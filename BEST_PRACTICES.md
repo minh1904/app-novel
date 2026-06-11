@@ -231,138 +231,162 @@ declare global {
 
 ---
 
-## 4. Cấu trúc thư mục đề xuất
+## 4. Cấu trúc thư mục
 
-Repo hiện tại để tất cả trong `src/` — ổn cho app nhỏ. Khi app lớn hơn, tách theo process:
+### Tầng Electron (top-level `src/`)
 
 ```
 src/
-├── main/                    # Main process
-│   ├── index.ts             # Entry point (hiện là main.ts)
-│   ├── window.ts            # BrowserWindow factory
-│   └── ipc/                 # IPC handlers (tách theo domain)
+├── main/                    # Main process (Node.js full access)
+│   ├── index.ts             # Entry point
+│   └── ipc/                 # IPC handlers, tách theo domain khi app lớn
 │       ├── index.ts         # Đăng ký tất cả handlers
 │       ├── file-handlers.ts
 │       └── prefs-handlers.ts
 │
-├── preload/                 # Preload scripts
-│   ├── index.ts             # contextBridge (hiện là preload.ts)
+├── preload/                 # Secure bridge (sandboxed)
+│   ├── index.ts             # contextBridge.exposeInMainWorld()
 │   └── index.d.ts           # Type declarations cho window.electronAPI
 │
-├── renderer/                # Renderer process
-│   ├── index.ts             # Entry (hiện là renderer.ts)
-│   └── index.css
+├── renderer/                # React app (Chromium, no Node access)
+│   └── ...                  # Xem tầng React bên dưới
 │
-└── shared/                  # Types dùng chung (không import Node/Electron)
-    └── types.ts
+└── shared/                  # Dùng chung giữa CÁC processes
+    └── types.ts             # IpcResult<T>, shared constants
+                             # KHÔNG import từ 'electron' hay Node built-ins
 ```
 
-**Cập nhật `forge.config.ts`** khi đổi đường dẫn:
+> **Quy tắc `shared/`:** Chỉ chứa pure TypeScript — không import `electron`, không import Node built-ins. Main và renderer đều có thể import.
 
-```typescript
-build: [
-  { entry: 'src/main/index.ts', config: 'vite.main.config.ts', target: 'main' },
-  { entry: 'src/preload/index.ts', config: 'vite.preload.config.ts', target: 'preload' },
-],
+### Tầng React (bên trong `src/renderer/`)
+
+```
+src/renderer/
+├── App.tsx                  # Root component, setup router
+├── index.tsx                # Entry — ReactDOM.createRoot() + StrictMode
+├── index.css                # Global styles
+│
+├── features/                # CORE — tổ chức theo domain, không theo loại file
+│   └── [feature-name]/
+│       ├── components/      # UI chỉ dùng trong feature này
+│       ├── hooks/           # Hooks của feature
+│       ├── services/        # IPC calls cho feature này
+│       └── store/           # Zustand slice cho feature này
+│
+├── components/              # Shared UI components (Button, Modal, Input...)
+│                            # Không chứa business logic
+├── hooks/                   # Global hooks (useTheme, useWindowSize...)
+├── layouts/                 # Layout components
+│   └── RootLayout.tsx
+├── services/                # IPC abstraction layer — wrapper window.electronAPI
+│   └── ipc.ts
+├── store/                   # Global Zustand store (shared state)
+└── types/                   # Renderer-specific TypeScript types
+```
+
+**Ví dụ feature module** khi app lớn:
+
+```
+features/
+├── editor/
+│   ├── components/EditorPanel.tsx
+│   ├── hooks/useAutoSave.ts
+│   ├── services/editorIpc.ts   ← gọi ipcService.saveFile(...)
+│   └── store/editorStore.ts
+└── settings/
+    ├── components/SettingsModal.tsx
+    └── hooks/useSettings.ts
 ```
 
 ---
 
-## 5. Vấn đề hiện tại trong code
+## 5. Trạng thái bảo mật hiện tại
 
-Scan nhanh `src/main.ts` hiện tại — các điểm cần sửa khi bắt đầu phát triển thực sự:
+Scan `src/main/index.ts` — các vấn đề còn lại:
 
 | # | Vấn đề | File | Mức độ |
 |---|--------|------|--------|
-| 1 | `BrowserWindow` thiếu `contextIsolation: true` và `sandbox: true` | `src/main.ts:15` | 🔴 Critical |
-| 2 | `mainWindow.webContents.openDevTools()` bật mặc định | `src/main.ts:31` | 🟡 Medium |
-| 3 | `preload.ts` hoàn toàn rỗng — không expose API nào | `src/preload.ts` | 🟠 High |
-| 4 | Không có Content Security Policy | `src/main.ts` | 🟠 High |
-| 5 | Không có type declaration cho `window.electronAPI` | — | 🟡 Medium |
+| 1 | Chưa có Content Security Policy | `src/main/index.ts` | 🟠 High |
 
-> Vấn đề #1 quan trọng nhất. Dù Electron 20+ đặt `contextIsolation: true` và `sandbox: true` là mặc định, vẫn nên khai báo tường minh để tránh vô tình override sau này.
+Các vấn đề đã được fix ✅:
 
-**Fix nhanh cho `src/main.ts`:**
+| ✅ | Chi tiết |
+|----|---------|
+| `contextIsolation: true` | Khai báo tường minh trong BrowserWindow |
+| `sandbox: true` | Khai báo tường minh trong BrowserWindow |
+| `nodeIntegration: false` | Khai báo tường minh trong BrowserWindow |
+| DevTools guard | Chỉ mở khi `NODE_ENV !== 'production'` |
+| contextBridge | preload expose API qua function wrappers |
+| Type declarations | `window.electronAPI` có đầy đủ TypeScript types |
+
+**Fix còn lại — thêm CSP vào `src/main/index.ts`:**
 
 ```typescript
-const mainWindow = new BrowserWindow({
-  width: 800,
-  height: 600,
-  webPreferences: {
-    preload: path.join(__dirname, 'preload.js'),
-    contextIsolation: true,  // thêm
-    sandbox: true,           // thêm
-    nodeIntegration: false,  // thêm
-  },
+mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+  callback({
+    responseHeaders: {
+      ...details.responseHeaders,
+      'Content-Security-Policy': [
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
+      ],
+    },
+  });
 });
-
-// Chỉ mở DevTools trong development
-if (process.env.NODE_ENV === 'development') {
-  mainWindow.webContents.openDevTools();
-}
 ```
 
 ---
 
-## 6. Thêm React (khi cần)
+## 6. React trong Renderer
 
-### Cài đặt
+### Services layer — bắt buộc khi app lớn
 
-```bash
-npm install react react-dom
-npm install -D @types/react @types/react-dom @vitejs/plugin-react
-```
-
-### Cập nhật `vite.renderer.config.ts`
+Không gọi `window.electronAPI.*` trực tiếp trong components. Bọc lại trong `services/ipc.ts`:
 
 ```typescript
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [react()],
-});
+// src/renderer/services/ipc.ts
+export const ipcService = {
+  ping: () => window.electronAPI.ping(),
+  // saveFile: (content: string) => window.electronAPI.saveFile(content),
+};
 ```
 
-### React + IPC pattern
+**Lợi ích:**
+- Renderer không bị coupled vào IPC API — dễ mock khi test
+- Một chỗ duy nhất để thay đổi khi preload API thay đổi
+- Feature services import từ đây, không import trực tiếp `window.electronAPI`
+
+### IPC listener trong useEffect — luôn cleanup
 
 ```tsx
-// src/renderer/App.tsx
-import { useEffect, useState } from 'react';
-
-export function App() {
-  const [status, setStatus] = useState('');
-
-  useEffect(() => {
-    // Luôn trả về cleanup để tránh memory leak
-    const cleanup = window.electronAPI.onUpdateStatus((s) => setStatus(s));
-    return cleanup;
-  }, []);
-
-  const handleSave = async () => {
-    const result = await window.electronAPI.saveFile('content here');
-    if (!result.success) {
-      console.error(result.error);
-    }
-  };
-
-  return <div>{status}</div>;
-}
+useEffect(() => {
+  const cleanup = window.electronAPI.onUpdateStatus((status) => {
+    setStatus(status);
+  });
+  return cleanup; // bắt buộc — tránh memory leak và double-register trong Strict Mode
+}, []);
 ```
 
-**React Strict Mode** — nên bật vì nó giúp phát hiện IPC listener leak (double-invoke effects):
+**React Strict Mode** double-invoke effects để phát hiện missing cleanup — nên bật:
 
 ```tsx
 // src/renderer/index.tsx
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>
 );
 ```
+
+### State management
+
+```
+Global shared state  →  Zustand store  (src/renderer/store/)
+Feature-local state  →  Zustand slice   (src/renderer/features/[name]/store/)
+Persistent state     →  electron-store  (main process, expose qua IPC)
+Server/async state   →  TanStack Query  (nếu có external API)
+```
+
+Không dùng Redux cho app Electron quy mô vừa — Zustand đủ và nhẹ hơn nhiều.
 
 ---
 
