@@ -302,37 +302,24 @@ features/
 
 ## 5. Trạng thái bảo mật hiện tại
 
-Scan `src/main/index.ts` — các vấn đề còn lại:
-
-| # | Vấn đề | File | Mức độ |
-|---|--------|------|--------|
-| 1 | Chưa có Content Security Policy | `src/main/index.ts` | 🟠 High |
-
-Các vấn đề đã được fix ✅:
+Tất cả issues đã được fix ✅:
 
 | ✅ | Chi tiết |
 |----|---------|
 | `contextIsolation: true` | Khai báo tường minh trong BrowserWindow |
 | `sandbox: true` | Khai báo tường minh trong BrowserWindow |
 | `nodeIntegration: false` | Khai báo tường minh trong BrowserWindow |
-| DevTools guard | Chỉ mở khi `NODE_ENV !== 'production'` |
+| `webviewTag: false` | Disable `<webview>` element |
+| `allowRunningInsecureContent: false` | Chặn mixed content |
+| `experimentalFeatures: false` | Chặn unstable Chromium features |
+| Content Security Policy | Áp dụng khi `app.isPackaged` |
+| Navigation guards | `will-navigate` + `setWindowOpenHandler` |
+| DevTools guard | `!app.isPackaged` thay vì `NODE_ENV` |
 | contextBridge | preload expose API qua function wrappers |
 | Type declarations | `window.electronAPI` có đầy đủ TypeScript types |
-
-**Fix còn lại — thêm CSP vào `src/main/index.ts`:**
-
-```typescript
-mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-  callback({
-    responseHeaders: {
-      ...details.responseHeaders,
-      'Content-Security-Policy': [
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
-      ],
-    },
-  });
-});
-```
+| IpcChannelMap | Single source of truth cho IPC contracts |
+| TypeScript strict | `strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess` |
+| Path aliases | `@/` và `@shared/` trong tsconfig + vite configs |
 
 ---
 

@@ -1,0 +1,10 @@
+packages:
+  - '.'
+
+shamefullyHoist: true
+nodeLinker: hoisted
+blockExoticSubdeps: false
+
+allowBuilds:
+  electron-winstaller: true
+  esbuild: true
