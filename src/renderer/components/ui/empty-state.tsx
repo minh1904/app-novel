@@ -1,12 +1,12 @@
-import * as React from "react"
+import type * as React from 'react';
 
 type EmptyStateProps = {
-  icon?: React.ReactNode
-  title: string
-  description?: string
-  action?: React.ReactNode
-  className?: string
-}
+  icon?: React.ReactNode;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+  className?: string;
+};
 
 function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
@@ -16,7 +16,7 @@ function EmptyState({ icon, title, description, action, className }: EmptyStateP
       {description && <p>{description}</p>}
       {action}
     </div>
-  )
+  );
 }
 
-export { EmptyState }
+export { EmptyState };

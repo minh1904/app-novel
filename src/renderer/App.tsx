@@ -1,24 +1,24 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import {
-  Button,
   Badge,
+  Button,
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  Input,
   Dialog,
-  DialogTrigger,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogTrigger,
+  Input,
   Spinner,
-} from './components/ui'
+} from './components/ui';
 
 export function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
@@ -26,7 +26,9 @@ export function App() {
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold text-foreground">Design System</h1>
-            <p className="text-sm text-muted-foreground">Component preview — migrate-design-system</p>
+            <p className="text-sm text-muted-foreground">
+              Component preview — migrate-design-system
+            </p>
           </div>
 
           {/* Buttons */}
@@ -78,9 +80,13 @@ export function App() {
               <CardTitle>Counter & Spinner</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center gap-4">
-              <Button onClick={() => setCount(c => c - 1)} variant="outline" size="sm">−</Button>
+              <Button onClick={() => setCount((c) => c - 1)} variant="outline" size="sm">
+                −
+              </Button>
               <span className="text-foreground font-mono text-lg w-8 text-center">{count}</span>
-              <Button onClick={() => setCount(c => c + 1)} size="sm">+</Button>
+              <Button onClick={() => setCount((c) => c + 1)} size="sm">
+                +
+              </Button>
               <Spinner className="ml-auto text-muted-foreground" />
             </CardContent>
           </Card>
@@ -92,9 +98,7 @@ export function App() {
             </CardHeader>
             <CardContent>
               <Dialog>
-                <DialogTrigger render={<Button variant="outline" />}>
-                  Mở Dialog
-                </DialogTrigger>
+                <DialogTrigger render={<Button variant="outline" />}>Mở Dialog</DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Design System hoạt động!</DialogTitle>
@@ -112,5 +116,5 @@ export function App() {
         </div>
       </div>
     </div>
-  )
+  );
 }

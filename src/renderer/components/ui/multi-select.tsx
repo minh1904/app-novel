@@ -1,28 +1,28 @@
-import { useMemo, useState } from 'react'
-import type { ComponentType } from 'react'
-import * as React from 'react'
-import { Popover } from '@base-ui/react/popover'
-import { CheckIcon, ChevronDown, XCircle, XIcon } from 'lucide-react'
+import { Popover } from '@base-ui/react/popover';
+import { CheckIcon, ChevronDown, XCircle, XIcon } from 'lucide-react';
+import type * as React from 'react';
+import type { ComponentType } from 'react';
+import { useMemo, useState } from 'react';
 
-import { cn } from '@/lib/cn'
-import { Badge } from './badge'
+import { cn } from '@/lib/cn';
+import { Badge } from './badge';
 
 export interface MultiSelectOption {
-  label: string
-  value: string
-  icon?: ComponentType<{ className?: string }>
-  disabled?: boolean
+  label: string;
+  value: string;
+  icon?: ComponentType<{ className?: string }>;
+  disabled?: boolean;
 }
 
 interface MultiSelectProps {
-  options: MultiSelectOption[]
-  value?: string[]
-  onValueChange: (value: string[]) => void
-  placeholder?: string
-  maxCount?: number
-  searchable?: boolean
-  disabled?: boolean
-  className?: string
+  options: MultiSelectOption[];
+  value?: string[];
+  onValueChange: (value: string[]) => void;
+  placeholder?: string;
+  maxCount?: number;
+  searchable?: boolean;
+  disabled?: boolean;
+  className?: string;
 }
 
 export function MultiSelect({
@@ -35,41 +35,38 @@ export function MultiSelect({
   disabled = false,
   className,
 }: MultiSelectProps) {
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState('')
-  const [expanded, setExpanded] = useState(false)
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState(false);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return options
-    const q = search.toLowerCase()
-    return options.filter((o) => o.label.toLowerCase().includes(q))
-  }, [options, search])
+    if (!search.trim()) return options;
+    const q = search.toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }, [options, search]);
 
-  const enabledOptions = options.filter((o) => !o.disabled)
-  const allSelected =
-    enabledOptions.length > 0 && value.length === enabledOptions.length
+  const enabledOptions = options.filter((o) => !o.disabled);
+  const allSelected = enabledOptions.length > 0 && value.length === enabledOptions.length;
 
   const toggle = (optValue: string) => {
     onValueChange(
-      value.includes(optValue)
-        ? value.filter((v) => v !== optValue)
-        : [...value, optValue],
-    )
-  }
+      value.includes(optValue) ? value.filter((v) => v !== optValue) : [...value, optValue],
+    );
+  };
 
   const toggleAll = () => {
-    onValueChange(allSelected ? [] : enabledOptions.map((o) => o.value))
-  }
+    onValueChange(allSelected ? [] : enabledOptions.map((o) => o.value));
+  };
 
   const removeValue = (optValue: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    onValueChange(value.filter((v) => v !== optValue))
-  }
+    e.stopPropagation();
+    onValueChange(value.filter((v) => v !== optValue));
+  };
 
   const clearAll = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onValueChange([])
-  }
+    e.stopPropagation();
+    onValueChange([]);
+  };
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -88,14 +85,10 @@ export function MultiSelect({
           ) : (
             <>
               {(expanded ? value : value.slice(0, maxCount)).map((v) => {
-                const opt = options.find((o) => o.value === v)
-                if (!opt) return null
+                const opt = options.find((o) => o.value === v);
+                if (!opt) return null;
                 return (
-                  <Badge
-                    key={v}
-                    variant="secondary"
-                    className="gap-1 pr-1 font-normal"
-                  >
+                  <Badge key={v} variant="secondary" className="gap-1 pr-1 font-normal">
                     {opt.icon && <opt.icon className="size-3" />}
                     {opt.label}
                     <span
@@ -104,20 +97,23 @@ export function MultiSelect({
                       onClick={(e) => removeValue(v, e)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ')
-                          removeValue(v, e as unknown as React.MouseEvent)
+                          removeValue(v, e as unknown as React.MouseEvent);
                       }}
                       className="ml-0.5 rounded-sm hover:bg-foreground/10"
                     >
                       <XCircle className="size-3" />
                     </span>
                   </Badge>
-                )
+                );
               })}
               {!expanded && value.length > maxCount && (
                 <Badge
                   variant="secondary"
                   className="cursor-pointer font-normal hover:bg-secondary/60"
-                  onClick={(e) => { e.stopPropagation(); setExpanded(true) }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpanded(true);
+                  }}
                 >
                   +{value.length - maxCount} more
                 </Badge>
@@ -126,7 +122,10 @@ export function MultiSelect({
                 <Badge
                   variant="outline"
                   className="cursor-pointer font-normal hover:bg-accent"
-                  onClick={(e) => { e.stopPropagation(); setExpanded(false) }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpanded(false);
+                  }}
                 >
                   Thu gọn
                 </Badge>
@@ -144,7 +143,7 @@ export function MultiSelect({
                 onClick={clearAll}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ')
-                    clearAll(e as unknown as React.MouseEvent)
+                    clearAll(e as unknown as React.MouseEvent);
                 }}
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="Clear all"
@@ -190,13 +189,11 @@ export function MultiSelect({
               <div className="my-1 h-px bg-border" />
 
               {filtered.length === 0 && (
-                <p className="py-4 text-center text-sm text-muted-foreground">
-                  No results found.
-                </p>
+                <p className="py-4 text-center text-sm text-muted-foreground">No results found.</p>
               )}
 
               {filtered.map((opt) => {
-                const selected = value.includes(opt.value)
+                const selected = value.includes(opt.value);
                 return (
                   <button
                     key={opt.value}
@@ -210,12 +207,10 @@ export function MultiSelect({
                     )}
                   >
                     <CheckboxBox checked={selected} />
-                    {opt.icon && (
-                      <opt.icon className="size-4 text-muted-foreground" />
-                    )}
+                    {opt.icon && <opt.icon className="size-4 text-muted-foreground" />}
                     <span>{opt.label}</span>
                   </button>
-                )
+                );
               })}
             </div>
 
@@ -246,7 +241,7 @@ export function MultiSelect({
         </Popover.Positioner>
       </Popover.Portal>
     </Popover.Root>
-  )
+  );
 }
 
 function CheckboxBox({ checked }: { checked: boolean }) {
@@ -259,5 +254,5 @@ function CheckboxBox({ checked }: { checked: boolean }) {
     >
       {checked && <CheckIcon className="size-3" />}
     </div>
-  )
+  );
 }

@@ -1,11 +1,9 @@
-export type IpcResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+export type IpcResult<T> = { success: true; data: T } | { success: false; error: string };
 
 // Single source of truth cho IPC contracts.
 // Thêm channel mới ở đây — type error sẽ propagate sang main handler và preload.
 export type IpcChannelMap = {
-  'ping': { args: []; return: string };
+  ping: { args: []; return: string };
 };
 
 // Main→renderer push events (send/on pattern, không có return value)
