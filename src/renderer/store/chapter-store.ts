@@ -115,17 +115,35 @@ const MOCK_CHAPTERS_NOVEL_1: Chapter[] = [
 interface ChapterState {
   chapters: Record<string, Chapter[]>;
   activeChapterId: string | null;
+  collapsedVolumes: Set<string>;
+  selectedChapterIds: string[];
+  lastSelectedChapterId: string | null;
   getChapters: (novelId: string) => Chapter[];
   getActiveChapter: (novelId: string) => Chapter | undefined;
   setActiveChapter: (chapterId: string) => void;
   setChapterStatus: (chapterId: string, novelId: string, status: ChapterStatus) => void;
   updateParagraph: (novelId: string, chapterId: string, paragraphId: string, translatedText: string, reviewed: boolean) => void;
   appendStreamedText: (novelId: string, chapterId: string, paragraphId: string, token: string) => void;
+  toggleVolume: (volumeTitle: string) => void;
+  expandVolume: (volumeTitle: string) => void;
+  selectChapter: (novelId: string, chapterId: string, mode: 'single' | 'ctrl' | 'shift') => void;
+  clearSelection: () => void;
+  reorderChapter: (novelId: string, activeId: string, overId: string) => void;
+  moveChapterToVolume: (novelId: string, chapterId: string, targetVolume: string) => void;
+  renameChapter: (novelId: string, chapterId: string, newTitle: string) => void;
+  renameVolume: (novelId: string, oldTitle: string, newTitle: string) => void;
+  deleteChapters: (novelId: string, ids: string[]) => void;
+  duplicateChapter: (novelId: string, chapterId: string) => void;
+  changeChapterStatus: (novelId: string, ids: string[], status: ChapterStatus) => void;
+  addChapterAfter: (novelId: string, afterChapterId: string | null, volumeTitle: string) => void;
 }
 
 export const useChapterStore = create<ChapterState>((set, get) => ({
   chapters: { '1': MOCK_CHAPTERS_NOVEL_1 },
   activeChapterId: 'c1-004',
+  collapsedVolumes: new Set<string>(),
+  selectedChapterIds: [],
+  lastSelectedChapterId: null,
 
   getChapters: (novelId) => get().chapters[novelId] ?? [],
 
@@ -181,4 +199,152 @@ export const useChapterStore = create<ChapterState>((set, get) => ({
         ),
       },
     })),
+
+  toggleVolume: (volumeTitle) =>
+    set((state) => {
+      const next = new Set(state.collapsedVolumes);
+      if (next.has(volumeTitle)) next.delete(volumeTitle);
+      else next.add(volumeTitle);
+      return { collapsedVolumes: next };
+    }),
+
+  expandVolume: (volumeTitle) =>
+    set((state) => {
+      const next = new Set(state.collapsedVolumes);
+      next.delete(volumeTitle);
+      return { collapsedVolumes: next };
+    }),
+
+  selectChapter: (novelId, chapterId, mode) => {
+    const { chapters, selectedChapterIds, lastSelectedChapterId } = get();
+    const list = chapters[novelId] ?? [];
+
+    if (mode === 'ctrl') {
+      const isSelected = selectedChapterIds.includes(chapterId);
+      set({
+        selectedChapterIds: isSelected
+          ? selectedChapterIds.filter((id) => id !== chapterId)
+          : [...selectedChapterIds, chapterId],
+        lastSelectedChapterId: chapterId,
+      });
+    } else if (mode === 'shift' && lastSelectedChapterId) {
+      const anchorIdx = list.findIndex((c) => c.id === lastSelectedChapterId);
+      const targetIdx = list.findIndex((c) => c.id === chapterId);
+      const [from, to] = anchorIdx < targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+      const range = list.slice(from, to + 1).map((c) => c.id);
+      const merged = Array.from(new Set([...selectedChapterIds, ...range]));
+      set({ selectedChapterIds: merged });
+    } else {
+      set({ selectedChapterIds: [], lastSelectedChapterId: chapterId });
+    }
+  },
+
+  clearSelection: () => set({ selectedChapterIds: [], lastSelectedChapterId: null }),
+
+  reorderChapter: (novelId, activeId, overId) =>
+    set((state) => {
+      const list = state.chapters[novelId] ?? [];
+      const activeIdx = list.findIndex((c) => c.id === activeId);
+      const overIdx = list.findIndex((c) => c.id === overId);
+      if (activeIdx === -1 || overIdx === -1) return {};
+      const active = list[activeIdx];
+      const over = list[overIdx];
+      if (!active || !over) return {};
+      const targetVolume = over.volumeTitle;
+      const { volumeTitle: _v, ...baseChapter } = active;
+      const movedChapter: Chapter = targetVolume !== undefined
+        ? { ...baseChapter, volumeTitle: targetVolume }
+        : baseChapter;
+      const withoutActive = list.filter((_, i) => i !== activeIdx);
+      const insertAt = withoutActive.findIndex((c) => c.id === overId);
+      const newList: Chapter[] = [
+        ...withoutActive.slice(0, insertAt),
+        movedChapter,
+        ...withoutActive.slice(insertAt),
+      ];
+      return { chapters: { ...state.chapters, [novelId]: newList } };
+    }),
+
+  moveChapterToVolume: (novelId, chapterId, targetVolume) =>
+    set((state) => {
+      const list = (state.chapters[novelId] ?? []).map((c) =>
+        c.id === chapterId ? { ...c, volumeTitle: targetVolume } : c,
+      );
+      return { chapters: { ...state.chapters, [novelId]: list } };
+    }),
+
+  renameChapter: (novelId, chapterId, newTitle) =>
+    set((state) => ({
+      chapters: {
+        ...state.chapters,
+        [novelId]: (state.chapters[novelId] ?? []).map((c) =>
+          c.id === chapterId ? { ...c, title: newTitle } : c,
+        ),
+      },
+    })),
+
+  renameVolume: (novelId, oldTitle, newTitle) =>
+    set((state) => ({
+      chapters: {
+        ...state.chapters,
+        [novelId]: (state.chapters[novelId] ?? []).map((c) =>
+          c.volumeTitle === oldTitle ? { ...c, volumeTitle: newTitle } : c,
+        ),
+      },
+    })),
+
+  deleteChapters: (novelId, ids) =>
+    set((state) => ({
+      chapters: {
+        ...state.chapters,
+        [novelId]: (state.chapters[novelId] ?? []).filter((c) => !ids.includes(c.id)),
+      },
+      selectedChapterIds: state.selectedChapterIds.filter((id) => !ids.includes(id)),
+    })),
+
+  duplicateChapter: (novelId, chapterId) =>
+    set((state) => {
+      const list = [...(state.chapters[novelId] ?? [])];
+      const idx = list.findIndex((c) => c.id === chapterId);
+      if (idx === -1) return {};
+      const original = list[idx]!;
+      const newChapter: Chapter = {
+        ...original,
+        id: `${original.id}-copy-${Date.now()}`,
+        title: `${original.title} (copy)`,
+        paragraphs: original.paragraphs.map((p) => ({ ...p, id: `${p.id}-copy` })),
+      };
+      list.splice(idx + 1, 0, newChapter);
+      return { chapters: { ...state.chapters, [novelId]: list } };
+    }),
+
+  changeChapterStatus: (novelId, ids, status) =>
+    set((state) => ({
+      chapters: {
+        ...state.chapters,
+        [novelId]: (state.chapters[novelId] ?? []).map((c) =>
+          ids.includes(c.id) ? { ...c, status } : c,
+        ),
+      },
+    })),
+
+  addChapterAfter: (novelId, afterChapterId, volumeTitle) =>
+    set((state) => {
+      const list = [...(state.chapters[novelId] ?? [])];
+      const maxNumber = list.reduce((m, c) => Math.max(m, c.number), 0);
+      const newChapter: Chapter = {
+        id: `ch-${Date.now()}`,
+        novelId,
+        number: maxNumber + 1,
+        title: `Chương ${maxNumber + 1}`,
+        volumeTitle,
+        status: 'todo',
+        paragraphs: [],
+      };
+      const insertIdx = afterChapterId
+        ? list.findIndex((c) => c.id === afterChapterId) + 1
+        : list.length;
+      list.splice(insertIdx === 0 ? list.length : insertIdx, 0, newChapter);
+      return { chapters: { ...state.chapters, [novelId]: list } };
+    }),
 }));
