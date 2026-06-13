@@ -1,4 +1,3 @@
-import { Icon } from '@iconify/react';
 import { cn } from '@/lib/cn';
 
 interface TitleBarProps {
@@ -8,15 +7,7 @@ interface TitleBarProps {
 export function TitleBar({ onToggleSidebar }: TitleBarProps) {
   return (
     <header className="app-drag flex h-(--titlebar-h) shrink-0 select-none items-center border-border border-b bg-titlebar">
-      <div className="flex w-(--actbar-w) shrink-0 items-center justify-center">
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          className="app-no-drag flex h-8 w-8 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
-        >
-          <Icon icon="solar:sidebar-minimalistic-linear" width={17} />
-        </button>
-      </div>
+      <div className="flex w-(--actbar-w) shrink-0 items-center justify-center" />
 
       <div className="min-w-0 flex-1" />
 

@@ -1,5 +1,5 @@
-import { Link, useRouterState } from '@tanstack/react-router';
 import { Icon } from '@iconify/react';
+import { Link, useRouterState } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
@@ -58,7 +58,7 @@ function ActivityIcon({
       title={label}
       aria-label={label}
       className={cn(
-        'relative flex h-8 w-8 items-center justify-center rounded transition-colors',
+        'relative flex h-8 w-8 items-center justify-center rounded-sm transition-colors',
         active
           ? 'bg-sidebar-accent text-foreground'
           : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground',

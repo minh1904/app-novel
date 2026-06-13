@@ -73,7 +73,7 @@ export function MultiSelect({
       <Popover.Trigger
         disabled={disabled}
         className={cn(
-          'flex min-h-9 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-background px-2 py-1.5 text-sm transition-colors',
+          'flex min-h-9 w-full cursor-pointer items-center justify-between rounded-sm border border-input bg-background px-2 py-1.5 text-sm transition-colors',
           'hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
           'disabled:cursor-not-allowed disabled:opacity-50',
           className,
@@ -165,7 +165,7 @@ export function MultiSelect({
 
       <Popover.Portal>
         <Popover.Positioner sideOffset={4} align="start" className="isolate z-50">
-          <Popover.Popup className="data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 flex w-(--anchor-width) min-w-[200px] flex-col rounded-md border border-border bg-popover shadow-md outline-none data-closed:animate-out data-open:animate-in">
+          <Popover.Popup className="data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 flex w-(--anchor-width) min-w-[200px] flex-col rounded-sm border border-border bg-popover shadow-md outline-none data-closed:animate-out data-open:animate-in">
             {searchable && (
               <div className="shrink-0 border-border border-b px-3 py-2">
                 <input

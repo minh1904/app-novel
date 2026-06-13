@@ -72,6 +72,10 @@ export function Sidebar() {
     );
   }
 
+  if (pathname === '/') {
+    return null;
+  }
+
   return (
     <aside className="flex w-(--sidebar-w) shrink-0 flex-col overflow-hidden border-border border-r bg-sidebar">
       <SidebarHeader label="Thư viện" />

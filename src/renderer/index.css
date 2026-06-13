@@ -57,7 +57,7 @@
   --chart-5: oklch(0.269 0 0);
 
   /* Geometry — Obsidian-style tight radius */
-  --radius: 0.25rem;
+  --radius: 0.5rem;
 
   /* App shell dimensions */
   --titlebar-h: 36px;
@@ -200,4 +200,11 @@
 @utility scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+}
+
+@layer base {
+  /* Solar icons hardcode stroke-width on inner paths, so we need !important to override */
+  svg.iconify [stroke] {
+    stroke-width: 2.2px !important;
+  }
 }

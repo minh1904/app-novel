@@ -39,7 +39,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        'flex min-h-9 w-full cursor-pointer select-none items-center justify-between gap-1.5 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm outline-none transition-colors',
+        'flex min-h-9 w-full cursor-pointer select-none items-center justify-between gap-1.5 rounded-sm border border-input bg-background px-2.5 py-1.5 text-sm outline-none transition-colors',
         'hover:bg-accent',
         'focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -87,7 +87,7 @@ function SelectContent({
           data-slot="select-content"
           className={cn(
             'max-h-(--available-height) w-(--anchor-width) min-w-36 overflow-y-auto',
-            'rounded-md border border-border bg-popover text-popover-foreground shadow-md outline-none',
+            'rounded-sm border border-border bg-popover text-popover-foreground shadow-md outline-none',
             'origin-(--transform-origin)',
             'data-open:fade-in-0 data-open:zoom-in-95 data-open:animate-in',
             'data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:animate-out',
@@ -120,7 +120,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default select-none items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-default select-none items-center gap-1.5 rounded-sm py-1 pr-8 pl-1.5 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}
