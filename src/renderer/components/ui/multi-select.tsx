@@ -1,8 +1,6 @@
 import { Popover } from '@base-ui/react/popover';
 import { Icon } from '@iconify/react';
-import type * as React from 'react';
-import type { ComponentType } from 'react';
-import { useMemo, useState } from 'react';
+import { type ComponentType, type MouseEvent, useMemo, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { Badge } from './badge';
@@ -58,12 +56,12 @@ export function MultiSelect({
     onValueChange(allSelected ? [] : enabledOptions.map((o) => o.value));
   };
 
-  const removeValue = (optValue: string, e: React.MouseEvent) => {
+  const removeValue = (optValue: string, e: MouseEvent) => {
     e.stopPropagation();
     onValueChange(value.filter((v) => v !== optValue));
   };
 
-  const clearAll = (e: React.MouseEvent) => {
+  const clearAll = (e: MouseEvent) => {
     e.stopPropagation();
     onValueChange([]);
   };
@@ -97,7 +95,7 @@ export function MultiSelect({
                       onClick={(e) => removeValue(v, e)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ')
-                          removeValue(v, e as unknown as React.MouseEvent);
+                          removeValue(v, e as unknown as MouseEvent);
                       }}
                       className="ml-0.5 rounded-sm hover:bg-foreground/10"
                     >
@@ -142,8 +140,7 @@ export function MultiSelect({
                 tabIndex={0}
                 onClick={clearAll}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ')
-                    clearAll(e as unknown as React.MouseEvent);
+                  if (e.key === 'Enter' || e.key === ' ') clearAll(e as unknown as MouseEvent);
                 }}
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="Clear all"
