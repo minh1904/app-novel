@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import type { ActivitySection } from './ActivityBar';
 import { ActivityBar } from './ActivityBar';
 import { Sidebar } from './Sidebar';
 import { TitleBar } from './TitleBar';
@@ -12,13 +11,12 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState<ActivitySection>('library');
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
       <TitleBar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
       <div className="flex flex-1 overflow-hidden">
-        <ActivityBar active={activeSection} onChange={setActiveSection} />
+        <ActivityBar />
         <AnimatePresence initial={false}>
           {sidebarOpen && (
             <motion.div
@@ -29,7 +27,7 @@ export function AppShell({ children }: AppShellProps) {
               transition={{ duration: 0.15, ease: 'easeInOut' }}
               style={{ overflow: 'hidden', flexShrink: 0, display: 'flex' }}
             >
-              <Sidebar activeSection={activeSection} />
+              <Sidebar />
             </motion.div>
           )}
         </AnimatePresence>

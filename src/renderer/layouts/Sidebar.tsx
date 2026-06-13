@@ -1,7 +1,7 @@
+import { Link, useRouterState } from '@tanstack/react-router';
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
-import type { ActivitySection } from './ActivityBar';
 
 const DEMO_TREE = [
   {
@@ -26,11 +26,8 @@ const DEMO_TREE = [
   },
 ];
 
-interface SidebarProps {
-  activeSection: ActivitySection;
-}
-
-export function Sidebar({ activeSection: _ }: SidebarProps) {
+export function Sidebar() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['novel-1']));
   const [activeChapter, setActiveChapter] = useState('007 Văn vẹo.');
 
@@ -42,14 +39,42 @@ export function Sidebar({ activeSection: _ }: SidebarProps) {
       return next;
     });
 
+  if (pathname === '/search') {
+    return (
+      <aside className="flex w-(--sidebar-w) shrink-0 flex-col overflow-hidden border-border border-r bg-sidebar">
+        <SidebarHeader label="Tìm kiếm" />
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-muted-foreground text-xs">Sắp ra mắt</p>
+        </div>
+      </aside>
+    );
+  }
+
+  if (pathname === '/bookmarks') {
+    return (
+      <aside className="flex w-(--sidebar-w) shrink-0 flex-col overflow-hidden border-border border-r bg-sidebar">
+        <SidebarHeader label="Đánh dấu" />
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-muted-foreground text-xs">Sắp ra mắt</p>
+        </div>
+      </aside>
+    );
+  }
+
+  if (pathname === '/settings') {
+    return (
+      <aside className="flex w-(--sidebar-w) shrink-0 flex-col overflow-hidden border-border border-r bg-sidebar">
+        <SidebarHeader label="Cài đặt" />
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-muted-foreground text-xs">Sắp ra mắt</p>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="flex w-(--sidebar-w) shrink-0 flex-col overflow-hidden border-border border-r bg-sidebar">
-      <div className="flex h-8 shrink-0 items-center border-border border-b px-3">
-        <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-          Thư viện
-        </span>
-      </div>
-
+      <SidebarHeader label="Thư viện" />
       <div className="flex-1 overflow-y-auto py-1">
         {DEMO_TREE.map((novel) => (
           <div key={novel.id}>
@@ -91,5 +116,13 @@ export function Sidebar({ activeSection: _ }: SidebarProps) {
         ))}
       </div>
     </aside>
+  );
+}
+
+function SidebarHeader({ label }: { label: string }) {
+  return (
+    <div className="flex h-8 shrink-0 items-center border-border border-b px-3">
+      <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">{label}</span>
+    </div>
   );
 }
