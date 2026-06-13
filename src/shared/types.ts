@@ -8,9 +8,12 @@ export type IpcChannelMap = {
   'window:maximize': { args: []; return: undefined };
   'window:close': { args: []; return: undefined };
   'window:is-maximized': { args: []; return: boolean };
+  'translate:start': { args: [novelId: string, chapterId: string, paragraphIndex: number]; return: { sessionId: string } };
+  'translate:stop': { args: [sessionId: string]; return: undefined };
 };
 
 // Main→renderer push events (send/on pattern, không có return value)
 export type IpcEventMap = {
-  // Ví dụ: 'update-status': { args: [status: string] };
+  'stream:chunk': { args: [sessionId: string, token: string] };
+  'stream:done': { args: [sessionId: string] };
 };

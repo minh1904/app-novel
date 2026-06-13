@@ -1,6 +1,7 @@
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
-import { Route } from '@/routes/novel.$novelId';
+import { useNavigate } from '@tanstack/react-router';
+import { Route as NovelRoute } from '@/routes/novel.$novelId.index';
 import { NovelFormSheet } from '@/features/library/components/NovelFormSheet';
 import { MetaRow } from '@/features/novel-detail/components/MetaRow';
 import { cn } from '@/lib/cn';
@@ -40,7 +41,8 @@ const GENRE_LABEL: Record<NovelGenre, string> = {
 };
 
 export function NovelDetailPage() {
-  const { novelId } = Route.useParams();
+  const { novelId } = NovelRoute.useParams();
+  const navigate = useNavigate();
   const novels = useNovelStore((state) => state.novels);
   const updateNovel = useNovelStore((state) => state.updateNovel);
   const novel = novels.find((n) => n.id === novelId);
@@ -139,10 +141,11 @@ export function NovelDetailPage() {
         <div className="flex gap-2 px-5 pb-4">
           <button
             type="button"
+            onClick={() => navigate({ to: '/novel/$novelId/translate', params: { novelId } })}
             className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/90"
           >
             <Icon icon="solar:play-linear" width={14} />
-            {novel.resumeChapter ? `Tiếp tục chương ${novel.resumeChapter}` : 'Bắt đầu đọc'}
+            {novel.resumeChapter ? `Tiếp tục dịch · Ch. ${novel.resumeChapter}` : 'Bắt đầu dịch'}
           </button>
           <button
             type="button"
