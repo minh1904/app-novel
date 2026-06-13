@@ -5,19 +5,15 @@ import { TranslationPane } from './TranslationPane';
 interface SplitPaneProps {
   paragraphs: TranslationParagraph[];
   glossaryTerms: GlossaryTerm[];
-  isStreaming: boolean;
-  onParagraphEdit: (paragraphId: string, text: string) => void;
+  translationMd: string;
+  onTranslationEdit: (md: string) => void;
 }
 
-export function SplitPane({ paragraphs, glossaryTerms, isStreaming, onParagraphEdit }: SplitPaneProps) {
+export function SplitPane({ paragraphs, glossaryTerms, translationMd, onTranslationEdit }: SplitPaneProps) {
   return (
     <div className="flex min-h-0 flex-1">
       <RawPane paragraphs={paragraphs} terms={glossaryTerms} />
-      <TranslationPane
-        paragraphs={paragraphs}
-        isStreaming={isStreaming}
-        onParagraphEdit={onParagraphEdit}
-      />
+      <TranslationPane translationMd={translationMd} onEdit={onTranslationEdit} />
     </div>
   );
 }

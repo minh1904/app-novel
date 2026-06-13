@@ -5,33 +5,37 @@ const MOCK_CHAPTERS_NOVEL_1: Chapter[] = [
   {
     id: 'c1-001', novelId: '1', number: 1, title: 'Thiên tài hay phế vật',
     volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'done',
+    translationMd: 'Tiêu Viêm ngồi yên lặng trên phiến đá, nhìn về phía dãy núi trùng điệp ở phía xa, trong đầu không ngừng hiện lên cảnh tượng tuyệt vọng đó.\n\nTừng là thiên tài, nay trở thành phế vật. Ba năm trước, hắn còn là sự tồn tại sáng chói nhất trong Tiêu gia, thực lực đấu khí bát đoạn khiến vô số người đồng trang lứa phải ngưỡng mộ.\n\nThế nhưng, trong một lần tình cờ, hắn đã gặp chiếc nhẫn bí ẩn đó, trong nhẫn ngủ say linh hồn của Dược Lão…',
     paragraphs: [
-      { id: 'p1', rawText: '萧炎静默地坐在石头上，望着远处连绵不绝的群山，脑海中不断浮现着那个让他感到绝望的场景。', translatedText: 'Tiêu Viêm ngồi yên lặng trên phiến đá, nhìn về phía dãy núi trùng điệp ở phía xa, trong đầu không ngừng hiện lên cảnh tượng tuyệt vọng đó.', aiGenerated: false, reviewed: true },
-      { id: 'p2', rawText: '曾经的天才，如今的废材。三年前，他还是萧家中最耀眼的存在，斗气八段的实力让无数同龄人望尘莫及。', translatedText: 'Từng là thiên tài, nay trở thành phế vật. Ba năm trước, hắn còn là sự tồn tại sáng chói nhất trong Tiêu gia, thực lực đấu khí bát đoạn khiến vô số người đồng trang lứa phải ngưỡng mộ.', aiGenerated: false, reviewed: true },
-      { id: 'p3', rawText: '然而，在一次偶然的机会中，他遇见了那个神秘的戒指，戒指中沉睡着药老的灵魂…', translatedText: 'Thế nhưng, trong một lần tình cờ, hắn đã gặp chiếc nhẫn bí ẩn đó, trong nhẫn ngủ say linh hồn của Dược Lão…', aiGenerated: false, reviewed: true },
+      { id: 'p1', rawText: '萧炎静默地坐在石头上，望着远处连绵不绝的群山，脑海中不断浮现着那个让他感到绝望的场景。', translatedText: '', aiGenerated: false, reviewed: true },
+      { id: 'p2', rawText: '曾经的天才，如今的废材。三年前，他还是萧家中最耀眼的存在，斗气八段的实力让无数同龄人望尘莫及。', translatedText: '', aiGenerated: false, reviewed: true },
+      { id: 'p3', rawText: '然而，在一次偶然的机会中，他遇见了那个神秘的戒指，戒指中沉睡着药老的灵魂…', translatedText: '', aiGenerated: false, reviewed: true },
     ],
   },
   {
     id: 'c1-002', novelId: '1', number: 2, title: 'Hủy hôn ước',
     volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'done',
+    translationMd: 'Trên đài tỷ võ, Nạp Lan Yên Nhiên mặc y phục đỏ, rực rỡ như ngọn lửa, ánh mắt nàng quét qua phía dưới đài, cuối cùng dừng lại trên người Tiêu Viêm.\n\n"Tiêu Viêm, ta — Nạp Lan Yên Nhiên — tại đây tuyên bố chính thức hủy bỏ hôn ước giữa chúng ta." Giọng nàng lạnh lẽo, vang vọng trên quảng trường yên tĩnh, khiến ai nấy đều nghe rõ mồn một.\n\nSắc mặt Tiêu Viêm không hề thay đổi, hắn từ từ gật đầu, nhưng trong lòng trào lên chút đắng cay. Có lúc nào đó, người con gái trước mắt là hôn thê mà hắn từng tự hào nhất.',
     paragraphs: [
-      { id: 'p1', rawText: '比武台上，纳兰嫣然一身红衣，宛如火焰般耀眼，她的目光扫过台下，最终停在了萧炎身上。', translatedText: 'Trên đài tỷ võ, Nạp Lan Yên Nhiên mặc y phục đỏ, rực rỡ như ngọn lửa, ánh mắt nàng quét qua phía dưới đài, cuối cùng dừng lại trên người Tiêu Viêm.', aiGenerated: false, reviewed: true },
-      { id: 'p2', rawText: '"萧炎，我纳兰嫣然在此宣布，正式解除我们之间的婚约。"她的声音清冷，却在寂静的广场上回荡，让每一个人都听得清清楚楚。', translatedText: '"Tiêu Viêm, ta — Nạp Lan Yên Nhiên — tại đây tuyên bố chính thức hủy bỏ hôn ước giữa chúng ta." Giọng nàng lạnh lẽo, vang vọng trên quảng trường yên tĩnh, khiến ai nấy đều nghe rõ mồn một.', aiGenerated: false, reviewed: true },
-      { id: 'p3', rawText: '萧炎的脸色没有丝毫变化，他缓缓点头，心中却涌起一丝苦涩。曾几何时，眼前这个女子是他最骄傲的未婚妻。', translatedText: 'Sắc mặt Tiêu Viêm không hề thay đổi, hắn từ từ gật đầu, nhưng trong lòng trào lên chút đắng cay. Có lúc nào đó, người con gái trước mắt là hôn thê mà hắn từng tự hào nhất.', aiGenerated: false, reviewed: true },
+      { id: 'p1', rawText: '比武台上，纳兰嫣然一身红衣，宛如火焰般耀眼，她的目光扫过台下，最终停在了萧炎身上。', translatedText: '', aiGenerated: false, reviewed: true },
+      { id: 'p2', rawText: '"萧炎，我纳兰嫣然在此宣布，正式解除我们之间的婚约。"她的声音清冷，却在寂静的广场上回荡，让每一个人都听得清清楚楚。', translatedText: '', aiGenerated: false, reviewed: true },
+      { id: 'p3', rawText: '萧炎的脸色没有丝毫变化，他缓缓点头，心中却涌起一丝苦涩。曾几何时，眼前这个女子是他最骄傲的未婚妻。', translatedText: '', aiGenerated: false, reviewed: true },
     ],
   },
   {
     id: 'c1-003', novelId: '1', number: 3, title: 'Dược Lão xuất hiện',
     volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'review',
+    translationMd: 'Đêm khuya, Tiêu Viêm ngồi một mình trong phòng, tay mân mê chiếc nhẫn đen, lòng suy nghĩ vạn mối. Đột nhiên, chiếc nhẫn rung nhẹ, một giọng nói già nua vang lên trong đầu hắn.\n\n"Tiểu quỷ, đã mấy năm rồi không có ai quấy rầy lão phu, ngươi lại là người đầu tiên." Giọng nói đó mang vẻ lười biếng, nhưng ẩn chứa thứ khí thế uy nghiêm tự nhiên.\n\nTiêu Viêm trợn mắt, nhìn chằm chằm vào bóng hình mờ ảo trong không trung với vẻ khó tin. Đó là một lão nhân tóc bạc mặt trẻ, tuy chỉ là ảo ảnh, nhưng lại cho người ta cảm giác áp chế như núi non.',
     paragraphs: [
-      { id: 'p1', rawText: '深夜，萧炎独坐于房内，手中把玩着那枚黑色戒指，心中思绪万千。突然，戒指微微颤动，一道苍老的声音在他脑海中响起。', translatedText: 'Đêm khuya, Tiêu Viêm ngồi một mình trong phòng, tay mân mê chiếc nhẫn đen, lòng suy nghĩ vạn mối. Đột nhiên, chiếc nhẫn rung nhẹ, một giọng nói già nua vang lên trong đầu hắn.', aiGenerated: true, reviewed: false },
-      { id: 'p2', rawText: '"小娃娃，有些年没有人打扰老夫了，你倒是第一个。"那声音带着几分慵懒，却隐隐透着一股不怒自威的气势。', translatedText: '"Tiểu quỷ, đã mấy năm rồi không có ai quấy rầy lão phu, ngươi lại là người đầu tiên." Giọng nói đó mang vẻ lười biếng, nhưng ẩn chứa thứ khí thế uy nghiêm tự nhiên.', aiGenerated: true, reviewed: false },
-      { id: 'p3', rawText: '萧炎瞪大了眼睛，难以置信地望着空中那道虚幻的身影。那是一个鹤发童颜的老人，虽然只是虚影，却给人一种山岳般的压迫感。', translatedText: 'Tiêu Viêm trợn mắt, nhìn chằm chằm vào bóng hình mờ ảo trong không trung với vẻ khó tin. Đó là một lão nhân tóc bạc mặt trẻ, tuy chỉ là ảo ảnh, nhưng lại cho người ta cảm giác áp chế như núi non.', aiGenerated: true, reviewed: false },
+      { id: 'p1', rawText: '深夜，萧炎独坐于房内，手中把玩着那枚黑色戒指，心中思绪万千。突然，戒指微微颤动，一道苍老的声音在他脑海中响起。', translatedText: '', aiGenerated: true, reviewed: false },
+      { id: 'p2', rawText: '"小娃娃，有些年没有人打扰老夫了，你倒是第一个。"那声音带着几分慵懒，却隐隐透着一股不怒自威的气势。', translatedText: '', aiGenerated: true, reviewed: false },
+      { id: 'p3', rawText: '萧炎瞪大了眼睛，难以置信地望着空中那道虚幻的身影。那是一个鹤发童颜的老人，虽然只是虚影，却给人一种山岳般的压迫感。', translatedText: '', aiGenerated: true, reviewed: false },
     ],
   },
   {
     id: 'c1-004', novelId: '1', number: 4, title: 'Bái sư',
     volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'active',
+    translationMd: '',
     paragraphs: [
       {
         id: 'p1',
@@ -79,7 +83,7 @@ const MOCK_CHAPTERS_NOVEL_1: Chapter[] = [
   },
   {
     id: 'c1-005', novelId: '1', number: 5, title: 'Đấu khí tái hiện',
-    volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'todo',
+    volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'todo', translationMd: '',
     paragraphs: [
       { id: 'p1', rawText: '在药老的指导下，萧炎开始了艰苦的修炼。每日天不亮便起身，在后山密林中打坐吐纳，感受着天地间微弱的斗气流动。', translatedText: '', aiGenerated: false, reviewed: false },
       { id: 'p2', rawText: '三个月后的某一天，萧炎正在修炼之时，忽然感到丹田处一阵温热，一缕细如游丝的斗气，竟然重新在体内流转起来。', translatedText: '', aiGenerated: false, reviewed: false },
@@ -89,7 +93,7 @@ const MOCK_CHAPTERS_NOVEL_1: Chapter[] = [
   },
   {
     id: 'c1-006', novelId: '1', number: 6, title: 'Rời gia tộc',
-    volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'todo',
+    volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY', status: 'todo', translationMd: '',
     paragraphs: [
       { id: 'p1', rawText: '萧炎站在萧家大门前，身后是简单的行囊，面前是宽阔的官道。父亲萧战送他到此，沉默良久，最终只是拍了拍他的肩膀。', translatedText: '', aiGenerated: false, reviewed: false },
       { id: 'p2', rawText: '"炎儿，此去江湖，凶险万分。记住，无论何时，你永远是萧家的子弟。"萧战的声音有些沙哑，他转过身，不让儿子看见自己湿润的眼眶。', translatedText: '', aiGenerated: false, reviewed: false },
@@ -98,17 +102,14 @@ const MOCK_CHAPTERS_NOVEL_1: Chapter[] = [
   },
   ...(['Ma Thú sơn mạch', 'Tụ Khí Tán', 'Đan phương'] as const).map((title, i) => ({
     id: `c1-00${i + 7}`, novelId: '1', number: i + 7,
-    title,
-    volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY',
-    status: 'todo' as ChapterStatus,
-    paragraphs: [],
+    title, volumeTitle: 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY',
+    status: 'todo' as ChapterStatus, translationMd: '', paragraphs: [],
   })),
   ...Array.from({ length: 100 }, (_, i): Chapter => ({
     id: `c1-${String(i + 10).padStart(3, '0')}`, novelId: '1', number: i + 10,
     title: `Chương ${i + 10}`,
     volumeTitle: i < 50 ? 'QUYỂN 1 · PHẾ VẬT TRỖI DẬY' : 'QUYỂN 2 · CON ĐƯỜNG TRỖI DẬY',
-    status: 'todo' as ChapterStatus,
-    paragraphs: [],
+    status: 'todo' as ChapterStatus, translationMd: '', paragraphs: [],
   })),
 ];
 
@@ -122,6 +123,7 @@ interface ChapterState {
   getActiveChapter: (novelId: string) => Chapter | undefined;
   setActiveChapter: (chapterId: string) => void;
   setChapterStatus: (chapterId: string, novelId: string, status: ChapterStatus) => void;
+  updateTranslation: (novelId: string, chapterId: string, md: string) => void;
   updateParagraph: (novelId: string, chapterId: string, paragraphId: string, translatedText: string, reviewed: boolean) => void;
   appendStreamedText: (novelId: string, chapterId: string, paragraphId: string, token: string) => void;
   toggleVolume: (volumeTitle: string) => void;
@@ -160,6 +162,16 @@ export const useChapterStore = create<ChapterState>((set, get) => ({
         ...state.chapters,
         [novelId]: (state.chapters[novelId] ?? []).map((c) =>
           c.id === chapterId ? { ...c, status } : c,
+        ),
+      },
+    })),
+
+  updateTranslation: (novelId, chapterId, md) =>
+    set((state) => ({
+      chapters: {
+        ...state.chapters,
+        [novelId]: (state.chapters[novelId] ?? []).map((c) =>
+          c.id === chapterId ? { ...c, translationMd: md } : c,
         ),
       },
     })),
@@ -339,6 +351,7 @@ export const useChapterStore = create<ChapterState>((set, get) => ({
         title: `Chương ${maxNumber + 1}`,
         volumeTitle,
         status: 'todo',
+        translationMd: '',
         paragraphs: [],
       };
       const insertIdx = afterChapterId

@@ -22,6 +22,7 @@ export function TranslatorPage() {
     getActiveChapter,
     setActiveChapter,
     setChapterStatus,
+    updateTranslation,
     updateParagraph,
     appendStreamedText,
   } = useChapterStore();
@@ -163,10 +164,8 @@ export function TranslatorPage() {
               <SplitPane
                 paragraphs={activeChapter.paragraphs}
                 glossaryTerms={glossaryTerms}
-                isStreaming={streamStatus === 'streaming'}
-                onParagraphEdit={(paragraphId, text) => {
-                  updateParagraph(novelId, activeChapter.id, paragraphId, text, true);
-                }}
+                translationMd={activeChapter.translationMd}
+                onTranslationEdit={(md) => updateTranslation(novelId, activeChapter.id, md)}
               />
 
               {/* Action bar */}

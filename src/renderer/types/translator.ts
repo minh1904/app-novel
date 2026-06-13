@@ -39,6 +39,7 @@ export interface Chapter {
   volumeTitle?: string;
   status: ChapterStatus;
   paragraphs: TranslationParagraph[];
+  translationMd: string;
 }
 
 export type StreamingStatus = 'idle' | 'streaming' | 'paused' | 'done' | 'error';
