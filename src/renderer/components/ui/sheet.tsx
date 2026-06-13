@@ -62,7 +62,7 @@ function SheetContent({
             data-slot="sheet-close"
             render={<Button variant="ghost" className="absolute top-3 right-3" size="icon-sm" />}
           >
-            <Icon icon="solar:close-circle-linear" />
+            <Icon icon="mynaui:plus" className="rotate-45" />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
         )}

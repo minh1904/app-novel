@@ -1,7 +1,9 @@
 import { Icon } from '@iconify/react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NovelFormSheet } from '@/features/library/NovelFormSheet';
 import { AddNovelCard, NovelCard } from '@/features/library/NovelCard';
 import { TopBar } from '@/layouts/TopBar';
 import { useNovelStore } from '@/store/novel-store';
@@ -11,7 +13,9 @@ export const Route = createFileRoute('/')({
 });
 
 function LibraryPage() {
-  const { novels, search, setSearch } = useNovelStore();
+  const { novels, search, setSearch, createNovel } = useNovelStore();
+  const navigate = useNavigate();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const filtered = search.trim()
     ? novels.filter(
@@ -25,6 +29,7 @@ function LibraryPage() {
     <div className="flex h-full flex-col">
       <TopBar
         title="Kho truyện"
+        description={`${novels.length} truyện trong thư viện`}
         actions={
           <>
             <div className="relative">
@@ -40,8 +45,8 @@ function LibraryPage() {
                 className="w-32 pl-7 text-xs"
               />
             </div>
-            <Button size="sm">
-              <Icon icon="solar:add-circle-linear" />
+            <Button size="sm" onClick={() => setSheetOpen(true)}>
+              <Icon icon="mynaui:plus" width={16} />
               Thêm
             </Button>
           </>
@@ -61,15 +66,22 @@ function LibraryPage() {
                 key={novel.id}
                 novel={novel}
                 onClick={() => {
-                  /* navigate to translator */
+                  navigate({ to: '/novel/$novelId', params: { novelId: novel.id } });
                 }}
               />
             ))}
-            {/* eslint-disable-next-line @typescript-eslint/no-empty-function */}
-            <AddNovelCard onClick={() => {}} />
+            <AddNovelCard onClick={() => setSheetOpen(true)} />
           </div>
         )}
       </div>
+
+      <NovelFormSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSubmit={(data) => {
+          createNovel({ ...data, totalChapters: 0 });
+        }}
+      />
     </div>
   );
 }
