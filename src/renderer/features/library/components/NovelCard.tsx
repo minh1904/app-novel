@@ -48,9 +48,7 @@ export function NovelCard({ novel, onClick }: NovelCardProps) {
       onClick={onClick}
       className="group flex w-full flex-col overflow-hidden rounded-sm border border-border bg-card text-left transition-all hover:scale-[1.015] hover:shadow-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
     >
-      {/* Cover — fills full width, 4:3 */}
       <div className="relative aspect-4/3 w-full overflow-hidden bg-muted/50">
-        {/* Status badge overlay */}
         <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 rounded-full bg-background/75 px-2 py-[3px] backdrop-blur-sm">
           <span
             className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT_COLOR[novel.status])}
@@ -75,7 +73,6 @@ export function NovelCard({ novel, onClick }: NovelCardProps) {
         )}
       </div>
 
-      {/* Info section */}
       <div className="flex flex-col gap-2 px-3 py-2.5">
         <div>
           <p className="truncate font-semibold text-foreground text-sm leading-snug">
@@ -88,7 +85,6 @@ export function NovelCard({ novel, onClick }: NovelCardProps) {
           )}
         </div>
 
-        {/* Chapter progress */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between text-[10px] text-muted-foreground">
             <span>
@@ -120,7 +116,6 @@ export function AddNovelCard({ onClick }: AddNovelCardProps) {
       onClick={onClick}
       className="group flex w-full flex-col overflow-hidden rounded-sm border border-border border-dashed bg-card text-left transition-all hover:border-foreground/20 hover:shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
     >
-      {/* Thumbnail area — same 4:3 as novel cards */}
       <div className="relative flex aspect-4/3 w-full items-center justify-center bg-muted/20 transition-colors group-hover:bg-muted/35">
         <div
           className="flex items-center justify-center rounded-sm border border-border/60 border-dashed bg-card/50 transition-colors group-hover:border-foreground/15"
@@ -145,7 +140,6 @@ export function AddNovelCard({ onClick }: AddNovelCardProps) {
         </div>
       </div>
 
-      {/* Text section */}
       <div className="flex flex-col gap-0.5 px-3 py-2.5">
         <p className="font-semibold text-foreground text-sm leading-snug">Thêm truyện mới</p>
         <p className="text-[11px] text-muted-foreground">Bắt đầu hành trình dịch thuật</p>

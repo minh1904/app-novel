@@ -60,7 +60,7 @@ interface NovelFormSheetProps {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
       {children}
     </div>
   );
@@ -81,7 +81,6 @@ function DynamicListField({
     <Field label={label}>
       <div className="flex flex-col gap-1.5">
         {values.map((v, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: order is stable within session
           <div key={i} className="flex items-center gap-1.5">
             <Input
               value={v}
@@ -159,7 +158,7 @@ export function NovelFormSheet({ open, onOpenChange, initialData, onSubmit }: No
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
-        <SheetHeader className="border-b border-border px-5 py-4">
+        <SheetHeader className="border-border border-b px-5 py-4">
           <SheetTitle>{isEdit ? 'Chỉnh sửa truyện' : 'Thêm truyện mới'}</SheetTitle>
           <SheetDescription>
             {isEdit ? 'Cập nhật thông tin bộ truyện.' : 'Điền thông tin để bắt đầu dịch.'}
@@ -167,9 +166,8 @@ export function NovelFormSheet({ open, onOpenChange, initialData, onSubmit }: No
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
-          {/* Tên & tác giả */}
           <div className="flex flex-col gap-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="font-medium text-[11px] text-muted-foreground uppercase tracking-wider">
               Tên & Tác giả
             </p>
 
@@ -212,12 +210,10 @@ export function NovelFormSheet({ open, onOpenChange, initialData, onSubmit }: No
                 onChange={(e) => set('author', e.target.value)}
               />
             </Field>
-
           </div>
 
-          {/* Phân loại */}
           <div className="flex flex-col gap-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="font-medium text-[11px] text-muted-foreground uppercase tracking-wider">
               Phân loại
             </p>
 
@@ -232,9 +228,8 @@ export function NovelFormSheet({ open, onOpenChange, initialData, onSubmit }: No
             </Field>
           </div>
 
-          {/* Nguồn */}
           <div className="flex flex-col gap-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="font-medium text-[11px] text-muted-foreground uppercase tracking-wider">
               Nguồn raw
             </p>
 
@@ -245,10 +240,9 @@ export function NovelFormSheet({ open, onOpenChange, initialData, onSubmit }: No
               placeholder="Ví dụ: qidian.com/book/..."
             />
           </div>
-
         </div>
 
-        <SheetFooter className="flex-row gap-2 border-t border-border px-5 py-3">
+        <SheetFooter className="flex-row gap-2 border-border border-t px-5 py-3">
           <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
             Huỷ
           </Button>
