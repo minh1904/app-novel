@@ -410,7 +410,7 @@ packagerConfig: {
 ### 7.3 Auto Updates
 
 ```bash
-npm install electron-updater
+pnpm install electron-updater
 ```
 
 ```typescript
@@ -428,10 +428,10 @@ app.on('ready', () => {
 ### 7.4 Lệnh build
 
 ```bash
-npm run start    # Dev mode với HMR
-npm run package  # Build ra thư mục out/
-npm run make     # Build + tạo installers
-npm run publish  # Build + upload lên GitHub Releases
+pnpm run start    # Dev mode với HMR
+pnpm run package  # Build ra thư mục out/
+pnpm run make     # Build + tạo installers
+pnpm run publish  # Build + upload lên GitHub Releases
 ```
 
 ---
@@ -441,7 +441,7 @@ npm run publish  # Build + upload lên GitHub Releases
 ### 8.1 Unit tests (Vitest)
 
 ```bash
-npm install -D vitest
+pnpm install -D vitest
 ```
 
 ```typescript
@@ -455,7 +455,7 @@ export default defineConfig({
 ### 8.2 E2E tests (Playwright — thay thế Spectron đã deprecated)
 
 ```bash
-npm install -D @playwright/test playwright
+pnpm install -D @playwright/test playwright
 ```
 
 ```typescript

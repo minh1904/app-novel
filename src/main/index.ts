@@ -11,6 +11,10 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    minWidth: 800,
+    minHeight: 520,
+    frame: false,
+    backgroundColor: '#1e1e1e',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -42,9 +46,7 @@ const createWindow = () => {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 
-  if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools();
-  }
+  // DevTools: mở thủ công bằng Ctrl+Shift+I khi cần
 };
 
 // Chặn navigation ra ngoài app và cấm mở cửa sổ mới

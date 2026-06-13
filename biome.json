@@ -19,6 +19,16 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "nursery": {
+        "useSortedClasses": {
+          "level": "warn",
+          "fix": "safe",
+          "options": {
+            "attributes": ["className", "class"],
+            "functions": ["cn", "cva", "clsx", "twMerge", "cx"]
+          }
+        }
+      },
       "a11y": {
         "useFocusableInteractive": "off",
         "useSemanticElements": "off",
@@ -49,6 +59,16 @@
     }
   },
   "css": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineWidth": 100,
+      "quoteStyle": "double"
+    },
+    "linter": {
+      "enabled": true
+    },
     "parser": {
       "tailwindDirectives": true
     }

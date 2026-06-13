@@ -1,5 +1,5 @@
 import { Popover } from '@base-ui/react/popover';
-import { CheckIcon, ChevronDown, XCircle, XIcon } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import type * as React from 'react';
 import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
@@ -101,7 +101,7 @@ export function MultiSelect({
                       }}
                       className="ml-0.5 rounded-sm hover:bg-foreground/10"
                     >
-                      <XCircle className="size-3" />
+                      <Icon icon="solar:close-circle-linear" className="size-3" />
                     </span>
                   </Badge>
                 );
@@ -148,12 +148,13 @@ export function MultiSelect({
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="Clear all"
               >
-                <XIcon className="size-3.5" />
+                <Icon icon="solar:close-circle-linear" className="size-3.5" />
               </span>
               <div className="h-4 w-px bg-border" />
             </>
           )}
-          <ChevronDown
+          <Icon
+            icon="solar:alt-arrow-down-linear"
             className={cn(
               'size-4 text-muted-foreground transition-transform duration-200',
               open && 'rotate-180',
@@ -164,9 +165,9 @@ export function MultiSelect({
 
       <Popover.Portal>
         <Popover.Positioner sideOffset={4} align="start" className="isolate z-50">
-          <Popover.Popup className="w-(--anchor-width) min-w-[200px] flex flex-col rounded-md border border-border bg-popover shadow-md outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+          <Popover.Popup className="data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 flex w-(--anchor-width) min-w-[200px] flex-col rounded-md border border-border bg-popover shadow-md outline-none data-closed:animate-out data-open:animate-in">
             {searchable && (
-              <div className="shrink-0 border-b border-border px-3 py-2">
+              <div className="shrink-0 border-border border-b px-3 py-2">
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -189,7 +190,7 @@ export function MultiSelect({
               <div className="my-1 h-px bg-border" />
 
               {filtered.length === 0 && (
-                <p className="py-4 text-center text-sm text-muted-foreground">No results found.</p>
+                <p className="py-4 text-center text-muted-foreground text-sm">No results found.</p>
               )}
 
               {filtered.map((opt) => {
@@ -214,7 +215,7 @@ export function MultiSelect({
               })}
             </div>
 
-            <div className="border-t border-border">
+            <div className="border-border border-t">
               <div className="flex items-center text-sm">
                 {value.length > 0 && (
                   <>
@@ -252,7 +253,7 @@ function CheckboxBox({ checked }: { checked: boolean }) {
         checked ? 'bg-primary text-primary-foreground' : 'opacity-40',
       )}
     >
-      {checked && <CheckIcon className="size-3" />}
+      {checked && <Icon icon="solar:check-circle-linear" className="size-3" />}
     </div>
   );
 }

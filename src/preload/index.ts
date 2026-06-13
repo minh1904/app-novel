@@ -22,4 +22,10 @@ export function typedOn<K extends keyof IpcEventMap>(
 
 contextBridge.exposeInMainWorld('electronAPI', {
   ping: () => typedInvoke('ping'),
+  window: {
+    minimize: () => typedInvoke('window:minimize'),
+    maximize: () => typedInvoke('window:maximize'),
+    close: () => typedInvoke('window:close'),
+    isMaximized: () => typedInvoke('window:is-maximized'),
+  },
 });

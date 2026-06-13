@@ -1,15 +1,14 @@
-import { Loader2Icon } from 'lucide-react';
-import type * as React from 'react';
+import { Icon } from '@iconify/react';
 
 import { cn } from '@/lib/cn';
 
-function Spinner({ className, ...props }: React.ComponentProps<'svg'>) {
+function Spinner({ className }: { className?: string }) {
   return (
-    <Loader2Icon
+    <Icon
+      icon="solar:restart-linear"
       role="status"
       aria-label="Loading"
       className={cn('size-4 animate-spin', className)}
-      {...props}
     />
   );
 }

@@ -41,7 +41,7 @@
   --ring: oklch(0.708 0 0);
 
   /* Sidebar */
-  --sidebar: #f4f2f0;
+  --sidebar: oklch(0.963 0.003 75);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -57,8 +57,18 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
 
-  /* Geometry */
-  --radius: 0.6rem;
+  /* Geometry — Obsidian-style tight radius */
+  --radius: 0.25rem;
+
+  /* App shell dimensions */
+  --titlebar-h: 36px;
+  --actbar-w: 44px;
+  --sidebar-w: 260px;
+
+  /* Shell surface colors (light mode placeholders) */
+  --titlebar: oklch(0.92 0 0);
+  --actbar: oklch(0.963 0.003 75);
+  --actbar-foreground: oklch(0.145 0 0);
 }
 
 @theme inline {
@@ -81,6 +91,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-titlebar: var(--titlebar);
+  --color-actbar: var(--actbar);
+  --color-actbar-foreground: var(--actbar-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -110,49 +123,61 @@
 }
 
 .dark {
-  /* Base */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  /*
+   * oklch L = cbrt(linear_sRGB), công thức CSS Color Level 4 chính xác:
+   *   #1e1e1e → oklch(0.236 0 0)  content/editor
+   *   #262626 → oklch(0.269 0 0)  actbar + sidebar
+   *   #282828 → oklch(0.277 0 0)  floating cards
+   *   #2e2e2e → oklch(0.310 0 0)  hover/muted fills
+   *   #363636 → oklch(0.333 0 0)  titlebar + selected item
+   *   #3c3c3c → oklch(0.356 0 0)  borders
+   *   #999999 → oklch(0.636 0 0)  muted text
+   *   #dadada → oklch(0.873 0 0)  body text
+   */
 
-  /* Surfaces */
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --background: oklch(0.236 0 0);
+  --foreground: oklch(0.873 0 0);
 
-  /* Interactive */
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
+  --card: oklch(0.277 0 0);
+  --card-foreground: oklch(0.873 0 0);
+  --popover: oklch(0.277 0 0);
+  --popover-foreground: oklch(0.873 0 0);
 
-  /* Borders */
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --muted: oklch(0.31 0 0);
+  --muted-foreground: oklch(0.636 0 0);
 
-  /* Sidebar */
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.922 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --primary: oklch(0.873 0 0);
+  --primary-foreground: oklch(0.236 0 0);
+  --secondary: oklch(0.277 0 0);
+  --secondary-foreground: oklch(0.873 0 0);
+  --accent: oklch(0.31 0 0);
+  --accent-foreground: oklch(0.873 0 0);
+  --destructive: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(1 0 0);
 
-  /* Charts */
-  --chart-1: oklch(0.269 0 0);
-  --chart-2: oklch(0.371 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.556 0 0);
-  --chart-5: oklch(0.708 0 0);
+  --border: oklch(0.356 0 0);
+  --input: oklch(0.356 0 0);
+  --ring: oklch(0.5 0 0);
+
+  --titlebar: oklch(0.333 0 0);
+
+  --actbar: oklch(0.269 0 0);
+  --actbar-foreground: oklch(0.873 0 0);
+
+  --sidebar: oklch(0.269 0 0);
+  --sidebar-foreground: oklch(0.873 0 0);
+  --sidebar-primary: oklch(0.873 0 0);
+  --sidebar-primary-foreground: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.333 0 0);
+  --sidebar-accent-foreground: oklch(0.873 0 0);
+  --sidebar-border: oklch(0.31 0 0);
+  --sidebar-ring: oklch(0.5 0 0);
+
+  --chart-1: oklch(0.873 0 0);
+  --chart-2: oklch(0.72 0 0);
+  --chart-3: oklch(0.55 0 0);
+  --chart-4: oklch(0.38 0 0);
+  --chart-5: oklch(0.284 0 0);
 }
 
 @layer base {
@@ -165,4 +190,17 @@
   html {
     @apply font-sans;
   }
+}
+
+@utility app-drag {
+  -webkit-app-region: drag;
+}
+
+@utility app-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }

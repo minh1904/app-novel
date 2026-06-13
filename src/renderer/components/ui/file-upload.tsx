@@ -224,7 +224,7 @@ function FileUploadDropzone({ className, children, ...props }: React.ComponentPr
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       className={cn(
-        'relative flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-background transition-colors',
+        'relative flex flex-col items-center justify-center rounded-md border border-border border-dashed bg-background transition-colors',
         'data-[dragging]:border-primary data-[dragging]:bg-primary/5',
         className,
       )}
@@ -250,7 +250,7 @@ function FileUploadTrigger({
         type="button"
         onClick={openFileDialog}
         className={cn(
-          'inline-flex cursor-pointer items-center gap-2 rounded-md text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
+          'inline-flex cursor-pointer items-center gap-2 rounded-md font-medium text-muted-foreground text-sm outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
           className,
         )}
         {...props}
@@ -312,7 +312,7 @@ function FileUploadErrors({ className, ...props }: React.ComponentProps<'ul'>) {
   return (
     <ul
       data-slot="file-upload-errors"
-      className={cn('space-y-1 text-xs text-destructive', className)}
+      className={cn('space-y-1 text-destructive text-xs', className)}
       {...props}
     >
       {errors.map((err, i) => (
