@@ -317,6 +317,21 @@ export const ChapterSidebar = forwardRef<ChapterSidebarRef, ChapterSidebarProps>
           </DndContext>
         </div>
 
+        {/* Pinned context link */}
+        <div className="shrink-0 border-border border-t px-3 py-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate({ to: '/novel/$novelId/context', params: { novelId } });
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground text-xs transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Icon icon="solar:brain-linear" width={13} />
+            <span className="font-medium">Ngữ cảnh truyện</span>
+          </button>
+        </div>
+
         {/* Delete confirmation dialog */}
         <Dialog
           open={pendingDeleteIds !== null}

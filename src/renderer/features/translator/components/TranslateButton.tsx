@@ -59,7 +59,7 @@ export function TranslateButton({
           onClick={onStop}
           className={cn(
             FIXED_W,
-            'flex items-center justify-center gap-2 rounded-md border border-border bg-muted px-4 py-2 font-medium text-sm text-foreground transition-colors hover:bg-muted/80 active:scale-[0.98]',
+            'flex items-center justify-center gap-2 rounded-md border border-red-500 bg-transparent px-4 py-2 font-medium text-red-500 text-sm transition-colors hover:bg-red-500/10 active:scale-[0.98]',
           )}
         >
           <Icon icon="solar:stop-linear" width={14} />

@@ -5,6 +5,7 @@ export interface GlossaryTerm {
   rawText: string;
   translatedText: string;
   note?: string;
+  aiEnabled?: boolean;
 }
 
 export interface Character {
@@ -21,6 +22,24 @@ export interface AddressForm {
   toCharacterId: string;
   address: string;
   fromChapter: number;
+}
+
+export type AddressKind = 'gia tộc' | 'sư môn' | 'tình cảm' | 'bằng hữu' | 'địch' | 'thế lực';
+
+export interface AddressPhase {
+  from: number;
+  rel: string;
+  note?: string;
+  aToB: { call: string; self: string };
+  bToA: { call: string; self: string };
+}
+
+export interface AddressFormFull {
+  id: string;
+  a: string;
+  b: string;
+  kind: AddressKind;
+  phases: AddressPhase[];
 }
 
 export interface TranslationParagraph {

@@ -9,7 +9,7 @@ import {
   placeholder as cmPlaceholder,
 } from '@codemirror/view';
 import { EditorState, Compartment, RangeSetBuilder } from '@codemirror/state';
-import { defaultKeymap, historyKeymap, history } from '@codemirror/commands';
+import { defaultKeymap, historyKeymap, history, indentWithTab } from '@codemirror/commands';
 import { useEffect, useRef } from 'react';
 
 interface CmEditorProps {
@@ -195,7 +195,7 @@ export function CmEditor({
 
     const extensions = [
       history(),
-      keymap.of([...defaultKeymap, ...historyKeymap]),
+      keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
       markdown(),
       markdownDecorations,
       baseTheme,

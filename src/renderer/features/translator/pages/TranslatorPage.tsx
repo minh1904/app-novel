@@ -165,6 +165,7 @@ export function TranslatorPage() {
                 paragraphs={activeChapter.paragraphs}
                 glossaryTerms={glossaryTerms}
                 translationMd={activeChapter.translationMd}
+                novelId={novelId}
                 onTranslationEdit={(md) => updateTranslation(novelId, activeChapter.id, md)}
               />
 

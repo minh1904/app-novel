@@ -152,7 +152,7 @@ export function ContextPanel({ open, novelId, chapterNumber, chapterRawContent, 
           <div className="shrink-0 border-border border-t p-3">
             <button
               type="button"
-              onClick={() => navigate({ to: '/novel/$novelId', params: { novelId } })}
+              onClick={() => navigate({ to: '/novel/$novelId/context', params: { novelId } })}
               className="flex w-full items-center justify-center gap-1.5 rounded-md bg-muted/60 px-3 py-2 text-foreground/70 text-xs font-medium transition-colors hover:bg-muted hover:text-foreground"
             >
               Quản lý ngữ cảnh

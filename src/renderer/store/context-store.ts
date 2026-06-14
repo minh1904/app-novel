@@ -1,10 +1,14 @@
 import { create } from 'zustand';
-import type { AddressForm, Character, GlossaryTerm } from '@/types/translator';
+import { nanoid } from 'nanoid';
+import type { AddressForm, AddressFormFull, Character, GlossaryTerm } from '@/types/translator';
 
 interface NovelContext {
   glossary: GlossaryTerm[];
   characters: Character[];
   addressForms: AddressForm[];
+  addressFormsFull: AddressFormFull[];
+  world: string;
+  style: string;
 }
 
 const MOCK_CONTEXT: Record<string, NovelContext> = {
@@ -35,21 +39,88 @@ const MOCK_CONTEXT: Record<string, NovelContext> = {
       { id: 'af2', fromCharacterId: 'char2', toCharacterId: 'char1', address: 'Đệ tử', fromChapter: 3 },
       { id: 'af3', fromCharacterId: 'char1', toCharacterId: 'char4', address: 'Phụ thân', fromChapter: 1 },
     ],
+    addressFormsFull: [
+      {
+        id: 'aff1',
+        a: 'char1',
+        b: 'char2',
+        kind: 'sư môn',
+        phases: [
+          {
+            from: 3,
+            rel: 'Đệ tử – Sư phụ',
+            aToB: { call: 'Sư phụ', self: 'đệ tử' },
+            bToA: { call: 'Tiêu Viêm', self: 'lão phu' },
+          },
+        ],
+      },
+      {
+        id: 'aff2',
+        a: 'char1',
+        b: 'char3',
+        kind: 'tình cảm',
+        phases: [
+          {
+            from: 1,
+            rel: 'Hôn ước',
+            aToB: { call: 'Nạp Lan', self: 'ta' },
+            bToA: { call: 'Tiêu Viêm', self: 'ta' },
+          },
+          {
+            from: 8,
+            rel: 'Cựu hôn ước (đã hủy)',
+            note: 'Nạp Lan hủy hôn từ ch.8',
+            aToB: { call: 'Nạp Lan tiểu thư', self: 'ta' },
+            bToA: { call: 'Tiêu Viêm', self: 'ta' },
+          },
+        ],
+      },
+    ],
+    world: 'Đấu Khí đại lục — hệ thống cấp bậc: Đấu Giả → Đấu Sư → Đại Đấu Sư → Đấu Linh → Đấu Vương → Đấu Hoàng → Đấu Tông → Đấu Tôn → Đấu Thánh → Đấu Đế',
+    style: 'Xưng hô: hắn/nàng (không dùng anh/em). Văn phong: cổ điển, trang trọng. Giữ tên Hán Việt nguyên bản.',
   },
 };
 
 interface ContextState {
   contexts: Record<string, NovelContext>;
+
+  // Read
   getContext: (novelId: string) => NovelContext;
   getChapterTerms: (novelId: string, rawContent: string) => GlossaryTerm[];
   getActiveAddressForms: (novelId: string, chapterNumber: number) => AddressForm[];
+
+  // Glossary CRUD
+  addTerm: (novelId: string, term: Omit<GlossaryTerm, 'id'>) => void;
+  updateTerm: (novelId: string, id: string, patch: Partial<Omit<GlossaryTerm, 'id'>>) => void;
+  deleteTerm: (novelId: string, id: string) => void;
+
+  // Character CRUD
+  addCharacter: (novelId: string, char: Omit<Character, 'id'>) => void;
+  updateCharacter: (novelId: string, id: string, patch: Partial<Omit<Character, 'id'>>) => void;
+  deleteCharacter: (novelId: string, id: string) => void;
+
+  // AddressFormFull CRUD
+  addForm: (novelId: string, form: Omit<AddressFormFull, 'id'>) => void;
+  updateForm: (novelId: string, id: string, patch: Partial<Omit<AddressFormFull, 'id'>>) => void;
+  deleteForm: (novelId: string, id: string) => void;
+
+  // World & Style
+  updateWorld: (novelId: string, world: string) => void;
+  updateStyle: (novelId: string, style: string) => void;
 }
 
-export const useContextStore = create<ContextState>((_, get) => ({
+function ensureContext(contexts: Record<string, NovelContext>, novelId: string): NovelContext {
+  if (!contexts[novelId]) {
+    contexts[novelId] = { glossary: [], characters: [], addressForms: [], addressFormsFull: [], world: '', style: '' };
+  }
+  return contexts[novelId];
+}
+
+export const useContextStore = create<ContextState>((set, get) => ({
   contexts: MOCK_CONTEXT,
 
   getContext: (novelId) =>
-    get().contexts[novelId] ?? { glossary: [], characters: [], addressForms: [] },
+    get().contexts[novelId] ?? { glossary: [], characters: [], addressForms: [], addressFormsFull: [], world: '', style: '' },
 
   getChapterTerms: (novelId, rawContent) => {
     const ctx = get().getContext(novelId);
@@ -70,4 +141,103 @@ export const useContextStore = create<ContextState>((_, get) => ({
     }
     return Array.from(grouped.values());
   },
+
+  addTerm: (novelId, term) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.glossary = [...ctx.glossary, { id: nanoid(), ...term }];
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  updateTerm: (novelId, id, patch) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.glossary = ctx.glossary.map((t) => (t.id === id ? { ...t, ...patch } : t));
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  deleteTerm: (novelId, id) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.glossary = ctx.glossary.filter((t) => t.id !== id);
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  addCharacter: (novelId, char) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.characters = [...ctx.characters, { id: nanoid(), ...char }];
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  updateCharacter: (novelId, id, patch) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.characters = ctx.characters.map((c) => (c.id === id ? { ...c, ...patch } : c));
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  deleteCharacter: (novelId, id) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.characters = ctx.characters.filter((c) => c.id !== id);
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  addForm: (novelId, form) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.addressFormsFull = [...ctx.addressFormsFull, { id: nanoid(), ...form }];
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  updateForm: (novelId, id, patch) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.addressFormsFull = ctx.addressFormsFull.map((f) => (f.id === id ? { ...f, ...patch } : f));
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  deleteForm: (novelId, id) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.addressFormsFull = ctx.addressFormsFull.filter((f) => f.id !== id);
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  updateWorld: (novelId, world) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.world = world;
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
+
+  updateStyle: (novelId, style) =>
+    set((s) => {
+      const contexts = { ...s.contexts };
+      const ctx = { ...ensureContext(contexts, novelId) };
+      ctx.style = style;
+      contexts[novelId] = ctx;
+      return { contexts };
+    }),
 }));
