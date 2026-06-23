@@ -1,12 +1,25 @@
-# Tài Liệu app-novel
+# Tài Liệu NovelFlow
 
-**app-novel** là desktop app xây dựng trên Electron + React, chạy hoàn toàn local.
+**NovelFlow** là bàn làm việc dịch thuật chuyên dụng cho dịch giả fan tiểu thuyết người Việt.  
+Desktop app chạy hoàn toàn local. AI là integration, không phải sản phẩm.
 
 **Stack**: Electron + Electron Forge + Vite + React 19 + Tailwind CSS v4 + TypeScript
 
 ---
 
 ## Lộ Trình Đọc
+
+### Product (đọc đây trước nếu bạn muốn hiểu WHY)
+
+1. [`01-product/01-vision.md`](01-product/01-vision.md) — Vision, positioning, triết lý thiết kế
+2. [`01-product/02-user-research.md`](01-product/02-user-research.md) — Research findings (verified), pain points
+3. [`01-product/03-personas.md`](01-product/03-personas.md) — 3 personas: Solo, Team Lead, Editor
+4. [`01-product/04-user-journeys.md`](01-product/04-user-journeys.md) — 5 journeys: onboarding → daily loop → context → export → team
+5. [`01-product/05-feature-spec.md`](01-product/05-feature-spec.md) — Feature spec P0/P1/P2/P3 với acceptance criteria
+6. [`01-product/06-ux-principles.md`](01-product/06-ux-principles.md) — 8 nguyên tắc UX
+7. [`01-product/07-information-architecture.md`](01-product/07-information-architecture.md) — IA, screens, data model, AI injection flow
+
+---
 
 ### Bắt Đầu
 
