@@ -1,0 +1,84 @@
+/*
+ * Solar Icons v2 documentation color theme snapshot, 2026-09-23.
+ * Source: https://solar-icons.vercel.app/docs/v2
+ * Stylesheet inspected: /_next/static/immutable/chunks/2aqnr_rriz4bt.css
+ * The site mixes Fumadocs --color-fd-* surfaces with its own HSL page background.
+ * Surface roles below were checked against the user-provided browser screenshots.
+ * The --background, --primary, etc. aliases adapt those values to the
+ * existing novel component preview; they are not copied site token names.
+ */
+html[data-theme="light"] {
+  color-scheme: light;
+  --solar-fd-background: #f5f5f5;
+  --solar-page-background: hsl(219 36% 99%);
+  --solar-chrome-background: #f6f6f7;
+  --solar-control-background: #eeefef;
+  --solar-active-background: #dadada;
+  --solar-fd-foreground: #0a0a0a;
+  --solar-fd-muted: #f5f5f5;
+  --solar-fd-muted-foreground: #737373;
+  --solar-fd-popover: #fafafa;
+  --solar-fd-popover-foreground: #272727;
+  --solar-fd-card: #f1f1f1;
+  --solar-fd-card-foreground: #0a0a0a;
+  --solar-fd-border: #cccccc80;
+  --solar-fd-primary: #171717;
+  --solar-fd-primary-foreground: #fafafa;
+  --solar-fd-secondary: #ededed;
+  --solar-fd-secondary-foreground: #171717;
+  --solar-fd-accent: #d1d1d180;
+  --solar-fd-accent-foreground: #171717;
+  --solar-fd-ring: #a3a3a3;
+  --solar-fd-info: #3080ff;
+  --solar-fd-warning: #f99c00;
+  --solar-fd-error: #fb2c36;
+  --solar-fd-success: #00c758;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --solar-fd-background: #121212;
+  --solar-page-background: hsl(219 54% 0%);
+  --solar-chrome-background: #0e0e0e;
+  --solar-control-background: #232323;
+  --solar-active-background: #2f2f2f;
+  --solar-fd-foreground: #ebebeb;
+  --solar-fd-muted: #212121;
+  --solar-fd-muted-foreground: #b3b3b3cc;
+  --solar-fd-popover: #1e1e1e;
+  --solar-fd-popover-foreground: #dedede;
+  --solar-fd-card: #191919;
+  --solar-fd-card-foreground: #fafafa;
+  --solar-fd-border: #6663;
+  --solar-fd-primary: #fafafa;
+  --solar-fd-primary-foreground: #171717;
+  --solar-fd-secondary: #212121;
+  --solar-fd-secondary-foreground: #ebebeb;
+  --solar-fd-accent: #6868684d;
+  --solar-fd-accent-foreground: #e6e6e6;
+  --solar-fd-ring: #8c8c8c;
+  --solar-fd-info: #3080ff;
+  --solar-fd-warning: #f99c00;
+  --solar-fd-error: #fb2c36;
+  --solar-fd-success: #00c758;
+}
+html[data-theme="light"], html[data-theme="dark"] {
+  --background: var(--solar-page-background);
+  --foreground: var(--solar-fd-foreground);
+  --card: var(--solar-fd-card);
+  --card-foreground: var(--solar-fd-card-foreground);
+  --popover: var(--solar-fd-popover);
+  --popover-foreground: var(--solar-fd-popover-foreground);
+  --primary: var(--solar-fd-primary);
+  --primary-foreground: var(--solar-fd-primary-foreground);
+  --secondary: var(--solar-fd-secondary);
+  --secondary-foreground: var(--solar-fd-secondary-foreground);
+  --muted: var(--solar-fd-muted);
+  --muted-foreground: var(--solar-fd-muted-foreground);
+  --accent: var(--solar-fd-accent);
+  --accent-foreground: var(--solar-fd-accent-foreground);
+  --attention: var(--solar-fd-warning);
+  --destructive: var(--solar-fd-error);
+  --ring: var(--solar-fd-ring);
+  --border: var(--solar-fd-foreground);
+  --input: var(--solar-fd-foreground);
+}
