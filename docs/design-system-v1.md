@@ -13,7 +13,7 @@ Cập nhật 2026-09-23. Người dùng đã chốt **palette light/dark theo gi
 
 | Phần | Quyết định |
 | --- | --- |
-| Font | **Google Sans Flex**, đóng gói local cho chrome, control và editor; fallback sans-serif khi thiếu glyph. [Font trong preview](assets/GoogleSansFlex.ttf). |
+| Font | **Google Sans Flex**, đóng gói local cho chrome, control và editor; fallback sans-serif khi thiếu glyph. [Font trong preview](../src/renderer/src/assets/GoogleSansFlex.ttf). |
 | Theme | **Light và dark**; không dùng màu tím từ lớp token HSL của website Solar cho action trong bản này. Theme mở mặc định của app vẫn chưa chốt. |
 | Nền nội dung | Light `hsl(219 36% 99%)` (xấp xỉ `#fcfcfd`); dark `hsl(219 54% 0%)` (`#000000`). Đây là `--background` HSL của website Solar. |
 | Sidebar và card | Light `#f1f1f1`; dark `#191919`, theo lớp `--color-fd-card` của website và ảnh chụp. Editor chính là mặt phẳng làm việc, không lồng mọi khối trong card. |
@@ -44,3 +44,7 @@ Website [Solar Icons docs v2](https://solar-icons.vercel.app/docs/v2) phối **h
 - Logo/wordmark và tagline chính thức; theme mặc định theo Windows hay ghi nhớ lựa chọn; cách đóng gói font và icon.
 - Type scale, chiều cao field/tab và mật độ editor dài; kiểm tra tiếng Việt dài ở cửa sổ Windows hẹp/rộng.
 - Implementation của Field, Tabs, SegmentRow, ProseEditor, AI suggestion/diff và trạng thái bàn phím/IME.
+
+## Triển khai trong scaffold
+
+Token runtime ở [tokens.css](../src/renderer/src/styles/tokens.css) dùng Tailwind CSS v4 với @theme inline và semantic variable theo light/dark; Button, Tabs và Slider ở [components](../src/renderer/src/components) dùng Base UI cho hành vi tương tác, Tailwind cho giao diện; TextField đơn giản dùng native. Font local nằm ở [assets](../src/renderer/src/assets/GoogleSansFlex.ttf). App mở vào màn xem component có công tắc light/dark; đây là bề mặt đối chiếu, chưa phải editor sản phẩm. Mặc định theo theme Windows trong scaffold chỉ là lựa chọn tạm cho preview, chưa khóa hành vi setting P0.

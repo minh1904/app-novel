@@ -1,0 +1,97 @@
+@import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@font-face {
+  font-family: "Google Sans Flex";
+  src: url("../assets/GoogleSansFlex.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root,
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --font-ui: "Google Sans Flex", "Segoe UI", sans-serif;
+  --font-code: "Cascadia Code", Consolas, monospace;
+
+  --surface-canvas: #000000;
+  --surface-sidebar: #191919;
+  --surface-chrome: #0e0e0e;
+  --surface-control: #232323;
+  --surface-selected: #2f2f2f;
+  --surface-popover: #1e1e1e;
+
+  --text-primary: #ebebeb;
+  --text-muted: #b3b3b3;
+  --border-subtle: #66666633;
+  --border-strong: #66666666;
+  --action-primary: #fafafa;
+  --action-on-primary: #171717;
+  --focus-ring: #8c8c8c;
+
+  --status-info: #3080ff;
+  --status-warning: #f99c00;
+  --status-error: #fb2c36;
+  --status-success: #00c758;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --surface-canvas: hsl(219 36% 99%);
+  --surface-sidebar: #f1f1f1;
+  --surface-chrome: #f6f6f7;
+  --surface-control: #eeefef;
+  --surface-selected: #dadada;
+  --surface-popover: #fafafa;
+
+  --text-primary: #0a0a0a;
+  --text-muted: #737373;
+  --border-subtle: #cccccc80;
+  --border-strong: #b8b8b8;
+  --action-primary: #171717;
+  --action-on-primary: #fafafa;
+  --focus-ring: #a3a3a3;
+}
+
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+
+  --color-canvas: var(--surface-canvas);
+  --color-sidebar: var(--surface-sidebar);
+  --color-chrome: var(--surface-chrome);
+  --color-control: var(--surface-control);
+  --color-selected: var(--surface-selected);
+  --color-popover: var(--surface-popover);
+  --color-ink: var(--text-primary);
+  --color-ink-muted: var(--text-muted);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-primary: var(--action-primary);
+  --color-primary-foreground: var(--action-on-primary);
+  --color-focus: var(--focus-ring);
+  --color-info: var(--status-info);
+  --color-warning: var(--status-warning);
+  --color-error: var(--status-error);
+  --color-success: var(--status-success);
+
+  --radius-control: 10px;
+  --radius-tab: 11px;
+  --radius-panel: 14px;
+}
+
+@layer base {
+  body {
+    @apply bg-canvas font-sans text-[13px] text-ink antialiased;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

@@ -1,13 +1,13 @@
 # Đề xuất công nghệ cho bản Windows offline đầu tiên
 
-Cập nhật: 2026-09-23. Đây là **đề xuất kỹ thuật**, chưa phải stack được người dùng phê duyệt. Ràng buộc đã chốt: app Windows trước, biên tập cốt lõi chạy offline, app lưu dữ liệu nội bộ và cho xuất/backup. AI thuộc giai đoạn sau bản đầu.
+Cập nhật: 2026-09-23. Người dùng đã yêu cầu scaffold Electron; Electron + React + TypeScript + Tailwind CSS v4 + Base UI hiện là nền thử nghiệm trong repo. Các lớp editor, lưu trữ và đóng gói bên dưới vẫn là **đề xuất kỹ thuật**, chưa được khóa cho P0. Ràng buộc đã chốt: app Windows trước, biên tập cốt lõi chạy offline, app lưu dữ liệu nội bộ và cho xuất/backup. AI thuộc giai đoạn sau bản đầu.
 
 ## Stack đề xuất
 
 | Lớp | Công nghệ | Lý do |
 | --- | --- | --- |
 | Desktop shell | **Electron** | Một Chromium đóng gói cùng app giúp trải nghiệm editor và hành vi nhập liệu nhất quán trên các bản Windows; có API hệ điều hành cho file, menu, cửa sổ. Tradeoff: bộ cài và RAM lớn hơn Tauri. |
-| UI | **React + TypeScript** | Xây hai mode trên một mô hình tài liệu, tái dùng component và giữ type cho dữ liệu chương/segment. |
+| UI | **React + TypeScript + Tailwind CSS v4 + Base UI** | Xây hai mode trên một mô hình tài liệu; Tailwind giữ token/style, Base UI cung cấp hành vi cho component tương tác dùng chung, TypeScript giữ type cho dữ liệu chương/segment. |
 | Build | **electron-vite** | Tách main, preload, renderer và có quy trình phát triển với Vite. |
 | Editor toàn văn | **CodeMirror 6 + Markdown extension** | Văn bản dài, transaction/change set, selection và trang trí giao diện phù hợp prototype Markdown/Live Preview. Live Preview kiểu Obsidian là phần phải tự xây, không phải tính năng có sẵn chỉ nhờ cài CodeMirror. |
 | Editor từng câu | **React row UI + một editor hoạt động cho hàng đang sửa**; cân nhắc **TanStack Virtual** cho danh sách rất dài | Tránh tạo hàng nghìn editor cùng lúc; giao diện segment Smartcat-inspired dùng cùng nội dung chương. Virtualization cần thử kỹ với chiều cao hàng thay đổi và ô đang focus. |
