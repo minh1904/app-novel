@@ -13,16 +13,17 @@ export type ButtonVariant =
 export type ButtonSize = 'xxs' | 'xs' | 'sm' | 'default' | 'lg' | 'xl' | 'icon'
 
 const base =
-  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 rounded-control border border-transparent font-medium whitespace-nowrap select-none outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus/40 data-disabled:pointer-events-none data-disabled:opacity-50'
+  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 rounded-control border font-medium whitespace-nowrap select-none outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus/40 data-disabled:pointer-events-none data-disabled:opacity-50'
 
 const variants: Record<ButtonVariant, string> = {
-  default: 'bg-primary text-primary-foreground hover:brightness-90',
+  default: 'border-transparent bg-primary text-primary-foreground hover:brightness-90',
   outline: 'border-line-strong bg-transparent text-ink hover:bg-selected',
-  secondary: 'bg-control text-ink hover:bg-selected',
-  ghost: 'bg-transparent text-ink hover:bg-selected',
-  'ghost-muted': 'bg-transparent text-ink-muted hover:bg-selected hover:text-ink',
+  secondary: 'border-transparent bg-control text-ink hover:bg-selected',
+  ghost: 'border-transparent bg-transparent text-ink hover:bg-selected',
+  'ghost-muted':
+    'border-transparent bg-transparent text-ink-muted hover:bg-selected hover:text-ink',
   destructive: 'border-error/35 bg-error/15 text-error hover:bg-error/25',
-  link: 'bg-transparent px-0 text-ink underline underline-offset-3'
+  link: 'border-transparent bg-transparent px-0 text-ink underline underline-offset-3'
 }
 
 const sizes: Record<ButtonSize, string> = {
