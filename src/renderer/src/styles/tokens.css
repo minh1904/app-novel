@@ -1,19 +1,19 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @font-face {
-  font-family: "Google Sans Flex";
-  src: url("../assets/GoogleSansFlex.ttf") format("truetype");
+  font-family: 'Google Sans Flex';
+  src: url('../assets/GoogleSansFlex.ttf') format('truetype');
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
 }
 
 :root,
-html[data-theme="dark"] {
+html[data-theme='dark'] {
   color-scheme: dark;
-  --font-ui: "Google Sans Flex", "Segoe UI", sans-serif;
-  --font-code: "Cascadia Code", Consolas, monospace;
+  --font-ui: 'Google Sans Flex', 'Segoe UI', sans-serif;
+  --font-code: 'Cascadia Code', Consolas, monospace;
 
   --surface-canvas: #000000;
   --surface-sidebar: #191919;
@@ -36,7 +36,7 @@ html[data-theme="dark"] {
   --status-success: #00c758;
 }
 
-html[data-theme="light"] {
+html[data-theme='light'] {
   color-scheme: light;
   --surface-canvas: hsl(219 36% 99%);
   --surface-sidebar: #f1f1f1;

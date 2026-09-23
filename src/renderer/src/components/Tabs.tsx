@@ -1,6 +1,11 @@
+import type { JSX } from 'react'
 import { Tabs as BaseTabs } from '@base-ui/react/tabs'
 
-function List({ className, ...props }: BaseTabs.List.Props) {
+export function TabsRoot(props: BaseTabs.Root.Props): JSX.Element {
+  return <BaseTabs.Root {...props} />
+}
+
+export function TabsList({ className, ...props }: BaseTabs.List.Props): JSX.Element {
   return (
     <BaseTabs.List
       data-slot="tabs-list"
@@ -12,7 +17,7 @@ function List({ className, ...props }: BaseTabs.List.Props) {
   )
 }
 
-function Tab({ className, ...props }: BaseTabs.Tab.Props) {
+export function TabsTab({ className, ...props }: BaseTabs.Tab.Props): JSX.Element {
   return (
     <BaseTabs.Tab
       data-slot="tabs-tab"
@@ -27,9 +32,6 @@ function Tab({ className, ...props }: BaseTabs.Tab.Props) {
   )
 }
 
-export const Tabs = {
-  Root: BaseTabs.Root,
-  List,
-  Tab,
-  Panel: BaseTabs.Panel
+export function TabsPanel(props: BaseTabs.Panel.Props): JSX.Element {
+  return <BaseTabs.Panel {...props} />
 }

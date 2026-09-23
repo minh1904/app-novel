@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { JSX, ReactNode } from 'react'
 import { Button as BaseButton } from '@base-ui/react/button'
 
 export type ButtonVariant =
@@ -49,7 +49,7 @@ export function Button({
   children,
   type = 'button',
   ...props
-}: ButtonProps) {
+}: ButtonProps): JSX.Element {
   return (
     <BaseButton
       data-slot="button"

@@ -1,11 +1,11 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import type { HTMLAttributes, JSX, ReactNode } from 'react'
 
 export interface PanelProps extends HTMLAttributes<HTMLElement> {
   title?: string
   children: ReactNode
 }
 
-export function Panel({ title, className, children, ...props }: PanelProps) {
+export function Panel({ title, className, children, ...props }: PanelProps): JSX.Element {
   return (
     <section
       data-slot="panel"

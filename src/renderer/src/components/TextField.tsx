@@ -1,17 +1,20 @@
-import { useId, type InputHTMLAttributes } from 'react'
+import { useId, type InputHTMLAttributes, type JSX } from 'react'
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
   hint?: string
 }
 
-export function TextField({ label, hint, id, className, ...props }: TextFieldProps) {
+export function TextField({ label, hint, id, className, ...props }: TextFieldProps): JSX.Element {
   const generatedId = useId()
   const inputId = id ?? generatedId
   const hintId = hint ? inputId + '-hint' : undefined
 
   return (
-    <div data-slot="text-field" className={['flex flex-col gap-[7px]', className].filter(Boolean).join(' ')}>
+    <div
+      data-slot="text-field"
+      className={['flex flex-col gap-[7px]', className].filter(Boolean).join(' ')}
+    >
       <label className="text-[11px] font-semibold" htmlFor={inputId}>
         {label}
       </label>

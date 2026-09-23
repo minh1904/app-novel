@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { Slider as BaseSlider } from '@base-ui/react/slider'
 
 export interface SliderProps {
@@ -9,7 +10,14 @@ export interface SliderProps {
   step?: number
 }
 
-export function Slider({ label, value, onChange, min = 0, max = 100, step = 1 }: SliderProps) {
+export function Slider({
+  label,
+  value,
+  onChange,
+  min = 0,
+  max = 100,
+  step = 1
+}: SliderProps): JSX.Element {
   return (
     <BaseSlider.Root
       data-slot="slider"
@@ -22,7 +30,9 @@ export function Slider({ label, value, onChange, min = 0, max = 100, step = 1 }:
     >
       <div className="flex justify-between text-[11px] text-ink-muted">
         <BaseSlider.Label>{label}</BaseSlider.Label>
-        <BaseSlider.Value className="text-ink tabular-nums">{(_, values) => values[0] + "%"}</BaseSlider.Value>
+        <BaseSlider.Value className="text-ink tabular-nums">
+          {(_, values) => values[0] + '%'}
+        </BaseSlider.Value>
       </div>
       <BaseSlider.Control className="flex h-7 w-full cursor-ew-resize items-center rounded-control border border-line bg-control outline-none focus-within:ring-2 focus-within:ring-focus/40">
         <BaseSlider.Track className="relative h-full w-full">

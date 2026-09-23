@@ -13,7 +13,7 @@ Cập nhật: 2026-09-23. Người dùng đã yêu cầu scaffold Electron; Elec
 | Editor từng câu | **React row UI + một editor hoạt động cho hàng đang sửa**; cân nhắc **TanStack Virtual** cho danh sách rất dài | Tránh tạo hàng nghìn editor cùng lúc; giao diện segment Smartcat-inspired dùng cùng nội dung chương. Virtualization cần thử kỹ với chiều cao hàng thay đổi và ô đang focus. |
 | Lưu local | **SQLite**, kèm xuất/nhập TXT/Markdown | Một kho dữ liệu app quản lý nội bộ cho project, document, văn bản, phiên bản và metadata căn chỉnh; transaction giúp cập nhật nhất quán. SQLite là đề xuất, chưa chốt một DB toàn thư viện hay một file DB mỗi project. |
 | Ranh giới quyền | Electron main/preload + **typed IPC/contextBridge** | Renderer không được truy cập trực tiếp filesystem/database. Bật context isolation, sandbox và tắt Node integration. |
-| Đóng gói Windows | **Electron Forge**, thử installer Squirrel.Windows | Có đường tạo installer cho người dùng thử. Cơ chế ký app và cập nhật sẽ chốt trước khi phân phối rộng. |
+| Đóng gói Windows | **electron-builder** trong scaffold, thử installer NSIS | Có lệnh tạo installer cho người dùng thử. Cơ chế ký app và cập nhật sẽ chốt trước khi phân phối rộng. |
 
 AI thuộc giai đoạn sau P0; lúc đó có thể là adapter riêng gọi dịch vụ khi online. Việc chạy AI offline/chạy model local chưa được chốt. Truy cập internet không được chặn đọc, sửa, lưu, lịch sử, nhập/xuất hoặc backup.
 
@@ -40,6 +40,6 @@ Tauri cũng dùng web UI với backend Rust và Windows WebView. Nó có thể g
 
 - [Electron process model](https://www.electronjs.org/docs/latest/tutorial/process-model), [security](https://www.electronjs.org/docs/latest/tutorial/security).
 - [Tauri architecture](https://v2.tauri.app/concept/architecture/).
-- [electron-vite](https://electron-vite.org/guide/), [Electron Forge Squirrel.Windows](https://www.electronforge.io/config/makers/squirrel.windows).
+- [electron-vite](https://electron-vite.org/guide/), [electron-builder](https://www.electron.build/).
 - [CodeMirror 6 guide](https://codemirror.net/docs/guide/), [TanStack Virtual](https://tanstack.com/virtual/latest/docs/introduction).
 - [SQLite application file format](https://www.sqlite.org/appfileformat.html).
