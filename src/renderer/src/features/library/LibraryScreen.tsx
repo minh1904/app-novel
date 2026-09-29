@@ -468,6 +468,11 @@ function WorkRow({
               </>
             )}
           </span>
+          {(work.author || work.genre) && (
+            <span className="truncate text-[11px] text-ink-muted">
+              {[work.author, work.genre].filter(Boolean).join(' · ')}
+            </span>
+          )}
           {work.description && (
             <span className="truncate text-[11px] text-ink-muted">{work.description}</span>
           )}

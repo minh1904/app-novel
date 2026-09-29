@@ -30,6 +30,8 @@ export function CreateWorkScreen({
   const [title, setTitle] = useState('')
   const [sourceLang, setSourceLang] = useState<SourceLanguage>('zh-Hans')
   const [originalTitle, setOriginalTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [genre, setGenre] = useState('')
   const [description, setDescription] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -51,6 +53,8 @@ export function CreateWorkScreen({
       title,
       sourceLang,
       ...(originalTitle.trim() !== '' && { originalTitle }),
+      ...(author.trim() !== '' && { author }),
+      ...(genre.trim() !== '' && { genre }),
       ...(description.trim() !== '' && { description })
     })
     setSubmitting(false)
@@ -66,7 +70,7 @@ export function CreateWorkScreen({
   }
 
   return (
-    <div className="mx-auto flex max-w-[560px] flex-col gap-6 px-6 py-10">
+    <div className="@container mx-auto flex max-w-[560px] flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[24px] leading-[1.2] font-semibold tracking-[-0.045em]">
           Tạo tác phẩm
@@ -113,6 +117,24 @@ export function CreateWorkScreen({
           error={fieldErrors.originalTitle}
           onChange={(event) => setOriginalTitle(event.target.value)}
         />
+
+        <div className="grid grid-cols-1 gap-5 @min-[480px]:grid-cols-2">
+          <TextField
+            label="Tác giả (tùy chọn)"
+            value={author}
+            maxLength={TITLE_MAX}
+            error={fieldErrors.author}
+            onChange={(event) => setAuthor(event.target.value)}
+          />
+          <TextField
+            label="Thể loại / bối cảnh (tùy chọn)"
+            hint="Ví dụ: tiên hiệp, cổ đại. Giúp AI chọn xưng hô và giọng văn."
+            value={genre}
+            maxLength={TITLE_MAX}
+            error={fieldErrors.genre}
+            onChange={(event) => setGenre(event.target.value)}
+          />
+        </div>
 
         <TextArea
           label="Mô tả (tùy chọn)"
