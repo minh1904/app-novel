@@ -274,7 +274,14 @@ describe('LibraryStore recovery', () => {
     const store = open(dir)
     store.close()
     stores.length = 0
-    writeFileSync(join(dir, 'works', '.tmp', 'abc.mira.part'), 'half written')
+    for (const name of [
+      'abc.mira.part',
+      'abc.mira.part-journal',
+      'abc.mira.part-wal',
+      'stray.txt'
+    ]) {
+      writeFileSync(join(dir, 'works', '.tmp', name), 'half written')
+    }
 
     const reopened = open(dir)
     expect(reopened.list()).toEqual({ works: [], problems: [] })

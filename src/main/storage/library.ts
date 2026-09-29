@@ -198,8 +198,10 @@ export class LibraryStore {
 
   /** Makes the index agree with the work files on disk and records files that cannot be opened. */
   private reconcile(): void {
+    // Everything in .tmp is an unfinished create or restore, including SQLite's own side files
+    // (-journal, -wal, -shm), so nothing there is worth keeping after a restart.
     for (const name of readdirSync(this.tmpDir)) {
-      if (name.endsWith(PART_EXTENSION)) this.removeWorkFiles(join(this.tmpDir, name))
+      rmSync(join(this.tmpDir, name), { recursive: true, force: true })
     }
 
     const problems: WorkProblem[] = []
@@ -290,6 +292,6 @@ export class LibraryStore {
   }
 
   private removeWorkFiles(path: string): void {
-    for (const suffix of ['', '-wal', '-shm']) rmSync(path + suffix, { force: true })
+    for (const suffix of ['', '-journal', '-wal', '-shm']) rmSync(path + suffix, { force: true })
   }
 }
