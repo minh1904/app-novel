@@ -14,7 +14,7 @@ Cập nhật: 2026-09-29 · Trạng thái: quy ước đề xuất, đã áp d�
 
 ## Hình thức đóng bộ
 
-**Bản gốc:** Markdown trong `docs/handbook/`, tài sản tham khảo dùng chung ở `docs/assets/`, mục lục ở [README](../README.md). Đọc ngay trong Git/editor, diff được cùng code và không cần thêm framework web.
+**Bản gốc:** Markdown trong `docs/handbook/` (ảnh tham khảo cũ ở `docs/assets/` đã gỡ ngày 2026-09-29; ảnh mới chỉ thêm khi chương cần), mục lục ở [README](../README.md). Đọc ngay trong Git/editor, diff được cùng code và không cần thêm framework web.
 
 **Đơn vị thay đổi:** một chủ đề có nơi chịu trách nhiệm duy nhất. Scope mô tả ranh giới, spec chuyên đề mô tả hành vi, current-state mô tả code, ADR lưu lý do. Trang khác dẫn tới chúng thay vì chép toàn văn. Tóm tắt ở README phải ngắn và trỏ nguồn chính.
 

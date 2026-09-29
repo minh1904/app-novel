@@ -6,7 +6,8 @@
 - Thêm nghiên cứu công cụ dịch AI (GalTransl, AiNiee, LinguaGacha, auto-novel, Sakura, OpenNovel), nhiều nguồn, văn phong và OpenRouter PKCE.
 - Thêm nghiên cứu hệ sinh thái dịch truyện Việt/nhà cung cấp AI và khả thi kỹ thuật (liên kết qua chỉnh sửa, `node:sqlite`, căn chỉnh bậc thang, đo thử embedding).
 - Viết lại roadmap theo quy trình đã chốt: giao diện sớm trên dữ liệu thật mỏng, provider giả lập, một chương xuyên suốt trước.
-- Cập nhật decisions, open-questions, scope (đánh dấu phần bị thay), mapping MIR-09 và thêm MIR-13 đến MIR-15.
+- Viết lại scope thành bảng ưu tiên S0–S3 kèm thứ tự spec; cập nhật decisions, open-questions, mapping MIR-09 và thêm MIR-13 đến MIR-15.
+- Gỡ link tới `docs/assets` và preview design system đã xóa; ghi cách lấy lại từ lịch sử Git. Gỡ màn preview design system và panel công cụ phát triển khỏi app.
 
 ## 0.1 — 2026-09-29
 

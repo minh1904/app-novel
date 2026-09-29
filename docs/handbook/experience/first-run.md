@@ -29,11 +29,13 @@ flowchart LR
 
 ## Các màn hình mockup
 
-1. [00 — Danh sách tác phẩm](../../assets/flow-00-project-library.png): trạng thái đã có dữ liệu, có tìm/lọc/sắp xếp, mở tác phẩm và tiếp tục chương gần đây.
-2. [01 — Thư viện trống](../../assets/flow-01-empty-library.png): trạng thái mới hoàn toàn, một hành động chính “Tạo tác phẩm”; chưa có project được chọn.
-3. [02 — Tạo tác phẩm](../../assets/flow-02-create-project.png): tên + ngôn ngữ gốc/đích là thông tin cốt lõi; bìa và tác giả có thể bổ sung sau.
-4. [03 — Thêm chương](../../assets/flow-03-add-chapter.png): dán văn bản hoặc nhập TXT/MD cho bản gốc; bản dịch toàn văn có sẵn là tùy chọn.
-5. [04 — Xem trước chương](../../assets/flow-04-preview-chapter.png): kiểm tra tên, ngôn ngữ, ranh giới đoạn và nội dung trước khi mở editor. Không tự tạo bản dịch.
+Mockup gốc (`flow-00` đến `flow-04`) đã gỡ khỏi repo; mô tả dưới đây là phần còn dùng. Ảnh/tệp tham khảo cũ đã gỡ khỏi repo ở commit `551727d`; lấy lại bằng `git show 551727d^:docs/assets/<tên-tệp>` nếu cần.
+
+1. 00 — Danh sách tác phẩm: trạng thái đã có dữ liệu, có tìm/lọc/sắp xếp, mở tác phẩm và tiếp tục chương gần đây.
+2. 01 — Thư viện trống: trạng thái mới hoàn toàn, một hành động chính “Tạo tác phẩm”; chưa có project được chọn.
+3. 02 — Tạo tác phẩm: tên + ngôn ngữ gốc/đích là thông tin cốt lõi; bìa và tác giả có thể bổ sung sau.
+4. 03 — Thêm chương: dán văn bản hoặc nhập TXT/MD cho bản gốc; bản dịch toàn văn có sẵn là tùy chọn.
+5. 04 — Xem trước chương: kiểm tra tên, ngôn ngữ, ranh giới đoạn và nội dung trước khi mở editor. Không tự tạo bản dịch.
 
 Trong thư viện đã có dữ liệu, **Mở tác phẩm** đi đến tổng quan tác phẩm; **Tiếp tục dịch** đưa thẳng về chương làm việc gần nhất. Thư viện trống là biến thể của cùng màn, không phải một bước mà người dùng hiện hữu luôn phải đi qua.
 
