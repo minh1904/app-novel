@@ -18,6 +18,8 @@ export interface WorkRow {
   title: string
   original_title: string | null
   description: string | null
+  author: string | null
+  genre: string | null
   source_lang: WorkSummary['sourceLang']
   status: WorkSummary['status']
   archived: number
@@ -35,6 +37,8 @@ export function rowToSummary(row: WorkRow): WorkSummary {
     title: row.title,
     originalTitle: row.original_title,
     description: row.description,
+    author: row.author,
+    genre: row.genre,
     sourceLang: row.source_lang,
     status: row.status,
     archived: row.archived === 1,
@@ -53,7 +57,7 @@ export function rowToSummary(row: WorkRow): WorkSummary {
 }
 
 const SELECT_WORK = `
-  SELECT w.id, w.title, w.original_title, w.description, w.source_lang, w.status, w.archived,
+  SELECT w.id, w.title, w.original_title, w.description, w.author, w.genre, w.source_lang, w.status, w.archived,
          (SELECT count(*) FROM chapter) AS chapter_count,
          lc.id AS last_chapter_id,
          (SELECT count(*) FROM chapter c WHERE c.position < lc.position) + 1 AS last_chapter_number,
@@ -81,13 +85,16 @@ export function readWork(db: Db): WorkSummary {
 
 export function insertWork(db: Db, id: string, input: CreateWorkInput, now: number): void {
   db.prepare(
-    `INSERT INTO work (id, title, original_title, description, source_lang, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO work (
+       id, title, original_title, description, author, genre, source_lang, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     input.title,
     emptyToNull(input.originalTitle),
     emptyToNull(input.description),
+    emptyToNull(input.author),
+    emptyToNull(input.genre),
     input.sourceLang,
     now,
     now
@@ -103,9 +110,11 @@ export function patchWork(db: Db, patch: WorkPatch, now: number): boolean {
     params.push(value)
   }
 
-  if (patch.title !== undefined) set('title', patch.title)
+  if (patch.title !== undefined) set('title', patch.title.trim())
   if (patch.originalTitle !== undefined) set('original_title', emptyToNull(patch.originalTitle))
   if (patch.description !== undefined) set('description', emptyToNull(patch.description))
+  if (patch.author !== undefined) set('author', emptyToNull(patch.author))
+  if (patch.genre !== undefined) set('genre', emptyToNull(patch.genre))
   if (patch.status !== undefined) set('status', patch.status)
   if (patch.archived !== undefined) set('archived', patch.archived ? 1 : 0)
 
@@ -115,7 +124,9 @@ export function patchWork(db: Db, patch: WorkPatch, now: number): boolean {
   return true
 }
 
+/** Storage does not rely on callers having trimmed: blank optional text is stored as null. */
 function emptyToNull(value: string | null | undefined): string | null {
   if (value === undefined || value === null) return null
-  return value.length === 0 ? null : value
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
 }

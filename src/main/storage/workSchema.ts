@@ -93,6 +93,12 @@ BEGIN
 END;
 `
 
+/** Author and genre give the translator model context about the work. Both are optional. */
+const version2 = `
+ALTER TABLE work ADD COLUMN author TEXT;
+ALTER TABLE work ADD COLUMN genre TEXT;
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -101,6 +107,12 @@ export const workSchema: SchemaSpec = {
       up(db) {
         db.exec(version1)
         db.exec('PRAGMA application_id = ' + WORK_APPLICATION_ID)
+      }
+    },
+    {
+      version: 2,
+      up(db) {
+        db.exec(version2)
       }
     }
   ]

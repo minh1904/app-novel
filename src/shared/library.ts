@@ -22,6 +22,9 @@ export interface WorkSummary {
   title: string
   originalTitle: string | null
   description: string | null
+  author: string | null
+  /** Free text such as "Tiên hiệp, cổ đại"; later used as context for the translator model. */
+  genre: string | null
   sourceLang: SourceLanguage
   status: WorkStatus
   archived: boolean
@@ -57,6 +60,18 @@ const optionalTitle = v.pipe(
   v.maxLength(TITLE_MAX, 'Tên gốc tối đa ' + TITLE_MAX + ' ký tự.')
 )
 
+const author = v.pipe(
+  v.string('Tác giả phải là chữ.'),
+  v.trim(),
+  v.maxLength(TITLE_MAX, 'Tác giả tối đa ' + TITLE_MAX + ' ký tự.')
+)
+
+const genre = v.pipe(
+  v.string('Thể loại phải là chữ.'),
+  v.trim(),
+  v.maxLength(TITLE_MAX, 'Thể loại tối đa ' + TITLE_MAX + ' ký tự.')
+)
+
 const description = v.pipe(
   v.string('Mô tả phải là chữ.'),
   v.trim(),
@@ -71,6 +86,8 @@ export const createWorkSchema = v.strictObject({
   title,
   sourceLang,
   originalTitle: v.optional(optionalTitle),
+  author: v.optional(author),
+  genre: v.optional(genre),
   description: v.optional(description)
 })
 export type CreateWorkInput = v.InferInput<typeof createWorkSchema>
@@ -79,6 +96,8 @@ export type CreateWorkInput = v.InferInput<typeof createWorkSchema>
 export const workPatchSchema = v.strictObject({
   title: v.optional(title),
   originalTitle: v.optional(v.nullable(optionalTitle)),
+  author: v.optional(v.nullable(author)),
+  genre: v.optional(v.nullable(genre)),
   description: v.optional(v.nullable(description)),
   status: v.optional(status),
   archived: v.optional(v.boolean('Giá trị lưu trữ phải là đúng/sai.'))

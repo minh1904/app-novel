@@ -1,10 +1,21 @@
-import { existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { StorageError } from './errors'
 import { LibraryStore } from './library'
+import { LIBRARY_APPLICATION_ID, librarySchema } from './librarySchema'
+import { migrate, readPragmas, type SchemaSpec } from './migrate'
 import { openDatabase } from './sqlite'
 import { createTempDirs } from './testing'
+import { workSchema } from './workSchema'
 
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -268,5 +279,86 @@ describe('LibraryStore recovery', () => {
     const reopened = open(dir)
     expect(reopened.list()).toEqual({ works: [], problems: [] })
     expect(readdirSync(join(dir, 'works', '.tmp'))).toEqual([])
+  })
+})
+
+describe('LibraryStore author and genre', () => {
+  it('stores optional author and genre and trims them', () => {
+    const store = open(tempDir())
+    const work = store.create({
+      title: 'Hiệu thuốc trên núi',
+      sourceLang: 'zh-Hans',
+      author: '  Lý Minh  ',
+      genre: 'Tiên hiệp, cổ đại'
+    })
+    expect(work).toMatchObject({ author: 'Lý Minh', genre: 'Tiên hiệp, cổ đại' })
+    expect(store.list().works[0]).toMatchObject({ author: 'Lý Minh', genre: 'Tiên hiệp, cổ đại' })
+  })
+
+  it('defaults both to null and lets them be changed and cleared', () => {
+    const store = open(tempDir())
+    const work = store.create({ title: 'A', sourceLang: 'en' })
+    expect(work).toMatchObject({ author: null, genre: null })
+
+    const set = store.update(work.id, { author: 'X', genre: 'Hiện đại' })
+    expect(set).toMatchObject({ author: 'X', genre: 'Hiện đại' })
+    const cleared = store.update(work.id, { genre: null })
+    expect(cleared).toMatchObject({ author: 'X', genre: null })
+    expect(store.list().works[0]).toMatchObject({ author: 'X', genre: null })
+  })
+})
+
+describe('LibraryStore upgrade from schema v1', () => {
+  it('opens data written by the first release, keeps it, and adds the new fields', () => {
+    const dir = tempDir()
+    const id = '33333333-3333-4333-8333-333333333333'
+    mkdirSync(join(dir, 'works'), { recursive: true })
+
+    // A data directory exactly as version 1 wrote it: only migration 1 applied to both files.
+    const stopAtV1 = (spec: SchemaSpec): SchemaSpec => ({
+      ...spec,
+      migrations: spec.migrations.filter((m) => m.version <= 1)
+    })
+    const work = openDatabase(join(dir, 'works', id + '.mira'))
+    migrate(work, stopAtV1(workSchema))
+    work
+      .prepare(
+        `INSERT INTO work (id, title, original_title, source_lang, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(id, 'Ngọc đình ký', '玉庭記', 'zh-Hant', 10, 20)
+    work.close()
+    const index = openDatabase(join(dir, 'library.db'))
+    migrate(index, stopAtV1(librarySchema))
+    index.close()
+
+    const store = open(dir)
+    expect(store.list().problems).toEqual([])
+    expect(store.list().works).toHaveLength(1)
+    expect(store.list().works[0]).toMatchObject({
+      id,
+      title: 'Ngọc đình ký',
+      originalTitle: '玉庭記',
+      author: null,
+      genre: null,
+      createdAt: 10
+    })
+    expect(store.update(id, { author: 'Tác giả', genre: 'Cung đấu' })).toMatchObject({
+      title: 'Ngọc đình ký',
+      author: 'Tác giả',
+      genre: 'Cung đấu'
+    })
+    store.close()
+    stores.length = 0
+
+    for (const [name, spec] of [
+      [join('works', id + '.mira'), workSchema],
+      ['library.db', librarySchema]
+    ] as const) {
+      const db = openDatabase(join(dir, name))
+      expect(readPragmas(db).userVersion).toBe(spec.migrations.length)
+      db.close()
+    }
+    expect(LIBRARY_APPLICATION_ID).toBe(0x4d49524c)
   })
 })

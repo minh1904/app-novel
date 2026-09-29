@@ -68,7 +68,9 @@ describe('library IPC handlers', () => {
     ['an unexpected field', { title: 'A', sourceLang: 'en', path: 'C:\\evil' }],
     ['a non-object payload', 'hello'],
     ['null', null],
-    ['an oversized title', { title: 'x'.repeat(201), sourceLang: 'en' }]
+    ['an oversized title', { title: 'x'.repeat(201), sourceLang: 'en' }],
+    ['an oversized author', { title: 'A', sourceLang: 'en', author: 'x'.repeat(201) }],
+    ['a non-text genre', { title: 'A', sourceLang: 'en', genre: 5 }]
   ])('rejects %s without touching data', (_name, raw) => {
     const { call } = setup()
     const result = call(CHANNELS.worksCreate, raw)

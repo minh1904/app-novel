@@ -26,11 +26,11 @@ const thrown = (fn: () => unknown): boolean => {
   return false
 }
 
-describe('work schema v1', () => {
-  it('stamps the Mira application id and schema version', () => {
+describe('work schema', () => {
+  it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 1, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 2, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 

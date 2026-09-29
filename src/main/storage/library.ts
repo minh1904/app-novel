@@ -225,13 +225,14 @@ export class LibraryStore {
     this.index
       .prepare(
         `INSERT INTO work_index (
-           id, file_name, title, original_title, description, source_lang, status, archived,
-           chapter_count, last_chapter_id, last_chapter_number, last_chapter_title,
+           id, file_name, title, original_title, description, author, genre, source_lang, status,
+           archived, chapter_count, last_chapter_id, last_chapter_number, last_chapter_title,
            created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET
            file_name = excluded.file_name, title = excluded.title,
            original_title = excluded.original_title, description = excluded.description,
+           author = excluded.author, genre = excluded.genre,
            source_lang = excluded.source_lang, status = excluded.status,
            archived = excluded.archived, chapter_count = excluded.chapter_count,
            last_chapter_id = excluded.last_chapter_id,
@@ -245,6 +246,8 @@ export class LibraryStore {
         summary.title,
         summary.originalTitle,
         summary.description,
+        summary.author,
+        summary.genre,
         summary.sourceLang,
         summary.status,
         summary.archived ? 1 : 0,

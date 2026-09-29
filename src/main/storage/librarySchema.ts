@@ -32,6 +32,11 @@ CREATE TABLE meta (
 );
 `
 
+const version2 = `
+ALTER TABLE work_index ADD COLUMN author TEXT;
+ALTER TABLE work_index ADD COLUMN genre TEXT;
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -40,6 +45,12 @@ export const librarySchema: SchemaSpec = {
       up(db) {
         db.exec(version1)
         db.exec('PRAGMA application_id = ' + LIBRARY_APPLICATION_ID)
+      }
+    },
+    {
+      version: 2,
+      up(db) {
+        db.exec(version2)
       }
     }
   ]
