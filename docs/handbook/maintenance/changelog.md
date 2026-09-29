@@ -1,5 +1,11 @@
 # Nhật ký handbook
 
+## 0.3 — 2026-09-29
+
+- ADR-003: chốt bộ công nghệ lưu trữ và soạn thảo (`node:sqlite`, CodeMirror 6, SQL thuần, valibot, Vitest, IPC tự viết, một tệp `.mira` mỗi tác phẩm) kèm bằng chứng đo và điều kiện xem lại.
+- Hoàn thành phần đầu M0: kho lưu trữ, IPC, thư viện thật (tác giả, thể loại/bối cảnh, ảnh bìa), test crash. Cập nhật hiện trạng và roadmap; phần còn lại của M0 tách thành hai change riêng.
+- Sửa các mô tả hiện trạng không còn đúng (dữ liệu mẫu, khung hoạt động gần đây, màn preview design system).
+
 ## 0.2 — 2026-09-29
 
 - ADR-002: AI dịch từ raw thành luồng chính của bản đầu; thêm nhiều nguồn raw, văn phong từ bản dịch cũ, ma trận xưng hô; chốt kiểu kết nối model (API key, OpenRouter, tương thích OpenAI; không OAuth thuê bao Claude/Antigravity). Tài khoản và đồng bộ để sau.

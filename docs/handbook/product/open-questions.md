@@ -10,7 +10,7 @@ Cập nhật 2026-09-29 sau [ADR-002](../decisions/0002-ai-first-translation.md)
 | P0 | TXT và Markdown đã chốt; mức giữ cú pháp và encoding khi import/export thế nào? Có cần xuất “dán sạch” và chọn kiểu lời thoại? | Tiêu chí không mất nội dung; nền tảng đăng chủ yếu nhận văn bản dán. | Cần đặc tả + dữ liệu mẫu. |
 | P0 | Ma trận xưng hô: cấu trúc (người nói, người nghe, cách xưng, từ chương nào) và cách AI đề xuất cập nhật để người dùng duyệt? | Nỗi đau nhất quán lớn nhất theo nghiên cứu. | Màn xem ưu tiên trước; cơ chế cập nhật cần spec. |
 | P1 | Văn phong từ bản dịch cũ: ví dụ mẫu truy xuất theo câu tương tự, bản hướng dẫn văn phong, hay cả hai? | Cần căn chỉnh bản cũ với raw; chi phí prompt tăng. | Chờ nghiên cứu công cụ + thử. |
-| Kỹ thuật | `node:sqlite` có chạy trong Electron 44 main process không? | Quyết định có cần native module. | Cần smoke-test; đề xuất một file SQLite mỗi tác phẩm ở [khả thi kỹ thuật](../research/technical-feasibility.md). |
+| Kỹ thuật | IME tiếng Việt (Telex, VNI) và Pinyin có gõ đúng trong CodeMirror ở Electron 44 không? | Chromium 149+ trên Windows từng mất lần gõ IME đầu ở contenteditable; chưa kiểm chứng cho Chromium 152. Điều kiện chốt CodeMirror ([ADR-003](../decisions/0003-technology-stack.md)). | Cần thử tay bằng bàn phím thật ở spike M1. |
 | Kỹ thuật | Căn chỉnh offline có cần model embedding trong bản cài? | Sau ADR-002 căn chỉnh rời đường chính; vẫn cần cho nhiều nguồn và bản cũ. | Lát cắt đầu dùng Bậc 0; đo trên corpus trước khi quyết. |
 | UX | Khi mở app dùng theme theo Windows hay ghi nhớ lựa chọn gần nhất? | Cần cho setting và screenshot mặc định. | Chưa chốt. |
 | Brand | Logo/wordmark, subtitle/tagline chính thức và khả dụng nhãn hiệu/domain/store cho Mira? | Tên đã chốt; nhận diện còn mở. | Chưa chốt. |
@@ -18,7 +18,7 @@ Cập nhật 2026-09-29 sau [ADR-002](../decisions/0002-ai-first-translation.md)
 | Nghiên cứu | Người dịch bằng AI có thực sự soát theo segment, hay chỉ đọc lướt toàn văn? | Quyết định mức đầu tư cho mode Từng câu. | [Kế hoạch kiểm chứng](../delivery/validation.md), chưa thực hiện. |
 | Sau bản đầu | Tài khoản, đồng bộ, docs/MDX nhiều file, EPUB. | Đã chốt để sau. | Chưa cần khóa. |
 
-**Đã trả lời:** app lưu nội bộ và cho xuất/backup; Source editor + Reading view riêng; đề xuất căn chỉnh offline; ba cặp ngôn ngữ Anh/Trung giản thể/phồn thể/Nhật → Việt; nhập/xuất TXT/MD; sửa lỗi bản gốc bằng thao tác riêng có lịch sử/hoàn tác; tên là Mira; Tailwind CSS v4 + Base UI. Ngày 2026-09-29: **AI dịch từ raw là luồng chính**; nhiều nguồn raw với nguồn chính do người dùng chọn; văn phong từ bản dịch cũ; ma trận xưng hô; kết nối API key/OpenRouter/tương thích OpenAI, không OAuth thuê bao; tài khoản và đồng bộ để sau. Không hỏi lại trừ khi người dùng đổi ý.
+**Đã trả lời:** `node:sqlite` chạy trong Electron 44 và được chốt cùng CodeMirror, SQL thuần, valibot, Vitest, IPC tự viết ([ADR-003](../decisions/0003-technology-stack.md)); đuôi tệp là `.mira`; mỗi tác phẩm một tệp; app lưu nội bộ và cho xuất/backup; Source editor + Reading view riêng; đề xuất căn chỉnh offline; ba cặp ngôn ngữ Anh/Trung giản thể/phồn thể/Nhật → Việt; nhập/xuất TXT/MD; sửa lỗi bản gốc bằng thao tác riêng có lịch sử/hoàn tác; tên là Mira; Tailwind CSS v4 + Base UI. Ngày 2026-09-29: **AI dịch từ raw là luồng chính**; nhiều nguồn raw với nguồn chính do người dùng chọn; văn phong từ bản dịch cũ; ma trận xưng hô; kết nối API key/OpenRouter/tương thích OpenAI, không OAuth thuê bao; tài khoản và đồng bộ để sau. Không hỏi lại trừ khi người dùng đổi ý.
 
 ---
 
