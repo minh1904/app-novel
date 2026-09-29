@@ -20,6 +20,12 @@ Cập nhật: **2026-09-29**. Các nguồn dưới đây đã được đọc qu
 | S14 | [Diátaxis](https://diataxis.fr/) | Phân loại nhu cầu tài liệu |
 | S15 | [GitLab Handbook Usage](https://handbook.gitlab.com/handbook/about/handbook-usage/) | Tham khảo handbook trong quy trình làm việc |
 | S16 | [Architectural Decision Records](https://adr.github.io/) | Lưu bối cảnh và hệ quả quyết định |
+| S17 | Hako: [AI 2023](https://ln.hako.vn/thao-luan/2562-ve-viec-su-dung-ai), [AI dịch 2025](https://ln.hako.vn/thao-luan/3097-thong-bao-ve-ai-dich), [quy định truyện dịch](https://docln.net/thao-luan/2745-quy-dinh-doi-voi-truyen-dich) | Chính sách nền tảng; xem [hệ sinh thái Việt](vietnam-ecosystem.md) |
+| S18 | [Voz: tool dịch Gemini](https://voz.vn/t/tool-dich-truyen-bang-gemini.1076131/), [QuickTranslator](http://yukitosai.blogspot.com/2013/07/phan-mem-quick-translator-qt-moi-nhat.html) | Quy trình cộng đồng, định dạng Names/VietPhrase |
+| S19 | [Anthropic OAuth](https://code.claude.com/docs/en/legal-and-compliance), [Gemini CLI/Antigravity](https://github.com/google-gemini/gemini-cli/discussions/20632), [OpenRouter PKCE](https://openrouter.ai/docs/use-cases/oauth-pkce) | Điều khoản kết nối model; đổi nhanh, đọc lại trước tích hợp |
+| S20 | [CodeMirror ChangeDesc](https://codemirror.net/docs/ref/#state.ChangeDesc), [InterText](https://github.com/czcorpus/InterText_editor), [node:sqlite](https://nodejs.org/docs/latest-v24.x/api/sqlite.html), [SQLite WAL](https://www.sqlite.org/wal.html) | Mô hình dữ liệu và lưu trữ; xem [khả thi kỹ thuật](technical-feasibility.md) |
+| S21 | [sentencex](https://github.com/wikimedia/sentencex-js), [Bertalign](https://github.com/bfsujason/bertalign), [Vecalign](https://github.com/thompsonb/vecalign), [multilingual-e5-small](https://huggingface.co/Xenova/multilingual-e5-small) | Tách câu, căn chỉnh, embedding offline; một phần chạy thử trên Node 24 |
+| S22 | [GalTransl](https://github.com/GalTransl/GalTransl), [AiNiee](https://github.com/NEKOparapa/AiNiee), [auto-novel](https://github.com/auto-novel/auto-novel), [OpenNovel auto-translate](https://www.opennovel.co/docs/auto-translate), [EMNLP 2024 multilingual input](https://aclanthology.org/2024.emnlp-main.396.pdf), [Moslem 2023](https://arxiv.org/abs/2301.13294) | Pipeline dịch AI, nhiều nguồn, văn phong; xem [công cụ dịch AI](ai-translation-tools.md) |
 
 ## Nguồn kế thừa từ tài liệu 2026-09-23
 
