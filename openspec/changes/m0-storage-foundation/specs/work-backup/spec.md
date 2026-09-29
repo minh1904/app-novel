@@ -6,7 +6,7 @@ Cho người dùng mang một tác phẩm ra khỏi máy và khôi phục lại 
 
 ### Requirement: Sao lưu một tác phẩm thành một tệp
 
-Người dùng SHALL sao lưu một tác phẩm thành đúng một tệp do họ chọn nơi lưu qua hộp thoại hệ thống. Tệp sao lưu SHALL là bản chụp nhất quán tại một thời điểm, có thể tạo khi tác phẩm đang mở, và SHALL chứa toàn bộ văn bản, segment, liên kết, nguồn gốc, thiết lập của tác phẩm đó.
+Người dùng SHALL sao lưu một tác phẩm thành đúng một tệp do họ chọn nơi lưu qua hộp thoại hệ thống. Tệp sao lưu SHALL là bản chụp nhất quán tại một thời điểm, có thể tạo khi tác phẩm đang mở, và SHALL chứa toàn bộ văn bản, segment, liên kết, nguồn gốc, ảnh bìa và thiết lập của tác phẩm đó.
 
 #### Scenario: Sao lưu khi đang mở
 - **WHEN** người dùng sao lưu tác phẩm đang có thay đổi vừa lưu
@@ -22,7 +22,7 @@ Người dùng SHALL khôi phục từ tệp sao lưu qua hộp thoại chọn t
 
 #### Scenario: Khôi phục trên máy sạch
 - **WHEN** khôi phục một tệp sao lưu hợp lệ trên hồ sơ người dùng mới
-- **THEN** tác phẩm xuất hiện với nội dung, segment, liên kết và nguồn gốc giống bản gốc
+- **THEN** tác phẩm xuất hiện với nội dung, segment, liên kết, nguồn gốc và ảnh bìa giống bản gốc
 
 #### Scenario: Khôi phục khi bản gốc còn tồn tại
 - **WHEN** khôi phục tệp của một tác phẩm vẫn đang có trong thư viện

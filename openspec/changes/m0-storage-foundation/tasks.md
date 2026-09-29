@@ -35,6 +35,8 @@
 - [x] 5.3 Hàm chuẩn hóa tìm không dấu (NFD, bỏ dấu tổ hợp, `đ`→`d`, chữ thường) kèm test; nối vào ô tìm và các mục lọc
 - [x] 5.4 Màn tạo tác phẩm: tên + ngôn ngữ nguồn, tùy chọn tên gốc/mô tả; báo lỗi ngay tại trường tên khi rỗng
 - [x] 5.5 Nối đổi tên, tạm dừng/tiếp tục, lưu trữ/bỏ lưu trữ vào IPC; hiển thị dòng "không mở được" cho tác phẩm trong `problems`
+- [x] 5.9 Ảnh bìa: lưu trong tệp tác phẩm (schema v3), IPC `works:cover:get` và `works:cover:set`, kiểm tra JPEG ở main, nén ảnh ở renderer, có test
+- [x] 5.10 Bộ chọn ảnh bìa trong form tạo (chọn tệp, kéo thả, gỡ), menu hàng "Thêm/Đổi/Gỡ ảnh bìa", bìa hiển thị ở danh sách và thanh bên; dựng lại bố cục form cho cân đối
 - [ ] 5.6 Màn tổng quan tác phẩm tối giản: danh sách chương, thêm, đổi tên, sắp xếp; "Tiếp tục" chỉ khả dụng khi có chương gần nhất, chương mở vào màn "editor chưa xây"
 - [ ] 5.7 Trạng thái trống của danh sách chương khớp spec `work-library` (trạng thái trống của thư viện đã có)
 - [ ] 5.8 Kiểm tra tay: tạo → đóng/mở app → còn nguyên; đổi tên, tạm dừng, lưu trữ; tìm không dấu; tắt mạng và lặp lại; `pnpm typecheck`, `pnpm lint`, `pnpm test`
@@ -53,7 +55,7 @@
 
 - [ ] 7.1 `backup:export`: hộp thoại lưu do main mở; `VACUUM INTO` vào `.part`, kiểm tra, đổi tên thành tệp đích; hủy hộp thoại không tạo gì
 - [ ] 7.2 `backup:restore`: hộp thoại mở; sao chép vào `works/.tmp`, kiểm tra (`application_id`, `user_version`, `integrity_check`, `foreign_key_check`, bảng bắt buộc), nâng cấp schema nếu cần, ghi `work.id` mới, đổi tên nguyên tử, upsert chỉ mục
-- [ ] 7.3 Test: khôi phục trên hồ sơ sạch khớp nội dung; khôi phục khi bản gốc còn tồn tại tạo tác phẩm mới độc lập; tệp không phải Mira, tệp cắt cụt, schema mới hơn đều bị từ chối và thư viện không đổi; gián đoạn giữa restore không để lại tác phẩm dở
+- [ ] 7.3 Test: khôi phục trên hồ sơ sạch khớp nội dung và giữ cả ảnh bìa; khôi phục khi bản gốc còn tồn tại tạo tác phẩm mới độc lập; tệp không phải Mira, tệp cắt cụt, schema mới hơn đều bị từ chối và thư viện không đổi; gián đoạn giữa restore không để lại tác phẩm dở
 - [ ] 7.4 Đo `VACUUM INTO` với tệp tác phẩm vài chục MB; nếu chậm, chuyển sang `backup()` có tiến trình
 - [ ] 7.5 Nối "Mở tác phẩm có sẵn" thành khôi phục từ backup và thêm hành động sao lưu một tác phẩm trên thư viện; kiểm tra tay sao lưu → khôi phục trên `MIRA_DATA_DIR` mới, khi tắt mạng
 

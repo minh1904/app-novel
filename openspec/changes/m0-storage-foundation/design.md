@@ -74,6 +74,7 @@ provenance(segment_id PRIMARY KEY, origin CHECK IN ('human','ai','mock','import'
 ```
 
 - **Schema v2** thêm `work.author` và `work.genre` (văn bản, tùy chọn) và hai cột tương ứng trong `work_index`, bằng `ALTER TABLE ... ADD COLUMN` trong migration riêng; v1 giữ nguyên trong snapshot. Đã kiểm chứng trong Electron thật: dữ liệu v1 có sẵn được nâng cấp tại chỗ, giữ nguyên nội dung.
+- **Schema v3** thêm bảng `cover` (một dòng, `mime = 'image/jpeg'`, `data BLOB`) trong tệp tác phẩm để sao lưu một tệp là đủ, và cột `cover_version` (bằng `cover.updated_at`) trong `work_index` làm khóa bộ nhớ đệm. Cột `work.cover_path` của v1 không dùng nữa nhưng giữ lại vì SQLite không bỏ cột nếu không dựng lại bảng.
 - Tên bảng/cột tránh từ khóa SQL (`text`, `end`) nên không truy vấn nào cần đặt trong dấu nháy. Ràng buộc "một tệp một tác phẩm" là chỉ mục duy nhất trên biểu thức hằng `((1))`. Giữ nguyên `CHECK` cho ngôn ngữ, trạng thái, tên không rỗng, `target_lang = 'vi'`, `end_offset >= start_offset`. Schema v1 được đóng băng bằng test snapshot (`__fixtures__/*.schema.sql`); thay đổi sau khi phát hành phải là migration mới.
 - Thời điểm lưu là số nguyên mili-giây UTC. `chapter.position` là số nguyên; sắp xếp lại reindex cả danh sách trong một transaction (không ràng buộc UNIQUE để tránh xung đột trung gian). Số thứ tự hiển thị suy từ `position`.
 - **Bất biến neo:** mọi thao tác đổi `text.content` chạy trong một transaction cùng lúc thay toàn bộ segment cùng `(chapter_id, side)` và đặt `segment.text_rev = text.rev` mới. Lớp repository là nơi duy nhất ghi hai bảng này.
@@ -117,6 +118,8 @@ ProviderError = { kind: rate_limited | network | auth | refused | invalid_respon
 - Tìm không dấu: hàm thuần chuẩn hóa NFD, bỏ dấu tổ hợp, đổi `đ/Đ` thành `d` (NFD không phân rã `đ`), hạ chữ thường, rồi so `includes`. Chạy ở renderer trên danh sách đã tải.
 - `ChapterRef.excerpt` (trích đoạn "dòng dịch cuối") chưa có nguồn dữ liệu ở M0 nên trở thành tùy chọn; UI ẩn dòng trích khi thiếu. Chương gần nhất chỉ hiển thị số thứ tự và tiêu đề.
 - Màn "tạo tác phẩm" thay `PendingScreen` bằng biểu mẫu thật (tên + ngôn ngữ nguồn, còn lại tùy chọn). Màn tổng quan tác phẩm/danh sách chương là bản tối giản: liệt kê, thêm, đổi tên, sắp xếp chương. Mở một chương vẫn dẫn tới màn "editor chưa xây" cho đến M1.
+- **Ảnh bìa:** renderer đọc tệp người dùng chọn bằng `<input type=file>` hoặc kéo thả (không có đường dẫn nào đi qua IPC), giải mã bằng Chromium (JPEG, PNG, WebP, AVIF, GIF), đặt nền trắng, thu nhỏ vừa khung 600×900 và mã hóa JPEG; chỉ JPEG kết quả (data URL, tối đa 1 MiB) được gửi đi. Main kiểm tra lại tiền tố, kích thước và dấu hiệu đầu/cuối JPEG trước khi lưu. `works:list` chỉ trả `coverVersion`; ảnh được lấy theo yêu cầu qua `works:cover:get` và giữ trong bộ nhớ theo khóa `id:version`, nên bìa không đổi thì không bao giờ tải hai lần và danh sách không kéo theo hàng trăm KB dữ liệu ảnh.
+- **Bố cục form tạo:** ảnh bìa nằm ở cột riêng bên trái, mọi trường xếp một cột bên phải cùng độ rộng, mô tả ở cuối; màn hẹp thì bìa lên trên.
 - "Mở tác phẩm có sẵn" ở thư viện được nối thành **khôi phục từ backup** (chốt hành vi còn mở ở handbook `first-run`).
 
 ### D9. Kiểm thử

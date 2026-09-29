@@ -32,6 +32,22 @@ Người dùng SHALL tạo được tác phẩm chỉ với tên và ngôn ngữ
 - **WHEN** người dùng gửi tên rỗng
 - **THEN** không tạo tác phẩm và hiển thị lỗi tại trường tên
 
+### Requirement: Ảnh bìa
+
+Người dùng SHALL thêm ảnh bìa khi tạo tác phẩm hoặc sau đó, đổi ảnh khác, và gỡ ảnh bìa. Hệ thống SHALL nhận các định dạng ảnh phổ biến, thu nhỏ và nén ảnh khi lưu, từ chối tệp không phải ảnh mà không thay đổi tác phẩm, và giữ ảnh bìa sau khi mở lại ứng dụng. Khi có ảnh bìa, nó SHALL hiển thị ở danh sách, thanh bên và khung tiếp tục; khi không có, hệ thống SHALL dùng ký hiệu ngôn ngữ nguồn. Mọi thay đổi ảnh bìa SHALL cập nhật thời điểm sửa đổi của tác phẩm.
+
+#### Scenario: Thêm ảnh bìa khi tạo
+- **WHEN** người dùng chọn một ảnh PNG lớn trong form tạo tác phẩm rồi tạo
+- **THEN** tác phẩm có ảnh bìa đã thu nhỏ, hiển thị trong danh sách và còn nguyên sau khi mở lại
+
+#### Scenario: Tệp không phải ảnh
+- **WHEN** người dùng chọn một tệp văn bản làm ảnh bìa
+- **THEN** hệ thống báo lỗi dễ hiểu, không đổi ảnh bìa hiện có và không tạo dữ liệu dở dang
+
+#### Scenario: Đổi và gỡ ảnh bìa
+- **WHEN** người dùng chọn "Đổi ảnh bìa" rồi sau đó "Gỡ ảnh bìa" từ menu của tác phẩm
+- **THEN** ảnh mới thay ảnh cũ, và sau khi gỡ tác phẩm quay về ký hiệu ngôn ngữ nguồn
+
 ### Requirement: Quản lý tác phẩm
 
 Người dùng SHALL đổi tên, tạm dừng/tiếp tục, lưu trữ/bỏ lưu trữ tác phẩm. Mỗi thay đổi SHALL cập nhật thời điểm sửa đổi và được lưu bền. Tác phẩm đã lưu trữ SHALL không nằm trong danh sách mặc định nhưng vẫn truy cập được qua mục lưu trữ và SHALL NOT bị xóa dữ liệu.
