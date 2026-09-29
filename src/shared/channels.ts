@@ -3,7 +3,9 @@ export const CHANNELS = {
   worksList: 'works:list',
   worksGet: 'works:get',
   worksCreate: 'works:create',
-  worksUpdate: 'works:update'
+  worksUpdate: 'works:update',
+  worksCoverGet: 'works:cover:get',
+  worksCoverSet: 'works:cover:set'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

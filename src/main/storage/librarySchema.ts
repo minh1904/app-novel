@@ -37,6 +37,10 @@ ALTER TABLE work_index ADD COLUMN author TEXT;
 ALTER TABLE work_index ADD COLUMN genre TEXT;
 `
 
+const version3 = `
+ALTER TABLE work_index ADD COLUMN cover_version INTEGER;
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -51,6 +55,12 @@ export const librarySchema: SchemaSpec = {
       version: 2,
       up(db) {
         db.exec(version2)
+      }
+    },
+    {
+      version: 3,
+      up(db) {
+        db.exec(version3)
       }
     }
   ]

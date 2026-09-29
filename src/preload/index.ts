@@ -13,7 +13,11 @@ const desktopApi: DesktopApi = {
     create: (input: CreateWorkInput) =>
       ipcRenderer.invoke(CHANNELS.worksCreate, input) as Promise<Result<WorkSummary>>,
     update: (id: string, patch: WorkPatch) =>
-      ipcRenderer.invoke(CHANNELS.worksUpdate, { id, patch }) as Promise<Result<WorkSummary>>
+      ipcRenderer.invoke(CHANNELS.worksUpdate, { id, patch }) as Promise<Result<WorkSummary>>,
+    getCover: (id: string) =>
+      ipcRenderer.invoke(CHANNELS.worksCoverGet, { id }) as Promise<Result<string | null>>,
+    setCover: (id: string, cover: string | null) =>
+      ipcRenderer.invoke(CHANNELS.worksCoverSet, { id, cover }) as Promise<Result<WorkSummary>>
   }
 }
 

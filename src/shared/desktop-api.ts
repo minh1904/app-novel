@@ -12,6 +12,10 @@ export interface WorksApi {
   get(id: string): Promise<Result<WorkSummary>>
   create(input: CreateWorkInput): Promise<Result<WorkSummary>>
   update(id: string, patch: WorkPatch): Promise<Result<WorkSummary>>
+  /** The cover as a JPEG data URL, or null when the work has none. */
+  getCover(id: string): Promise<Result<string | null>>
+  /** Pass null to remove the cover. */
+  setCover(id: string, cover: string | null): Promise<Result<WorkSummary>>
 }
 
 export interface DesktopApi {

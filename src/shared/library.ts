@@ -8,6 +8,10 @@ export const WORK_STATUSES = ['not-started', 'in-progress', 'paused'] as const
 export type WorkStatus = (typeof WORK_STATUSES)[number]
 
 export const TITLE_MAX = 200
+
+/** Covers are normalised to JPEG by the renderer and re-checked by the main process. */
+export const COVER_MAX_BYTES = 1024 * 1024
+export const COVER_DATA_URL_PREFIX = 'data:image/jpeg;base64,'
 export const DESCRIPTION_MAX = 2000
 
 export interface ChapterSummary {
@@ -25,6 +29,8 @@ export interface WorkSummary {
   author: string | null
   /** Free text such as "Tiên hiệp, cổ đại"; later used as context for the translator model. */
   genre: string | null
+  /** Changes whenever the cover does; null when the work has no cover. Used as a cache key. */
+  coverVersion: number | null
   sourceLang: SourceLanguage
   status: WorkStatus
   archived: boolean
@@ -78,6 +84,16 @@ const description = v.pipe(
   v.maxLength(DESCRIPTION_MAX, 'Mô tả tối đa ' + DESCRIPTION_MAX + ' ký tự.')
 )
 
+// base64 inflates by 4/3; the exact byte limit is enforced again after decoding.
+const cover = v.pipe(
+  v.string('Ảnh bìa không hợp lệ.'),
+  v.startsWith(COVER_DATA_URL_PREFIX, 'Ảnh bìa phải là ảnh JPEG.'),
+  v.maxLength(
+    COVER_DATA_URL_PREFIX.length + Math.ceil((COVER_MAX_BYTES * 4) / 3) + 4,
+    'Ảnh bìa quá lớn.'
+  )
+)
+
 const sourceLang = v.picklist(SOURCE_LANGUAGES, 'Chọn ngôn ngữ nguồn hợp lệ.')
 const status = v.picklist(WORK_STATUSES, 'Trạng thái không hợp lệ.')
 export const idSchema = v.pipe(v.string('ID phải là chữ.'), v.uuid('ID không hợp lệ.'))
@@ -88,7 +104,8 @@ export const createWorkSchema = v.strictObject({
   originalTitle: v.optional(optionalTitle),
   author: v.optional(author),
   genre: v.optional(genre),
-  description: v.optional(description)
+  description: v.optional(description),
+  cover: v.optional(cover)
 })
 export type CreateWorkInput = v.InferInput<typeof createWorkSchema>
 
@@ -105,5 +122,6 @@ export const workPatchSchema = v.strictObject({
 export type WorkPatch = v.InferInput<typeof workPatchSchema>
 
 export const getWorkSchema = v.strictObject({ id: idSchema })
+export const setCoverSchema = v.strictObject({ id: idSchema, cover: v.nullable(cover) })
 export const updateWorkSchema = v.strictObject({ id: idSchema, patch: workPatchSchema })
 export type UpdateWorkInput = v.InferInput<typeof updateWorkSchema>

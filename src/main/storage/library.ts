@@ -8,6 +8,7 @@ import type {
   WorkProblem,
   WorkSummary
 } from '../../shared/library'
+import { decodeCover, encodeCover } from './cover'
 import { StorageError, toStorageError } from './errors'
 import { librarySchema } from './librarySchema'
 import { migrate } from './migrate'
@@ -17,8 +18,10 @@ import {
   insertWork,
   openWorkFile,
   patchWork,
+  readCover,
   readWork,
   rowToSummary,
+  writeCover,
   type WorkRow
 } from './workFile'
 
@@ -81,6 +84,8 @@ export class LibraryStore {
     const title = input.title.trim()
     if (title.length === 0) throw new StorageError('validation', 'Nhập tên tác phẩm.')
 
+    // Decode first so a bad cover fails before any file is created.
+    const cover = input.cover === undefined ? null : decodeCover(input.cover)
     const id = this.newId()
     assertWorkId(id)
     const finalPath = this.workPath(id)
@@ -91,7 +96,10 @@ export class LibraryStore {
     try {
       const db = openWorkFile(partPath)
       try {
-        db.transaction(() => insertWork(db, id, { ...input, title }, now))
+        db.transaction(() => {
+          insertWork(db, id, { ...input, title }, now)
+          if (cover) writeCover(db, cover, now)
+        })
         summary = readWork(db)
       } finally {
         db.close()
@@ -110,6 +118,25 @@ export class LibraryStore {
   update(id: string, patch: WorkPatch): WorkSummary {
     const summary = this.withWork(id, (db) => {
       db.transaction(() => patchWork(db, patch, this.now()))
+      return readWork(db)
+    })
+    this.syncIndex(summary)
+    return summary
+  }
+
+  /** The cover as a data URL, or null when the work has none. */
+  getCover(id: string): string | null {
+    return this.withWork(id, (db) => {
+      const cover = readCover(db)
+      return cover ? encodeCover(cover) : null
+    })
+  }
+
+  /** Pass null to remove the cover. */
+  setCover(id: string, dataUrl: string | null): WorkSummary {
+    const cover = dataUrl === null ? null : decodeCover(dataUrl)
+    const summary = this.withWork(id, (db) => {
+      db.transaction(() => writeCover(db, cover, this.now()))
       return readWork(db)
     })
     this.syncIndex(summary)
@@ -227,8 +254,8 @@ export class LibraryStore {
         `INSERT INTO work_index (
            id, file_name, title, original_title, description, author, genre, source_lang, status,
            archived, chapter_count, last_chapter_id, last_chapter_number, last_chapter_title,
-           created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           cover_version, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET
            file_name = excluded.file_name, title = excluded.title,
            original_title = excluded.original_title, description = excluded.description,
@@ -238,6 +265,7 @@ export class LibraryStore {
            last_chapter_id = excluded.last_chapter_id,
            last_chapter_number = excluded.last_chapter_number,
            last_chapter_title = excluded.last_chapter_title,
+           cover_version = excluded.cover_version,
            created_at = excluded.created_at, updated_at = excluded.updated_at`
       )
       .run(
@@ -255,6 +283,7 @@ export class LibraryStore {
         summary.lastChapter?.id ?? null,
         summary.lastChapter?.number ?? null,
         summary.lastChapter?.title ?? null,
+        summary.coverVersion,
         summary.createdAt,
         summary.updatedAt
       )

@@ -99,6 +99,20 @@ ALTER TABLE work ADD COLUMN author TEXT;
 ALTER TABLE work ADD COLUMN genre TEXT;
 `
 
+/**
+ * The cover lives inside the work file so backing up one file backs up everything. The older
+ * `work.cover_path` column from version 1 is unused and kept only because SQLite cannot drop it
+ * without rebuilding the table.
+ */
+const version3 = `
+CREATE TABLE cover (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  mime TEXT NOT NULL CHECK (mime = 'image/jpeg'),
+  data BLOB NOT NULL CHECK (length(data) > 0),
+  updated_at INTEGER NOT NULL
+);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -113,6 +127,12 @@ export const workSchema: SchemaSpec = {
       version: 2,
       up(db) {
         db.exec(version2)
+      }
+    },
+    {
+      version: 3,
+      up(db) {
+        db.exec(version3)
       }
     }
   ]

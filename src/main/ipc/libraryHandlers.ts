@@ -1,5 +1,10 @@
 import { CHANNELS, type Channel } from '../../shared/channels'
-import { createWorkSchema, getWorkSchema, updateWorkSchema } from '../../shared/library'
+import {
+  createWorkSchema,
+  getWorkSchema,
+  setCoverSchema,
+  updateWorkSchema
+} from '../../shared/library'
 import { fail, type Result } from '../../shared/result'
 import type { LibraryStore } from '../storage/library'
 import { createHandler, type RawHandler } from './handler'
@@ -12,6 +17,10 @@ export function createLibraryHandlers(library: LibraryStore): Record<Channel, Ra
     [CHANNELS.worksCreate]: createHandler(createWorkSchema, (input) => library.create(input)),
     [CHANNELS.worksUpdate]: createHandler(updateWorkSchema, ({ id, patch }) =>
       library.update(id, patch)
+    ),
+    [CHANNELS.worksCoverGet]: createHandler(getWorkSchema, ({ id }) => library.getCover(id)),
+    [CHANNELS.worksCoverSet]: createHandler(setCoverSchema, ({ id, cover }) =>
+      library.setCover(id, cover)
     )
   }
 }

@@ -1,4 +1,5 @@
 import type { CreateWorkInput, WorkPatch, WorkSummary } from '../../shared/library'
+import type { CoverImage } from './cover'
 import { StorageError } from './errors'
 import { migrate } from './migrate'
 import { openDatabase, type Db } from './sqlite'
@@ -27,6 +28,7 @@ export interface WorkRow {
   last_chapter_id: string | null
   last_chapter_number: number | null
   last_chapter_title: string | null
+  cover_version: number | null
   created_at: number
   updated_at: number
 }
@@ -39,6 +41,7 @@ export function rowToSummary(row: WorkRow): WorkSummary {
     description: row.description,
     author: row.author,
     genre: row.genre,
+    coverVersion: row.cover_version,
     sourceLang: row.source_lang,
     status: row.status,
     archived: row.archived === 1,
@@ -62,6 +65,7 @@ const SELECT_WORK = `
          lc.id AS last_chapter_id,
          (SELECT count(*) FROM chapter c WHERE c.position < lc.position) + 1 AS last_chapter_number,
          lc.title AS last_chapter_title,
+         (SELECT updated_at FROM cover) AS cover_version,
          w.created_at, w.updated_at
   FROM work w LEFT JOIN chapter lc ON lc.id = w.last_chapter_id`
 
@@ -129,4 +133,25 @@ function emptyToNull(value: string | null | undefined): string | null {
   if (value === undefined || value === null) return null
   const trimmed = value.trim()
   return trimmed.length === 0 ? null : trimmed
+}
+
+/** Replaces or removes the cover. Changing it counts as editing the work. */
+export function writeCover(db: Db, cover: CoverImage | null, now: number): void {
+  if (cover === null) {
+    db.prepare('DELETE FROM cover').run()
+  } else {
+    db.prepare(
+      `INSERT INTO cover (id, mime, data, updated_at) VALUES (1, ?, ?, ?)
+       ON CONFLICT (id) DO UPDATE SET
+         mime = excluded.mime, data = excluded.data, updated_at = excluded.updated_at`
+    ).run(cover.mime, cover.data, now)
+  }
+  db.prepare('UPDATE work SET updated_at = ?').run(now)
+}
+
+export function readCover(db: Db): CoverImage | null {
+  const row = db
+    .prepare('SELECT mime, data FROM cover')
+    .get<{ mime: 'image/jpeg'; data: Uint8Array }>()
+  return row ? { mime: row.mime, data: row.data } : null
 }
