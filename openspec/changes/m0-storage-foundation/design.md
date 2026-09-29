@@ -73,6 +73,7 @@ provenance(segment_id PRIMARY KEY, origin CHECK IN ('human','ai','mock','import'
            provider, model, at)
 ```
 
+- **Schema v2** thêm `work.author` và `work.genre` (văn bản, tùy chọn) và hai cột tương ứng trong `work_index`, bằng `ALTER TABLE ... ADD COLUMN` trong migration riêng; v1 giữ nguyên trong snapshot. Đã kiểm chứng trong Electron thật: dữ liệu v1 có sẵn được nâng cấp tại chỗ, giữ nguyên nội dung.
 - Tên bảng/cột tránh từ khóa SQL (`text`, `end`) nên không truy vấn nào cần đặt trong dấu nháy. Ràng buộc "một tệp một tác phẩm" là chỉ mục duy nhất trên biểu thức hằng `((1))`. Giữ nguyên `CHECK` cho ngôn ngữ, trạng thái, tên không rỗng, `target_lang = 'vi'`, `end_offset >= start_offset`. Schema v1 được đóng băng bằng test snapshot (`__fixtures__/*.schema.sql`); thay đổi sau khi phát hành phải là migration mới.
 - Thời điểm lưu là số nguyên mili-giây UTC. `chapter.position` là số nguyên; sắp xếp lại reindex cả danh sách trong một transaction (không ràng buộc UNIQUE để tránh xung đột trung gian). Số thứ tự hiển thị suy từ `position`.
 - **Bất biến neo:** mọi thao tác đổi `text.content` chạy trong một transaction cùng lúc thay toàn bộ segment cùng `(chapter_id, side)` và đặt `segment.text_rev = text.rev` mới. Lớp repository là nơi duy nhất ghi hai bảng này.

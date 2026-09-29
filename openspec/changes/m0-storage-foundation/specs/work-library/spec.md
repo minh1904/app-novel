@@ -18,11 +18,15 @@ Thư viện SHALL hiển thị đúng các tác phẩm đã lưu và SHALL NOT h
 
 ### Requirement: Tạo tác phẩm
 
-Người dùng SHALL tạo được tác phẩm chỉ với tên và ngôn ngữ nguồn; các thông tin khác (tên gốc, mô tả, bìa) là tùy chọn. Hệ thống SHALL từ chối tên rỗng hoặc chỉ gồm khoảng trắng và SHALL báo rõ lý do.
+Người dùng SHALL tạo được tác phẩm chỉ với tên và ngôn ngữ nguồn; các thông tin khác (tên gốc, tác giả, thể loại/bối cảnh, mô tả, bìa) là tùy chọn. Thể loại/bối cảnh là văn bản tự do (ví dụ "tiên hiệp, cổ đại") dùng làm ngữ cảnh cho AI ở mốc sau. Hệ thống SHALL từ chối tên rỗng hoặc chỉ gồm khoảng trắng và SHALL báo rõ lý do.
 
 #### Scenario: Tạo thành công
 - **WHEN** người dùng nhập tên hợp lệ và chọn ngôn ngữ nguồn
 - **THEN** tác phẩm mới xuất hiện trong thư viện ở trạng thái chưa bắt đầu, chưa có chương
+
+#### Scenario: Thông tin tùy chọn
+- **WHEN** người dùng nhập thêm tác giả và thể loại có khoảng trắng thừa ở hai đầu
+- **THEN** tác phẩm lưu các giá trị đã cắt khoảng trắng và hiển thị chúng trong danh sách; trường để trống được lưu là không có giá trị
 
 #### Scenario: Tên không hợp lệ
 - **WHEN** người dùng gửi tên rỗng
