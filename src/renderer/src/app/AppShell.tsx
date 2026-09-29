@@ -15,8 +15,6 @@ export interface AppShellProps {
   appVersion: string
   title: ReactNode
   actions?: ReactNode
-  /** Development-only tools rendered above the sidebar footer. */
-  devTools?: ReactNode
   children: ReactNode
 }
 
@@ -29,7 +27,6 @@ export function AppShell({
   appVersion,
   title,
   actions,
-  devTools,
   children
 }: AppShellProps): JSX.Element {
   useEffect(() => {
@@ -63,7 +60,6 @@ export function AppShell({
           </div>
           <div className="flex min-h-0 flex-1 flex-col">{sidebar}</div>
           <div className="flex flex-col gap-2 px-3 pt-3 pb-3">
-            {devTools}
             <span className="border-t border-line px-2.5 pt-3 text-[11px] text-ink-muted tabular-nums">
               {appVersion ? 'Mira ' + appVersion : 'Mira'}
             </span>

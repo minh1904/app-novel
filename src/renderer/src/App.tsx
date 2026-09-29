@@ -3,8 +3,6 @@ import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { AppShell } from './app/AppShell'
 import { PendingScreen } from './app/PendingScreen'
 import { useTheme } from './app/useTheme'
-import { Button } from './components/Button'
-import { DesignSystemPreview } from './features/design-system/DesignSystemPreview'
 import { LibraryScreen } from './features/library/LibraryScreen'
 import { LibrarySidebar, type LibrarySection } from './features/library/LibrarySidebar'
 import {
@@ -21,7 +19,6 @@ type View =
   | { name: 'create' }
   | { name: 'open-existing' }
   | { name: 'work'; workId: string; intent: 'open' | 'continue' }
-  | { name: 'design-system' }
 
 const RECENT_LIMIT = 4
 
@@ -159,39 +156,7 @@ export function App(): JSX.Element {
       )
       break
     }
-    case 'design-system':
-      title = <h1 className="font-semibold">Design system</h1>
-      content = <DesignSystemPreview theme={theme} />
-      break
   }
-
-  const devTools = import.meta.env.DEV ? (
-    <div className="flex flex-col gap-0.5 rounded-control border border-dashed border-line-strong p-1.5">
-      <span className="px-1.5 pb-1 text-[10px] text-ink-muted">Chỉ hiện khi phát triển</span>
-      <Button
-        variant="ghost-muted"
-        size="sm"
-        className="justify-start"
-        aria-pressed={view.name === 'design-system'}
-        onClick={() => setView({ name: 'design-system' })}
-      >
-        Design system
-      </Button>
-      <Button
-        variant="ghost-muted"
-        size="sm"
-        className="justify-start"
-        onClick={() => {
-          const empty = works.length > 0
-          setWorks(empty ? [] : sampleWorks)
-          setActivities(empty ? [] : sampleActivities)
-          showSection('all')
-        }}
-      >
-        {works.length > 0 ? 'Xem thư viện trống' : 'Nạp lại dữ liệu mẫu'}
-      </Button>
-    </div>
-  ) : undefined
 
   return (
     <AppShell
@@ -211,7 +176,6 @@ export function App(): JSX.Element {
       onToggleTheme={toggleTheme}
       appVersion={appVersion}
       title={title}
-      devTools={devTools}
     >
       {content}
     </AppShell>
