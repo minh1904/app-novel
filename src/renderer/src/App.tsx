@@ -3,16 +3,13 @@ import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { AppShell } from './app/AppShell'
 import { PendingScreen } from './app/PendingScreen'
 import { useTheme } from './app/useTheme'
+import { Button } from './components/Button'
+import { CreateWorkScreen } from './features/library/CreateWorkScreen'
+import { LibraryNotices } from './features/library/LibraryNotices'
 import { LibraryScreen } from './features/library/LibraryScreen'
 import { LibrarySidebar, type LibrarySection } from './features/library/LibrarySidebar'
-import {
-  byUpdated,
-  sampleActivities,
-  sampleWorks,
-  type Activity,
-  type ActivityKind,
-  type Work
-} from './features/library/works'
+import { useLibrary } from './features/library/useLibrary'
+import { byUpdated, type Work } from './features/library/works'
 
 type View =
   | { name: 'library'; section: LibrarySection }
@@ -27,9 +24,8 @@ export function App(): JSX.Element {
   const [view, setView] = useState<View>({ name: 'library', section: 'all' })
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [appVersion, setAppVersion] = useState('')
-  // Until storage exists the library lives in memory, seeded with sample data.
-  const [works, setWorks] = useState<Work[]>(sampleWorks)
-  const [activities, setActivities] = useState<Activity[]>(sampleActivities)
+  const library = useLibrary()
+  const { works } = library
 
   useEffect(() => {
     let active = true
@@ -57,34 +53,16 @@ export function App(): JSX.Element {
     setView({ name: 'work', workId: work.id, intent: 'continue' })
   const createWork = (): void => setView({ name: 'create' })
 
-  function updateWork(id: string, change: Partial<Work>, activity?: ActivityKind): void {
-    const now = new Date()
-    setWorks((current) =>
-      current.map((work) => (work.id === id ? { ...work, ...change, updatedAt: now } : work))
-    )
-    if (activity) {
-      setActivities((current) => [
-        ...current,
-        { id: crypto.randomUUID(), kind: activity, workId: id, at: now }
-      ])
-    }
-  }
-
   const libraryActions = {
     onCreateWork: createWork,
     onOpenExisting: () => setView({ name: 'open-existing' }),
     onOpenWork: openWork,
     onContinueWork: continueWork,
     onSelectSection: showSection,
-    onRenameWork: (work: Work, title: string) => updateWork(work.id, { title }),
+    onRenameWork: (work: Work, title: string) => void library.update(work, { title }),
     onSetPaused: (work: Work, paused: boolean) =>
-      updateWork(
-        work.id,
-        { status: paused ? 'paused' : 'in-progress' },
-        paused ? 'paused' : 'resumed'
-      ),
-    onSetArchived: (work: Work, archived: boolean) =>
-      updateWork(work.id, { archived }, archived ? 'archived' : undefined)
+      void library.update(work, { status: paused ? 'paused' : 'in-progress' }),
+    onSetArchived: (work: Work, archived: boolean) => void library.update(work, { archived })
   }
 
   const crumb = (label: string): JSX.Element => (
@@ -107,22 +85,50 @@ export function App(): JSX.Element {
   switch (view.name) {
     case 'library':
       title = <h1 className="font-semibold">Thư viện</h1>
-      content = (
-        <LibraryScreen
-          section={view.section}
-          works={works}
-          activities={activities}
-          {...libraryActions}
-        />
-      )
+      if (library.load === 'loading') {
+        content = (
+          <p role="status" className="px-6 pt-8 text-[13px] text-ink-muted">
+            Đang mở thư viện…
+          </p>
+        )
+      } else if (library.load === 'failed') {
+        content = (
+          <div className="mx-auto flex max-w-[560px] flex-col gap-3 px-6 pt-12">
+            <h2 className="text-[20px] font-semibold tracking-[-0.04em]">Không mở được thư viện</h2>
+            <p role="alert" className="text-[13px] leading-[1.6] text-ink-muted">
+              {library.loadError}
+            </p>
+            <div>
+              <Button variant="secondary" onClick={() => void library.reload()}>
+                Thử lại
+              </Button>
+            </div>
+          </div>
+        )
+      } else {
+        content = (
+          <LibraryScreen
+            section={view.section}
+            works={works}
+            notices={
+              <LibraryNotices
+                problems={library.problems}
+                notice={library.notice}
+                onDismissNotice={library.dismissNotice}
+              />
+            }
+            {...libraryActions}
+          />
+        )
+      }
       break
     case 'create':
       title = crumb('Tạo tác phẩm')
       content = (
-        <PendingScreen
-          heading="Màn tạo tác phẩm chưa được xây"
-          detail="Bước tiếp theo trong luồng đầu tiên: nhập tên tác phẩm và chọn ngôn ngữ gốc."
-          onBack={() => showSection('all')}
+        <CreateWorkScreen
+          onSubmit={library.create}
+          onCreated={() => showSection('all')}
+          onCancel={() => showSection('all')}
         />
       )
       break
@@ -131,7 +137,7 @@ export function App(): JSX.Element {
       content = (
         <PendingScreen
           heading="Chưa chốt hành vi của “Mở tác phẩm có sẵn”"
-          detail="Có thể là mở dữ liệu đã có trên máy, nhập bản backup, hoặc cả hai. Xem mục câu hỏi mở trong first-run-flow.md."
+          detail="Đề xuất: khôi phục một tác phẩm từ tệp sao lưu .mira. Chức năng này được xây cùng phần sao lưu và khôi phục."
           onBack={() => showSection('all')}
         />
       )

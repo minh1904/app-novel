@@ -1,3 +1,5 @@
+import type { WorkSummary } from '../../../../shared/library'
+
 export type SourceLanguage = 'en' | 'zh-Hans' | 'zh-Hant' | 'ja'
 
 export type WorkStatus = 'not-started' | 'in-progress' | 'paused'
@@ -5,8 +7,8 @@ export type WorkStatus = 'not-started' | 'in-progress' | 'paused'
 export interface ChapterRef {
   number: number
   title: string
-  /** Last translated line the translator touched, shown as a reminder of where they stopped. */
-  excerpt: string
+  /** Last translated line the translator touched. Absent until the editor records one. */
+  excerpt?: string
 }
 
 export interface Work {
@@ -22,16 +24,6 @@ export interface Work {
   archived: boolean
   updatedAt: Date
   lastChapter?: ChapterRef
-}
-
-export type ActivityKind = 'chapter-updated' | 'paused' | 'resumed' | 'created' | 'archived'
-
-export interface Activity {
-  id: string
-  kind: ActivityKind
-  workId: string
-  chapterNumber?: number
-  at: Date
 }
 
 export const languages: Record<SourceLanguage, { name: string; short: string; glyph: string }> = {
@@ -62,91 +54,20 @@ export function byUpdated(a: Work, b: Work): number {
   return b.updatedAt.getTime() - a.updatedAt.getTime()
 }
 
-const hour = 60 * 60 * 1000
-const ago = (hours: number): Date => new Date(Date.now() - hours * hour)
-
-// Illustrative data until the storage layer exists. Titles and descriptions are invented.
-export const sampleWorks: Work[] = [
-  {
-    id: 'lantern-street',
-    title: 'The Lantern Street Letters',
-    description: 'Những lá thư không người nhận trong một khu phố ven sông.',
-    sourceLanguage: 'en',
-    chapterCount: 12,
-    status: 'in-progress',
-    archived: false,
-    updatedAt: ago(1.5),
-    lastChapter: {
-      number: 3,
-      title: 'A Window Facing East',
-      excerpt: 'Khi cô mở cửa sổ, cả thành phố vẫn còn say ngủ.'
-    }
-  },
-  {
-    id: 'mountain-apothecary',
-    title: 'Hiệu thuốc trên núi',
-    originalTitle: '山中药铺',
-    description: 'Một thầy thuốc trẻ kế nghiệp hiệu thuốc cũ giữa vùng núi.',
-    sourceLanguage: 'zh-Hans',
-    chapterCount: 48,
-    status: 'in-progress',
-    archived: false,
-    updatedAt: ago(26),
-    lastChapter: {
-      number: 17,
-      title: 'Mưa đầu hạ',
-      excerpt: 'Ông lão đặt gói thuốc xuống quầy, không nói thêm lời nào.'
-    }
-  },
-  {
-    id: 'first-snow-station',
-    title: 'Ga tàu mùa tuyết đầu',
-    originalTitle: '初雪の駅',
-    description: 'Người trực ga cuối cùng của một tuyến tàu sắp đóng cửa.',
-    sourceLanguage: 'ja',
-    chapterCount: 8,
-    status: 'not-started',
-    archived: false,
-    updatedAt: ago(74)
-  },
-  {
-    id: 'jade-court',
-    title: 'Ngọc đình ký',
-    originalTitle: '玉庭記',
-    description: 'Chuyện cung đình qua lời một nữ quan chép sử.',
-    sourceLanguage: 'zh-Hant',
-    chapterCount: 120,
-    status: 'paused',
-    archived: false,
-    updatedAt: ago(24 * 6),
-    lastChapter: {
-      number: 64,
-      title: 'Yến tiệc cuối thu',
-      excerpt: 'Nàng nâng chén, nhưng ánh mắt vẫn dừng ở cửa điện.'
-    }
-  },
-  {
-    id: 'harbor-notes',
-    title: 'Harbor Notes',
-    description: 'Tùy bút về một thị trấn cảng.',
-    sourceLanguage: 'en',
-    chapterCount: 5,
-    status: 'in-progress',
-    archived: true,
-    updatedAt: ago(24 * 40),
-    lastChapter: { number: 5, title: 'Low Tide', excerpt: 'Nước rút để lộ những bậc đá cũ.' }
+/** Converts a work as stored by the main process into the shape the screens use. */
+export function toWork(summary: WorkSummary): Work {
+  return {
+    id: summary.id,
+    title: summary.title,
+    originalTitle: summary.originalTitle ?? undefined,
+    description: summary.description ?? undefined,
+    sourceLanguage: summary.sourceLang,
+    chapterCount: summary.chapterCount,
+    status: summary.status,
+    archived: summary.archived,
+    updatedAt: new Date(summary.updatedAt),
+    lastChapter: summary.lastChapter
+      ? { number: summary.lastChapter.number, title: summary.lastChapter.title }
+      : undefined
   }
-]
-
-export const sampleActivities: Activity[] = [
-  { id: 'a1', kind: 'chapter-updated', workId: 'lantern-street', chapterNumber: 3, at: ago(1.5) },
-  {
-    id: 'a2',
-    kind: 'chapter-updated',
-    workId: 'mountain-apothecary',
-    chapterNumber: 17,
-    at: ago(26)
-  },
-  { id: 'a3', kind: 'created', workId: 'first-snow-station', at: ago(74) },
-  { id: 'a4', kind: 'paused', workId: 'jade-court', at: ago(24 * 6) }
-]
+}

@@ -1,4 +1,12 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState, type JSX } from 'react'
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type ReactNode
+} from 'react'
 import { AddIcon } from '@solar-icons/react/linear/add'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { ArchiveIcon } from '@solar-icons/react/linear/archive'
@@ -8,7 +16,6 @@ import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { FilterIcon } from '@solar-icons/react/linear/filter'
 import { FolderOpenIcon } from '@solar-icons/react/linear/folder-open'
-import { HistoryIcon } from '@solar-icons/react/linear/history'
 import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
 import { PauseIcon } from '@solar-icons/react/linear/pause'
 import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
@@ -25,6 +32,7 @@ import { TextField } from '../../components/TextField'
 import { formatFullDate, formatUpdated, formatUpdatedParts } from './format'
 import { LanguageMark } from './LanguageMark'
 import type { LibrarySection } from './LibrarySidebar'
+import { matchesQuery } from './search'
 import { WorkCover } from './WorkCover'
 import {
   byUpdated,
@@ -32,8 +40,6 @@ import {
   languages,
   RECENT_DAYS,
   statusLabels,
-  type Activity,
-  type ActivityKind,
   type Work,
   type WorkStatus
 } from './works'
@@ -93,12 +99,19 @@ export interface LibraryActions {
 export interface LibraryScreenProps extends LibraryActions {
   section: LibrarySection
   works: Work[]
-  activities: Activity[]
+  /** Messages shown above the library, e.g. work files that could not be opened. */
+  notices?: ReactNode
 }
 
 export function LibraryScreen(props: LibraryScreenProps): JSX.Element {
   if (props.works.length === 0) {
-    return <EmptyLibrary onCreateWork={props.onCreateWork} onOpenExisting={props.onOpenExisting} />
+    return (
+      <EmptyLibrary
+        notices={props.notices}
+        onCreateWork={props.onCreateWork}
+        onOpenExisting={props.onOpenExisting}
+      />
+    )
   }
   return <PopulatedLibrary {...props} />
 }
@@ -106,7 +119,7 @@ export function LibraryScreen(props: LibraryScreenProps): JSX.Element {
 function PopulatedLibrary({
   section,
   works,
-  activities,
+  notices,
   ...actions
 }: LibraryScreenProps): JSX.Element {
   const [status, setStatus] = useState<StatusFilter>('any')
@@ -137,15 +150,13 @@ function PopulatedLibrary({
   )
 
   const visible = useMemo(() => {
-    const needle = deferredQuery.trim().toLocaleLowerCase('vi')
     return works
       .filter(sectionFilter[section])
       .filter((work) => status === 'any' || work.status === status)
       .filter(
         (work) =>
-          !needle ||
-          work.title.toLocaleLowerCase('vi').includes(needle) ||
-          (work.originalTitle?.toLocaleLowerCase('vi').includes(needle) ?? false)
+          matchesQuery(work.title, deferredQuery) ||
+          (work.originalTitle !== undefined && matchesQuery(work.originalTitle, deferredQuery))
       )
       .sort((a, b) => (sort === 'title' ? collator.compare(a.title, b.title) : byUpdated(a, b)))
   }, [works, section, status, sort, deferredQuery])
@@ -155,8 +166,14 @@ function PopulatedLibrary({
 
   return (
     <div className="@container mx-auto max-w-[1440px] px-6 pt-7 pb-12">
-      <div className="grid grid-cols-1 gap-6 @min-[1000px]:grid-cols-[minmax(0,1fr)_280px]">
+      <div
+        className={cx(
+          'grid grid-cols-1 gap-6',
+          lastWorkedOn && '@min-[1000px]:grid-cols-[minmax(0,1fr)_280px]'
+        )}
+      >
         <div className="flex min-w-0 flex-col gap-5">
+          {notices}
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 flex-col gap-1">
               <h2 className="text-[24px] leading-[1.2] font-semibold tracking-[-0.045em]">
@@ -233,26 +250,18 @@ function PopulatedLibrary({
               )}
             </div>
           )}
-
-          <div className="@min-[1000px]:hidden">
-            <ActivityPanel activities={activities} works={works} />
-          </div>
         </div>
 
-        <aside
-          className="hidden flex-col gap-4 @min-[1000px]:flex"
-          aria-label="Tiếp tục và hoạt động"
-        >
-          {lastWorkedOn && (
+        {lastWorkedOn && (
+          <aside className="hidden flex-col gap-4 @min-[1000px]:flex" aria-label="Tiếp tục dịch">
             <ContinuePanel
               work={lastWorkedOn}
               layout="side"
               onContinue={actions.onContinueWork}
               onShowRecent={() => actions.onSelectSection('recent')}
             />
-          )}
-          <ActivityPanel activities={activities} works={works} />
-        </aside>
+          </aside>
+        )}
       </div>
 
       <RenameDialog
@@ -329,9 +338,11 @@ function ContinuePanel({
       <p className="text-xs text-ink-muted">
         Chương {chapter.number} · {chapter.title}
       </p>
-      <p className="mt-1 line-clamp-2 border-l-2 border-line-strong pl-2.5 text-xs leading-[1.5]">
-        {chapter.excerpt}
-      </p>
+      {chapter.excerpt && (
+        <p className="mt-1 line-clamp-2 border-l-2 border-line-strong pl-2.5 text-xs leading-[1.5]">
+          {chapter.excerpt}
+        </p>
+      )}
       <p className="mt-1 text-[11px] text-ink-muted">
         Sửa{' '}
         <time dateTime={work.updatedAt.toISOString()} title={formatFullDate(work.updatedAt)}>
@@ -375,73 +386,6 @@ function ContinuePanel({
         {details}
       </div>
       {button}
-    </section>
-  )
-}
-
-const activityCopy: Record<ActivityKind, { icon: JSX.Element; label(a: Activity): string }> = {
-  'chapter-updated': {
-    icon: <DocumentTextIcon size={15} />,
-    label: (a) => 'Đã cập nhật Chương ' + a.chapterNumber
-  },
-  paused: { icon: <PauseIcon size={15} />, label: () => 'Tạm dừng dịch' },
-  resumed: { icon: <PlayIcon size={15} />, label: () => 'Dịch tiếp' },
-  created: { icon: <AddIcon size={15} />, label: () => 'Đã tạo tác phẩm' },
-  archived: { icon: <ArchiveIcon size={15} />, label: () => 'Đã lưu trữ' }
-}
-
-const ACTIVITY_LIMIT = 5
-
-function ActivityPanel({
-  activities,
-  works
-}: {
-  activities: Activity[]
-  works: Work[]
-}): JSX.Element {
-  const titles = new Map(works.map((work) => [work.id, work.title]))
-  const latest = [...activities]
-    .sort((a, b) => b.at.getTime() - a.at.getTime())
-    .slice(0, ACTIVITY_LIMIT)
-
-  return (
-    <section
-      aria-labelledby="activity-heading"
-      className="flex flex-col gap-3 rounded-panel border border-line bg-sidebar p-4"
-    >
-      <PanelHeading id="activity-heading" icon={<HistoryIcon size={16} />}>
-        Hoạt động gần đây
-      </PanelHeading>
-      {latest.length === 0 ? (
-        <p className="text-xs text-ink-muted">Chưa có hoạt động nào.</p>
-      ) : (
-        <ol className="flex flex-col gap-3.5">
-          {latest.map((activity) => {
-            const { day, time } = formatUpdatedParts(activity.at)
-            const copy = activityCopy[activity.kind]
-            return (
-              <li key={activity.id} className="flex gap-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-control text-ink-muted">
-                  {copy.icon}
-                </span>
-                <div className="flex min-w-0 flex-col">
-                  <span className="text-xs font-semibold">{copy.label(activity)}</span>
-                  <span className="truncate text-[11px] text-ink-muted">
-                    {titles.get(activity.workId) ?? 'Tác phẩm đã xóa'}
-                  </span>
-                  <time
-                    className="text-[11px] text-ink-muted"
-                    dateTime={activity.at.toISOString()}
-                    title={formatFullDate(activity.at)}
-                  >
-                    {day} · {time}
-                  </time>
-                </div>
-              </li>
-            )
-          })}
-        </ol>
-      )}
     </section>
   )
 }
@@ -697,15 +641,18 @@ const steps = [
 ]
 
 function EmptyLibrary({
+  notices,
   onCreateWork,
   onOpenExisting
 }: {
+  notices?: ReactNode
   onCreateWork(): void
   onOpenExisting(): void
 }): JSX.Element {
   return (
-    <div className="@container mx-auto min-h-full max-w-[1440px] px-6 pt-7 pb-12">
-      <div className="grid min-h-full grid-cols-1 gap-6 @min-[1000px]:grid-cols-[minmax(0,1fr)_280px]">
+    <div className="@container mx-auto flex min-h-full max-w-[1440px] flex-col gap-5 px-6 pt-7 pb-12">
+      {notices}
+      <div className="grid flex-1 grid-cols-1 gap-6 @min-[1000px]:grid-cols-[minmax(0,1fr)_280px]">
         <section className="flex flex-col items-center justify-center rounded-panel border border-line px-8 py-16 text-center">
           <div className="mb-9 flex items-center gap-2" aria-hidden="true">
             {(['en', 'zh-Hans', 'zh-Hant', 'ja'] as const).map((language) => (
