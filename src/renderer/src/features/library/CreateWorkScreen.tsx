@@ -162,7 +162,7 @@ export function CreateWorkScreen({
         )}
 
         <div className="flex justify-end gap-2 border-t border-line pt-5">
-          <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+          <Button variant="secondary" size="lg" onClick={onCancel} disabled={submitting}>
             Hủy
           </Button>
           <Button type="submit" size="lg" disabled={submitting}>

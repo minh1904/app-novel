@@ -79,7 +79,6 @@ export function CoverPicker({
         <div className="flex gap-1.5">
           <Button
             variant="secondary"
-            size="sm"
             className="flex-1"
             disabled={disabled || busy}
             onClick={() => input.current?.click()}
