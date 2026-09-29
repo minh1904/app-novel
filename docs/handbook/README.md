@@ -39,6 +39,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Duy trì | [Nhật ký handbook](maintenance/changelog.md) | Các thay đổi có ý nghĩa |
 | Quyết định | [ADR-001: đổi tên Mira](decisions/0001-mira-brand.md) | Accepted — yêu cầu người dùng |
 | Quyết định | [ADR-002: AI dịch từ raw là luồng chính](decisions/0002-ai-first-translation.md) | Accepted — thay “AI sau P0” |
+| Quyết định | [ADR-003: bộ công nghệ lưu trữ và soạn thảo](decisions/0003-technology-stack.md) | Accepted — có chạy thử |
 
 ## Cách hiểu nội dung
 
