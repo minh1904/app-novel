@@ -29,9 +29,7 @@ function check(name: string, db: Db): void {
   const actual = dumpSchema(db)
   if (process.env.MIRA_UPDATE_SNAPSHOTS === '1') writeFileSync(path, actual, 'utf-8')
   // Git may check the fixture out with CRLF; the schema itself always uses LF.
-  expect(actual).toBe(readFileSync(path, 'utf-8').replace(/
-/g, '
-'))
+  expect(actual).toBe(readFileSync(path, 'utf-8').replaceAll('\r\n', '\n'))
 }
 
 describe('schema version 1 is frozen', () => {
