@@ -1,20 +1,24 @@
 # Mira — quyết định còn mở
 
-Cập nhật 2026-09-29; kế thừa quyết định ngày 2026-09-23. Trang này chỉ liệt kê điều cần quyết định, tránh để các câu hỏi cũ trong nhật ký bị hiểu là chưa được trả lời. Mục đã chốt nằm ở [decisions.md](decisions.md).
+Cập nhật 2026-09-29 sau [ADR-002](../decisions/0002-ai-first-translation.md); kế thừa quyết định ngày 2026-09-23. Trang này chỉ liệt kê điều cần quyết định, tránh để các câu hỏi cũ trong nhật ký bị hiểu là chưa được trả lời. Mục đã chốt nằm ở [decisions.md](decisions.md).
 
 | Ưu tiên | Câu hỏi | Vì sao cần | Trạng thái |
 | --- | --- | --- | --- |
-| P0 | TXT và Markdown đã chốt; mức giữ cú pháp Markdown (tiêu đề, bảng, link, code...) và encoding khi import/export thế nào? | Cần tiêu chí không mất nội dung và định dạng. | Cần đặc tả + dữ liệu mẫu; không cần hỏi lại định dạng file. |
-| P0 | Đề xuất căn chỉnh offline đã chốt; thuật toán, ngưỡng tin cậy và UX kiểm tra vùng mơ hồ nên thế nào? | Bảo vệ bản dịch thoát ý, gộp/tách và đảo đoạn. | Cần prototype với dữ liệu Anh/Trung/Nhật → Việt. |
-| Kỹ thuật | Lưu nội bộ bằng một DB thư viện hay một package mỗi project? | App quản lý nội bộ đã chốt; cấu trúc vật lý cần spike backup/restore. | Chưa chốt. |
-| Kỹ thuật | Electron đã dùng cho scaffold; CodeMirror/SQLite và chi phí runtime có phù hợp với editor P0 không? | Cần đo editor, bộ cài, RAM và triển khai offline trước khi khóa stack P0. | [Đề xuất stack](../engineering/architecture.md); Electron/React là scaffold hiện tại, phần còn lại chưa chốt. |
+| P0 | Đơn vị gửi AI là câu, đoạn hay cửa sổ nhiều đoạn? Định dạng nào đảm bảo ánh xạ lại đúng segment ID (dòng đánh số, JSON)? | Quyết định chất lượng văn và việc liên kết sinh ra có tin cậy. | Đang nghiên cứu công cụ hiện có; cần spike với 2–3 provider. |
+| P0 | Provider mặc định, giới hạn chi phí mỗi job, lưu khóa API và dữ liệu nào được gửi đi? | Người dùng cần biết trước chi phí và phạm vi gửi. | Cần spec AI; hướng kết nối đã chốt ở decisions. |
+| P0 | Ghép chương giữa các nguồn raw khi bản EN/JA chia chương khác bản gốc? | Nhiều nguồn đã chốt; ghép sai làm hỏng ngữ cảnh gửi AI. | Cần mẫu dữ liệu thật. |
+| P0 | TXT và Markdown đã chốt; mức giữ cú pháp và encoding khi import/export thế nào? Có cần xuất “dán sạch” và chọn kiểu lời thoại? | Tiêu chí không mất nội dung; nền tảng đăng chủ yếu nhận văn bản dán. | Cần đặc tả + dữ liệu mẫu. |
+| P0 | Ma trận xưng hô: cấu trúc (người nói, người nghe, cách xưng, từ chương nào) và cách AI đề xuất cập nhật để người dùng duyệt? | Nỗi đau nhất quán lớn nhất theo nghiên cứu. | Màn xem ưu tiên trước; cơ chế cập nhật cần spec. |
+| P1 | Văn phong từ bản dịch cũ: ví dụ mẫu truy xuất theo câu tương tự, bản hướng dẫn văn phong, hay cả hai? | Cần căn chỉnh bản cũ với raw; chi phí prompt tăng. | Chờ nghiên cứu công cụ + thử. |
+| Kỹ thuật | `node:sqlite` có chạy trong Electron 44 main process không? | Quyết định có cần native module. | Cần smoke-test; đề xuất một file SQLite mỗi tác phẩm ở [khả thi kỹ thuật](../research/technical-feasibility.md). |
+| Kỹ thuật | Căn chỉnh offline có cần model embedding trong bản cài? | Sau ADR-002 căn chỉnh rời đường chính; vẫn cần cho nhiều nguồn và bản cũ. | Lát cắt đầu dùng Bậc 0; đo trên corpus trước khi quyết. |
 | UX | Khi mở app dùng theme theo Windows hay ghi nhớ lựa chọn gần nhất? | Cần cho setting và screenshot mặc định. | Chưa chốt. |
-| Brand | Logo/wordmark, subtitle/tagline chính thức và khả dụng nhãn hiệu/domain/store cho Mira? | Tên sản phẩm đã chốt; nhận diện và phát hành công khai còn mở. | Chưa chốt. |
-| Sản phẩm | Giấy phép của Mira, mô hình thu phí và kênh phân phối? | Khảo sát nguồn mở/đóng không tự quyết định mô hình kinh doanh. | Chưa chốt; cần nghiên cứu người dùng. |
-| Nghiên cứu | Hai mode giảm công biên tập đủ để người dùng đổi công cụ không? | Cần quan sát thay vì chỉ so checklist chức năng. | [Kế hoạch kiểm chứng](../delivery/validation.md), chưa thực hiện. |
-| Sau P0 | AI provider, online/local, quyền agent và UX duyệt diff; hỗ trợ Markdown docs/MDX nhiều file. | AI và docs là giai đoạn sau. | Chưa cần khóa cho bản đầu. |
+| Brand | Logo/wordmark, subtitle/tagline chính thức và khả dụng nhãn hiệu/domain/store cho Mira? | Tên đã chốt; nhận diện còn mở. | Chưa chốt. |
+| Sản phẩm | Giấy phép của Mira, mô hình thu phí và kênh phân phối? | Không tự suy ra từ khảo sát đối thủ. | Chưa chốt; cần nghiên cứu người dùng. |
+| Nghiên cứu | Người dịch bằng AI có thực sự soát theo segment, hay chỉ đọc lướt toàn văn? | Quyết định mức đầu tư cho mode Từng câu. | [Kế hoạch kiểm chứng](../delivery/validation.md), chưa thực hiện. |
+| Sau bản đầu | Tài khoản, đồng bộ, docs/MDX nhiều file, EPUB. | Đã chốt để sau. | Chưa cần khóa. |
 
-**Đã trả lời:** AI không nằm trong bản đầu; app lưu nội bộ và cho xuất/backup; Source editor + Reading view riêng và đề xuất căn chỉnh offline ở P0; ba cặp ngôn ngữ Anh/Trung giản thể/phồn thể/Nhật → Việt; nhập/xuất TXT/MD; sửa lỗi bản gốc bằng thao tác riêng có lịch sử/hoàn tác; tên là Mira; Tailwind CSS v4 + Base UI cho component tương tác dùng chung. Không hỏi lại trừ khi người dùng đổi ý.
+**Đã trả lời:** app lưu nội bộ và cho xuất/backup; Source editor + Reading view riêng; đề xuất căn chỉnh offline; ba cặp ngôn ngữ Anh/Trung giản thể/phồn thể/Nhật → Việt; nhập/xuất TXT/MD; sửa lỗi bản gốc bằng thao tác riêng có lịch sử/hoàn tác; tên là Mira; Tailwind CSS v4 + Base UI. Ngày 2026-09-29: **AI dịch từ raw là luồng chính**; nhiều nguồn raw với nguồn chính do người dùng chọn; văn phong từ bản dịch cũ; ma trận xưng hô; kết nối API key/OpenRouter/tương thích OpenAI, không OAuth thuê bao; tài khoản và đồng bộ để sau. Không hỏi lại trừ khi người dùng đổi ý.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Phiên bản **0.1 · 2026-09-29**. Tài liệu sống trong Git để xây sản phẩm; chưa phải hướng dẫn sử dụng ứng dụng hoàn thiện.
 
-Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối chiếu chi tiết khi cần. Mục tiêu P0 là vòng **nhập → biên tập hai mode → lưu/mở lại → xuất/backup/restore** trên Windows, offline. [Hiện trạng code](engineering/current-state.md) còn ở mức scaffold và thư viện mẫu.
+Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối chiếu chi tiết khi cần. Mục tiêu bản đầu là vòng **nhập raw → AI dịch → soát/sửa hai mode → lưu/mở lại → xuất/backup/restore** trên Windows; mọi thứ trừ bước gọi AI chạy offline ([ADR-002](decisions/0002-ai-first-translation.md)). [Hiện trạng code](engineering/current-state.md) còn ở mức scaffold và thư viện mẫu.
 
 ## Đường đọc
 
@@ -18,11 +18,14 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Sản phẩm | [Định hướng và người dùng](product/vision.md) | Ràng buộc đã chốt + giả thuyết giá trị |
 | Sản phẩm | [Quyết định hiện hành](product/decisions.md) | Nguồn chính của quyết định đã chốt |
 | Sản phẩm | [Brand Mira](product/brand.md) | Tên đã chốt, nhận diện còn mở |
-| Sản phẩm | [Scope P0/P1](product/scope.md) | Đề xuất phạm vi chi tiết |
+| Sản phẩm | [Scope bản đầu](product/scope.md) | Bảng ưu tiên S0–S3, thứ tự đã chốt |
 | Sản phẩm | [Câu hỏi còn mở](product/open-questions.md) | Những điều chưa khóa |
 | Nghiên cứu | [Thị trường nguồn đóng và nguồn mở](research/market-landscape.md) | Tài liệu công khai, chưa benchmark |
 | Nghiên cứu | [Mapping chức năng → Mira](research/feature-map.md) | Ưu tiên, mã yêu cầu và kiểm chứng |
 | Nghiên cứu | [Editor segment](research/segment-editors.md) | Nghiên cứu UX kế thừa 2026-09-23 |
+| Nghiên cứu | [Hệ sinh thái dịch truyện Việt và nhà cung cấp AI](research/vietnam-ecosystem.md) | Quan sát 2026-09-29, chưa phỏng vấn |
+| Nghiên cứu | [Khả thi kỹ thuật: dữ liệu, lưu trữ, căn chỉnh](research/technical-feasibility.md) | Đọc tài liệu + chạy thử một phần |
+| Nghiên cứu | [Công cụ dịch AI, nhiều nguồn, văn phong](research/ai-translation-tools.md) | Đọc README/mã, chưa chạy thử |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
@@ -35,6 +38,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Duy trì | [Mẫu research / spec / ADR / kiểm chứng](maintenance/templates.md) | Dùng cho các chương bổ sung |
 | Duy trì | [Nhật ký handbook](maintenance/changelog.md) | Các thay đổi có ý nghĩa |
 | Quyết định | [ADR-001: đổi tên Mira](decisions/0001-mira-brand.md) | Accepted — yêu cầu người dùng |
+| Quyết định | [ADR-002: AI dịch từ raw là luồng chính](decisions/0002-ai-first-translation.md) | Accepted — thay “AI sau P0” |
 
 ## Cách hiểu nội dung
 

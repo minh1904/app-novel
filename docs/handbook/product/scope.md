@@ -1,104 +1,113 @@
-# Scope v0.1 — Mira
+# Scope bản đầu — Mira
 
-Cập nhật: 2026-09-23. **Bản đề xuất để chốt roadmap**, không tự coi mọi mục dưới đây là yêu cầu đã được duyệt. Căn cứ đã chốt: app Windows với biên tập cốt lõi offline, dữ liệu app lưu nội bộ có xuất/backup, hai mode Toàn văn/Từng câu dùng chung nội dung, AI sau bản đầu, đề xuất căn chỉnh offline ngay P0. P0 hỗ trợ Anh/Trung giản thể và phồn thể/Nhật → Việt cho dịch giả truyện; sản phẩm cần có đường mở rộng sang dịch tài liệu về sau. Design system hiện hành nằm ở [design-system-v1.md](../experience/design-system.md), không lấy màu từ mockup gốc.
+Cập nhật: **2026-09-29** (v0.2, viết lại theo [ADR-002](../decisions/0002-ai-first-translation.md)) · Trạng thái: **thứ tự ưu tiên đã chốt** theo [roadmap](../delivery/roadmap.md); chi tiết hành vi từng hạng mục cần spec riêng trước khi làm. Chủ trì: chủ sản phẩm.
 
-## 1. Bài toán và người dùng đầu tiên
+Trang này trả lời câu hỏi **làm gì trước, làm gì sau, và cái gì chưa làm**. Căn cứ đã chốt nằm ở [quyết định hiện hành](decisions.md); lý do chọn ở [nghiên cứu](../research/feature-map.md).
 
-Dịch giả cá nhân làm việc với truyện nhiều chương, có thể dịch tuần tự từng câu hoặc viết/sửa cả chương dưới dạng Markdown. Họ cần đọc bản gốc, duy trì giọng văn và thuật ngữ xuyên chương, chuyển mode mà không mất chữ hoặc làm sai liên kết câu. Họ có thể bắt đầu từ chỉ bản gốc hoặc nhập một bản dịch toàn văn đã có.
+## 1. Bản đầu giải bài toán gì
 
-**Giá trị của bản đầu:** một workspace Windows lưu tại máy, cho phép nhập → dịch → kiểm tra → xuất chương; dữ liệu vẫn đọc/sửa/lưu được khi không có internet. AI thuộc giai đoạn sau; bản đầu không phụ thuộc AI hoặc kết nối mạng.
+Dịch giả truyện dài (Anh/Trung/Nhật → Việt) muốn **AI dịch từ raw theo chương, rồi soát và sửa** trong một workspace trên máy, giữ tên riêng, xưng hô và văn phong nhất quán xuyên chương, và mang bản dịch đi đăng. Mọi thứ trừ bước gọi AI chạy offline.
 
-## 2. Scope bản dùng thử lõi (P0 — bắt buộc trước khi coi sản phẩm dùng được)
+Vòng hoàn chỉnh:
 
-| Nhóm | Trong scope | Hành vi cần thấy |
-| --- | --- | --- |
-| Thư viện | Danh sách tác phẩm, tìm kiếm, tạo/đổi tên/lưu trữ; vào lại chương gần nhất | Có trạng thái thư viện trống và đã có dữ liệu; “Mở tác phẩm” khác “Tiếp tục dịch” |
-| Cấu trúc truyện | Tác phẩm → danh sách chương; tạo, đổi tên, sắp xếp thủ công | Không bắt nhập cả tập để tạo tác phẩm |
-| Nhập liệu | Dán văn bản hoặc nhập một chương TXT/MD cho bản gốc; bản dịch TXT/MD có sẵn là tùy chọn; preview trước khi lưu | Không dịch AI, không ép căn chỉnh lúc nhập |
-| Mode Toàn văn | Bản gốc/bản dịch là hai văn bản dài song song; bản dịch sửa được bằng Markdown; xem đọc và sửa, undo/redo, tìm trong chương | Hai cột cuộn/chiều dài độc lập, không có số nối hoặc đường nối |
-| Mode Từng câu | Bảng segment kiểu Smartcat: nguồn trái, đích phải; chọn/sửa hàng, tìm/lọc, trạng thái Chưa dịch/Đang dịch/Đã dịch/Cần kiểm tra | Có gộp/tách câu và nhóm 1:n, n:1; không bắt dịch 1:1 |
-| Chuyển mode | Hai mode sửa cùng nội dung chương; chuyển qua lại giữ vị trí làm việc hợp lý | Sửa ở một mode hiện đúng ở mode kia, không nhân bản nội dung |
-| Sửa lỗi bản gốc | Bản gốc chỉ đọc trong luồng dịch thường; có thao tác sửa lỗi nhập liệu riêng với lịch sử/hoàn tác | Sau khi sửa, liên kết bị ảnh hưởng cần kiểm tra lại; không sửa âm thầm |
-| Căn chỉnh | Đề xuất liên kết offline cho bản dịch toàn văn có sẵn, tách câu theo ngôn ngữ, hàng đợi kiểm tra phần không chắc, chỉnh liên kết bằng tay | Văn bản gốc/dịch không bị hệ thống tự viết lại để ép khớp; chỗ chưa chắc hiển thị rõ |
-| An toàn dữ liệu | Tự lưu local, lịch sử phiên bản tối thiểu, phục hồi sau đóng/crash, backup và restore, xuất bản dịch MD/TXT | Không mất nội dung đã lưu khi không có mạng |
-| Tập trung | Ẩn/hiện điều hướng để vùng đọc rộng hơn; panel AI chỉ xuất hiện ở giai đoạn sau | Có lối trở lại workspace thường |
-| Ngữ cảnh cơ bản | Từ điển tác phẩm tạo/sửa/tìm thủ công; tên nhân vật có thể ghi dưới dạng mục ngữ cảnh đơn giản | Gợi ý thuật ngữ theo mục có sẵn, chưa cần tự trích xuất |
+```text
+Tạo tác phẩm → nhập raw chương → AI dịch theo segment → soát ở Từng câu ⇄ sửa ở Toàn văn
+            → kiểm tra nhất quán → xuất TXT/MD → đóng/mở lại, backup/restore
+```
 
-**Markdown P0 đã chốt cách xem/sửa và định dạng:** Source editor và Reading view riêng, chưa cần Live Preview inline; nhập/xuất TXT và Markdown. Phạm vi cú pháp trong đề xuất: đoạn văn, tiêu đề, nhấn mạnh, dấu phân cách và lời thoại dạng văn bản. Bản đầu cần giữ nguyên cú pháp khi nhập/xuất trong phạm vi hỗ trợ. “Live Preview như Obsidian” là mục tiêu trải nghiệm, không ngầm cam kết tương thích toàn bộ plugin/cú pháp Obsidian. Obsidian phân biệt Reading, Live Preview và Source mode; UX cụ thể ở đây còn cần prototype. [Obsidian views/modes](https://obsidian.md/help/edit-and-read).
+## 2. Nguyên tắc ưu tiên
 
-**Căn chỉnh P0 đã chốt mức hành vi:** đề xuất tự động chạy offline và cho phép kiểm tra/chỉnh tay; không tuyên bố chính xác tuyệt đối. Chỗ tự động tạo liên kết cần ghi nguồn gốc và có thể sửa. Tỷ lệ liên kết không phải tỷ lệ hoàn thành bản dịch. Chi tiết: [alignment-flow.md](../experience/alignment.md).
+1. **Không mất chữ** đứng trên mọi tính năng: dữ liệu bền trước, tính năng sau.
+2. **Một chương xuyên suốt trước nhiều chương**; nhiều chương trước nhiều nguồn/văn phong.
+3. **Giao diện xem được sớm nhưng trên dữ liệu thật**; AI thật đến sau provider giả lập.
+4. Một hạng mục chỉ vào mốc khi mốc trước đã qua nghiệm thu.
 
-## Mockup để đối chiếu luồng
+## 3. Bảng ưu tiên
 
-- [Workspace gốc](../../assets/original-workspace.png): tham khảo bố cục, không dùng palette/logo làm chuẩn.
-- [Toàn văn](../../assets/mode-1-full-text.png) và [chế độ tập trung](../../assets/focus-mode.png): tham khảo hai pane độc lập, không có đường nối.
-- [Từng câu](../../assets/mode-2-sentence-smartcat-inspired.png) và [ảnh Smartcat](../../assets/smartcat-reference.png): tham khảo editor theo hàng segment.
-## 3. Lớp AI và ngữ cảnh mở rộng (P1 — sau khi P0 giữ dữ liệu tin cậy)
+Mức: **S0** nền bắt buộc · **S1** lát cắt một chương · **S2** AI thật và nhất quán · **S3** khác biệt nâng cao · **Sau** ngoài bản đầu.
 
-- AI Chat theo chương/vùng chọn: dịch, viết lại, giải thích, kiểm tra thuật ngữ. Khi mất mạng, panel hiển thị trạng thái không khả dụng nhưng editor vẫn hoạt động.
-- AI chỉ tạo **đề xuất**; người dùng xem phần thay đổi rồi áp dụng/hoàn tác. Bản gốc mặc định chỉ đọc. Không để agent ghi đè âm thầm vào toàn chương.
-- Ngữ cảnh có kiểm soát: câu/đoạn lân cận, từ điển, ghi chú nhân vật và hướng dẫn văn phong. Người dùng thấy phạm vi gửi đi; chưa mặc định đưa toàn bộ tác phẩm cho AI.
-- Mở rộng hồ sơ nhân vật, thế giới quan, ghi chú văn phong; gợi ý nhất quán và QA. Benchmark cần mục tiêu đo riêng trước khi triển khai.
+### S0 — Nền dữ liệu (M0)
 
-**Đã chốt:** AI thuộc giai đoạn sau P0. Chưa chốt AI local/offline, model/provider và chi phí của giai đoạn đó.
+| ID | Hạng mục | Làm tối thiểu | Chưa làm | MIR |
+| --- | --- | --- | --- | --- |
+| S0.1 | Kho lưu trữ | `library.db` + một file SQLite mỗi tác phẩm; WAL; transaction trong main process; IPC có kiểu | Đồng bộ, tài khoản | 05 |
+| S0.2 | Mô hình nội dung | Tác phẩm → chương → văn bản theo bên (raw/dịch) có revision; segment có ID; link n:m | Nhiều nguồn raw (S3) | 02, 03 |
+| S0.3 | Thư viện thật | Tạo/đổi tên/lưu trữ tác phẩm, danh sách chương, “tiếp tục chương gần nhất” đọc từ kho | Tìm/lọc nâng cao | 01 |
+| S0.4 | Provider giả lập | Interface provider + provider mock offline (độ trễ, lỗi giả lập) | Provider thật (S2) | 09 |
+| S0.5 | Backup/restore một tác phẩm | Xuất một file tác phẩm, mở trên profile sạch; từ chối an toàn gói lỗi | Backup toàn thư viện theo lịch | 05 |
 
-## 4. Ngoài scope bản đầu
+### S1 — Một chương AI xuyên suốt (M1)
 
-- Cộng tác thời gian thực, tài khoản và đồng bộ nhiều thiết bị.
-- Web/PWA, macOS, Linux, điện thoại.
-- Tự động xuất bản lên nền tảng truyện, hệ thống bản quyền/đăng nhập nguồn, scraping hàng loạt.
-- Dịch AI hàng loạt toàn tác phẩm mặc định, tự áp dụng không xem diff.
-- Nhập EPUB/DOCX/PDF/OCR; nhập nhiều chương tự nhận biết cấu trúc; plugin Obsidian; tính năng định dạng Markdown tùy ý.
-- Translation memory quy mô CAT chuyên nghiệp, workflow duyệt nhiều vai trò, marketplace dịch giả.
-- Cam kết tự căn chỉnh hoàn hảo sau khi bản dịch đảo đoạn/viết lại gần như cả chương.
+| ID | Hạng mục | Làm tối thiểu | Chưa làm | MIR |
+| --- | --- | --- | --- | --- |
+| S1.1 | Nhập raw | Dán hoặc nhập một tệp TXT/MD cho một chương; preview; chuẩn hóa newline/encoding theo spec | Nhập cả tập, EPUB | 06 |
+| S1.2 | Chia segment | Tách câu theo ngôn ngữ (sentencex cho ZH/JA; ICU + viết tắt cho EN/VI); giữ ranh giới đoạn/thoại | Người dùng chỉnh quy tắc tách | 03 |
+| S1.3 | Job dịch AI | Gửi theo đoạn có ID, kiểm tra ID khớp, thử lại phần lỗi, lưu từng segment, dừng/tiếp tục, tiến trình | Chạy nhiều chương song song | 09 |
+| S1.4 | Mode Từng câu | Hàng nguồn/dịch, sửa hàng, trạng thái Chưa dịch / AI đã dịch / Đã soát / Cần kiểm tra, nhảy hàng tiếp | Gộp/tách hàng (S2) | 02, 07 |
+| S1.5 | Mode Toàn văn | Hai pane độc lập; bản dịch sửa bằng CodeMirror (Source); Reading view; undo/redo | Live Preview inline | 02 |
+| S1.6 | Chuyển mode an toàn | Hai mode chung một văn bản và một undo stack; sửa ở Toàn văn đánh dấu segment bị chạm là Cần kiểm tra | Neo lại sau khi sửa tệp ngoài app | 02, 03 |
+| S1.7 | Autosave + phục hồi | Lưu bền trước khi báo đã lưu; phục hồi sau đóng cưỡng bức; snapshot trước job AI | Lịch sử phiên bản có giao diện | 05 |
+| S1.8 | Xuất | TXT/MD bản dịch của chương | Kiểu lời thoại, xuất nhiều chương (S2) | 06 |
 
-Các mục này có thể lên roadmap sau khi có nhu cầu và dữ liệu sử dụng; không bị coi là “không bao giờ làm”.
+### S2 — AI thật và nhất quán (M2)
 
-## 5. Luồng chính phải hoàn thành trọn vẹn
+| ID | Hạng mục | Làm tối thiểu | Chưa làm | MIR |
+| --- | --- | --- | --- | --- |
+| S2.1 | Provider thật | Adapter tương thích OpenAI (OpenRouter, DeepSeek, Ollama/LM Studio), Anthropic, Gemini; OAuth PKCE OpenRouter; khóa lưu bằng `safeStorage` | OAuth thuê bao (bị cấm) | 09 |
+| S2.2 | Chi phí và giới hạn | Ước lượng token/chi phí trước khi chạy; ghi usage thực tế; backoff theo `Retry-After` | Ngân sách theo tháng | 09 |
+| S2.3 | Glossary | Tạo/sửa/tìm theo tác phẩm; import `Names.txt`/`VietPhrase.txt`; chỉ gửi mục xuất hiện trong đoạn | AI tự trích thuật ngữ (S3) | 04 |
+| S2.4 | Ma trận xưng hô — xem | Màn xem/sửa tay: người nói, người nghe, cách xưng, từ chương nào; gửi vào prompt | AI đề xuất cập nhật (S3) | 14 |
+| S2.5 | QA nhất quán | Cảnh báo: tên sai glossary, xưng hô lệch ma trận, segment trống, sót chữ nguồn | Tự sửa | 04, 14 |
+| S2.6 | Nhiều chương | Danh sách chương, sắp xếp, dịch hàng loạt có hàng đợi | Tự nhận ranh giới chương khi nhập | 01 |
+| S2.7 | Gộp/tách segment | Gộp/tách ở Từng câu, undo được | — | 03 |
+| S2.8 | Sửa lỗi raw | Thao tác riêng có lịch sử; link bị ảnh hưởng thành Cần kiểm tra | — | 08 |
+| S2.9 | Nguồn gốc bản dịch | Ghi tay/AI/nhập theo segment và tóm tắt theo chương | — | 09 |
+| S2.10 | Xuất để đăng | Xuất “dán sạch” nhiều chương, tiêu đề chương, chọn kiểu lời thoại (gạch đầu dòng / ngoặc kép) | EPUB/DOCX | 06 |
 
-1. Từ [thư viện](../experience/first-run.md), tạo tác phẩm, chọn ngôn ngữ, thêm chương gốc; có thể thêm bản dịch toàn văn có sẵn.
-2. Mở Toàn văn, viết/chỉnh bản dịch Markdown, đóng app, mở lại và tiếp tục đúng nội dung.
-3. Vào Từng câu, xem liên kết được đề xuất, gộp/tách hoặc sửa vùng Cần kiểm tra, dịch một hàng, quay về Toàn văn và thấy bản dịch đúng.
-4. Sửa toàn văn làm thay đổi ranh giới câu; hệ thống giữ nội dung, chỉ đánh dấu liên kết bị ảnh hưởng để kiểm tra.
-5. Xuất bản dịch ra MD/TXT, backup/restore tác phẩm, làm lại các bước đọc/sửa khi offline.
+### S3 — Khác biệt nâng cao (M3)
 
-## 6. Điều kiện nghiệm thu sản phẩm cho P0
+| ID | Hạng mục | Làm tối thiểu | MIR |
+| --- | --- | --- | --- |
+| S3.1 | Nhiều nguồn raw | Thêm nguồn phụ, người dùng chọn nguồn chính; ghép chương N:M có xác nhận; nguồn phụ gửi AI dạng khối tham khảo | 13 |
+| S3.2 | Văn phong từ bản dịch cũ | Nhập bản cũ, căn chỉnh với raw (Bậc 0), truy xuất cặp câu tương tự làm ví dụ; bản hướng dẫn văn phong người dùng duyệt | 15 |
+| S3.3 | Xưng hô tự cập nhật | AI đề xuất thay đổi ma trận sau mỗi chương; người dùng duyệt | 14 |
+| S3.4 | Glossary tự trích | AI phát hiện thuật ngữ/nhân vật mới mỗi chương; duyệt trước lô lớn | 04 |
+| S3.5 | Căn chỉnh bản dịch có sẵn | Nhập bản dịch toàn văn không phải do Mira tạo, đề xuất liên kết, hàng đợi kiểm tra; embedding tùy chọn | 03 |
 
-- Các luồng ở mục 5 chạy **không cần internet**, trừ tính năng AI P1.
-- Sau mỗi lần lưu/đóng/mở và backup/restore, nội dung bản gốc và bản dịch không bị mất/nhân đôi; trạng thái liên kết chưa chắc không tự biến thành đã xác nhận.
-- Import → export giữ nội dung và Markdown thuộc phạm vi hỗ trợ; mọi thay đổi định dạng không thể giữ phải được báo trước khi áp dụng.
-- Chuyển mode và thao tác gộp/tách có thể undo, hoặc phục hồi từ phiên bản trước trong trường hợp thay đổi lớn.
-- UI vẫn dùng được với chương ngắn, chương dài, thoại, dấu ba chấm, tên riêng, bản dịch 1:n/n:1 và bản dịch bỏ/thêm câu. Chưa đặt ngưỡng hiệu năng cụ thể trước khi có bộ chương mẫu.
-- Người dùng hiểu được sự khác nhau giữa **Chưa dịch**, **Đã dịch** và **Cần kiểm tra liên kết**. Không dùng một phần trăm mơ hồ để gộp cả ba.
+### Sau bản đầu
 
-## 7. Chi tiết cần làm rõ trước roadmap kỹ thuật
+Tài khoản và đồng bộ; cộng tác; web/macOS/mobile; EPUB/DOCX/PDF/OCR; crawler/uploader nền tảng; Live Preview inline; translation memory quy mô CAT; dịch docs/MDX nhiều tệp. Đây là hoãn, không phải “không bao giờ làm”.
 
-1. **Cặp ngôn ngữ P0 đã chốt:** Anh → Việt, Trung giản thể/phồn thể → Việt, Nhật → Việt. Còn cần bộ dữ liệu mẫu cho quy tắc tách câu và căn chỉnh của từng ngôn ngữ.
-2. **Cách lưu nội bộ:** app quản lý dữ liệu và có xuất/backup đã chốt; còn cần chọn DB/package, cách biểu diễn Markdown và metadata căn chỉnh. Không yêu cầu thư mục Markdown do người dùng tự quản lý làm nguồn chuẩn P0.
-3. **Markdown P0 đã chốt:** Source + Reading riêng; còn cần đặc tả phím tắt/chuyển view, cú pháp nhập/xuất và vị trí con trỏ.
-4. **Bản gốc P0 đã chốt:** chỉ đọc trong luồng thường, có thao tác riêng để sửa lỗi nhập liệu với lịch sử/hoàn tác; còn cần đặc tả ảnh hưởng đến căn chỉnh.
-5. **AI sau P0 đã chốt:** cần thiết kế về sau phạm vi tác vụ, quyền agent và cách duyệt diff; không là điều kiện nghiệm thu bản đầu.
-6. **Backup và restore:** định dạng gói, phiên bản schema, phạm vi một tác phẩm/toàn thư viện và cách chọn nơi xuất.
-7. **Bộ chương mẫu và ngưỡng chất lượng:** lấy chương thật có thoại/đa ngôn ngữ/bản dịch thoát ý để đánh giá tách câu, căn chỉnh và hiệu năng.
+## 4. Luồng phải chạy trọn trước khi thử với người dùng
 
-## 8. Mốc ra quyết định
+1. Tạo tác phẩm, chọn cặp ngôn ngữ, nhập raw chương, xem trước.
+2. Chạy AI dịch chương (mock ở M1, provider thật ở M2); ngắt mạng giữa chừng rồi tiếp tục đúng chỗ.
+3. Soát ở Từng câu, sửa vài hàng; sang Toàn văn viết lại một đoạn; quay lại thấy đúng nội dung, vùng bị viết lại hiện Cần kiểm tra.
+4. Glossary/xưng hô được áp dụng; QA bắt lỗi cài sẵn.
+5. Xuất chương; đóng app, mở lại; backup, restore trên profile sạch; đọc/sửa/xuất khi offline.
 
-Trước khi triển khai đầy đủ, làm một vertical slice: **một tác phẩm, một chương gốc, bản dịch viết toàn văn, chuyển sang bảng segment, sửa một câu, quay lại toàn văn, đóng/mở, backup/restore**. Nếu lát cắt này chưa giữ dữ liệu ổn định thì không mở rộng AI, nhân vật hay benchmark.
+## 5. Nghiệm thu bản đầu
 
-Tham khảo sản phẩm: [Smartcat editor và segment](https://help.smartcat.com/editor-functionalities-overview/) cho mode từng câu; [Crowdin editor](https://support.crowdin.com/online-editor/) cho cách tách editor segment và preview toàn file; [memoQ nhập bản đã review](https://docs.memoq.com/12-2/en/Workspace/import-reviewed-document.html) cho việc đối chiếu văn bản toàn phần với segment. Đây là tham khảo luồng, không sao chép giới hạn của các sản phẩm đó.
+- Không mất hoặc nhân đôi nội dung đã báo lưu, qua đóng/mở, crash, backup/restore và chuyển mode.
+- Bản dịch AI không bao giờ gắn sai segment âm thầm; phản hồi hỏng ID được thử lại hoặc đánh dấu.
+- AI không ghi đè hàng người dùng đã sửa khi dịch lại; phải so sánh để chọn.
+- Người dùng phân biệt được **Chưa dịch**, **AI đã dịch**, **Đã soát** và **Cần kiểm tra liên kết**; không gộp thành một phần trăm.
+- Đọc, sửa, lưu, nhập/xuất, backup chạy không cần mạng.
+- Bộ bài chi tiết ở [kế hoạch kiểm chứng](../delivery/validation.md).
 
-## 9. Hướng mở rộng sau P0 — dịch tài liệu
+## 6. Spec cần viết theo thứ tự
 
-Người dùng xác nhận sản phẩm **có thể dịch docs về sau**, không chỉ novel. Điều này là định hướng mở rộng, **chưa đưa hỗ trợ tài liệu kỹ thuật đầy đủ vào P0**. P0 vẫn cần hoàn thiện luồng truyện nhiều chương, offline và chuyển Toàn văn/Từng câu an toàn trước khi mở loại nội dung mới.
+1. **Kho dữ liệu + IPC** (S0.1–S0.3, S0.5) — kèm smoke-test `node:sqlite`.
+2. **Provider interface + định dạng gửi/nhận segment + job dịch** (S0.4, S1.3).
+3. **Nhập raw và chia segment** (S1.1–S1.2) — encoding, newline, Markdown hỗ trợ.
+4. **Editor hai mode + đồng bộ + undo** (S1.4–S1.6).
+5. **Glossary và ma trận xưng hô** (S2.3–S2.5).
 
-Để không phải thay lõi dữ liệu sau này:
+## 7. Định hướng dịch tài liệu (sau bản đầu)
 
-- Mô hình cấp cao nên là **project → document → content blocks**. Với truyện, project là tác phẩm và document là chương; với docs, project có thể là bộ tài liệu và document là trang/file. Nhãn UI đổi theo loại project, không buộc mọi thứ gọi là “tác phẩm/chương” trong schema.
-- Văn bản gốc/dịch, ID khối, trạng thái dịch, lịch sử sửa và metadata căn chỉnh vẫn dùng chung. Quy tắc tách/căn chỉnh chọn theo loại nội dung; văn xuôi ưu tiên câu/đoạn, docs có thể cần tiêu đề, danh sách, bảng và khối mã làm ranh giới.
-- Khi hỗ trợ Markdown docs, phải giữ cấu trúc, link, hình, code fence, inline code, placeholder và frontmatter. Không tự đưa các phần không cần dịch vào segment hoặc sửa chúng khi xuất. MDX, Docusaurus/VitePress/Docsify và cú pháp plugin cụ thể cần quyết định riêng; không ngầm coi là đã hỗ trợ.
-- Luồng nhập/xuất docs có thể cần cây thư mục nhiều file và giữ đường dẫn tương đối. Đây là scope tương lai, không ép UI thư viện P0 phải giả vờ có tính năng đó.
+Mô hình dữ liệu nên giữ đường sang **project → document → content blocks** để hỗ trợ docs về sau: nhãn UI “tác phẩm/chương” không buộc tên trong schema; khi hỗ trợ Markdown docs phải giữ link, hình, code fence, inline code, placeholder và frontmatter, không đưa phần không cần dịch vào segment. MDX và cú pháp framework docs cần quyết định riêng.
 
-Tên **Mira** đủ rộng cho định hướng translation workspace. Logo và tagline vẫn chưa chốt.
+Tham khảo luồng: [Smartcat editor](https://help.smartcat.com/editor-functionalities-overview/), [Crowdin editor](https://support.crowdin.com/online-editor/), [memoQ nhập bản đã review](https://docs.memoq.com/12-2/en/Workspace/import-reviewed-document.html), [Obsidian views](https://obsidian.md/help/edit-and-read).
 
 ---
 

@@ -27,7 +27,10 @@ Mã `MIR-*` là nhãn truy vết handbook, chưa phải issue đã triển khai.
 | MIR-06 | Định dạng và xuất dữ liệu ảnh hưởng công việc tiếp theo | Mang bản dịch đi được | P0 TXT/MD; EPUB/DOCX/PDF sau | Corpus import/export bảo toàn phạm vi đã đặc tả |
 | MIR-07 | Xác nhận segment khác việc văn bản đã tồn tại | Trạng thái minh bạch | P0; tách tiến độ dịch và liên kết | Người dùng giải thích đúng “đã dịch” và “cần kiểm tra liên kết” |
 | MIR-08 | Dịch giả cần sửa lỗi raw | Sửa nguồn có chủ đích | P0 thao tác riêng, lịch sử | Vùng liên kết chịu ảnh hưởng bị đánh dấu, undo được |
-| MIR-09 | Đối thủ cung cấp AI/MT | Hỗ trợ dịch có kiểm soát | P1, không phụ thuộc cho P0 | Đề xuất có diff, phạm vi dữ liệu rõ; provider còn mở |
+| MIR-09 | Đối thủ cung cấp AI/MT; cộng đồng Việt đã chuyển sang dịch AI | AI dịch từ raw có kiểm soát | **Luồng chính bản đầu** ([ADR-002](../decisions/0002-ai-first-translation.md)) | Job dịch tiếp tục sau lỗi; bản dịch gắn đúng segment; nguồn gốc ghi lại; không ghi đè bản đã sửa |
+| MIR-13 | Truyện có nhiều bản raw/bản dịch trung gian | Nhiều nguồn, nguồn chính do người dùng chọn | Bản đầu, sau lát cắt một chương | Ghép chương giữa nguồn; đo chất lượng có/không nguồn phụ |
+| MIR-14 | Xưng hô lệch là nỗi đau lớn nhất | Ma trận xưng hô theo tác phẩm | Bản đầu; màn xem trước, AI đề xuất cập nhật sau | QA bắt xưng hô lệch; người dùng duyệt đề xuất |
+| MIR-15 | Muốn giữ văn phong bản dịch cũ | Ví dụ văn phong trong prompt | Bản đầu, M3 | So chất lượng có/không ví dụ trên corpus |
 | MIR-10 | Ebook tools đáp ứng nhập/xuất sách | Mở rộng khi có nhu cầu | Sau P0; không thêm converter ngay | Corpus định dạng và yêu cầu từ người dùng thật |
 | MIR-11 | TMS có workflow nhóm | Cá nhân trước | Hoãn cloud/cộng tác/marketplace | Chỉ mở khi có nhu cầu lặp lại và mô hình chi phí |
 | MIR-12 | Công cụ cộng đồng có đăng/tải chương | Biên tập độc lập nền tảng | Ngoài P0: crawler/uploader | Quyết định riêng nếu nhu cầu vượt import/export |
