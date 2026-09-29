@@ -29,6 +29,8 @@ Lý do và phạm vi: xem `proposal.md`. Hiện trạng liên quan:
 Chọn `node:sqlite` (Electron 44 → Node 24.21). Không thêm dependency runtime, không cần rebuild native, không cần `asarUnpack`. Toàn bộ chỗ chạm engine nằm trong một module (`storage/sqlite.ts`: mở DB, `pragma`, `transaction()`, `prepare`), các module khác chỉ dùng adapter này.
 
 Phương án khác: `better-sqlite3` (trưởng thành, nhưng cần `@electron/rebuild` theo ABI mỗi lần nâng Electron); `sql.js`/`wa-sqlite` (giữ DB trong bộ nhớ hoặc chạy ở renderer, trái yêu cầu bền và ranh giới IPC).
+**Đã kiểm chứng khi triển khai (2026-09-29):** `electron-vite build` để `node:sqlite` và `valibot` là external (`require(...)` trong `out/main/index.js`, preload không kéo theo valibot). Bản `electron-builder --dir` (asar) mở được và tạo `library.db`; bước NSIS trên máy thử lỗi ở giải nén `winCodeSign` vì thiếu quyền tạo symlink của Windows, không liên quan tới mã. Script `pnpm smoke:sqlite` chạy trong Electron thật để bắt lỗi sau mỗi lần nâng Electron.
+
 Rủi ro: `node:sqlite` mới ở mức release candidate, API có thể đổi → adapter là chỗ duy nhất phải sửa; đường lùi là `better-sqlite3` với cùng adapter.
 
 ### D2. Hai tầng tệp, tệp tác phẩm là nguồn sự thật
@@ -60,9 +62,9 @@ work(id, title, original_title, description, cover_path,        -- đúng một 
      status CHECK IN ('not-started','in-progress','paused'), archived,
      last_chapter_id, created_at, updated_at)
 chapter(id, position, title, created_at, updated_at)
-text(chapter_id, side CHECK IN ('source','target'), content, rev, updated_at,
-     PRIMARY KEY (chapter_id, side))
-segment(id, chapter_id, side, position, start, end, text_rev,
+chapter_text(chapter_id, side CHECK IN ('source','target'), content, rev, updated_at,
+             PRIMARY KEY (chapter_id, side))
+segment(id, chapter_id, side, position, start_offset, end_offset, text_rev,
         status CHECK IN ('ok','dirty','orphaned'), anchor_text)
 link(id, chapter_id, kind CHECK IN ('ai','user'), confidence,
      status CHECK IN ('ok','needs_review','broken'), created_at, reviewed_at)
@@ -71,6 +73,7 @@ provenance(segment_id PRIMARY KEY, origin CHECK IN ('human','ai','mock','import'
            provider, model, at)
 ```
 
+- Tên bảng/cột tránh từ khóa SQL (`text`, `end`) nên không truy vấn nào cần đặt trong dấu nháy. Ràng buộc "một tệp một tác phẩm" là chỉ mục duy nhất trên biểu thức hằng `((1))`. Giữ nguyên `CHECK` cho ngôn ngữ, trạng thái, tên không rỗng, `target_lang = 'vi'`, `end_offset >= start_offset`. Schema v1 được đóng băng bằng test snapshot (`__fixtures__/*.schema.sql`); thay đổi sau khi phát hành phải là migration mới.
 - Thời điểm lưu là số nguyên mili-giây UTC. `chapter.position` là số nguyên; sắp xếp lại reindex cả danh sách trong một transaction (không ràng buộc UNIQUE để tránh xung đột trung gian). Số thứ tự hiển thị suy từ `position`.
 - **Bất biến neo:** mọi thao tác đổi `text.content` chạy trong một transaction cùng lúc thay toàn bộ segment cùng `(chapter_id, side)` và đặt `segment.text_rev = text.rev` mới. Lớp repository là nơi duy nhất ghi hai bảng này.
 - **Xung đột revision:** ghi nhận `expectedRev`; `UPDATE ... WHERE rev = ?` và kiểm số dòng bị ảnh hưởng, 0 dòng → lỗi `conflict`.
@@ -86,9 +89,9 @@ provenance(segment_id PRIMARY KEY, origin CHECK IN ('human','ai','mock','import'
 
 ### D6. IPC: kênh theo miền, kết quả có kiểu, lỗi là dữ liệu
 
-- Kênh dạng `work:list`, `work:create`, `work:update`, `chapter:list`, `chapter:add`, `chapter:reorder`, `chapter:rename`, `text:get`, `text:save`, `backup:export`, `backup:restore`, ... Hợp đồng (tên kênh → kiểu vào/ra) nằm trong `src/shared/`, dùng chung cho preload và main; preload chỉ là ánh xạ mỏng gọi `ipcRenderer.invoke`.
-- Mọi handler qua một hàm bao chung: kiểm tra người gửi (giữ đúng cách của `app:info`), xác thực đầu vào bằng hàm kiểm tra viết tay (ít kiểu ở M0, tránh thêm dependency), bắt lỗi và trả `{ ok: true, value } | { ok: false, error: { code, message } }`. Điều này vì Electron chỉ giữ chuỗi thông báo của lỗi bị ném, mất phân loại.
-- Mã lỗi: `validation`, `not_found`, `conflict`, `unsupported_version`, `corrupt`, `io`, `cancelled`, `untrusted_sender`.
+- Kênh dạng `works:list`, `works:get`, `works:create`, `works:update` (đã có), rồi `chapters:*`, `text:*`, `backup:*`. Tên kênh nằm trong `src/shared/channels.ts` (không import runtime để preload sandbox đóng gói được), kiểu và schema valibot của dữ liệu nằm trong `src/shared/library.ts`, dùng chung cho preload và main; preload chỉ là ánh xạ mỏng gọi `ipcRenderer.invoke`.
+- Mọi handler qua một hàm bao chung: kiểm tra người gửi (giữ đúng cách của `app:info`), xác thực đầu vào bằng **valibot** (ADR-003; schema là nguồn duy nhất cho cả kiểu lẫn kiểm tra, lỗi trả kèm đường dẫn trường để form hiện đúng chỗ), bắt lỗi và trả `{ ok: true, value } | { ok: false, error: { code, message } }`. Điều này vì Electron chỉ giữ chuỗi thông báo của lỗi bị ném, mất phân loại.
+- Mã lỗi: `validation`, `not_found`, `conflict`, `unsupported_version`, `corrupt`, `io`, `cancelled`, `untrusted_sender`, `internal` (lỗi không lường trước, thông báo chung, chi tiết chỉ ghi log ở main). Người gửi hợp lệ chỉ khi là khung chính của cửa sổ chính của ứng dụng; quy tắc này là hàm thuần `guardHandlers` để test không cần Electron.
 - Renderer không bao giờ gửi đường dẫn: hộp thoại lưu/mở do main mở; `cover_path` (nếu dùng) là tệp trong thư mục dữ liệu, không phải đường dẫn người dùng.
 - Thư mục dữ liệu lấy từ `app.getPath('userData')`, cho phép ghi đè bằng biến môi trường `MIRA_DATA_DIR` để chạy test và tách dữ liệu dev.
 
