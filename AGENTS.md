@@ -1,4 +1,14 @@
-# Miyati repository rules
+# Mira repository rules
+
+## Product handbook
+
+Start with [Mira Handbook](docs/handbook/README.md), then read
+[current decisions](docs/handbook/product/decisions.md) and
+[implementation status](docs/handbook/engineering/current-state.md) before product work.
+Distinguish accepted decisions, proposals, research observations, and implemented behavior.
+Update the canonical handbook chapter when its behavior or decision changes; legacy files in
+`docs/` are redirect pages. Follow the [maintenance guide](docs/handbook/maintenance/handbook-guide.md)
+when adding research, specifications, or decision records. Write handbook content in Vietnamese.
 
 ## Commits
 
@@ -28,7 +38,7 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 | `chore` | Other changes that do not touch source code or tests |
 | `revert` | Reverting a previous commit |
 
-**Scope** is optional and names a part of Miyati. Start with `editor`, `segments`, `alignment`, `library`, `storage`, `ui`, `research`, or `docs`; add scopes as modules appear.
+**Scope** is optional and names a part of Mira. Start with `editor`, `segments`, `alignment`, `library`, `storage`, `ui`, `research`, or `docs`; add scopes as modules appear.
 
 **Description:** use the imperative mood ("add", "fix", "remove"), start with a lowercase letter, and omit the trailing period. Keep the entire header at most 72 characters. Keep body and footer lines at most 100 characters. Separate header, body, and footers with blank lines.
 
@@ -39,7 +49,7 @@ Make one logical change per commit. If a change fits two types, split it into tw
 Examples:
 
 ```text
-docs: record Miyati product decisions
+docs: record Mira product decisions
 feat(editor): add full-text source view
 fix(alignment): preserve links after splitting a segment
 refactor(storage)!: move projects into separate databases

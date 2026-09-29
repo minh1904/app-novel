@@ -13,7 +13,7 @@ function createWindow(): void {
     minWidth: 940,
     minHeight: 600,
     show: false,
-    title: 'Miyati',
+    title: 'Mira',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#191919' : '#f1f1f1',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

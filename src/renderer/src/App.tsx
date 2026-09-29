@@ -36,7 +36,7 @@ export function App(): JSX.Element {
 
   useEffect(() => {
     let active = true
-    void window.miyati.getAppInfo().then((info) => {
+    void window.mira.getAppInfo().then((info) => {
       if (active) setAppVersion(info.version)
     })
     return () => {

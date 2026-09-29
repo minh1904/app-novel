@@ -43,3 +43,7 @@ Tauri cũng dùng web UI với backend Rust và Windows WebView. Nó có thể g
 - [electron-vite](https://electron-vite.org/guide/), [electron-builder](https://www.electron.build/).
 - [CodeMirror 6 guide](https://codemirror.net/docs/guide/), [TanStack Virtual](https://tanstack.com/virtual/latest/docs/introduction).
 - [SQLite application file format](https://www.sqlite.org/appfileformat.html).
+
+---
+
+[Mục lục handbook](../README.md)

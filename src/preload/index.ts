@@ -5,4 +5,4 @@ const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>
 }
 
-contextBridge.exposeInMainWorld('miyati', desktopApi)
+contextBridge.exposeInMainWorld('mira', desktopApi)

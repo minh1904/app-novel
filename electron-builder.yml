@@ -1,5 +1,5 @@
-appId: app.miyati.desktop
-productName: Miyati
+appId: app.mira.desktop
+productName: Mira
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -9,8 +9,8 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 win:
   target: nsis
-  executableName: Miyati
+  executableName: Mira
 nsis:
-  artifactName: miyati-setup.exe
-  shortcutName: Miyati
-  uninstallDisplayName: Miyati
+  artifactName: mira-setup.exe
+  shortcutName: Mira
+  uninstallDisplayName: Mira

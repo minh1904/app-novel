@@ -5,7 +5,7 @@ import type { Plugin } from 'vite'
 
 function contentSecurityPolicy(): Plugin {
   return {
-    name: 'miyati-content-security-policy',
+    name: 'mira-content-security-policy',
     transformIndexHtml: {
       order: 'post',
       handler(html, context) {

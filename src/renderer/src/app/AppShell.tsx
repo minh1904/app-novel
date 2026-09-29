@@ -59,13 +59,13 @@ export function AppShell({
           aria-label="Điều hướng chính"
         >
           <div className="flex h-[52px] shrink-0 items-center px-5">
-            <span className="text-[17px] font-semibold tracking-[-0.05em]">Miyati</span>
+            <span className="text-[17px] font-semibold tracking-[-0.05em]">Mira</span>
           </div>
           <div className="flex min-h-0 flex-1 flex-col">{sidebar}</div>
           <div className="flex flex-col gap-2 px-3 pt-3 pb-3">
             {devTools}
             <span className="border-t border-line px-2.5 pt-3 text-[11px] text-ink-muted tabular-nums">
-              {appVersion ? 'Miyati ' + appVersion : 'Miyati'}
+              {appVersion ? 'Mira ' + appVersion : 'Mira'}
             </span>
           </div>
         </aside>

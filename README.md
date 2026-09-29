@@ -1,26 +1,33 @@
-# Miyati
+# Mira
 
-Miyati là workspace dịch thuật dành cho Windows. Bản đầu phục vụ dịch giả truyện với editor **Toàn văn** và **Từng câu** trên cùng nội dung, lưu nội bộ và làm việc cốt lõi offline. Sản phẩm được thiết kế để sau này có thể mở rộng sang dịch tài liệu/docs. AI thuộc giai đoạn sau.
+Mira là workspace dịch thuật cho Windows, dành trước tiên cho dịch giả truyện nhiều chương từ Anh, Trung giản thể/phồn thể và Nhật sang Việt. Mục tiêu lõi: **Toàn văn / Từng câu trên cùng nội dung**, làm việc offline và giữ dữ liệu an toàn. AI và dịch tài liệu là hướng mở rộng sau P0.
 
-Repo đang ở giai đoạn lập roadmap lại từ đầu; prototype cũ đã được bỏ khỏi cây làm việc và còn trong lịch sử Git. Tên thư mục repo `app-novel` không phải tên hiển thị của sản phẩm.
+**Bắt đầu tại [Mira Handbook](docs/handbook/README.md).** Bộ tài liệu nối nghiên cứu thị trường → mục tiêu → phạm vi → trải nghiệm → kỹ thuật → kiểm chứng.
 
-Đọc [mục lục docs](docs/README.md), [quyết định đã chốt](docs/decisions.md) và [câu hỏi còn mở](docs/open-questions.md) trước khi đề xuất tính năng, mô hình dữ liệu, roadmap hoặc UI.
+| Bạn cần | Đọc |
+| --- | --- |
+| Hiểu sản phẩm | [Định hướng](docs/handbook/product/vision.md), [quyết định](docs/handbook/product/decisions.md) |
+| Hiểu đối thủ | [Thị trường](docs/handbook/research/market-landscape.md), [mapping với Mira](docs/handbook/research/feature-map.md) |
+| Tiếp tục phát triển | [Hiện trạng](docs/handbook/engineering/current-state.md), [roadmap](docs/handbook/delivery/roadmap.md) |
+| Bổ sung handbook | [Cách vận hành](docs/handbook/maintenance/handbook-guide.md), [mẫu tài liệu](docs/handbook/maintenance/templates.md) |
 
-## Quy ước đóng góp
+## Chạy scaffold
 
-Commit theo [quy tắc của repo](AGENTS.md#commits), tham chiếu từ point-cloud và áp dụng cho Miyati.
+Yêu cầu Node.js >=22.12 và pnpm 8.9.0 theo package.json.
 
-## Scaffold ứng dụng
+```powershell
+pnpm install
+pnpm dev
+pnpm typecheck
+pnpm lint
+pnpm build
+pnpm preview
+```
 
-Scaffold dùng template React + TypeScript của `@quick-start/electron`, với Electron main/preload giữ sandbox. React renderer dùng Tailwind CSS v4 + Base UI; màn xem component hỗ trợ light/dark. Chưa có thư viện tác phẩm, editor lưu dữ liệu hoặc AI. Chế độ màu khởi đầu theo Windows trong bản xem này; hành vi mặc định của sản phẩm chưa chốt.
+Hiện có Electron + React + TypeScript, Tailwind CSS v4, Base UI, thư viện với dữ liệu mẫu trong bộ nhớ và màn xem component. **Chưa có editor, lưu tác phẩm bền vững, import/export hoặc backup.** Không dùng scaffold để giữ bản dịch thật.
 
-Yêu cầu Node.js từ 22.12 và pnpm 8.9.
+Lần cài/chạy đầu có thể cần tải Electron qua mạng. `pnpm build` tạo bundle trong `out`; `pnpm build:win` tạo installer Windows bằng electron-builder, chưa phải quy trình phát hành chính thức. Nếu terminal đặt `NPM_CONFIG_OFFLINE=true`, chuyển sang `false` khi cài dependency cần mạng.
 
-    pnpm install
-    pnpm dev
-    pnpm typecheck
-    pnpm lint
-    pnpm build
-    pnpm preview
+Brand đổi từ Miyati sang **Mira** ngày 2026-09-29. Thư mục repo `app-novel` giữ nguyên. Xem [brand](docs/handbook/product/brand.md) về định danh bản cài và giới hạn migration.
 
-Lần chạy `pnpm dev` đầu tiên tải binary Electron qua lệnh `electron --version` nếu máy chưa có; lần tải đó cần mạng, còn app sau khi cài vẫn chạy offline. Nếu terminal đang đặt `NPM_CONFIG_OFFLINE=true`, cần chuyển sang `false` khi cài dependency lần đầu. `pnpm build` tạo bundle trong `out`; `pnpm build:win` tạo bộ cài Windows qua electron-builder, chưa phải bản phát hành chính thức. Token Tailwind CSS-first nằm ở src/renderer/src/styles/tokens.css; component ở src/renderer/src/components; font local ở src/renderer/src/assets. Màn xem trong app dùng cùng baseline với docs/design-system-v1.md.
+Commit theo [quy tắc repository](AGENTS.md#commits). Handbook viết bằng tiếng Việt; commit message viết bằng tiếng Anh.

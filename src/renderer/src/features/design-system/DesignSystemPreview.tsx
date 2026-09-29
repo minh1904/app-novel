@@ -20,7 +20,7 @@ export function DesignSystemPreview({ theme }: { theme: Theme }): JSX.Element {
       <div className="mx-auto max-w-[1220px] px-14 pt-[46px] pb-[54px] max-[1100px]:px-8 max-md:px-[18px] max-md:py-8">
         <section className="mb-[52px] max-w-[650px]" id="foundation">
           <p className="mb-2.5 text-[10px] font-semibold tracking-[0.11em] text-ink-muted uppercase">
-            Miyati / 01
+            Mira / 01
           </p>
           <h1 className="mb-[15px] text-[clamp(30px,3.2vw,42px)] leading-[1.1] font-semibold tracking-[-0.055em]">
             Workspace foundations

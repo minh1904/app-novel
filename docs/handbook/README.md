@@ -1,0 +1,43 @@
+# Mira Handbook
+
+Phiên bản **0.1 · 2026-09-29**. Tài liệu sống trong Git để xây sản phẩm; chưa phải hướng dẫn sử dụng ứng dụng hoàn thiện.
+
+Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối chiếu chi tiết khi cần. Mục tiêu P0 là vòng **nhập → biên tập hai mode → lưu/mở lại → xuất/backup/restore** trên Windows, offline. [Hiện trạng code](engineering/current-state.md) còn ở mức scaffold và thư viện mẫu.
+
+## Đường đọc
+
+- **Chủ sản phẩm:** định hướng → thị trường → mapping → scope → roadmap → câu hỏi mở.
+- **Thiết kế:** quyết định → luồng đầu tiên → căn chỉnh → design system → kiểm chứng.
+- **Lập trình:** quyết định → hiện trạng → kiến trúc → scope → roadmap và nghiệm thu.
+- **Người tiếp quản/agent:** đọc quyết định và hiện trạng trước; cập nhật chương chịu trách nhiệm cho nội dung thay đổi.
+
+## Mục lục
+
+| Phần | Chương | Vai trò / trạng thái |
+| --- | --- | --- |
+| Sản phẩm | [Định hướng và người dùng](product/vision.md) | Ràng buộc đã chốt + giả thuyết giá trị |
+| Sản phẩm | [Quyết định hiện hành](product/decisions.md) | Nguồn chính của quyết định đã chốt |
+| Sản phẩm | [Brand Mira](product/brand.md) | Tên đã chốt, nhận diện còn mở |
+| Sản phẩm | [Scope P0/P1](product/scope.md) | Đề xuất phạm vi chi tiết |
+| Sản phẩm | [Câu hỏi còn mở](product/open-questions.md) | Những điều chưa khóa |
+| Nghiên cứu | [Thị trường nguồn đóng và nguồn mở](research/market-landscape.md) | Tài liệu công khai, chưa benchmark |
+| Nghiên cứu | [Mapping chức năng → Mira](research/feature-map.md) | Ưu tiên, mã yêu cầu và kiểm chứng |
+| Nghiên cứu | [Editor segment](research/segment-editors.md) | Nghiên cứu UX kế thừa 2026-09-23 |
+| Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
+| Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
+| Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
+| Trải nghiệm | [Design system](experience/design-system.md) | Baseline đã chốt + scaffold |
+| Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Đối chiếu code ngày 2026-09-29 |
+| Kỹ thuật | [Kiến trúc và spike](engineering/architecture.md) | Scaffold + công nghệ đề xuất |
+| Phát triển | [Roadmap theo điều kiện hoàn thành](delivery/roadmap.md) | Đề xuất thứ tự; không cam kết lịch |
+| Phát triển | [Kế hoạch kiểm chứng](delivery/validation.md) | Người dùng, dữ liệu, nghiệm thu |
+| Duy trì | [Cách xây và cập nhật handbook](maintenance/handbook-guide.md) | Quy ước làm việc đề xuất |
+| Duy trì | [Mẫu research / spec / ADR / kiểm chứng](maintenance/templates.md) | Dùng cho các chương bổ sung |
+| Duy trì | [Nhật ký handbook](maintenance/changelog.md) | Các thay đổi có ý nghĩa |
+| Quyết định | [ADR-001: đổi tên Mira](decisions/0001-mira-brand.md) | Accepted — yêu cầu người dùng |
+
+## Cách hiểu nội dung
+
+**Đã chốt** là điều người dùng xác nhận. **Đề xuất** là phương án cần đánh giá. **Quan sát** có nguồn. **Giả thuyết** cần kiểm chứng. **Đã triển khai** phải có bằng chứng code; không suy ra từ mockup, roadmap hoặc tên nút. Một trang có thể có nhiều trạng thái, từng phần phải ghi rõ.
+
+Khi có mâu thuẫn: chỉ đạo mới nhất của người dùng → quyết định hiện hành → đặc tả chủ đề. Code phản ánh thứ đã làm, không tự chứng minh yêu cầu đã chốt. [Cách duy trì](maintenance/handbook-guide.md) mô tả quy trình cập nhật.

@@ -49,3 +49,7 @@ Trường hợp câu gốc bị lược bỏ có thể là `Gốc X ↔ không c
 - Prototype cần thử thao tác sửa trong mode từng câu rồi quay về Markdown, và chiều ngược lại, bao gồm undo, lịch sử ; AI viết lại vùng chọn thuộc giai đoạn sau P0.
 
 Tham khảo: [Vecalign](https://github.com/thompsonb/vecalign) dùng liên kết 1–nhiều/nhiều–nhiều; [memoQ Alignment Editor](https://docs.memoq.com/current/en/Workspace/alignment-editor.html) cho phép sửa liên kết tự động bằng tay. Đây là nguồn tham khảo, không phải quyết định áp dụng nguyên thuật toán hoặc UI.
+
+---
+
+[Mục lục handbook](../README.md)

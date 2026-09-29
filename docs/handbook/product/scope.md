@@ -1,6 +1,6 @@
-# Scope v0.1 — Miyati
+# Scope v0.1 — Mira
 
-Cập nhật: 2026-09-23. **Bản đề xuất để chốt roadmap**, không tự coi mọi mục dưới đây là yêu cầu đã được duyệt. Căn cứ đã chốt: app Windows với biên tập cốt lõi offline, dữ liệu app lưu nội bộ có xuất/backup, hai mode Toàn văn/Từng câu dùng chung nội dung, AI sau bản đầu, đề xuất căn chỉnh offline ngay P0. P0 hỗ trợ Anh/Trung giản thể và phồn thể/Nhật → Việt cho dịch giả truyện; sản phẩm cần có đường mở rộng sang dịch tài liệu về sau. Design system hiện hành nằm ở [design-system-v1.md](design-system-v1.md), không lấy màu từ mockup gốc.
+Cập nhật: 2026-09-23. **Bản đề xuất để chốt roadmap**, không tự coi mọi mục dưới đây là yêu cầu đã được duyệt. Căn cứ đã chốt: app Windows với biên tập cốt lõi offline, dữ liệu app lưu nội bộ có xuất/backup, hai mode Toàn văn/Từng câu dùng chung nội dung, AI sau bản đầu, đề xuất căn chỉnh offline ngay P0. P0 hỗ trợ Anh/Trung giản thể và phồn thể/Nhật → Việt cho dịch giả truyện; sản phẩm cần có đường mở rộng sang dịch tài liệu về sau. Design system hiện hành nằm ở [design-system-v1.md](../experience/design-system.md), không lấy màu từ mockup gốc.
 
 ## 1. Bài toán và người dùng đầu tiên
 
@@ -26,13 +26,13 @@ Dịch giả cá nhân làm việc với truyện nhiều chương, có thể d�
 
 **Markdown P0 đã chốt cách xem/sửa và định dạng:** Source editor và Reading view riêng, chưa cần Live Preview inline; nhập/xuất TXT và Markdown. Phạm vi cú pháp trong đề xuất: đoạn văn, tiêu đề, nhấn mạnh, dấu phân cách và lời thoại dạng văn bản. Bản đầu cần giữ nguyên cú pháp khi nhập/xuất trong phạm vi hỗ trợ. “Live Preview như Obsidian” là mục tiêu trải nghiệm, không ngầm cam kết tương thích toàn bộ plugin/cú pháp Obsidian. Obsidian phân biệt Reading, Live Preview và Source mode; UX cụ thể ở đây còn cần prototype. [Obsidian views/modes](https://obsidian.md/help/edit-and-read).
 
-**Căn chỉnh P0 đã chốt mức hành vi:** đề xuất tự động chạy offline và cho phép kiểm tra/chỉnh tay; không tuyên bố chính xác tuyệt đối. Chỗ tự động tạo liên kết cần ghi nguồn gốc và có thể sửa. Tỷ lệ liên kết không phải tỷ lệ hoàn thành bản dịch. Chi tiết: [alignment-flow.md](alignment-flow.md).
+**Căn chỉnh P0 đã chốt mức hành vi:** đề xuất tự động chạy offline và cho phép kiểm tra/chỉnh tay; không tuyên bố chính xác tuyệt đối. Chỗ tự động tạo liên kết cần ghi nguồn gốc và có thể sửa. Tỷ lệ liên kết không phải tỷ lệ hoàn thành bản dịch. Chi tiết: [alignment-flow.md](../experience/alignment.md).
 
 ## Mockup để đối chiếu luồng
 
-- [Workspace gốc](assets/original-workspace.png): tham khảo bố cục, không dùng palette/logo làm chuẩn.
-- [Toàn văn](assets/mode-1-full-text.png) và [chế độ tập trung](assets/focus-mode.png): tham khảo hai pane độc lập, không có đường nối.
-- [Từng câu](assets/mode-2-sentence-smartcat-inspired.png) và [ảnh Smartcat](assets/smartcat-reference.png): tham khảo editor theo hàng segment.
+- [Workspace gốc](../../assets/original-workspace.png): tham khảo bố cục, không dùng palette/logo làm chuẩn.
+- [Toàn văn](../../assets/mode-1-full-text.png) và [chế độ tập trung](../../assets/focus-mode.png): tham khảo hai pane độc lập, không có đường nối.
+- [Từng câu](../../assets/mode-2-sentence-smartcat-inspired.png) và [ảnh Smartcat](../../assets/smartcat-reference.png): tham khảo editor theo hàng segment.
 ## 3. Lớp AI và ngữ cảnh mở rộng (P1 — sau khi P0 giữ dữ liệu tin cậy)
 
 - AI Chat theo chương/vùng chọn: dịch, viết lại, giải thích, kiểm tra thuật ngữ. Khi mất mạng, panel hiển thị trạng thái không khả dụng nhưng editor vẫn hoạt động.
@@ -56,7 +56,7 @@ Các mục này có thể lên roadmap sau khi có nhu cầu và dữ liệu s�
 
 ## 5. Luồng chính phải hoàn thành trọn vẹn
 
-1. Từ [thư viện](first-run-flow.md), tạo tác phẩm, chọn ngôn ngữ, thêm chương gốc; có thể thêm bản dịch toàn văn có sẵn.
+1. Từ [thư viện](../experience/first-run.md), tạo tác phẩm, chọn ngôn ngữ, thêm chương gốc; có thể thêm bản dịch toàn văn có sẵn.
 2. Mở Toàn văn, viết/chỉnh bản dịch Markdown, đóng app, mở lại và tiếp tục đúng nội dung.
 3. Vào Từng câu, xem liên kết được đề xuất, gộp/tách hoặc sửa vùng Cần kiểm tra, dịch một hàng, quay về Toàn văn và thấy bản dịch đúng.
 4. Sửa toàn văn làm thay đổi ranh giới câu; hệ thống giữ nội dung, chỉ đánh dấu liên kết bị ảnh hưởng để kiểm tra.
@@ -98,4 +98,8 @@ Người dùng xác nhận sản phẩm **có thể dịch docs về sau**, khô
 - Khi hỗ trợ Markdown docs, phải giữ cấu trúc, link, hình, code fence, inline code, placeholder và frontmatter. Không tự đưa các phần không cần dịch vào segment hoặc sửa chúng khi xuất. MDX, Docusaurus/VitePress/Docsify và cú pháp plugin cụ thể cần quyết định riêng; không ngầm coi là đã hỗ trợ.
 - Luồng nhập/xuất docs có thể cần cây thư mục nhiều file và giữ đường dẫn tương đối. Đây là scope tương lai, không ép UI thư viện P0 phải giả vờ có tính năng đó.
 
-Tên **Miyati** đủ rộng cho định hướng translation workspace. Logo và tagline vẫn chưa chốt.
+Tên **Mira** đủ rộng cho định hướng translation workspace. Logo và tagline vẫn chưa chốt.
+
+---
+
+[Mục lục handbook](../README.md)
