@@ -1,3 +1,5 @@
+> **Ghi chú khi khép change:** D5 (backup và restore) và D7 (provider) được chuyển nguyên sang change `content-backup-provider` cùng các spec `content-model`, `work-backup`, `translation-provider`; phần chương của D8 chuyển sang `work-detail-screen`. Các mục đó ở đây chỉ còn là bối cảnh thiết kế, không phải cam kết đã làm.
+
 ## Context
 
 Lý do và phạm vi: xem `proposal.md`. Hiện trạng liên quan:

@@ -60,33 +60,9 @@ Người dùng SHALL đổi tên, tạm dừng/tiếp tục, lưu trữ/bỏ lư
 - **WHEN** người dùng đổi tên tác phẩm rồi mở lại ứng dụng
 - **THEN** tên mới được giữ
 
-### Requirement: Danh sách chương
-
-Người dùng SHALL thêm chương (tiêu đề tùy chọn), đổi tên chương và sắp xếp lại thứ tự chương. Số thứ tự hiển thị SHALL suy từ vị trí hiện tại, không lưu cứng.
-
-#### Scenario: Thêm chương
-- **WHEN** người dùng thêm một chương vào tác phẩm
-- **THEN** chương được thêm vào cuối danh sách và lưu bền
-
-#### Scenario: Sắp xếp lại
-- **WHEN** người dùng chuyển chương 5 lên trước chương 2
-- **THEN** các số thứ tự hiển thị cập nhật theo vị trí mới và thứ tự này được giữ sau khi mở lại
-
-### Requirement: Tiếp tục chương gần nhất
-
-Hệ thống SHALL ghi nhớ chương làm việc gần nhất của mỗi tác phẩm. "Tiếp tục" SHALL đưa người dùng tới chương đó; nếu tác phẩm chưa có chương nào, hành động này SHALL không khả dụng và "Mở tác phẩm" vẫn dùng được.
-
-#### Scenario: Có chương gần nhất
-- **WHEN** người dùng chọn Tiếp tục trên tác phẩm đã có chương gần nhất
-- **THEN** điều hướng tới chương đó
-
-#### Scenario: Tác phẩm chưa có chương
-- **WHEN** tác phẩm chưa có chương
-- **THEN** nút Tiếp tục không hiển thị hoặc bị vô hiệu kèm giải thích, Mở tác phẩm vẫn dùng được
-
 ### Requirement: Tìm và lọc cơ bản
 
-Thư viện SHALL cho tìm theo tên tác phẩm không phân biệt hoa thường và dấu tiếng Việt, và lọc theo mục Tất cả / Gần đây / Đang dịch / Tạm dừng / Lưu trữ.
+Thư viện SHALL cho tìm theo tên tác phẩm không phân biệt hoa thường và dấu tiếng Việt, và lọc theo mục Tất cả / Gần đây / Lưu trữ cùng bộ lọc trạng thái (Đang dịch, Tạm dừng, Chưa bắt đầu).
 
 #### Scenario: Tìm không dấu
 - **WHEN** người dùng gõ "tien hiep" và có tác phẩm tên "Tiên Hiệp"

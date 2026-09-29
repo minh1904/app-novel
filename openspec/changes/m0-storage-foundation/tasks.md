@@ -17,16 +17,13 @@
 ## 3. Repository tác phẩm và chương
 
 - [x] 3.1 Repository tác phẩm: tạo, đọc, đổi tên, tạm dừng/tiếp tục, lưu trữ/bỏ lưu trữ, cập nhật `updated_at`; ghi tệp tác phẩm rồi cập nhật chỉ mục
-- [ ] 3.2 Repository chương: thêm, đổi tên, sắp xếp lại (reindex trong một transaction), đặt chương gần nhất
-- [ ] 3.3 Test: dữ liệu giữ nguyên sau đóng và mở lại; tên rỗng bị từ chối; sắp xếp lại giữ đúng thứ tự; thứ tự hiển thị suy từ vị trí
 
 ## 4. IPC có kiểu cho thư viện
 
 - [x] 4.1 Định nghĩa hợp đồng kênh (tên → vào/ra) và kiểu `Result` với mã lỗi trong `src/shared/`
 - [x] 4.2 Viết hàm bao handler chung: kiểm tra người gửi (dùng lại logic của `app:info`), xác thực đầu vào, bắt lỗi thành `Result`
-- [x] 4.3 Đăng ký handler `works:*`; mở rộng preload và `DesktopApi` để phơi đúng các hàm đó (`chapters:*` ở 4.5)
+- [x] 4.3 Đăng ký handler `works:*`; mở rộng preload và `DesktopApi` để phơi đúng các hàm đó (`chapters:*` thuộc change `work-detail-screen`)
 - [x] 4.4 Test handler: nguồn không tin cậy bị từ chối; ID sai kiểu và trường thiếu/thừa trả `validation` và không đổi dữ liệu
-- [ ] 4.5 Đăng ký handler `chapters:*` (thêm, đổi tên, sắp xếp, đặt chương gần nhất) cùng 3.2
 
 ## 5. Thư viện tác phẩm thật trong renderer
 
@@ -37,37 +34,15 @@
 - [x] 5.5 Nối đổi tên, tạm dừng/tiếp tục, lưu trữ/bỏ lưu trữ vào IPC; hiển thị dòng "không mở được" cho tác phẩm trong `problems`
 - [x] 5.9 Ảnh bìa: lưu trong tệp tác phẩm (schema v3), IPC `works:cover:get` và `works:cover:set`, kiểm tra JPEG ở main, nén ảnh ở renderer, có test
 - [x] 5.10 Bộ chọn ảnh bìa trong form tạo (chọn tệp, kéo thả, gỡ), menu hàng "Thêm/Đổi/Gỡ ảnh bìa", bìa hiển thị ở danh sách và thanh bên; dựng lại bố cục form cho cân đối
-- [ ] 5.6 Màn tổng quan tác phẩm tối giản: danh sách chương, thêm, đổi tên, sắp xếp; "Tiếp tục" chỉ khả dụng khi có chương gần nhất, chương mở vào màn "editor chưa xây"
-- [ ] 5.7 Trạng thái trống của danh sách chương khớp spec `work-library` (trạng thái trống của thư viện đã có)
-- [ ] 5.8 Kiểm tra tay: tạo → đóng/mở app → còn nguyên; đổi tên, tạm dừng, lưu trữ; tìm không dấu; tắt mạng và lặp lại; `pnpm typecheck`, `pnpm lint`, `pnpm test`
+- [x] 5.8 Kiểm tra: tạo → đóng/mở app → còn nguyên; đổi tên, tạm dừng, lưu trữ; tìm không dấu; ảnh bìa; chủ sản phẩm đã xem và chấp nhận. Chưa thử tắt mạng thật vì ở phạm vi này ứng dụng không có truy cập mạng nào (CSP `connect-src 'self'`, main không gọi mạng)
 
-**Điểm dừng để đánh giá:** hết nhóm 5 là lát cắt "thư viện tác phẩm chạy trên dữ liệu thật". Xem và chốt trước khi làm các nhóm sau.
+## 6. Hoàn tất và tài liệu
 
-## 6. Repository nội dung (văn bản, segment, liên kết)
+- [x] 6.1 Chạy `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` và `build:unpack`; mở bản unpack kiểm tra tạo/đọc dữ liệu
+- [x] 6.2 Cập nhật `docs/handbook/engineering/current-state.md` (đúng phạm vi đã có bằng chứng), `delivery/roadmap.md` (trạng thái M0), `product/open-questions.md`; ghi ADR bộ công nghệ và ADR storage vào `docs/handbook/decisions/`
+- [x] 6.3 Chốt câu hỏi mở còn lại trong design (đuôi tệp) trước khi archive change
 
-- [ ] 6.1 Repository văn bản: `text:get` và `text:save` với `expectedRev`, lỗi `conflict` khi lỗi thời; thay toàn bộ segment cùng transaction và đặt `text_rev`
-- [ ] 6.2 Repository segment, link, `link_member`, `provenance`: ghi/đọc n:m; xóa segment đặt link thành `needs_review`
-- [ ] 6.3 Đăng ký handler `text:*` và mở rộng preload
-- [ ] 6.4 Test bất biến: văn bản và segment lưu hoặc hủy cùng nhau; đóng/mở giữ nguyên ID, vùng, nội dung từng ký tự (gồm tiếng Việt, CJK, emoji, CRLF)
-- [ ] 6.5 Test crash: tiến trình con ghi rồi bị kill giữa transaction; mở lại thấy trạng thái trước hoặc sau, không nửa vời; thao tác đã báo thành công vẫn còn
+## Đã chuyển sang change khác
 
-## 7. Backup và restore
-
-- [ ] 7.1 `backup:export`: hộp thoại lưu do main mở; `VACUUM INTO` vào `.part`, kiểm tra, đổi tên thành tệp đích; hủy hộp thoại không tạo gì
-- [ ] 7.2 `backup:restore`: hộp thoại mở; sao chép vào `works/.tmp`, kiểm tra (`application_id`, `user_version`, `integrity_check`, `foreign_key_check`, bảng bắt buộc), nâng cấp schema nếu cần, ghi `work.id` mới, đổi tên nguyên tử, upsert chỉ mục
-- [ ] 7.3 Test: khôi phục trên hồ sơ sạch khớp nội dung và giữ cả ảnh bìa; khôi phục khi bản gốc còn tồn tại tạo tác phẩm mới độc lập; tệp không phải Mira, tệp cắt cụt, schema mới hơn đều bị từ chối và thư viện không đổi; gián đoạn giữa restore không để lại tác phẩm dở
-- [ ] 7.4 Đo `VACUUM INTO` với tệp tác phẩm vài chục MB; nếu chậm, chuyển sang `backup()` có tiến trình
-- [ ] 7.5 Nối "Mở tác phẩm có sẵn" thành khôi phục từ backup và thêm hành động sao lưu một tác phẩm trên thư viện; kiểm tra tay sao lưu → khôi phục trên `MIRA_DATA_DIR` mới, khi tắt mạng
-
-## 8. Provider dịch và provider giả lập
-
-- [ ] 8.1 Định nghĩa `TranslationProvider`, `TranslateRequest/Response`, `ProviderError` (loại lỗi, `retryable`, `retryAfterMs`)
-- [ ] 8.2 Viết hàm thuần `reconcile` (matched/missing/extra/duplicates) và test: đủ ID khác thứ tự, thiếu, thừa, trùng
-- [ ] 8.3 Provider giả lập: bản dịch xác định `[giả lập] <nguồn>`, độ trễ và các chế độ lỗi cấu hình được, tôn trọng `AbortSignal`, nguồn gốc `mock`
-- [ ] 8.4 Test: dịch ba segment; bật lỗi thiếu ID; giới hạn tốc độ kèm thời gian chờ; hủy giữa chừng không ghi kết quả; xác thực không thử lại được
-
-## 9. Hoàn tất và tài liệu
-
-- [ ] 9.1 Chạy `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` và `build:unpack`; mở bản unpack kiểm tra tạo/đọc dữ liệu
-- [ ] 9.2 Cập nhật `docs/handbook/engineering/current-state.md` (đúng phạm vi đã có bằng chứng), `delivery/roadmap.md` (trạng thái M0), `product/open-questions.md`; ghi ADR bộ công nghệ và ADR storage vào `docs/handbook/decisions/`
-- [ ] 9.3 Chốt câu hỏi mở còn lại trong design (đuôi tệp) trước khi archive change
+- `content-backup-provider`: repository văn bản/segment/liên kết, sao lưu và khôi phục, provider dịch giả lập.
+- `work-detail-screen`: thêm/đổi tên/sắp xếp chương (repository và IPC `chapters:*`), màn chi tiết truyện, trạng thái trống của danh sách chương, "Tiếp tục chương gần nhất".
