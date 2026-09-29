@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import { cx } from '../../components/cx'
+import { useCoverUrl } from './useCoverUrl'
 import { languages, type Work } from './works'
 
 const sizes = {
@@ -18,14 +19,15 @@ export function WorkCover({
   size = 'sm',
   className
 }: {
-  work: Pick<Work, 'coverUrl' | 'sourceLanguage'>
+  work: Pick<Work, 'id' | 'coverVersion' | 'sourceLanguage'>
   size?: keyof typeof sizes
   className?: string
 }): JSX.Element {
   const base = cx('shrink-0 overflow-hidden border border-line', sizes[size], className)
+  const coverUrl = useCoverUrl(work.id, work.coverVersion)
 
-  if (work.coverUrl) {
-    return <img src={work.coverUrl} alt="" className={cx(base, 'object-cover')} />
+  if (coverUrl) {
+    return <img src={coverUrl} alt="" className={cx(base, 'object-cover')} />
   }
 
   return (

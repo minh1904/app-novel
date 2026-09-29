@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkProblem } from '../../../../shared/library'
 import type { IpcError, Result } from '../../../../shared/result'
+import { CoverImageError, fileToCoverDataUrl } from './coverImage'
 import { toWork, type Work } from './works'
 
 export type LibraryLoad = 'loading' | 'ready' | 'failed'
@@ -22,6 +23,8 @@ export interface LibraryController extends LibraryState {
   /** Resolves to the created work, or the error so a form can show field messages. */
   create(input: CreateWorkInput): Promise<Result<Work>>
   update(work: Work, patch: WorkPatch): Promise<void>
+  /** Replaces the cover with `file`, or removes it when `file` is null. */
+  setCover(work: Work, file: File | null): Promise<void>
 }
 
 const initial: LibraryState = {
@@ -89,9 +92,33 @@ export function useLibrary(): LibraryController {
     [reload]
   )
 
+  const setCover = useCallback(
+    async (work: Work, file: File | null): Promise<void> => {
+      const fail = (reason: string): void =>
+        setState((current) => ({
+          ...current,
+          notice: 'Không đổi được ảnh bìa của “' + work.title + '”: ' + reason
+        }))
+
+      let cover: string | null = null
+      if (file) {
+        try {
+          cover = await fileToCoverDataUrl(file)
+        } catch (error) {
+          fail(error instanceof CoverImageError ? error.message : 'Không xử lý được ảnh này.')
+          return
+        }
+      }
+      const result = await window.mira.works.setCover(work.id, cover)
+      if (!result.ok) fail(describe(result.error))
+      await reload()
+    },
+    [reload]
+  )
+
   const dismissNotice = useCallback(() => setState((current) => ({ ...current, notice: null })), [])
 
-  return { ...state, reload, dismissNotice, create, update }
+  return { ...state, reload, dismissNotice, create, update, setCover }
 }
 
 export function describe(error: IpcError): string {

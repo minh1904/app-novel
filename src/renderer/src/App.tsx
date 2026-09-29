@@ -62,7 +62,8 @@ export function App(): JSX.Element {
     onRenameWork: (work: Work, title: string) => void library.update(work, { title }),
     onSetPaused: (work: Work, paused: boolean) =>
       void library.update(work, { status: paused ? 'paused' : 'in-progress' }),
-    onSetArchived: (work: Work, archived: boolean) => void library.update(work, { archived })
+    onSetArchived: (work: Work, archived: boolean) => void library.update(work, { archived }),
+    onSetCover: (work: Work, file: File | null) => void library.setCover(work, file)
   }
 
   const crumb = (label: string): JSX.Element => (

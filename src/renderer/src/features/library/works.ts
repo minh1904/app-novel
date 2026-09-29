@@ -19,8 +19,8 @@ export interface Work {
   author?: string
   /** Free text such as "Tiên hiệp, cổ đại". */
   genre?: string
-  /** Optional cover image; the source-language mark stands in when it is missing. */
-  coverUrl?: string
+  /** Changes with the cover; absent when the work has none (the source-language mark stands in). */
+  coverVersion?: number
   sourceLanguage: SourceLanguage
   chapterCount: number
   status: WorkStatus
@@ -66,6 +66,7 @@ export function toWork(summary: WorkSummary): Work {
     description: summary.description ?? undefined,
     author: summary.author ?? undefined,
     genre: summary.genre ?? undefined,
+    coverVersion: summary.coverVersion ?? undefined,
     sourceLanguage: summary.sourceLang,
     chapterCount: summary.chapterCount,
     status: summary.status,

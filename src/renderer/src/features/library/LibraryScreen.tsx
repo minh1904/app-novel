@@ -15,12 +15,14 @@ import { ClockCircleIcon } from '@solar-icons/react/linear/clock-circle'
 import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { FilterIcon } from '@solar-icons/react/linear/filter'
+import { GalleryAddIcon } from '@solar-icons/react/linear/gallery-add'
 import { FolderOpenIcon } from '@solar-icons/react/linear/folder-open'
 import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
 import { PauseIcon } from '@solar-icons/react/linear/pause'
 import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
 import { PlayIcon } from '@solar-icons/react/linear/play'
 import { SortVerticalIcon } from '@solar-icons/react/linear/sort-vertical'
+import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
 import { TranslationIcon } from '@solar-icons/react/linear/translation'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
@@ -94,6 +96,8 @@ export interface LibraryActions {
   onRenameWork(work: Work, title: string): void
   onSetPaused(work: Work, paused: boolean): void
   onSetArchived(work: Work, archived: boolean): void
+  /** `null` removes the cover. */
+  onSetCover(work: Work, file: File | null): void
 }
 
 export interface LibraryScreenProps extends LibraryActions {
@@ -442,6 +446,7 @@ function WorkRow({
 }): JSX.Element {
   const updated = formatUpdatedParts(work.updatedAt)
   const titleId = 'work-title-' + work.id
+  const coverInput = useRef<HTMLInputElement>(null)
 
   return (
     <li
@@ -507,8 +512,25 @@ function WorkRow({
           <FolderOpenIcon size={14} />
           Mở tác phẩm
         </Button>
-        <WorkMenu work={work} actions={actions} onRename={onRename} />
+        <WorkMenu
+          work={work}
+          actions={actions}
+          onRename={onRename}
+          onPickCover={() => coverInput.current?.click()}
+        />
       </div>
+      <input
+        ref={coverInput}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        aria-label={'Ảnh bìa mới cho ' + work.title}
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (file) actions.onSetCover(work, file)
+        }}
+      />
     </li>
   )
 }
@@ -516,11 +538,13 @@ function WorkRow({
 function WorkMenu({
   work,
   actions,
-  onRename
+  onRename,
+  onPickCover
 }: {
   work: Work
   actions: LibraryActions
   onRename(): void
+  onPickCover(): void
 }): JSX.Element {
   return (
     <MenuRoot>
@@ -541,6 +565,16 @@ function WorkMenu({
           <PenNewSquareIcon size={14} />
           Đổi tên…
         </MenuItem>
+        <MenuItem onClick={onPickCover}>
+          <GalleryAddIcon size={14} />
+          {work.coverVersion === undefined ? 'Thêm ảnh bìa…' : 'Đổi ảnh bìa…'}
+        </MenuItem>
+        {work.coverVersion !== undefined && (
+          <MenuItem onClick={() => actions.onSetCover(work, null)}>
+            <TrashBinMinimalisticIcon size={14} />
+            Gỡ ảnh bìa
+          </MenuItem>
+        )}
         {work.status === 'in-progress' && (
           <MenuItem onClick={() => actions.onSetPaused(work, true)}>
             <PauseIcon size={14} />
