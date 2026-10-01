@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { AppShell } from './app/AppShell'
 import { PendingScreen } from './app/PendingScreen'
@@ -10,12 +10,14 @@ import { LibraryScreen } from './features/library/LibraryScreen'
 import { LibrarySidebar, type LibrarySection } from './features/library/LibrarySidebar'
 import { useLibrary } from './features/library/useLibrary'
 import { byUpdated, type Work } from './features/library/works'
+import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 
 type View =
   | { name: 'library'; section: LibrarySection }
   | { name: 'create' }
   | { name: 'open-existing' }
-  | { name: 'work'; workId: string; intent: 'open' | 'continue' }
+  | { name: 'work'; workId: string }
+  | { name: 'chapter'; workId: string; chapterId: string }
 
 const RECENT_LIMIT = 4
 
@@ -47,10 +49,30 @@ export function App(): JSX.Element {
   )
 
   const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), [])
-  const showSection = (section: LibrarySection): void => setView({ name: 'library', section })
-  const openWork = (work: Work): void => setView({ name: 'work', workId: work.id, intent: 'open' })
-  const continueWork = (work: Work): void =>
-    setView({ name: 'work', workId: work.id, intent: 'continue' })
+  const showSection = (section: LibrarySection): void => {
+    setView({ name: 'library', section })
+    // The detail screen already hands changes to the library; this also catches anything missed.
+    void library.reload()
+  }
+  const openWork = (work: Work): void => setView({ name: 'work', workId: work.id })
+  const openChapterView = (workId: string, chapterId: string): void =>
+    setView({ name: 'chapter', workId, chapterId })
+  /** Records the chapter as the one being worked on, then shows it; without one, shows the work. */
+  const continueWork = (work: Work): void => {
+    const chapter = work.lastChapter
+    if (!chapter) {
+      openWork(work)
+      return
+    }
+    void window.mira.chapters.open(work.id, chapter.id).then((result) => {
+      if (result.ok) {
+        library.applyWork(result.value.work)
+        openChapterView(work.id, chapter.id)
+      } else {
+        library.reportNotice('Không mở được chương ' + chapter.number + ': ' + result.error.message)
+      }
+    })
+  }
   const createWork = (): void => setView({ name: 'create' })
 
   const libraryActions = {
@@ -66,18 +88,30 @@ export function App(): JSX.Element {
     onSetCover: (work: Work, file: File | null) => void library.setCover(work, file)
   }
 
-  const crumb = (label: string): JSX.Element => (
-    <>
-      <button
-        type="button"
-        className="cursor-pointer rounded-[6px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
-        onClick={() => showSection('all')}
-      >
-        Thư viện
-      </button>
-      <AltArrowRightIcon size={12} className="shrink-0 text-ink-muted" />
+  const crumbLink = (label: string, onClick: () => void): JSX.Element => (
+    <button
+      type="button"
+      className="max-w-[40%] shrink-0 cursor-pointer truncate rounded-[6px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  )
+
+  /** "Thư viện › ancestors… › current": ancestors are links, the last item is the page heading. */
+  const crumb = (
+    label: string,
+    ancestors: Array<{ label: string; onClick(): void }> = []
+  ): JSX.Element => (
+    <nav aria-label="Vị trí hiện tại" className="flex min-w-0 items-center gap-2">
+      {[{ label: 'Thư viện', onClick: () => showSection('all') }, ...ancestors].map((item) => (
+        <Fragment key={item.label}>
+          {crumbLink(item.label, item.onClick)}
+          <AltArrowRightIcon size={12} className="shrink-0 text-ink-muted" />
+        </Fragment>
+      ))}
       <h1 className="truncate font-semibold">{label}</h1>
-    </>
+    </nav>
   )
 
   let title: JSX.Element
@@ -147,18 +181,34 @@ export function App(): JSX.Element {
       const work = works.find((item) => item.id === view.workId)
       title = crumb(work?.title ?? 'Tác phẩm')
       content = (
+        <WorkDetailScreen
+          key={view.workId}
+          workId={view.workId}
+          onBackToLibrary={() => showSection('all')}
+          onOpenChapter={openChapterView}
+          onWorkChanged={library.applyWork}
+        />
+      )
+      break
+    }
+    case 'chapter': {
+      const work = works.find((item) => item.id === view.workId)
+      const last = work?.lastChapter?.id === view.chapterId ? work.lastChapter : undefined
+      const backToWork = (): void => setView({ name: 'work', workId: view.workId })
+      title = crumb(last ? 'Chương ' + last.number : 'Chương', [
+        { label: work?.title ?? 'Tác phẩm', onClick: backToWork }
+      ])
+      content = (
         <PendingScreen
           heading={
-            view.intent === 'continue' && work?.lastChapter
-              ? 'Editor cho chương ' + work.lastChapter.number + ' chưa được xây'
-              : 'Màn tổng quan tác phẩm chưa được xây'
+            last ? 'Editor cho chương ' + last.number + ' chưa được xây' : 'Editor chưa được xây'
           }
           detail={
-            view.intent === 'continue'
-              ? '“Tiếp tục dịch” sẽ mở thẳng chương làm gần nhất trong editor, đúng chế độ đã dùng.'
-              : '“Mở tác phẩm” sẽ dẫn tới danh sách chương, từ điển và thông tin của tác phẩm.'
+            (last?.title ? '“' + last.title + '”. ' : '') +
+            'Chương này đã được ghi là chương làm gần nhất, nên “Tiếp tục” sẽ đưa bạn trở lại đây khi editor có mặt.'
           }
-          onBack={() => showSection('all')}
+          backLabel="Về tác phẩm"
+          onBack={backToWork}
         />
       )
       break

@@ -7,7 +7,8 @@ const sizes = {
   xs: 'h-9 w-7 rounded-[6px] text-[12px]',
   sm: 'h-16 w-12 rounded-[8px] text-[17px]',
   md: 'h-[88px] w-16 rounded-control text-[24px]',
-  lg: 'h-24 w-[72px] rounded-control text-[28px]'
+  lg: 'h-24 w-[72px] rounded-control text-[28px]',
+  xl: 'h-[180px] w-[120px] rounded-control text-[44px]'
 }
 
 /**

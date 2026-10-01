@@ -10,7 +10,7 @@ export type ButtonVariant =
   | 'destructive'
   | 'link'
 
-export type ButtonSize = 'xxs' | 'xs' | 'sm' | 'default' | 'lg' | 'xl' | 'icon'
+export type ButtonSize = 'xxs' | 'xs' | 'sm' | 'default' | 'lg' | 'xl' | 'icon' | 'icon-lg'
 
 const base =
   'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 rounded-control border font-medium whitespace-nowrap select-none outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus/40 data-disabled:pointer-events-none data-disabled:opacity-50'
@@ -33,7 +33,8 @@ const sizes: Record<ButtonSize, string> = {
   default: 'h-7 px-2.5 text-xs',
   lg: 'h-[34px] px-3.5 text-[13px]',
   xl: 'h-10 px-4 text-[13px]',
-  icon: 'size-7 p-0'
+  icon: 'size-7 p-0',
+  'icon-lg': 'size-[34px] p-0'
 }
 
 export interface ButtonProps extends Omit<BaseButton.Props, 'className'> {

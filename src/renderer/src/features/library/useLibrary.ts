@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CreateWorkInput, WorkList, WorkPatch, WorkProblem } from '../../../../shared/library'
+import type {
+  CreateWorkInput,
+  WorkList,
+  WorkPatch,
+  WorkProblem,
+  WorkSummary
+} from '../../../../shared/library'
 import type { IpcError, Result } from '../../../../shared/result'
 import { CoverImageError, fileToCoverDataUrl } from './coverImage'
 import { toWork, type Work } from './works'
@@ -25,6 +31,10 @@ export interface LibraryController extends LibraryState {
   update(work: Work, patch: WorkPatch): Promise<void>
   /** Replaces the cover with `file`, or removes it when `file` is null. */
   setCover(work: Work, file: File | null): Promise<void>
+  /** Puts a work that changed elsewhere (the detail screen) into the list without a round trip. */
+  applyWork(summary: WorkSummary): void
+  /** Shows a failure that happened outside the library's own actions. */
+  reportNotice(message: string): void
 }
 
 const initial: LibraryState = {
@@ -118,7 +128,22 @@ export function useLibrary(): LibraryController {
 
   const dismissNotice = useCallback(() => setState((current) => ({ ...current, notice: null })), [])
 
-  return { ...state, reload, dismissNotice, create, update, setCover }
+  const applyWork = useCallback((summary: WorkSummary): void => {
+    const next = toWork(summary)
+    setState((current) => ({
+      ...current,
+      works: current.works.some((work) => work.id === next.id)
+        ? current.works.map((work) => (work.id === next.id ? next : work))
+        : [...current.works, next]
+    }))
+  }, [])
+
+  const reportNotice = useCallback(
+    (message: string): void => setState((current) => ({ ...current, notice: message })),
+    []
+  )
+
+  return { ...state, reload, dismissNotice, create, update, setCover, applyWork, reportNotice }
 }
 
 export function describe(error: IpcError): string {

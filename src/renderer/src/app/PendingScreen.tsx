@@ -6,10 +6,12 @@ import { Button } from '../components/Button'
 export function PendingScreen({
   heading,
   detail,
+  backLabel = 'Về thư viện',
   onBack
 }: {
   heading: string
   detail: string
+  backLabel?: string
   onBack(): void
 }): JSX.Element {
   return (
@@ -19,7 +21,7 @@ export function PendingScreen({
       <div className="mt-2">
         <Button variant="secondary" onClick={onBack}>
           <AltArrowLeftIcon size={14} />
-          Về thư viện
+          {backLabel}
         </Button>
       </div>
     </div>

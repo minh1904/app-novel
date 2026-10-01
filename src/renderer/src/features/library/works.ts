@@ -5,6 +5,7 @@ export type SourceLanguage = 'en' | 'zh-Hans' | 'zh-Hant' | 'ja'
 export type WorkStatus = 'not-started' | 'in-progress' | 'paused'
 
 export interface ChapterRef {
+  id: string
   number: number
   title: string
   /** Last translated line the translator touched. Absent until the editor records one. */
@@ -73,7 +74,11 @@ export function toWork(summary: WorkSummary): Work {
     archived: summary.archived,
     updatedAt: new Date(summary.updatedAt),
     lastChapter: summary.lastChapter
-      ? { number: summary.lastChapter.number, title: summary.lastChapter.title }
+      ? {
+          id: summary.lastChapter.id,
+          number: summary.lastChapter.number,
+          title: summary.lastChapter.title
+        }
       : undefined
   }
 }
