@@ -31,6 +31,7 @@ export function ChapterScreen({
   const screen = useChapterScreen(workId, chapterId, onWorkChanged)
   const [importing, setImporting] = useState(false)
   const [chosenFile, setChosenFile] = useState<File | null>(null)
+  const opener = useRef<HTMLElement | null>(null)
   const picker = useRef<HTMLInputElement>(null)
 
   if (screen.load === 'loading') {
@@ -65,6 +66,7 @@ export function ChapterScreen({
   const hasSource = source.content !== ''
 
   function openDialog(file: File | null): void {
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setChosenFile(file)
     setImporting(true)
   }
@@ -155,6 +157,7 @@ export function ChapterScreen({
         replacing={hasSource}
         hasTarget={chapter.hasTarget}
         initialFile={chosenFile}
+        finalFocus={opener}
         onSaved={(record) => void screen.applySource(record)}
       />
     </div>

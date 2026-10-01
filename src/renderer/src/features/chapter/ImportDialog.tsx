@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent, type JSX } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type JSX,
+  type RefObject
+} from 'react'
 import type { SourceLanguage } from '../../../../shared/library'
 import {
   FILE_MAX_BYTES,
@@ -45,6 +53,8 @@ export interface ImportDialogProps {
   hasTarget: boolean
   /** A file the user already chose on the chapter screen; the dialog opens on its preview. */
   initialFile: File | null
+  /** The control that opened the dialog, so closing returns focus to it. */
+  finalFocus?: RefObject<HTMLElement | null>
   onSaved(record: TextRecord): void
 }
 
@@ -60,6 +70,7 @@ export function ImportDialog(props: ImportDialogProps): JSX.Element {
         if (!saving) onOpenChange(next)
       }}
       size="wide"
+      finalFocus={props.finalFocus}
       title={props.replacing ? 'Thay bản gốc của chương' : 'Nhập bản gốc cho chương'}
       description="Văn bản được đọc ngay trên máy bạn và chưa lưu gì cho tới khi bạn xác nhận ở bước xem trước."
     >
@@ -91,6 +102,7 @@ function ImportBody({
   const [backupNote, setBackupNote] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const picker = useRef<HTMLInputElement>(null)
+  const confirmButton = useRef<HTMLButtonElement>(null)
 
   async function takeFile(chosen: File): Promise<void> {
     setInputError(null)
@@ -128,6 +140,12 @@ function ImportBody({
       encoding
     )
   }, [step, file, pasted, sourceLang, encoding])
+
+  // Moving to the preview unmounts the field that had focus; land on the action instead.
+  const previewing = step === 'preview' && prepared?.ok === true
+  useEffect(() => {
+    if (previewing) confirmButton.current?.focus()
+  }, [previewing])
 
   function previewPasted(): void {
     const result = prepareImport({ kind: 'paste', text: pasted }, sourceLang)
@@ -400,7 +418,7 @@ function ImportBody({
         <Button variant="secondary" size="lg" disabled={saving} onClick={() => onOpenChange(false)}>
           Hủy
         </Button>
-        <Button size="lg" disabled={saving} onClick={() => void confirm(plan)}>
+        <Button ref={confirmButton} size="lg" disabled={saving} onClick={() => void confirm(plan)}>
           {saving ? 'Đang lưu…' : replacing ? 'Thay bản gốc' : 'Nhập vào chương'}
         </Button>
       </div>
