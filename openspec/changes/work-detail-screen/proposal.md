@@ -6,19 +6,20 @@ Thư viện đã tạo và quản lý được tác phẩm, nhưng "Mở tác ph
 
 - Thêm **màn chi tiết truyện**: đầu trang có bìa, tên, tên gốc, tác giả, thể loại/bối cảnh, mô tả, trạng thái, ngôn ngữ nguồn, số chương, thời điểm sửa; nút chính **Tiếp tục** (hoặc **Thêm chương** khi chưa có chương); menu tác phẩm dùng lại đổi trạng thái và lưu trữ.
 - Thêm **sửa thông tin tác phẩm** từ màn này: tên, tên gốc, tác giả, thể loại/bối cảnh, mô tả và ảnh bìa (dùng lại form của màn tạo). Ngôn ngữ nguồn không đổi được.
-- Thêm **danh sách chương**: thêm chương, đặt/đổi tên, chuyển vị trí, xóa (có xác nhận), tìm và nhảy tới chương; danh sách vẫn dùng được với hàng nghìn chương.
+- Thêm **danh sách chương**: thêm chương, đặt/đổi tên, chuyển vị trí, xóa (có xác nhận), tìm và nhảy tới chương; phân trang 50/100 chương để danh sách vẫn dùng được với hàng nghìn chương.
+- Dựng **khung màn**: đầu trang tác phẩm tách khỏi vùng nội dung, vùng nội dung lấy khu vực từ một danh mục đăng ký (hiện chỉ Chương, hiển thị trực tiếp, không vẽ thanh tab một mục). Ngữ cảnh, Nguồn, Tác vụ gắn vào khung này ở các change sau ([work-area-navigation](../work-area-navigation/proposal.md)).
+- Thêm **minh họa chỉ-trên-giao-diện** cho tính năng chưa làm, mỗi mục có nhãn "Sắp có" và một mục trong `delivery/backlog.md`. Bản này minh họa **Nhập chương từ .txt**; không đọc tệp, không ghi dữ liệu.
 - Ghi nhớ **chương làm việc gần nhất**: mở một chương thì "Tiếp tục" ở thư viện và ở màn chi tiết đưa về đúng chương đó.
 - Nối điều hướng: "Mở tác phẩm", "Tiếp tục", thanh bên "Tác phẩm gần đây" và đường dẫn breadcrumb đều đi tới màn này; mở một chương vẫn tới màn "editor chưa xây" cho đến khi có editor.
 - Thêm repository chương trong tệp tác phẩm và các kênh IPC `chapters:*`; cập nhật chỉ mục thư viện (số chương, chương gần nhất) mỗi khi chương đổi.
 
-Không thuộc change này: nội dung chương (văn bản gốc/dịch), nhập raw, editor, trạng thái dịch từng chương, đếm số từ, nhóm chương theo tập, xóa tác phẩm, kéo thả sắp xếp, nhập nhiều chương một lần.
+Không thuộc change này: nội dung chương (văn bản gốc/dịch), nhập raw, editor, trạng thái dịch từng chương, đếm số từ, nhóm chương theo tập, xóa tác phẩm, kéo thả sắp xếp. Nhập nhiều chương từ .txt chỉ có bản minh họa, chưa hoạt động.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `work-detail`: màn chi tiết một tác phẩm — hiển thị thông tin, sửa thông tin, điều hướng vào/ra, "Tiếp tục" tới chương gần nhất.
-- `work-chapters`: chương của một tác phẩm — thêm, đổi tên, sắp xếp, xóa, tìm, chịu tải nhiều chương, giữ bền và giữ chỉ mục đúng.
+- `work-detail`: màn chi tiết một tác phẩm, gồm khung màn (đầu trang + vùng nội dung theo khu vực có danh mục đăng ký), thông tin và sửa thông tin, điều hướng vào/ra, "Tiếp tục"/mở chương, và danh sách chương (thêm, đổi tên, sắp xếp, xóa, tìm, phân trang, chịu tải nhiều chương, giữ bền và giữ chỉ mục đúng). Gộp từ hai spec `work-detail` và `work-chapters` trước đó.
 
 ### Modified Capabilities
 
