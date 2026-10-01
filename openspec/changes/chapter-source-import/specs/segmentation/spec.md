@@ -20,9 +20,9 @@ Hệ thống SHALL chia văn bản thành các segment theo thứ tự xuất hi
 - **WHEN** một dòng là "第一章 山中药铺" hoặc "***" và không có dấu kết câu
 - **THEN** cả dòng là một segment riêng
 
-### Requirement: Ranh giới câu theo ngôn ngữ nguồn
+### Requirement: Ranh giới câu theo ngôn ngữ
 
-Câu SHALL kết thúc sau dấu kết câu của ngôn ngữ nguồn cùng các dấu đóng đi liền nó. Với tiếng Trung và tiếng Nhật, dấu kết câu gồm 。！？ và dấu chấm lửng …/……; với tiếng Anh, tiếng Việt gồm . ! ? và chấm lửng, và dấu chấm chỉ kết câu khi theo sau là khoảng trắng hoặc hết dòng. Chấm lửng liền nhau SHALL không bị tách làm nhiều câu. Số có dấu thập phân hoặc phân cách hàng nghìn (3.50, 1,000) SHALL không bị tách.
+Câu SHALL kết thúc sau dấu kết câu của ngôn ngữ của văn bản (các ngôn ngữ nguồn, và tiếng Việt cho văn bản tiếng Việt như bản dịch) cùng các dấu đóng đi liền nó. Với tiếng Trung và tiếng Nhật, dấu kết câu gồm 。！？ và dấu chấm lửng …/……; với tiếng Anh, tiếng Việt gồm . ! ? và chấm lửng, và dấu chấm chỉ kết câu khi theo sau là khoảng trắng hoặc hết dòng. Chấm lửng liền nhau SHALL không bị tách làm nhiều câu, và chấm lửng theo sau bởi từ viết thường (tiếng Anh, tiếng Việt) SHALL không kết câu. Số có dấu thập phân hoặc phân cách hàng nghìn (3.50, 1,000) SHALL không bị tách.
 
 #### Scenario: Tiếng Trung
 - **WHEN** ngôn ngữ nguồn là tiếng Trung giản thể và văn bản là "他说：“你好。”然后离开了。今天天气很好！你呢？"
@@ -31,6 +31,10 @@ Câu SHALL kết thúc sau dấu kết câu của ngôn ngữ nguồn cùng các
 #### Scenario: Chấm lửng
 - **WHEN** văn bản có "彼は黙った……そして去った。"
 - **THEN** chấm lửng "……" không tách câu và đây là một segment
+
+#### Scenario: Chấm lửng trước chữ thường
+- **WHEN** ngôn ngữ nguồn là tiếng Anh và văn bản là "Wait... what? Yes!! Really?! Fine."
+- **THEN** các segment là "Wait... what?", "Yes!!", "Really?!" và "Fine."
 
 #### Scenario: Số thập phân
 - **WHEN** ngôn ngữ nguồn là tiếng Anh và văn bản là "It cost $3.50 today. Then it rose."
@@ -50,7 +54,7 @@ Dấu ngoặc hoặc nháy mở thoại (「『（“‘ và tương đương) S
 
 ### Requirement: Không tách sau từ viết tắt
 
-Với tiếng Anh và tiếng Việt, dấu chấm sau một từ viết tắt đã biết SHALL không kết câu. Danh sách tối thiểu: tiếng Anh Mr., Mrs., Ms., Dr., Prof., Sr., Jr., St., vs., U.S., U.K.; tiếng Việt TP., Th.S., TS., PGS., GS., ThS. Danh sách là dữ liệu có thể mở rộng mà không đổi mã tách. Khi viết tắt đứng cuối dòng, đó vẫn là hết câu.
+Với tiếng Anh và tiếng Việt, dấu chấm sau một từ viết tắt đã biết SHALL không kết câu. Danh sách tối thiểu: tiếng Anh Mr., Mrs., Ms., Dr., Prof., Sr., Jr., St., vs.; tiếng Việt TP., Th.S., TS., PGS., GS., ThS. Riêng U.S., U.K., U.N. có thể kết câu thật, nên chấm chỉ bị bỏ qua khi từ theo sau bắt đầu bằng chữ thường hoặc chữ số. Danh sách là dữ liệu có thể mở rộng mà không đổi mã tách. Khi viết tắt đứng cuối dòng, đó vẫn là hết câu.
 
 #### Scenario: Tiếng Anh
 - **WHEN** văn bản là "Mr. Smith went to Washington. Dr. Lee agreed."
@@ -59,6 +63,10 @@ Với tiếng Anh và tiếng Việt, dấu chấm sau một từ viết tắt �
 #### Scenario: Tiếng Việt
 - **WHEN** văn bản là "TP. Hồ Chí Minh rất đông. Th.S. Nam nói: \"Chào bạn.\" Anh ấy đi."
 - **THEN** có ba segment "TP. Hồ Chí Minh rất đông.", "Th.S. Nam nói: \"Chào bạn.\"" và "Anh ấy đi."
+
+#### Scenario: U.S. giữa câu và cuối câu
+- **WHEN** văn bản là "He lived in the U.S. and loved it." và văn bản khác là "He lived in the U.S. Then he left."
+- **THEN** ca đầu là một segment, ca sau là hai segment "He lived in the U.S." và "Then he left."
 
 #### Scenario: Viết tắt cuối dòng
 - **WHEN** một dòng kết thúc bằng "…ở U.S." rồi xuống dòng

@@ -1,10 +1,10 @@
 ## 1. Hàm thuần: giải mã, chuẩn hóa, chia câu
 
-- [ ] 1.1 `rawText.ts`: `detectEncoding` (BOM → UTF-8 nghiêm ngặt → danh sách theo ngôn ngữ nguồn → ít U+FFFD nhất), `decodeRaw(bytes, encoding)`, danh sách bảng mã hỗ trợ; test bằng byte thật của UTF-8/UTF-16 (BOM và không BOM), GB18030, Big5, Shift_JIS, EUC-JP, Windows-1252, và ca đoán sai có cảnh báo
-- [ ] 1.2 `normalizeRaw` trả `{ text, changes }` (BOM, xuống dòng CRLF/CR/U+2028/2029, ký tự điều khiển, cắt hai đầu); test từng loại, giữ U+3000/khoảng trắng đầu dòng/dấu câu, không đổi NFC/NFD, và báo cáo "giữ nguyên" khi không đổi gì
-- [ ] 1.3 `segmenter.ts` + `segmenterData.ts`: tách dòng → `Intl.Segmenter` → sửa dấu mở thoại, gộp sau từ viết tắt (Anh/Việt, danh sách là dữ liệu), cắt khoảng trắng; trả vùng UTF-16; đánh dấu segment dài > 1.000
-- [ ] 1.4 Bộ hồi quy `segmentation` cho en/zh-Hans/zh-Hant/ja gồm mọi ví dụ trong spec (thoại Nhật, thoại nhiều câu, chấm lửng, số thập phân, Mr./Dr., TP./Th.S., viết tắt cuối dòng, dòng không dấu, tiêu đề Markdown); chạy thêm `sentencex` trên cùng bộ chỉ để so (không thêm vào dependency) và ghi kết quả so sánh vào design
-- [ ] 1.5 Test bất biến ngẫu nhiên: không mất/lặp chữ không-khoảng-trắng, vùng sắp xếp không chồng, không cắt cặp surrogate, xác định; đo 300.000 ký tự < 500 ms
+- [x] 1.1 `rawText.ts`: `detectEncoding` (BOM → UTF-8 nghiêm ngặt → danh sách theo ngôn ngữ nguồn → ít U+FFFD nhất), `decodeRaw(bytes, encoding)`, danh sách bảng mã hỗ trợ; test bằng byte thật của UTF-8/UTF-16 (BOM và không BOM), GB18030, Big5, Shift_JIS, EUC-JP, Windows-1252, và ca đoán sai có cảnh báo
+- [x] 1.2 `normalizeRaw` trả `{ text, changes }` (BOM, xuống dòng CRLF/CR/U+2028/2029, ký tự điều khiển, cắt hai đầu); test từng loại, giữ U+3000/khoảng trắng đầu dòng/dấu câu, không đổi NFC/NFD, và báo cáo "giữ nguyên" khi không đổi gì
+- [x] 1.3 `segmenter.ts` + `segmenterData.ts`: tách dòng → `Intl.Segmenter` → sửa dấu mở thoại, gộp sau từ viết tắt (Anh/Việt, danh sách là dữ liệu), cắt khoảng trắng; trả vùng UTF-16; đánh dấu segment dài > 1.000
+- [x] 1.4 Bộ hồi quy `segmentation` cho en/zh-Hans/zh-Hant/ja gồm mọi ví dụ trong spec (thoại Nhật, thoại nhiều câu, chấm lửng, số thập phân, Mr./Dr., TP./Th.S., viết tắt cuối dòng, dòng không dấu, tiêu đề Markdown); chạy thêm `sentencex` trên cùng bộ chỉ để so (không thêm vào dependency) và ghi kết quả so sánh vào design
+- [x] 1.5 Test bất biến ngẫu nhiên: không mất/lặp chữ không-khoảng-trắng, vùng sắp xếp không chồng, không cắt cặp surrogate, xác định; đo 300.000 ký tự < 500 ms
 
 ## 2. Nhập và lưu
 

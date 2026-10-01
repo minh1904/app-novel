@@ -35,7 +35,7 @@ Phương án khác: đọc tệp ở main qua hộp thoại. Thêm kênh và b�
 
 Thứ tự: BOM → UTF-8 nghiêm ngặt → danh sách theo ngôn ngữ nguồn (giản thể: gb18030; phồn thể: big5, gb18030; Nhật: shift_jis, euc-jp; Anh: windows-1252), lấy cái đầu tiên giải mã không lỗi; nếu không có, lấy cái ít ký tự thay thế (U+FFFD) nhất và cảnh báo. Windows-1252 giải mã được mọi byte nên luôn "thành công": vì vậy nó chỉ đứng cuối danh sách tiếng Anh và không bao giờ được thử cho tiếng Trung/Nhật. Màn xem trước luôn nêu bảng mã và có danh sách chọn lại. Dán văn bản không qua bước này.
 
-Rủi ro đã biết: nhiều chuỗi byte hợp lệ ở cả GBK lẫn Big5/Shift_JIS, nên đoán có thể sai mà không báo lỗi. Hai bảo đảm: người dùng thấy văn bản trước khi lưu, và đổi bảng mã tính lại ngay.
+Rủi ro đã biết: nhiều chuỗi byte hợp lệ ở cả GBK lẫn Big5/Shift_JIS, nên đoán có thể sai mà không báo lỗi. **Đã gặp thật khi viết test:** byte EUC-JP cũng là Shift_JIS hợp lệ (thành katakana nửa chiều rộng), nên thứ tự cố định nhận nhầm. Sửa bằng cách, khi nhiều bảng mã cùng giải mã sạch tệp tiếng Nhật, chọn bảng mã cho ít katakana nửa chiều rộng (U+FF61–FF9F) nhất. Với Big5/GB18030 chưa có tín hiệu tương tự, giữ thứ tự (Big5 trước cho phồn thể) và dựa vào xem trước. Hai bảo đảm: người dùng thấy văn bản trước khi lưu, và đổi bảng mã tính lại ngay.
 
 ### D3. Chuẩn hóa chỉ làm những việc liệt kê, và báo lại
 
@@ -45,7 +45,9 @@ Rủi ro đã biết: nhiều chuỗi byte hợp lệ ở cả GBK lẫn Big5/Sh
 
 Quy trình: tách dòng → với mỗi dòng, `Intl.Segmenter(lang, { granularity: 'sentence' })` → sửa: (1) chuyển ký tự mở thoại ở cuối một mảnh sang đầu mảnh sau; (2) gộp mảnh kết thúc bằng từ viết tắt trong danh sách (tiếng Anh/Việt) với mảnh sau; (3) cắt khoảng trắng hai đầu để vùng chỉ phủ ký tự không phải khoảng trắng. Danh sách viết tắt là dữ liệu trong `segmenterData.ts`.
 
-`sentencex` là lựa chọn nêu trong [nghiên cứu](../../../docs/handbook/research/technical-feasibility.md) và scope. Mình chưa chọn nó vì: số đo trên cho thấy ICU đã đúng ở phần lớn ca và hai lỗi còn lại sửa được bằng quy tắc nhỏ; thêm dependency cần đánh giá giấy phép, cỡ và bảo trì; và chưa có bộ ca thật để chứng minh nó tốt hơn. Cách quyết định: task 1.4 chạy cả hai trên bộ hồi quy; chỉ thêm `sentencex` nếu ICU + sửa không đạt. Chuẩn đạt cho cả hai là bộ hồi quy trong `segmentation`. Hàm `segment` có chữ ký ổn định nên đổi bên trong không đụng chỗ gọi.
+`sentencex` là lựa chọn nêu trong [nghiên cứu](../../../docs/handbook/research/technical-feasibility.md) và scope. Mình chưa chọn nó vì: số đo trên cho thấy ICU đã đúng ở phần lớn ca và hai lỗi còn lại sửa được bằng quy tắc nhỏ; thêm dependency cần đánh giá giấy phép, cỡ và bảo trì; và chưa có bộ ca thật để chứng minh nó tốt hơn. Cách quyết định: task 1.4 chạy cả hai trên bộ hồi quy; chỉ thêm `sentencex` nếu ICU + sửa không đạt.
+
+**Kết quả so sánh** (2026-10-01, `sentencex` 1.0.32, cùng 25 ca của `segmenterCorpus.ts`, cho `sentencex` từng dòng như bộ của Mira): Mira 25/25, `sentencex` 23/25. `sentencex` sai ở viết tắt tiếng Việt ("Th.S." thành "Th." + "S.") và gộp lời thoại nhiều câu thành một segment (hợp lý ở góc nhìn khác, nhưng khác spec). Tốc độ ngang nhau: 41 ms so với 40 ms cho 300.000 ký tự tiếng Nhật. Hai điều cần nhớ khi đọc con số: bộ ca do chính mình viết nên 25/25 không phải bằng chứng độc lập, và `sentencex` là **addon Rust gốc** (gói `sentencex-win32-x64/index.node`), tức là phải đóng gói theo từng nền tảng cho Electron. Với kết quả này không thêm dependency; xem lại nếu bộ ca thật cho thấy ICU kém hơn. Chuẩn đạt cho cả hai là bộ hồi quy trong `segmentation`. Hàm `segment` có chữ ký ổn định nên đổi bên trong không đụng chỗ gọi.
 
 Giới hạn đã chấp nhận: ranh giới câu là heuristic; "Wait... what?" tách sau "Wait..." theo ICU, và sau từ viết tắt không có trong danh sách sẽ tách sai. Người dùng chưa chỉnh được quy tắc (ngoài phạm vi); segment sai được sửa ở editor (mốc sau).
 

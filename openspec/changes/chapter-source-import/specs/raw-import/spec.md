@@ -26,7 +26,7 @@ Người dùng SHALL nhập bản gốc cho một chương bằng cách dán vă
 
 ### Requirement: Nhận đúng bảng mã của tệp
 
-Hệ thống SHALL xác định bảng mã theo thứ tự: dấu thứ tự byte (BOM) UTF-8 hoặc UTF-16; nếu không có, UTF-8 nghiêm ngặt (không ký tự thay thế); nếu không đạt, lần lượt các bảng mã cũ hợp với ngôn ngữ nguồn của tác phẩm (Trung giản thể: GB18030; Trung phồn thể: Big5 rồi GB18030; Nhật: Shift_JIS rồi EUC-JP; Anh: Windows-1252) và chọn bảng mã đầu tiên giải mã không lỗi. Màn xem trước SHALL nêu bảng mã đã dùng và cho người dùng đổi sang bảng mã khác trong danh sách hỗ trợ; kết quả SHALL cập nhật ngay. Văn bản dán SHALL không qua bước nhận bảng mã. Nếu kết quả có ký tự thay thế (U+FFFD), màn xem trước SHALL cảnh báo là có thể sai bảng mã.
+Hệ thống SHALL xác định bảng mã theo thứ tự: dấu thứ tự byte (BOM) UTF-8 hoặc UTF-16; nếu không có, UTF-8 nghiêm ngặt (không ký tự thay thế); nếu không đạt, lần lượt các bảng mã cũ hợp với ngôn ngữ nguồn của tác phẩm (Trung giản thể: GB18030; Trung phồn thể: Big5 rồi GB18030; Nhật: Shift_JIS rồi EUC-JP; Anh: Windows-1252) và chọn bảng mã giải mã không lỗi; khi nhiều bảng mã cùng giải mã được tệp tiếng Nhật, chọn bảng mã cho ít ký tự katakana nửa chiều rộng nhất, vì byte EUC-JP cũng là Shift_JIS hợp lệ nhưng cho ra chuỗi katakana nửa chiều rộng mà văn bản thật hiếm có. Màn xem trước SHALL nêu bảng mã đã dùng và cho người dùng đổi sang bảng mã khác trong danh sách hỗ trợ; kết quả SHALL cập nhật ngay. Văn bản dán SHALL không qua bước nhận bảng mã. Nếu kết quả có ký tự thay thế (U+FFFD), màn xem trước SHALL cảnh báo là có thể sai bảng mã.
 
 #### Scenario: Tệp UTF-8 có BOM
 - **WHEN** người dùng chọn tệp UTF-8 có BOM
@@ -40,13 +40,17 @@ Hệ thống SHALL xác định bảng mã theo thứ tự: dấu thứ tự byt
 - **WHEN** xem trước hiện chữ loạn vì bảng mã đoán sai và người dùng chọn bảng mã khác
 - **THEN** văn bản và số segment tính lại theo bảng mã mới
 
+#### Scenario: EUC-JP bị nhầm với Shift_JIS
+- **WHEN** tác phẩm có ngôn ngữ nguồn tiếng Nhật và người dùng chọn tệp EUC-JP không có BOM mà các byte cũng là Shift_JIS hợp lệ
+- **THEN** văn bản hiện đúng chữ Nhật và bảng mã hiển thị là EUC-JP
+
 #### Scenario: Nhận sai
 - **WHEN** không bảng mã nào giải mã sạch tệp
 - **THEN** xem trước dùng bảng mã ít ký tự thay thế nhất, hiện cảnh báo, và vẫn cho người dùng đổi bảng mã hoặc hủy
 
 ### Requirement: Chuẩn hóa tối thiểu và báo lại những gì đã đổi
 
-Khi nhập, hệ thống SHALL chỉ thực hiện các thay đổi sau: bỏ BOM; đổi mọi kiểu xuống dòng (CRLF, CR, U+2028, U+2029) thành LF; bỏ ký tự điều khiển (NUL và các ký tự C0 khác, trừ tab và LF); bỏ dòng trống và khoảng trắng thừa ở đầu và cuối cả văn bản. Hệ thống SHALL NOT đổi dấu câu, khoảng trắng trong dòng, khoảng trắng đầu dòng (kể cả U+3000), chữ hoa/thường, dạng chữ Hán hay chuẩn Unicode (NFC/NFD). Màn xem trước SHALL liệt kê số lượng từng loại thay đổi đã áp dụng; nếu không đổi gì thì nói là không đổi.
+Khi nhập, hệ thống SHALL chỉ thực hiện các thay đổi sau: bỏ BOM; đổi mọi kiểu xuống dòng (CRLF, CR, U+2028, U+2029) thành LF; bỏ ký tự điều khiển (NUL và các ký tự C0 khác, trừ tab và LF); bỏ các dòng trống ở đầu văn bản (dòng đầu tiên có chữ giữ nguyên thụt đầu dòng của nó) và khoảng trắng, dòng trống ở cuối văn bản. Hệ thống SHALL NOT đổi dấu câu, khoảng trắng trong dòng, khoảng trắng đầu dòng (kể cả U+3000), chữ hoa/thường, dạng chữ Hán hay chuẩn Unicode (NFC/NFD). Màn xem trước SHALL liệt kê số lượng từng loại thay đổi đã áp dụng; nếu không đổi gì thì nói là không đổi.
 
 #### Scenario: Xuống dòng kiểu Windows
 - **WHEN** văn bản có 120 dòng kết thúc bằng CRLF
