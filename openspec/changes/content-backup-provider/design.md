@@ -1,6 +1,6 @@
 ## Context
 
-Lý do và phạm vi: xem `proposal.md`. Nền đã có (change `m0-storage-foundation`, đã archive): adapter SQLite với `transaction()` lồng được, migration theo `user_version`, tệp tác phẩm `.mira` với đủ bảng `chapter_text`, `segment`, `link`, `link_member`, `provenance`, `cover`, thư viện có chỉ mục dựng lại được, IPC có kiểu trả `Result`, kiểm tra người gửi.
+Lý do và phạm vi: xem `proposal.md`. Nền đã có (change `m0-storage-foundation`, đã archive): adapter SQLite với `transaction()` lồng được, migration theo `user_version`, tệp tác phẩm `.mira` với đủ bảng `chapter_text`, `segment`, `link`, `link_member`, `provenance`, `cover`, thư viện có chỉ mục dựng lại được, IPC có kiểu trả `Result`, kiểm tra người gửi. Từ change `work-detail-screen` (đã archive) có thêm: kho chương (`chapterFile.ts`, vị trí liền mạch trong một transaction), kênh `chapters:*`, `works:update` nhận `cover`, khung màn chi tiết với danh mục khu vực, menu tác phẩm ở thư viện và ở màn chi tiết, hộp xóa chương, và `delivery/backlog.md` ghi các mục chỉ-minh-họa. Chương hiện **không có hàng nào trong `chapter_text`**; xóa chương xóa con qua khóa ngoại `ON DELETE CASCADE`.
 
 Quyết định công nghệ đã chốt ở [ADR-003](../../../docs/handbook/decisions/0003-technology-stack.md): `node:sqlite`, SQL thuần + repository, valibot, Vitest, IPC tự viết.
 
@@ -42,6 +42,32 @@ ProviderError = { kind: rate_limited | network | auth | refused | invalid_respon
 - Provider giả lập: dịch xác định (`[giả lập] <nguồn>`), tùy chọn độ trễ và các chế độ lỗi (giới hạn tốc độ, lỗi mạng, thiếu ID, ID trùng, xáo thứ tự, phản hồi rỗng); tôn trọng `AbortSignal`; nguồn gốc luôn là `mock`.
 - Change này chỉ kiểm thử provider bằng test đơn vị; chưa có giao diện gọi nó và không đăng ký IPC cho provider (job dịch và UI là M1).
 
+### D4. Hợp đồng IPC cho văn bản: chỉ `text:get` và `text:save`
+
+| Kênh | Vào | Ra |
+| --- | --- | --- |
+| `text:get` | `{ workId, chapterId, side }` | `{ content, rev, segments: [{ id, start, end, textRev, status }] }` |
+| `text:save` | `{ workId, chapterId, side, content, expectedRev, segments: [{ id?, start, end }] }` | `{ rev, segments }` |
+
+`side` là `source` hoặc `target`. Bên chưa từng ghi đọc ra `{ content: '', rev: 0, segments: [] }` (không tạo hàng khi chỉ đọc); lần `text:save` đầu với `expectedRev: 0` tạo hàng và đặt `rev = 1`. `segments[].id` có mặt thì phải là ID của segment cùng `(chapter, side)`, nếu không cả lần ghi bị từ chối (`validation`); vắng mặt thì cấp UUID mới. Xung đột revision trả `conflict` kèm `rev` hiện tại để người gọi tải lại.
+
+Liên kết và nguồn gốc (`link`, `link_member`, `provenance`) là hàm của repository có test đơn vị, **chưa mở IPC**: renderer chưa có việc nào cần chúng cho tới khi có editor và job dịch (M1), và mỗi kênh mở thêm là thêm bề mặt tấn công. Chủ ý này ghi lại để M1 mở đúng thứ cần.
+
+Phương án khác: `text:save` chỉ nhận nội dung và main tự chia segment (đơn giản cho renderer, nhưng chia câu là việc của M1 và cần thử nghiệm; đưa vào đây sẽ khóa sớm một thuật toán chưa kiểm chứng).
+
+### D5. Đơn vị vùng, giới hạn, và cờ "có nội dung"
+
+- **Đơn vị vùng là UTF-16 code unit**, khớp chỉ số chuỗi JavaScript và CodeMirror; `start_offset`/`end_offset` trong schema đã là số nguyên không có đơn vị ràng buộc nên không cần migrate. Kiểm tra trong một hàm thuần: sắp theo `start`, không chồng, `0 ≤ start ≤ end ≤ content.length`, và (cảnh báo, không từ chối) không cắt giữa cặp surrogate. Test với emoji, chữ Hán mặt phẳng phụ, CRLF.
+- **Giới hạn** 2.000.000 đơn vị UTF-16 mỗi văn bản và 50.000 segment mỗi bên. Một chương truyện thường vài chục nghìn ký tự, nên đây là trần chống sự cố (dán nhầm cả cuốn) chứ không phải giới hạn dùng thật. **Là giả định cần xác nhận**, xem câu hỏi mở. Kiểm tra ở schema valibot (IPC) và lặp lại ở repository (đường không qua IPC).
+- **Cờ có nội dung:** `ChapterItem` thêm `hasSource` và `hasTarget` (văn bản không rỗng), tính trong cùng câu `SELECT` của `listChapters` bằng `EXISTS` trên `chapter_text` nên không tải nội dung. Dùng cho hộp xóa chương; cột trên giao diện vẫn nằm trong backlog (`chapter-content-presence`).
+
+### D6. Giao diện chạm vào: xóa chương, menu tác phẩm, khôi phục
+
+- **Hộp xóa chương** nhận `hasSource`/`hasTarget` của chương: nêu rõ bên nào sẽ mất và gợi ý "Sao lưu tác phẩm trước" (một nút mở hộp lưu, không bắt buộc). Chương không có nội dung giữ câu cũ.
+- **"Sao lưu…"** thêm vào `WorkMenu` ở thư viện và `WorkHeader` ở màn chi tiết; cả hai gọi cùng một kênh `backup:export`. Kết quả hiện bằng thông báo (đã lưu ở đâu / lý do lỗi); hủy hộp thoại không báo gì.
+- **"Mở tác phẩm có sẵn"** thay `PendingScreen` bằng hành động mở hộp chọn tệp ngay (không có màn trung gian). Thành công: thông báo trên thư viện kèm nút "Mở tác phẩm" tới màn chi tiết, vì tác phẩm giữ mốc thời gian cũ (`updated_at` không đổi khi khôi phục) nên có thể không nằm đầu danh sách. `work.id` mới nhưng `last_chapter_id`, trạng thái và mốc thời gian giữ nguyên.
+- Hộp thoại mở/lưu chạy ở main với cửa sổ cha là cửa sổ chính; renderer không bao giờ truyền đường dẫn vào.
+
 ## Risks / Trade-offs
 
 - **`VACUUM INTO` chưa kiểm chứng với tệp WAL lớn và ổ đích khác** → task đo bằng tệp vài chục MB.
@@ -54,4 +80,8 @@ Không đổi schema; không cần migrate. Hoàn tác: revert commit.
 
 ## Open Questions
 
-- Tên tệp gợi ý khi sao lưu (đề xuất: `<tên tác phẩm> — <ngày>.mira`, bỏ ký tự không hợp lệ trên Windows).
+Cần chủ sản phẩm xác nhận trước khi làm (đề xuất ghi kèm; đổi câu trả lời sẽ đổi spec hoặc tasks):
+
+1. **Giới hạn kích thước:** 2.000.000 đơn vị UTF-16 mỗi văn bản và 50.000 segment mỗi bên có ổn không, hay muốn trần thấp hơn/cao hơn?
+2. **Tên tệp gợi ý khi sao lưu:** `<tên tác phẩm> — <ngày>.mira`, bỏ ký tự Windows không cho phép (`\ / : * ? " < > |`) và cắt ở khoảng 100 ký tự.
+3. **Khôi phục giữ mốc thời gian cũ** (đề xuất) hay đặt "sửa lần cuối" thành lúc khôi phục để tác phẩm lên đầu danh sách? Đề xuất giữ cũ để không làm sai lịch sử, bù bằng thông báo kèm nút mở.

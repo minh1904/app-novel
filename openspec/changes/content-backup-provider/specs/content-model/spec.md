@@ -8,13 +8,25 @@
 
 Hệ thống SHALL biểu diễn một tác phẩm gồm danh sách chương có thứ tự; mỗi chương có tiêu đề và văn bản theo từng bên (bên nguồn và bên dịch), mỗi văn bản là chuỗi Markdown thuần. Tác phẩm SHALL ghi ngôn ngữ nguồn thuộc tập {Anh, Trung giản thể, Trung phồn thể, Nhật} và ngôn ngữ đích là Việt.
 
-#### Scenario: Tạo chương
-- **WHEN** thêm chương vào tác phẩm
-- **THEN** chương xuất hiện đúng vị trí thứ tự, có văn bản nguồn và bản dịch rỗng hợp lệ
+#### Scenario: Chương mới tạo
+- **WHEN** thêm chương vào tác phẩm bằng màn chi tiết
+- **THEN** chương xuất hiện đúng vị trí thứ tự và đọc văn bản nguồn hay bản dịch của nó cho kết quả rỗng hợp lệ
 
 #### Scenario: Chương không có bản dịch
 - **WHEN** chương chỉ có văn bản nguồn
 - **THEN** chương vẫn hợp lệ và mở/lưu được
+
+### Requirement: Văn bản của chương được tạo khi cần
+
+Chương SHALL tồn tại mà chưa có bản ghi văn bản. Đọc văn bản của một bên chưa từng ghi SHALL trả nội dung rỗng với revision 0 và danh sách segment rỗng, không báo lỗi. Lần ghi đầu tiên (kèm revision 0 đã đọc) SHALL tạo bản ghi và đặt revision 1.
+
+#### Scenario: Đọc bên chưa ghi
+- **WHEN** đọc bản dịch của một chương chưa từng có bản dịch
+- **THEN** nhận nội dung rỗng, revision 0 và không có segment
+
+#### Scenario: Ghi lần đầu
+- **WHEN** ghi văn bản nguồn của chương kèm revision 0
+- **THEN** nội dung được lưu với revision 1 và đọc lại đúng từng ký tự
 
 ### Requirement: Văn bản có revision
 
@@ -30,7 +42,7 @@ Mỗi văn bản SHALL có số revision tăng sau mỗi lần nội dung thay �
 
 ### Requirement: Segment có ID ổn định và neo vào một revision
 
-Hệ thống SHALL lưu segment gồm ID ổn định, bên (nguồn/dịch), vùng vị trí trong văn bản và revision văn bản mà vùng đó hợp lệ. Nội dung văn bản và toàn bộ segment của bên đó SHALL được ghi trong cùng một giao dịch; hệ thống SHALL NOT để tồn tại segment neo vào revision khác với revision văn bản hiện tại mà không được đánh dấu.
+Hệ thống SHALL lưu segment gồm ID ổn định, bên (nguồn/dịch), vùng vị trí trong văn bản và revision văn bản mà vùng đó hợp lệ. Nội dung văn bản và toàn bộ segment của bên đó SHALL được ghi trong cùng một giao dịch; hệ thống SHALL NOT để tồn tại segment neo vào revision khác với revision văn bản hiện tại mà không được đánh dấu. Người gọi MAY đưa kèm ID cho segment đã có để giữ ID ổn định; segment không có ID SHALL được cấp ID mới.
 
 #### Scenario: Ghi văn bản và segment cùng lúc
 - **WHEN** văn bản một bên được cập nhật cùng danh sách segment mới
@@ -39,6 +51,50 @@ Hệ thống SHALL lưu segment gồm ID ổn định, bên (nguồn/dịch), v�
 #### Scenario: Segment ID giữ nguyên
 - **WHEN** đọc lại segment sau khi đóng và mở tác phẩm
 - **THEN** ID, vùng và trạng thái của segment giống hệt trước đó
+
+#### Scenario: Giữ ID khi ghi lại
+- **WHEN** ghi lại văn bản kèm danh sách segment mang ID của các segment đã có
+- **THEN** các segment đó giữ nguyên ID và mọi liên kết trỏ tới chúng còn nguyên
+
+#### Scenario: ID của chương khác
+- **WHEN** danh sách segment mang ID thuộc chương hay bên khác
+- **THEN** lần ghi bị từ chối và không có dữ liệu nào đổi
+
+### Requirement: Vùng segment hợp lệ
+
+Vùng của segment SHALL được tính theo **đơn vị UTF-16** của chuỗi văn bản (chỉ số của chuỗi trong JavaScript và của CodeMirror), gồm vị trí đầu và cuối với 0 ≤ đầu ≤ cuối ≤ độ dài văn bản. Các segment cùng bên SHALL được sắp theo vị trí và SHALL NOT chồng lên nhau. Lần ghi có vùng không hợp lệ SHALL bị từ chối toàn bộ, kèm segment sai, và không đổi gì.
+
+#### Scenario: Văn bản có ký tự ngoài mặt phẳng cơ bản
+- **WHEN** lưu văn bản có emoji và chữ Hán hiếm kèm segment bao quanh chúng
+- **THEN** sau khi đọc lại, cắt văn bản theo vùng của segment cho đúng nội dung segment, không cắt đôi một ký tự
+
+#### Scenario: Vùng vượt độ dài
+- **WHEN** ghi segment có vị trí cuối lớn hơn độ dài văn bản
+- **THEN** lần ghi bị từ chối kèm lý do và văn bản cũ không đổi
+
+#### Scenario: Segment chồng nhau
+- **WHEN** hai segment cùng bên có vùng chồng lên nhau
+- **THEN** lần ghi bị từ chối và không segment nào được lưu
+
+### Requirement: Giới hạn kích thước
+
+Mỗi văn bản SHALL có tối đa 2.000.000 đơn vị UTF-16 và mỗi bên của một chương SHALL có tối đa 50.000 segment. Lần ghi vượt giới hạn SHALL bị từ chối kèm lý do rõ ràng và không đổi gì, thay vì làm treo giao diện hay đầy bộ nhớ.
+
+#### Scenario: Văn bản quá dài
+- **WHEN** ghi văn bản dài hơn giới hạn
+- **THEN** lần ghi bị từ chối kèm giới hạn và văn bản cũ không đổi
+
+### Requirement: Chương cho biết đã có nội dung chưa
+
+Danh sách chương SHALL cho biết với mỗi chương bên nguồn và bên dịch đã có văn bản không rỗng hay chưa, mà không phải tải nội dung. Thông tin này SHALL luôn khớp với kho sau mỗi lần ghi, xóa hay khôi phục.
+
+#### Scenario: Có bản gốc, chưa có bản dịch
+- **WHEN** chương chỉ có văn bản nguồn không rỗng
+- **THEN** danh sách đánh dấu chương có bản gốc và chưa có bản dịch
+
+#### Scenario: Xóa hết văn bản
+- **WHEN** ghi văn bản rỗng cho bên nguồn của chương
+- **THEN** danh sách đánh dấu chương chưa có bản gốc
 
 ### Requirement: Liên kết n:m giữa segment
 
