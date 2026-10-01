@@ -7,7 +7,7 @@ Lý do và phạm vi: xem `proposal.md`. Hiện trạng liên quan:
 - IPC theo mẫu đã có: kênh trong `shared/channels.ts`, schema valibot trong `shared/library.ts`, handler thuần ở `main/ipc/`, trả `Result`.
 - Tham khảo thực tế: trang truyện trên Hako có bìa, tên, thể loại, tình trạng, nút "Đọc tiếp", tóm tắt, tác giả, nhóm dịch và mục lục **nhóm theo Tập** với "Xem tiếp (N chương)" để gập danh sách dài. Chỉ đọc qua kết quả tìm kiếm của một trang thật, chưa xác nhận từng chi tiết giao diện.
 
-Quyết định đã chốt liên quan: SQL thuần + repository, valibot, IPC tự viết, không thêm thư viện ([ADR-003](../../../docs/handbook/decisions/0003-technology-stack.md)).
+Quyết định đã chốt liên quan: SQL thuần + repository, valibot, IPC tự viết, không thêm thư viện ([ADR-003](../../../../docs/handbook/decisions/0003-technology-stack.md)).
 
 ## Goals / Non-Goals
 
@@ -42,7 +42,7 @@ Quyết định đã chốt liên quan: SQL thuần + repository, valibot, IPC t
 
 Ở cửa sổ hẹp, bìa xếp trên thông tin và các nút xuống hàng riêng. Nút chính là "Tiếp tục" khi có chương gần nhất, ngược lại "Thêm chương". Menu `⋯` của tác phẩm dùng lại các hành động của thư viện (tạm dừng/tiếp tục, lưu trữ, đổi/gỡ bìa).
 
-Thanh năm tab trong [mockup nghiên cứu](../../../docs/handbook/research/work-detail-screen.md) là bản phác trước quyết định ngày 2026-10-01. Cấu trúc đã chốt là **Chương · Ngữ cảnh · Nguồn · Tác vụ**, với Thuật ngữ, Xưng hô và Văn phong trong Ngữ cảnh ([change điều hướng](../work-area-navigation/proposal.md)). Change này xây **khung** (D10) và vùng **Chương**; chưa vẽ thanh tab một mục và không tạo tab rỗng dẫn tới màn chưa có. Các khu vực khác được đưa vào khung khi có màn và luồng làm việc thật.
+Thanh năm tab trong [mockup nghiên cứu](../../../../docs/handbook/research/work-detail-screen.md) là bản phác trước quyết định ngày 2026-10-01. Cấu trúc đã chốt là **Chương · Ngữ cảnh · Nguồn · Tác vụ**, với Thuật ngữ, Xưng hô và Văn phong trong Ngữ cảnh ([change điều hướng](../../work-area-navigation/proposal.md)). Change này xây **khung** (D10) và vùng **Chương**; chưa vẽ thanh tab một mục và không tạo tab rỗng dẫn tới màn chưa có. Các khu vực khác được đưa vào khung khi có màn và luồng làm việc thật.
 
 ### D2. Dữ liệu chương và IPC
 
@@ -153,7 +153,7 @@ Phương án khác: để `WorkDetailScreen` render thẳng danh sách chương 
 
 ### D11. Minh họa tính năng chưa triển khai và backlog
 
-Theo nguyên tắc roadmap "giao diện xem được sớm", chủ sản phẩm muốn thấy các luồng chưa làm để biết còn việc gì. Mỗi tính năng như vậy là một **mục minh họa** khai báo ở một nơi (`mockFeatures`: `id`, nhãn, mô tả, đường dẫn mục backlog), render nhãn "Sắp có" và hộp thoại minh họa chung với dữ liệu mẫu cố định. Mục minh họa không có IPC, không đọc tệp, không ghi dữ liệu; thiếu mục backlog tương ứng thì test fail (đọc `docs/handbook/delivery/backlog.md` và kiểm `id`). Ngày 2026-10-01 chủ sản phẩm yêu cầu thấy thanh tab ngay, nên Ngữ cảnh, Nguồn và Tác vụ cũng được đăng ký dưới dạng minh họa (`soon: true`, nhãn "Sắp có" trên tab, `MockAreaPanel` chỉ mô tả, không dữ liệu). Việc này **thay** nguyên tắc trước đó là "không vẽ tab chưa có màn"; quyết định gốc ghi ở [decisions](../../../docs/handbook/product/decisions.md). Khi một khu vực thành thật, bỏ `soon` và thay `render`.
+Theo nguyên tắc roadmap "giao diện xem được sớm", chủ sản phẩm muốn thấy các luồng chưa làm để biết còn việc gì. Mỗi tính năng như vậy là một **mục minh họa** khai báo ở một nơi (`mockFeatures`: `id`, nhãn, mô tả, đường dẫn mục backlog), render nhãn "Sắp có" và hộp thoại minh họa chung với dữ liệu mẫu cố định. Mục minh họa không có IPC, không đọc tệp, không ghi dữ liệu; thiếu mục backlog tương ứng thì test fail (đọc `docs/handbook/delivery/backlog.md` và kiểm `id`). Ngày 2026-10-01 chủ sản phẩm yêu cầu thấy thanh tab ngay, nên Ngữ cảnh, Nguồn và Tác vụ cũng được đăng ký dưới dạng minh họa (`soon: true`, nhãn "Sắp có" trên tab, `MockAreaPanel` chỉ mô tả, không dữ liệu). Việc này **thay** nguyên tắc trước đó là "không vẽ tab chưa có màn"; quyết định gốc ghi ở [decisions](../../../../docs/handbook/product/decisions.md). Khi một khu vực thành thật, bỏ `soon` và thay `render`.
 
 Minh họa đầu tiên: **Nhập chương từ tệp .txt** (nút cạnh "Thêm chương" và trong trạng thái trống). Hộp thoại minh họa các bước: chọn tệp (tên mẫu), quy tắc tách chương (đề xuất: dòng bắt đầu bằng `***` là tên chương, như Hako), xem trước danh sách chương mẫu, nhập (vô hiệu). Quy tắc tách và giới hạn chỉ là đề xuất để thảo luận, chưa chốt. Các minh họa khác (cột "có raw/có bản dịch", lối vào glossary/xưng hô) nằm trong backlog, chưa có minh họa trên UI.
 

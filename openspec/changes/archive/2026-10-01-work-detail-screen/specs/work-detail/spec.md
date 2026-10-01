@@ -1,6 +1,6 @@
 ## Purpose
 
-Định nghĩa màn chi tiết một tác phẩm: khung màn, thông tin tác phẩm, danh sách chương và đường đi tiếp vào chương đang làm. Đây là điểm vào của mọi việc dịch thuật trên một tác phẩm. Chương ở giai đoạn này chỉ là mục trong danh sách (số thứ tự, tên); văn bản gốc/dịch nằm ở change sau. Các khu vực dài hạn (Ngữ cảnh, Nguồn, Tác vụ) gắn vào khung này khi có màn thật, theo [work-area-navigation](../../../work-area-navigation/proposal.md).
+Định nghĩa màn chi tiết một tác phẩm: khung màn, thông tin tác phẩm, danh sách chương và đường đi tiếp vào chương đang làm. Đây là điểm vào của mọi việc dịch thuật trên một tác phẩm. Chương ở giai đoạn này chỉ là mục trong danh sách (số thứ tự, tên); văn bản gốc/dịch nằm ở change sau. Các khu vực dài hạn (Ngữ cảnh, Nguồn, Tác vụ) gắn vào khung này khi có màn thật, theo [work-area-navigation](../../../../work-area-navigation/proposal.md).
 
 ## ADDED Requirements
 
