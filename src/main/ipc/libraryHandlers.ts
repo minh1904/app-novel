@@ -1,5 +1,12 @@
 import { CHANNELS, type Channel } from '../../shared/channels'
 import {
+  chapterRefSchema,
+  createChapterSchema,
+  listChaptersSchema,
+  moveChapterSchema,
+  renameChapterSchema
+} from '../../shared/chapters'
+import {
   createWorkSchema,
   getWorkSchema,
   setCoverSchema,
@@ -21,7 +28,25 @@ export function createLibraryHandlers(library: LibraryStore): Record<Channel, Ra
     [CHANNELS.worksCoverGet]: createHandler(getWorkSchema, ({ id }) => library.getCover(id)),
     [CHANNELS.worksCoverSet]: createHandler(setCoverSchema, ({ id, cover }) =>
       library.setCover(id, cover)
-    )
+    ),
+    [CHANNELS.chaptersList]: createHandler(listChaptersSchema, ({ workId }) => ({
+      chapters: library.listChapters(workId)
+    })),
+    [CHANNELS.chaptersCreate]: createHandler(createChapterSchema, ({ workId, title }) =>
+      library.createChapter(workId, title)
+    ),
+    [CHANNELS.chaptersRename]: createHandler(renameChapterSchema, ({ workId, chapterId, title }) =>
+      library.renameChapter(workId, chapterId, title)
+    ),
+    [CHANNELS.chaptersMove]: createHandler(moveChapterSchema, ({ workId, chapterId, to }) =>
+      library.moveChapter(workId, chapterId, to)
+    ),
+    [CHANNELS.chaptersDelete]: createHandler(chapterRefSchema, ({ workId, chapterId }) =>
+      library.deleteChapter(workId, chapterId)
+    ),
+    [CHANNELS.chaptersOpen]: createHandler(chapterRefSchema, ({ workId, chapterId }) => ({
+      work: library.openChapter(workId, chapterId)
+    }))
   }
 }
 

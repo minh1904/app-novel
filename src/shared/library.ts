@@ -109,7 +109,10 @@ export const createWorkSchema = v.strictObject({
 })
 export type CreateWorkInput = v.InferInput<typeof createWorkSchema>
 
-/** `null` clears an optional text field; an absent key leaves it unchanged. */
+/**
+ * `null` clears an optional text field or removes the cover; an absent key leaves it unchanged.
+ * The cover travels in the same patch so details and cover save atomically.
+ */
 export const workPatchSchema = v.strictObject({
   title: v.optional(title),
   originalTitle: v.optional(v.nullable(optionalTitle)),
@@ -117,7 +120,8 @@ export const workPatchSchema = v.strictObject({
   genre: v.optional(v.nullable(genre)),
   description: v.optional(v.nullable(description)),
   status: v.optional(status),
-  archived: v.optional(v.boolean('Giá trị lưu trữ phải là đúng/sai.'))
+  archived: v.optional(v.boolean('Giá trị lưu trữ phải là đúng/sai.')),
+  cover: v.optional(v.nullable(cover))
 })
 export type WorkPatch = v.InferInput<typeof workPatchSchema>
 

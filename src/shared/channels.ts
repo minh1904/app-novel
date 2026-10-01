@@ -5,7 +5,13 @@ export const CHANNELS = {
   worksCreate: 'works:create',
   worksUpdate: 'works:update',
   worksCoverGet: 'works:cover:get',
-  worksCoverSet: 'works:cover:set'
+  worksCoverSet: 'works:cover:set',
+  chaptersList: 'chapters:list',
+  chaptersCreate: 'chapters:create',
+  chaptersRename: 'chapters:rename',
+  chaptersMove: 'chapters:move',
+  chaptersDelete: 'chapters:delete',
+  chaptersOpen: 'chapters:open'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

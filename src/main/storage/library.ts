@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
+import type { ChapterChange, ChapterItem, ChaptersChange } from '../../shared/chapters'
 import type {
   CreateWorkInput,
   WorkList,
@@ -8,6 +9,14 @@ import type {
   WorkProblem,
   WorkSummary
 } from '../../shared/library'
+import {
+  deleteChapter,
+  insertChapter,
+  listChapters,
+  moveChapter,
+  openChapter,
+  renameChapter
+} from './chapterFile'
 import { decodeCover, encodeCover } from './cover'
 import { StorageError, toStorageError } from './errors'
 import { librarySchema } from './librarySchema'
@@ -30,6 +39,7 @@ export interface LibraryOptions {
   dataDir: string
   now?: () => number
   newId?: () => string
+  newChapterId?: () => string
 }
 
 const WORK_EXTENSION = '.mira'
@@ -48,6 +58,7 @@ export class LibraryStore {
   private readonly tmpDir: string
   private readonly now: () => number
   private readonly newId: () => string
+  private readonly newChapterId: () => string
   private index: Db
   private problems: WorkProblem[] = []
 
@@ -59,6 +70,7 @@ export class LibraryStore {
     this.tmpDir = join(this.worksDir, '.tmp')
     this.now = options.now ?? Date.now
     this.newId = options.newId ?? randomUUID
+    this.newChapterId = options.newChapterId ?? randomUUID
     mkdirSync(this.tmpDir, { recursive: true })
     this.index = this.openIndex()
   }
@@ -115,13 +127,75 @@ export class LibraryStore {
     return summary
   }
 
+  /** Details and cover are saved in one transaction: either both change or neither does. */
   update(id: string, patch: WorkPatch): WorkSummary {
+    // Decode first so a bad cover fails before the file is touched.
+    const cover =
+      patch.cover === undefined ? undefined : patch.cover === null ? null : decodeCover(patch.cover)
     const summary = this.withWork(id, (db) => {
-      db.transaction(() => patchWork(db, patch, this.now()))
+      db.transaction(() => {
+        const now = this.now()
+        patchWork(db, patch, now)
+        if (cover !== undefined) writeCover(db, cover, now)
+      })
       return readWork(db)
     })
     this.syncIndex(summary)
     return summary
+  }
+
+  listChapters(workId: string): ChapterItem[] {
+    return this.withWork(workId, (db) => listChapters(db))
+  }
+
+  createChapter(workId: string, title = ''): ChapterChange {
+    const chapterId = this.newChapterId()
+    return this.changeChapters(workId, (db, now) => {
+      const chapter = insertChapter(db, chapterId, title.trim(), now)
+      return { chapter }
+    })
+  }
+
+  renameChapter(workId: string, chapterId: string, title: string): ChapterChange {
+    return this.changeChapters(workId, (db, now) => ({
+      chapter: renameChapter(db, chapterId, title.trim(), now)
+    }))
+  }
+
+  /** `to` is the 1-based position the chapter should end up at. */
+  moveChapter(workId: string, chapterId: string, to: number): ChaptersChange {
+    return this.changeChapters(workId, (db, now) => {
+      moveChapter(db, chapterId, to, now)
+      return { chapters: listChapters(db) }
+    })
+  }
+
+  deleteChapter(workId: string, chapterId: string): ChaptersChange {
+    return this.changeChapters(workId, (db, now) => {
+      deleteChapter(db, chapterId, now)
+      return { chapters: listChapters(db) }
+    })
+  }
+
+  /** Marks a chapter as the one being worked on and returns the updated work. */
+  openChapter(workId: string, chapterId: string): WorkSummary {
+    return this.changeChapters(workId, (db, now) => {
+      openChapter(db, chapterId, now)
+      return {}
+    }).work
+  }
+
+  /** Runs a chapter change in one transaction, then refreshes the library index from the result. */
+  private changeChapters<T extends object>(
+    workId: string,
+    change: (db: Db, now: number) => T
+  ): T & { work: WorkSummary } {
+    const result = this.withWork(workId, (db) => {
+      const changed = db.transaction(() => change(db, this.now()))
+      return { ...changed, work: readWork(db) }
+    })
+    this.syncIndex(result.work)
+    return result
   }
 
   /** The cover as a data URL, or null when the work has none. */

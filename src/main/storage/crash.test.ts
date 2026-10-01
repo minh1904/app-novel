@@ -69,6 +69,71 @@ function integrityOk(path: string): boolean {
   }
 }
 
+interface ChapterAck {
+  op: 'work' | 'created' | 'renamed' | 'moved' | 'opened' | 'deleted'
+  id: string
+  title?: string
+}
+
+function bundleChaptersChild(outDir: string): string {
+  const outfile = join(outDir, 'crashChaptersChild.mjs')
+  buildSync({
+    entryPoints: [join(__dirname, 'crashChaptersChild.ts')],
+    outfile,
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    logLevel: 'silent'
+  })
+  return outfile
+}
+
+describe('killing the process while it edits chapters', () => {
+  it('keeps acknowledged chapters and a gapless order', async () => {
+    const dataDir = tempDir()
+    const script = bundleChaptersChild(tempDir())
+    const acks: ChapterAck[] = []
+
+    for (const runMs of [80, 200, 350, 500, 700]) {
+      acks.push(...((await runAndKill(script, dataDir, runMs)) as unknown as ChapterAck[]))
+
+      const workId = acks.find((ack) => ack.op === 'work')?.id
+      expect(workId).toBeDefined()
+      if (!workId) continue
+
+      const store = LibraryStore.open({ dataDir })
+      try {
+        expect(store.list().problems).toEqual([])
+        const chapters = store.listChapters(workId)
+        expect(chapters.map((c) => c.number)).toEqual(chapters.map((_, i) => i + 1))
+
+        const present = new Map(chapters.map((c) => [c.id, c]))
+        const deleted = new Set(acks.filter((a) => a.op === 'deleted').map((a) => a.id))
+        for (const ack of acks) {
+          if (ack.op === 'created' && !deleted.has(ack.id)) {
+            expect(present.has(ack.id), 'acknowledged chapter missing after a kill').toBe(true)
+          }
+          if (ack.op === 'renamed' && !deleted.has(ack.id)) {
+            expect(present.get(ack.id)?.title).toBe(ack.title)
+          }
+          if (ack.op === 'deleted') expect(present.has(ack.id)).toBe(false)
+        }
+
+        // The index must agree with the work file, even if the kill landed between the two.
+        expect(store.list().works[0]).toEqual(store.get(workId))
+      } finally {
+        store.close()
+      }
+
+      for (const name of readdirSync(join(dataDir, 'works'))) {
+        if (name.endsWith('.mira')) expect(integrityOk(join(dataDir, 'works', name))).toBe(true)
+      }
+    }
+
+    expect(acks.filter((a) => a.op === 'created').length).toBeGreaterThan(5)
+  }, 90_000)
+})
+
 describe('killing the process while it writes', () => {
   it('keeps every acknowledged change and never exposes a half-written work', async () => {
     const dataDir = tempDir()

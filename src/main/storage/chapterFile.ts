@@ -1,0 +1,119 @@
+import type { ChapterItem } from '../../shared/chapters'
+import { StorageError } from './errors'
+import type { Db } from './sqlite'
+
+/**
+ * Chapter operations inside one work file. Invariant: `chapter.position` is always a gapless
+ * permutation 0..n-1. There is no UNIQUE constraint on it (the shifting statements pass through
+ * duplicates mid-update), so every operation that changes positions must run in one transaction.
+ */
+
+interface ChapterRow {
+  id: string
+  position: number
+  title: string
+  created_at: number
+  updated_at: number
+}
+
+function toItem(row: ChapterRow): ChapterItem {
+  return {
+    id: row.id,
+    number: row.position + 1,
+    title: row.title,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  }
+}
+
+export function listChapters(db: Db): ChapterItem[] {
+  return db
+    .prepare('SELECT id, position, title, created_at, updated_at FROM chapter ORDER BY position')
+    .all<ChapterRow>()
+    .map(toItem)
+}
+
+function findChapter(db: Db, chapterId: string): ChapterRow {
+  const row = db
+    .prepare('SELECT id, position, title, created_at, updated_at FROM chapter WHERE id = ?')
+    .get<ChapterRow>(chapterId)
+  if (!row) throw new StorageError('not_found', 'Không tìm thấy chương.')
+  return row
+}
+
+function countChapters(db: Db): number {
+  return db.prepare('SELECT count(*) AS n FROM chapter').get<{ n: number }>()?.n ?? 0
+}
+
+/** Any chapter work counts as work on the work itself. */
+function touchWork(db: Db, now: number): void {
+  db.prepare('UPDATE work SET updated_at = ?').run(now)
+}
+
+export function getChapter(db: Db, chapterId: string): ChapterItem {
+  return toItem(findChapter(db, chapterId))
+}
+
+/** Appends a chapter; the title may be empty (shown as "Chương N"). */
+export function insertChapter(db: Db, id: string, title: string, now: number): ChapterItem {
+  db.prepare(
+    `INSERT INTO chapter (id, position, title, created_at, updated_at)
+     VALUES (?, (SELECT count(*) FROM chapter), ?, ?, ?)`
+  ).run(id, title, now, now)
+  touchWork(db, now)
+  return getChapter(db, id)
+}
+
+export function renameChapter(db: Db, chapterId: string, title: string, now: number): ChapterItem {
+  findChapter(db, chapterId)
+  db.prepare('UPDATE chapter SET title = ?, updated_at = ? WHERE id = ?').run(title, now, chapterId)
+  touchWork(db, now)
+  return getChapter(db, chapterId)
+}
+
+/** `to` is 1-based. Moving a chapter onto its own position changes nothing, including timestamps. */
+export function moveChapter(db: Db, chapterId: string, to: number, now: number): void {
+  const total = countChapters(db)
+  if (!Number.isInteger(to) || to < 1 || to > total) {
+    throw new StorageError('validation', 'Vị trí phải từ 1 đến ' + total + '.')
+  }
+  const from = findChapter(db, chapterId).position
+  const target = to - 1
+  if (from === target) return
+
+  if (from < target) {
+    db.prepare(
+      'UPDATE chapter SET position = position - 1 WHERE position > ? AND position <= ?'
+    ).run(from, target)
+  } else {
+    db.prepare(
+      'UPDATE chapter SET position = position + 1 WHERE position >= ? AND position < ?'
+    ).run(target, from)
+  }
+  db.prepare('UPDATE chapter SET position = ?, updated_at = ? WHERE id = ?').run(
+    target,
+    now,
+    chapterId
+  )
+  touchWork(db, now)
+}
+
+/** Child rows and `work.last_chapter_id` are handled by their foreign keys. */
+export function deleteChapter(db: Db, chapterId: string, now: number): void {
+  const { position } = findChapter(db, chapterId)
+  db.prepare('DELETE FROM chapter WHERE id = ?').run(chapterId)
+  db.prepare('UPDATE chapter SET position = position - 1 WHERE position > ?').run(position)
+  touchWork(db, now)
+}
+
+/**
+ * Records the chapter as the one being worked on. A work that has not been started becomes
+ * in progress; a paused work stays paused because that was the user's choice.
+ */
+export function openChapter(db: Db, chapterId: string, now: number): void {
+  findChapter(db, chapterId)
+  db.prepare(
+    `UPDATE work SET last_chapter_id = ?, updated_at = ?,
+       status = CASE status WHEN 'not-started' THEN 'in-progress' ELSE status END`
+  ).run(chapterId, now)
+}
