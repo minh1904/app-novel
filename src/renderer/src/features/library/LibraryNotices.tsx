@@ -66,7 +66,7 @@ export function LibraryNotices({
           <ul className="flex flex-col gap-1 text-ink-muted">
             {problems.map((problem) => (
               <li key={problem.fileName}>
-                <span className="font-mono text-[11px] text-ink">{problem.fileName}</span>
+                <span className="font-mono text-[12px] text-ink">{problem.fileName}</span>
                 {' — '}
                 {reasons[problem.code] ?? problem.message}
               </li>

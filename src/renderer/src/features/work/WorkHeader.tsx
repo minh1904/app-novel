@@ -83,7 +83,7 @@ export function WorkHeader({
             <span className="tabular-nums">{work.chapterCount} chương</span>
             <span aria-hidden="true">·</span>
             <time dateTime={work.updatedAt.toISOString()} title={formatFullDate(work.updatedAt)}>
-              Sửa {formatUpdated(work.updatedAt)}
+              Sửa {formatUpdated(work.updatedAt).toLocaleLowerCase('vi')}
             </time>
           </p>
 

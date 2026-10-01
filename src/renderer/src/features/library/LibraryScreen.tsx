@@ -356,7 +356,7 @@ function ContinuePanel({
           {chapter.excerpt}
         </p>
       )}
-      <p className="mt-1 text-[11px] text-ink-muted">
+      <p className="mt-1 text-[12px] text-ink-muted">
         Sửa{' '}
         <time dateTime={work.updatedAt.toISOString()} title={formatFullDate(work.updatedAt)}>
           {formatUpdated(work.updatedAt).toLocaleLowerCase('vi')}
@@ -420,7 +420,7 @@ function WorkTable({
   return (
     <div className="@container">
       <div
-        className={cx(columns, 'h-8 border-b border-line px-3 text-[11px] text-ink-muted')}
+        className={cx(columns, 'h-8 border-b border-line px-3 text-[12px] text-ink-muted')}
         aria-hidden="true"
       >
         <span>Tác phẩm</span>
@@ -471,7 +471,7 @@ function WorkRow({
           <span id={titleId} className="line-clamp-2 text-[13px] leading-[1.35] font-semibold">
             {work.title}
           </span>
-          <span className="truncate text-[11px] text-ink-muted">
+          <span className="truncate text-[12px] text-ink-muted">
             <span title={languages[work.sourceLanguage].name + ' → Tiếng Việt'}>
               {languages[work.sourceLanguage].short} → Việt
             </span>
@@ -483,12 +483,12 @@ function WorkRow({
             )}
           </span>
           {(work.author || work.genre) && (
-            <span className="truncate text-[11px] text-ink-muted">
+            <span className="truncate text-[12px] text-ink-muted">
               {[work.author, work.genre].filter(Boolean).join(' · ')}
             </span>
           )}
           {work.description && (
-            <span className="truncate text-[11px] text-ink-muted">{work.description}</span>
+            <span className="truncate text-[12px] text-ink-muted">{work.description}</span>
           )}
         </div>
       </div>
@@ -498,15 +498,15 @@ function WorkRow({
       <div className="flex flex-col items-start gap-1">
         <span
           className={cx(
-            'inline-flex h-[22px] items-center rounded-full px-2 text-[10px] font-semibold whitespace-nowrap',
+            'inline-flex h-[22px] items-center rounded-full px-2 text-[11px] font-semibold whitespace-nowrap',
             statusTone[work.status]
           )}
         >
           {statusLabels[work.status]}
         </span>
-        <span className="pl-2 text-[11px] text-ink-muted">
-          {work.lastChapter ? 'Chương ' + work.lastChapter.number : '–'}
-        </span>
+        {work.lastChapter && (
+          <span className="pl-2 text-[12px] text-ink-muted">Chương {work.lastChapter.number}</span>
+        )}
       </div>
       <time
         className={cx('flex flex-col text-xs', hideBelow560)}
@@ -514,7 +514,7 @@ function WorkRow({
         title={formatFullDate(work.updatedAt)}
       >
         <span>{updated.day}</span>
-        <span className="text-[11px] text-ink-muted">{updated.time}</span>
+        <span className="text-[12px] text-ink-muted">{updated.time}</span>
       </time>
       <div className="flex w-[152px] items-center justify-end gap-1">
         <Button variant="outline" onClick={() => actions.onOpenWork(work)}>
@@ -752,7 +752,7 @@ function EmptyLibrary({
                 key={step.title}
                 className="flex gap-3 rounded-control border border-line bg-canvas p-3"
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-control text-[11px] font-semibold tabular-nums">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-control text-[12px] font-semibold tabular-nums">
                   {index + 1}
                 </span>
                 <span className="mt-0.5 text-ink-muted">{step.icon}</span>

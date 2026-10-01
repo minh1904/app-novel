@@ -22,7 +22,7 @@ export function TabsTab({ className, ...props }: BaseTabs.Tab.Props): JSX.Elemen
     <BaseTabs.Tab
       data-slot="tabs-tab"
       className={[
-        'h-[27px] cursor-pointer rounded-[8px] border-0 bg-transparent px-3 text-[11px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-active:bg-selected data-active:text-ink',
+        'h-[27px] cursor-pointer rounded-[8px] border-0 bg-transparent px-3 text-[12px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-active:bg-selected data-active:text-ink',
         className
       ]
         .filter(Boolean)

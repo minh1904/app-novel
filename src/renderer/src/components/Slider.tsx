@@ -28,7 +28,7 @@ export function Slider({
       max={max}
       step={step}
     >
-      <div className="flex justify-between text-[11px] text-ink-muted">
+      <div className="flex justify-between text-[12px] text-ink-muted">
         <BaseSlider.Label>{label}</BaseSlider.Label>
         <BaseSlider.Value className="text-ink tabular-nums">
           {(_, values) => values[0] + '%'}

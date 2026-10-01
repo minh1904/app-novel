@@ -166,7 +166,7 @@ export function ChaptersArea({
     <Button size="lg" variant="secondary" onClick={() => setImportOpen(true)}>
       <ImportIcon size={14} />
       {MOCK_FEATURES.importTxt.label}
-      <span className="ml-0.5 rounded-[5px] bg-selected px-1.5 py-px text-[10px] text-ink-muted">
+      <span className="ml-0.5 rounded-[5px] bg-selected px-1.5 py-px text-[11px] text-ink">
         {SOON_LABEL}
       </span>
     </Button>
@@ -197,7 +197,7 @@ export function ChaptersArea({
               aria-describedby={searchError ? 'chapter-search-error' : undefined}
             />
             {searchError && (
-              <p id="chapter-search-error" role="alert" className="text-[11px] text-error">
+              <p id="chapter-search-error" role="alert" className="text-[12px] text-error">
                 {searchError}
               </p>
             )}
@@ -289,7 +289,7 @@ export function ChaptersArea({
             <div
               className={cx(
                 CHAPTER_GRID,
-                'gap-x-2 border-b border-line bg-sidebar px-1 py-2 text-[11px] font-medium text-ink-muted'
+                'gap-x-2 border-b border-line bg-sidebar px-1 py-2 text-[12px] font-medium text-ink-muted'
               )}
               aria-hidden="true"
             >

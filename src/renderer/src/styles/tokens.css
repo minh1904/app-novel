@@ -46,12 +46,18 @@ html[data-theme='light'] {
   --surface-popover: #fafafa;
 
   --text-primary: #0a0a0a;
-  --text-muted: #737373;
+  --text-muted: #666666;
   --border-subtle: #cccccc80;
   --border-strong: #b8b8b8;
   --action-primary: #171717;
   --action-on-primary: #fafafa;
   --focus-ring: #a3a3a3;
+
+  /* Darker than the dark-theme status colours so small text on a pale tint reaches 4.5:1. */
+  --status-info: #1d5fd6;
+  --status-warning: #9a5b00;
+  --status-error: #d1141f;
+  --status-success: #00793a;
 }
 
 @theme inline {

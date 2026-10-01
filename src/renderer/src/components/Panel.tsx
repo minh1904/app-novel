@@ -19,7 +19,7 @@ export function Panel({ title, className, children, ...props }: PanelProps): JSX
       {...props}
     >
       {title && (
-        <h2 className="m-0 text-[10px] font-semibold tracking-[0.07em] text-ink-muted uppercase">
+        <h2 className="m-0 text-[11px] font-semibold tracking-[0.07em] text-ink-muted uppercase">
           {title}
         </h2>
       )}

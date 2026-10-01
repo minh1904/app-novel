@@ -75,7 +75,7 @@ export function WorkAreaHost({
           <TabsTab key={area.id} value={area.id} className="shrink-0">
             {area.label}
             {area.soon && (
-              <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[9px] text-ink-muted">
+              <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[11px] text-ink">
                 {SOON_LABEL}
               </span>
             )}

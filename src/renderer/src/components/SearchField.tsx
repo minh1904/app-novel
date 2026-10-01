@@ -36,7 +36,7 @@ export function SearchField({
         {...props}
       />
       {shortcut && (
-        <kbd className="pointer-events-none mr-2 rounded-[5px] border border-line px-1.5 font-sans text-[10px] whitespace-nowrap text-ink-muted">
+        <kbd className="pointer-events-none mr-2 rounded-[5px] border border-line px-1.5 font-sans text-[11px] whitespace-nowrap text-ink-muted">
           {shortcut}
         </kbd>
       )}

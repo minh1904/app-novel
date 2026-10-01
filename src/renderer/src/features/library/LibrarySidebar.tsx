@@ -74,7 +74,7 @@ export function LibrarySidebar({
       >
         <h2
           id="recent-works-heading"
-          className="mb-1.5 px-2.5 text-[11px] font-medium text-ink-muted"
+          className="mb-1.5 px-2.5 text-[12px] font-medium text-ink-muted"
         >
           Tác phẩm gần đây
         </h2>
@@ -90,7 +90,7 @@ export function LibrarySidebar({
                   <WorkCover work={work} size="xs" />
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate text-xs font-medium text-ink">{work.title}</span>
-                    <span className="truncate text-[11px] text-ink-muted">
+                    <span className="truncate text-[12px] text-ink-muted">
                       {workProgressLabel(work)}
                     </span>
                   </span>
@@ -102,7 +102,7 @@ export function LibrarySidebar({
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 pb-10 text-center">
             <FolderIcon size={28} className="text-ink-muted" />
             <p className="text-xs font-semibold text-ink-muted">Chưa có tác phẩm nào</p>
-            <p className="text-[11px] leading-[1.5] text-ink-muted">
+            <p className="text-[12px] leading-[1.5] text-ink-muted">
               Tác phẩm bạn tạo sẽ hiện ở đây để mở lại nhanh.
             </p>
           </div>

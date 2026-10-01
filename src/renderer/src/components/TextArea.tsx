@@ -24,7 +24,7 @@ export function TextArea({
       data-slot="text-area"
       className={['flex flex-col gap-[7px]', className].filter(Boolean).join(' ')}
     >
-      <label className="text-[11px] font-semibold" htmlFor={inputId}>
+      <label className="text-[12px] font-semibold" htmlFor={inputId}>
         {label}
       </label>
       <textarea
@@ -40,12 +40,12 @@ export function TextArea({
         {...props}
       />
       {hint && (
-        <span id={hintId} className="text-[10px] text-ink-muted">
+        <span id={hintId} className="text-[12px] text-ink-muted">
           {hint}
         </span>
       )}
       {error && (
-        <span id={errorId} role="alert" className="text-[11px] text-error">
+        <span id={errorId} role="alert" className="text-[12px] text-error">
           {error}
         </span>
       )}

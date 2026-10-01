@@ -309,7 +309,7 @@ function ImportBody({
       ))}
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-[11px] font-semibold">Xem trước các segment</span>
+        <span className="text-[12px] font-semibold">Xem trước các segment</span>
         <ol
           lang={sourceLang}
           className="flex flex-col divide-y divide-line rounded-control border border-line text-[13px]"
@@ -332,7 +332,7 @@ function ImportBody({
                 <span className="break-words whitespace-pre-wrap">
                   {plan.text.slice(plan.segments[item.index].start, plan.segments[item.index].end)}
                   {plan.longSegments.includes(item.index) && (
-                    <span className="ml-2 rounded-[5px] bg-warning/20 px-1.5 text-[10px]">
+                    <span className="ml-2 rounded-[5px] bg-warning/20 px-1.5 text-[11px]">
                       dài bất thường
                     </span>
                   )}

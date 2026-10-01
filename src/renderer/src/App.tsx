@@ -91,7 +91,7 @@ export function App(): JSX.Element {
   const crumbLink = (label: string, onClick: () => void): JSX.Element => (
     <button
       type="button"
-      className="max-w-[40%] shrink-0 cursor-pointer truncate rounded-[6px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
+      className="-my-1 max-w-[40%] shrink-0 cursor-pointer truncate rounded-[6px] py-1 text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
       onClick={onClick}
     >
       {label}

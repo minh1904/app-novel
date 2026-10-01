@@ -114,7 +114,7 @@ export function WorkForm({
 
           {mode === 'create' ? (
             <div className="flex flex-col gap-[7px]">
-              <span className="text-[11px] font-semibold">Ngôn ngữ gốc</span>
+              <span className="text-[12px] font-semibold">Ngôn ngữ gốc</span>
               <Select<SourceLanguage>
                 label="Ngôn ngữ gốc"
                 value={values.sourceLang}
@@ -122,7 +122,7 @@ export function WorkForm({
                 onChange={(lang) => set('sourceLang', lang)}
                 className="w-full"
               />
-              <span className="text-[10px] text-ink-muted">Ngôn ngữ đích luôn là tiếng Việt.</span>
+              <span className="text-[11px] text-ink-muted">Ngôn ngữ đích luôn là tiếng Việt.</span>
             </div>
           ) : (
             <TextField

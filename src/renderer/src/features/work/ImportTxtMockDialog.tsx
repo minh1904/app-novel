@@ -42,7 +42,7 @@ export function ImportTxtMockDialog({
 
         <ol className="flex flex-col gap-4">
           <li className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-semibold">1. Chọn tệp</span>
+            <span className="text-[12px] font-semibold">1. Chọn tệp</span>
             <div className="flex items-center gap-2">
               <span className="min-w-0 flex-1 truncate rounded-control border border-line-strong px-3 py-2 text-ink-muted">
                 truyen-mau.txt (mẫu)
@@ -54,7 +54,7 @@ export function ImportTxtMockDialog({
           </li>
 
           <li className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-semibold">2. Cách tách chương</span>
+            <span className="text-[12px] font-semibold">2. Cách tách chương</span>
             <p className="leading-[1.55] text-ink-muted">
               Đề xuất: một dòng bắt đầu bằng <code className="font-mono text-ink">***</code> là tên
               của chương mới; phần văn bản dưới nó thuộc chương đó. Quy tắc này chưa chốt.
@@ -62,7 +62,7 @@ export function ImportTxtMockDialog({
           </li>
 
           <li className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-semibold">3. Xem trước</span>
+            <span className="text-[12px] font-semibold">3. Xem trước</span>
             <p className="text-ink-muted">Tìm thấy {SAMPLE_CHAPTERS.length} chương (mẫu)</p>
             <ul className="flex flex-col divide-y divide-line rounded-control border border-line">
               {SAMPLE_CHAPTERS.map((title, index) => (
@@ -76,7 +76,7 @@ export function ImportTxtMockDialog({
         </ol>
 
         <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
-          <span id="import-txt-reason" className="mr-auto text-[11px] text-ink-muted">
+          <span id="import-txt-reason" className="mr-auto text-[12px] text-ink-muted">
             Chưa nhập được: tính năng này đang là bản minh họa.
           </span>
           <Button variant="secondary" size="lg" onClick={() => onOpenChange(false)}>

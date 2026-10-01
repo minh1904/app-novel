@@ -22,7 +22,7 @@ export function MockAreaPanel({
       <div className="flex flex-col gap-1.5">
         <h2 id="mock-area-heading" className="flex items-center gap-2 text-[15px] font-semibold">
           {title}
-          <span className="rounded-[5px] bg-selected px-1.5 py-px text-[10px] font-normal text-ink-muted">
+          <span className="rounded-[5px] bg-selected px-1.5 py-px text-[11px] font-normal text-ink">
             {SOON_LABEL}
           </span>
         </h2>
@@ -36,7 +36,7 @@ export function MockAreaPanel({
           </li>
         ))}
       </ul>
-      <p className="text-[11px] text-ink-muted">
+      <p className="text-[12px] text-ink-muted">
         Bản minh họa: khu vực này chưa hoạt động và không thay đổi tác phẩm của bạn.
       </p>
     </section>

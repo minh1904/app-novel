@@ -60,7 +60,7 @@ export function AppShell({
           </div>
           <div className="flex min-h-0 flex-1 flex-col">{sidebar}</div>
           <div className="flex flex-col gap-2 px-3 pt-3 pb-3">
-            <span className="border-t border-line px-2.5 pt-3 text-[11px] text-ink-muted tabular-nums">
+            <span className="border-t border-line px-2.5 pt-3 text-[12px] text-ink-muted tabular-nums">
               {appVersion ? 'Mira ' + appVersion : 'Mira'}
             </span>
           </div>
