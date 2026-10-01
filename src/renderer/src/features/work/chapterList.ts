@@ -21,6 +21,16 @@ export function fold(text: string): string {
     .toLowerCase()
 }
 
+/** What deleting a chapter would destroy beyond its name, or null when it holds no text. */
+export function lossNote(chapter: Pick<ChapterItem, 'hasSource' | 'hasTarget'>): string | null {
+  if (chapter.hasSource && chapter.hasTarget) {
+    return 'Chương này có cả bản gốc lẫn bản dịch; cả hai sẽ mất.'
+  }
+  if (chapter.hasSource) return 'Chương này có bản gốc; bản gốc sẽ mất.'
+  if (chapter.hasTarget) return 'Chương này có bản dịch; bản dịch sẽ mất.'
+  return null
+}
+
 export type SearchQuery =
   | { kind: 'empty' }
   /** The whole input is a number: confirm to jump to that chapter. */

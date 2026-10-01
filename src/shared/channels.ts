@@ -11,7 +11,11 @@ export const CHANNELS = {
   chaptersRename: 'chapters:rename',
   chaptersMove: 'chapters:move',
   chaptersDelete: 'chapters:delete',
-  chaptersOpen: 'chapters:open'
+  chaptersOpen: 'chapters:open',
+  textGet: 'text:get',
+  textSave: 'text:save',
+  backupExport: 'backup:export',
+  backupRestore: 'backup:restore'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

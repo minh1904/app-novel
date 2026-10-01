@@ -13,11 +13,19 @@ import {
   updateWorkSchema
 } from '../../shared/library'
 import { fail, type Result } from '../../shared/result'
+import { saveTextSchema, textRefSchema } from '../../shared/text'
 import type { LibraryStore } from '../storage/library'
-import { createHandler, type RawHandler } from './handler'
+import { backupExportSchema } from '../../shared/backup'
+import { backupFileName } from '../storage/backupName'
+import { StorageError } from '../storage/errors'
+import { createAsyncHandler, createHandler, type RawHandler } from './handler'
+import { noFilePicker, type FilePicker } from './filePicker'
 
 /** Channel → validated handler. Free of Electron imports so tests can call it directly. */
-export function createLibraryHandlers(library: LibraryStore): Record<Channel, RawHandler<unknown>> {
+export function createLibraryHandlers(
+  library: LibraryStore,
+  files: FilePicker = noFilePicker
+): Record<Channel, RawHandler<unknown>> {
   return {
     [CHANNELS.worksList]: createHandler(null, () => library.list()),
     [CHANNELS.worksGet]: createHandler(getWorkSchema, ({ id }) => library.get(id)),
@@ -46,7 +54,28 @@ export function createLibraryHandlers(library: LibraryStore): Record<Channel, Ra
     ),
     [CHANNELS.chaptersOpen]: createHandler(chapterRefSchema, ({ workId, chapterId }) => ({
       work: library.openChapter(workId, chapterId)
-    }))
+    })),
+    [CHANNELS.backupExport]: createAsyncHandler(backupExportSchema, async ({ workId }) => {
+      const work = library.get(workId)
+      const chosen = await files.chooseSavePath(backupFileName(work.title, new Date()))
+      if (chosen === null) throw new StorageError('cancelled', 'Đã hủy.')
+      const path = /\.mira$/i.test(chosen) ? chosen : chosen + '.mira'
+      library.exportWork(workId, path)
+      return { path }
+    }),
+    [CHANNELS.backupRestore]: createAsyncHandler(null, async () => {
+      const chosen = await files.chooseOpenPath()
+      if (chosen === null) throw new StorageError('cancelled', 'Đã hủy.')
+      return library.restoreWork(chosen)
+    }),
+    [CHANNELS.textGet]: createHandler(textRefSchema, ({ workId, chapterId, side }) =>
+      library.readText(workId, chapterId, side)
+    ),
+    [CHANNELS.textSave]: createHandler(
+      saveTextSchema,
+      ({ workId, chapterId, side, content, expectedRev, segments }) =>
+        library.saveText(workId, chapterId, side, content, expectedRev, segments)
+    )
   }
 }
 
@@ -57,8 +86,11 @@ export function createLibraryHandlers(library: LibraryStore): Record<Channel, Ra
 export function guardHandlers<E>(
   handlers: Record<Channel, RawHandler<unknown>>,
   isTrustedSender: (event: E) => boolean
-): Record<Channel, (event: E, raw: unknown) => Result<unknown>> {
-  const guarded = {} as Record<Channel, (event: E, raw: unknown) => Result<unknown>>
+): Record<Channel, (event: E, raw: unknown) => Result<unknown> | Promise<Result<unknown>>> {
+  const guarded = {} as Record<
+    Channel,
+    (event: E, raw: unknown) => Result<unknown> | Promise<Result<unknown>>
+  >
   for (const channel of Object.values(CHANNELS)) {
     guarded[channel] = (event, raw) =>
       isTrustedSender(event)

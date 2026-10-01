@@ -1,6 +1,8 @@
+import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from './library'
 import type { Result } from './result'
+import type { SegmentInput, TextRecord, TextSide } from './text'
 
 export interface AppInfo {
   name: string
@@ -31,8 +33,34 @@ export interface ChaptersApi {
   open(workId: string, chapterId: string): Promise<Result<{ work: WorkSummary }>>
 }
 
+export interface TextApi {
+  /** A side that was never saved reads as empty at revision 0. */
+  get(workId: string, chapterId: string, side: TextSide): Promise<Result<TextRecord>>
+  /** Replaces the text and its segments together; `expectedRev` is the revision last read. */
+  save(
+    workId: string,
+    chapterId: string,
+    side: TextSide,
+    content: string,
+    expectedRev: number,
+    segments: SegmentInput[]
+  ): Promise<Result<TextRecord>>
+}
+
+export interface BackupApi {
+  /**
+   * Opens a "save as" dialog (suggesting a file name) and writes a backup of the work there.
+   * Resolves to the `cancelled` error code when the user dismisses the dialog.
+   */
+  export(workId: string): Promise<Result<BackupExported>>
+  /** Opens a file dialog and adds the chosen backup to the library as a new work. */
+  restore(): Promise<Result<WorkSummary>>
+}
+
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
   works: WorksApi
   chapters: ChaptersApi
+  text: TextApi
+  backup: BackupApi
 }

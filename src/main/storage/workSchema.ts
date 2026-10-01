@@ -113,6 +113,19 @@ CREATE TABLE cover (
 );
 `
 
+/**
+ * Whether a side of a chapter has text is needed for every row of the chapter list. In a row the
+ * text comes before any later column, so reading even `rev` means walking the overflow pages of a
+ * long chapter (measured: about 400 ms for 5,000 chapters). `size` is a small copy of the text
+ * length, and the index below holds it next to the key, so the list is answered from the index
+ * alone. The application keeps `size` equal to the text length in the same transaction.
+ */
+const version4 = `
+ALTER TABLE chapter_text ADD COLUMN size INTEGER NOT NULL DEFAULT 0 CHECK (size >= 0);
+UPDATE chapter_text SET size = length(content);
+CREATE INDEX chapter_text_presence ON chapter_text (chapter_id, side, size);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -133,6 +146,12 @@ export const workSchema: SchemaSpec = {
       version: 3,
       up(db) {
         db.exec(version3)
+      }
+    },
+    {
+      version: 4,
+      up(db) {
+        db.exec(version4)
       }
     }
   ]

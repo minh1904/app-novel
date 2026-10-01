@@ -126,12 +126,18 @@ describe('guardHandlers', () => {
       (sender: string) => sender === 'main'
     )
 
-    const refused = guarded[CHANNELS.worksCreate]('iframe', { title: 'Injected', sourceLang: 'en' })
+    const refused = guarded[CHANNELS.worksCreate]('iframe', {
+      title: 'Injected',
+      sourceLang: 'en'
+    }) as Result<unknown>
     expect(refused.ok).toBe(false)
     if (!refused.ok) expect(refused.error.code).toBe('untrusted_sender')
     expect(library.list().works).toEqual([])
 
-    const allowed = guarded[CHANNELS.worksCreate]('main', { title: 'Real', sourceLang: 'en' })
+    const allowed = guarded[CHANNELS.worksCreate]('main', {
+      title: 'Real',
+      sourceLang: 'en'
+    }) as Result<unknown>
     expect(allowed.ok).toBe(true)
     expect(library.list().works).toHaveLength(1)
   })
@@ -140,7 +146,7 @@ describe('guardHandlers', () => {
     const { library } = setup()
     const guarded = guardHandlers(createLibraryHandlers(library), () => false)
     for (const channel of Object.values(CHANNELS)) {
-      const result = guarded[channel]('anyone', undefined)
+      const result = guarded[channel]('anyone', undefined) as Result<unknown>
       expect(result.ok).toBe(false)
       if (!result.ok) expect(result.error.code).toBe('untrusted_sender')
     }

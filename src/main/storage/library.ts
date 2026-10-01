@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
+import { isAbsolute, join, relative, resolve } from 'node:path'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../../shared/chapters'
 import type {
   CreateWorkInput,
@@ -17,6 +17,11 @@ import {
   openChapter,
   renameChapter
 } from './chapterFile'
+import type { SegmentInput, TextRecord, TextSide } from '../../shared/text'
+import { createLink, getProvenance, listLinks, setProvenance } from './linkFile'
+import type { LinkInput, LinkRecord, ProvenanceRecord } from './linkFile'
+import { readText, saveText } from './textFile'
+import { exportToFile, verifyWorkFile } from './backupFile'
 import { decodeCover, encodeCover } from './cover'
 import { StorageError, toStorageError } from './errors'
 import { librarySchema } from './librarySchema'
@@ -40,6 +45,8 @@ export interface LibraryOptions {
   now?: () => number
   newId?: () => string
   newChapterId?: () => string
+  /** Ids for segments and links. */
+  newContentId?: () => string
 }
 
 const WORK_EXTENSION = '.mira'
@@ -59,6 +66,7 @@ export class LibraryStore {
   private readonly now: () => number
   private readonly newId: () => string
   private readonly newChapterId: () => string
+  private readonly newContentId: () => string
   private index: Db
   private problems: WorkProblem[] = []
 
@@ -71,6 +79,7 @@ export class LibraryStore {
     this.now = options.now ?? Date.now
     this.newId = options.newId ?? randomUUID
     this.newChapterId = options.newChapterId ?? randomUUID
+    this.newContentId = options.newContentId ?? randomUUID
     mkdirSync(this.tmpDir, { recursive: true })
     this.index = this.openIndex()
   }
@@ -177,6 +186,52 @@ export class LibraryStore {
     })
   }
 
+  /** One side of a chapter's text. A side that was never saved reads as empty at revision 0. */
+  readText(workId: string, chapterId: string, side: TextSide): TextRecord {
+    return this.withWork(workId, (db) => readText(db, chapterId, side))
+  }
+
+  /** Text and segments are replaced together; `expectedRev` guards against a stale writer. */
+  saveText(
+    workId: string,
+    chapterId: string,
+    side: TextSide,
+    content: string,
+    expectedRev: number,
+    segments: SegmentInput[]
+  ): TextRecord {
+    const saved = this.changeChapters(workId, (db, now) => ({
+      text: saveText(
+        db,
+        { chapterId, side, content, expectedRev, segments },
+        now,
+        this.newContentId
+      )
+    }))
+    return saved.text
+  }
+
+  createLink(workId: string, chapterId: string, input: LinkInput): LinkRecord {
+    return this.changeChapters(workId, (db, now) => ({
+      link: createLink(db, chapterId, input, now, this.newContentId())
+    })).link
+  }
+
+  listLinks(workId: string, chapterId: string): LinkRecord[] {
+    return this.withWork(workId, (db) => listLinks(db, chapterId))
+  }
+
+  setProvenance(workId: string, record: ProvenanceRecord): void {
+    this.changeChapters(workId, (db) => {
+      setProvenance(db, record)
+      return {}
+    })
+  }
+
+  getProvenance(workId: string, segmentId: string): ProvenanceRecord | null {
+    return this.withWork(workId, (db) => getProvenance(db, segmentId))
+  }
+
   /** Marks a chapter as the one being worked on and returns the updated work. */
   openChapter(workId: string, chapterId: string): WorkSummary {
     return this.changeChapters(workId, (db, now) => {
@@ -213,6 +268,58 @@ export class LibraryStore {
       db.transaction(() => writeCover(db, cover, this.now()))
       return readWork(db)
     })
+    this.syncIndex(summary)
+    return summary
+  }
+
+  /**
+   * Writes a consistent backup of one work to `destination`, which the user chose. The work stays
+   * open and unchanged. The destination must be outside the data directory, so a backup can never
+   * overwrite a live work file.
+   */
+  exportWork(workId: string, destination: string): void {
+    if (!isAbsolute(destination)) {
+      throw new StorageError('validation', 'Đường dẫn lưu phải là đường dẫn đầy đủ.')
+    }
+    const inside = relative(resolve(this.dataDir), resolve(destination))
+    if (inside === '' || (!inside.startsWith('..') && !isAbsolute(inside))) {
+      throw new StorageError('validation', 'Hãy chọn nơi lưu bên ngoài thư mục dữ liệu của Mira.')
+    }
+    this.withWork(workId, (db) => exportToFile(db, destination))
+  }
+
+  /**
+   * Adds a backup to the library as a new work. The file is copied, checked and upgraded as a copy
+   * in `.tmp`; the rename into `works/` is the commit point, so a work is either complete or absent.
+   * The user's file is never opened in place. Status, last chapter and dates come from the backup.
+   */
+  restoreWork(sourcePath: string): WorkSummary {
+    if (!isAbsolute(sourcePath)) {
+      throw new StorageError('validation', 'Đường dẫn tệp phải là đường dẫn đầy đủ.')
+    }
+    const id = this.newId()
+    assertWorkId(id)
+    const partPath = join(this.tmpDir, id + WORK_EXTENSION + PART_EXTENSION)
+    const finalPath = this.workPath(id)
+
+    let summary: WorkSummary
+    try {
+      copyFileSync(sourcePath, partPath)
+      verifyWorkFile(partPath)
+      const db = openWorkFile(partPath)
+      try {
+        db.transaction(() => db.prepare('UPDATE work SET id = ?').run(id))
+        db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
+        summary = readWork(db)
+      } finally {
+        db.close()
+      }
+      renameSync(partPath, finalPath)
+    } catch (error) {
+      this.removeWorkFiles(partPath)
+      throw toStorageError(error)
+    }
+
     this.syncIndex(summary)
     return summary
   }

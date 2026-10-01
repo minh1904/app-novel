@@ -174,7 +174,7 @@ describe('chapter IPC handlers', () => {
       CHANNELS.chaptersDelete,
       CHANNELS.chaptersOpen
     ]) {
-      const result = guarded[channel]('iframe', { workId, title: 'Injected' })
+      const result = guarded[channel]('iframe', { workId, title: 'Injected' }) as Result<unknown>
       expect(codeOf(result), channel).toBe('untrusted_sender')
     }
     expect(library.listChapters(workId)).toEqual([])

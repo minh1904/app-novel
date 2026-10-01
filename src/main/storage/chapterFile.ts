@@ -14,7 +14,21 @@ interface ChapterRow {
   title: string
   created_at: number
   updated_at: number
+  has_source: number
+  has_target: number
 }
+
+/**
+ * The two flags read `size` through the covering index chapter_text_presence, so listing never
+ * touches the text itself.
+ */
+export const CHAPTER_SELECT = `
+  SELECT c.id, c.position, c.title, c.created_at, c.updated_at,
+    EXISTS (SELECT 1 FROM chapter_text t INDEXED BY chapter_text_presence
+            WHERE t.chapter_id = c.id AND t.side = 'source' AND t.size > 0) AS has_source,
+    EXISTS (SELECT 1 FROM chapter_text t INDEXED BY chapter_text_presence
+            WHERE t.chapter_id = c.id AND t.side = 'target' AND t.size > 0) AS has_target
+  FROM chapter c`
 
 function toItem(row: ChapterRow): ChapterItem {
   return {
@@ -22,21 +36,21 @@ function toItem(row: ChapterRow): ChapterItem {
     number: row.position + 1,
     title: row.title,
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    hasSource: row.has_source === 1,
+    hasTarget: row.has_target === 1
   }
 }
 
 export function listChapters(db: Db): ChapterItem[] {
   return db
-    .prepare('SELECT id, position, title, created_at, updated_at FROM chapter ORDER BY position')
+    .prepare(CHAPTER_SELECT + ' ORDER BY c.position')
     .all<ChapterRow>()
     .map(toItem)
 }
 
 function findChapter(db: Db, chapterId: string): ChapterRow {
-  const row = db
-    .prepare('SELECT id, position, title, created_at, updated_at FROM chapter WHERE id = ?')
-    .get<ChapterRow>(chapterId)
+  const row = db.prepare(CHAPTER_SELECT + ' WHERE c.id = ?').get<ChapterRow>(chapterId)
   if (!row) throw new StorageError('not_found', 'Không tìm thấy chương.')
   return row
 }

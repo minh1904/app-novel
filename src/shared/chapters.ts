@@ -8,6 +8,9 @@ export interface ChapterItem extends ChapterSummary {
   /** Milliseconds since the Unix epoch, UTC. */
   createdAt: number
   updatedAt: number
+  /** The source / translated text is not empty. Computed by the store, so the text is not loaded. */
+  hasSource: boolean
+  hasTarget: boolean
 }
 
 /** Every change returns the new work summary so the header and library need no second round trip. */

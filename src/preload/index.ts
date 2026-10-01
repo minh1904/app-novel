@@ -1,9 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { BackupExported } from '../shared/backup'
 import { CHANNELS } from '../shared/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/chapters'
 import type { AppInfo, DesktopApi } from '../shared/desktop-api'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/library'
 import type { Result } from '../shared/result'
+import type { SegmentInput, TextRecord, TextSide } from '../shared/text'
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,
@@ -45,6 +47,33 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke(CHANNELS.chaptersOpen, { workId, chapterId }) as Promise<
         Result<{ work: WorkSummary }>
       >
+  },
+  text: {
+    get: (workId: string, chapterId: string, side: TextSide) =>
+      ipcRenderer.invoke(CHANNELS.textGet, { workId, chapterId, side }) as Promise<
+        Result<TextRecord>
+      >,
+    save: (
+      workId: string,
+      chapterId: string,
+      side: TextSide,
+      content: string,
+      expectedRev: number,
+      segments: SegmentInput[]
+    ) =>
+      ipcRenderer.invoke(CHANNELS.textSave, {
+        workId,
+        chapterId,
+        side,
+        content,
+        expectedRev,
+        segments
+      }) as Promise<Result<TextRecord>>
+  },
+  backup: {
+    export: (workId: string) =>
+      ipcRenderer.invoke(CHANNELS.backupExport, { workId }) as Promise<Result<BackupExported>>,
+    restore: () => ipcRenderer.invoke(CHANNELS.backupRestore) as Promise<Result<WorkSummary>>
   }
 }
 

@@ -4,6 +4,7 @@ import {
   clampPage,
   displayTitle,
   filterChapters,
+  lossNote,
   fold,
   pageCount,
   pageOfPosition,
@@ -19,7 +20,9 @@ function chapters(titles: string[]): ChapterItem[] {
     number: index + 1,
     title,
     createdAt: 0,
-    updatedAt: 0
+    updatedAt: 0,
+    hasSource: false,
+    hasTarget: false
   }))
 }
 
@@ -27,6 +30,18 @@ describe('displayTitle', () => {
   it('falls back to "Chương N" for an untitled chapter', () => {
     expect(displayTitle({ number: 12, title: '' })).toBe('Chương 12')
     expect(displayTitle({ number: 12, title: 'Mở đầu' })).toBe('Mở đầu')
+  })
+})
+
+describe('lossNote', () => {
+  it('names what a delete would destroy', () => {
+    expect(lossNote({ hasSource: true, hasTarget: true })).toMatch(/cả bản gốc lẫn bản dịch/)
+    expect(lossNote({ hasSource: true, hasTarget: false })).toMatch(/bản gốc sẽ mất/)
+    expect(lossNote({ hasSource: false, hasTarget: true })).toMatch(/bản dịch sẽ mất/)
+  })
+
+  it('says nothing for a chapter with no text', () => {
+    expect(lossNote({ hasSource: false, hasTarget: false })).toBeNull()
   })
 })
 
