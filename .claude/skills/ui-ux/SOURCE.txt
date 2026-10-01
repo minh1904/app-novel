@@ -1,0 +1,2 @@
+Source: https://github.com/evondev/evondevKit (MIT, Tuan Tran), commit 6d531ca, skills/ui-ux.
+Copied unchanged except scripts/lint-skill.mjs, which maintains the upstream repo and is not needed here.

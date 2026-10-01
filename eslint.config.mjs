@@ -7,7 +7,7 @@ import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 
 export default defineConfig(
   // scripts/ holds plain-JS tooling that runs outside the TypeScript projects.
-  { ignores: ['**/node_modules', '**/dist', '**/out', 'scripts'] },
+  { ignores: ['**/node_modules', '**/dist', '**/out', 'scripts', '.claude'] },
   tseslint.configs.recommended,
   eslintPluginReact.configs.flat.recommended,
   eslintPluginReact.configs.flat['jsx-runtime'],
