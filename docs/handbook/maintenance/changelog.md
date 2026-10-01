@@ -1,5 +1,9 @@
 # Nhật ký handbook
 
+## Nhập bản gốc một chương — 2026-10-01
+
+- Triển khai `chapter-source-import`: màn chương, hộp thoại nhập (dán hoặc tệp, nhiều bảng mã, xem trước, thay bản gốc giữ bản dịch). Đo trong Electron thật và kiểm tra bàn phím; ghi số đo vào design của change. Ghi quy tắc chuẩn hóa vào hiện trạng, thêm bốn mục vào backlog (`chapter-title-from-text`, `import-whole-volume`, `segmentation-rules-editor`, `encoding-detect-cjk`).
+
 ## Hoàn thành M0 về dữ liệu — 2026-10-01
 
 - Triển khai `content-backup-provider`: kho văn bản/segment/liên kết, sao lưu và khôi phục tác phẩm, provider dịch giả lập. Schema tệp tác phẩm lên v4 (cột `size` + index phủ) sau khi đo thấy danh sách chương chậm 409 ms với 5.000 chương có nội dung. Cập nhật hiện trạng, roadmap và backlog.

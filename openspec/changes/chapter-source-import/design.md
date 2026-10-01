@@ -63,7 +63,7 @@ Màn chương nằm ở `features/chapter/`; nhánh `chapter` trong `App.tsx` tr
 
 ### D7. Hộp thoại nhập
 
-Một hộp thoại rộng, ba trạng thái trong cùng chỗ: **Nhập** (ô dán + chọn tệp/kéo thả) → **Xem trước** (bảng mã, thống kê, chuẩn hóa, mẫu đầu/cuối, cảnh báo, segment dài) → **Đang lưu**. Hủy ở bất kỳ bước nào không đổi dữ liệu. Lỗi lưu giữ nguyên trạng thái xem trước để thử lại. Xem trước tính trong `useDeferredValue` hoặc `startTransition` để ô dán không giật với văn bản dài; với văn bản rất dài chỉ tính lại khi người dùng dừng gõ.
+Một hộp thoại rộng, ba trạng thái trong cùng chỗ: **Nhập** (ô dán + chọn tệp/kéo thả) → **Xem trước** (bảng mã, thống kê, chuẩn hóa, mẫu đầu/cuối, cảnh báo, segment dài) → **Đang lưu**. Hủy ở bất kỳ bước nào không đổi dữ liệu. Lỗi lưu giữ nguyên trạng thái xem trước để thử lại. Xem trước chỉ tính khi người dùng bấm "Xem trước" hoặc đổi bảng mã, không tính theo từng phím gõ, nên ô dán không bị giật và không cần `useDeferredValue`. Khi chuyển sang bước xem trước, focus đặt vào nút xác nhận; đóng hộp thoại trả focus về nút đã mở nó.
 
 ### D8. Kiểm thử
 
@@ -71,6 +71,22 @@ Một hộp thoại rộng, ba trạng thái trong cùng chỗ: **Nhập** (ô d
 - Tích hợp qua kho: nhập vào chương thật, đóng mở lại; thay bản gốc khi có bản dịch và liên kết; xung đột revision.
 - Hiệu năng hàm thuần với 300.000 ký tự (mục tiêu < 500 ms cho chia câu).
 - Chạy trong Electron thật: nhập từ tệp mẫu từng bảng mã, chương 5.000 segment, bàn phím, 940 px, chụp màn hình.
+
+### Số đo trong Electron thật
+
+Đo ngày 2026-10-01 trên bản build (`out/`), dữ liệu tạm qua `MIRA_DATA_DIR`, Electron 44.4.5, Windows 11.
+
+| Phép đo | Kết quả |
+| --- | --- |
+| Chia câu hàm thuần, 300.000 ký tự (32.433 segment tiếng Trung, 12.500 segment tiếng Anh) | 46–60 ms (zh), 22–26 ms (en) |
+| Dán 300.000 ký tự vào ô, bấm "Xem trước" | 140 ms, một tác vụ dài 101 ms |
+| Lưu 300.000 ký tự (32.433 segment) | 2,07 giây, hộp thoại giữ ở trạng thái đang lưu |
+| Mở chương 5.000 segment (43.889 ký tự) | 83 ms đến khi hiện hàng đầu |
+| Đổi trang 200 segment | 99 ms |
+
+Nhập từ tệp: UTF-8 có và không BOM, UTF-16 LE có BOM, GB18030 (tác phẩm giản thể) và Shift_JIS (tác phẩm Nhật) đều nhận đúng bảng mã, lưu rồi đọc lại đúng văn bản và số segment. Tệp Big5 trong tác phẩm giản thể bị đoán thành GB18030 và ra chữ sai ("㎡") **mà không có cảnh báo** vì mọi byte đều hợp lệ trong GB18030; chọn lại "Big5" trong bước xem trước đọc đúng. Đúng như rủi ro đã ghi ở trên; ghi `encoding-detect-cjk` vào backlog.
+
+Bàn phím: mở hộp thoại bằng Enter trên nút, gõ, Ctrl+Enter sang xem trước, Tab quay vòng trong hộp thoại, Escape đóng và không đổi dữ liệu, Enter trên nút xác nhận thay bản gốc; bản dịch giữ nguyên. Hộp thoại chạy được ở 940 px.
 
 ## Risks / Trade-offs
 

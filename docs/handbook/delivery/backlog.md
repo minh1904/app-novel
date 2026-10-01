@@ -36,6 +36,16 @@ Quy tắc: nút hay mục menu “Sắp có” trên giao diện phải có mụ
 | `chapter-drag-drop` | Kéo thả sắp xếp chương | Không làm (hiện tại) | Chưa có; dùng menu và “Chuyển tới vị trí…”. | Khó dùng với hàng nghìn chương và không truy cập được bằng bàn phím. |
 | `work-delete` | Xóa tác phẩm | Backlog | Chưa có. | Cần xác nhận mạnh và quy ước sao lưu trước khi xóa. |
 
+## Nhập bản gốc của chương
+
+| `id` | Tính năng | Trạng thái | Trên giao diện hiện nay | Điều kiện để làm thật / câu hỏi còn mở |
+| --- | --- | --- | --- | --- |
+| `chapter-source-import` | Nhập bản gốc cho một chương (dán hoặc tệp, xem trước, thay bản gốc) | **Đã triển khai** (2026-10-01) | Màn chương và hộp thoại nhập; xem change `chapter-source-import`. | — |
+| `chapter-title-from-text` | Tự đặt tên chương từ dòng đầu của văn bản | Backlog | Chưa có; tên chương đặt tay. | Chủ sản phẩm đã đề xuất không làm trong change nhập; cần quy tắc nhận dòng tên (ví dụ “第一章 …”). |
+| `import-whole-volume` | Tách một tệp thành nhiều chương | Backlog | “Nhập từ .txt” trên màn chi tiết vẫn là minh họa (`import-txt`). | Phụ thuộc quy tắc tách chương; dùng lại bộ giải mã và chia câu đã có. |
+| `segmentation-rules-editor` | Sửa quy tắc chia câu (từ viết tắt, ngoại lệ) | Backlog | Chưa có; danh sách viết tắt là dữ liệu trong mã. | Cần số liệu sai sót từ người dùng thật trước. |
+| `encoding-detect-cjk` | Phân biệt Big5 và GB18030 khi cả hai đọc sạch | Backlog | Tệp Big5 trong tác phẩm giản thể bị đoán là GB18030, ra chữ sai không cảnh báo; chọn lại bảng mã ở bước xem trước sửa được. | Thêm kiểm tra theo tần suất chữ phồn thể/giản thể hoặc cảnh báo khi đoán theo ngôn ngữ; tìm tệp mẫu thật trước. |
+
 ## Cách dùng khi triển khai
 
 1. Làm thật một mục: đổi trạng thái thành **Đã triển khai**, dẫn change/commit, gỡ nhãn “Sắp có” và mục `mockFeatures` tương ứng.

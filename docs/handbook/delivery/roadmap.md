@@ -29,7 +29,7 @@ flowchart LR
 | M3 — nhiều nguồn + văn phong | Thêm nguồn raw phụ, ghép chương giữa nguồn, căn chỉnh Bậc 0 nguồn ↔ nguồn và bản cũ ↔ raw; ví dụ văn phong trong prompt; AI đề xuất cập nhật ma trận xưng hô | Đo chất lượng với/không có nguồn phụ và ví dụ văn phong trên corpus; người dùng duyệt được đề xuất xưng hô | Báo cáo kiểm chứng, alignment |
 | M4 — thử nghiệm | Build Windows, máy sạch, phiên quan sát với 5–8 dịch giả (ưu tiên người đang dịch bằng AI) | Không lỗi mất nội dung đã lưu; người dùng tự hoàn tất vòng; kết quả theo cặp ngôn ngữ | Validation, release notes |
 
-**Hiện tại:** M0 đạt **một phần** (2026-09-29). Xong: kho SQLite hai tầng, IPC có kiểu, thư viện thật với ảnh bìa, test crash. Cập nhật 2026-10-01: màn chi tiết truyện và danh sách chương (`work-detail-screen`) và nội dung dịch + sao lưu/khôi phục + provider giả lập (`content-backup-provider`) đã xong, nên M0 **đủ về dữ liệu và kho**. Còn treo trước M1: thử tay IME tiếng Việt trong Electron 44 (việc 4 bên dưới).
+**Hiện tại:** M0 đạt **một phần** (2026-09-29). Xong: kho SQLite hai tầng, IPC có kiểu, thư viện thật với ảnh bìa, test crash. Cập nhật 2026-10-01: màn chi tiết truyện và danh sách chương (`work-detail-screen`) và nội dung dịch + sao lưu/khôi phục + provider giả lập (`content-backup-provider`) đã xong, nên M0 **đủ về dữ liệu và kho**. Cũng trong ngày: nhập bản gốc một chương (`chapter-source-import`) đã xong, gồm giải mã nhiều bảng mã, chia segment và màn chương; đây là bước đầu của M1. Còn treo trước M1: thử tay IME tiếng Việt trong Electron 44 (việc 4 bên dưới).
 
 ## Công việc gần nhất
 
