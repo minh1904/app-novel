@@ -5,7 +5,7 @@ import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import type { WorkSummary } from '../../../../shared/library'
 import { Button } from '../../components/Button'
 import { languages } from '../library/works'
-import { displayTitle } from '../work/chapterList'
+import { headingTitle } from '../work/chapterList'
 import { ImportDialog } from './ImportDialog'
 import { SegmentList } from './SegmentList'
 import { useChapterScreen } from './useChapterScreen'
@@ -89,9 +89,7 @@ export function ChapterScreen({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-[24px] leading-[1.2] font-semibold tracking-[-0.045em] break-words">
-            {chapter.title === ''
-              ? displayTitle(chapter)
-              : 'Chương ' + chapter.number + ': ' + chapter.title}
+            {headingTitle(chapter)}
           </h2>
           <p className="text-xs text-ink-muted">
             {work.title} · {languages[work.sourceLanguage].short} → Việt

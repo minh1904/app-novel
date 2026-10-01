@@ -11,6 +11,12 @@ export function displayTitle(chapter: Pick<ChapterItem, 'number' | 'title'>): st
   return chapter.title === '' ? 'Chương ' + chapter.number : chapter.title
 }
 
+/** The heading of the chapter screen: "Chương N: name", unless the name already starts with "Chương". */
+export function headingTitle(chapter: Pick<ChapterItem, 'number' | 'title'>): string {
+  if (chapter.title === '' || /^chương\s/i.test(chapter.title)) return displayTitle(chapter)
+  return 'Chương ' + chapter.number + ': ' + chapter.title
+}
+
 /** Lower-cases and strips Vietnamese tone and vowel marks, so "gap go" finds "Cuộc gặp gỡ". */
 export function fold(text: string): string {
   return text

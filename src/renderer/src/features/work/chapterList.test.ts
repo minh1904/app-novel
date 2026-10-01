@@ -4,6 +4,7 @@ import {
   clampPage,
   displayTitle,
   filterChapters,
+  headingTitle,
   lossNote,
   fold,
   pageCount,
@@ -25,6 +26,14 @@ function chapters(titles: string[]): ChapterItem[] {
     hasTarget: false
   }))
 }
+
+describe('headingTitle', () => {
+  it('prefixes a plain name and leaves one that already says Chương', () => {
+    expect(headingTitle({ number: 2, title: 'Khởi đầu' })).toBe('Chương 2: Khởi đầu')
+    expect(headingTitle({ number: 2, title: 'Chương 2: Khởi đầu' })).toBe('Chương 2: Khởi đầu')
+    expect(headingTitle({ number: 2, title: '' })).toBe('Chương 2')
+  })
+})
 
 describe('displayTitle', () => {
   it('falls back to "Chương N" for an untitled chapter', () => {
