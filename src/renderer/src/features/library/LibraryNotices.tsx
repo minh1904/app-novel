@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import type { WorkProblem } from '../../../../shared/library'
+import { Banner } from '../../components/Banner'
 import { Button } from '../../components/Button'
 
 const reasons: Partial<Record<WorkProblem['code'], string>> = {
@@ -12,16 +13,35 @@ const reasons: Partial<Record<WorkProblem['code'], string>> = {
 export function LibraryNotices({
   problems,
   notice,
-  onDismissNotice
+  onDismissNotice,
+  success,
+  onDismissSuccess,
+  onOpenWork
 }: {
   problems: WorkProblem[]
   notice: string | null
   onDismissNotice(): void
+  success?: { message: string; workId?: string } | null
+  onDismissSuccess?(): void
+  onOpenWork?(workId: string): void
 }): JSX.Element | null {
-  if (problems.length === 0 && !notice) return null
+  if (problems.length === 0 && !notice && !success) return null
 
   return (
     <div className="flex flex-col gap-3">
+      {success && (
+        <Banner
+          tone="success"
+          onDismiss={() => onDismissSuccess?.()}
+          action={
+            success.workId && onOpenWork
+              ? { label: 'Mở tác phẩm', onClick: () => onOpenWork(success.workId!) }
+              : undefined
+          }
+        >
+          {success.message}
+        </Banner>
+      )}
       {notice && (
         <div
           role="alert"

@@ -18,6 +18,7 @@ import { FilterIcon } from '@solar-icons/react/linear/filter'
 import { GalleryAddIcon } from '@solar-icons/react/linear/gallery-add'
 import { FolderOpenIcon } from '@solar-icons/react/linear/folder-open'
 import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
+import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
 import { PauseIcon } from '@solar-icons/react/linear/pause'
 import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
 import { PlayIcon } from '@solar-icons/react/linear/play'
@@ -96,6 +97,8 @@ export interface LibraryActions {
   onRenameWork(work: Work, title: string): void
   onSetPaused(work: Work, paused: boolean): void
   onSetArchived(work: Work, archived: boolean): void
+  /** Opens the system dialog and writes a backup of the work. */
+  onBackup(work: Work): void
   /** `null` removes the cover. */
   onSetCover(work: Work, file: File | null): void
 }
@@ -185,10 +188,16 @@ function PopulatedLibrary({
               </h2>
               <p className="text-[13px] text-ink-muted">{copy.subtitle}</p>
             </div>
-            <Button size="lg" onClick={actions.onCreateWork}>
-              <AddIcon size={15} />
-              Tạo tác phẩm
-            </Button>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button variant="outline" size="lg" onClick={actions.onOpenExisting}>
+                <FolderOpenIcon size={15} />
+                Mở tác phẩm có sẵn
+              </Button>
+              <Button size="lg" onClick={actions.onCreateWork}>
+                <AddIcon size={15} />
+                Tạo tác phẩm
+              </Button>
+            </div>
           </div>
 
           {lastWorkedOn && (
@@ -587,6 +596,10 @@ function WorkMenu({
             Dịch tiếp
           </MenuItem>
         )}
+        <MenuItem onClick={() => actions.onBackup(work)}>
+          <UploadMinimalisticIcon size={14} />
+          Sao lưu…
+        </MenuItem>
         <MenuSeparator />
         <MenuItem onClick={() => actions.onSetArchived(work, !work.archived)}>
           <ArchiveIcon size={14} />

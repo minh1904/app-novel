@@ -3,7 +3,7 @@ import type { ChapterItem } from '../../../../shared/chapters'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'
 import { TextField } from '../../components/TextField'
-import { displayTitle } from './chapterList'
+import { displayTitle, lossNote } from './chapterList'
 
 /** Asks for a position from 1 to the number of chapters and says why when the answer is not one. */
 export function MoveChapterDialog({
@@ -108,11 +108,17 @@ function describeChapter(chapter: ChapterItem): string {
 export function DeleteChapterDialog({
   chapter,
   onClose,
-  onDelete
+  onDelete,
+  onBackup
 }: {
   chapter: ChapterItem | null
   onClose(): void
   onDelete(chapter: ChapterItem): void
+  /**
+   * Offered when the chapter holds text: backs the work up without deleting anything. Resolves to
+   * a sentence about how it went, shown in the dialog.
+   */
+  onBackup?: () => Promise<string | null>
 }): JSX.Element {
   return (
     <Dialog
@@ -122,29 +128,87 @@ export function DeleteChapterDialog({
       }}
       title="Xóa chương?"
     >
+      {/* Keyed so a new chapter starts without the last chapter's backup message. */}
       {chapter && (
-        <div className="flex flex-col gap-4">
-          <p className="text-xs leading-[1.55]">
-            <strong className="font-semibold">{describeChapter(chapter)}</strong> sẽ bị xóa khỏi tác
-            phẩm, các chương sau nó đổi số thứ tự. Việc này không hoàn tác được.
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button size="lg" variant="secondary" onClick={onClose} autoFocus>
-              Hủy
-            </Button>
-            <Button
-              size="lg"
-              variant="destructive"
-              onClick={() => {
-                onDelete(chapter)
-                onClose()
-              }}
-            >
-              Xóa chương
-            </Button>
-          </div>
-        </div>
+        <DeleteBody
+          key={chapter.id}
+          chapter={chapter}
+          onClose={onClose}
+          onDelete={onDelete}
+          onBackup={onBackup}
+        />
       )}
     </Dialog>
+  )
+}
+
+function DeleteBody({
+  chapter,
+  onClose,
+  onDelete,
+  onBackup
+}: {
+  chapter: ChapterItem
+  onClose(): void
+  onDelete(chapter: ChapterItem): void
+  onBackup?: () => Promise<string | null>
+}): JSX.Element {
+  const [backingUp, setBackingUp] = useState(false)
+  const [backupMessage, setBackupMessage] = useState<string | null>(null)
+  const note = lossNote(chapter)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs leading-[1.55]">
+        <strong className="font-semibold">{describeChapter(chapter)}</strong> sẽ bị xóa khỏi tác
+        phẩm, các chương sau nó đổi số thứ tự. Việc này không hoàn tác được.
+      </p>
+      {note && (
+        <p
+          role="note"
+          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-xs leading-[1.5]"
+        >
+          <strong className="font-semibold">{note}</strong> Nên sao lưu tác phẩm trước khi xóa.
+        </p>
+      )}
+      {backupMessage && (
+        <p role="status" className="text-xs leading-[1.5] break-words text-ink-muted">
+          {backupMessage}
+        </p>
+      )}
+      <div className="flex justify-end gap-2">
+        {note && onBackup && (
+          <Button
+            size="lg"
+            variant="outline"
+            className="mr-auto"
+            disabled={backingUp}
+            onClick={() => {
+              setBackingUp(true)
+              void onBackup().then((message) => {
+                setBackingUp(false)
+                setBackupMessage(message)
+              })
+            }}
+          >
+            {backingUp ? 'Đang sao lưu…' : 'Sao lưu trước…'}
+          </Button>
+        )}
+        <Button size="lg" variant="secondary" onClick={onClose} autoFocus>
+          Hủy
+        </Button>
+        <Button
+          size="lg"
+          variant="destructive"
+          disabled={backingUp}
+          onClick={() => {
+            onDelete(chapter)
+            onClose()
+          }}
+        >
+          Xóa chương
+        </Button>
+      </div>
+    </div>
   )
 }

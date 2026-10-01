@@ -15,7 +15,6 @@ import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 type View =
   | { name: 'library'; section: LibrarySection }
   | { name: 'create' }
-  | { name: 'open-existing' }
   | { name: 'work'; workId: string }
   | { name: 'chapter'; workId: string; chapterId: string }
 
@@ -77,7 +76,8 @@ export function App(): JSX.Element {
 
   const libraryActions = {
     onCreateWork: createWork,
-    onOpenExisting: () => setView({ name: 'open-existing' }),
+    onOpenExisting: () => void library.restore(),
+    onBackup: (work: Work) => void library.backup(work),
     onOpenWork: openWork,
     onContinueWork: continueWork,
     onSelectSection: showSection,
@@ -150,6 +150,12 @@ export function App(): JSX.Element {
                 problems={library.problems}
                 notice={library.notice}
                 onDismissNotice={library.dismissNotice}
+                success={library.success}
+                onDismissSuccess={library.dismissSuccess}
+                onOpenWork={(workId) => {
+                  library.dismissSuccess()
+                  setView({ name: 'work', workId })
+                }}
               />
             }
             {...libraryActions}
@@ -164,16 +170,6 @@ export function App(): JSX.Element {
           onSubmit={library.create}
           onCreated={() => showSection('all')}
           onCancel={() => showSection('all')}
-        />
-      )
-      break
-    case 'open-existing':
-      title = crumb('Mở tác phẩm có sẵn')
-      content = (
-        <PendingScreen
-          heading="Chưa chốt hành vi của “Mở tác phẩm có sẵn”"
-          detail="Đề xuất: khôi phục một tác phẩm từ tệp sao lưu .mira. Chức năng này được xây cùng phần sao lưu và khôi phục."
-          onBack={() => showSection('all')}
         />
       )
       break

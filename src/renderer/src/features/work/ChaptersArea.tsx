@@ -14,6 +14,7 @@ import type { ChapterItem } from '../../../../shared/chapters'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import { SearchField } from '../../components/SearchField'
+import { backupWork, savedMessage } from './backup'
 import { ChapterPager } from './ChapterPager'
 import { DeleteChapterDialog, MoveChapterDialog } from './ChapterDialogs'
 import { CHAPTER_GRID, ChapterRow, type ChapterRowActions } from './ChapterRow'
@@ -355,6 +356,12 @@ export function ChaptersArea({
         onDelete={(chapter) => {
           setAnnouncement('Đã xóa chương ' + chapter.number + '.')
           void chapters.remove(chapter.id)
+        }}
+        onBackup={async () => {
+          const outcome = await backupWork(workId)
+          if (outcome.kind === 'saved') return savedMessage(outcome.path)
+          if (outcome.kind === 'failed') return 'Không sao lưu được: ' + outcome.message
+          return null
         }}
       />
       <ImportTxtMockDialog open={importOpen} onOpenChange={setImportOpen} />

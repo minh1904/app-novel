@@ -1,7 +1,9 @@
 import { useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import type { WorkSummary } from '../../../../shared/library'
+import { Banner } from '../../components/Banner'
 import { Button } from '../../components/Button'
+import { backupWork, savedMessage } from './backup'
 import { EditWorkDialog } from './EditWorkDialog'
 import { useWorkDetail } from './useWorkDetail'
 import { WorkAreaHost } from './WorkAreaHost'
@@ -31,6 +33,7 @@ export function WorkDetailScreen({
   const [areaId, setAreaId] = useState(workAreas[0].id)
   const [editing, setEditing] = useState(false)
   const [addChapterSignal, setAddChapterSignal] = useState(0)
+  const [saved, setSaved] = useState<string | null>(null)
 
   if (detail.load === 'loading') {
     return (
@@ -72,8 +75,24 @@ export function WorkDetailScreen({
     }
   }
 
+  async function backUp(): Promise<void> {
+    const outcome = await backupWork(workId)
+    if (outcome.kind === 'saved') {
+      detail.dismissNotice()
+      setSaved(savedMessage(outcome.path))
+    } else if (outcome.kind === 'failed') {
+      setSaved(null)
+      detail.reportNotice('Không sao lưu được: ' + outcome.message)
+    }
+  }
+
   return (
     <div className="mx-auto flex max-w-[960px] flex-col gap-7 px-6 py-8">
+      {saved && (
+        <Banner tone="success" onDismiss={() => setSaved(null)}>
+          {saved}
+        </Banner>
+      )}
       {detail.notice && (
         <div
           role="alert"
@@ -94,7 +113,8 @@ export function WorkDetailScreen({
           onEdit: () => setEditing(true),
           onSetPaused: (paused) => void detail.setPaused(paused),
           onSetArchived: (archived) => void detail.setArchived(archived),
-          onSetCover: (file) => void detail.setCover(file)
+          onSetCover: (file) => void detail.setCover(file),
+          onBackup: () => void backUp()
         }}
       />
 

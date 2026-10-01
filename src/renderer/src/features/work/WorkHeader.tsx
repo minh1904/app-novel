@@ -6,6 +6,7 @@ import { PauseIcon } from '@solar-icons/react/linear/pause'
 import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
 import { PlayIcon } from '@solar-icons/react/linear/play'
 import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
+import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
 import { AddIcon } from '@solar-icons/react/linear/add'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
@@ -24,6 +25,7 @@ export interface WorkHeaderActions {
   onSetPaused(paused: boolean): void
   onSetArchived(archived: boolean): void
   onSetCover(file: File | null): void
+  onBackup(): void
 }
 
 /**
@@ -161,6 +163,10 @@ export function WorkHeader({
                     Gỡ ảnh bìa
                   </MenuItem>
                 )}
+                <MenuItem onClick={actions.onBackup}>
+                  <UploadMinimalisticIcon size={14} />
+                  Sao lưu…
+                </MenuItem>
                 <MenuSeparator />
                 <MenuItem onClick={() => actions.onSetArchived(!work.archived)}>
                   <ArchiveIcon size={14} />

@@ -6,7 +6,9 @@ import type {
   WorkProblem,
   WorkSummary
 } from '../../../../shared/library'
-import type { IpcError, Result } from '../../../../shared/result'
+import type { Result } from '../../../../shared/result'
+import { backupWork, savedMessage } from '../work/backup'
+import { describe, describeBackupError } from './describeError'
 import { CoverImageError, fileToCoverDataUrl } from './coverImage'
 import { toWork, type Work } from './works'
 
@@ -21,6 +23,8 @@ export interface LibraryState {
   loadError: string | null
   /** Last failed action, shown until dismissed. */
   notice: string | null
+  /** Last thing that worked and is worth confirming (a backup, a restore). */
+  success: { message: string; workId?: string } | null
 }
 
 export interface LibraryController extends LibraryState {
@@ -33,6 +37,11 @@ export interface LibraryController extends LibraryState {
   setCover(work: Work, file: File | null): Promise<void>
   /** Puts a work that changed elsewhere (the detail screen) into the list without a round trip. */
   applyWork(summary: WorkSummary): void
+  /** Backs the work up through the system dialog; cancelling says nothing. */
+  backup(work: Work): Promise<void>
+  /** Adds a backup chosen in the system dialog as a new work. */
+  restore(): Promise<void>
+  dismissSuccess(): void
   /** Shows a failure that happened outside the library's own actions. */
   reportNotice(message: string): void
 }
@@ -42,7 +51,8 @@ const initial: LibraryState = {
   works: [],
   problems: [],
   loadError: null,
-  notice: null
+  notice: null,
+  success: null
 }
 
 export function useLibrary(): LibraryController {
@@ -128,6 +138,47 @@ export function useLibrary(): LibraryController {
 
   const dismissNotice = useCallback(() => setState((current) => ({ ...current, notice: null })), [])
 
+  const backup = useCallback(async (work: Work): Promise<void> => {
+    const outcome = await backupWork(work.id)
+    if (outcome.kind === 'saved') {
+      setState((current) => ({
+        ...current,
+        notice: null,
+        success: { message: savedMessage(outcome.path) }
+      }))
+    } else if (outcome.kind === 'failed') {
+      setState((current) => ({
+        ...current,
+        notice: 'Không sao lưu được “' + work.title + '”: ' + outcome.message
+      }))
+    }
+  }, [])
+
+  const restore = useCallback(async (): Promise<void> => {
+    const result = await window.mira.backup.restore()
+    if (result.ok) {
+      await reload()
+      setState((current) => ({
+        ...current,
+        notice: null,
+        success: {
+          message: 'Đã khôi phục “' + result.value.title + '” thành tác phẩm mới.',
+          workId: result.value.id
+        }
+      }))
+    } else if (result.error.code !== 'cancelled') {
+      setState((current) => ({
+        ...current,
+        notice: 'Không khôi phục được: ' + describeBackupError(result.error)
+      }))
+    }
+  }, [reload])
+
+  const dismissSuccess = useCallback(
+    () => setState((current) => ({ ...current, success: null })),
+    []
+  )
+
   const applyWork = useCallback((summary: WorkSummary): void => {
     const next = toWork(summary)
     setState((current) => ({
@@ -143,22 +194,19 @@ export function useLibrary(): LibraryController {
     []
   )
 
-  return { ...state, reload, dismissNotice, create, update, setCover, applyWork, reportNotice }
-}
-
-export function describe(error: IpcError): string {
-  switch (error.code) {
-    case 'not_found':
-      return 'Không tìm thấy tác phẩm; có thể tệp đã bị xóa hoặc di chuyển.'
-    case 'unsupported_version':
-      return error.message
-    case 'corrupt':
-      return 'Dữ liệu bị hỏng. ' + error.message
-    case 'io':
-      return 'Không đọc hoặc ghi được tệp. ' + error.message
-    case 'validation':
-      return error.message
-    default:
-      return error.message
+  return {
+    ...state,
+    reload,
+    dismissNotice,
+    create,
+    update,
+    setCover,
+    applyWork,
+    reportNotice,
+    backup,
+    restore,
+    dismissSuccess
   }
 }
+
+export { describe }
