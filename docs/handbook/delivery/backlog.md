@@ -46,6 +46,21 @@ Quy tắc: nút hay mục menu “Sắp có” trên giao diện phải có mụ
 | `segmentation-rules-editor` | Sửa quy tắc chia câu (từ viết tắt, ngoại lệ) | Backlog | Chưa có; danh sách viết tắt là dữ liệu trong mã. | Cần số liệu sai sót từ người dùng thật trước. |
 | `encoding-detect-cjk` | Phân biệt Big5 và GB18030 khi cả hai đọc sạch | Backlog | Tệp Big5 trong tác phẩm giản thể bị đoán là GB18030, ra chữ sai không cảnh báo; chọn lại bảng mã ở bước xem trước sửa được. | Thêm kiểm tra theo tần suất chữ phồn thể/giản thể hoặc cảnh báo khi đoán theo ngôn ngữ; tìm tệp mẫu thật trước. |
 
+## Soạn thảo văn bản chương
+
+| `id` | Tính năng | Trạng thái | Trên giao diện hiện nay | Điều kiện để làm thật / câu hỏi còn mở |
+| --- | --- | --- | --- | --- |
+| `source-editor` | Editor bản gốc của chương (CodeMirror 6, ánh xạ segment, lưu, xung đột) | **Đã triển khai** (2026-10-01) | Màn chương; xem change `source-editor`. | — |
+| `autosave` | Tự lưu định kỳ khi đang sửa | Backlog | Chưa có; lưu bằng Ctrl+S hoặc nút “Lưu”, đóng cửa sổ khi chưa lưu chỉ hỏi ở/đóng. | Cần quyết định có tạo bản lưu tạm hay ghi thẳng vào chương, và cách báo lỗi khi tự lưu thất bại. |
+| `edited-segment-link-review` | Đánh dấu liên kết `needs_review` khi nội dung segment bản gốc đổi mà ID giữ nguyên | Backlog | Chưa có: kho chỉ đánh dấu liên kết khi segment bị xóa; segment đã sửa vẫn có liên kết `ok`. | Phải đổi kho (`saveText` so nội dung theo ID) và quyết định coi sửa nhỏ như lỗi chính tả có phải đánh dấu không. Giải quyết trước khi có căn chỉnh (M3). |
+| `manual-segment-split-merge` | Tách/gộp segment bằng lệnh thủ công | Backlog | Chưa có; ranh giới do bộ chia câu quyết định lại sau mỗi lần sửa. | Dựa vào dữ liệu sai sót thực tế của bộ chia câu. |
+| `translation-editor` | Sửa bản dịch trên giao diện (màn Toàn văn hai pane, Reading view, khóa bản gốc) | **Đã triển khai** (2026-10-01) | Màn chương hai pane; xem change `translation-editor`. | — |
+| `sentence-mode` | Mode **Từng câu**: hàng nguồn/dịch, trạng thái hàng, nhảy hàng kế | **Đã triển khai** (2026-10-01) | Tab “Từng câu” trên màn editor; xem change `sentence-mode`. Hàng “AI đã dịch” có trong mô hình nhưng chưa có gì tạo ra nó cho tới khi có job dịch. | — |
+| `merge-split-rows` | Gộp/tách hàng (segment) ở mode Từng câu, hoàn tác được | Backlog | Chưa có; hàng theo đúng segment bản gốc, liên kết nhiều–nhiều không sửa được từ giao diện. | Scope S2.7. Cần cách gộp/tách segment nguồn và dịch giữ liên kết; là cách sửa đúng khi “Ghép theo thứ tự” ước đoán sai. |
+| `shared-undo-modes` | Một lịch sử hoàn tác chung giữa Toàn văn và Từng câu | Backlog | Mỗi lần đổi mode lịch sử hoàn tác bắt đầu lại và bản gốc về trạng thái khóa. | Scope S1.6 muốn chung một lịch sử. Cần một trạng thái chung cho văn bản dịch giữa editor dài và các ô hàng. |
+| `reading-view-markdown` | Hiển thị Markdown trong Reading view | Backlog | Reading view đọc văn bản thuần theo đoạn; `#` và `*` hiện nguyên. | Cần đặc tả cú pháp Markdown hỗ trợ (câu hỏi mở của quyết định lưu trữ). |
+| `sync-scroll` | Cuộn đồng bộ hai pane theo tỷ lệ hoặc theo vị trí tương ứng | Backlog | Hai pane cuộn độc lập. | Cuộn theo tỷ lệ chỉ đoán được; cuộn theo vị trí tương ứng cần liên kết giữa hai bên. Nghiên cứu ghi câu hỏi mở về cách ít làm mất mạch đọc nhất. |
+
 ## Cách dùng khi triển khai
 
 1. Làm thật một mục: đổi trạng thái thành **Đã triển khai**, dẫn change/commit, gỡ nhãn “Sắp có” và mục `mockFeatures` tương ứng.

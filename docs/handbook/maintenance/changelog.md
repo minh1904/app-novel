@@ -1,5 +1,17 @@
 # Nhật ký handbook
 
+## Mode Từng câu — 2026-10-01
+
+- Triển khai `sentence-mode`: tab “Từng câu” với các hàng theo segment bản gốc, trạng thái hàng suy ra từ liên kết, ghi một hàng vào văn bản dịch cùng liên kết trong một transaction, xác nhận hàng, nhảy hàng cần xử lý kế tiếp, ghép theo thứ tự cho bản dịch viết sẵn, chuyển mode không mất chữ. Thêm bốn kênh IPC cho liên kết, không đổi schema. Đo trong Electron thật, sửa hai chỗ chậm bậc hai ở kho liên kết do đo lộ ra. `sentence-mode` chuyển sang đã triển khai ở backlog; thêm `merge-split-rows`, `shared-undo-modes`.
+
+## Màn editor hai pane — 2026-10-01
+
+- Triển khai `translation-editor`: màn Toàn văn với bản gốc bên trái (khóa mặc định, mở khóa để sửa lỗi) và bản dịch bên phải (sửa trực tiếp, Reading view), lưu cả hai bên, chặn rời, nút tập trung. Ghi cách thể hiện "bản gốc chỉ đọc" vào quyết định hiện hành. Thêm vào backlog `sentence-mode`, `reading-view-markdown`, `sync-scroll`; `translation-editor` chuyển sang đã triển khai.
+
+## Editor chương — 2026-10-01
+
+- Triển khai `source-editor`: editor CodeMirror 6 cho bản gốc của chương, ánh xạ segment qua chỉnh sửa, một lịch sử hoàn tác gồm cả ID, lưu bằng `expectedRev` (xung đột không ghi đè), chặn rời khi chưa lưu. Đo trong Electron thật trên chương 5.000 segment; ghi số đo vào design và kiểm chứng. Sửa ADR-003: bỏ đường lùi `<textarea>` và ghi quy tắc chèn ở ranh giới segment mới. Thêm vào backlog `autosave`, `edited-segment-link-review`, `manual-segment-split-merge`, `translation-editor`.
+
 ## Nhập bản gốc một chương — 2026-10-01
 
 - Triển khai `chapter-source-import`: màn chương, hộp thoại nhập (dán hoặc tệp, nhiều bảng mã, xem trước, thay bản gốc giữ bản dịch). Đo trong Electron thật và kiểm tra bàn phím; ghi số đo vào design của change. Ghi quy tắc chuẩn hóa vào hiện trạng, thêm bốn mục vào backlog (`chapter-title-from-text`, `import-whole-volume`, `segmentation-rules-editor`, `encoding-detect-cjk`).

@@ -48,6 +48,20 @@ Không mất nội dung đã xác nhận lưu là điều kiện bắt buộc. S
 
 Mỗi lần chạy ghi build/commit, OS/phần cứng, fixture, điều kiện mạng, bước tái hiện, actual/expected, log và kết luận pass/fail/blocked. Dùng [mẫu kiểm chứng](../maintenance/templates.md). Chỉ mở mốc tiếp khi có bằng chứng; chưa thực thi các bài này trong lần đóng handbook.
 
+## Kết quả đã chạy
+
+### Editor chương (V09, change `source-editor`) — 2026-10-01
+
+Build `out/` của Electron 44.4.5 trên Windows 11, dữ liệu tạm. Số đo và cách đo ở [design của change](../../../openspec/changes/source-editor/design.md) (mục “Số đo trong Electron thật”). Chương 5.000 segment, 205.999 ký tự: mở 95–117 ms; xử lý mỗi phím p95 1,7 ms; cuộn khung hình tệ nhất 14 ms; lưu 179 ms, giao diện không đứng. Bảng ca IME (Telex, VNI, Pinyin) ở `src/renderer/src/features/editor/imeCases.md`: lần 1 trên bản editor tối thiểu đạt (chủ sản phẩm báo); lần 2 trên bản hoàn chỉnh ghi ở đó.
+
+### Màn editor hai pane (V09, change `translation-editor`) — 2026-10-01
+
+Cùng build và cách đo như mục trên. Chương mà mỗi bên 5.000 segment (bản gốc 206.000 ký tự, bản dịch 421.000 ký tự): mở cả hai editor 123–141 ms; xử lý mỗi phím p95 3,7 ms ở cả hai bên; lưu cả hai bên 214 ms, không có tác vụ dài. Số đo đầy đủ và danh sách kiểm tra chức năng ở [design của change](../../../openspec/changes/translation-editor/design.md). Bảng ca IME cho pane dịch (Telex, VNI, ca bản dịch trống đang hiện gợi ý, ca chuyển giữa hai pane): chờ người dùng thử tay, ghi ở `src/renderer/src/features/editor/imeCases.md`.
+
+### Mode Từng câu (V09, change `sentence-mode`) — 2026-10-01
+
+Cùng build và cách đo như các mục trên. Chương 5.000 hàng (bản gốc 206.000 ký tự, bản dịch 625.000 ký tự, 5.000 liên kết): mở mode 180–199 ms; đổi trang 111–114 ms; xử lý mỗi phím trong ô p95 7 ms; ghi một hàng 135–143 ms; ghép 5.000 cặp 464–562 ms. Chương 500 hàng: ghi một hàng 16 ms. Đo lộ ra và đã sửa hai chỗ chậm bậc hai ở kho liên kết (ghép 5.000 cặp từ 191 giây xuống 0,5 giây). Số đo đầy đủ và danh sách kiểm tra chức năng ở [design của change](../../../openspec/changes/sentence-mode/design.md). Bảng ca IME cho ô hàng (Telex, VNI): chờ người dùng thử tay, ghi ở `src/renderer/src/features/editor/imeCases.md`.
+
 ---
 
 [Mục lục handbook](../README.md)
