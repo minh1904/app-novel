@@ -11,37 +11,43 @@ export function ChapterPager({
   pageSize,
   total,
   onPage,
-  onPageSize
+  onPageSize,
+  unit = 'chương'
 }: {
   page: number
-  pageSize: PageSize
-  /** Chapters in the current result (after filtering). */
+  pageSize: number
+  /** Items in the current result (after filtering). */
   total: number
   onPage(page: number): void
-  onPageSize(size: PageSize): void
+  /** Leave out to hide the page-size choice, for lists with a fixed page size. */
+  onPageSize?: (size: PageSize) => void
+  /** What is being paged, for the labels: "chương", "segment". */
+  unit?: string
 }): JSX.Element {
   const pages = pageCount(total, pageSize)
   const { from, to } = pageRange(page, total, pageSize)
 
   return (
     <nav
-      aria-label="Phân trang danh sách chương"
+      aria-label={'Phân trang ' + unit}
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-3"
     >
       <p role="status" className="text-xs text-ink-muted tabular-nums">
-        {total === 0 ? 'Không có chương' : `${from}–${to} trong ${total} chương`}
+        {total === 0 ? 'Không có ' + unit : `${from}–${to} trong ${total} ${unit}`}
       </p>
 
       <div className="flex items-center gap-3">
-        <Select<string>
-          label="Số chương mỗi trang"
-          value={String(pageSize)}
-          options={PAGE_SIZES.map((size) => ({
-            value: String(size),
-            label: size + ' chương/trang'
-          }))}
-          onChange={(value) => onPageSize(Number(value) as PageSize)}
-        />
+        {onPageSize && (
+          <Select<string>
+            label={'Số ' + unit + ' mỗi trang'}
+            value={String(pageSize)}
+            options={PAGE_SIZES.map((size) => ({
+              value: String(size),
+              label: size + ' ' + unit + '/trang'
+            }))}
+            onChange={(value) => onPageSize(Number(value) as PageSize)}
+          />
+        )}
         <div className="flex items-center gap-1">
           <Button
             variant="ghost-muted"

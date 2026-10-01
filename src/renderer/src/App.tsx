@@ -1,7 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { AppShell } from './app/AppShell'
-import { PendingScreen } from './app/PendingScreen'
 import { useTheme } from './app/useTheme'
 import { Button } from './components/Button'
 import { CreateWorkScreen } from './features/library/CreateWorkScreen'
@@ -10,6 +9,7 @@ import { LibraryScreen } from './features/library/LibraryScreen'
 import { LibrarySidebar, type LibrarySection } from './features/library/LibrarySidebar'
 import { useLibrary } from './features/library/useLibrary'
 import { byUpdated, type Work } from './features/library/works'
+import { ChapterScreen } from './features/chapter/ChapterScreen'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 
 type View =
@@ -195,16 +195,12 @@ export function App(): JSX.Element {
         { label: work?.title ?? 'Tác phẩm', onClick: backToWork }
       ])
       content = (
-        <PendingScreen
-          heading={
-            last ? 'Editor cho chương ' + last.number + ' chưa được xây' : 'Editor chưa được xây'
-          }
-          detail={
-            (last?.title ? '“' + last.title + '”. ' : '') +
-            'Chương này đã được ghi là chương làm gần nhất, nên “Tiếp tục” sẽ đưa bạn trở lại đây khi editor có mặt.'
-          }
-          backLabel="Về tác phẩm"
-          onBack={backToWork}
+        <ChapterScreen
+          key={view.chapterId}
+          workId={view.workId}
+          chapterId={view.chapterId}
+          onBackToWork={backToWork}
+          onWorkChanged={library.applyWork}
         />
       )
       break
