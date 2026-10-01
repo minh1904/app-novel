@@ -26,6 +26,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Nghiên cứu | [Hệ sinh thái dịch truyện Việt và nhà cung cấp AI](research/vietnam-ecosystem.md) | Quan sát 2026-09-29, chưa phỏng vấn |
 | Nghiên cứu | [Khả thi kỹ thuật: dữ liệu, lưu trữ, căn chỉnh](research/technical-feasibility.md) | Đọc tài liệu + chạy thử một phần |
 | Nghiên cứu | [Công cụ dịch AI, nhiều nguồn, văn phong](research/ai-translation-tools.md) | Đọc README/mã, chưa chạy thử |
+| Nghiên cứu | [Màn chi tiết truyện và danh sách chương](research/work-detail-screen.md) | So sánh sản phẩm; cấu trúc bốn khu vực đã chốt, chi tiết khác còn đề xuất |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
@@ -33,6 +34,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Đối chiếu code ngày 2026-09-29 |
 | Kỹ thuật | [Kiến trúc và spike](engineering/architecture.md) | Scaffold + công nghệ đề xuất |
 | Phát triển | [Roadmap theo điều kiện hoàn thành](delivery/roadmap.md) | Đề xuất thứ tự; không cam kết lịch |
+| Phát triển | [Backlog tính năng chưa triển khai](delivery/backlog.md) | Mục “Sắp có” trên giao diện và điều kiện làm thật |
 | Phát triển | [Kế hoạch kiểm chứng](delivery/validation.md) | Người dùng, dữ liệu, nghiệm thu |
 | Duy trì | [Cách xây và cập nhật handbook](maintenance/handbook-guide.md) | Quy ước làm việc đề xuất |
 | Duy trì | [Mẫu research / spec / ADR / kiểm chứng](maintenance/templates.md) | Dùng cho các chương bổ sung |

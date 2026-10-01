@@ -37,7 +37,7 @@ Mockup gốc (`flow-00` đến `flow-04`) đã gỡ khỏi repo; mô tả dướ
 4. 03 — Thêm chương: dán văn bản hoặc nhập TXT/MD cho bản gốc; bản dịch toàn văn có sẵn là tùy chọn.
 5. 04 — Xem trước chương: kiểm tra tên, ngôn ngữ, ranh giới đoạn và nội dung trước khi mở editor. Không tự tạo bản dịch.
 
-Trong thư viện đã có dữ liệu, **Mở tác phẩm** đi đến tổng quan tác phẩm; **Tiếp tục dịch** đưa thẳng về chương làm việc gần nhất. Thư viện trống là biến thể của cùng màn, không phải một bước mà người dùng hiện hữu luôn phải đi qua.
+*(Đã triển khai ngày 2026-10-01: “Mở tác phẩm” và mục “Tác phẩm gần đây” mở màn chi tiết với danh sách chương; “Tiếp tục” mở chương gần nhất, tạm thời là màn giữ chỗ editor.)* Trong thư viện đã có dữ liệu, **Mở tác phẩm** đi đến tổng quan tác phẩm; **Tiếp tục dịch** đưa thẳng về chương làm việc gần nhất. Thư viện trống là biến thể của cùng màn, không phải một bước mà người dùng hiện hữu luôn phải đi qua.
 
 ## Hành vi cần làm rõ trước khi lên roadmap
 

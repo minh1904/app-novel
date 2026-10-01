@@ -29,12 +29,12 @@ flowchart LR
 | M3 — nhiều nguồn + văn phong | Thêm nguồn raw phụ, ghép chương giữa nguồn, căn chỉnh Bậc 0 nguồn ↔ nguồn và bản cũ ↔ raw; ví dụ văn phong trong prompt; AI đề xuất cập nhật ma trận xưng hô | Đo chất lượng với/không có nguồn phụ và ví dụ văn phong trên corpus; người dùng duyệt được đề xuất xưng hô | Báo cáo kiểm chứng, alignment |
 | M4 — thử nghiệm | Build Windows, máy sạch, phiên quan sát với 5–8 dịch giả (ưu tiên người đang dịch bằng AI) | Không lỗi mất nội dung đã lưu; người dùng tự hoàn tất vòng; kết quả theo cặp ngôn ngữ | Validation, release notes |
 
-**Hiện tại:** M0 đạt **một phần** (2026-09-29). Xong: kho SQLite hai tầng, IPC có kiểu, thư viện thật với ảnh bìa, test crash. Còn lại của M0: chương và màn chi tiết truyện (change `work-detail-screen`), nội dung dịch + sao lưu/khôi phục + provider giả lập (change `content-backup-provider`).
+**Hiện tại:** M0 đạt **một phần** (2026-09-29). Xong: kho SQLite hai tầng, IPC có kiểu, thư viện thật với ảnh bìa, test crash. Cập nhật 2026-10-01: màn chi tiết truyện và danh sách chương đã xong (change `work-detail-screen`). Còn lại của M0: nội dung dịch + sao lưu/khôi phục + provider giả lập (change `content-backup-provider`).
 
 ## Công việc gần nhất
 
 1. ~~Smoke-test `node:sqlite`, kho dữ liệu và IPC cho tác phẩm, thư viện nối kho thật~~ — xong (`m0-storage-foundation`).
-2. Màn chi tiết truyện và danh sách chương (`work-detail-screen`).
+2. ~~Màn chi tiết truyện và danh sách chương (`work-detail-screen`)~~ — xong ngày 2026-10-01, gồm khung khu vực và minh họa “Nhập từ .txt”; xem [backlog](backlog.md) cho phần chưa làm.
 3. Nội dung dịch (văn bản, segment, liên kết), sao lưu/khôi phục, interface provider + provider giả lập (`content-backup-provider`).
 4. Spike CodeMirror: ánh xạ segment qua chỉnh sửa, undo chung hai mode, **thử tay IME tiếng Việt Telex/VNI và Pinyin trong Electron 44** (lỗi Chromium 149+ mất lần gõ IME đầu tiên ở contenteditable chưa được loại trừ cho Chromium 152).
 5. Bộ fixture: vài chương mỗi cặp ngôn ngữ có quyền sử dụng, kèm bản dịch tham chiếu.

@@ -1,6 +1,6 @@
 # Sổ nguồn nghiên cứu
 
-Cập nhật: **2026-09-29**. Các nguồn dưới đây đã được đọc qua web trong đợt này, trừ nhóm ghi rõ kế thừa. Nguồn mô tả sản phẩm là bằng chứng tài liệu, không phải trải nghiệm cài/chạy. Ngày đọc không đồng nghĩa ngày nhà cung cấp cập nhật.
+Cập nhật: **2026-10-01** (bổ sung S23–S24; S01–S22 đọc 2026-09-29). Nguồn mô tả sản phẩm là bằng chứng tài liệu, không phải trải nghiệm cài/chạy. Ngày đọc không đồng nghĩa ngày nhà cung cấp cập nhật.
 
 | ID | Nguồn chính chủ | Dùng cho / giới hạn |
 | --- | --- | --- |
@@ -26,6 +26,8 @@ Cập nhật: **2026-09-29**. Các nguồn dưới đây đã được đọc qu
 | S20 | [CodeMirror ChangeDesc](https://codemirror.net/docs/ref/#state.ChangeDesc), [InterText](https://github.com/czcorpus/InterText_editor), [node:sqlite](https://nodejs.org/docs/latest-v24.x/api/sqlite.html), [SQLite WAL](https://www.sqlite.org/wal.html) | Mô hình dữ liệu và lưu trữ; xem [khả thi kỹ thuật](technical-feasibility.md) |
 | S21 | [sentencex](https://github.com/wikimedia/sentencex-js), [Bertalign](https://github.com/bfsujason/bertalign), [Vecalign](https://github.com/thompsonb/vecalign), [multilingual-e5-small](https://huggingface.co/Xenova/multilingual-e5-small) | Tách câu, căn chỉnh, embedding offline; một phần chạy thử trên Node 24 |
 | S22 | [GalTransl](https://github.com/GalTransl/GalTransl), [AiNiee](https://github.com/NEKOparapa/AiNiee), [auto-novel](https://github.com/auto-novel/auto-novel), [OpenNovel auto-translate](https://www.opennovel.co/docs/auto-translate), [EMNLP 2024 multilingual input](https://aclanthology.org/2024.emnlp-main.396.pdf), [Moslem 2023](https://arxiv.org/abs/2301.13294) | Pipeline dịch AI, nhiều nguồn, văn phong; xem [công cụ dịch AI](ai-translation-tools.md) |
+| S23 | [Hako: trang truyện](https://ln.hako.vn/truyen/24830-nhung-thieu-nu-hac-hoa-va-cuoc-song-thuong-ngay-vun-vo-cua-toi), [OpenNovel Auto-Translate](https://www.opennovel.co/docs/auto-translate), [OpenNovel nhập EPUB](https://www.opennovel.co/docs/translating-epubs), [Reedsy Studio FAQ](https://reedsy.com/studio/resources/book-writing-software-faq/), [GalTransl README](https://github.com/GalTransl/GalTransl/blob/main/README_EN.md) | Đọc 2026-10-01: màn chi tiết/mục lục và quản lý chương; [phân tích](work-detail-screen.md). Hako chỉ đọc bản văn từ kết quả tìm kiếm, chưa mở trực tiếp; chưa thao tác sản phẩm hoặc xác minh nút “Đọc tiếp” |
+| S24 | [AiNiee PromptBuilder](https://github.com/NEKOparapa/AiNiee/blob/main/ModuleFolders/Domain/PromptBuilder/PromptBuilder.py), [Quick Translator Engine](https://github.com/thiendiepdt/quick-translator-engine), [LinguaGacha Glossary](https://github.com/neavo/LinguaGacha/wiki/GlossaryEN), [Smartcat Intelligence Fabric](https://help.smartcat.com/intelligence-fabric-translation-memory-glossaries-language-insights/) | Đọc 2026-10-01: đối chiếu nguồn cho xưng hô, glossary, văn phong và tác vụ; [bảng theo tab](work-detail-screen.md). Mã/README/tài liệu, chưa thao tác sản phẩm; không xác nhận có ma trận xưng hô hay nhiều nguồn raw như Mira |
 
 ## Nguồn kế thừa từ tài liệu 2026-09-23
 

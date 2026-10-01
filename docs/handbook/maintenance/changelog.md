@@ -1,5 +1,16 @@
 # Nhật ký handbook
 
+## Nghiên cứu bổ sung — 2026-10-01
+
+- Gộp spec `work-chapters` vào `work-detail` (một spec cho màn chi tiết, có khung đầu trang + danh mục khu vực), thêm requirement minh họa tính năng chưa làm; chốt bốn câu hỏi mở của `work-detail-screen` (danh sách phẳng, số chương theo vị trí, cho xóa chương, mở chương đổi trạng thái).
+- Thêm [backlog tính năng chưa triển khai](../delivery/backlog.md); “Nhập từ .txt” là mục đầu tiên ở trạng thái chỉ minh họa trên giao diện.
+
+- So sánh màn chi tiết truyện và danh sách chương của Hako, OpenNovel, Reedsy Studio, GalTransl; ghi các suy luận cho `work-detail-screen` và câu hỏi cần kiểm chứng, chưa đổi quyết định hay spec.
+- Thêm mockup sáng để thảo luận bố cục màn chi tiết; dữ liệu trong ảnh chỉ minh họa.
+- Theo phản hồi về mockup, bổ sung hướng tab cấp tác phẩm và đổi thiết kế danh sách chương trong change `work-detail-screen` từ “Hiện thêm” sang phân trang 50/100.
+- Đối chiếu nguồn chính chủ cho từng khu vực/tab dự kiến (chương, thuật ngữ, xưng hô, nguồn raw, tác vụ, văn phong); ghi rõ phần Mira tự thiết kế và giới hạn bằng chứng.
+- Chốt điều hướng tác phẩm thành bốn khu vực Chương/Ngữ cảnh/Nguồn/Tác vụ, gộp Thuật ngữ/Xưng hô/Văn phong dưới Ngữ cảnh; lập change `work-area-navigation` và giữ M0 chỉ có Chương.
+
 ## 0.3 — 2026-09-29
 
 - ADR-003: chốt bộ công nghệ lưu trữ và soạn thảo (`node:sqlite`, CodeMirror 6, SQL thuần, valibot, Vitest, IPC tự viết, một tệp `.mira` mỗi tác phẩm) kèm bằng chứng đo và điều kiện xem lại.
