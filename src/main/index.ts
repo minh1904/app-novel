@@ -1,10 +1,28 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeTheme, type IpcMainInvokeEvent } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeTheme,
+  type IpcMainInvokeEvent
+} from 'electron'
 import { join } from 'node:path'
 import type { AppInfo } from '../shared/desktop-api'
 import { registerLibraryHandlers } from './ipc/library'
 import { LibraryStore } from './storage/library'
 
 app.enableSandbox()
+
+/**
+ * No File/Edit/View menu bar: Mira is one window with its own chrome, and the default menu only
+ * offered things the app already does or must not do (new window, reload mid-edit). On macOS the
+ * menu lives in the system bar instead of the window, so it is left alone.
+ *
+ * Cut, copy, paste, undo and select-all in a text field keep working without it — Chromium handles
+ * those itself. What the menu did provide are the developer shortcuts, re-bound below.
+ */
+const MENU_IS_IN_THE_WINDOW = process.platform !== 'darwin'
 
 let mainWindow: BrowserWindow | null = null
 let library: LibraryStore | null = null
@@ -58,6 +76,17 @@ function createWindow(): void {
   })
 
   const rendererUrl = process.env.ELECTRON_RENDERER_URL
+
+  // The menu used to carry F12 and Ctrl+Shift+I; keep them while developing, and only then, so a
+  // shipped build has no way in. Reload is deliberately not re-bound: it would drop unsaved typing.
+  if (rendererUrl) {
+    window.webContents.on('before-input-event', (_event, input) => {
+      if (input.type !== 'keyDown') return
+      const devTools = input.key === 'F12' || (input.control && input.shift && input.key === 'I')
+      if (devTools) window.webContents.toggleDevTools()
+    })
+  }
+
   if (rendererUrl) {
     void window.loadURL(rendererUrl)
   } else {
@@ -66,6 +95,8 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  if (MENU_IS_IN_THE_WINDOW) Menu.setApplicationMenu(null)
+
   try {
     library = LibraryStore.open({ dataDir: process.env.MIRA_DATA_DIR ?? app.getPath('userData') })
   } catch (error) {
