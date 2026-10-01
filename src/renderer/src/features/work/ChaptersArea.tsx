@@ -163,7 +163,7 @@ export function ChaptersArea({
   }
 
   const importButton = (
-    <Button size="lg" variant="secondary" onClick={() => setImportOpen(true)}>
+    <Button variant="secondary" onClick={() => setImportOpen(true)}>
       <ImportIcon size={14} />
       {MOCK_FEATURES.importTxt.label}
       <span className="ml-0.5 rounded-[5px] bg-selected px-1.5 py-px text-[11px] text-ink">
@@ -180,7 +180,7 @@ export function ChaptersArea({
     <section aria-labelledby="chapters-heading" className="@container flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h2 id="chapters-heading" className="mr-auto text-[15px] font-semibold tracking-[-0.02em]">
-          Chương <span className="font-normal text-ink-muted tabular-nums">({all.length})</span>
+          Chương <span className="font-normal text-ink-muted">({all.length})</span>
         </h2>
         {all.length > 0 && (
           <div className="flex min-w-[220px] flex-1 basis-[280px] flex-col gap-1 @min-[760px]:max-w-[360px]">
@@ -208,7 +208,7 @@ export function ChaptersArea({
           <>
             {importButton}
             <Button
-              size="lg"
+             
               onClick={() => {
                 setAdding(true)
                 setAddKey((key) => key + 1)
@@ -248,7 +248,7 @@ export function ChaptersArea({
           <p role="alert" className="text-[13px]">
             Không tải được danh sách chương. {chapters.loadError}
           </p>
-          <Button size="lg" variant="secondary" onClick={() => void chapters.reload()}>
+          <Button variant="secondary" onClick={() => void chapters.reload()}>
             Thử lại
           </Button>
         </div>
@@ -267,7 +267,7 @@ export function ChaptersArea({
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button
-                  size="lg"
+                 
                   onClick={() => {
                     setAdding(true)
                     setAddKey((key) => key + 1)
@@ -305,7 +305,7 @@ export function ChaptersArea({
                   Không có chương nào khớp “{filterText}”.
                 </p>
                 <Button
-                  size="lg"
+                 
                   variant="secondary"
                   onClick={() => {
                     setQuery('')
@@ -411,10 +411,10 @@ function AddChapterRow({
           }
         }}
       />
-      <Button size="lg" type="submit" disabled={busy}>
+      <Button type="submit" disabled={busy}>
         Thêm
       </Button>
-      <Button size="lg" variant="ghost-muted" onClick={onClose}>
+      <Button variant="ghost-muted" onClick={onClose}>
         Xong
       </Button>
     </form>

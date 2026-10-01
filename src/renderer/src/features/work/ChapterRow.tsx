@@ -54,7 +54,7 @@ export const ChapterRow = memo(function ChapterRow({
         highlighted ? 'bg-selected' : 'hover:bg-control/60'
       )}
     >
-      <span className="pl-2 text-xs text-ink-muted tabular-nums">{chapter.number}</span>
+      <span className="pl-2 text-xs text-ink-muted">{chapter.number}</span>
 
       {editing ? (
         <RenameInput chapter={chapter} actions={actions} />

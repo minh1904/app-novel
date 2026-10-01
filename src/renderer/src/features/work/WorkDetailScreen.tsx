@@ -51,11 +51,11 @@ export function WorkDetailScreen({
           {detail.loadError}
         </p>
         <div className="flex gap-2">
-          <Button size="lg" onClick={onBackToLibrary}>
+          <Button onClick={onBackToLibrary}>
             <AltArrowLeftIcon size={14} />
             Về thư viện
           </Button>
-          <Button size="lg" variant="secondary" onClick={() => void detail.reload()}>
+          <Button variant="secondary" onClick={() => void detail.reload()}>
             Thử lại
           </Button>
         </div>

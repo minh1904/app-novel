@@ -32,7 +32,7 @@ export function ChapterPager({
       aria-label={'Phân trang ' + unit}
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-3"
     >
-      <p role="status" className="text-xs text-ink-muted tabular-nums">
+      <p role="status" className="text-xs text-ink-muted">
         {total === 0 ? 'Không có ' + unit : `${from}–${to} trong ${total} ${unit}`}
       </p>
 
@@ -51,7 +51,7 @@ export function ChapterPager({
         <div className="flex items-center gap-1">
           <Button
             variant="ghost-muted"
-            size="icon-lg"
+            size="icon"
             aria-label="Trang trước"
             disabled={page <= 1}
             onClick={() => onPage(page - 1)}
@@ -67,11 +67,10 @@ export function ChapterPager({
               <Button
                 key={entry}
                 variant={entry === page ? 'secondary' : 'ghost-muted'}
-                size="icon-lg"
+                size="icon"
                 aria-label={'Trang ' + entry}
                 aria-current={entry === page ? 'page' : undefined}
                 onClick={() => onPage(entry)}
-                className="tabular-nums"
               >
                 {entry}
               </Button>
@@ -79,7 +78,7 @@ export function ChapterPager({
           )}
           <Button
             variant="ghost-muted"
-            size="icon-lg"
+            size="icon"
             aria-label="Trang sau"
             disabled={page >= pages}
             onClick={() => onPage(page + 1)}

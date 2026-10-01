@@ -47,7 +47,7 @@ export function ImportTxtMockDialog({
               <span className="min-w-0 flex-1 truncate rounded-control border border-line-strong px-3 py-2 text-ink-muted">
                 truyen-mau.txt (mẫu)
               </span>
-              <Button size="lg" variant="secondary" disabled>
+              <Button variant="secondary" disabled>
                 Chọn tệp…
               </Button>
             </div>
@@ -67,7 +67,7 @@ export function ImportTxtMockDialog({
             <ul className="flex flex-col divide-y divide-line rounded-control border border-line">
               {SAMPLE_CHAPTERS.map((title, index) => (
                 <li key={title} className="flex items-center gap-3 px-3 py-1.5">
-                  <span className="w-5 text-right text-ink-muted tabular-nums">{index + 1}</span>
+                  <span className="w-5 text-right text-ink-muted">{index + 1}</span>
                   <span className="truncate">{title}</span>
                 </li>
               ))}
@@ -79,10 +79,10 @@ export function ImportTxtMockDialog({
           <span id="import-txt-reason" className="mr-auto text-[12px] text-ink-muted">
             Chưa nhập được: tính năng này đang là bản minh họa.
           </span>
-          <Button variant="secondary" size="lg" onClick={() => onOpenChange(false)}>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          <Button size="lg" disabled aria-describedby="import-txt-reason">
+          <Button disabled aria-describedby="import-txt-reason">
             Nhập {SAMPLE_CHAPTERS.length} chương
           </Button>
         </div>

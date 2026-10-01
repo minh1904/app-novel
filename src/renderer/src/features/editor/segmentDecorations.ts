@@ -143,8 +143,7 @@ export const segmentTheme = EditorView.baseTheme({
   },
   '.cm-segment-gutter .cm-gutterElement': {
     padding: '0 8px 0 12px',
-    textAlign: 'right',
-    fontVariantNumeric: 'tabular-nums'
+    textAlign: 'right'
   },
   '.cm-segment-number-edited': { color: 'var(--status-info)', fontWeight: '600' },
   '.cm-segment': { borderRadius: '3px' },

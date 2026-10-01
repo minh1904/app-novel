@@ -171,37 +171,72 @@ function PopulatedLibrary({
   const copy = sectionCopy[section]
   const filtered = deferredQuery.trim() !== '' || status !== 'any'
 
+  /**
+   * One 42px bar holds everything above the list — heading, search, filters, the two buttons — so
+   * the list itself keeps the rest of the height and twice as many works fit without scrolling.
+   */
   return (
-    <div className="@container mx-auto max-w-[1440px] px-6 pt-7 pb-12">
+    <div className="@container flex h-full min-h-0 flex-col">
+      <div className="flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
+        <h2 className="shrink-0 text-[12.5px] font-semibold">
+          {copy.title}{' '}
+          <span className="font-normal text-ink-muted">
+            · {visible.length.toLocaleString('vi')} tác phẩm
+          </span>
+        </h2>
+        <SearchField
+          ref={searchRef}
+          size="sm"
+          label="Tìm tác phẩm"
+          placeholder="Tìm tác phẩm…"
+          shortcut="Ctrl F"
+          className="ml-1 min-w-[150px] flex-1"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape' && query) {
+              event.stopPropagation()
+              setQuery('')
+            }
+          }}
+        />
+        <Select<StatusFilter>
+          size="sm"
+          label="Lọc theo trạng thái"
+          value={status}
+          options={statusOptions}
+          onChange={setStatus}
+          icon={<FilterIcon size={13} />}
+        />
+        <Select<Sort>
+          size="sm"
+          label="Sắp xếp"
+          value={sort}
+          options={sortOptions}
+          onChange={setSort}
+          icon={<SortVerticalIcon size={13} />}
+        />
+        <Button variant="outline" onClick={actions.onOpenExisting}>
+          <FolderOpenIcon size={14} />
+          Mở tác phẩm có sẵn
+        </Button>
+        <Button onClick={actions.onCreateWork}>
+          <AddIcon size={14} />
+          Tạo tác phẩm
+        </Button>
+      </div>
+
       <div
         className={cx(
-          'grid grid-cols-1 gap-6',
+          'grid min-h-0 flex-1 grid-cols-1',
           lastWorkedOn && '@min-[1000px]:grid-cols-[minmax(0,1fr)_280px]'
         )}
       >
-        <div className="flex min-w-0 flex-col gap-5">
-          {notices}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 flex-col gap-1">
-              <h2 className="text-[24px] leading-[1.2] font-semibold tracking-[-0.045em]">
-                {copy.title}
-              </h2>
-              <p className="text-[13px] text-ink-muted">{copy.subtitle}</p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button variant="outline" size="lg" onClick={actions.onOpenExisting}>
-                <FolderOpenIcon size={15} />
-                Mở tác phẩm có sẵn
-              </Button>
-              <Button size="lg" onClick={actions.onCreateWork}>
-                <AddIcon size={15} />
-                Tạo tác phẩm
-              </Button>
-            </div>
-          </div>
+        <div className="flex min-h-0 min-w-0 flex-col overflow-y-auto">
+          {notices && <div className="flex flex-col gap-2 px-2.5 pt-2.5">{notices}</div>}
 
           {lastWorkedOn && (
-            <div className="@min-[1000px]:hidden">
+            <div className="px-2.5 pt-2.5 @min-[1000px]:hidden">
               <ContinuePanel
                 work={lastWorkedOn}
                 layout="banner"
@@ -211,42 +246,10 @@ function PopulatedLibrary({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
-            <SearchField
-              ref={searchRef}
-              label="Tìm tác phẩm"
-              placeholder="Tìm tác phẩm…"
-              shortcut="Ctrl F"
-              className="min-w-[220px] flex-1"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape' && query) {
-                  event.stopPropagation()
-                  setQuery('')
-                }
-              }}
-            />
-            <Select<StatusFilter>
-              label="Lọc theo trạng thái"
-              value={status}
-              options={statusOptions}
-              onChange={setStatus}
-              icon={<FilterIcon size={14} />}
-            />
-            <Select<Sort>
-              label="Sắp xếp"
-              value={sort}
-              options={sortOptions}
-              onChange={setSort}
-              icon={<SortVerticalIcon size={14} />}
-            />
-          </div>
-
           {visible.length > 0 ? (
             <WorkTable works={visible} actions={actions} onRename={setRenaming} />
           ) : (
-            <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
               <p className="text-[13px] text-ink-muted">
                 {filtered ? 'Không có tác phẩm nào khớp bộ lọc hiện tại.' : copy.empty}
               </p>
@@ -266,7 +269,10 @@ function PopulatedLibrary({
         </div>
 
         {lastWorkedOn && (
-          <aside className="hidden flex-col gap-4 @min-[1000px]:flex" aria-label="Tiếp tục dịch">
+          <aside
+            className="hidden min-h-0 flex-col gap-4 overflow-y-auto border-l border-line p-3 @min-[1000px]:flex"
+            aria-label="Tiếp tục dịch"
+          >
             <ContinuePanel
               work={lastWorkedOn}
               layout="side"
@@ -366,7 +372,7 @@ function ContinuePanel({
   )
 
   const button = (
-    <Button size="lg" className="w-full" onClick={() => onContinue(work)}>
+    <Button className="w-full" onClick={() => onContinue(work)}>
       <PlayIcon size={14} />
       Tiếp tục dịch
     </Button>
@@ -404,7 +410,7 @@ function ContinuePanel({
 }
 
 const columns =
-  'grid grid-cols-[minmax(0,1fr)_76px_100px_92px_auto] items-center gap-3 @max-[700px]:grid-cols-[minmax(0,1fr)_100px_92px_auto] @max-[560px]:grid-cols-[minmax(0,1fr)_100px_auto]'
+  'grid grid-cols-[minmax(0,1fr)_72px_96px_84px_auto] items-center gap-3 @max-[700px]:grid-cols-[minmax(0,1fr)_96px_84px_auto] @max-[560px]:grid-cols-[minmax(0,1fr)_96px_auto]'
 const hideBelow700 = '@max-[700px]:hidden'
 const hideBelow560 = '@max-[560px]:hidden'
 
@@ -420,14 +426,17 @@ function WorkTable({
   return (
     <div className="@container">
       <div
-        className={cx(columns, 'h-8 border-b border-line px-3 text-[12px] text-ink-muted')}
+        className={cx(
+          columns,
+          'sticky top-0 z-10 h-7 border-b border-line bg-canvas px-2.5 text-[11px] text-ink-muted'
+        )}
         aria-hidden="true"
       >
         <span>Tác phẩm</span>
         <span className={cx('text-right', hideBelow700)}>Chương</span>
-        <span>Tiến độ dịch</span>
+        <span>Tiến độ</span>
         <span className={hideBelow560}>Cập nhật</span>
-        <span className="w-[152px] text-right">Thao tác</span>
+        <span className="w-[92px] text-right">Thao tác</span>
       </div>
       <ul aria-label="Danh sách tác phẩm">
         {works.map((work) => (
@@ -462,19 +471,22 @@ function WorkRow({
       aria-labelledby={titleId}
       className={cx(
         columns,
-        'border-b border-line px-3 py-3 transition-colors hover:bg-sidebar focus-within:bg-sidebar'
+        'border-b border-line px-2.5 py-1.5 transition-colors hover:bg-sidebar focus-within:bg-sidebar'
       )}
     >
-      <div className="flex min-w-0 items-center gap-3.5">
-        <WorkCover work={work} />
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span id={titleId} className="line-clamp-2 text-[13px] leading-[1.35] font-semibold">
+      {/* Author, genre and description drop out: at this density only the name and the pair of
+          languages fit, and the rest is one click away on the work screen. */}
+      <div className="flex min-w-0 items-center gap-2.5">
+        <WorkCover work={work} size="xs" />
+        <div className="flex min-w-0 flex-col">
+          <span id={titleId} className="truncate text-[12.5px] font-semibold">
             {work.title}
           </span>
-          <span className="truncate text-[12px] text-ink-muted">
+          <span className="truncate text-[11px] text-ink-muted">
             <span title={languages[work.sourceLanguage].name + ' → Tiếng Việt'}>
               {languages[work.sourceLanguage].short} → Việt
             </span>
+            {work.author && ' · ' + work.author}
             {work.originalTitle && (
               <>
                 {' · '}
@@ -482,44 +494,33 @@ function WorkRow({
               </>
             )}
           </span>
-          {(work.author || work.genre) && (
-            <span className="truncate text-[12px] text-ink-muted">
-              {[work.author, work.genre].filter(Boolean).join(' · ')}
-            </span>
-          )}
-          {work.description && (
-            <span className="truncate text-[12px] text-ink-muted">{work.description}</span>
-          )}
         </div>
       </div>
-      <span className={cx('text-right text-xs whitespace-nowrap tabular-nums', hideBelow700)}>
+      <span className={cx('text-right text-[11px] whitespace-nowrap text-ink-muted', hideBelow700)}>
         {work.chapterCount} chương
       </span>
-      <div className="flex flex-col items-start gap-1">
+      <div className="flex items-center gap-1.5">
         <span
           className={cx(
             'inline-flex h-[22px] items-center rounded-full px-2 text-[11px] font-semibold whitespace-nowrap',
             statusTone[work.status]
           )}
+          title={work.lastChapter ? 'Chương ' + work.lastChapter.number : undefined}
         >
           {statusLabels[work.status]}
         </span>
-        {work.lastChapter && (
-          <span className="pl-2 text-[12px] text-ink-muted">Chương {work.lastChapter.number}</span>
-        )}
       </div>
       <time
-        className={cx('flex flex-col text-xs', hideBelow560)}
+        className={cx('flex flex-col text-[11px] text-ink-muted', hideBelow560)}
         dateTime={work.updatedAt.toISOString()}
         title={formatFullDate(work.updatedAt)}
       >
         <span>{updated.day}</span>
-        <span className="text-[12px] text-ink-muted">{updated.time}</span>
+        <span className="text-ink-muted/70">{updated.time}</span>
       </time>
-      <div className="flex w-[152px] items-center justify-end gap-1">
-        <Button variant="outline" onClick={() => actions.onOpenWork(work)}>
-          <FolderOpenIcon size={14} />
-          Mở tác phẩm
+      <div className="flex w-[92px] items-center justify-end gap-1">
+        <Button variant="outline" size="sm" onClick={() => actions.onOpenWork(work)}>
+          Mở
         </Button>
         <WorkMenu
           work={work}
@@ -752,7 +753,7 @@ function EmptyLibrary({
                 key={step.title}
                 className="flex gap-3 rounded-control border border-line bg-canvas p-3"
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-control text-[12px] font-semibold tabular-nums">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-control text-[12px] font-semibold">
                   {index + 1}
                 </span>
                 <span className="mt-0.5 text-ink-muted">{step.icon}</span>

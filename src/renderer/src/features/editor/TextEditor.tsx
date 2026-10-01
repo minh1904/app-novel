@@ -23,6 +23,7 @@ import {
   type SessionStatus,
   type TextStore
 } from './editorSession'
+import { livePreviewDecorations } from './livePreviewDecorations'
 import { idleResegment } from './resegmenter'
 import { segmentDecorations } from './segmentDecorations'
 
@@ -34,17 +35,17 @@ import { segmentDecorations } from './segmentDecorations'
  * surrounds it (title, status line, save button) belongs to the screen.
  */
 const theme = EditorView.theme({
+  // No border of its own: the pane around it is the box, so the two would read as nested frames.
   '&': {
     height: '100%',
     fontSize: '14px',
     color: 'var(--text-primary)',
     backgroundColor: 'transparent',
-    border: '1px solid var(--border-subtle)',
-    borderRadius: 'var(--radius-panel)'
+    borderRadius: 'var(--radius-control)'
   },
   '&.cm-focused': {
     outline: 'none',
-    boxShadow: '0 0 0 2px color-mix(in srgb, var(--focus-ring) 40%, transparent)'
+    boxShadow: 'inset 0 0 0 2px color-mix(in srgb, var(--focus-ring) 40%, transparent)'
   },
   '.cm-scroller': { fontFamily: 'inherit', lineHeight: '1.7', overflow: 'auto' },
   '.cm-content': { padding: '12px 0', caretColor: 'var(--text-primary)' },
@@ -89,6 +90,8 @@ export interface TextEditorProps {
   readOnly?: boolean
   /** Shown over the empty text; it is not part of the text and goes when the first character does. */
   emptyHint?: string
+  /** Styles `#` headings and `**bold**` inline while still editable; read once like `lang`. */
+  livePreview?: boolean
   /** A save went through (or the stored text was reloaded): the figures on the screen follow it. */
   onSaved(record: TextRecord): void
   onStatusChange?(status: SessionStatus): void
@@ -105,6 +108,7 @@ export function TextEditor({
   store,
   readOnly = false,
   emptyHint,
+  livePreview = false,
   onSaved,
   onStatusChange,
   handleRef
@@ -174,6 +178,7 @@ export function TextEditor({
             if (update.docChanged) setEmpty(update.state.doc.length === 0)
           }),
           segmentDecorations(),
+          ...(livePreview ? [livePreviewDecorations()] : []),
           idleResegment(lang, 800, () => sessionRef.current?.saving ?? false),
           theme
         ]
@@ -266,10 +271,10 @@ export function TextEditor({
         description="Những chỗ bạn đã sửa mà chưa lưu sẽ bị bỏ. Bạn có thể bấm “Sao chép văn bản của tôi” trước để giữ lại."
       >
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" size="lg" onClick={() => setConfirmReload(false)}>
+          <Button variant="secondary" onClick={() => setConfirmReload(false)}>
             Hủy
           </Button>
-          <Button size="lg" onClick={() => void reload()}>
+          <Button onClick={() => void reload()}>
             Tải lại bản đã lưu
           </Button>
         </div>

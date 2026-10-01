@@ -12,6 +12,9 @@ const STATE_LABEL: Record<SessionStatus['state'], string> = {
 /**
  * One side of the full-text editor: what it is, whether its text is safe, and the controls that
  * belong to it. The text itself is the child; the pane never looks inside it.
+ *
+ * The pane is the bordered box, so the text inside draws no border of its own, and the name, the
+ * figures and the save state share one line to leave the height to the text.
  */
 export function EditorPane({
   title,
@@ -33,23 +36,27 @@ export function EditorPane({
 }): JSX.Element {
   const saved = status.state === 'saved'
   return (
-    <section aria-label={title} className="flex min-h-0 min-w-0 flex-col gap-2">
-      <div className="flex min-w-0 items-baseline gap-2">
-        <h3 className="text-[13px] font-semibold">{title}</h3>
-        <p className="truncate text-xs text-ink-muted">{subtitle}</p>
-      </div>
-      <div className="flex min-h-7 min-w-0 items-center justify-between gap-2">
-        <p role="status" className="flex min-w-0 items-center gap-1.5 text-xs text-ink-muted">
-          <span
-            aria-hidden="true"
-            className={'size-1.5 shrink-0 rounded-full ' + (saved ? 'bg-success' : 'bg-warning')}
-          />
-          <span className="truncate">
+    <section
+      aria-label={title}
+      className="flex min-h-0 min-w-0 flex-col gap-2 rounded-panel border border-line bg-sidebar p-3"
+    >
+      <div className="flex min-h-6 min-w-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <h3 className="shrink-0 text-[13px] font-semibold">{title}</h3>
+          <p className="truncate text-xs text-ink-muted">{subtitle}</p>
+          <p
+            role="status"
+            className="flex shrink-0 items-center gap-1 text-[11px] whitespace-nowrap text-ink-muted"
+          >
+            <span
+              aria-hidden="true"
+              className={'size-1.5 shrink-0 rounded-full ' + (saved ? 'bg-success' : 'bg-warning')}
+            />
             {lockLabel ? lockLabel + ' · ' : ''}
             {STATE_LABEL[status.state]}
-          </span>
-        </p>
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">{actions}</div>
       </div>
       {notice}
       <div className="min-h-0 flex-1">{children}</div>

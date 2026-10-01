@@ -30,7 +30,7 @@ export function Slider({
     >
       <div className="flex justify-between text-[12px] text-ink-muted">
         <BaseSlider.Label>{label}</BaseSlider.Label>
-        <BaseSlider.Value className="text-ink tabular-nums">
+        <BaseSlider.Value className="text-ink">
           {(_, values) => values[0] + '%'}
         </BaseSlider.Value>
       </div>

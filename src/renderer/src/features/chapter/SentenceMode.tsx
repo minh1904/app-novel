@@ -157,7 +157,7 @@ export function SentenceMode({
           {rows.loadError}
         </p>
         <div>
-          <Button variant="secondary" size="lg" onClick={() => void rows.reload()}>
+          <Button variant="secondary" onClick={() => void rows.reload()}>
             Thử lại
           </Button>
         </div>
@@ -171,7 +171,7 @@ export function SentenceMode({
         <p
           role="status"
           aria-label="Số hàng theo trạng thái"
-          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted tabular-nums"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted"
         >
           {(['untranslated', 'ai', 'check', 'reviewed'] as RowState[]).map((state) => (
             <span key={state} className="flex items-center gap-1.5">
@@ -180,7 +180,7 @@ export function SentenceMode({
             </span>
           ))}
         </p>
-        <Button variant="secondary" size="lg" onClick={() => jumpFrom(active.current)}>
+        <Button variant="secondary" onClick={() => jumpFrom(active.current)}>
           Hàng cần xử lý kế tiếp
         </Button>
       </div>
@@ -331,7 +331,7 @@ const SentenceRow = memo(function SentenceRow({
   const statusId = 'row-state-' + row.sourceId
   return (
     <li className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-x-4 border-b border-line px-3 py-3 last:border-b-0">
-      <span className="pt-0.5 text-right text-xs text-ink-muted tabular-nums">{number}</span>
+      <span className="pt-0.5 text-right text-xs text-ink-muted">{number}</span>
       <p lang={sourceLang} className="text-[14px] leading-[1.7] break-words whitespace-pre-wrap">
         {row.sourceText}
       </p>

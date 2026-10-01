@@ -14,5 +14,6 @@ export const MOCK_FEATURES = {
   importTxt: { id: 'import-txt', label: 'Nhập từ .txt' },
   contextArea: { id: 'context-area', label: 'Ngữ cảnh' },
   sourcesArea: { id: 'sources-area', label: 'Nguồn' },
-  jobsArea: { id: 'jobs-area', label: 'Tác vụ' }
+  jobsArea: { id: 'jobs-area', label: 'Tác vụ' },
+  aiPanel: { id: 'ai-chat-panel', label: 'Hỏi AI' }
 } as const satisfies Record<string, MockFeature>

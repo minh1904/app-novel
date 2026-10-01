@@ -81,13 +81,13 @@ export function useLeaveGuardRegistry(): { registry: LeaveGuardRegistry; dialog:
       description="Bạn đã sửa văn bản của chương này nhưng chưa lưu. Bạn muốn làm gì?"
     >
       <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="secondary" size="lg" disabled={saving} onClick={() => answer(false)}>
+        <Button variant="secondary" disabled={saving} onClick={() => answer(false)}>
           Ở lại
         </Button>
-        <Button variant="destructive" size="lg" disabled={saving} onClick={() => void drop()}>
+        <Button variant="destructive" disabled={saving} onClick={() => void drop()}>
           Bỏ thay đổi
         </Button>
-        <Button size="lg" disabled={saving} onClick={() => void saveAndGo()}>
+        <Button disabled={saving} onClick={() => void saveAndGo()}>
           {saving ? 'Đang lưu…' : 'Lưu rồi tiếp tục'}
         </Button>
       </div>

@@ -32,19 +32,12 @@ export function CreateWorkScreen({
 }: CreateWorkScreenProps): JSX.Element {
   const created = useRef<Work | null>(null)
 
+  // Two steps, so creating a work is the name and the language; the rest is a step you can skip.
   return (
-    <div className="mx-auto flex max-w-[760px] flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[24px] leading-[1.2] font-semibold tracking-[-0.045em]">
-          Tạo tác phẩm
-        </h2>
-        <p className="text-[13px] leading-[1.6] text-ink-muted">
-          Chỉ cần tên và ngôn ngữ gốc. Ảnh bìa, chương, bản gốc và bản dịch thêm sau cũng được.
-        </p>
-      </div>
-
+    <div className="flex h-full min-h-0 flex-col">
       <WorkForm
         mode="create"
+        stepped
         submitLabel="Tạo tác phẩm"
         busyLabel="Đang tạo…"
         onSubmit={async (values) => {

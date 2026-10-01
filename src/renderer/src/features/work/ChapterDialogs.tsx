@@ -86,10 +86,10 @@ function MoveForm({
         }}
       />
       <div className="flex justify-end gap-2">
-        <Button size="lg" variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={onClose}>
           Hủy
         </Button>
-        <Button size="lg" type="submit">
+        <Button type="submit">
           Chuyển
         </Button>
       </div>
@@ -179,7 +179,7 @@ function DeleteBody({
       <div className="flex justify-end gap-2">
         {note && onBackup && (
           <Button
-            size="lg"
+           
             variant="outline"
             className="mr-auto"
             disabled={backingUp}
@@ -194,11 +194,11 @@ function DeleteBody({
             {backingUp ? 'Đang sao lưu…' : 'Sao lưu trước…'}
           </Button>
         )}
-        <Button size="lg" variant="secondary" onClick={onClose} autoFocus>
+        <Button variant="secondary" onClick={onClose} autoFocus>
           Hủy
         </Button>
         <Button
-          size="lg"
+         
           variant="destructive"
           disabled={backingUp}
           onClick={() => {

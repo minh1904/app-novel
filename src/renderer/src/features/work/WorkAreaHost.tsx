@@ -23,7 +23,7 @@ class AreaBoundary extends Component<{ label: string; children: ReactNode }, { f
         <p>
           Không hiển thị được khu vực “{this.props.label}”. Tác phẩm và dữ liệu không bị ảnh hưởng.
         </p>
-        <Button size="lg" variant="secondary" onClick={() => this.setState({ failed: false })}>
+        <Button variant="secondary" onClick={() => this.setState({ failed: false })}>
           Thử lại
         </Button>
       </div>

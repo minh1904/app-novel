@@ -9,12 +9,16 @@ export interface SelectOption<T extends string> {
   label: string
 }
 
+/** `sm` fits a 42px toolbar; `default` is the standalone size. */
+export type SelectSize = 'sm' | 'default'
+
 export interface SelectProps<T extends string> {
   label: string
   value: T
   options: ReadonlyArray<SelectOption<T>>
   onChange(value: T): void
   icon?: ReactNode
+  size?: SelectSize
   className?: string
 }
 
@@ -24,6 +28,7 @@ export function Select<T extends string>({
   options,
   onChange,
   icon,
+  size = 'default',
   className
 }: SelectProps<T>): JSX.Element {
   return (
@@ -38,7 +43,8 @@ export function Select<T extends string>({
         data-slot="select"
         aria-label={label}
         className={cx(
-          'inline-flex h-[34px] shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line-strong bg-canvas pr-2.5 pl-3 text-xs text-ink outline-none hover:bg-control focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-control',
+          'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line-strong bg-canvas text-xs text-ink outline-none hover:bg-control focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-control',
+          size === 'sm' ? 'h-7 gap-1.5 pr-2 pl-2.5' : 'h-[34px] pr-2.5 pl-3',
           className
         )}
       >

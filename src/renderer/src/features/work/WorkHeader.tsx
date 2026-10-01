@@ -80,7 +80,7 @@ export function WorkHeader({
             )}
             <span>{languages[work.sourceLanguage].short} → Việt</span>
             <span aria-hidden="true">·</span>
-            <span className="tabular-nums">{work.chapterCount} chương</span>
+            <span>{work.chapterCount} chương</span>
             <span aria-hidden="true">·</span>
             <time dateTime={work.updatedAt.toISOString()} title={formatFullDate(work.updatedAt)}>
               Sửa {formatUpdated(work.updatedAt).toLocaleLowerCase('vi')}
@@ -115,7 +115,7 @@ export function WorkHeader({
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {work.lastChapter ? (
               <Button
-                size="lg"
+               
                 onClick={actions.onContinue}
                 title={'Tiếp tục chương ' + work.lastChapter.number}
               >
@@ -124,12 +124,12 @@ export function WorkHeader({
                 <span className="font-normal opacity-70">· Chương {work.lastChapter.number}</span>
               </Button>
             ) : (
-              <Button size="lg" onClick={actions.onAddChapter}>
+              <Button onClick={actions.onAddChapter}>
                 <AddIcon size={14} />
                 Thêm chương
               </Button>
             )}
-            <Button variant="outline" size="lg" onClick={actions.onEdit}>
+            <Button variant="outline" onClick={actions.onEdit}>
               <PenNewSquareIcon size={14} />
               Sửa thông tin
             </Button>

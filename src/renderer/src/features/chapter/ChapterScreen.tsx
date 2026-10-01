@@ -1,9 +1,11 @@
 import { useMemo, useRef, useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
-import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
+import { ClipboardTextIcon } from '@solar-icons/react/linear/clipboard-text'
+import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import type { WorkSummary } from '../../../../shared/library'
 import type { TextSide } from '../../../../shared/text'
 import { Button } from '../../components/Button'
+import { cx } from '../../components/cx'
 import type { TextStore } from '../editor/editorSession'
 import { languages } from '../library/works'
 import { headingTitle } from '../work/chapterList'
@@ -46,6 +48,7 @@ export function ChapterScreen({
   const screen = useChapterScreen(workId, chapterId, onWorkChanged)
   const [importing, setImporting] = useState(false)
   const [chosenFile, setChosenFile] = useState<File | null>(null)
+  const [dragging, setDragging] = useState(false)
   const opener = useRef<HTMLElement | null>(null)
   const picker = useRef<HTMLInputElement>(null)
   const sourceStore = useMemo(() => makeStore(workId, chapterId, 'source'), [workId, chapterId])
@@ -73,11 +76,11 @@ export function ChapterScreen({
           {screen.error}
         </p>
         <div className="flex gap-2">
-          <Button size="lg" onClick={onBackToWork}>
+          <Button onClick={onBackToWork}>
             <AltArrowLeftIcon size={14} />
             Về tác phẩm
           </Button>
-          <Button variant="secondary" size="lg" onClick={() => void screen.reload()}>
+          <Button variant="secondary" onClick={() => void screen.reload()}>
             Thử lại
           </Button>
         </div>
@@ -148,39 +151,75 @@ export function ChapterScreen({
     )
   }
 
+  /** Keeps the chapter inside the same frame as a chapter that has a source, so only the middle changes. */
   return (
-    <div className="mx-auto flex max-w-[960px] flex-col gap-6 px-6 py-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="text-[24px] leading-[1.2] font-semibold tracking-[-0.045em] break-words">
-            {headingTitle(chapter)}
-          </h2>
-          <p className="text-xs text-ink-muted">
-            {work.title} · {languages[work.sourceLanguage].short} → Việt
-          </p>
-        </div>
-        <Button variant="secondary" size="lg" onClick={onBackToWork}>
-          <AltArrowLeftIcon size={14} />
-          Về tác phẩm
+    <div className="flex h-full min-h-0 flex-col">
+      <header className="flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
+        <h2 className="min-w-0 truncate text-[12.5px] font-semibold">
+          {headingTitle(chapter)}{' '}
+          <span className="font-normal text-ink-muted">
+            · {work.title} · {languages[work.sourceLanguage].short} → Việt
+          </span>
+        </h2>
+        <Button
+          variant="ghost-muted"
+          size="icon"
+          className="ml-auto"
+          aria-label="Về tác phẩm"
+          title="Về tác phẩm"
+          onClick={onBackToWork}
+        >
+          <AltArrowLeftIcon size={15} />
         </Button>
       </header>
 
       {fileInput}
 
-      <div className="flex flex-col items-center gap-3 rounded-panel border border-dashed border-line-strong px-6 py-14 text-center">
-        <DocumentTextIcon size={28} className="text-ink-muted" />
-        <p className="text-[14px] font-semibold">Chương này chưa có bản gốc</p>
-        <p className="max-w-[460px] text-xs leading-[1.6] text-ink-muted">
-          Đưa văn bản gốc của chương vào để Mira chia thành các segment. Bạn sẽ xem lại kết quả
-          trước khi lưu.
-        </p>
-        <div className="flex flex-wrap justify-center gap-2 pt-1">
-          <Button size="lg" onClick={() => openDialog(null)}>
-            Dán văn bản
-          </Button>
-          <Button variant="outline" size="lg" onClick={() => picker.current?.click()}>
-            Chọn tệp .txt / .md
-          </Button>
+      {/* Two ways in, side by side: each says what it is for, so the first time is not a guess. */}
+      <div className="@container flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6">
+        <div className="text-center">
+          <p className="text-[14px] font-semibold">Chương này chưa có bản gốc</p>
+          <p className="mt-1 max-w-[520px] text-xs leading-[1.6] text-ink-muted">
+            Đưa văn bản gốc vào để Mira chia thành các segment. Bạn xem lại kết quả trước khi lưu.
+          </p>
+        </div>
+        <div className="grid w-full max-w-[640px] gap-3 @min-[560px]:grid-cols-2">
+          <section className="flex flex-col items-start gap-2 rounded-panel border border-line bg-sidebar p-3.5">
+            <ClipboardTextIcon size={20} className="text-ink-muted" />
+            <h3 className="text-[13px] font-semibold">Dán văn bản</h3>
+            <p className="text-xs leading-[1.55] text-ink-muted">
+              Chép từ web hoặc tài liệu rồi dán thẳng vào. Hợp khi bạn lấy raw từng chương một.
+            </p>
+            <Button className="mt-1" onClick={() => openDialog(null)}>
+              Dán văn bản
+            </Button>
+          </section>
+          <section
+            className={cx(
+              'flex flex-col items-start gap-2 rounded-panel border border-dashed p-3.5 transition-colors',
+              dragging ? 'border-focus bg-control' : 'border-line-strong bg-control/40'
+            )}
+            onDragOver={(event) => {
+              event.preventDefault()
+              setDragging(true)
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault()
+              setDragging(false)
+              const file = event.dataTransfer.files[0]
+              if (file) openDialog(file)
+            }}
+          >
+            <DocumentAddIcon size={20} className="text-ink-muted" />
+            <h3 className="text-[13px] font-semibold">Chọn hoặc kéo tệp vào</h3>
+            <p className="text-xs leading-[1.55] text-ink-muted">
+              .txt hoặc .md, tối đa 8 MB. Mira tự nhận bảng mã (UTF-8, GB18030, Big5, Shift_JIS…).
+            </p>
+            <Button variant="outline" className="mt-1" onClick={() => picker.current?.click()}>
+              Chọn tệp…
+            </Button>
+          </section>
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import { LibraryScreen } from './features/library/LibraryScreen'
 import { LibrarySidebar, type LibrarySection } from './features/library/LibrarySidebar'
 import { useLibrary } from './features/library/useLibrary'
 import { byUpdated, type Work } from './features/library/works'
+import { ChapterNavSidebar } from './features/chapter/ChapterNavSidebar'
 import { ChapterScreen } from './features/chapter/ChapterScreen'
 import { LeaveGuardContext, useLeaveGuardRegistry } from './features/editor/leaveGuard'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
@@ -124,6 +125,16 @@ export function App(): JSX.Element {
 
   let title: JSX.Element
   let content: JSX.Element
+  let sidebar: JSX.Element = (
+    <LibrarySidebar
+      activeSection={view.name === 'library' ? view.section : undefined}
+      onSelectSection={showSection}
+      recentWorks={recentWorks}
+      hasWorks={works.length > 0}
+      onOpenWork={openWork}
+      onCreateWork={createWork}
+    />
+  )
 
   switch (view.name) {
     case 'library':
@@ -213,6 +224,17 @@ export function App(): JSX.Element {
           onToggleFocus={toggleSidebar}
         />
       )
+      sidebar = (
+        <ChapterNavSidebar
+          key={view.workId}
+          workId={view.workId}
+          workTitle={work?.title ?? 'Tác phẩm'}
+          activeChapterId={view.chapterId}
+          onOpenChapter={(chapterId) => openChapterView(view.workId, chapterId)}
+          onBackToWork={backToWork}
+          onWorkChanged={library.applyWork}
+        />
+      )
       break
     }
   }
@@ -220,16 +242,7 @@ export function App(): JSX.Element {
   return (
     <LeaveGuardContext.Provider value={registry}>
       <AppShell
-        sidebar={
-          <LibrarySidebar
-            activeSection={view.name === 'library' ? view.section : undefined}
-            onSelectSection={showSection}
-            recentWorks={recentWorks}
-            hasWorks={works.length > 0}
-            onOpenWork={openWork}
-            onCreateWork={createWork}
-          />
-        }
+        sidebar={sidebar}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={toggleSidebar}
         theme={theme}

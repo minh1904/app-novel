@@ -231,7 +231,7 @@ function ImportBody({
           }
         >
           <span className="text-ink-muted">hoặc kéo tệp .txt / .md vào đây,</span>
-          <Button variant="secondary" size="lg" onClick={() => picker.current?.click()}>
+          <Button variant="secondary" onClick={() => picker.current?.click()}>
             Chọn tệp…
           </Button>
         </div>
@@ -241,10 +241,10 @@ function ImportBody({
           </p>
         )}
         <div className="flex justify-end gap-2 border-t border-line pt-4">
-          <Button variant="secondary" size="lg" onClick={() => onOpenChange(false)}>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
-          <Button size="lg" onClick={previewPasted} disabled={pasted.trim() === ''}>
+          <Button onClick={previewPasted} disabled={pasted.trim() === ''}>
             Xem trước
           </Button>
         </div>
@@ -260,7 +260,7 @@ function ImportBody({
           {prepared.message}
         </p>
         <div className="flex justify-end gap-2 border-t border-line pt-4">
-          <Button variant="secondary" size="lg" onClick={() => setStep('input')}>
+          <Button variant="secondary" onClick={() => setStep('input')}>
             Quay lại
           </Button>
         </div>
@@ -298,7 +298,7 @@ function ImportBody({
           </>
         )}
         <dt className="text-ink-muted">Kích thước</dt>
-        <dd className="tabular-nums">
+        <dd>
           {plan.text.length.toLocaleString('vi')} ký tự ·{' '}
           {plan.segments.length.toLocaleString('vi')} segment
         </dd>
@@ -346,7 +346,7 @@ function ImportBody({
                 key={item.index}
                 className="grid grid-cols-[32px_minmax(0,1fr)] gap-2 px-3 py-1.5"
               >
-                <span className="text-ink-muted tabular-nums">{item.index + 1}</span>
+                <span className="text-ink-muted">{item.index + 1}</span>
                 <span className="break-words whitespace-pre-wrap">
                   {plan.text.slice(plan.segments[item.index].start, plan.segments[item.index].end)}
                   {plan.longSegments.includes(item.index) && (
@@ -412,13 +412,13 @@ function ImportBody({
       </p>
 
       <div className="flex justify-end gap-2 border-t border-line pt-4">
-        <Button variant="secondary" size="lg" disabled={saving} onClick={() => setStep('input')}>
+        <Button variant="secondary" disabled={saving} onClick={() => setStep('input')}>
           Quay lại
         </Button>
-        <Button variant="secondary" size="lg" disabled={saving} onClick={() => onOpenChange(false)}>
+        <Button variant="secondary" disabled={saving} onClick={() => onOpenChange(false)}>
           Hủy
         </Button>
-        <Button ref={confirmButton} size="lg" disabled={saving} onClick={() => void confirm(plan)}>
+        <Button ref={confirmButton} disabled={saving} onClick={() => void confirm(plan)}>
           {saving ? 'Đang lưu…' : replacing ? 'Thay bản gốc' : 'Nhập vào chương'}
         </Button>
       </div>
