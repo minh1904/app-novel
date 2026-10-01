@@ -10,6 +10,7 @@ import { LibrarySidebar, type LibrarySection } from './features/library/LibraryS
 import { useLibrary } from './features/library/useLibrary'
 import { byUpdated, type Work } from './features/library/works'
 import { ChapterScreen } from './features/chapter/ChapterScreen'
+import { LeaveGuardContext, useLeaveGuardRegistry } from './features/editor/leaveGuard'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 
 type View =
@@ -23,6 +24,13 @@ const RECENT_LIMIT = 4
 export function App(): JSX.Element {
   const [theme, toggleTheme] = useTheme()
   const [view, setView] = useState<View>({ name: 'library', section: 'all' })
+  const { registry, dialog: leaveDialog } = useLeaveGuardRegistry()
+  /** Every move to another screen passes here, so unsaved typing is never dropped silently. */
+  const go = (next: View): void => {
+    void registry.confirmLeave().then((proceed) => {
+      if (proceed) setView(next)
+    })
+  }
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [appVersion, setAppVersion] = useState('')
   const library = useLibrary()
@@ -49,13 +57,13 @@ export function App(): JSX.Element {
 
   const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), [])
   const showSection = (section: LibrarySection): void => {
-    setView({ name: 'library', section })
+    go({ name: 'library', section })
     // The detail screen already hands changes to the library; this also catches anything missed.
     void library.reload()
   }
-  const openWork = (work: Work): void => setView({ name: 'work', workId: work.id })
+  const openWork = (work: Work): void => go({ name: 'work', workId: work.id })
   const openChapterView = (workId: string, chapterId: string): void =>
-    setView({ name: 'chapter', workId, chapterId })
+    go({ name: 'chapter', workId, chapterId })
   /** Records the chapter as the one being worked on, then shows it; without one, shows the work. */
   const continueWork = (work: Work): void => {
     const chapter = work.lastChapter
@@ -72,7 +80,7 @@ export function App(): JSX.Element {
       }
     })
   }
-  const createWork = (): void => setView({ name: 'create' })
+  const createWork = (): void => go({ name: 'create' })
 
   const libraryActions = {
     onCreateWork: createWork,
@@ -154,7 +162,7 @@ export function App(): JSX.Element {
                 onDismissSuccess={library.dismissSuccess}
                 onOpenWork={(workId) => {
                   library.dismissSuccess()
-                  setView({ name: 'work', workId })
+                  go({ name: 'work', workId })
                 }}
               />
             }
@@ -190,7 +198,7 @@ export function App(): JSX.Element {
     case 'chapter': {
       const work = works.find((item) => item.id === view.workId)
       const last = work?.lastChapter?.id === view.chapterId ? work.lastChapter : undefined
-      const backToWork = (): void => setView({ name: 'work', workId: view.workId })
+      const backToWork = (): void => go({ name: 'work', workId: view.workId })
       title = crumb(last ? 'Chương ' + last.number : 'Chương', [
         { label: work?.title ?? 'Tác phẩm', onClick: backToWork }
       ])
@@ -201,6 +209,8 @@ export function App(): JSX.Element {
           chapterId={view.chapterId}
           onBackToWork={backToWork}
           onWorkChanged={library.applyWork}
+          focused={!sidebarOpen}
+          onToggleFocus={toggleSidebar}
         />
       )
       break
@@ -208,25 +218,28 @@ export function App(): JSX.Element {
   }
 
   return (
-    <AppShell
-      sidebar={
-        <LibrarySidebar
-          activeSection={view.name === 'library' ? view.section : undefined}
-          onSelectSection={showSection}
-          recentWorks={recentWorks}
-          hasWorks={works.length > 0}
-          onOpenWork={openWork}
-          onCreateWork={createWork}
-        />
-      }
-      sidebarOpen={sidebarOpen}
-      onToggleSidebar={toggleSidebar}
-      theme={theme}
-      onToggleTheme={toggleTheme}
-      appVersion={appVersion}
-      title={title}
-    >
-      {content}
-    </AppShell>
+    <LeaveGuardContext.Provider value={registry}>
+      <AppShell
+        sidebar={
+          <LibrarySidebar
+            activeSection={view.name === 'library' ? view.section : undefined}
+            onSelectSection={showSection}
+            recentWorks={recentWorks}
+            hasWorks={works.length > 0}
+            onOpenWork={openWork}
+            onCreateWork={createWork}
+          />
+        }
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={toggleSidebar}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        appVersion={appVersion}
+        title={title}
+      >
+        {content}
+      </AppShell>
+      {leaveDialog}
+    </LeaveGuardContext.Provider>
   )
 }

@@ -42,6 +42,20 @@ function createWindow(): void {
   })
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   window.webContents.on('will-navigate', (event) => event.preventDefault())
+  // The page holds back a close while there is typing it has not saved. Saving cannot be waited
+  // for while a window is closing, so the choice is to stay or to close and lose it.
+  window.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(window, {
+      type: 'warning',
+      buttons: ['Ở lại', 'Đóng và bỏ thay đổi'],
+      defaultId: 0,
+      cancelId: 0,
+      title: 'Có thay đổi chưa lưu',
+      message: 'Bạn đã sửa văn bản của chương nhưng chưa lưu.',
+      detail: 'Nếu đóng ngay, những chỗ sửa chưa lưu sẽ mất.'
+    })
+    if (choice === 1) event.preventDefault()
+  })
 
   const rendererUrl = process.env.ELECTRON_RENDERER_URL
   if (rendererUrl) {
