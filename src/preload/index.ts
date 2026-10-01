@@ -4,7 +4,9 @@ import { CHANNELS } from '../shared/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/chapters'
 import type { AppInfo, DesktopApi } from '../shared/desktop-api'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/library'
+import type { LinkRecord } from '../shared/links'
 import type { Result } from '../shared/result'
+import type { RowSaved } from '../shared/rows'
 import type { SegmentInput, TextRecord, TextSide } from '../shared/text'
 
 const desktopApi: DesktopApi = {
@@ -69,6 +71,34 @@ const desktopApi: DesktopApi = {
         expectedRev,
         segments
       }) as Promise<Result<TextRecord>>
+  },
+  rows: {
+    links: (workId: string, chapterId: string) =>
+      ipcRenderer.invoke(CHANNELS.linksList, { workId, chapterId }) as Promise<
+        Result<{ links: LinkRecord[] }>
+      >,
+    save: (
+      workId: string,
+      chapterId: string,
+      sourceId: string,
+      text: string,
+      expectedRev: number
+    ) =>
+      ipcRenderer.invoke(CHANNELS.rowSave, {
+        workId,
+        chapterId,
+        sourceId,
+        text,
+        expectedRev
+      }) as Promise<Result<RowSaved>>,
+    review: (workId: string, chapterId: string, sourceId: string) =>
+      ipcRenderer.invoke(CHANNELS.rowReview, { workId, chapterId, sourceId }) as Promise<
+        Result<{ links: LinkRecord[] }>
+      >,
+    autoPair: (workId: string, chapterId: string) =>
+      ipcRenderer.invoke(CHANNELS.rowsAutoPair, { workId, chapterId }) as Promise<
+        Result<{ links: LinkRecord[]; paired: number }>
+      >
   },
   backup: {
     export: (workId: string) =>

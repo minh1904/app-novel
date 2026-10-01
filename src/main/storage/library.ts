@@ -18,8 +18,10 @@ import {
   renameChapter
 } from './chapterFile'
 import type { SegmentInput, TextRecord, TextSide } from '../../shared/text'
+import type { RowSaved } from '../../shared/rows'
 import { createLink, getProvenance, listLinks, setProvenance } from './linkFile'
 import type { LinkInput, LinkRecord, ProvenanceRecord } from './linkFile'
+import { autoPair, reviewRow, saveRow, type RowRef } from './sentenceRows'
 import { readText, saveText } from './textFile'
 import { exportToFile, verifyWorkFile } from './backupFile'
 import { decodeCover, encodeCover } from './cover'
@@ -219,6 +221,26 @@ export class LibraryStore {
 
   listLinks(workId: string, chapterId: string): LinkRecord[] {
     return this.withWork(workId, (db) => listLinks(db, chapterId))
+  }
+
+  /**
+   * The translation of one row, written into the chapter's translation with its segments and its
+   * link, in one transaction. `expectedRev` is the translation revision the caller last read.
+   */
+  saveRow(workId: string, args: RowRef & { text: string; expectedRev: number }): RowSaved {
+    return this.changeChapters(workId, (db, now) => ({
+      saved: saveRow(db, args, now, this.newContentId)
+    })).saved
+  }
+
+  reviewRow(workId: string, args: RowRef): LinkRecord[] {
+    return this.changeChapters(workId, (db, now) => ({ links: reviewRow(db, args, now) })).links
+  }
+
+  autoPairRows(workId: string, chapterId: string): { links: LinkRecord[]; paired: number } {
+    return this.changeChapters(workId, (db, now) => ({
+      result: autoPair(db, chapterId, now, this.newContentId)
+    })).result
   }
 
   setProvenance(workId: string, record: ProvenanceRecord): void {

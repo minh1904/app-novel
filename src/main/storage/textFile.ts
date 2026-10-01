@@ -129,21 +129,25 @@ export function saveText(db: Db, args: SaveTextArgs, now: number, newId: () => s
   const kept = new Set(
     segments.flatMap((segment) => (segment.id === undefined ? [] : [segment.id]))
   )
+  // Prepared once: a chapter can have thousands of segments and every one is written here.
+  const remove = db.prepare('DELETE FROM segment WHERE id = ?')
+  const update = db.prepare(
+    `UPDATE segment SET position = ?, start_offset = ?, end_offset = ?, text_rev = ?, status = 'ok'
+     WHERE id = ?`
+  )
+  const insert = db.prepare(
+    `INSERT INTO segment (id, chapter_id, side, position, start_offset, end_offset, text_rev, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'ok')`
+  )
   for (const id of existing) {
-    if (!kept.has(id)) db.prepare('DELETE FROM segment WHERE id = ?').run(id)
+    if (!kept.has(id)) remove.run(id)
   }
 
   segments.forEach((segment, position) => {
     if (segment.id !== undefined) {
-      db.prepare(
-        `UPDATE segment SET position = ?, start_offset = ?, end_offset = ?, text_rev = ?, status = 'ok'
-         WHERE id = ?`
-      ).run(position, segment.start, segment.end, nextRev, segment.id)
+      update.run(position, segment.start, segment.end, nextRev, segment.id)
     } else {
-      db.prepare(
-        `INSERT INTO segment (id, chapter_id, side, position, start_offset, end_offset, text_rev, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'ok')`
-      ).run(newId(), chapterId, side, position, segment.start, segment.end, nextRev)
+      insert.run(newId(), chapterId, side, position, segment.start, segment.end, nextRev)
     }
   })
 

@@ -1,5 +1,7 @@
 import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
+import type { LinkRecord } from './links'
+import type { RowSaved } from './rows'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from './library'
 import type { Result } from './result'
 import type { SegmentInput, TextRecord, TextSide } from './text'
@@ -47,6 +49,33 @@ export interface TextApi {
   ): Promise<Result<TextRecord>>
 }
 
+export interface RowsApi {
+  /** The links of a chapter, which say which translated segments belong to which source segment. */
+  links(workId: string, chapterId: string): Promise<Result<{ links: LinkRecord[] }>>
+  /**
+   * Writes the translation of one row into the chapter's translation, with its segments and link,
+   * in one step. `expectedRev` is the translation revision last read. An empty text removes it.
+   */
+  save(
+    workId: string,
+    chapterId: string,
+    sourceId: string,
+    text: string,
+    expectedRev: number
+  ): Promise<Result<RowSaved>>
+  /** Confirms a row: its link is fine now and has been looked at. */
+  review(
+    workId: string,
+    chapterId: string,
+    sourceId: string
+  ): Promise<Result<{ links: LinkRecord[] }>>
+  /** Links translated segments nobody linked to rows without a translation, in order. */
+  autoPair(
+    workId: string,
+    chapterId: string
+  ): Promise<Result<{ links: LinkRecord[]; paired: number }>>
+}
+
 export interface BackupApi {
   /**
    * Opens a "save as" dialog (suggesting a file name) and writes a backup of the work there.
@@ -62,5 +91,6 @@ export interface DesktopApi {
   works: WorksApi
   chapters: ChaptersApi
   text: TextApi
+  rows: RowsApi
   backup: BackupApi
 }

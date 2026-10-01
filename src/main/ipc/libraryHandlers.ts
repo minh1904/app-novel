@@ -12,6 +12,7 @@ import {
   setCoverSchema,
   updateWorkSchema
 } from '../../shared/library'
+import { chapterLinksSchema, rowRefSchema, saveRowSchema } from '../../shared/rows'
 import { fail, type Result } from '../../shared/result'
 import { saveTextSchema, textRefSchema } from '../../shared/text'
 import type { LibraryStore } from '../storage/library'
@@ -68,6 +69,20 @@ export function createLibraryHandlers(
       if (chosen === null) throw new StorageError('cancelled', 'Đã hủy.')
       return library.restoreWork(chosen)
     }),
+    [CHANNELS.linksList]: createHandler(chapterLinksSchema, ({ workId, chapterId }) => ({
+      links: library.listLinks(workId, chapterId)
+    })),
+    [CHANNELS.rowSave]: createHandler(
+      saveRowSchema,
+      ({ workId, chapterId, sourceId, text, expectedRev }) =>
+        library.saveRow(workId, { chapterId, sourceId, text, expectedRev })
+    ),
+    [CHANNELS.rowReview]: createHandler(rowRefSchema, ({ workId, chapterId, sourceId }) => ({
+      links: library.reviewRow(workId, { chapterId, sourceId })
+    })),
+    [CHANNELS.rowsAutoPair]: createHandler(chapterLinksSchema, ({ workId, chapterId }) =>
+      library.autoPairRows(workId, chapterId)
+    ),
     [CHANNELS.textGet]: createHandler(textRefSchema, ({ workId, chapterId, side }) =>
       library.readText(workId, chapterId, side)
     ),
