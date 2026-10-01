@@ -1,5 +1,9 @@
 # Nhật ký handbook
 
+## Hoàn thành M0 về dữ liệu — 2026-10-01
+
+- Triển khai `content-backup-provider`: kho văn bản/segment/liên kết, sao lưu và khôi phục tác phẩm, provider dịch giả lập. Schema tệp tác phẩm lên v4 (cột `size` + index phủ) sau khi đo thấy danh sách chương chậm 409 ms với 5.000 chương có nội dung. Cập nhật hiện trạng, roadmap và backlog.
+
 ## Nghiên cứu bổ sung — 2026-10-01
 
 - Gộp spec `work-chapters` vào `work-detail` (một spec cho màn chi tiết, có khung đầu trang + danh mục khu vực), thêm requirement minh họa tính năng chưa làm; chốt bốn câu hỏi mở của `work-detail-screen` (danh sách phẳng, số chương theo vị trí, cho xóa chương, mở chương đổi trạng thái).

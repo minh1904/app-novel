@@ -30,6 +30,6 @@ Không thuộc change này: nhập raw, chia câu, editor và ánh xạ segment 
 ## Impact
 
 - **Code mới:** `src/main/storage/` (repository văn bản, segment, liên kết, backup), `src/main/providers/`, kênh IPC `text:*`, `backup:*`; mở rộng `src/shared/`, preload, `chapters:list`, hộp xóa chương, màn "Mở tác phẩm có sẵn" và menu tác phẩm ở thư viện và màn chi tiết.
-- **Dữ liệu:** không đổi schema tệp tác phẩm (đã có bảng từ v1 và cover từ v3); backup đọc và ghi đúng định dạng tệp `.mira` hiện có.
+- **Dữ liệu:** schema tệp tác phẩm lên **v4** (`chapter_text.size` và một index phủ, để danh sách chương biết chương nào có nội dung mà không đọc văn bản; xem design D5). Các bảng nội dung đã có từ v1. Backup đọc và ghi đúng định dạng tệp `.mira`, tệp cũ được nâng cấp khi khôi phục.
 - **Phụ thuộc:** không thêm dependency runtime.
 - **Tài liệu:** cập nhật `engineering/current-state.md`, `delivery/roadmap.md` và `delivery/backlog.md` khi hoàn thành.

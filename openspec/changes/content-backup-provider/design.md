@@ -26,7 +26,7 @@ Quy tắc ánh xạ vùng khi văn bản đổi (thuộc M1, ghi lại để thi
 - **Backup:** `VACUUM INTO` từ kết nối đang mở vào `<đích>.part` (đường dẫn do hộp thoại lưu của main chọn, không nhận từ renderer), kiểm tra bản `.part`, rồi đổi tên thành tệp đích. Tệp backup **chính là một tệp tác phẩm hợp lệ** (đuôi `.mira`), nên không có định dạng thứ hai để bảo trì. Ảnh bìa nằm trong tệp nên đi theo.
 - **Restore:** hộp thoại mở → sao chép sang `works/.tmp/<newId>.mira.part` → kiểm tra bản sao (không mở tệp gốc của người dùng tại chỗ): `application_id` khớp, `user_version` ≤ bản app hiểu, `PRAGMA integrity_check` = `ok`, `PRAGMA foreign_key_check` rỗng, các bảng bắt buộc có mặt → nâng cấp schema nếu cần → ghi `work.id` mới → **đổi tên thành `works/<newId>.mira` (điểm cam kết)** → cập nhật chỉ mục. Gián đoạn trước bước đổi tên chỉ để lại tệp trong `.tmp`, được dọn ở lần khởi động sau. Gián đoạn sau bước đổi tên: tệp đã hoàn chỉnh và bước đối chiếu khi khởi động nạp nó vào chỉ mục.
 - ID chương/segment chỉ duy nhất trong một tệp nên restore chỉ phải đổi `work.id`; không cần ánh xạ lại ID.
-- Cần đo `VACUUM INTO` với tệp vài chục MB; nếu chậm, dùng API `backup()` có tiến trình.
+- **Đã đo** (Windows, tệp có văn bản hai bên mỗi chương): 24 MB → xuất 269 ms, khôi phục 158 ms; 94 MB → 880 ms / 440 ms; 236 MB → 2.039 ms / 985 ms. Đủ nhanh cho tệp một tác phẩm; chưa cần API `backup()` có tiến trình, nhưng thao tác chạy ở main thread và chặn trong ~2 s ở cỡ 236 MB, cần chú ý nếu sau này có tác phẩm lớn hơn nhiều.
 
 ### D3. Provider: giao diện hẹp, đối chiếu ID là hàm thuần
 
@@ -59,7 +59,10 @@ Phương án khác: `text:save` chỉ nhận nội dung và main tự chia segme
 
 - **Đơn vị vùng là UTF-16 code unit**, khớp chỉ số chuỗi JavaScript và CodeMirror; `start_offset`/`end_offset` trong schema đã là số nguyên không có đơn vị ràng buộc nên không cần migrate. Kiểm tra trong một hàm thuần: sắp theo `start`, không chồng, `0 ≤ start ≤ end ≤ content.length`, và (cảnh báo, không từ chối) không cắt giữa cặp surrogate. Test với emoji, chữ Hán mặt phẳng phụ, CRLF.
 - **Giới hạn** 2.000.000 đơn vị UTF-16 mỗi văn bản và 50.000 segment mỗi bên. Một chương truyện thường vài chục nghìn ký tự, nên đây là trần chống sự cố (dán nhầm cả cuốn) chứ không phải giới hạn dùng thật. **Là giả định cần xác nhận**, xem câu hỏi mở. Kiểm tra ở schema valibot (IPC) và lặp lại ở repository (đường không qua IPC).
-- **Cờ có nội dung:** `ChapterItem` thêm `hasSource` và `hasTarget` (văn bản không rỗng), tính trong cùng câu `SELECT` của `listChapters` bằng `EXISTS` trên `chapter_text` nên không tải nội dung. Dùng cho hộp xóa chương; cột trên giao diện vẫn nằm trong backlog (`chapter-content-presence`).
+- **Cờ có nội dung:** `ChapterItem` thêm `hasSource` và `hasTarget` (văn bản không rỗng), tính trong cùng câu `SELECT` của `listChapters`. Dùng cho hộp xóa chương; cột trên giao diện vẫn nằm trong backlog (`chapter-content-presence`).
+  - **Phát hiện khi đo:** cách đầu tiên (`EXISTS ... length(content) > 0`) làm `listChapters` mất **409 ms** với 5.000 chương/236 MB (so với ~7 ms khi chưa có nội dung). Thử `content <> ''` (139–200 ms), `substr` (156–235 ms) và cả `rev > 0` (45–69 ms) đều chậm: trong bản ghi, `content` đứng trước mọi cột thêm sau, nên đọc cột nào cũng phải đi qua các trang tràn của văn bản.
+  - **Quyết định: migration v4.** Thêm `chapter_text.size` (độ dài văn bản, do repository giữ cùng transaction với văn bản) và index phủ `chapter_text_presence (chapter_id, side, size)`; câu truy vấn dùng `INDEXED BY` vì planner mặc định chọn index khóa chính (không phủ). Migration backfill `size = length(content)`. Kết quả: `listChapters` còn **14 ms** (5.000 chương, 210 MB), 6 ms (2.000 chương, 84 MB). Test khóa kế hoạch truy vấn (phải là `COVERING INDEX`) và tính đúng của `size`.
+  - Đây là đổi so với đề xuất ban đầu "không đổi schema": schema work-file lên **v4**. Tệp v1–v3 (kể cả bản sao lưu cũ) được nâng cấp khi mở hoặc khôi phục.
 
 ### D6. Giao diện chạm vào: xóa chương, menu tác phẩm, khôi phục
 
@@ -76,11 +79,13 @@ Phương án khác: `text:save` chỉ nhận nội dung và main tự chia segme
 
 ## Migration Plan
 
-Không đổi schema; không cần migrate. Hoàn tác: revert commit.
+Schema tệp tác phẩm lên v4 (cột `size` + index phủ, backfill trong migration). Tệp cũ tự nâng cấp khi mở; migration chạy trong transaction nên thất bại không để lại tệp nửa vời. Hoàn tác: revert commit; tệp đã lên v4 sẽ bị bản cũ từ chối kèm hướng dẫn cập nhật (cơ chế `unsupported_version` có sẵn), nên không nên hạ bản sau khi đã dùng.
 
 ## Open Questions
 
 Cần chủ sản phẩm xác nhận trước khi làm (đề xuất ghi kèm; đổi câu trả lời sẽ đổi spec hoặc tasks):
+
+Các giá trị dưới đây đã được làm theo đề xuất mặc định vì chưa có phản hồi; đổi ở `src/shared/text.ts` nếu cần.
 
 1. **Giới hạn kích thước:** 2.000.000 đơn vị UTF-16 mỗi văn bản và 50.000 segment mỗi bên có ổn không, hay muốn trần thấp hơn/cao hơn?
 2. **Tên tệp gợi ý khi sao lưu:** `<tên tác phẩm> — <ngày>.mira`, bỏ ký tự Windows không cho phép (`\ / : * ? " < > |`) và cắt ở khoảng 100 ký tự.
