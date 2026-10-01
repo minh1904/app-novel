@@ -30,6 +30,8 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
+| Trải nghiệm | [Redesign workspace dịch](experience/editor-redesign.md) | Đề xuất + mockup, đối chiếu quyết định hiện hành, chưa chốt |
+| Trải nghiệm | [Wireframe các màn còn lại](experience/wireframes/README.md) | Ba phương án mỗi màn, chờ chọn |
 | Trải nghiệm | [Design system](experience/design-system.md) | Baseline đã chốt + scaffold |
 | Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Đối chiếu code ngày 2026-09-29 |
 | Kỹ thuật | [Kiến trúc và spike](engineering/architecture.md) | Scaffold + công nghệ đề xuất |

@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wireframe · Các màn còn lại của Mira</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+<link rel="stylesheet" href="chrome.css" />
+<style type="text/tailwindcss">
+/* Token gốc của Mira, dán từ src/renderer/src/styles/tokens.css.
+   Sửa ở đó thì sửa cả ở đây, nếu không wireframe và app lệch màu. */
+:root,
+html[data-theme='dark'] {
+  color-scheme: dark;
+  /* Google Sans Flex là font cục bộ của app, không nạp qua CDN được ở wireframe */
+  --font-ui: 'Segoe UI', sans-serif;
+  --font-code: 'Cascadia Code', Consolas, monospace;
+  --surface-canvas: #000000;
+  --surface-sidebar: #191919;
+  --surface-chrome: #0e0e0e;
+  --surface-control: #232323;
+  --surface-selected: #2f2f2f;
+  --surface-popover: #1e1e1e;
+  --text-primary: #ebebeb;
+  --text-muted: #b3b3b3;
+  --border-subtle: #66666633;
+  --border-strong: #66666666;
+  --action-primary: #fafafa;
+  --action-on-primary: #171717;
+  --focus-ring: #8c8c8c;
+  --status-info: #3080ff;
+  --status-warning: #f99c00;
+  --status-error: #fb2c36;
+  --status-success: #00c758;
+}
+html[data-theme='light'] {
+  color-scheme: light;
+  --surface-canvas: hsl(219 36% 99%);
+  --surface-sidebar: #f1f1f1;
+  --surface-chrome: #f6f6f7;
+  --surface-control: #eeefef;
+  --surface-selected: #dadada;
+  --surface-popover: #fafafa;
+  --text-primary: #0a0a0a;
+  --text-muted: #666666;
+  --border-subtle: #cccccc80;
+  --border-strong: #b8b8b8;
+  --action-primary: #171717;
+  --action-on-primary: #fafafa;
+  --focus-ring: #a3a3a3;
+  --status-info: #1d5fd6;
+  --status-warning: #9a5b00;
+  --status-error: #d1141f;
+  --status-success: #00793a;
+}
+
+/* Nấc "Xám": dự án không có màu nhấn theo hue (primary đã là gần đen/trắng),
+   nên Xám chỉ tắt MÀU TRẠNG THÁI để so bố cục thuần; "Màu" bật lại token thật. */
+body[data-mau='xam'] {
+  --status-info: #8c8c8c;
+  --status-warning: #8c8c8c;
+  --status-error: #8c8c8c;
+  --status-success: #8c8c8c;
+}
+
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  --color-canvas: var(--surface-canvas);
+  --color-sidebar: var(--surface-sidebar);
+  --color-chrome: var(--surface-chrome);
+  --color-control: var(--surface-control);
+  --color-selected: var(--surface-selected);
+  --color-popover: var(--surface-popover);
+  --color-ink: var(--text-primary);
+  --color-ink-muted: var(--text-muted);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-primary: var(--action-primary);
+  --color-primary-foreground: var(--action-on-primary);
+  --color-focus: var(--focus-ring);
+  --color-info: var(--status-info);
+  --color-warning: var(--status-warning);
+  --color-error: var(--status-error);
+  --color-success: var(--status-success);
+  --radius-control: 10px;
+  --radius-tab: 11px;
+  --radius-panel: 14px;
+}
+
+body {
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+  font: 13px/1.5 var(--font-ui);
+}
+
+/* Chỉ màn và phương án đang chọn mới hiện */
+.wf-screen {
+  display: none;
+}
+.wf-screen[data-on] {
+  display: grid;
+}
+[data-tt-view] {
+  display: none;
+}
+[data-tt-view][data-on] {
+  display: flex;
+}
+</style>
+</head>
+<body data-man="thu-vien" data-v="a" data-mau="mau" data-tt="du-lieu">
+
+<!-- ===================== THANH CÔNG CỤ WIREFRAME ===================== -->
+<nav class="wf-bar" aria-label="Wireframe">
+  <div class="wf-group">
+    <span class="wf-label">Màn</span>
+    <span class="wf-set" data-wf-param="man" id="wf-screens"></span>
+  </div>
+  <div class="wf-group">
+    <span class="wf-label">Phương án</span>
+    <span class="wf-set" data-wf-param="v" id="wf-variants"></span>
+  </div>
+  <a class="wf-switch" data-wf-toggle="mau" data-on="mau" data-off="xam" role="switch">Màu <i></i></a>
+  <details class="wf-menu">
+    <summary><span>Trạng thái:</span><b data-wf-current="tt"></b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="wf-popover" data-wf-param="tt" id="wf-states"></div>
+  </details>
+  <span class="wf-reason-name" data-reason-name></span>
+  <span class="wf-reason-tag" data-reason-tag></span>
+  <button type="button" class="wf-reason-toggle" id="wf-reason-toggle" aria-expanded="false" aria-controls="wf-reason"><span>Ưu, nhược</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+</nav>
+
+<!-- ===================== KHUNG LÝ DO (lớp phủ, không đẩy bản thiết kế) ===================== -->
+<div class="wf-reason" id="wf-reason" hidden>
+  <div class="wf-reason-body">
+    <p class="wf-reason-why" data-reason-why></p>
+    <div class="wf-reason-cols" data-reason-cols></div>
+    <div class="wf-reason-tips">
+      <h3>Gợi ý góp ý</h3>
+      <span id="wf-tips"></span>
+    </div>
+  </div>
+</div>
+
+<main id="wf-design" style="height:calc(100vh - 48px)"></main>
+
+<script type="module">
+import { SCREENS, STATE_LABELS } from './screens.js'
+
+const state = { man: 'thu-vien', v: 'a', mau: 'mau', tt: 'du-lieu' }
+const params = new URLSearchParams(location.search)
+for (const key of Object.keys(state)) state[key] = params.get(key) || state[key]
+
+// Phương án và trạng thái là của từng màn, nên link cũ có thể trỏ vào thứ màn này không có.
+const screen = SCREENS[state.man] ?? SCREENS['thu-vien']
+if (!screen.variants[state.v]) state.v = Object.keys(screen.variants)[0]
+if (!screen.states.includes(state.tt)) state.tt = screen.states[0]
+Object.assign(document.body.dataset, state)
+
+const href = (patch) => '?' + new URLSearchParams({ ...state, ...patch })
+
+/** Đổi màn thì phương án và trạng thái về mặc định của màn đó, tránh link chết. */
+function fillSet(host, param, items) {
+  host.innerHTML = items
+    .map(([value, label, title, recommended]) => {
+      const patch =
+        param === 'man' ? { man: value, v: Object.keys(SCREENS[value].variants)[0], tt: SCREENS[value].states[0] } : { [param]: value }
+      return `<a href="${href(patch)}" title="${title}"${state[param] === value ? ' aria-current="page"' : ''}${recommended ? ' data-recommended' : ''}>${label}</a>`
+    })
+    .join('')
+}
+
+fillSet(
+  document.getElementById('wf-screens'),
+  'man',
+  Object.entries(SCREENS).map(([id, s]) => [id, s.short, s.name])
+)
+fillSet(
+  document.getElementById('wf-variants'),
+  'v',
+  Object.entries(screen.variants).map(([id, v]) => [id, id.toUpperCase(), v.name, v.tag === 'Nhịp D'])
+)
+
+document.getElementById('wf-states').innerHTML = screen.states
+  .map((s) => `<a href="${href({ tt: s })}"${state.tt === s ? ' aria-current="page"' : ''}>${STATE_LABELS[s]}</a>`)
+  .join('')
+document.querySelector('[data-wf-current="tt"]').textContent = STATE_LABELS[state.tt]
+
+const toggle = document.querySelector('[data-wf-toggle]')
+const on = state.mau === 'mau'
+toggle.setAttribute('aria-checked', String(on))
+toggle.href = href({ mau: on ? 'xam' : 'mau' })
+
+const menu = document.querySelector('.wf-menu')
+menu.addEventListener('toggle', () => {
+  const r = menu.querySelector('summary').getBoundingClientRect()
+  Object.assign(menu.querySelector('.wf-popover').style, { top: `${r.bottom + 6}px`, left: `${r.left}px` })
+})
+document.addEventListener('click', (e) => {
+  if (!menu.contains(e.target)) menu.open = false
+})
+
+// ===== Bản thiết kế =====
+const variant = screen.variants[state.v]
+const design = document.getElementById('wf-design')
+design.innerHTML = `<div class="wf-screen h-full" data-on>${variant.render(state.tt)}</div>`
+
+// ===== Khung lý do =====
+document.querySelector('[data-reason-name]').textContent = `${screen.name} — ${variant.name}`
+const tag = document.querySelector('[data-reason-tag]')
+tag.textContent = variant.tag
+tag.style.display = variant.tag ? '' : 'none'
+document.querySelector('[data-reason-why]').textContent = variant.why
+document.querySelector('[data-reason-cols]').innerHTML = `
+  <section><h3><i data-tone="uu"></i>Ưu</h3><ul>${variant.uu.map((x) => `<li>${x}</li>`).join('')}</ul></section>
+  <section><h3><i data-tone="nhuoc"></i>Nhược</h3><ul>${variant.nhuoc.map((x) => `<li>${x}</li>`).join('')}</ul></section>
+  <section><h3></h3><p>${variant.hopkhi}</p></section>`
+
+const TIPS = [
+  'Chốt phương án này, dựng luôn',
+  'Lấy bố cục này nhưng chữ to như phương án đang chạy',
+  'Khối 2 và khối 3 gộp lại một thanh',
+  'Đổi thứ tự: khối này lên trên'
+]
+document.getElementById('wf-tips').innerHTML = TIPS.map(
+  (t) =>
+    `<button type="button" data-copy="${t} (${screen.name} · ${variant.name})"><span>${t}</span><svg data-icon="chep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg data-icon="da-chep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button>`
+).join('')
+
+for (const button of document.querySelectorAll('[data-copy]')) {
+  button.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(button.dataset.copy)
+    button.setAttribute('data-copied', '')
+    setTimeout(() => button.removeAttribute('data-copied'), 1500)
+  })
+}
+
+/** Khung lý do là lớp phủ nên mở/đóng không đổi chiều cao bản thiết kế; nhớ lựa chọn qua các lần đổi màn. */
+const reason = document.getElementById('wf-reason')
+const reasonToggle = document.getElementById('wf-reason-toggle')
+function showReason(open) {
+  reason.hidden = !open
+  reasonToggle.setAttribute('aria-expanded', String(open))
+  localStorage.setItem('wf-reason-open', open ? '1' : '0')
+}
+showReason(localStorage.getItem('wf-reason-open') === '1')
+reasonToggle.addEventListener('click', () => showReason(reason.hidden))
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !reason.hidden) showReason(false)
+})
+document.addEventListener('click', (e) => {
+  if (!reason.hidden && !reason.contains(e.target) && !reasonToggle.contains(e.target)) showReason(false)
+})
+
+lucide.createIcons()
+</script>
+</body>
+</html>

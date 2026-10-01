@@ -1,0 +1,100 @@
+/* Token gốc của Mira, dán từ src/renderer/src/styles/tokens.css.
+   Sửa ở đó thì sửa cả ở đây, nếu không wireframe và app lệch màu. */
+:root,
+html[data-theme='dark'] {
+  color-scheme: dark;
+  /* Google Sans Flex là font cục bộ của app, không nạp qua CDN được ở wireframe */
+  --font-ui: 'Segoe UI', sans-serif;
+  --font-code: 'Cascadia Code', Consolas, monospace;
+  --surface-canvas: #000000;
+  --surface-sidebar: #191919;
+  --surface-chrome: #0e0e0e;
+  --surface-control: #232323;
+  --surface-selected: #2f2f2f;
+  --surface-popover: #1e1e1e;
+  --text-primary: #ebebeb;
+  --text-muted: #b3b3b3;
+  --border-subtle: #66666633;
+  --border-strong: #66666666;
+  --action-primary: #fafafa;
+  --action-on-primary: #171717;
+  --focus-ring: #8c8c8c;
+  --status-info: #3080ff;
+  --status-warning: #f99c00;
+  --status-error: #fb2c36;
+  --status-success: #00c758;
+}
+html[data-theme='light'] {
+  color-scheme: light;
+  --surface-canvas: hsl(219 36% 99%);
+  --surface-sidebar: #f1f1f1;
+  --surface-chrome: #f6f6f7;
+  --surface-control: #eeefef;
+  --surface-selected: #dadada;
+  --surface-popover: #fafafa;
+  --text-primary: #0a0a0a;
+  --text-muted: #666666;
+  --border-subtle: #cccccc80;
+  --border-strong: #b8b8b8;
+  --action-primary: #171717;
+  --action-on-primary: #fafafa;
+  --focus-ring: #a3a3a3;
+  --status-info: #1d5fd6;
+  --status-warning: #9a5b00;
+  --status-error: #d1141f;
+  --status-success: #00793a;
+}
+
+/* Nấc "Xám": dự án không có màu nhấn theo hue (primary đã là gần đen/trắng),
+   nên Xám chỉ tắt MÀU TRẠNG THÁI để so bố cục thuần; "Màu" bật lại token thật. */
+body[data-mau='xam'] {
+  --status-info: #8c8c8c;
+  --status-warning: #8c8c8c;
+  --status-error: #8c8c8c;
+  --status-success: #8c8c8c;
+}
+
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  --color-canvas: var(--surface-canvas);
+  --color-sidebar: var(--surface-sidebar);
+  --color-chrome: var(--surface-chrome);
+  --color-control: var(--surface-control);
+  --color-selected: var(--surface-selected);
+  --color-popover: var(--surface-popover);
+  --color-ink: var(--text-primary);
+  --color-ink-muted: var(--text-muted);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-primary: var(--action-primary);
+  --color-primary-foreground: var(--action-on-primary);
+  --color-focus: var(--focus-ring);
+  --color-info: var(--status-info);
+  --color-warning: var(--status-warning);
+  --color-error: var(--status-error);
+  --color-success: var(--status-success);
+  --radius-control: 10px;
+  --radius-tab: 11px;
+  --radius-panel: 14px;
+}
+
+body {
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+  font: 13px/1.5 var(--font-ui);
+}
+
+/* Chỉ màn và phương án đang chọn mới hiện */
+.wf-screen {
+  display: none;
+}
+.wf-screen[data-on] {
+  display: grid;
+}
+[data-tt-view] {
+  display: none;
+}
+[data-tt-view][data-on] {
+  display: flex;
+}

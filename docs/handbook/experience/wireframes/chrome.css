@@ -1,0 +1,377 @@
+/* Khung ngoài của wireframe: thanh chọn màn/phương án và khung lý do.
+   Tách khỏi wireframe.html để file màn hình chỉ còn phần thiết kế thật.
+   Phần này cố ý KHÔNG dùng token của Mira — nó là giàn giáo, không phải sản phẩm. */
+
+/* Giàn giáo chỉ được chiếm đúng một thanh 48px; khung lý do là lớp phủ,
+   để bản thiết kế luôn có gần trọn chiều cao màn hình mà không phải cuộn. */
+.wf-bar {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 48px;
+  padding: 0 12px;
+  /* hidden, không phải auto: để tên phương án co lại nhường chỗ thay vì đẩy nút "Ưu, nhược" ra ngoài */
+  overflow: hidden;
+  white-space: nowrap;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  color: #737373;
+  font: 14px/1 system-ui, -apple-system, sans-serif;
+}
+.wf-bar *,
+.wf-reason * {
+  box-sizing: border-box;
+}
+.wf-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.wf-label {
+  color: #a3a3a3;
+}
+.wf-set {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 10px;
+  background: #f4f4f5;
+}
+.wf-set a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 7px;
+  color: #737373;
+  text-decoration: none;
+}
+.wf-set a:hover {
+  color: #171717;
+}
+.wf-set a[aria-current='page'] {
+  background: #fff;
+  color: #171717;
+  font-weight: 500;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 0 0 1px rgb(0 0 0 / 0.04);
+}
+[data-wf-param='v'] a {
+  justify-content: center;
+  min-width: 32px;
+  padding: 0 10px;
+}
+[data-wf-param='v'] a[data-recommended]::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4f46e5;
+}
+.wf-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: #737373;
+  text-decoration: none;
+}
+.wf-switch i {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: #e4e4e7;
+  transition: background 0.15s;
+}
+.wf-switch i::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  transition: translate 0.15s;
+}
+.wf-switch[aria-checked='true'] i {
+  background: #171717;
+}
+.wf-switch[aria-checked='true'] i::after {
+  translate: 16px 0;
+}
+.wf-bar svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.wf-menu {
+  flex-shrink: 0;
+}
+.wf-menu summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.wf-menu summary::-webkit-details-marker {
+  display: none;
+}
+.wf-menu summary:hover,
+.wf-menu[open] summary {
+  background: #f4f4f5;
+}
+.wf-menu b {
+  color: #171717;
+  font-weight: 500;
+}
+.wf-popover {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  min-width: 190px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
+}
+.wf-popover a {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: #404040;
+  text-decoration: none;
+}
+.wf-popover a:hover,
+.wf-popover a[aria-current='page'] {
+  background: #f4f4f5;
+  color: #171717;
+}
+.wf-popover a[aria-current='page'] {
+  font-weight: 500;
+}
+.wf-popover a[data-disabled] {
+  color: #c4c4c4;
+  pointer-events: none;
+}
+
+/* ===== Khung lý do: lớp phủ dưới thanh công cụ, không đẩy bản thiết kế ===== */
+.wf-reason {
+  position: fixed;
+  top: 48px;
+  right: 0;
+  left: 0;
+  z-index: 40;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fafafa;
+  color: #404040;
+  font: 13px/1.5 system-ui, -apple-system, sans-serif;
+  box-shadow: 0 14px 28px rgb(0 0 0 / 0.16);
+}
+.wf-reason[hidden] {
+  display: none;
+}
+.wf-reason-name {
+  flex: 1 1 0;
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: #171717;
+  font-weight: 500;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wf-reason-tag {
+  flex-shrink: 0;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.wf-reason-why {
+  max-width: 1120px;
+  color: #525252;
+}
+/* Nút mở khung lý do, nằm trên thanh công cụ */
+.wf-reason-toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #171717;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.wf-reason-toggle:hover,
+.wf-reason-toggle[aria-expanded='true'] {
+  background: #f4f4f5;
+}
+.wf-reason-toggle svg {
+  width: 16px;
+  height: 16px;
+  transition: rotate 0.15s;
+}
+.wf-reason-toggle[aria-expanded='true'] svg {
+  rotate: 180deg;
+}
+.wf-reason-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 16px 16px;
+}
+.wf-reason-cols {
+  display: grid;
+  max-width: 1120px;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px 32px;
+}
+.wf-reason h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  color: #171717;
+  font-size: 12px;
+  font-weight: 600;
+}
+.wf-reason h3 i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a3a3a3;
+}
+.wf-reason h3 i[data-tone='uu'] {
+  background: #16a34a;
+}
+.wf-reason h3 i[data-tone='nhuoc'] {
+  background: #d97706;
+}
+.wf-reason ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 16px;
+}
+.wf-reason li::marker {
+  color: #a3a3a3;
+}
+.wf-reason p {
+  margin: 0;
+}
+.wf-reason-tips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #ebebeb;
+}
+.wf-reason-tips h3 {
+  margin: 0 4px 0 0;
+}
+.wf-reason-tips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #262626;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wf-reason-tips button:hover {
+  border-color: #d4d4d4;
+  background: #f5f5f5;
+}
+.wf-reason-tips button svg {
+  width: 14px;
+  height: 14px;
+  color: #737373;
+}
+.wf-reason-tips button [data-icon='da-chep'],
+.wf-reason-tips button[data-copied] [data-icon='chep'] {
+  display: none;
+}
+.wf-reason-tips button[data-copied] [data-icon='da-chep'] {
+  display: block;
+  color: #16a34a;
+}
+.wf-reason :focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+@media (max-width: 767px) {
+  .wf-reason-toggle span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .wf-reason-tips h3 {
+    flex-basis: 100%;
+  }
+}
+
+/* Số khối, để góp ý nói "khối 3" thay vì mô tả dài */
+[data-wf-block] {
+  position: relative;
+}
+[data-wf-block]::before {
+  content: attr(data-wf-block);
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: #1f1f1f;
+  color: #fff;
+  font-size: 11px;
+}
+[data-wf-block][data-wf-block-out]::before {
+  top: auto;
+  bottom: 100%;
+}

@@ -1,5 +1,19 @@
 # Nhật ký handbook
 
+## Sửa lại: thêm nhãn Ngữ cảnh trong màn chương — 2026-10-02
+
+- Mục ngày 2026-10-01 bên dưới ghi nhầm là "quyết định không thêm hàng tab Ngữ cảnh" trong màn chương; người dùng xác nhận lại muốn thấy đúng như wireframe D (hàng nhãn **Thuật ngữ · Xưng hô · Văn phong** cạnh mode Toàn văn/Từng câu). Đã thêm hàng này vào `ChapterWorkspace.tsx`: ba nhãn tĩnh, mỗi nhãn kèm badge "Sắp có" dùng chung `SOON_LABEL`/`MOCK_FEATURES.contextArea` đã có, không bấm được, không tạo điều hướng hay mục `mockFeatures` mới (không trùng với tab Ngữ cảnh ở cấp tác phẩm, chỉ là xem trước). Cập nhật lại `editor-redesign.md` và change OpenSpec `editor-redesign` (proposal/specs/design/tasks) cho khớp.
+
+## Dựng phần redesign đã chốt từ wireframe — 2026-10-01
+
+- Sau khi chọn phương án D ở [đề xuất redesign](../experience/editor-redesign.md), dựng vào code thật: sidebar bên trái đổi thành danh sách chương của tác phẩm (`ChapterNavSidebar`) khi đang mở một chương, thay vì điều hướng thư viện. Pane bản dịch ở mode Toàn văn có Live Preview nhẹ (`livePreviewDecorations`: `#`/`##`/`###` và `**đậm**`, chỉ mark decoration để không phá IME, không ẩn ký tự cú pháp — khác Live Preview đầy đủ của Obsidian). Nút "Hỏi AI" (hoặc Ctrl+K) ở mode Toàn văn mở `AiPanel`, một cột thật cạnh hai pane (không che nội dung) với nội dung hỏi/đáp là dữ liệu mẫu, đăng ký minh họa "Sắp có" (`ai-chat-panel`) theo đúng quy ước `mockFeatures`.
+- Quyết định không thêm hàng tab "Ngữ cảnh" (Thuật ngữ/Xưng hô/Văn phong) riêng trong màn chương như wireframe D ban đầu: khu vực này đã có sẵn ở cấp tác phẩm và có khá nhiều thông tin nên giữ làm một khu vực đầy đủ, tránh trùng lặp (`work-area-nav-v2` chuyển sang "Không làm hiện tại").
+- Cập nhật `decisions.md` ("Nội dung chung"), `open-questions.md`, `backlog.md` (`ai-chat-panel`, `rendered-direct-edit-view`, `work-area-nav-v2`) và `current-state.md` theo đúng phạm vi đã dựng. Kiểm bằng `pnpm typecheck`, `pnpm lint` (chỉ còn cảnh báo CRLF có sẵn trong repo), `pnpm build`, `pnpm vitest run` (513/514 qua; 1 ca đo hiệu năng trong `rows.test.ts` chập chờn theo máy, không liên quan), và một lượt lái Electron thật (Playwright `_electron`) qua `window.mira` để tạo dữ liệu mẫu, xác nhận bằng mắt cả ba thay đổi trên.
+
+## Đề xuất redesign workspace từ mockup — 2026-10-01
+
+- Nhận 5 ảnh mockup mới (`focus-mode`, `mode-1-full-text`, `mode-2-sentence-smartcat-inspired`, `original-workspace`, `smartcat-reference`). Viết [đề xuất redesign workspace](../experience/editor-redesign.md) đối chiếu từng mockup với quyết định hiện hành: xác nhận giữ tên **Mira** (mockup dùng tên minh họa khác); nêu ba điểm lệch cần chốt (điều hướng cấp tác phẩm, Live Preview ở mode Chỉnh sửa trực tiếp, phạm vi panel AI Chat) và thêm vào [open-questions.md](../product/open-questions.md). Thêm sáu mục backlog mới (`ai-chat-panel`, `inline-ai-quick-actions`, `sentence-mode-toolbar`, `sentence-mode-side-panels`, `rendered-direct-edit-view`, `work-area-nav-v2`) ở trạng thái Backlog, chưa lên roadmap.
+
 ## Mode Từng câu — 2026-10-01
 
 - Triển khai `sentence-mode`: tab “Từng câu” với các hàng theo segment bản gốc, trạng thái hàng suy ra từ liên kết, ghi một hàng vào văn bản dịch cùng liên kết trong một transaction, xác nhận hàng, nhảy hàng cần xử lý kế tiếp, ghép theo thứ tự cho bản dịch viết sẵn, chuyển mode không mất chữ. Thêm bốn kênh IPC cho liên kết, không đổi schema. Đo trong Electron thật, sửa hai chỗ chậm bậc hai ở kho liên kết do đo lộ ra. `sentence-mode` chuyển sang đã triển khai ở backlog; thêm `merge-split-rows`, `shared-undo-modes`.

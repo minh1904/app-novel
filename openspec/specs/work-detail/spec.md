@@ -2,7 +2,9 @@
 
 ## Purpose
 Định nghĩa màn chi tiết một tác phẩm: khung màn, thông tin tác phẩm, danh sách chương và đường đi tiếp vào chương đang làm. Đây là điểm vào của mọi việc dịch thuật trên một tác phẩm. Chương ở giai đoạn này chỉ là mục trong danh sách (số thứ tự, tên); văn bản gốc/dịch nằm ở change sau. Các khu vực dài hạn (Ngữ cảnh, Nguồn, Tác vụ) gắn vào khung này khi có màn thật, theo [work-area-navigation](../../changes/work-area-navigation/proposal.md).
+
 ## Requirements
+
 ### Requirement: Mở màn chi tiết từ thư viện
 
 Người dùng SHALL mở màn chi tiết của một tác phẩm bằng "Mở tác phẩm" ở danh sách, bằng mục "Tác phẩm gần đây" của thanh bên, hoặc bằng "Tiếp tục" (xem yêu cầu Tiếp tục chương gần nhất). Từ màn chi tiết, người dùng SHALL quay về thư viện bằng liên kết "Thư viện" ở đầu trang. Khi quay về, thư viện SHALL hiển thị số chương và thời điểm sửa mới nhất. Nếu tác phẩm không còn (bị xóa hoặc tệp không mở được), màn SHALL báo rõ lý do bằng lời dễ hiểu và cho quay về thư viện thay vì hiển thị trống hay lỗi kỹ thuật thô.
@@ -97,11 +99,15 @@ Hệ thống SHALL ghi nhớ chương làm việc gần nhất của mỗi tác 
 
 ### Requirement: Mở một chương
 
-Người dùng SHALL mở một chương bằng cách bấm tên chương hoặc nhấn Enter khi hàng đang được chọn. Việc mở SHALL ghi chương đó là chương gần nhất (theo yêu cầu Tiếp tục chương gần nhất) trước khi chuyển màn. Cho tới khi có editor, chương mở ra SHALL hiển thị màn giữ chỗ nêu tên và số thứ tự chương, nói rõ editor chưa có, kèm nút quay về màn chi tiết của cùng tác phẩm. Việc mở chương thất bại SHALL báo lỗi và ở lại màn chi tiết.
+Người dùng SHALL mở một chương bằng cách bấm tên chương hoặc nhấn Enter khi hàng đang được chọn. Việc mở SHALL ghi chương đó là chương gần nhất (theo yêu cầu Tiếp tục chương gần nhất) trước khi chuyển màn. Chương mở ra SHALL hiển thị màn chương (đặc tả `chapter-screen`), kèm đường quay về màn chi tiết của cùng tác phẩm. Việc mở chương thất bại SHALL báo lỗi và ở lại màn chi tiết.
 
 #### Scenario: Mở chương từ danh sách
 - **WHEN** người dùng bấm tên chương 7
-- **THEN** màn giữ chỗ của chương 7 hiện ra, và quay về sẽ tới màn chi tiết của cùng tác phẩm với "Tiếp tục" trỏ vào chương 7
+- **THEN** màn chương 7 hiện ra, và quay về sẽ tới màn chi tiết của cùng tác phẩm với "Tiếp tục" trỏ vào chương 7
+
+#### Scenario: Chương lỗi khi mở
+- **WHEN** việc ghi chương gần nhất thất bại lúc mở chương
+- **THEN** màn chi tiết báo lỗi và người dùng vẫn ở màn chi tiết
 
 ### Requirement: Chương có thứ tự và số thứ tự suy ra từ vị trí
 
@@ -149,7 +155,7 @@ Người dùng SHALL chuyển một chương lên một vị trí, xuống một
 
 ### Requirement: Xóa chương
 
-Người dùng SHALL xóa một chương sau khi xác nhận, trong hộp xác nhận nêu tên chương và cảnh báo việc này không hoàn tác được. Xóa SHALL loại chương khỏi danh sách và dồn số thứ tự các chương sau nó, và SHALL xóa mọi dữ liệu thuộc chương đó cùng lúc (không để lại dữ liệu mồ côi). Hủy hộp xác nhận SHALL không đổi gì.
+Người dùng SHALL xóa một chương sau khi xác nhận, trong hộp xác nhận nêu tên chương và cảnh báo việc này không hoàn tác được. Khi chương đã có văn bản gốc hoặc bản dịch, hộp xác nhận SHALL nói rõ bên nào sẽ mất và gợi ý sao lưu tác phẩm trước. Xóa SHALL loại chương khỏi danh sách và dồn số thứ tự các chương sau nó, và SHALL xóa mọi dữ liệu thuộc chương đó cùng lúc (không để lại dữ liệu mồ côi). Hủy hộp xác nhận SHALL không đổi gì.
 
 #### Scenario: Xóa chương giữa danh sách
 - **WHEN** người dùng xóa chương 4 trong danh sách 10 chương và xác nhận
@@ -158,6 +164,14 @@ Người dùng SHALL xóa một chương sau khi xác nhận, trong hộp xác n
 #### Scenario: Hủy xóa
 - **WHEN** người dùng mở hộp xác nhận xóa rồi hủy
 - **THEN** danh sách và dữ liệu không đổi
+
+#### Scenario: Xóa chương đã có nội dung
+- **WHEN** người dùng xóa một chương có cả văn bản gốc và bản dịch
+- **THEN** hộp xác nhận nêu chương sẽ mất cả bản gốc lẫn bản dịch, gợi ý sao lưu trước, và sau khi xác nhận không còn văn bản hay segment nào của chương đó
+
+#### Scenario: Xóa chương chỉ có bản gốc
+- **WHEN** người dùng xóa một chương chỉ có văn bản gốc
+- **THEN** hộp xác nhận chỉ nêu mất bản gốc, không nhắc bản dịch
 
 ### Requirement: Tìm và nhảy tới chương
 
@@ -270,4 +284,3 @@ Bố cục SHALL không tràn ngang ở chiều rộng cửa sổ tối thiểu 
 #### Scenario: Chỉ dùng bàn phím
 - **WHEN** người dùng chỉ dùng bàn phím để sửa thông tin, thêm chương, đổi tên, chuyển vị trí và xóa chương
 - **THEN** hoàn tất được mà không cần chuột
-
