@@ -50,6 +50,8 @@ Trường hợp câu gốc bị lược bỏ có thể là `Gốc X ↔ không c
 
 Tham khảo: [Vecalign](https://github.com/thompsonb/vecalign) dùng liên kết 1–nhiều/nhiều–nhiều; [memoQ Alignment Editor](https://docs.memoq.com/current/en/Workspace/alignment-editor.html) cho phép sửa liên kết tự động bằng tay. Đây là nguồn tham khảo, không phải quyết định áp dụng nguyên thuật toán hoặc UI.
 
+**Ghi chú về "tự đồng bộ theo ý" (nguyên lý, xem [khả thi kỹ thuật §3](../research/technical-feasibility.md)):** Vecalign/Bertalign — hai thuật toán gần nhất với bước F/G ở trên — là căn chỉnh **theo lô** (chạy một lần trên cả văn bản đã có sẵn embedding), không phải cơ chế tính lại tức thời theo từng ký tự gõ. Bertalign còn tách hai pha rẻ: neo 1-1 tin cậy cao bằng top-k cosine trước, rồi mới chạy DP trong cửa sổ hẹp quanh neo để tìm liên kết n:m — mẫu này hợp với bước O (so thay đổi, cập nhật liên kết **vùng ảnh hưởng**) hơn là chạy lại DP toàn ma trận mỗi lần sửa.
+
 ---
 
 [Mục lục handbook](../README.md)

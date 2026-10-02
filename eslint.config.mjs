@@ -7,7 +7,17 @@ import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 
 export default defineConfig(
   // scripts/ holds plain-JS tooling that runs outside the TypeScript projects.
-  { ignores: ['**/node_modules', '**/dist', '**/out', 'scripts', '.claude'] },
+  // Wireframe là script chạy thẳng trong trình duyệt để xem, không phải mã của app.
+  {
+    ignores: [
+      '**/node_modules',
+      '**/dist',
+      '**/out',
+      'scripts',
+      '.claude',
+      'docs/handbook/experience/wireframes'
+    ]
+  },
   tseslint.configs.recommended,
   eslintPluginReact.configs.flat.recommended,
   eslintPluginReact.configs.flat['jsx-runtime'],

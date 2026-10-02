@@ -26,6 +26,9 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Nghiên cứu | [Hệ sinh thái dịch truyện Việt và nhà cung cấp AI](research/vietnam-ecosystem.md) | Quan sát 2026-09-29, chưa phỏng vấn |
 | Nghiên cứu | [Khả thi kỹ thuật: dữ liệu, lưu trữ, căn chỉnh](research/technical-feasibility.md) | Đọc tài liệu + chạy thử một phần |
 | Nghiên cứu | [Công cụ dịch AI, nhiều nguồn, văn phong](research/ai-translation-tools.md) | Đọc README/mã, chưa chạy thử |
+| Nghiên cứu | [Chế độ AI, nhà cung cấp, CLI proxy, model local](research/ai-provider-integration.md) | Quan sát 2026-10-02 + đề xuất adapter; chưa gọi provider thật |
+| Nghiên cứu | [Hai hướng provider: gateway và khóa Google](research/provider-gemini-gateway.md) | Tài liệu Gemini + mã CLIProxyAPI, 2026-10-02; chưa gọi thật, chưa dựng gateway |
+| Nghiên cứu | [Ngữ cảnh truyện: so sánh và đề xuất](research/story-context.md) | Quan sát 2026-10-02: công cụ dịch, CAT, công cụ viết AI + 2 bài nghiên cứu; sáu lớp ngữ cảnh và ba tầng prompt, đề xuất chưa chốt |
 | Nghiên cứu | [Màn chi tiết truyện và danh sách chương](research/work-detail-screen.md) | So sánh sản phẩm; cấu trúc bốn khu vực đã chốt, chi tiết khác còn đề xuất |
 | Nghiên cứu | [Tính năng Markdown của Obsidian](research/obsidian-markdown-features.md) | Bảng kiểm đối chiếu với Mira, đã tick cái nào xong |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
@@ -33,6 +36,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
 | Trải nghiệm | [Redesign workspace dịch](experience/editor-redesign.md) | Đề xuất + mockup, đối chiếu quyết định hiện hành, chưa chốt |
 | Trải nghiệm | [Wireframe các màn còn lại](experience/wireframes/README.md) | Ba phương án mỗi màn, chờ chọn |
+| Trải nghiệm | [Màn cài đặt kết nối AI](experience/ai-connection-settings.md) | Audit + brief + quy ước app cùng loại + 7 wireframe; **đã chốt phương án F**, vào bằng nút bánh răng góc trên phải |
 | Trải nghiệm | [Design system](experience/design-system.md) | Baseline đã chốt + scaffold |
 | Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Đối chiếu code ngày 2026-09-29 |
 | Kỹ thuật | [Kiến trúc và spike](engineering/architecture.md) | Scaffold + công nghệ đề xuất |
@@ -45,6 +49,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Quyết định | [ADR-001: đổi tên Mira](decisions/0001-mira-brand.md) | Accepted — yêu cầu người dùng |
 | Quyết định | [ADR-002: AI dịch từ raw là luồng chính](decisions/0002-ai-first-translation.md) | Accepted — thay “AI sau P0” |
 | Quyết định | [ADR-003: bộ công nghệ lưu trữ và soạn thảo](decisions/0003-technology-stack.md) | Accepted — có chạy thử |
+| Quyết định | [ADR-004: tầng kết nối AI và scope lát cắt đầu](decisions/0004-ai-provider-layer.md) | Accepted — chủ sản phẩm uỷ quyền chốt 2026-10-02 |
 
 ## Cách hiểu nội dung
 
