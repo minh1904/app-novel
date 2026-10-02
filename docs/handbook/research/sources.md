@@ -1,6 +1,6 @@
 # Sổ nguồn nghiên cứu
 
-Cập nhật: **2026-10-01** (bổ sung S23–S24; S01–S22 đọc 2026-09-29). Nguồn mô tả sản phẩm là bằng chứng tài liệu, không phải trải nghiệm cài/chạy. Ngày đọc không đồng nghĩa ngày nhà cung cấp cập nhật.
+Cập nhật: **2026-10-02** (bổ sung S25; S23–S24 đọc 2026-10-01; S01–S22 đọc 2026-09-29). Nguồn mô tả sản phẩm là bằng chứng tài liệu, không phải trải nghiệm cài/chạy. Ngày đọc không đồng nghĩa ngày nhà cung cấp cập nhật.
 
 | ID | Nguồn chính chủ | Dùng cho / giới hạn |
 | --- | --- | --- |
@@ -28,6 +28,7 @@ Cập nhật: **2026-10-01** (bổ sung S23–S24; S01–S22 đọc 2026-09-29).
 | S22 | [GalTransl](https://github.com/GalTransl/GalTransl), [AiNiee](https://github.com/NEKOparapa/AiNiee), [auto-novel](https://github.com/auto-novel/auto-novel), [OpenNovel auto-translate](https://www.opennovel.co/docs/auto-translate), [EMNLP 2024 multilingual input](https://aclanthology.org/2024.emnlp-main.396.pdf), [Moslem 2023](https://arxiv.org/abs/2301.13294) | Pipeline dịch AI, nhiều nguồn, văn phong; xem [công cụ dịch AI](ai-translation-tools.md) |
 | S23 | [Hako: trang truyện](https://ln.hako.vn/truyen/24830-nhung-thieu-nu-hac-hoa-va-cuoc-song-thuong-ngay-vun-vo-cua-toi), [OpenNovel Auto-Translate](https://www.opennovel.co/docs/auto-translate), [OpenNovel nhập EPUB](https://www.opennovel.co/docs/translating-epubs), [Reedsy Studio FAQ](https://reedsy.com/studio/resources/book-writing-software-faq/), [GalTransl README](https://github.com/GalTransl/GalTransl/blob/main/README_EN.md) | Đọc 2026-10-01: màn chi tiết/mục lục và quản lý chương; [phân tích](work-detail-screen.md). Hako chỉ đọc bản văn từ kết quả tìm kiếm, chưa mở trực tiếp; chưa thao tác sản phẩm hoặc xác minh nút “Đọc tiếp” |
 | S24 | [AiNiee PromptBuilder](https://github.com/NEKOparapa/AiNiee/blob/main/ModuleFolders/Domain/PromptBuilder/PromptBuilder.py), [Quick Translator Engine](https://github.com/thiendiepdt/quick-translator-engine), [LinguaGacha Glossary](https://github.com/neavo/LinguaGacha/wiki/GlossaryEN), [Smartcat Intelligence Fabric](https://help.smartcat.com/intelligence-fabric-translation-memory-glossaries-language-insights/) | Đọc 2026-10-01: đối chiếu nguồn cho xưng hô, glossary, văn phong và tác vụ; [bảng theo tab](work-detail-screen.md). Mã/README/tài liệu, chưa thao tác sản phẩm; không xác nhận có ma trận xưng hô hay nhiều nguồn raw như Mira |
+| S25 | Obsidian: [cú pháp cơ bản](https://obsidian.md/help/Editing+and+formatting/Basic+formatting+syntax), [nhúng tệp](https://obsidian.md/help/Linking+notes+and+files/Embed+files), [định dạng tệp chấp nhận](https://obsidian.md/help/Files+and+folders/Accepted+file+formats) | Đọc 2026-10-02: cú pháp Markdown, nhúng/resize ảnh, định dạng ảnh chấp nhận; [bảng kiểm đối chiếu Mira](obsidian-markdown-features.md). Tài liệu chính thức, chưa cài Obsidian để thao tác trực tiếp; trang Live Preview trả 404 lúc đọc nên phần đó dựa trên quan sát hành vi phổ biến đã biết, không trích dẫn được URL cụ thể |
 
 ## Nguồn kế thừa từ tài liệu 2026-09-23
 
