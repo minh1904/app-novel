@@ -196,7 +196,11 @@ toggle.href = href({ mau: on ? 'xam' : 'mau' })
 const menu = document.querySelector('.wf-menu')
 menu.addEventListener('toggle', () => {
   const r = menu.querySelector('summary').getBoundingClientRect()
-  Object.assign(menu.querySelector('.wf-popover').style, { top: `${r.bottom + 6}px`, left: `${r.left}px` })
+  const pop = menu.querySelector('.wf-popover')
+  // Thanh công cụ dài dần theo số màn; ở 1024 nút Trạng thái nằm sát mép phải nên menu lòi khỏi màn.
+  pop.style.top = `${r.bottom + 6}px`
+  pop.style.left = '0px'
+  pop.style.left = `${Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8))}px`
 })
 document.addEventListener('click', (e) => {
   if (!menu.contains(e.target)) menu.open = false

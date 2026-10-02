@@ -1,7 +1,7 @@
 // Mỗi màn có ba phương án. Phương án mang tag "Nhịp D" dùng đúng nhịp đã chốt ở màn chương
 // (thanh 42px/36px, chữ 12–13px, nút h-7/h-6); hai phương án còn lại đổi bố cục để so sánh.
 // Nội dung lấy từ data.js nên ba phương án cùng chữ, chỉ khác cách bày.
-import { CHAPTERS, COUNTS, ROWS, ROW_STATES, WORKS } from './data.js'
+import { AI_CHAT, AI_CONTEXT_CHIPS, AI_MODELS, AI_MODES, CHAPTERS, COUNTS, ROWS, ROW_STATES, WORKS } from './data.js'
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const icon = (name, cls = 'size-3.5') => `<i data-lucide="${name}" class="${cls}"></i>`
@@ -161,7 +161,7 @@ const libSidebar = () => `
     ]
       .map(
         ([ic, label, on]) =>
-          `<a href="#" class="flex h-[30px] items-center gap-2 rounded-control px-2 text-[12.5px] font-medium ${on ? 'bg-selected text-ink' : 'text-ink-muted hover:bg-selected/60 hover:text-ink'}">${icon(ic, 'size-4 shrink-0')}${esc(label)}</a>`
+          `<a href="#" class="flex h-[30px] items-center gap-2 rounded-control px-2 text-[12.5px] font-medium ${on ? 'bg-selected text-ink' : 'text-ink-muted hover:bg-selected hover:text-ink'}">${icon(ic, 'size-4 shrink-0')}${esc(label)}</a>`
       )
       .join('')}
   </nav>
@@ -169,7 +169,7 @@ const libSidebar = () => `
     <span class="px-2 text-[11px] font-medium text-ink-muted">Tác phẩm gần đây</span>
     ${WORKS.slice(0, 4)
       .map(
-        (w) => `<a href="#" class="flex items-center gap-2 rounded-control px-2 py-1 hover:bg-selected/60">
+        (w) => `<a href="#" class="flex items-center gap-2 rounded-control px-2 py-1 hover:bg-selected">
         ${cover(w, 'h-7 w-[22px]', 'text-[10px]')}
         <span class="min-w-0 flex-1">
           <span class="block truncate text-[12px] font-medium text-ink">${esc(w.title)}</span>
@@ -669,7 +669,7 @@ const chapterNav = () => `
     </button>
   </div>
   <nav class="min-h-0 flex-1 overflow-y-auto p-1.5" aria-label="Danh sách chương">
-    ${CHAPTERS.map((c) => `<a href="#" class="flex items-center gap-2 rounded-control px-2 py-1 text-[12.5px] ${c.active ? 'bg-selected text-ink' : 'text-ink-muted hover:bg-selected/60'}">${dot(c.done ? 'bg-success' : 'bg-warning')}<span class="truncate">${c.n}. ${esc(c.title || 'Chương ' + c.n)}</span></a>`).join('')}
+    ${CHAPTERS.map((c) => `<a href="#" class="flex items-center gap-2 rounded-control px-2 py-1 text-[12.5px] ${c.active ? 'bg-selected text-ink' : 'text-ink-muted hover:bg-selected'}">${dot(c.done ? 'bg-success' : 'bg-warning')}<span class="truncate">${c.n}. ${esc(c.title || 'Chương ' + c.n)}</span></a>`).join('')}
   </nav>
 </aside>`
 
@@ -695,7 +695,7 @@ const previewList = () => `
 
 const CHUONG_RONG = {
   name: 'Chương chưa có bản gốc',
-  short: 'Chương rỗng',
+  short: 'Ch. rỗng',
   states: ['du-lieu', 'dang-tai', 'loi'],
   variants: {
     a: {
@@ -1015,12 +1015,530 @@ const TUNG_CAU = {
   }
 }
 
+
+// ===================================================================
+// MÀN 6 — HỎI AI (panel chat trong mode Toàn văn)
+// ===================================================================
+// Khuôn tin nhắn lấy từ references/components/chat.md của skill ui-ux, đổi sang token và nhịp
+// của Mira: tin nhắn 13px (không phải text-base 16px), phụ trợ 11–12px.
+// Khuôn ô soạn lấy theo Cursor/Antigravity (chủ dự án yêu cầu 2026-10-02): chip ngữ cảnh và
+// thanh công cụ nằm TRONG hộp soạn, chọn chế độ và chọn model ngay cạnh nút gửi.
+// Hai chế độ Hỏi/Sửa và danh sách model lấy từ research/ai-provider-integration.md — doc đó
+// chốt Mira KHÔNG làm chế độ Agent.
+// Hai pane gốc/dịch vẽ kèm làm khung: không có chúng thì không thấy cái giá của mỗi phương án.
+
+const SRC_PARAS = [
+  'Quitting halfway through his freshman year didn’t give Itsuki Hashima the time to make many college friends.',
+  'He had only one real acquaintance left from that era that he bothered to maintain.',
+  'That was Miyako Shirakawa, aged twenty and now a sophomore.',
+  AI_CHAT.source,
+  'Itsuki never asked why. He assumed she would tell him when it mattered.'
+]
+const VI_PARAS = [
+  'Bỏ học giữa năm nhất nên Itsuki Hashima không có thời gian kết bạn nhiều ở đại học.',
+  'Từ quãng đó cậu chỉ còn giữ liên lạc với đúng một người.',
+  'Đó là Miyako Shirakawa, hai mươi tuổi, giờ đang học năm hai.',
+  AI_CHAT.current,
+  'Itsuki chưa bao giờ hỏi vì sao. Cậu cho rằng khi nào cần thì cô sẽ tự nói.'
+]
+
+/** Đầu pane như EditorPane trong app: tên, ngôn ngữ, trạng thái lưu, rồi nút của pane đó. */
+const paneHead = (title, sub, status, right) => `
+<div class="flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-2.5">
+  <h3 class="text-[12px] font-semibold">${esc(title)}</h3>
+  <span class="truncate text-[11px] text-ink-muted">${esc(sub)}</span>
+  <span class="ml-auto flex shrink-0 items-center gap-1.5">
+    <span class="text-[11px] text-ink-muted">${esc(status)}</span>${right}
+  </span>
+</div>`
+
+/** Câu đang bàn được tô như vùng chọn trong editor, để thấy panel đang nói về chỗ nào. */
+const paneText = (paras, markIndex) => `
+<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+  <div class="space-y-3 text-[13px] leading-[1.75]">
+    ${paras
+      .map((p, i) =>
+        i === markIndex
+          ? `<p class="-mx-1 rounded-[4px] bg-info/15 px-1">${esc(p)}</p>`
+          : `<p>${esc(p)}</p>`
+      )
+      .join('')}
+  </div>
+</div>`
+
+const srcPane = () => `
+<section class="flex min-h-0 min-w-0 flex-col bg-canvas">
+  ${paneHead('Bản gốc', 'Anh', 'Đã khóa, chỉ đọc', btn('Sửa bản gốc', { size: 'sm', variant: 'outline' }))}
+  ${paneText(SRC_PARAS, 3)}
+</section>`
+
+const viPane = (grow = false) => `
+<section class="flex min-h-0 min-w-0 ${grow ? 'flex-1' : ''} flex-col bg-canvas">
+  ${paneHead(
+    'Bản dịch',
+    'Tiếng Việt',
+    'Đã lưu',
+    `<span role="group" aria-label="Cách xem bản dịch" class="flex items-center gap-[2px] rounded-tab bg-control p-[2px]">
+       ${btn('Soạn thảo', { size: 'sm', variant: 'secondary', cls: 'rounded-[7px]' })}${btn('Đọc', { size: 'sm', variant: 'ghost', cls: 'rounded-[7px]' })}
+     </span>`
+  )}
+  ${paneText(VI_PARAS, 3)}
+</section>`
+
+/** Hàng chế độ 36px của màn chương, vẽ nguyên để nhịp của panel đặt cạnh đúng thứ đang chạy. */
+const modeRow = () => `
+<div class="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-chrome px-2.5">
+  <span class="flex items-center gap-[2px] rounded-tab bg-control p-[2px]">
+    ${btn('Toàn văn', { size: 'sm', variant: 'secondary', cls: 'rounded-[7px]' })}${btn('Từng câu', { size: 'sm', variant: 'ghost', cls: 'rounded-[7px]' })}
+  </span>
+  <span class="h-4 w-px shrink-0 bg-line" aria-hidden="true"></span>
+  <span class="flex min-w-0 items-center gap-2.5 overflow-hidden text-[12px] text-ink-muted">
+    <span>Thuật ngữ</span><span>Xưng hô</span><span>Văn phong</span>${soon()}
+  </span>
+</div>`
+
+// ---------- các mảnh của khung chat ----------
+
+const userMsg = (text) => `
+<p class="ml-auto w-fit max-w-[85%] rounded-control bg-control px-2.5 py-1.5 text-[13px] leading-[1.55] whitespace-pre-wrap [overflow-wrap:anywhere]">${esc(text)}</p>`
+
+let stepsId = 0
+/**
+ * Bước dùng công cụ: mặc định thu gọn, mở bằng CSS (không JS) nên wireframe bấm được.
+ * Bản dựng thật dùng button + aria-expanded + grid-rows như components/chat.md.
+ */
+const toolSteps = ({ head, items = [], running = false }) => {
+  const id = `steps-${++stepsId}`
+  const mark = (state) =>
+    state === 'error'
+      ? icon('circle-alert', 'size-3.5 mt-px shrink-0 text-error')
+      : state === 'running'
+        ? icon('loader-circle', 'size-3.5 mt-px shrink-0 animate-spin text-ink-muted')
+        : icon('check', 'size-3.5 mt-px shrink-0 text-ink-muted')
+  return `
+<div>
+  <input type="checkbox" id="${id}" class="peer sr-only"${items.length ? '' : ' disabled'} />
+  <label for="${id}" class="flex h-6 w-fit cursor-pointer items-center gap-1.5 text-[11px] text-ink-muted hover:text-ink peer-checked:[&_svg:first-child]:rotate-90">
+    ${items.length ? icon('chevron-right', 'size-3.5 shrink-0 transition-transform') : icon('loader-circle', 'size-3.5 shrink-0 animate-spin')}
+    <span>${esc(head)}</span>${running && items.length ? icon('loader-circle', 'size-3 shrink-0 animate-spin') : ''}
+  </label>
+  <div class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 peer-checked:grid-rows-[1fr]">
+    <div class="min-h-0 overflow-hidden">
+      <ul class="mt-2 ml-[7px] space-y-2 border-l border-line-strong pl-4">
+        ${items
+          .map(
+            (s) => `<li class="flex gap-1.5">${mark(s.state)}<div class="min-w-0">
+              <p class="text-[12px] text-ink">${esc(s.label)}</p>
+              <p class="text-[11px] leading-[1.5] text-ink-muted">${esc(s.detail)}</p>
+            </div></li>`
+          )
+          .join('')}
+      </ul>
+    </div>
+  </div>
+</div>`
+}
+
+/** Hàng thao tác dưới câu trả lời. -ml-[7px] để icon đầu thẳng cột chữ (nút size-7, icon 14px). */
+const actionRow = (stopped = false) => `
+<div class="-ml-[7px] flex items-center gap-0.5 pt-0.5">
+  ${iconBtn('copy', 'Sao chép')}${iconBtn('rotate-cw', 'Tạo lại')}
+  ${stopped ? '<span class="pl-1 text-[11px] text-ink-muted">Đã dừng giữa chừng</span>' : ''}
+</div>`
+
+/** Ba hành động đưa kết quả vào bản dịch — thứ phân biệt panel này với một khung chat thường. */
+const applyRow = () => `
+<div class="flex flex-wrap gap-1.5 pt-1">
+  ${btn('Áp dụng', { size: 'xs', variant: 'primary' })}${btn('Chèn ở con trỏ', { size: 'xs', variant: 'outline' })}${btn('Sao chép', { size: 'xs', variant: 'outline' })}
+</div>`
+
+const cursorTick = () =>
+  '<span class="ml-0.5 inline-block h-[1.1em] w-[7px] translate-y-[2px] rounded-sm bg-ink/30"></span>'
+
+const suggest = (label, items) => `
+<div class="space-y-1.5">
+  <p class="text-[11px] text-ink-muted">${esc(label)}</p>
+  ${items
+    .map(
+      (s) =>
+        `<button type="button" class="block w-fit max-w-full cursor-pointer rounded-control border border-line-strong bg-control px-2.5 py-1.5 text-left text-[12.5px] text-ink hover:bg-selected">${esc(s)}</button>`
+    )
+    .join('')}
+</div>`
+
+const answerFail = () => `
+<div class="space-y-1.5">
+  <p role="alert" class="text-[12.5px] font-medium text-error">Trợ lý chưa trả lời được</p>
+  <p class="text-[12px] leading-[1.55] text-ink-muted">${esc(AI_CHAT.errorReason)}</p>
+  <div class="pt-0.5">${btn('Thử lại', { size: 'xs', variant: 'outline', ico: 'rotate-cw' })}</div>
+</div>`
+
+// ---------- ô soạn kiểu Cursor: chip ngữ cảnh + thanh công cụ nằm trong hộp ----------
+
+const chipEl = (c) => `
+<span class="inline-flex h-[20px] shrink-0 items-center gap-1 rounded-[6px] border border-line bg-canvas pr-1 pl-1.5 text-[11px] text-ink-muted">
+  ${icon(c.icon, 'size-3 shrink-0')}${esc(c.label)}
+  ${c.fixed ? '<span class="w-px"></span>' : `<button type="button" aria-label="Bỏ ${esc(c.label)}" class="cursor-pointer px-0.5 hover:text-ink">×</button>`}
+</span>`
+
+/** Ngữ cảnh gửi kèm hiện thành chip trong ô soạn, thay cho thẻ ngữ cảnh riêng ở đầu panel. */
+const ctxChips = () => `
+<div class="flex flex-wrap items-center gap-1 px-1 pb-1">
+  ${AI_CONTEXT_CHIPS.map(chipEl).join('')}
+  <button type="button" class="inline-flex h-[20px] shrink-0 cursor-pointer items-center gap-1 rounded-[6px] border border-dashed border-line-strong px-1.5 text-[11px] text-ink-muted hover:bg-selected hover:text-ink">
+    ${icon('plus', 'size-3 shrink-0')}Ngữ cảnh
+  </button>
+</div>`
+
+const pickerBtn = (label, title, open = false) => `
+<button type="button" title="${esc(title)}" aria-expanded="${open}" class="inline-flex h-6 shrink-0 cursor-pointer items-center gap-0.5 rounded-control px-1.5 text-[11px] whitespace-nowrap ${open ? 'bg-selected text-ink' : 'text-ink-muted hover:bg-selected hover:text-ink'}">
+  ${esc(label)}${icon('chevron-down', 'size-3 shrink-0')}
+</button>`
+
+/** Box chọn model, mở lên trên vì ô soạn dính đáy. Giá là số mẫu, xem data.js. */
+const modelMenu = () => `
+<div role="menu" class="absolute bottom-full left-0 z-20 mb-1 w-[292px] overflow-hidden rounded-panel border border-line-strong bg-popover py-1">
+  ${AI_MODELS.map(
+    (g) => `
+    <p class="px-2.5 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-[0.06em] text-ink-muted uppercase">${esc(g.group)}</p>
+    ${g.items
+      .map(
+        (m) => `<button type="button" role="menuitemradio" aria-checked="${Boolean(m.current)}" class="flex w-full cursor-pointer items-center gap-1.5 px-2.5 py-1 text-left ${m.current ? 'bg-selected' : 'hover:bg-selected'}">
+          <span class="min-w-0 flex-1 truncate text-[12.5px] text-ink">${esc(m.name)}</span>
+          ${m.badge ? `<span class="shrink-0 rounded-[5px] bg-control px-1 text-[10px] text-ink-muted">${esc(m.badge)}</span>` : ''}
+          <span class="shrink-0 text-[11px] text-ink-muted">${esc(m.meta)}</span>
+          ${m.current ? icon('check', 'size-3.5 shrink-0 text-ink') : '<span class="size-3.5 shrink-0"></span>'}
+        </button>`
+      )
+      .join('')}`
+  ).join('')}
+  <p class="mt-1 border-t border-line px-2.5 pt-1.5 pb-0.5 text-[10px] leading-[1.5] text-ink-muted">
+    USD / 1M token, số mẫu. Thêm khóa và endpoint trong Cài đặt.
+  </p>
+</div>`
+
+const sendBtn = (running, enabled) =>
+  running
+    ? `<button type="button" aria-label="Dừng trả lời" title="Dừng trả lời" class="grid size-7 shrink-0 cursor-pointer place-items-center rounded-control bg-primary text-primary-foreground">${icon('square', 'size-3 fill-current')}</button>`
+    : `<button type="button" aria-label="Gửi" title="Gửi (Enter)"${enabled ? '' : ' disabled'} class="grid size-7 shrink-0 cursor-pointer place-items-center rounded-control bg-primary text-primary-foreground disabled:cursor-not-allowed disabled:opacity-30">${icon('arrow-up', 'size-3.5')}</button>`
+
+/**
+ * Hộp soạn. Bo lồng (M19): hộp rounded-panel 14 = nút rounded-control 10 + p-1.
+ * Thứ tự trong hộp theo Cursor: chip ngữ cảnh → ô gõ → hàng [chế độ] [model] … [gửi].
+ */
+const composer = (block, { running = false, draft = '', menu = false } = {}) => `
+<div data-wf-block="${block}" data-wf-block-out class="relative m-3 shrink-0">
+  ${menu ? modelMenu() : ''}
+  <form class="flex flex-col rounded-panel border ${menu ? 'border-focus ring-2 ring-focus/25' : 'border-line-strong'} bg-control p-1 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/25">
+    ${ctxChips()}
+    <textarea rows="${draft ? 3 : 1}" class="max-h-40 min-h-6 w-full resize-none bg-transparent px-1.5 text-[13px] leading-[1.6] text-ink outline-none placeholder:text-ink-muted" placeholder="Hỏi về câu đang chọn, hoặc cả đoạn…">${esc(draft)}</textarea>
+    <div class="flex items-center gap-0.5 pt-1">
+      ${pickerBtn(AI_MODES[0].label, 'Chế độ — ' + AI_MODES[0].hint + ' (Shift+Tab đổi)')}
+      ${pickerBtn('Claude Sonnet 5', 'Đổi model (Ctrl+/)', menu)}
+      <span class="ml-auto flex shrink-0 items-center gap-0.5">
+        ${iconBtn('paperclip', 'Đính kèm ảnh')}${sendBtn(running, Boolean(draft))}
+      </span>
+    </div>
+  </form>
+</div>`
+
+const scrollDown = () => `
+<div class="sticky bottom-0 flex justify-center pt-1">
+  <button type="button" aria-label="Xuống cuối" title="Xuống cuối" class="grid size-7 cursor-pointer place-items-center rounded-full border border-line-strong bg-popover text-ink-muted">${icon('arrow-down', 'size-3.5')}</button>
+</div>`
+
+/**
+ * Một lượt hỏi đáp theo trạng thái. `mode` chỉ đổi NỘI DUNG, không đổi bố cục:
+ *  full — mặc định · d — gọn chữ · tray — không mang hành động vì đã có khay ghim dưới
+ */
+const turn = (tt, mode = 'full') => {
+  const d = mode === 'd'
+  const withApply = mode !== 'tray'
+  const body = (inner) => `<div class="space-y-2.5">${inner}</div>`
+
+  if (tt === 'dang-soan')
+    return [userMsg(AI_CHAT.question), body(toolSteps({ head: 'Đang soạn câu trả lời' }))].join('')
+
+  if (tt === 'dung-cong-cu')
+    return [
+      userMsg(AI_CHAT.question),
+      body(
+        toolSteps({
+          head: 'Đang đọc ví dụ Văn phong',
+          running: true,
+          items: [AI_CHAT.steps[0], AI_CHAT.steps[1], { ...AI_CHAT.running, state: 'running' }]
+        })
+      )
+    ].join('')
+
+  if (tt === 'dang-chay')
+    return [
+      userMsg(AI_CHAT.question),
+      body(
+        toolSteps({ head: 'Đã dùng 3 công cụ', items: AI_CHAT.steps }) +
+          `<div class="space-y-2 text-[13px] leading-[1.65]"><p>${esc(AI_CHAT.lead)}</p><p>${esc(AI_CHAT.partial)}${cursorTick()}</p></div>`
+      )
+    ].join('')
+
+  if (tt === 'da-dung')
+    return [
+      userMsg(AI_CHAT.question),
+      body(
+        toolSteps({ head: 'Đã dùng 3 công cụ', items: AI_CHAT.steps }) +
+          `<div class="space-y-2 text-[13px] leading-[1.65]"><p>${esc(AI_CHAT.lead)}</p><p>${esc(AI_CHAT.partial)}</p></div>` +
+          actionRow(true)
+      )
+    ].join('')
+
+  if (tt === 'khong-tra-loi')
+    return [
+      userMsg(AI_CHAT.question),
+      body(
+        toolSteps({
+          head: 'Đã dùng 2 công cụ, 1 lỗi',
+          items: [AI_CHAT.steps[0], AI_CHAT.steps[1], AI_CHAT.failedStep]
+        }) + answerFail()
+      )
+    ].join('')
+
+  if (tt === 'cong-cu-loi')
+    return [
+      userMsg(AI_CHAT.question),
+      body(
+        toolSteps({
+          head: 'Đã dùng 2 công cụ, 1 lỗi',
+          items: [AI_CHAT.steps[0], AI_CHAT.steps[1], AI_CHAT.failedStep]
+        }) +
+          `<div class="space-y-2 text-[13px] leading-[1.65]">
+             <p>Không mở được ví dụ Văn phong nên bản dưới chỉ theo Thuật ngữ và Xưng hô đã chốt:</p>
+             <p>${esc(AI_CHAT.proposal)}</p>
+           </div>` +
+          (withApply ? applyRow() : '') +
+          actionRow()
+      ),
+      suggest('Hỏi tiếp', AI_CHAT.suggestions)
+    ].join('')
+
+  if (tt === 'ca-bien')
+    return [
+      userMsg(AI_CHAT.longQuestion),
+      `<p class="ml-auto w-fit max-w-[85%] rounded-control bg-control px-2.5 py-1.5 text-[13px] [overflow-wrap:anywhere]">${esc(AI_CHAT.longUrl)}</p>`,
+      body(
+        toolSteps({ head: 'Đã dùng 3 công cụ', items: AI_CHAT.steps }) +
+          `<div class="space-y-2 text-[13px] leading-[1.65]"><p>${esc(AI_CHAT.longAnswer)}</p></div>` +
+          (withApply ? applyRow() : '') +
+          actionRow()
+      )
+    ].join('')
+
+  // xong, và chon-model (menu mở đè lên trên, hội thoại giữ nguyên)
+  return [
+    userMsg(AI_CHAT.question),
+    body(
+      toolSteps({ head: 'Đã dùng 3 công cụ', items: AI_CHAT.steps }) +
+        (d
+          ? `<p class="text-[13px] leading-[1.65]">${esc(AI_CHAT.proposal)}</p>`
+          : `<div class="space-y-2 text-[13px] leading-[1.65]">
+               <p>${esc(AI_CHAT.lead)}</p>
+               <p>${esc(AI_CHAT.proposal)}</p>
+               <p class="text-[12px] text-ink-muted">${esc(AI_CHAT.note)}</p>
+             </div>`) +
+        (withApply ? applyRow() : '') +
+        actionRow()
+    ),
+    suggest('Hỏi tiếp', AI_CHAT.suggestions)
+  ].join('')
+}
+
+const RUNNING_STATES = ['dang-soan', 'dung-cong-cu', 'dang-chay']
+
+/** Đầu panel: tên, chương, mở hội thoại mới, đóng. Phương án E bỏ hẳn hàng này. */
+const aiHead = (sub) => `
+<div class="flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-3">
+  ${icon('sparkles', 'size-4 shrink-0 text-info')}
+  <h3 class="text-[12px] font-semibold">Hỏi AI</h3>
+  ${sub ? `<span class="min-w-0 truncate text-[11px] text-ink-muted">${esc(sub)}</span>` : ''}
+  <span class="ml-auto flex shrink-0 items-center gap-0.5">
+    ${iconBtn('square-pen', 'Hội thoại mới')}${iconBtn('x', 'Đóng (Esc)')}
+  </span>
+</div>`
+
+/** Khay đề xuất ghim của phương án C: thứ cần bấm không trôi theo cuộn. */
+const trayCard = (block) => `
+<div data-wf-block="${block}" data-wf-block-out class="mx-3 shrink-0 space-y-1 rounded-control border border-line-strong bg-popover p-2.5">
+  <p class="text-[11px] font-medium text-ink-muted">Đề xuất cho segment ${AI_CHAT.segment}</p>
+  <p class="line-clamp-2 text-[12px] leading-[1.5] text-ink-muted">Đang có: ${esc(AI_CHAT.current)}</p>
+  <p class="text-[12.5px] leading-[1.6]">${esc(AI_CHAT.proposal)}</p>
+  ${applyRow()}
+</div>`
+
+/** Ruột của panel, dùng chung cho A, C, D, E; B dùng lại nguyên khối trong thanh ngang. */
+const aiBody = (tt, { mode = 'full', sub = 'Ch.12 · Đoạn 9', tray = false, head = true } = {}) => {
+  const running = RUNNING_STATES.includes(tt)
+  return `
+${head ? aiHead(sub) : ''}
+<div data-wf-block="4" class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 py-3">
+  ${
+    tt === 'moi'
+      ? `<div class="mt-auto">${suggest('Thử hỏi', AI_CHAT.openers)}</div>`
+      : turn(tt, tray ? 'tray' : mode)
+  }
+  ${tt === 'dang-chay' ? scrollDown() : ''}
+</div>
+${tray && tt !== 'moi' ? trayCard(5) : ''}
+${composer(tray ? 6 : 5, {
+  running,
+  menu: tt === 'chon-model',
+  draft: tt === 'ca-bien' ? 'Vậy sửa ở Ch.3 trước, rồi mới quay lại đây\n\nNhớ giữ “bạn từ nhỏ”' : ''
+})}`
+}
+
+/** Tay kéo rộng panel: panel nhớ bề rộng là quy ước của panel trợ lý cạnh nội dung. */
+const grip = () => `
+<span class="absolute top-0 left-0 z-10 flex h-full w-1.5 cursor-col-resize items-center justify-center hover:bg-focus/30" title="Kéo để đổi bề rộng">
+  <span class="h-6 w-px bg-line-strong"></span>
+</span>`
+
+const frame = (cols, main) => `
+<div class="grid h-full min-h-0 grid-cols-[216px_minmax(0,1fr)] overflow-hidden">
+  ${chapterNav()}
+  <div class="flex min-h-0 min-w-0 flex-col bg-canvas">
+    ${chapterBar(
+      iconBtn('sparkles', 'Hỏi AI (Ctrl+K)', { variant: 'secondary' }) +
+        iconBtn('minimize-2', 'Tập trung', { variant: 'outline' }) +
+        btn('Lưu', { size: 'md', variant: 'secondary' }) +
+        iconBtn('more-horizontal', 'Thêm thao tác chương')
+    )}
+    ${modeRow()}
+    <div class="grid min-h-0 flex-1 ${cols} divide-x divide-line">${main}</div>
+  </div>
+</div>`
+
+/** A, C, D, E dùng chung khung ba cột 420px (Cursor để panel 400–520px); chỉ ruột panel khác. */
+const column = (tt, opts) =>
+  frame(
+    'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_420px]',
+    srcPane() +
+      viPane() +
+      `<aside data-wf-block="3" aria-label="Hỏi AI" class="relative flex min-h-0 flex-col bg-sidebar">${grip()}${aiBody(tt, opts)}</aside>`
+  )
+
+const HOI_AI = {
+  name: 'Panel Hỏi AI',
+  short: 'Hỏi AI',
+  states: [
+    'xong',
+    'chon-model',
+    'dang-chay',
+    'dung-cong-cu',
+    'dang-soan',
+    'cong-cu-loi',
+    'da-dung',
+    'khong-tra-loi',
+    'moi',
+    'ca-bien'
+  ],
+  variants: {
+    a: {
+      name: 'A · Cột thứ ba kéo rộng được',
+      tag: 'Nhịp D',
+      why: 'Giữ đúng chỗ panel đang nằm (cột thứ ba, không che chữ) nhưng rộng 420px và kéo được — Cursor để panel trợ lý ở 400–520px, 320px hiện tại chỉ vừa khoảng 38 ký tự một dòng.',
+      uu: [
+        'Hai pane và panel cùng thấy một lúc: so câu đang có với câu AI đề xuất không phải nhớ',
+        'Hội thoại một mạch dọc, cuộn một chỗ, giống mọi trợ lý nằm cạnh nội dung',
+        'Kéo rộng rồi app nhớ — người đọc nhiều thì nới ra, người soạn thì thu lại'
+      ],
+      nhuoc: [
+        'Ăn 420px bề ngang: ở 1280 mỗi pane chỉ còn khoảng 300px, câu dài xuống dòng nhiều hơn',
+        'Hàng Áp dụng/Chèn trôi khỏi tầm nhìn khi hội thoại dài'
+      ],
+      hopkhi: 'Mặc định. Hợp khi người dùng hỏi vài lượt liên tiếp về cùng một câu.',
+      render: (tt) => column(tt)
+    },
+    b: {
+      name: 'B · Thanh ngang dưới pane dịch',
+      tag: '',
+      why: 'Đặt câu AI đề xuất ngay dưới bản dịch, cùng một cột — hai pane giữ nguyên bề ngang, không pane nào bị bóp.',
+      uu: [
+        'Hai pane giữ đủ bề ngang ở 1280, câu dài không xuống dòng thêm',
+        'Đề xuất nằm thẳng dưới chỗ sẽ dán vào, mắt không phải nhảy ngang',
+        'Mở/đóng chỉ đổi chiều cao một cột, bố cục hai pane không nhảy'
+      ],
+      nhuoc: [
+        'Ăn 300px chiều cao — thứ editor cần nhất; pane dịch còn khoảng 45% màn ở 800px cao',
+        'Hội thoại trong khung thấp: quá hai lượt là phải cuộn liên tục',
+        'Chỉ gắn với pane dịch, hỏi về bản gốc thì thấy lệch chỗ'
+      ],
+      hopkhi: 'Nếu người dùng hỏi một lượt rồi áp ngay, ít khi hỏi tiếp.',
+      render: (tt) =>
+        frame(
+          'grid-cols-2',
+          srcPane() +
+            `<div class="flex min-h-0 min-w-0 flex-col">
+               ${viPane(true)}
+               <aside data-wf-block="3" aria-label="Hỏi AI" class="flex h-[300px] shrink-0 flex-col border-t border-line bg-sidebar">
+                 ${aiBody(tt, { sub: 'segment 88 · ' + AI_CHAT.source.slice(0, 44) + '…' })}
+               </aside>
+             </div>`
+        )
+    },
+    c: {
+      name: 'C · Cột thứ ba, khay đề xuất ghim dưới',
+      tag: '',
+      why: 'Cùng cột thứ ba như A, nhưng tách đề xuất mới nhất ra một khay ghim trên ô soạn: thứ cần bấm không bao giờ trôi khỏi tầm nhìn.',
+      uu: [
+        'Áp dụng/Chèn luôn ở một chỗ, hỏi bao nhiêu lượt cũng không phải cuộn tìm',
+        'Khay đặt câu đang có cạnh câu đề xuất — quyết định không cần nhìn pane dịch',
+        'Câu trả lời trong hội thoại gọn hơn vì không mang hàng nút'
+      ],
+      nhuoc: [
+        'Khay cộng ô soạn ăn gần 200px chiều cao của panel, hội thoại còn ít chỗ',
+        'Câu đề xuất hiện ở hai nơi (hội thoại và khay) nếu không cắt bớt ở trên',
+        'Thêm một khối phải học: khay này là gì, khác câu trả lời ở đâu'
+      ],
+      hopkhi: 'Nếu thấy người dùng hỏi nhiều lượt rồi mới áp, hay bỏ quên nút Áp dụng.',
+      render: (tt) => column(tt, { tray: true })
+    },
+    d: {
+      name: 'D · A gọn chữ',
+      tag: '',
+      why: 'Cùng bố cục A, bỏ câu dẫn và ghi chú thuật ngữ: câu trả lời chỉ còn đúng câu sẽ dán vào bản dịch.',
+      uu: [
+        'Một lượt hỏi đáp cao bằng nửa A, hai lượt vẫn thấy hết không cuộn',
+        'Không có câu nào phải đọc trước khi tới phần dùng được'
+      ],
+      nhuoc: [
+        'Mất lý do đổi chữ — không biết vì sao “trường tiểu học” thành “những năm đi học”',
+        'Người dùng muốn hiểu phải hỏi thêm một lượt'
+      ],
+      hopkhi: 'Nếu người dùng tin bản đề xuất và chỉ cần nó, không cần giải thích.',
+      render: (tt) => column(tt, { mode: 'd' })
+    },
+    e: {
+      name: 'E · A bỏ hàng tiêu đề',
+      tag: '',
+      why: 'Cùng bố cục A, bỏ hẳn hàng tiêu đề panel: tên chương đã có ở thanh trên cùng, còn “đang bàn câu nào” đã nằm trong chip ngữ cảnh của ô soạn.',
+      uu: [
+        'Hội thoại được thêm 34px, đúng một lượt hỏi đáp ngắn',
+        'Không có chữ nào xuất hiện hai lần trên cùng một màn'
+      ],
+      nhuoc: [
+        'Không còn nút Đóng và nút Hội thoại mới — phải đẩy sang Ctrl+K và menu',
+        'Panel tách khỏi màn thì không tự nói nó là panel gì'
+      ],
+      hopkhi: 'Nếu màn đã chật và bạn muốn mọi pixel dành cho hội thoại.',
+      render: (tt) => column(tt, { head: false })
+    }
+  }
+}
+
 export const SCREENS = {
   'thu-vien': THU_VIEN,
   'tao-tac-pham': TAO_TAC_PHAM,
   'chi-tiet': CHI_TIET,
   'chuong-rong': CHUONG_RONG,
-  'tung-cau': TUNG_CAU
+  'tung-cau': TUNG_CAU,
+  'hoi-ai': HOI_AI
 }
 
 export const STATE_LABELS = {
@@ -1028,5 +1546,16 @@ export const STATE_LABELS = {
   'dang-tai': 'Đang tải',
   rong: 'Rỗng',
   loi: 'Lỗi',
-  'dang-gui': 'Đang gửi'
+  'dang-gui': 'Đang gửi',
+  // Trạng thái của màn Hỏi AI, theo danh sách 'Trạng thái phải dựng' của components/chat.md
+  xong: 'Xong, có gợi ý',
+  'dang-chay': 'Đang chạy chữ',
+  'dung-cong-cu': 'Đang dùng công cụ',
+  'dang-soan': 'Đang soạn',
+  'cong-cu-loi': 'Một công cụ lỗi',
+  'da-dung': 'Người dùng đã dừng',
+  'khong-tra-loi': 'Không trả lời được',
+  moi: 'Trò chuyện mới',
+  'chon-model': 'Đang chọn model',
+  'ca-bien': 'Ca biên'
 }

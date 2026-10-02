@@ -17,10 +17,10 @@ Mở thẳng bằng `file://` không chạy được: `screens.js` là ES module
 
 | Tham số | Nghĩa |
 | --- | --- |
-| `man` | Màn: `thu-vien`, `tao-tac-pham`, `chi-tiet`, `chuong-rong`, `tung-cau` |
+| `man` | Màn: `thu-vien`, `tao-tac-pham`, `chi-tiet`, `chuong-rong`, `tung-cau`, `hoi-ai` |
 | `v` | Phương án `a` / `b` / `c` của màn đó (chấm tím = phương án theo nhịp D) |
 | `mau` | `mau` bật màu trạng thái thật, `xam` tắt đi để so bố cục thuần |
-| `tt` | Trạng thái: `du-lieu`, `dang-tai`, `rong`, `loi`, `dang-gui` (tùy màn) |
+| `tt` | Trạng thái: `du-lieu`, `dang-tai`, `rong`, `loi`, `dang-gui` (tùy màn). Màn Hỏi AI có bộ riêng: `xong`, `chon-model`, `dang-chay`, `dung-cong-cu`, `dang-soan`, `cong-cu-loi`, `da-dung`, `khong-tra-loi`, `moi`, `ca-bien` |
 
 Ví dụ: `?man=chi-tiet&v=c&mau=mau&tt=rong`
 
@@ -44,6 +44,21 @@ và thường có **một** phương án giữ nguyên bố cục đang chạy �
 | Chi tiết tác phẩm | Thanh gọn theo nhịp D | Header đầy đủ + tab (đang chạy) | Khu vực thành cột bên trái | chưa chốt |
 | Chương chưa có bản gốc | Khối rỗng gọn theo nhịp D | Hai lối đi cạnh nhau | Dán ngay tại chỗ, xem trước bên cạnh | **B** (2026-10-02) |
 | Từng câu | Bảng gọn theo nhịp D | Hàng rộng (đang chạy trước 2026-10-02) | Có lọc, và panel phụ dưới hàng | **C** (2026-10-02) |
+| Hỏi AI | Cột thứ ba kéo rộng được | Thanh ngang dưới pane dịch | Cột thứ ba, khay đề xuất ghim | chưa chốt |
+
+Màn **Hỏi AI** có thêm hai phương án nội dung **D** (A gọn chữ) và **E** (A bỏ hàng tiêu đề) trên cùng
+bố cục A, và mười trạng thái thay cho bốn. Ba nguồn của màn này:
+
+- **Khuôn tin nhắn** từ `references/components/chat.md` của skill `ui-ux`, đổi sang token và nhịp của
+  Mira (tin nhắn 13px thay vì 16px).
+- **Khuôn ô soạn** theo Cursor và Antigravity (chủ dự án yêu cầu 2026-10-02): chip ngữ cảnh và thanh
+  công cụ nằm trong hộp soạn, chọn chế độ và chọn model ngay cạnh nút gửi; panel rộng 420px theo khoảng
+  400–520px của Cursor.
+- **Hai chế độ Hỏi/Sửa, danh sách model và giá** từ [ai-provider-integration.md](../../research/ai-provider-integration.md).
+  Doc đó chốt Mira **không làm chế độ Agent**, và ghi rõ giá phải đọc lại trang chính chủ trước khi vào UI thật —
+  số trong wireframe là số mẫu.
+
+Màn này mô tả tính năng **chưa chốt phạm vi** — xem câu hỏi mở #3 trong [editor-redesign.md](../editor-redesign.md).
 
 Ba màn đầu đã chốt được dựng trong change [`screens-rhythm-d`](../../../../openspec/changes/screens-rhythm-d/proposal.md); wireframe giữ lại làm hồ sơ chọn lựa, **không** cập nhật theo code. Từng câu chốt phương án C riêng ngày 2026-10-02 (sau `screens-rhythm-d`): dựng thêm thanh lọc và panel gợi ý ở dạng minh họa, xem `sentence-mode-toolbar`/`sentence-mode-side-panels` trong [backlog](../../delivery/backlog.md). Một màn (Chi tiết tác phẩm) vẫn chưa chốt.
 
