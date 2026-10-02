@@ -22,7 +22,7 @@ import type { SegmentInput, TextRecord, TextSide } from '../../shared/text'
 import type { RowSaved } from '../../shared/rows'
 import { createLink, getProvenance, listLinks, setProvenance } from './linkFile'
 import type { LinkInput, LinkRecord, ProvenanceRecord } from './linkFile'
-import { autoPair, reviewRow, saveRow, type RowRef } from './sentenceRows'
+import { autoPair, reviewRow, saveRow, type RowAuthor, type RowRef } from './sentenceRows'
 import { readText, saveText } from './textFile'
 import { exportToFile, verifyWorkFile } from './backupFile'
 import { decodeCover, encodeCover } from './cover'
@@ -96,6 +96,24 @@ export class LibraryStore {
     const store = new LibraryStore(options.dataDir, options)
     store.reconcile()
     return store
+  }
+
+  /**
+   * Cơ sở dữ liệu phạm vi ứng dụng (`library.db`), cho những thứ không thuộc một tác phẩm nào —
+   * hiện là cài đặt kết nối AI. **Chỉ dùng trong main process**, và chỉ cho dữ liệu cấp ứng dụng:
+   * mọi thứ thuộc về một tác phẩm vẫn đi qua các phương thức của lớp này.
+   */
+  get appDb(): Db {
+    return this.index
+  }
+
+  /** Dùng chung với kho tác phẩm để id của kết nối và khóa cùng một kiểu. */
+  newAppId(): string {
+    return this.newId()
+  }
+
+  appNow(): number {
+    return this.now()
   }
 
   list(): WorkList {
@@ -233,7 +251,10 @@ export class LibraryStore {
    * The translation of one row, written into the chapter's translation with its segments and its
    * link, in one transaction. `expectedRev` is the translation revision the caller last read.
    */
-  saveRow(workId: string, args: RowRef & { text: string; expectedRev: number }): RowSaved {
+  saveRow(
+    workId: string,
+    args: RowRef & { text: string; expectedRev: number; by?: RowAuthor }
+  ): RowSaved {
     return this.changeChapters(workId, (db, now) => ({
       saved: saveRow(db, args, now, this.newContentId)
     })).saved

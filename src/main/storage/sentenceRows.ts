@@ -10,7 +10,14 @@ import {
 } from '../../shared/segmentMap'
 import type { TextRecord } from '../../shared/text'
 import { StorageError } from './errors'
-import { createLink, deleteLink, listLinks, markReviewed, setProvenance } from './linkFile'
+import {
+  createLink,
+  deleteLink,
+  listLinks,
+  markReviewed,
+  setProvenance,
+  type ProvenanceOrigin
+} from './linkFile'
 import type { Db } from './sqlite'
 import { readText, saveText } from './textFile'
 
@@ -24,6 +31,19 @@ export interface RowRef {
   chapterId: string
   sourceId: string
 }
+
+/**
+ * Who wrote the row's translation. The default is the person at the keyboard; an AI translation
+ * comes through here so its link is `kind: 'ai'` and unconfirmed, and its provenance carries the
+ * provider and the model. That difference is what tells "AI suggested" apart from "looked at".
+ */
+export interface RowAuthor {
+  origin: ProvenanceOrigin
+  provider: string | null
+  model: string | null
+}
+
+const BY_HAND: RowAuthor = { origin: 'human', provider: null, model: null }
 
 /** Between two translated sentences: a line break when their source sentences are on different lines. */
 function separatorBetween(source: TextRecord, before: number, after: number): string {
@@ -69,7 +89,7 @@ function linksOfRow(links: LinkRecord[], source: TextRecord, sourceId: string): 
 
 export function saveRow(
   db: Db,
-  args: RowRef & { text: string; expectedRev: number },
+  args: RowRef & { text: string; expectedRev: number; by?: RowAuthor },
   now: number,
   newId: () => string
 ): RowSaved {
@@ -183,16 +203,30 @@ export function saveRow(
   let created: LinkRecord | null = null
 
   if (rowIndices.length > 0) {
+    const by = args.by ?? BY_HAND
+    const byHand = by.origin === 'human'
     const targetIds = rowIndices.map((i) => saved.segments[i].id)
     created = createLink(
       db,
       chapterId,
-      { kind: 'user', status: 'ok', reviewedAt: now, members: [sourceId, ...targetIds] },
+      {
+        kind: byHand ? 'user' : 'ai',
+        status: 'ok',
+        // A person writing a row has looked at it by definition; a machine has not.
+        reviewedAt: byHand ? now : null,
+        members: [sourceId, ...targetIds]
+      },
       now,
       newId()
     )
     for (const segmentId of targetIds) {
-      setProvenance(db, { segmentId, origin: 'human', provider: null, model: null, at: now })
+      setProvenance(db, {
+        segmentId,
+        origin: by.origin,
+        provider: by.provider,
+        model: by.model,
+        at: now
+      })
     }
   }
   const remaining = links.filter((link) => !own.includes(link))
