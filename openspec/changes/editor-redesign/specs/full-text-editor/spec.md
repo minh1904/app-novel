@@ -6,7 +6,7 @@ Màn chương SHALL dựng chrome theo phương án wireframe D ("B gọn chữ"
 
 - Thanh thứ nhất cao 42px SHALL chứa tên chương (cỡ chữ 12.5px, đậm) với tác phẩm, cặp ngôn ngữ và số liệu đi sau ở màu chữ phụ, và các nút thao tác dồn về mép phải.
 - Thanh thứ hai cao 36px SHALL chứa tab mode và hàng nhãn Ngữ cảnh trên **cùng một hàng**.
-- Vùng hai pane SHALL cách mép 12px và cách nhau 12px; mỗi pane SHALL là một khối có viền, bo góc `--radius-panel`, nền `--surface-sidebar`, đệm trong 12px. Văn bản bên trong pane SHALL NOT vẽ thêm viền của riêng nó.
+- Vùng hai pane SHALL sát mép và sát nhau (không khoảng cách, không bo góc), mỗi pane vuông, nền `--surface-sidebar`, đệm trong 12px, ngăn cách nhau và ngăn cách mép cửa sổ bằng đúng một đường kẻ 1px dùng chung (`divide-x` ở khung lưới, không phải viền riêng của từng pane) — giống bố cục các panel sát nhau của IDE (Explorer/Editor/Agent liền khối, chỉ có đường kẻ mỏng phân cách). *(Cập nhật 2026-10-02: đổi từ card có viền/bo góc/khoảng cách 12px theo yêu cầu người dùng, tham chiếu Antigravity IDE.)* Văn bản bên trong pane SHALL NOT vẽ thêm viền của riêng nó.
 - Tên pane, số liệu và trạng thái lưu SHALL nằm trên **một hàng**, không phải hai.
 
 Chỉ hai thao tác dùng thường xuyên SHALL đứng thẳng trên thanh (Lưu, và nút bật/tắt Tập trung); các thao tác hiếm ("Thay bản gốc", "Về tác phẩm") SHALL nằm trong một menu tràn ở cuối thanh. Nút trên thanh SHALL cao 28px; nút bên trong pane SHALL cao 24px.

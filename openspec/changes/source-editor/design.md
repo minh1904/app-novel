@@ -82,7 +82,7 @@ Xung đột thật sự chỉ xảy ra khi "Thay bản gốc" hoặc cửa sổ 
 
 ### D7. Hiển thị không chèn gì vào văn bản
 
-- Số thứ tự ở lề dùng `gutter()` của CM6: mỗi dòng nhìn thấy tra segment đầu tiên bắt đầu trên dòng bằng tìm nhị phân trên field. Chỉ vẽ cho dòng trong viewport.
+- ~~Số thứ tự ở lề dùng `gutter()` của CM6~~ *(Cập nhật 2026-10-02: bỏ cột số dòng theo yêu cầu người dùng — pane dịch văn xuôi không cần lề kiểu code editor; `gutter()`/`NumberMarker` đã gỡ khỏi `segmentDecorations.ts`.)*
 - Ranh giới câu trong dòng và dấu "đã sửa" dùng `Decoration.mark` (class CSS, nền xen kẽ rất nhẹ, gạch dưới chấm cho segment đã sửa) tính cho viewport bằng `ViewPlugin`. **Không dùng `Decoration.widget` hay phần tử chèn vào dòng**: widget sát con trỏ là nguồn quen thuộc của lỗi IME, và đây là chỗ ta cần tránh rủi ro.
 - Phông chữ qua `lang` và `font-family` theo ngôn ngữ (như `SegmentList`); xuống dòng bằng `EditorView.lineWrapping`.
 - `tabindex` mặc định: Tab rời editor (không cài keymap Tab); nhãn đọc được qua `contentAttributes` (`aria-label`, `aria-multiline`).

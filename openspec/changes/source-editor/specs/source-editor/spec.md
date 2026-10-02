@@ -6,11 +6,11 @@
 
 ### Requirement: Hiển thị đúng văn bản đã lưu
 
-Editor SHALL hiển thị văn bản của chương đúng từng ký tự như đã lưu, không chuẩn hóa hay đổi gì khi mở, kể cả thụt đầu dòng U+3000 và khoảng trắng cuối dòng. Văn bản SHALL tự xuống dòng trong khung, không cuộn ngang, và SHALL dùng phông chữ theo ngôn ngữ của văn bản (ngôn ngữ nguồn của tác phẩm cho bản gốc). Lề SHALL hiện số dòng bình thường (1, 2, 3… theo từng dòng của văn bản, kể cả dòng trống) bằng cùng phông chữ và cỡ chữ với văn bản. Vì một dòng thường chứa nhiều câu nên lề không đánh số segment; ranh giới giữa các segment trong dòng SHALL nhìn thấy được bằng nền xen kẽ rất nhẹ mà không chèn thêm ký tự hay phần tử vào văn bản. Segment đã bị sửa kể từ lần lưu cuối SHALL phân biệt được với segment chưa sửa, và số dòng của dòng có segment bắt đầu và đã sửa SHALL được đánh dấu.
+Editor SHALL hiển thị văn bản của chương đúng từng ký tự như đã lưu, không chuẩn hóa hay đổi gì khi mở, kể cả thụt đầu dòng U+3000 và khoảng trắng cuối dòng. Văn bản SHALL tự xuống dòng trong khung, không cuộn ngang, và SHALL dùng phông chữ theo ngôn ngữ của văn bản (ngôn ngữ nguồn của tác phẩm cho bản gốc). Editor SHALL NOT có lề số dòng — pane là vùng văn bản thuần, không có cột số dòng kiểu code editor. Ranh giới giữa các segment SHALL nhìn thấy được bằng nền xen kẽ rất nhẹ mà không chèn thêm ký tự hay phần tử vào văn bản. Segment đã bị sửa kể từ lần lưu cuối SHALL phân biệt được với segment chưa sửa bằng kiểu tô khác (không dùng số dòng để đánh dấu, vì không còn số dòng). *(Cập nhật 2026-10-02: bỏ cột số dòng ở lề theo yêu cầu người dùng — trang quá rộng/giống code editor so với một editor dịch văn xuôi.)*
 
 #### Scenario: Mở chương
 - **WHEN** người dùng mở chương có bản gốc 40 segment
-- **THEN** editor hiện văn bản đúng như đã lưu, ở lề có số dòng liên tiếp 1, 2, 3… (kể cả dòng trống) cùng cỡ chữ với văn bản, ranh giới giữa các câu trong cùng dòng nhìn thấy được, và không có segment nào bị đánh dấu đã sửa
+- **THEN** editor hiện văn bản đúng như đã lưu, không có cột số dòng ở lề, ranh giới giữa các câu nhìn thấy được bằng nền xen kẽ, và không có segment nào bị đánh dấu đã sửa
 
 #### Scenario: Phông chữ Nhật
 - **WHEN** tác phẩm có ngôn ngữ nguồn tiếng Nhật
