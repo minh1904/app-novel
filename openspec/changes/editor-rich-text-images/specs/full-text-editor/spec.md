@@ -72,9 +72,9 @@ Pane bản dịch SHALL hiển thị mỗi cú pháp nhúng ảnh hợp lệ (đ
 - **WHEN** cú pháp nhúng trỏ tới một ID ảnh không còn tồn tại trong dữ liệu tác phẩm
 - **THEN** pane hiện một ô giữ chỗ báo "Không tìm thấy ảnh" tại đúng vị trí, không chặn phần văn bản còn lại hiển thị hay sửa được
 
-### Requirement: Phím tắt Ctrl+B bật/tắt chữ đậm trong pane bản dịch
+### Requirement: Phím tắt Ctrl+B/Ctrl+I bật/tắt đậm và nghiêng trong pane bản dịch
 
-Khi con trỏ hoặc vùng soạn thảo đang ở trong pane bản dịch, Ctrl+B (Cmd+B trên macOS) SHALL bật/tắt `**đậm**` trên vùng chọn hiện tại thay vì bật/tắt thanh bên: có vùng chọn thường (chưa đậm) thì bọc `**...**` quanh vùng đó; vùng chọn hoặc con trỏ đang nằm trong một đoạn đã đậm sẵn (bất kể đang chọn đúng cả cặp `**` hay chỉ con trỏ ở giữa chữ) thì gỡ cặp `**` đó; không có vùng chọn (con trỏ đứng yên, chưa ở trong đoạn đậm nào) thì chèn một cặp `**` rỗng và đặt con trỏ vào giữa để gõ tiếp. Thao tác này SHALL không lan ra khỏi dòng chứa vùng chọn. Phím tắt Ctrl+B của ứng dụng (bật/tắt thanh bên, "Tập trung") SHALL NOT kích hoạt khi pane bản dịch vừa xử lý phím này.
+Khi con trỏ hoặc vùng soạn thảo đang ở trong pane bản dịch, Ctrl+B (Cmd+B trên macOS) SHALL bật/tắt `**đậm**` và Ctrl+I (Cmd+I) SHALL bật/tắt `*nghiêng*` trên vùng chọn hiện tại — cùng một quy tắc cho cả hai, chỉ khác cặp dấu: có vùng chọn thường (chưa mang định dạng đó) thì bọc cặp dấu quanh vùng đó; vùng chọn hoặc con trỏ đang nằm trong một đoạn đã mang định dạng đó sẵn (bất kể đang chọn đúng cả cặp dấu hay chỉ con trỏ ở giữa chữ) thì gỡ cặp dấu đó; không có vùng chọn (con trỏ đứng yên, chưa ở trong đoạn nào mang định dạng đó) thì chèn một cặp dấu rỗng và đặt con trỏ vào giữa để gõ tiếp. Thao tác này SHALL không lan ra khỏi dòng chứa vùng chọn. Ctrl+I SHALL NOT đọc nhầm một cặp `**` đậm thành cặp `*` nghiêng lồng bên trong — đứng trong một đoạn chỉ có đậm (không có nghiêng) và bấm Ctrl+I SHALL bọc thêm một cặp `*` rỗng tại vị trí con trỏ, không được gỡ hay sửa cặp `**` đã có. Ctrl+B của ứng dụng (bật/tắt thanh bên, "Tập trung") SHALL NOT kích hoạt khi pane bản dịch vừa xử lý phím Ctrl+B này.
 
 #### Scenario: Bọc chữ đậm quanh vùng đang chọn
 - **WHEN** người dùng chọn chữ "quan trọng" trong pane bản dịch rồi bấm Ctrl+B
@@ -83,6 +83,14 @@ Khi con trỏ hoặc vùng soạn thảo đang ở trong pane bản dịch, Ctrl
 #### Scenario: Gỡ đậm khi con trỏ đang ở giữa chữ đã đậm
 - **WHEN** văn bản có "**quan trọng**", người dùng chỉ đặt con trỏ (không chọn gì) vào giữa chữ "trọng" rồi bấm Ctrl+B
 - **THEN** cặp `**` quanh "quan trọng" biến mất, còn lại "quan trọng" dạng chữ thường, vùng chọn mới là cả chữ "quan trọng"
+
+#### Scenario: Bọc chữ nghiêng quanh vùng đang chọn
+- **WHEN** người dùng chọn chữ "quan trọng" trong pane bản dịch rồi bấm Ctrl+I
+- **THEN** chữ đã chọn trở thành "*quan trọng*", hiện nghiêng ngay theo Live Preview, vùng chọn mới là đúng phần chữ "quan trọng"
+
+#### Scenario: Ctrl+I không đụng vào đoạn chỉ đậm
+- **WHEN** văn bản có "**quan trọng**" (chỉ đậm, không nghiêng), người dùng đặt con trỏ vào giữa chữ "trọng" rồi bấm Ctrl+I
+- **THEN** cặp `**` không đổi; một cặp `*` rỗng được chèn tại vị trí con trỏ để gõ chữ nghiêng mới, không gỡ hay sửa gì của đậm
 
 #### Scenario: Ctrl+B trong editor không đóng/mở thanh bên
 - **WHEN** con trỏ đang ở trong pane bản dịch và người dùng bấm Ctrl+B

@@ -23,7 +23,7 @@ import {
   type SessionStatus,
   type TextStore
 } from './editorSession'
-import { toggleBold } from './boldCommand'
+import { toggleBold, toggleItalic } from './formatCommands'
 import { imageEmbedDecorations, type ImageStore } from './imageEmbedDecorations'
 import { livePreviewDecorations } from './livePreviewDecorations'
 import { idleResegment } from './resegmenter'
@@ -224,7 +224,13 @@ export function TextEditor({
           }),
           segmentDecorations(),
           ...(livePreview
-            ? [livePreviewDecorations(), keymap.of([{ key: 'Mod-b', run: toggleBold }])]
+            ? [
+                livePreviewDecorations(),
+                keymap.of([
+                  { key: 'Mod-b', run: toggleBold },
+                  { key: 'Mod-i', run: toggleItalic }
+                ])
+              ]
             : []),
           ...(images ? [imageEmbedDecorations(images), imagePasteDrop(images, setImageError)] : []),
           idleResegment(lang, 800, () => sessionRef.current?.saving ?? false),

@@ -9,7 +9,7 @@ Ký hiệu trạng thái: ✅ Đã có · ◐ Một phần · ☐ Chưa có · �
 | Tính năng | Cú pháp Obsidian | Trạng thái | Ghi chú |
 | --- | --- | --- | --- |
 | Đậm | `**x**` / `__x__` | ✅ | Live Preview ẩn hẳn cặp dấu khi con trỏ rời khỏi span đã gõ xong — loại cú pháp duy nhất ẩn, không chỉ mờ (lý do IME ở `design.md` D1b của `editor-rich-text-images`). Ctrl+B bật/tắt. |
-| Nghiêng | `*x*` / `_x_` | ✅ | Cùng cơ chế ẩn/hiện như đậm. **Chưa có phím tắt Ctrl+I.** |
+| Nghiêng | `*x*` / `_x_` | ✅ | Cùng cơ chế ẩn/hiện như đậm. Ctrl+I bật/tắt (2026-10-02); chỉ chèn `*x*`, không tự dùng `_x_`. |
 | Đậm + nghiêng lồng | `***x***` | ☐ | Non-goal đã ghi: không xử lý cú pháp lồng nhau. |
 | Gạch ngang | `~~x~~` | ✅ | Cùng cơ chế ẩn/hiện như đậm. **Chưa có phím tắt.** |
 | Highlight | `==x==` | ☐ | Chưa làm. |
@@ -70,7 +70,7 @@ Ký hiệu trạng thái: ✅ Đã có · ◐ Một phần · ☐ Chưa có · �
 | Live Preview (ẩn cú pháp khi con trỏ rời) | Ẩn hẳn mọi cú pháp khi không focus dòng đó | ◐ | Chỉ đậm/nghiêng/gạch ngang ẩn hẳn; tiêu đề/trích dẫn/danh sách chỉ mờ, luôn hiện (ẩn dấu đầu dòng sẽ mất luôn dấu hiệu "đây là gì" mà không có gì thay thế). |
 | Reading view | Render Markdown đầy đủ, chỉ đọc | ◐ | Có view riêng (`ReadingView.tsx`) nhưng hiện văn bản thuần theo đoạn — `#`, `*` vẫn hiện nguyên ký tự, chưa render thật. |
 | Source mode | Luôn hiện markdown thô | — | Không tách riêng khỏi Live Preview; bản gốc (readOnly) là một khái niệm khác, không phải "source mode" của bản dịch. |
-| Phím tắt định dạng | Ctrl+B, Ctrl+I, Ctrl+K (link)... | ◐ | Chỉ Ctrl+B (vừa sửa khỏi xung đột với phím tắt thanh bên — xem `design.md` D8). Ctrl+I/gạch ngang chưa có. **Ctrl+K đã bị dùng cho panel "Hỏi AI"**, không còn trống cho link. |
+| Phím tắt định dạng | Ctrl+B, Ctrl+I, Ctrl+K (link)... | ◐ | Ctrl+B và Ctrl+I đã có (`formatCommands.ts`, cùng một hàm tham số hoá theo dấu bọc — xem `design.md` D8), cùng chặn không đọc nhầm `**` thành `*` lồng bên trong. Không làm phím cho gạch ngang (không có quy ước bàn phím chuẩn). **Ctrl+K đã bị dùng cho panel "Hỏi AI"**, không còn trống cho link. |
 | Backlinks panel | Danh sách note trỏ tới note hiện tại | — | Không có liên kết nhiều note để truy ngược. |
 | Outline (mục lục theo heading) | Cây heading của note, bấm nhảy tới | ☐ | Chưa làm — có thể hữu ích để nhảy giữa các đoạn dài trong một chương. |
 | Graph view | Mạng lưới note liên kết | — | Không hợp mô hình một tác phẩm → nhiều chương tuyến tính. |
