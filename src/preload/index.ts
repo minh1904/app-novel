@@ -100,6 +100,14 @@ const desktopApi: DesktopApi = {
         Result<{ links: LinkRecord[]; paired: number }>
       >
   },
+  images: {
+    put: (workId: string, data: string) =>
+      ipcRenderer.invoke(CHANNELS.imagesPut, { workId, data }) as Promise<Result<{ id: string }>>,
+    get: (workId: string, imageId: string) =>
+      ipcRenderer.invoke(CHANNELS.imagesGet, { workId, imageId }) as Promise<Result<string | null>>,
+    delete: (workId: string, imageId: string) =>
+      ipcRenderer.invoke(CHANNELS.imagesDelete, { workId, imageId }) as Promise<Result<void>>
+  },
   backup: {
     export: (workId: string) =>
       ipcRenderer.invoke(CHANNELS.backupExport, { workId }) as Promise<Result<BackupExported>>,

@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 4, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 5, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -101,6 +101,27 @@ describe('work schema', () => {
     expect(
       thrown(() => db.exec("INSERT INTO link_member (link_id, segment_id) VALUES ('l1', 'nope')"))
     ).toBe(true)
+    db.close()
+  })
+
+  it('rejects an image with an unaccepted mime or empty bytes', () => {
+    const db = fresh()
+    expect(
+      thrown(() =>
+        db.exec(
+          "INSERT INTO image (id, mime, data, created_at) VALUES ('i1', 'image/svg+xml', x'00', 1)"
+        )
+      )
+    ).toBe(true)
+    expect(
+      thrown(() =>
+        db.exec("INSERT INTO image (id, mime, data, created_at) VALUES ('i1', 'image/png', x'', 1)")
+      )
+    ).toBe(true)
+    db.exec(
+      "INSERT INTO image (id, mime, data, created_at) VALUES ('i1', 'image/png', x'89504e47', 1)"
+    )
+    expect(db.prepare('SELECT count(*) AS n FROM image').get<{ n: number }>()!.n).toBe(1)
     db.close()
   })
 

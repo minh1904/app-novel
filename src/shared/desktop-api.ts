@@ -76,6 +76,14 @@ export interface RowsApi {
   ): Promise<Result<{ links: LinkRecord[]; paired: number }>>
 }
 
+export interface ImagesApi {
+  /** Stores an image (a data URL) pasted or dropped into a chapter's translation; returns its ID. */
+  put(workId: string, data: string): Promise<Result<{ id: string }>>
+  /** The image as a data URL, or null when it no longer exists. */
+  get(workId: string, imageId: string): Promise<Result<string | null>>
+  delete(workId: string, imageId: string): Promise<Result<void>>
+}
+
 export interface BackupApi {
   /**
    * Opens a "save as" dialog (suggesting a file name) and writes a backup of the work there.
@@ -92,5 +100,6 @@ export interface DesktopApi {
   chapters: ChaptersApi
   text: TextApi
   rows: RowsApi
+  images: ImagesApi
   backup: BackupApi
 }

@@ -19,7 +19,10 @@ export const CHANNELS = {
   rowReview: 'rows:review',
   rowsAutoPair: 'rows:autopair',
   backupExport: 'backup:export',
-  backupRestore: 'backup:restore'
+  backupRestore: 'backup:restore',
+  imagesPut: 'images:put',
+  imagesGet: 'images:get',
+  imagesDelete: 'images:delete'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

@@ -126,6 +126,20 @@ UPDATE chapter_text SET size = length(content);
 CREATE INDEX chapter_text_presence ON chapter_text (chapter_id, side, size);
 `
 
+/**
+ * Images pasted or dropped into a chapter's translation. There is no attachments folder like
+ * Obsidian's vault: each image is a blob in this same file, named by a generated ID that the
+ * Markdown embed syntax (`![[id]]`) refers to.
+ */
+const version5 = `
+CREATE TABLE image (
+  id TEXT PRIMARY KEY,
+  mime TEXT NOT NULL CHECK (mime IN ('image/png', 'image/jpeg', 'image/gif', 'image/webp')),
+  data BLOB NOT NULL CHECK (length(data) > 0),
+  created_at INTEGER NOT NULL
+);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -152,6 +166,12 @@ export const workSchema: SchemaSpec = {
       version: 4,
       up(db) {
         db.exec(version4)
+      }
+    },
+    {
+      version: 5,
+      up(db) {
+        db.exec(version5)
       }
     }
   ]

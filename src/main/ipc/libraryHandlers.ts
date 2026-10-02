@@ -12,6 +12,7 @@ import {
   setCoverSchema,
   updateWorkSchema
 } from '../../shared/library'
+import { deleteImageSchema, getImageSchema, putImageSchema } from '../../shared/images'
 import { chapterLinksSchema, rowRefSchema, saveRowSchema } from '../../shared/rows'
 import { fail, type Result } from '../../shared/result'
 import { saveTextSchema, textRefSchema } from '../../shared/text'
@@ -90,6 +91,15 @@ export function createLibraryHandlers(
       saveTextSchema,
       ({ workId, chapterId, side, content, expectedRev, segments }) =>
         library.saveText(workId, chapterId, side, content, expectedRev, segments)
+    ),
+    [CHANNELS.imagesPut]: createHandler(putImageSchema, ({ workId, data }) =>
+      library.putImage(workId, data)
+    ),
+    [CHANNELS.imagesGet]: createHandler(getImageSchema, ({ workId, imageId }) =>
+      library.getImage(workId, imageId)
+    ),
+    [CHANNELS.imagesDelete]: createHandler(deleteImageSchema, ({ workId, imageId }) =>
+      library.deleteImage(workId, imageId)
     )
   }
 }

@@ -9,6 +9,7 @@ import type {
   WorkProblem,
   WorkSummary
 } from '../../shared/library'
+import { IMAGE_MAX_PER_WORK } from '../../shared/images'
 import {
   deleteChapter,
   insertChapter,
@@ -25,16 +26,21 @@ import { autoPair, reviewRow, saveRow, type RowRef } from './sentenceRows'
 import { readText, saveText } from './textFile'
 import { exportToFile, verifyWorkFile } from './backupFile'
 import { decodeCover, encodeCover } from './cover'
+import { decodeImage, encodeImage } from './image'
 import { StorageError, toStorageError } from './errors'
 import { librarySchema } from './librarySchema'
 import { migrate } from './migrate'
 import { openDatabase, type Db } from './sqlite'
 import {
   assertWorkId,
+  countImages,
+  deleteImage,
+  insertImage,
   insertWork,
   openWorkFile,
   patchWork,
   readCover,
+  readImage,
   readWork,
   rowToSummary,
   writeCover,
@@ -292,6 +298,40 @@ export class LibraryStore {
     })
     this.syncIndex(summary)
     return summary
+  }
+
+  /**
+   * Stores a pasted or dropped image as a blob in the work's own file and returns its generated ID;
+   * the embed syntax in the translation (`![[id]]`) refers to this ID, never a file name.
+   */
+  putImage(workId: string, dataUrl: string): { id: string } {
+    const image = decodeImage(dataUrl)
+    return this.withWork(workId, (db) =>
+      db.transaction(() => {
+        if (countImages(db) >= IMAGE_MAX_PER_WORK) {
+          throw new StorageError(
+            'validation',
+            'Tác phẩm đã có ' + IMAGE_MAX_PER_WORK + ' ảnh, đây là giới hạn tối đa.'
+          )
+        }
+        const id = this.newContentId()
+        insertImage(db, id, image, this.now())
+        return { id }
+      })
+    )
+  }
+
+  /** The image as a data URL, or null when it no longer exists (e.g. an embed left dangling). */
+  getImage(workId: string, imageId: string): string | null {
+    return this.withWork(workId, (db) => {
+      const image = readImage(db, imageId)
+      return image ? encodeImage(image) : null
+    })
+  }
+
+  /** Deleting an image that is already gone is not an error: the embed may have been removed first. */
+  deleteImage(workId: string, imageId: string): void {
+    this.withWork(workId, (db) => deleteImage(db, imageId))
   }
 
   /**
