@@ -110,9 +110,12 @@ export function ChapterWorkspace({
     [mode, saveAll]
   )
 
-  // Ctrl+S (Cmd+S) saves from anywhere on the screen.
+  // Ctrl+S (Cmd+S) saves from anywhere on the screen. `defaultPrevented` lets a more specific
+  // handler (inside an editor, a dialog) claim the key first; neither editor binds Mod-S today, but
+  // the check costs nothing and keeps every global shortcut in this file consistent.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.defaultPrevented) return
       if (event.key.toLowerCase() !== 's' || event.altKey || event.shiftKey) return
       if (!(event.ctrlKey || event.metaKey)) return
       event.preventDefault()
@@ -125,6 +128,7 @@ export function ChapterWorkspace({
   // Ctrl+K (Cmd+K) opens "Hỏi AI" in Toàn văn; Esc closes it. Illustration only, see AiPanel.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.defaultPrevented) return
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && mode === 'full') {
         event.preventDefault()
         setAiOpen((open) => !open)

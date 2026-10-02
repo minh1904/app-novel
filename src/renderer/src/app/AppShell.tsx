@@ -29,11 +29,17 @@ export function AppShell({
   actions,
   children
 }: AppShellProps): JSX.Element {
+  // A more specific handler closer to the key's target — the translation pane's own "bold" binding,
+  // for one — gets first look and calls preventDefault() when it claims the key; this global one
+  // backs off rather than also firing, the same way a browser lets an inner handler win.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
-      if (event.ctrlKey && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'b') {
-        event.preventDefault()
-        onToggleSidebar()
+      if (event.defaultPrevented) return
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey) {
+        if (event.key.toLowerCase() === 'b') {
+          event.preventDefault()
+          onToggleSidebar()
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown)

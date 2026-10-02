@@ -23,6 +23,7 @@ import {
   type SessionStatus,
   type TextStore
 } from './editorSession'
+import { toggleBold } from './boldCommand'
 import { imageEmbedDecorations, type ImageStore } from './imageEmbedDecorations'
 import { livePreviewDecorations } from './livePreviewDecorations'
 import { idleResegment } from './resegmenter'
@@ -222,7 +223,9 @@ export function TextEditor({
             if (update.docChanged) setEmpty(update.state.doc.length === 0)
           }),
           segmentDecorations(),
-          ...(livePreview ? [livePreviewDecorations()] : []),
+          ...(livePreview
+            ? [livePreviewDecorations(), keymap.of([{ key: 'Mod-b', run: toggleBold }])]
+            : []),
           ...(images ? [imageEmbedDecorations(images), imagePasteDrop(images, setImageError)] : []),
           idleResegment(lang, 800, () => sessionRef.current?.saving ?? false),
           theme

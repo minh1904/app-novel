@@ -71,3 +71,23 @@ Pane bản dịch SHALL hiển thị mỗi cú pháp nhúng ảnh hợp lệ (đ
 #### Scenario: Ảnh hỏng hoặc không tìm thấy
 - **WHEN** cú pháp nhúng trỏ tới một ID ảnh không còn tồn tại trong dữ liệu tác phẩm
 - **THEN** pane hiện một ô giữ chỗ báo "Không tìm thấy ảnh" tại đúng vị trí, không chặn phần văn bản còn lại hiển thị hay sửa được
+
+### Requirement: Phím tắt Ctrl+B bật/tắt chữ đậm trong pane bản dịch
+
+Khi con trỏ hoặc vùng soạn thảo đang ở trong pane bản dịch, Ctrl+B (Cmd+B trên macOS) SHALL bật/tắt `**đậm**` trên vùng chọn hiện tại thay vì bật/tắt thanh bên: có vùng chọn thường (chưa đậm) thì bọc `**...**` quanh vùng đó; vùng chọn hoặc con trỏ đang nằm trong một đoạn đã đậm sẵn (bất kể đang chọn đúng cả cặp `**` hay chỉ con trỏ ở giữa chữ) thì gỡ cặp `**` đó; không có vùng chọn (con trỏ đứng yên, chưa ở trong đoạn đậm nào) thì chèn một cặp `**` rỗng và đặt con trỏ vào giữa để gõ tiếp. Thao tác này SHALL không lan ra khỏi dòng chứa vùng chọn. Phím tắt Ctrl+B của ứng dụng (bật/tắt thanh bên, "Tập trung") SHALL NOT kích hoạt khi pane bản dịch vừa xử lý phím này.
+
+#### Scenario: Bọc chữ đậm quanh vùng đang chọn
+- **WHEN** người dùng chọn chữ "quan trọng" trong pane bản dịch rồi bấm Ctrl+B
+- **THEN** chữ đã chọn trở thành "**quan trọng**", hiện đậm ngay theo Live Preview, vùng chọn mới là đúng phần chữ "quan trọng" (không gồm hai cặp `**`)
+
+#### Scenario: Gỡ đậm khi con trỏ đang ở giữa chữ đã đậm
+- **WHEN** văn bản có "**quan trọng**", người dùng chỉ đặt con trỏ (không chọn gì) vào giữa chữ "trọng" rồi bấm Ctrl+B
+- **THEN** cặp `**` quanh "quan trọng" biến mất, còn lại "quan trọng" dạng chữ thường, vùng chọn mới là cả chữ "quan trọng"
+
+#### Scenario: Ctrl+B trong editor không đóng/mở thanh bên
+- **WHEN** con trỏ đang ở trong pane bản dịch và người dùng bấm Ctrl+B
+- **THEN** thanh bên (điều hướng chương) giữ nguyên trạng thái đóng/mở, không đổi
+
+#### Scenario: Ctrl+B ngoài editor vẫn đóng/mở thanh bên như cũ
+- **WHEN** con trỏ không ở trong pane bản dịch (ví dụ đang ở màn thư viện) và người dùng bấm Ctrl+B
+- **THEN** thanh bên đóng/mở như hành vi đã có, không đổi

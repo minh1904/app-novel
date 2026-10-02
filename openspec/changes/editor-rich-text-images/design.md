@@ -80,6 +80,20 @@ Trước khi gọi `images.put`, renderer resize ảnh về cạnh dài nhất t
 
 Chỉ nhận `.png .jpg .jpeg .gif .webp`. Bỏ `.svg` (có thể chứa script, rủi ro nếu render trực tiếp trong renderer) và `.avif .bmp` (ít gặp trong luồng dán từ clipboard/trình duyệt, không đáng thêm độ phức tạp kiểm tra).
 
+### D8. Phím tắt Ctrl+B cho đậm — khớp vào `keymap` của CodeMirror, không thêm thư viện phím tắt
+
+Người dùng báo lỗi: bấm Ctrl+B trong pane bản dịch lại đóng/mở thanh bên thay vì in đậm, và yêu cầu "nghiên cứu xem đặt phím tắt như nào, nếu cần thiết thì cài thư viện". Đã khảo sát nguyên nhân và các lựa chọn trước khi sửa.
+
+**Nguyên nhân:** `AppShell.tsx` gắn `window.addEventListener('keydown', ...)` toàn cục cho Ctrl+B, không kiểm tra focus đang ở đâu, nên luôn chạy bất kể con trỏ đang trong CodeMirror hay không. Trong khi đó `TextEditor` chưa hề có binding Ctrl+B nào — không phải do Ctrl+B "ưu tiên sai", mà do chưa có ai nhận phím này ở tầng editor để tranh phần với tầng ứng dụng.
+
+**Nghiên cứu:** đây là vấn đề *phạm vi phím tắt* (scoping), không phải thiếu công cụ bắt phím. Trình duyệt vốn đã có cơ chế chuẩn cho đúng việc này: `keydown` nổi bọt (bubble) từ phần tử đang có focus lên `window`; phần tử cụ thể hơn (ở đây là editor) luôn nhận sự kiện *trước* trình xử lý toàn cục gắn trên `window`. Nếu trình xử lý cụ thể gọi `event.preventDefault()`, trình xử lý toàn cục chỉ cần tự kiểm `event.defaultPrevented` trước khi hành động là tự nhường đúng cách — không cần thư viện quản lý phím tắt nào để làm việc này, vì bản chất là một lớp phần tử có phím tắt *riêng* nằm trong một lớp khác có phím tắt *chung*, và nền DOM đã giải quyết thứ tự ưu tiên đó sẵn. CodeMirror 6 cũng theo đúng mô hình này: `keymap.of([...])` là một extension gắn sự kiện trên gốc DOM của editor; `run` trả `true` thì CodeMirror tự gọi `preventDefault()` cho sự kiện gốc.
+
+**Quyết định:** thêm `keymap.of([{ key: 'Mod-b', run: toggleBold }])` vào `TextEditor` (chỉ khi `livePreview` bật, tức pane bản dịch) — `toggleBold` (`boldCommand.ts`) là một `Command` thuần của CodeMirror, không phải thư viện ngoài. Sửa ba trình xử lý toàn cục đang có (`AppShell` Ctrl+B, `ChapterWorkspace` Ctrl+S và Ctrl+K) để kiểm `event.defaultPrevented` trước khi hành động, theo đúng quy ước "handler cụ thể hơn nhận trước, handler chung chỉ chạy nếu phím chưa ai nhận". Nhân tiện sửa `AppShell` chỉ kiểm `event.ctrlKey` (thiếu `event.metaKey`), không nhất quán với hai trình xử lý kia — nay dùng chung `event.ctrlKey || event.metaKey`.
+
+**Phương án khác đã cân nhắc:**
+- *Cài một thư viện quản lý phím tắt* (`tinykeys`, `react-hotkeys-hook`, `hotkeys-js`, `mousetrap`...). Bị loại: những thư viện này giải quyết tốt bài toán "nhiều phím tắt rải khắp app, cần một nơi khai báo tập trung", nhưng **không tự giải quyết xung đột với CodeMirror** — CodeMirror có `keymap` riêng của chính nó, một thư viện phím tắt ngoài vẫn phải tự biết tránh né hoặc tích hợp với `keymap` đó, tức là vẫn quay lại đúng cơ chế `defaultPrevented`/DOM-scoping đã có sẵn. Thêm một dependency mới chỉ để bọc lại thứ nền tảng web đã làm đúng là không đáng, và ba trình xử lý hiện có không nhiều tới mức cần một framework quản lý.
+- *Gọi `stopPropagation()` ở `toggleBold`/CodeMirror thay vì dựa vào `defaultPrevented`*. CodeMirror không expose cách chèn `stopPropagation()` vào `run` của một `keymap` binding theo hướng sạch; `preventDefault()` + kiểm `defaultPrevented` ở tầng ngoài là cách idiomatic hơn và không cần chỉnh gì phía CodeMirror.
+
 ### Cấu trúc mã (dự kiến, chốt ở `tasks.md`)
 
 ```text

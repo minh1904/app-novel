@@ -1,5 +1,13 @@
 # Nhật ký handbook
 
+## Ctrl+B trong editor bật/tắt đậm thay vì đóng thanh bên — 2026-10-02
+
+- Người dùng báo: bấm Ctrl+B trong pane bản dịch lại đóng/mở thanh bên thay vì in đậm, kèm yêu cầu nghiên cứu cách đặt phím tắt cho đúng. Nguyên nhân: `AppShell.tsx` gắn trình xử lý `Ctrl+B` toàn cục trên `window`, không kiểm tra đang focus ở đâu, trong khi `TextEditor` chưa hề nhận Ctrl+B — không có gì "giành" phím đó ở tầng editor nên trình xử lý toàn cục luôn thắng.
+- Kết luận sau khi khảo sát (không cài thư viện phím tắt — xem D8 ở `editor-rich-text-images/design.md`): đây là vấn đề phạm vi (scoping), không phải thiếu công cụ bắt phím. `keydown` nổi bọt từ phần tử đang focus lên `window`; phần tử cụ thể hơn (editor) nhận trước và gọi `preventDefault()` khi tự xử lý; trình xử lý toàn cục chỉ cần kiểm `event.defaultPrevented` trước khi hành động là tự nhường đúng cách, không cần gì thêm ngoài nền DOM sẵn có.
+- `boldCommand.ts` (mới): `toggleBold` — một `Command` của CodeMirror — bọc/gỡ `**` quanh vùng chọn; nếu con trỏ hay vùng chọn đang nằm trong một đoạn đã đậm sẵn (quét dòng hiện tại bằng regex, không cần chọn đúng cả cặp `**`) thì gỡ đậm. Gắn vào `TextEditor` qua `keymap.of([{ key: 'Mod-b', run: toggleBold }])`, chỉ khi Live Preview bật (pane bản dịch).
+- Ba trình xử lý phím tắt toàn cục đang có (`AppShell` Ctrl+B thanh bên, `ChapterWorkspace` Ctrl+S và Ctrl+K) thêm `if (event.defaultPrevented) return` ở đầu, theo đúng quy ước "cụ thể hơn nhận trước". Nhân tiện sửa `AppShell` thiếu `event.metaKey` (chỉ kiểm `ctrlKey`), không nhất quán với hai nơi kia.
+- Cập nhật spec `editor-rich-text-images/specs/full-text-editor/spec.md` (yêu cầu + 4 scenario mới) và `current-state.md`. Kiểm bằng `pnpm typecheck`, `pnpm lint`, `electron-vite build`, `pnpm vitest run` (569/569, trừ 1 ca chập chờn ở `rows.test.ts` không liên quan) — đều sạch; chưa bấm thử trên Electron thật.
+
 ## Live Preview ẩn dấu đậm/nghiêng/gạch ngang khi rời con trỏ — 2026-10-02
 
 - Theo phản hồi trực tiếp của người dùng sau khi thử bản Live Preview (chỉ mờ dấu, không ẩn): đổi đậm/nghiêng/gạch ngang sang ẩn hẳn cặp dấu `**`/`*`/`_`/`~~` khi con trỏ/vùng chọn không chạm vào đúng đoạn đã gõ xong (đủ cặp mở/đóng), hiện lại mờ ngay khi bấm vào để sửa — không cần công tắc bật/tắt, tự động theo vị trí con trỏ, giống Live Preview thật của Obsidian. Tiêu đề/trích dẫn/danh sách **không** đổi (vẫn mờ, luôn hiện) vì ẩn hẳn dấu đầu dòng sẽ mất luôn dấu hiệu là tiêu đề/danh sách mà không có gì thay thế.
