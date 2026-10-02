@@ -23,8 +23,15 @@ export interface ChapterScreenController {
    * is when the editor must be opened again on the new text.
    */
   epoch: number
+  /**
+   * Changes whenever the translation was rewritten from outside the editor (AI translating the
+   * chapter), which is when the translation editor must be opened again on the new text.
+   */
+  targetEpoch: number
   /** Takes in a source that was just replaced, and refreshes the work so the library follows. */
   applySource(record: TextRecord): Promise<void>
+  /** Takes in a translation rewritten from outside the editor, and reopens the editor on it. */
+  applyTarget(record: TextRecord): Promise<void>
   /** The editor saved (or reloaded): the figures follow it, and the editor stays as it is. */
   noteSaved(record: TextRecord): Promise<void>
   /** The translation editor saved (or reloaded): the chapter and the work follow it. */
@@ -48,6 +55,7 @@ export function useChapterScreen(
   const [data, setData] = useState<Loaded | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [epoch, setEpoch] = useState(0)
+  const [targetEpoch, setTargetEpoch] = useState(0)
   const latest = useRef(0)
   const changed = useRef(onWorkChanged)
   useEffect(() => {
@@ -121,8 +129,9 @@ export function useChapterScreen(
   )
   const applySource = useCallback((record: TextRecord) => takeSource(record, true), [takeSource])
   const noteSaved = useCallback((record: TextRecord) => takeSource(record, false), [takeSource])
-  const noteTargetSaved = useCallback(
-    async (record: TextRecord): Promise<void> => {
+  const takeTarget = useCallback(
+    async (record: TextRecord, replaced: boolean): Promise<void> => {
+      if (replaced) setTargetEpoch((value) => value + 1)
       setData((current) =>
         current
           ? {
@@ -140,6 +149,11 @@ export function useChapterScreen(
     },
     [workId]
   )
+  const noteTargetSaved = useCallback(
+    (record: TextRecord) => takeTarget(record, false),
+    [takeTarget]
+  )
+  const applyTarget = useCallback((record: TextRecord) => takeTarget(record, true), [takeTarget])
 
   return {
     load,
@@ -150,7 +164,9 @@ export function useChapterScreen(
     error,
     reload,
     epoch,
+    targetEpoch,
     applySource,
+    applyTarget,
     noteSaved,
     noteTargetSaved
   }

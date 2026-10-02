@@ -27,6 +27,8 @@ export interface ChapterScreenProps {
   onBackToWork(): void
   /** Called with the work after the chapter changed, so the library list follows. */
   onWorkChanged(summary: WorkSummary): void
+  /** Nơi khai kết nối AI; hộp thoại "Dịch bằng AI" dẫn tới đây khi chưa có kết nối nào. */
+  onOpenSettings(): void
   /** True while the sidebar is hidden to give the editor room. */
   focused: boolean
   onToggleFocus(): void
@@ -42,6 +44,7 @@ export function ChapterScreen({
   chapterId,
   onBackToWork,
   onWorkChanged,
+  onOpenSettings,
   focused,
   onToggleFocus
 }: ChapterScreenProps): JSX.Element {
@@ -137,12 +140,15 @@ export function ChapterScreen({
           source={source}
           target={target}
           sourceEpoch={screen.epoch}
+          targetEpoch={screen.targetEpoch}
           sourceStore={sourceStore}
           targetStore={targetStore}
           onSourceSaved={(record) => void screen.noteSaved(record)}
           onTargetSaved={(record) => void screen.noteTargetSaved(record)}
           onBackToWork={onBackToWork}
           onReplaceSource={() => openDialog(null)}
+          onTargetReplaced={(record) => void screen.applyTarget(record)}
+          onOpenSettings={onOpenSettings}
           focused={focused}
           onToggleFocus={onToggleFocus}
         />

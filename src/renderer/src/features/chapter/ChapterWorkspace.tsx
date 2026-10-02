@@ -14,16 +14,23 @@ import type { SessionStatus, TextStore } from '../editor/editorSession'
 import { insertImageEmbed } from '../editor/imageEmbed'
 import type { ImageStore } from '../editor/imageEmbedDecorations'
 import { useConfirmLeave, useRegisterLeaveGuard } from '../editor/leaveGuard'
-import { ReadingView } from '../editor/ReadingView'
 import { TextEditor, type TextEditorHandle } from '../editor/TextEditor'
 import { languages, type Work } from '../library/works'
 import { headingTitle } from '../work/chapterList'
 import { SOON_LABEL } from '../work/mockFeatures'
 import { AiPanel } from './AiPanel'
+import { AiTranslateDialog } from './AiTranslateDialog'
 import { EditorPane } from './EditorPane'
 import { SentenceMode, type SentenceModeHandle } from './SentenceMode'
 
 const IDLE: SessionStatus = { state: 'saved', message: null, dirty: false }
+
+/**
+ * Tạm ẩn tab "Từng câu" khỏi giao diện: "Ghép theo thứ tự" hiện chỉ ghép theo thứ tự xuất hiện,
+ * chưa có ước lượng theo ngữ nghĩa (chờ change `segment-auto-align`, xem backlog.md). Phần còn lại
+ * của mode (state, switchMode, SentenceMode) giữ nguyên để bật lại chỉ bằng đổi hằng số này.
+ */
+const SENTENCE_MODE_ENABLED = false
 
 export interface ChapterWorkspaceProps {
   work: Work
@@ -32,12 +39,18 @@ export interface ChapterWorkspaceProps {
   target: TextRecord
   /** Changes when the source was replaced from outside, which is when the source editor reopens. */
   sourceEpoch: number
+  /** Changes when the translation was rewritten from outside (AI dịch chương): the editor reopens. */
+  targetEpoch: number
   sourceStore: TextStore
   targetStore: TextStore
   onSourceSaved(record: TextRecord): void
   onTargetSaved(record: TextRecord): void
   onBackToWork(): void
   onReplaceSource(): void
+  /** Nhận bản dịch AI vừa ghi, để trình soạn mở lại trên bản mới. */
+  onTargetReplaced(record: TextRecord): void
+  /** Nơi khai kết nối AI, cho hộp thoại dịch khi chưa có kết nối nào. */
+  onOpenSettings(): void
   /** True while the sidebar is hidden to give the panes room. */
   focused: boolean
   onToggleFocus(): void
@@ -60,12 +73,15 @@ export function ChapterWorkspace({
   source,
   target,
   sourceEpoch,
+  targetEpoch,
   sourceStore,
   targetStore,
   onSourceSaved,
   onTargetSaved,
   onBackToWork,
   onReplaceSource,
+  onTargetReplaced,
+  onOpenSettings,
   focused,
   onToggleFocus
 }: ChapterWorkspaceProps): JSX.Element {
@@ -74,11 +90,11 @@ export function ChapterWorkspace({
   const [sourceStatus, setSourceStatus] = useState<SessionStatus>(IDLE)
   const [targetStatus, setTargetStatus] = useState<SessionStatus>(IDLE)
   const [unlocked, setUnlocked] = useState(false)
-  const [reading, setReading] = useState(false)
   const [mode, setMode] = useState<'full' | 'sentence'>('full')
   const sentence = useRef<SentenceModeHandle>(null)
-  const [readText, setReadText] = useState('')
   const [aiOpen, setAiOpen] = useState(false)
+  const [translateOpen, setTranslateOpen] = useState(false)
+  const translateOpener = useRef<HTMLElement | null>(null)
   const confirmLeave = useConfirmLeave()
   const [imageStore] = useState<ImageStore>(() => ({
     insert: (file) => insertImageEmbed(work.id, file),
@@ -165,15 +181,10 @@ export function ChapterWorkspace({
       return
     }
     setUnlocked(false)
-    setReading(false)
     setAiOpen(false)
     setMode(next)
   }
 
-  function showReading(): void {
-    setReadText(targetEditor.current?.getText() ?? '')
-    setReading(true)
-  }
 
   const sourceLanguage = languages[work.sourceLanguage]
 
@@ -236,6 +247,19 @@ export function ChapterWorkspace({
                 <DocumentAddIcon size={14} className="text-ink-muted" />
                 Thay bản gốc
               </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  translateOpener.current =
+                    document.activeElement instanceof HTMLElement ? document.activeElement : null
+                  // Bản dịch đang có chữ chưa lưu thì xử lý trước: AI ghi thẳng vào kho.
+                  void confirmLeave({ reloadOnDiscard: true }).then((proceed) => {
+                    if (proceed) setTranslateOpen(true)
+                  })
+                }}
+              >
+                <StarsIcon size={14} className="text-ink-muted" />
+                Dịch bằng AI
+              </MenuItem>
               <MenuItem onClick={onBackToWork}>
                 <AltArrowLeftIcon size={14} className="text-ink-muted" />
                 Về tác phẩm
@@ -247,21 +271,25 @@ export function ChapterWorkspace({
 
       {/* The mode, and the context the translator reads while working. One row, so the panes keep the height. */}
       <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-chrome px-2.5">
-        <TabsRoot
-          value={mode}
-          aria-label="Chế độ soạn thảo"
-          onValueChange={(value) => void switchMode(value as 'full' | 'sentence')}
-        >
-          <TabsList size="sm">
-            <TabsTab size="sm" value="full">
-              Toàn văn
-            </TabsTab>
-            <TabsTab size="sm" value="sentence">
-              Từng câu
-            </TabsTab>
-          </TabsList>
-        </TabsRoot>
-        <span className="h-4 w-px shrink-0 bg-line" aria-hidden="true" />
+        {SENTENCE_MODE_ENABLED && (
+          <>
+            <TabsRoot
+              value={mode}
+              aria-label="Chế độ soạn thảo"
+              onValueChange={(value) => void switchMode(value as 'full' | 'sentence')}
+            >
+              <TabsList size="sm">
+                <TabsTab size="sm" value="full">
+                  Toàn văn
+                </TabsTab>
+                <TabsTab size="sm" value="sentence">
+                  Từng câu
+                </TabsTab>
+              </TabsList>
+            </TabsRoot>
+            <span className="h-4 w-px shrink-0 bg-line" aria-hidden="true" />
+          </>
+        )}
         {/* One badge for the group, not one per label: the row has to fit in 36px. */}
         <div
           role="group"
@@ -334,52 +362,20 @@ export function ChapterWorkspace({
             />
           </EditorPane>
 
-          <EditorPane
-            title="Bản dịch"
-            subtitle="Tiếng Việt"
-            status={targetStatus}
-            actions={
-              <div
-                role="group"
-                aria-label="Cách xem bản dịch"
-                className="flex items-center gap-[2px] rounded-tab bg-control p-[2px]"
-              >
-                <Button
-                  variant={reading ? 'ghost' : 'secondary'}
-                  size="sm"
-                  className="rounded-[7px]"
-                  aria-pressed={!reading}
-                  onClick={() => setReading(false)}
-                >
-                  Soạn thảo
-                </Button>
-                <Button
-                  variant={reading ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="rounded-[7px]"
-                  aria-pressed={reading}
-                  onClick={showReading}
-                >
-                  Đọc
-                </Button>
-              </div>
-            }
-          >
-            {reading && <ReadingView text={readText} lang="vi" label="Bản dịch của chương (đọc)" />}
-            <div className={reading ? 'hidden' : 'h-full'}>
-              <TextEditor
-                handleRef={targetEditor}
-                record={target}
-                lang="vi"
-                label="Bản dịch của chương"
-                store={targetStore}
-                livePreview
-                images={imageStore}
-                emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
-                onSaved={onTargetSaved}
-                onStatusChange={setTargetStatus}
-              />
-            </div>
+          <EditorPane title="Bản dịch" subtitle="Tiếng Việt" status={targetStatus}>
+            <TextEditor
+              key={targetEpoch}
+              handleRef={targetEditor}
+              record={target}
+              lang="vi"
+              label="Bản dịch của chương"
+              store={targetStore}
+              livePreview
+              images={imageStore}
+              emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
+              onSaved={onTargetSaved}
+              onStatusChange={setTargetStatus}
+            />
           </EditorPane>
 
           {aiOpen && (
@@ -390,6 +386,16 @@ export function ChapterWorkspace({
           )}
         </div>
       )}
+
+      <AiTranslateDialog
+        open={translateOpen}
+        onOpenChange={setTranslateOpen}
+        workId={work.id}
+        chapterId={chapter.id}
+        onOpenSettings={onOpenSettings}
+        onWritten={onTargetReplaced}
+        finalFocus={translateOpener}
+      />
     </div>
   )
 }
