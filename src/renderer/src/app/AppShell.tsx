@@ -55,7 +55,7 @@ export function AppShell({
           className="flex min-h-0 flex-col border-r border-line bg-sidebar"
           aria-label="Điều hướng chính"
         >
-          <div className="flex h-[44px] shrink-0 items-center px-4">
+          <div className="flex h-[42px] shrink-0 items-center px-2.5">
             <span className="text-[15px] font-semibold tracking-[-0.05em]">Mira</span>
           </div>
           <div className="flex min-h-0 flex-1 flex-col">{sidebar}</div>
@@ -68,7 +68,7 @@ export function AppShell({
       )}
 
       <div className="flex min-h-0 min-w-0 flex-col bg-canvas">
-        <header className="flex h-[44px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
+        <header className="flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
           <Button
             variant="ghost-muted"
             size="icon"

@@ -147,7 +147,25 @@ describe('normalizeRaw', () => {
   it('trims blank lines and spaces at the ends of the whole text only', () => {
     const result = normalizeRaw('\n\n  \nđầu\n\ngiữa\ncuối  \n\n')
     expect(result.text).toBe('đầu\n\ngiữa\ncuối')
-    expect(result.changes.map((c) => c.kind)).toEqual(['trim'])
+    expect(result.changes.map((c) => c.kind)).toEqual(['line-end', 'trim'])
+  })
+
+  it('cuts space or tab left dangling at the end of a line', () => {
+    const result = normalizeRaw('dòng cuối   \nvà tiếp\t\ncòn nữa')
+    expect(result.text).toBe('dòng cuối\nvà tiếp\ncòn nữa')
+    expect(result.changes).toEqual([{ kind: 'line-end', count: 2 }])
+  })
+
+  it('collapses two or more spaces or tabs inside a line to one', () => {
+    const result = normalizeRaw('a  b   c\t\td')
+    expect(result.text).toBe('a b c d')
+    expect(result.changes).toEqual([{ kind: 'space', count: 3 }])
+  })
+
+  it('leaves a single space or tab inside a line alone, and never touches the indentation it starts with', () => {
+    const result = normalizeRaw('  thụt đầu dòng a b\tc')
+    expect(result.text).toBe('  thụt đầu dòng a b\tc')
+    expect(result.changes).toEqual([])
   })
 
   it('keeps the indentation of the first line', () => {
@@ -156,8 +174,6 @@ describe('normalizeRaw', () => {
 
   it.each([
     ['full-width indentation', '　あ　い。\n　う。'],
-    ['spaces inside a line', 'a  b   c'],
-    ['space-padded line ends', 'dòng cuối   \nvà tiếp  '],
     ['punctuation and quotes', '“A” — «B» ‘C’ 「D」…'],
     ['mixed case', 'ĐỖ Văn Hiếu'],
     ['traditional and simplified forms', '體 体 龍 龙'],

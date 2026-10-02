@@ -129,7 +129,15 @@ export function decodeRaw(
   return { text, replacements: countReplacements(text) }
 }
 
-export type NormalizeKind = 'bom' | 'crlf' | 'cr' | 'line-separator' | 'control' | 'trim'
+export type NormalizeKind =
+  | 'bom'
+  | 'crlf'
+  | 'cr'
+  | 'line-separator'
+  | 'control'
+  | 'line-end'
+  | 'space'
+  | 'trim'
 
 export interface NormalizeChange {
   kind: NormalizeKind
@@ -148,9 +156,11 @@ const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g
 
 /**
  * The only changes made to a text on its way into a chapter: the byte order mark, line endings
- * (to LF), control characters, and blank lines or trailing spaces at the two ends of the whole
- * text. Everything else (punctuation, spaces inside and at the start of lines, case, Han forms,
- * Unicode normalisation) is left exactly as it was, and each change made is counted.
+ * (to LF), control characters, space/tab runs left dangling at a line's end or doubled up inside
+ * one, and blank lines or trailing spaces at the two ends of the whole text. The indentation at
+ * the start of a line is left alone — full-width (　) or not, it is how the source marks a new
+ * paragraph, not a typo. Punctuation, case, Han forms and Unicode normalisation are untouched too,
+ * and each change made is counted.
  */
 export function normalizeRaw(input: string): Normalized {
   const changes: NormalizeChange[] = []
@@ -178,6 +188,17 @@ export function normalizeRaw(input: string): Normalized {
   text = text.replace(CONTROL, () => (controls++, ''))
   note('control', controls)
 
+  // Space or tab left dangling before a line break, which cannot be meant.
+  let lineEnds = 0
+  text = text.replace(/[ \t]+(?=\n|$)/g, () => (lineEnds++, ''))
+  note('line-end', lineEnds)
+
+  // Two or more spaces/tabs in a row inside a line (not the indentation it starts with) collapse
+  // to one: almost always a slip from pasting out of a word processor or PDF.
+  let spaces = 0
+  text = text.replace(/(?<=[^\n　])[ \t]{2,}/g, () => (spaces++, ' '))
+  note('space', spaces)
+
   // Blank lines before the first real line go, but the first line keeps its own indentation.
   const before = text.length
   text = text.replace(/^(?:[^\S\n]*\n)+/, '').replace(/\s+$/, '')
@@ -200,6 +221,10 @@ export function describeChange(change: NormalizeChange): string {
       return 'đổi ' + n + ' dấu ngắt dòng Unicode thành LF'
     case 'control':
       return 'bỏ ' + n + ' ký tự điều khiển'
+    case 'line-end':
+      return 'cắt khoảng trắng dư ở cuối ' + n + ' dòng'
+    case 'space':
+      return 'gộp ' + n + ' chỗ có nhiều dấu cách/tab liền nhau thành một'
     case 'trim':
       return 'cắt ' + n + ' ký tự trống ở hai đầu văn bản'
   }

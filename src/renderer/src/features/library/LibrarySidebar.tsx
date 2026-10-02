@@ -56,7 +56,7 @@ export function LibrarySidebar({
               aria-current={active ? 'page' : undefined}
               className={cx(
                 itemClass,
-                'h-[34px] font-medium',
+                'h-7 font-medium',
                 active ? 'bg-selected text-ink' : 'text-ink-muted hover:bg-control hover:text-ink'
               )}
               onClick={() => onSelectSection(section.id)}

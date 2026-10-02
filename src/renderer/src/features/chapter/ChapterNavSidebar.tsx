@@ -29,7 +29,7 @@ export function ChapterNavSidebar({
 
   return (
     <>
-      <div className="flex h-[44px] shrink-0 items-center px-2">
+      <div className="flex h-[42px] shrink-0 items-center px-2.5">
         <button
           type="button"
           className="flex min-w-0 items-center gap-1 rounded-control px-1.5 py-1 text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"

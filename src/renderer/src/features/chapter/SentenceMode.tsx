@@ -15,6 +15,7 @@ import type { TextRecord } from '../../../../shared/text'
 import { Button } from '../../components/Button'
 import { clampPage, pageOfPosition, pageCount, slicePage } from '../work/chapterList'
 import { ChapterPager } from '../work/ChapterPager'
+import { SentenceFilterToolbarMock, SentenceSuggestionPanelMock } from './SentenceModeMocks'
 import { useSentenceRows, type RowProblem } from './useSentenceRows'
 
 export const ROWS_PER_PAGE = 50
@@ -185,6 +186,8 @@ export function SentenceMode({
         </Button>
       </div>
 
+      <SentenceFilterToolbarMock />
+
       {canPair && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line bg-control px-3 py-2 text-xs leading-[1.55]">
           <span>
@@ -242,6 +245,8 @@ export function SentenceMode({
           />
         ))}
       </ol>
+
+      <SentenceSuggestionPanelMock />
 
       <ChapterPager
         page={current}

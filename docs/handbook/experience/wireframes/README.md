@@ -43,9 +43,9 @@ và thường có **một** phương án giữ nguyên bố cục đang chạy �
 | Tạo tác phẩm | Một cột gọn theo nhịp D | Hai cột, bìa bên trái (đang chạy) | Hai bước: bắt buộc rồi tùy chọn | **C** (2026-10-02) |
 | Chi tiết tác phẩm | Thanh gọn theo nhịp D | Header đầy đủ + tab (đang chạy) | Khu vực thành cột bên trái | chưa chốt |
 | Chương chưa có bản gốc | Khối rỗng gọn theo nhịp D | Hai lối đi cạnh nhau | Dán ngay tại chỗ, xem trước bên cạnh | **B** (2026-10-02) |
-| Từng câu | Bảng gọn theo nhịp D | Hàng rộng (đang chạy) | Có lọc, và panel phụ dưới hàng | chưa chốt |
+| Từng câu | Bảng gọn theo nhịp D | Hàng rộng (đang chạy trước 2026-10-02) | Có lọc, và panel phụ dưới hàng | **C** (2026-10-02) |
 
-Ba màn đã chốt được dựng trong change [`screens-rhythm-d`](../../../../openspec/changes/screens-rhythm-d/proposal.md); wireframe giữ lại làm hồ sơ chọn lựa, **không** cập nhật theo code. Hai màn chưa chốt vẫn chờ chọn.
+Ba màn đầu đã chốt được dựng trong change [`screens-rhythm-d`](../../../../openspec/changes/screens-rhythm-d/proposal.md); wireframe giữ lại làm hồ sơ chọn lựa, **không** cập nhật theo code. Từng câu chốt phương án C riêng ngày 2026-10-02 (sau `screens-rhythm-d`): dựng thêm thanh lọc và panel gợi ý ở dạng minh họa, xem `sentence-mode-toolbar`/`sentence-mode-side-panels` trong [backlog](../../delivery/backlog.md). Một màn (Chi tiết tác phẩm) vẫn chưa chốt.
 
 **Một chỗ lệch so với wireframe:** phương án A của Thư viện không vẽ panel "Tiếp tục gần đây", nhưng bản dựng **giữ** panel đó — bỏ nó đi là bỏ một chức năng đang chạy, không phải đổi mật độ bảng.
 
