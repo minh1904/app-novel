@@ -20,14 +20,40 @@ import type { LibraryStore } from '../storage/library'
 import { backupExportSchema } from '../../shared/backup'
 import { backupFileName } from '../storage/backupName'
 import { StorageError } from '../storage/errors'
+import {
+  addConnectionKeySchema,
+  connectionRefSchema,
+  createConnectionSchema,
+  removeConnectionKeySchema,
+  setConnectionModelsSchema,
+  updateConnectionSchema
+} from '../../shared/aiConnections'
+import { translateBatchSchema, translatePlanSchema } from '../../shared/aiTranslate'
+import type { ConnectionService } from '../providers/connectionService'
+import type { ChapterTranslator } from '../providers/chapterTranslation'
 import { createAsyncHandler, createHandler, type RawHandler } from './handler'
 import { noFilePicker, type FilePicker } from './filePicker'
 
 /** Channel → validated handler. Free of Electron imports so tests can call it directly. */
 export function createLibraryHandlers(
   library: LibraryStore,
-  files: FilePicker = noFilePicker
+  files: FilePicker = noFilePicker,
+  connections?: ConnectionService,
+  translator?: ChapterTranslator
 ): Record<Channel, RawHandler<unknown>> {
+  /** Kênh kết nối AI chỉ dùng được khi kho khóa mở được; nếu không thì nói rõ thay vì im lặng. */
+  const ai = (): ConnectionService => {
+    if (!connections) {
+      throw new StorageError('io', 'Chưa mở được kho cài đặt kết nối AI.')
+    }
+    return connections
+  }
+  const translate = (): ChapterTranslator => {
+    if (!translator) {
+      throw new StorageError('io', 'Chưa mở được kho cài đặt kết nối AI.')
+    }
+    return translator
+  }
   return {
     [CHANNELS.worksList]: createHandler(null, () => library.list()),
     [CHANNELS.worksGet]: createHandler(getWorkSchema, ({ id }) => library.get(id)),
@@ -100,6 +126,32 @@ export function createLibraryHandlers(
     ),
     [CHANNELS.imagesDelete]: createHandler(deleteImageSchema, ({ workId, imageId }) =>
       library.deleteImage(workId, imageId)
+    ),
+    [CHANNELS.aiConnectionsList]: createHandler(null, () => ai().list()),
+    [CHANNELS.aiConnectionsCreate]: createHandler(createConnectionSchema, (input) =>
+      ai().create(input)
+    ),
+    [CHANNELS.aiConnectionsUpdate]: createHandler(updateConnectionSchema, (input) =>
+      ai().update(input)
+    ),
+    [CHANNELS.aiConnectionsDelete]: createHandler(connectionRefSchema, ({ id }) => ai().delete(id)),
+    [CHANNELS.aiConnectionsTest]: createAsyncHandler(connectionRefSchema, ({ id }) =>
+      ai().test(id)
+    ),
+    [CHANNELS.aiKeysAdd]: createAsyncHandler(addConnectionKeySchema, ({ id, secret }) =>
+      ai().addApiKey(id, secret)
+    ),
+    [CHANNELS.aiKeysRemove]: createHandler(removeConnectionKeySchema, ({ id, keyId }) =>
+      ai().removeApiKey(id, keyId)
+    ),
+    [CHANNELS.aiModelsSet]: createHandler(setConnectionModelsSchema, ({ id, models }) =>
+      ai().setModels(id, models)
+    ),
+    [CHANNELS.aiTranslatePlan]: createHandler(translatePlanSchema, (input) =>
+      translate().plan(input)
+    ),
+    [CHANNELS.aiTranslateBatch]: createAsyncHandler(translateBatchSchema, (input) =>
+      translate().runBatch(input)
     )
   }
 }

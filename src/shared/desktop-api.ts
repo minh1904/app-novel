@@ -1,3 +1,15 @@
+import type {
+  ConnectionTestResult,
+  ConnectionView,
+  CreateConnectionInput,
+  UpdateConnectionInput
+} from './aiConnections'
+import type {
+  TranslateBatchInput,
+  TranslateBatchResult,
+  TranslatePlan,
+  TranslatePlanInput
+} from './aiTranslate'
 import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
 import type { LinkRecord } from './links'
@@ -94,6 +106,31 @@ export interface BackupApi {
   restore(): Promise<Result<WorkSummary>>
 }
 
+/**
+ * Dịch một chương bằng AI, **từng lô một**: renderer gọi `plan` rồi gọi `batch` lần lượt. Tiến độ,
+ * nút Hủy và việc giữ lại phần đã xong đều nằm ở renderer vì mỗi lô là một lời gọi riêng.
+ */
+export interface AiTranslateApi {
+  /** Nói trước sẽ gửi gì, chia thành mấy lô, và ước lượng chi phí. Không gửi gì ra ngoài. */
+  plan(input: TranslatePlanInput): Promise<Result<TranslatePlan>>
+  /** Dịch một lô và ghi ngay phần được phép ghi. Hàng người dùng đã sửa quay về làm đề xuất. */
+  batch(input: TranslateBatchInput): Promise<Result<TranslateBatchResult>>
+}
+
+export interface AiApi {
+  list(): Promise<Result<{ connections: ConnectionView[] }>>
+  create(input: CreateConnectionInput): Promise<Result<ConnectionView>>
+  update(id: string, patch: UpdateConnectionInput['patch']): Promise<Result<ConnectionView>>
+  delete(id: string): Promise<Result<{ connections: ConnectionView[] }>>
+  /** Gọi `GET {base}/models`: xác nhận kết nối và lấy luôn danh sách model. */
+  test(id: string): Promise<Result<ConnectionTestResult>>
+  /** Lần duy nhất khóa đi từ giao diện vào; về sau chỉ nhận lại bốn ký tự cuối. */
+  addKey(id: string, secret: string): Promise<Result<ConnectionView>>
+  removeKey(id: string, keyId: string): Promise<Result<ConnectionView>>
+  setModels(id: string, models: string[]): Promise<Result<ConnectionView>>
+  translate: AiTranslateApi
+}
+
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
   works: WorksApi
@@ -102,4 +139,5 @@ export interface DesktopApi {
   rows: RowsApi
   images: ImagesApi
   backup: BackupApi
+  ai: AiApi
 }

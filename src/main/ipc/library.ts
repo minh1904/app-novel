@@ -1,6 +1,10 @@
 import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { CHANNELS } from '../../shared/channels'
+import { ChapterTranslator } from '../providers/chapterTranslation'
+import { ConnectionService } from '../providers/connectionService'
+import { electronSafeStorage } from '../storage/electronSafeStorage'
+import { SecretStore } from '../storage/secretStore'
 import type { LibraryStore } from '../storage/library'
 import type { FilePicker } from './filePicker'
 import { createLibraryHandlers, guardHandlers } from './libraryHandlers'
@@ -43,8 +47,19 @@ export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
 ): void {
+  const connections = new ConnectionService({
+    db: library.appDb,
+    secrets: new SecretStore(electronSafeStorage),
+    now: () => library.appNow(),
+    newId: () => library.newAppId()
+  })
+  const translator = new ChapterTranslator({
+    library,
+    connections,
+    now: () => library.appNow()
+  })
   const handlers = guardHandlers(
-    createLibraryHandlers(library, electronFilePicker()),
+    createLibraryHandlers(library, electronFilePicker(), connections, translator),
     isTrustedSender
   )
   for (const channel of Object.values(CHANNELS)) {

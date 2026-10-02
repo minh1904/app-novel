@@ -1,4 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type {
+  ConnectionTestResult,
+  ConnectionView,
+  CreateConnectionInput,
+  UpdateConnectionInput
+} from '../shared/aiConnections'
+import type {
+  TranslateBatchInput,
+  TranslateBatchResult,
+  TranslatePlan,
+  TranslatePlanInput
+} from '../shared/aiTranslate'
 import type { BackupExported } from '../shared/backup'
 import { CHANNELS } from '../shared/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/chapters'
@@ -112,6 +124,40 @@ const desktopApi: DesktopApi = {
     export: (workId: string) =>
       ipcRenderer.invoke(CHANNELS.backupExport, { workId }) as Promise<Result<BackupExported>>,
     restore: () => ipcRenderer.invoke(CHANNELS.backupRestore) as Promise<Result<WorkSummary>>
+  },
+  ai: {
+    list: () =>
+      ipcRenderer.invoke(CHANNELS.aiConnectionsList) as Promise<
+        Result<{ connections: ConnectionView[] }>
+      >,
+    create: (input: CreateConnectionInput) =>
+      ipcRenderer.invoke(CHANNELS.aiConnectionsCreate, input) as Promise<Result<ConnectionView>>,
+    update: (id: string, patch: UpdateConnectionInput['patch']) =>
+      ipcRenderer.invoke(CHANNELS.aiConnectionsUpdate, { id, patch }) as Promise<
+        Result<ConnectionView>
+      >,
+    delete: (id: string) =>
+      ipcRenderer.invoke(CHANNELS.aiConnectionsDelete, { id }) as Promise<
+        Result<{ connections: ConnectionView[] }>
+      >,
+    test: (id: string) =>
+      ipcRenderer.invoke(CHANNELS.aiConnectionsTest, { id }) as Promise<
+        Result<ConnectionTestResult>
+      >,
+    addKey: (id: string, secret: string) =>
+      ipcRenderer.invoke(CHANNELS.aiKeysAdd, { id, secret }) as Promise<Result<ConnectionView>>,
+    removeKey: (id: string, keyId: string) =>
+      ipcRenderer.invoke(CHANNELS.aiKeysRemove, { id, keyId }) as Promise<Result<ConnectionView>>,
+    setModels: (id: string, models: string[]) =>
+      ipcRenderer.invoke(CHANNELS.aiModelsSet, { id, models }) as Promise<Result<ConnectionView>>,
+    translate: {
+      plan: (input: TranslatePlanInput) =>
+        ipcRenderer.invoke(CHANNELS.aiTranslatePlan, input) as Promise<Result<TranslatePlan>>,
+      batch: (input: TranslateBatchInput) =>
+        ipcRenderer.invoke(CHANNELS.aiTranslateBatch, input) as Promise<
+          Result<TranslateBatchResult>
+        >
+    }
   }
 }
 

@@ -22,7 +22,17 @@ export const CHANNELS = {
   backupRestore: 'backup:restore',
   imagesPut: 'images:put',
   imagesGet: 'images:get',
-  imagesDelete: 'images:delete'
+  imagesDelete: 'images:delete',
+  aiConnectionsList: 'ai:connections:list',
+  aiConnectionsCreate: 'ai:connections:create',
+  aiConnectionsUpdate: 'ai:connections:update',
+  aiConnectionsDelete: 'ai:connections:delete',
+  aiConnectionsTest: 'ai:connections:test',
+  aiKeysAdd: 'ai:connections:keys:add',
+  aiKeysRemove: 'ai:connections:keys:remove',
+  aiModelsSet: 'ai:connections:models:set',
+  aiTranslatePlan: 'ai:translate:plan',
+  aiTranslateBatch: 'ai:translate:batch'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]
