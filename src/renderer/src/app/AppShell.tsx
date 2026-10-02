@@ -1,5 +1,6 @@
 import { useEffect, type JSX, type ReactNode } from 'react'
 import { MoonIcon } from '@solar-icons/react/linear/moon'
+import { SettingsIcon } from '@solar-icons/react/linear/settings'
 import { SidebarMinimalisticIcon } from '@solar-icons/react/linear/sidebar-minimalistic'
 import { SunIcon } from '@solar-icons/react/linear/sun'
 import { Button } from '../components/Button'
@@ -15,6 +16,10 @@ export interface AppShellProps {
   appVersion: string
   title: ReactNode
   actions?: ReactNode
+  /** Mở màn cài đặt. Nút ở mọi màn, nên đường vào không phụ thuộc đang đứng ở đâu. */
+  onOpenSettings(): void
+  /** Đang ở màn cài đặt: nút sáng lên và không mở lại chính nó. */
+  settingsOpen?: boolean
   children: ReactNode
 }
 
@@ -27,6 +32,8 @@ export function AppShell({
   appVersion,
   title,
   actions,
+  onOpenSettings,
+  settingsOpen = false,
   children
 }: AppShellProps): JSX.Element {
   // A more specific handler closer to the key's target — the translation pane's own "bold" binding,
@@ -89,6 +96,16 @@ export function AppShell({
           <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">{title}</div>
           <div className="flex shrink-0 items-center gap-1">
             {actions}
+            <Button
+              variant={settingsOpen ? 'secondary' : 'ghost-muted'}
+              size="icon"
+              aria-label="Cài đặt"
+              aria-current={settingsOpen ? 'page' : undefined}
+              title="Cài đặt"
+              onClick={onOpenSettings}
+            >
+              <SettingsIcon size={16} />
+            </Button>
             <Button
               variant="ghost-muted"
               size="icon"

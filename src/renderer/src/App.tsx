@@ -12,6 +12,7 @@ import { byUpdated, type Work } from './features/library/works'
 import { ChapterNavSidebar } from './features/chapter/ChapterNavSidebar'
 import { ChapterScreen } from './features/chapter/ChapterScreen'
 import { LeaveGuardContext, useLeaveGuardRegistry } from './features/editor/leaveGuard'
+import { SettingsScreen } from './features/settings/SettingsScreen'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 
 type View =
@@ -19,6 +20,7 @@ type View =
   | { name: 'create' }
   | { name: 'work'; workId: string }
   | { name: 'chapter'; workId: string; chapterId: string }
+  | { name: 'settings' }
 
 const RECENT_LIMIT = 4
 
@@ -31,6 +33,18 @@ export function App(): JSX.Element {
     void registry.confirmLeave().then((proceed) => {
       if (proceed) setView(next)
     })
+  }
+  /** Màn đang mở trước khi vào cài đặt, để đóng cài đặt trả người dùng về đúng chỗ. */
+  const [beforeSettings, setBeforeSettings] = useState<View | null>(null)
+  const openSettings = (): void => {
+    if (view.name === 'settings') return
+    setBeforeSettings(view)
+    go({ name: 'settings' })
+  }
+  const closeSettings = (): void => {
+    const back = beforeSettings ?? { name: 'library' as const, section: 'all' as const }
+    setBeforeSettings(null)
+    go(back)
   }
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [appVersion, setAppVersion] = useState('')
@@ -125,7 +139,7 @@ export function App(): JSX.Element {
 
   let title: JSX.Element
   let content: JSX.Element
-  let sidebar: JSX.Element = (
+  let sidebar: JSX.Element | null = (
     <LibrarySidebar
       activeSection={view.name === 'library' ? view.section : undefined}
       onSelectSection={showSection}
@@ -220,6 +234,7 @@ export function App(): JSX.Element {
           chapterId={view.chapterId}
           onBackToWork={backToWork}
           onWorkChanged={library.applyWork}
+          onOpenSettings={openSettings}
           focused={!sidebarOpen}
           onToggleFocus={toggleSidebar}
         />
@@ -237,6 +252,12 @@ export function App(): JSX.Element {
       )
       break
     }
+    case 'settings': {
+      title = <span className="font-semibold">Cài đặt</span>
+      content = <SettingsScreen onBack={closeSettings} />
+      sidebar = null
+      break
+    }
   }
 
   return (
@@ -249,6 +270,8 @@ export function App(): JSX.Element {
         onToggleTheme={toggleTheme}
         appVersion={appVersion}
         title={title}
+        onOpenSettings={openSettings}
+        settingsOpen={view.name === 'settings'}
       >
         {content}
       </AppShell>
