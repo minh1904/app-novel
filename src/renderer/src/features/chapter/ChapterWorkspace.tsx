@@ -295,7 +295,7 @@ export function ChapterWorkspace({
         <div
           className={
             aiOpen
-              ? 'grid min-h-0 flex-1 grid-cols-[1fr_1fr_320px] divide-x divide-line'
+              ? 'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_420px] divide-x divide-line'
               : 'grid min-h-0 flex-1 grid-cols-2 divide-x divide-line'
           }
         >

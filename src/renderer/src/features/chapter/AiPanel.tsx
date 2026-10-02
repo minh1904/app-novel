@@ -1,32 +1,19 @@
 import type { JSX } from 'react'
-import { ArrowRightIcon } from '@solar-icons/react/linear/arrow-right'
 import { CloseIcon } from '@solar-icons/react/linear/close'
-import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
-import { MagicWandIcon } from '@solar-icons/react/linear/magic-wand'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
-import { NotesIcon } from '@solar-icons/react/linear/notes'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import { PenNewRoundIcon } from '@solar-icons/react/linear/pen-new-round'
 import { StarsIcon } from '@solar-icons/react/linear/stars'
 import { Button } from '../../components/Button'
 import { SOON_LABEL } from '../work/mockFeatures'
-
-/** Fixed sample: what asking about the selected sentence would look like. Not from this chapter's AI. */
-const SAMPLE_CONTEXT = 'Cô toát lên vẻ thanh lịch, đúng kiểu sinh viên đại học thành phố lớn…'
-const SAMPLE_QUESTION = 'Dịch tự nhiên hơn, bớt cứng nhé'
-const SAMPLE_ANSWER =
-  '"Cô mang dáng vẻ thanh lịch rất đặc trưng của sinh viên thành phố lớn, xinh đẹp một cách tự nhiên."'
-
-const QUICK_ACTIONS = [
-  { icon: <RefreshIcon size={12} />, label: 'Dịch lại' },
-  { icon: <MagicWandIcon size={12} />, label: 'Viết tự nhiên hơn' },
-  { icon: <MinimalisticMagnifierIcon size={12} />, label: 'Tra từ' },
-  { icon: <NotesIcon size={12} />, label: 'Ghi chú' }
-]
+import { AiComposer } from './AiComposer'
+import { AiTurn } from './AiTurn'
 
 /**
- * Illustration of asking AI about the sentence being worked on. It is a real column next to the two
- * panes (not a layer floating over them), but every answer and action below is fixed sample text:
- * no provider is called, nothing is read or written. See delivery/backlog.md, `ai-chat-panel`.
+ * Asking AI about the sentence being worked on. A real third column next to the two panes (it never
+ * covers the text), built from wireframe `man=hoi-ai&v=a`: the conversation scrolls, the composer
+ * stays at the bottom and carries the context chips, the mode and the model next to the send button.
+ *
+ * Every answer and action below is fixed sample text: no provider is called, nothing is read or
+ * written. See delivery/backlog.md, `ai-chat-panel`.
  */
 export function AiPanel({
   contextLabel,
@@ -37,81 +24,48 @@ export function AiPanel({
   onClose(): void
 }): JSX.Element {
   return (
-    <section
-      aria-label="Hỏi AI"
-      className="flex h-full min-h-0 w-[320px] flex-col gap-3 bg-sidebar p-3"
-    >
-      <div className="flex items-center gap-2">
+    <section aria-label="Hỏi AI" className="relative flex h-full min-h-0 flex-col bg-sidebar">
+      {/* Drag handle for the panel width. Resizing is not wired yet; the handle shows where it goes. */}
+      <span
+        aria-hidden="true"
+        title="Kéo để đổi bề rộng"
+        className="absolute top-0 left-0 z-10 flex h-full w-1.5 cursor-col-resize items-center justify-center hover:bg-focus/30"
+      >
+        <span className="h-6 w-px bg-line-strong" />
+      </span>
+
+      <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-3">
         <StarsIcon size={16} className="shrink-0 text-info" />
-        <h3 className="text-[13px] font-semibold">Hỏi AI</h3>
-        <span className="rounded-[5px] bg-selected px-1.5 py-px text-[11px] font-normal text-ink-muted">
+        <h3 className="text-[12px] font-semibold">Hỏi AI</h3>
+        <span className="shrink-0 rounded-[5px] bg-selected px-1.5 py-px text-[11px] font-normal text-ink-muted">
           {SOON_LABEL}
         </span>
-        <Button
-          variant="ghost-muted"
-          size="icon"
-          className="ml-auto"
-          aria-label="Đóng (Esc)"
-          title="Đóng (Esc)"
-          onClick={onClose}
-        >
-          <CloseIcon size={15} />
-        </Button>
+        <span className="min-w-0 truncate text-[11px] text-ink-muted">{contextLabel}</span>
+        <span className="ml-auto flex shrink-0 items-center gap-0.5">
+          <Button variant="ghost-muted" size="icon" disabled aria-label="Hội thoại mới">
+            <PenNewRoundIcon size={14} />
+          </Button>
+          <Button
+            variant="ghost-muted"
+            size="icon"
+            aria-label="Đóng (Esc)"
+            title="Đóng (Esc)"
+            onClick={onClose}
+          >
+            <CloseIcon size={15} />
+          </Button>
+        </span>
       </div>
 
-      <div className="flex items-start gap-2 rounded-control border border-line bg-control p-2.5">
-        <DocumentTextIcon size={14} className="mt-0.5 shrink-0 text-ink-muted" />
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium text-ink-muted">{contextLabel}</p>
-          <p className="mt-0.5 text-[12.5px] text-ink italic">“{SAMPLE_CONTEXT}”</p>
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 py-3">
+        <AiTurn />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
-        <div className="flex flex-wrap gap-1.5">
-          {QUICK_ACTIONS.map((action) => (
-            <Button key={action.label} variant="outline" size="xs" disabled>
-              {action.icon}
-              {action.label}
-            </Button>
-          ))}
-        </div>
-
-        <p className="ml-auto w-fit max-w-[90%] rounded-control bg-control px-2.5 py-1.5 text-[12.5px]">
-          {SAMPLE_QUESTION}
-        </p>
-
-        <div className="flex flex-col gap-2 rounded-control border border-line p-2.5 text-[12.5px] leading-[1.6]">
-          <p>Đây là phiên bản tự nhiên hơn, mượt mà hơn:</p>
-          <p className="text-ink-muted italic">{SAMPLE_ANSWER}</p>
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            <Button size="xs" disabled>
-              Áp dụng
-            </Button>
-            <Button variant="outline" size="xs" disabled>
-              Chèn vào bản dịch
-            </Button>
-            <Button variant="outline" size="xs" disabled>
-              Sao chép
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <p className="text-[11px] leading-[1.5] text-ink-muted">
+      <p className="shrink-0 px-3 text-[11px] leading-[1.5] text-ink-muted">
         Bản minh họa: câu hỏi và câu trả lời ở trên là dữ liệu mẫu, không gọi AI thật.
       </p>
 
-      <div className="flex shrink-0 items-center gap-1.5 border-t border-line pt-2.5">
-        <input
-          className="h-7 min-w-0 flex-1 rounded-control border border-line-strong bg-transparent px-2 text-[12.5px] outline-none placeholder:text-ink-muted"
-          placeholder="Hỏi Mira về bản dịch, chỉnh sửa, hoặc yêu cầu khác…"
-          disabled
-        />
-        <Button variant="secondary" size="icon" disabled aria-label="Gửi">
-          <ArrowRightIcon size={14} />
-        </Button>
-      </div>
+      <AiComposer />
     </section>
   )
 }
