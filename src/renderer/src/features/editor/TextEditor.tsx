@@ -43,10 +43,9 @@ const theme = EditorView.theme({
     color: 'var(--text-primary)',
     backgroundColor: 'transparent'
   },
-  '&.cm-focused': {
-    outline: 'none',
-    boxShadow: 'inset 0 0 0 2px color-mix(in srgb, var(--focus-ring) 40%, transparent)'
-  },
+  // No ring on focus: the blinking caret is the focus signal here, same as a code editor's pane
+  // (unlike a button or field, where a ring is the only way to tell focus moved there at all).
+  '&.cm-focused': { outline: 'none' },
   '.cm-scroller': { fontFamily: 'inherit', lineHeight: '1.7', overflow: 'auto' },
   '.cm-content': { padding: '12px 0', caretColor: 'var(--text-primary)' },
   '.cm-line': { padding: '0 8px' },
