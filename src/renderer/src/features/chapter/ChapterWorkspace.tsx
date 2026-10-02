@@ -242,7 +242,7 @@ export function ChapterWorkspace({
       </header>
 
       {/* The mode, and the context the translator reads while working. One row, so the panes keep the height. */}
-      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line px-2.5">
+      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-chrome px-2.5">
         <TabsRoot
           value={mode}
           aria-label="Chế độ soạn thảo"
