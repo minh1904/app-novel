@@ -11,6 +11,8 @@ import { Button } from '../../components/Button'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
 import { TabsList, TabsRoot, TabsTab } from '../../components/Tabs'
 import type { SessionStatus, TextStore } from '../editor/editorSession'
+import { insertImageEmbed } from '../editor/imageEmbed'
+import type { ImageStore } from '../editor/imageEmbedDecorations'
 import { useConfirmLeave, useRegisterLeaveGuard } from '../editor/leaveGuard'
 import { ReadingView } from '../editor/ReadingView'
 import { TextEditor, type TextEditorHandle } from '../editor/TextEditor'
@@ -78,6 +80,10 @@ export function ChapterWorkspace({
   const [readText, setReadText] = useState('')
   const [aiOpen, setAiOpen] = useState(false)
   const confirmLeave = useConfirmLeave()
+  const [imageStore] = useState<ImageStore>(() => ({
+    insert: (file) => insertImageEmbed(work.id, file),
+    get: (imageId) => window.mira.images.get(work.id, imageId)
+  }))
 
   const handles = (): TextEditorHandle[] =>
     [sourceEditor.current, targetEditor.current].filter(
@@ -285,8 +291,8 @@ export function ChapterWorkspace({
         <div
           className={
             aiOpen
-              ? 'grid min-h-0 flex-1 grid-cols-[1fr_1fr_320px] gap-3 p-3'
-              : 'grid min-h-0 flex-1 grid-cols-2 gap-3 p-3'
+              ? 'grid min-h-0 flex-1 grid-cols-[1fr_1fr_320px] divide-x divide-line'
+              : 'grid min-h-0 flex-1 grid-cols-2 divide-x divide-line'
           }
         >
           <EditorPane
@@ -364,6 +370,7 @@ export function ChapterWorkspace({
                 label="Bản dịch của chương"
                 store={targetStore}
                 livePreview
+                images={imageStore}
                 emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
                 onSaved={onTargetSaved}
                 onStatusChange={setTargetStatus}

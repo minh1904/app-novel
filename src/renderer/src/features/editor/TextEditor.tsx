@@ -23,6 +23,7 @@ import {
   type SessionStatus,
   type TextStore
 } from './editorSession'
+import { imageEmbedDecorations, type ImageStore } from './imageEmbedDecorations'
 import { livePreviewDecorations } from './livePreviewDecorations'
 import { idleResegment } from './resegmenter'
 import { segmentDecorations } from './segmentDecorations'
@@ -35,13 +36,12 @@ import { segmentDecorations } from './segmentDecorations'
  * surrounds it (title, status line, save button) belongs to the screen.
  */
 const theme = EditorView.theme({
-  // No border of its own: the pane around it is the box, so the two would read as nested frames.
+  // No border or radius of its own: the pane is square and flush against the one next to it.
   '&': {
     height: '100%',
     fontSize: '14px',
     color: 'var(--text-primary)',
-    backgroundColor: 'transparent',
-    borderRadius: 'var(--radius-control)'
+    backgroundColor: 'transparent'
   },
   '&.cm-focused': {
     outline: 'none',
@@ -49,7 +49,7 @@ const theme = EditorView.theme({
   },
   '.cm-scroller': { fontFamily: 'inherit', lineHeight: '1.7', overflow: 'auto' },
   '.cm-content': { padding: '12px 0', caretColor: 'var(--text-primary)' },
-  '.cm-line': { padding: '0 16px 0 4px' },
+  '.cm-line': { padding: '0 8px' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
     backgroundColor: 'var(--surface-selected)'
   }
@@ -67,6 +67,47 @@ const lockExtension = (readOnly: boolean): Extension => [
   EditorState.readOnly.of(readOnly),
   EditorView.contentAttributes.of({ 'aria-readonly': String(readOnly) })
 ]
+
+/** Only attached when `images` is set (the translation pane): paste or drop a file to embed it. */
+function imagePasteDrop(images: ImageStore, onResult: (message: string | null) => void): Extension {
+  function firstImageFile(list: FileList | null | undefined): File | null {
+    if (!list) return null
+    for (const file of Array.from(list)) {
+      if (file.type.startsWith('image/')) return file
+    }
+    return null
+  }
+
+  function insertAt(view: EditorView, pos: number, file: File): void {
+    onResult(null)
+    void images.insert(file).then((result) => {
+      if (!result.ok) {
+        onResult(result.error.message)
+        return
+      }
+      view.dispatch({ changes: { from: pos, to: pos, insert: result.value } })
+    })
+  }
+
+  return EditorView.domEventHandlers({
+    paste(event, view) {
+      const file = firstImageFile(event.clipboardData?.files)
+      if (!file) return false
+      event.preventDefault()
+      insertAt(view, view.state.selection.main.from, file)
+      return true
+    },
+    drop(event, view) {
+      const file = firstImageFile(event.dataTransfer?.files)
+      if (!file) return false
+      event.preventDefault()
+      const pos =
+        view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? view.state.selection.main.from
+      insertAt(view, pos, file)
+      return true
+    }
+  })
+}
 
 export interface TextEditorHandle {
   /** Saves now, waiting out an input method; used before leaving the screen. */
@@ -92,6 +133,8 @@ export interface TextEditorProps {
   emptyHint?: string
   /** Styles `#` headings and `**bold**` inline while still editable; read once like `lang`. */
   livePreview?: boolean
+  /** When set, this pane accepts pasted/dropped images and shows `![[id]]` embeds as pictures. */
+  images?: ImageStore
   /** A save went through (or the stored text was reloaded): the figures on the screen follow it. */
   onSaved(record: TextRecord): void
   onStatusChange?(status: SessionStatus): void
@@ -109,6 +152,7 @@ export function TextEditor({
   readOnly = false,
   emptyHint,
   livePreview = false,
+  images,
   onSaved,
   onStatusChange,
   handleRef
@@ -120,6 +164,7 @@ export function TextEditor({
   const sessionRef = useRef<EditorSession | null>(null)
   const [confirmReload, setConfirmReload] = useState(false)
   const [empty, setEmpty] = useState(record.content === '')
+  const [imageError, setImageError] = useState<string | null>(null)
   const hintId = useId()
   const latest = useRef({ onSaved, onStatusChange, readOnly })
   useEffect(() => {
@@ -179,6 +224,7 @@ export function TextEditor({
           }),
           segmentDecorations(),
           ...(livePreview ? [livePreviewDecorations()] : []),
+          ...(images ? [imageEmbedDecorations(images), imagePasteDrop(images, setImageError)] : []),
           idleResegment(lang, 800, () => sessionRef.current?.saving ?? false),
           theme
         ]
@@ -252,6 +298,18 @@ export function TextEditor({
         </div>
       )}
 
+      {imageError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-2 rounded-control border border-error/40 bg-error/10 px-3 py-2 text-xs leading-[1.55]"
+        >
+          <span>{imageError}</span>
+          <Button variant="outline" onClick={() => setImageError(null)}>
+            Đã hiểu
+          </Button>
+        </div>
+      )}
+
       <div className="relative min-h-0 flex-1">
         <div ref={host} className="h-full min-w-0" />
         {showHint && (
@@ -274,9 +332,7 @@ export function TextEditor({
           <Button variant="secondary" onClick={() => setConfirmReload(false)}>
             Hủy
           </Button>
-          <Button onClick={() => void reload()}>
-            Tải lại bản đã lưu
-          </Button>
+          <Button onClick={() => void reload()}>Tải lại bản đã lưu</Button>
         </div>
       </Dialog>
     </div>

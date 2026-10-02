@@ -39,7 +39,7 @@ export function AiPanel({
   return (
     <section
       aria-label="Hỏi AI"
-      className="flex h-full min-h-0 w-[320px] flex-col gap-3 rounded-panel border border-line bg-sidebar p-3"
+      className="flex h-full min-h-0 w-[320px] flex-col gap-3 bg-sidebar p-3"
     >
       <div className="flex items-center gap-2">
         <StarsIcon size={16} className="shrink-0 text-info" />
