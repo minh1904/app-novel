@@ -20,11 +20,22 @@ export interface TranslateRequest {
   context?: string
 }
 
+/** What the provider says it actually spent. Absent when the endpoint does not report it. */
+export interface TranslateUsage {
+  inputTokens: number
+  outputTokens: number
+}
+
 export interface TranslateResponse {
   /** Which provider answered, e.g. "mock" or "openrouter". Recorded as provenance. */
   provider: string
   model: string
   items: SegmentText[]
+  /**
+   * The real token count, when the provider reports one. Kept beside the result so the estimate
+   * shown before a run can be compared against what the run cost (D7 of change `ai-connection`).
+   */
+  usage?: TranslateUsage
 }
 
 export interface TranslateOptions {
