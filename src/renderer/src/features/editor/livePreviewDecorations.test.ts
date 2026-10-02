@@ -4,7 +4,7 @@ import { HEADING_RE, INLINE_RE, LIST_RE, QUOTE_RE } from './livePreviewDecoratio
 /**
  * `build()` needs a real `EditorView` (DOM), which the `node` test environment does not provide, so
  * these test the regexes the decoration builder runs on each line — the part that decides what gets
- * marked. `editor-redesign`'s screenshots cover the rest (actual rendering in a real window).
+ * marked. Nothing here covers the actual rendering in a real window; that has not been checked.
  */
 
 describe('HEADING_RE', () => {

@@ -4,17 +4,19 @@
 
 **Dựng chrome theo phương án D (2026-10-02):** người dùng chốt bố cục **D · B gọn chữ** của wireframe. Màn chương đổi từ khối tiêu đề nhiều dòng sang **hai thanh cố định** — thanh chương 42px (tên chương 12.5px, số liệu ở màu chữ phụ, nút dồn phải) và thanh mode 36px (tab `size="sm"` cùng hàng với nhãn Ngữ cảnh). Hai pane thành khối có viền `rounded-panel bg-sidebar p-3`, tên pane + số liệu + trạng thái lưu gộp một hàng, CodeMirror bỏ viền riêng. "Thay bản gốc" và "Về tác phẩm" chuyển vào menu tràn; header AppShell và đầu sidebar thu 52px → 44px cho khớp nhịp. **Một thay đổi so với đoạn dưới:** ba nhãn Thuật ngữ/Xưng hô/Văn phong dùng **một** badge "Sắp có" chung cho cả nhóm thay vì mỗi nhãn một badge, vì cả hàng phải nằm gọn trong 36px.
 
-Cập nhật: 2026-10-01. Đây là **phương án UX để thảo luận**, chưa phải đặc tả đã duyệt. Năm ảnh mockup trong `docs/handbook/` minh họa giao diện và luồng thao tác; tên sản phẩm, nhãn nút, số liệu và bố cục chi tiết trong ảnh **không tự trở thành yêu cầu** (nguyên tắc ở [decisions.md](../product/decisions.md)). Mục này đối chiếu từng mockup với quyết định hiện hành, nêu phần khớp, phần lệch cần chốt, và phần hoàn toàn mới chưa có ở [scope](../product/scope.md)/[backlog](../delivery/backlog.md).
+Cập nhật: 2026-10-01. Đây là **phương án UX để thảo luận**, chưa phải đặc tả đã duyệt. Năm ảnh mockup do người dùng gửi minh họa giao diện và luồng thao tác; tên sản phẩm, nhãn nút, số liệu và bố cục chi tiết trong ảnh **không tự trở thành yêu cầu** (nguyên tắc ở [decisions.md](../product/decisions.md)). Mục này đối chiếu từng mockup với quyết định hiện hành, nêu phần khớp, phần lệch cần chốt, và phần hoàn toàn mới chưa có ở [scope](../product/scope.md)/[backlog](../delivery/backlog.md).
 
 ## Ảnh tham khảo
 
-| Tệp | Nội dung |
+**Năm tệp ảnh đã xóa khỏi repo ngày 2026-10-02** theo yêu cầu chủ sản phẩm (6,8 MB cho thứ chỉ dùng một lần ở bước đối chiếu, và mọi điều cần giữ đã nằm trong bảng dưới cùng bảng "Đối chiếu"). Bảng này giữ lại **nội dung từng mockup** vì đó là hồ sơ quá trình; cột đầu là tên gọi, không còn là đường dẫn tệp.
+
+| Mockup | Nội dung |
 | --- | --- |
-| `focus-mode.png` | Chế độ tập trung của mode Toàn văn (Song song): thanh trên cùng rút gọn, hai pane gốc/dịch, menu nổi khi bôi chọn một câu (Dịch lại · Viết tự nhiên hơn · Tra từ · Ghi chú). |
-| `mode-1-full-text.png` | Workspace đầy đủ ở mode Toàn văn: thanh bên trái (Dự án, Chương, Nhân vật, Từ điển), giữa là hai pane gốc/dịch kiểu Toàn văn/Từng câu, phải là panel **AI Chat** thường trực theo ngữ cảnh đoạn đang xem. |
-| `mode-2-sentence-smartcat-inspired.png` | Mode Từng câu dạng bảng: thanh công cụ tìm trong gốc/tìm trong dịch, lọc trạng thái, lọc người dịch, Gộp, Tách, Kiểm tra liên kết; dưới bảng có tab Gợi ý/Thuật ngữ/Lịch sử/QA; AI Chat bên phải trả lời câu hỏi về một thuật ngữ cụ thể. |
-| `original-workspace.png` | Mode "Chỉnh sửa trực tiếp": bản dịch hiển thị **có định dạng** (tiêu đề lớn, không phải đoạn thuần) thay vì văn bản thô; AI Chat đề xuất viết lại cả đoạn kèm bảng so sánh lý do từng chỗ đổi. |
-| `smartcat-reference.png` | Ảnh chụp **sản phẩm SmartCat thật**, không phải mockup của Mira — chỉ dùng để đối chiếu nguồn cảm hứng cho thanh công cụ và bảng hàng của mode Từng câu. |
+| Chế độ tập trung | Chế độ tập trung của mode Toàn văn (Song song): thanh trên cùng rút gọn, hai pane gốc/dịch, menu nổi khi bôi chọn một câu (Dịch lại · Viết tự nhiên hơn · Tra từ · Ghi chú). |
+| Toàn văn, workspace đầy đủ | Workspace đầy đủ ở mode Toàn văn: thanh bên trái (Dự án, Chương, Nhân vật, Từ điển), giữa là hai pane gốc/dịch kiểu Toàn văn/Từng câu, phải là panel **AI Chat** thường trực theo ngữ cảnh đoạn đang xem. |
+| Từng câu, kiểu SmartCat | Mode Từng câu dạng bảng: thanh công cụ tìm trong gốc/tìm trong dịch, lọc trạng thái, lọc người dịch, Gộp, Tách, Kiểm tra liên kết; dưới bảng có tab Gợi ý/Thuật ngữ/Lịch sử/QA; AI Chat bên phải trả lời câu hỏi về một thuật ngữ cụ thể. |
+| Chỉnh sửa trực tiếp | Mode "Chỉnh sửa trực tiếp": bản dịch hiển thị **có định dạng** (tiêu đề lớn, không phải đoạn thuần) thay vì văn bản thô; AI Chat đề xuất viết lại cả đoạn kèm bảng so sánh lý do từng chỗ đổi. |
+| Ảnh tham chiếu SmartCat | Ảnh chụp **sản phẩm SmartCat thật**, không phải mockup của Mira — chỉ dùng để đối chiếu nguồn cảm hứng cho thanh công cụ và bảng hàng của mode Từng câu. |
 
 ## Đối chiếu với quyết định hiện hành
 
@@ -35,7 +37,7 @@ Các mục dưới đây đã được thêm vào [backlog](../delivery/backlog.
 2. **Menu nổi AI khi bôi chọn văn bản** (`inline-ai-quick-actions`) — xuất hiện trong Chế độ tập trung khi chọn một câu/đoạn: Dịch lại, Viết tự nhiên hơn, Tra từ, Ghi chú.
 3. **Thanh công cụ mode Từng câu kiểu SmartCat** (`sentence-mode-toolbar`) — tìm trong bản gốc/bản dịch riêng biệt, lọc theo trạng thái, lọc theo người dịch (người/AI), nút Kiểm tra liên kết. Vượt xa `sentence-mode` đã triển khai (hiện chưa có tìm kiếm hay bộ lọc).
 4. **Panel phụ dưới bảng Từng câu** (`sentence-mode-side-panels`) — tab Gợi ý (câu tương tự từ bản dịch cũ, có % khớp), Thuật ngữ, Lịch sử sửa, QA cho đúng hàng đang chọn.
-5. **Mở lại câu hỏi Live Preview** (`rendered-direct-edit-view`) — mockup `original-workspace.png` cho thấy bản dịch hiển thị có định dạng (tiêu đề, có thể cả in đậm/nghiêng) thay vì đoạn thuần; đây là đúng thứ quyết định hiện hành ghi "chưa cần" cho P0 — ghi lại làm input, không tự bật.
+5. **Mở lại câu hỏi Live Preview** (`rendered-direct-edit-view`) — mockup "Chỉnh sửa trực tiếp" cho thấy bản dịch hiển thị có định dạng (tiêu đề, có thể cả in đậm/nghiêng) thay vì đoạn thuần; đây là đúng thứ quyết định hiện hành ghi "chưa cần" cho P0 — ghi lại làm input, không tự bật.
 6. **Điều hướng theo Nhân vật/Từ điển/Thế giới quan/Benchmark** (`work-area-nav-v2`) — nếu được chốt, đổi hướng của `work-area-navigation` (bốn khu vực Chương/Ngữ cảnh/Nguồn/Tác vụ) sang cấu trúc khác; cần làm rõ quan hệ với "Ngữ cảnh" đã gộp Thuật ngữ/Xưng hô/Văn phong.
 
 ## Câu hỏi mở mới (đã thêm vào [open-questions.md](../product/open-questions.md))

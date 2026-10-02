@@ -1,5 +1,13 @@
 # Nhật ký handbook
 
+## Xóa năm ảnh mockup, dọn chỗ tham chiếu — 2026-10-02
+
+- Chủ sản phẩm chốt bỏ thật năm ảnh mockup nhận ngày 2026-10-01 (`focus-mode`, `mode-1-full-text`, `mode-2-sentence-smartcat-inspired`, `original-workspace`, `smartcat-reference`) — **6,8 MB** cho thứ chỉ dùng một lần ở bước đối chiếu.
+- **Nội dung từng mockup không mất.** Bảng "Ảnh tham khảo" trong [đề xuất redesign](../experience/editor-redesign.md) giữ nguyên phần mô tả — chỉ đổi cột đầu từ đường dẫn tệp sang tên gọi, và thêm một dòng nói tệp đã xóa. Đó là hồ sơ quá trình: mọi kết luận rút ra từ năm ảnh đã nằm trong bảng "Đối chiếu với quyết định hiện hành" và trong sáu mục backlog sinh ra từ nó.
+- Dọn ba chỗ tham chiếu còn lại: dòng mục lục trong [README](../README.md), câu "Nguồn" đầu mục redesign trong [backlog](../delivery/backlog.md), và mục 5 của trang redesign (trước dẫn tên tệp `original-workspace.png`, giờ dẫn tên gọi).
+- Sửa một lời khai sai trong mã: `livePreviewDecorations.test.ts` ghi "`editor-redesign`'s screenshots cover the rest (actual rendering in a real window)" — ảnh đó là **mockup người dùng gửi**, không phải ảnh chụp Mira đang chạy, nên câu đó sai cả trước khi xóa ảnh. Đổi thành nói thẳng: phần dựng thật trong cửa sổ thật **chưa được kiểm**.
+- Mục ngày 2026-10-01 bên dưới vẫn giữ nguyên tên năm tệp — đó là lịch sử, không sửa.
+
 ## Đóng change `ai-connection` ở 25/41 task — 2026-10-02
 
 - Chủ sản phẩm chốt: "hiện tại chỉ cần kết nối AI thôi" → **đóng change** thay vì làm hết mục kiểm chứng. `openspec archive ai-connection` đã áp delta vào `openspec/specs/`: thêm hai capability mới (`ai-connection`, `ai-translate-chapter`) và cập nhật `translation-provider` — tổng **19 requirement**.

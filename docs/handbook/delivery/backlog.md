@@ -64,7 +64,7 @@ Quy tắc: nút hay mục menu “Sắp có” trên giao diện phải có mụ
 
 ## Đề xuất redesign workspace (tham khảo mockup 2026-10-01)
 
-Nguồn: [đề xuất redesign workspace](../experience/editor-redesign.md), đối chiếu 5 mockup mới với quyết định hiện hành. Các mục này **chưa lên roadmap** — chờ chủ sản phẩm chốt ba câu hỏi mở (điều hướng cấp tác phẩm, Live Preview, phạm vi AI Chat) trước khi viết spec.
+Nguồn: [đề xuất redesign workspace](../experience/editor-redesign.md), đối chiếu 5 mockup người dùng gửi với quyết định hiện hành (tệp ảnh đã xóa 2026-10-02; nội dung từng mockup ghi lại trong trang đó). Các mục này **chưa lên roadmap** — chờ chủ sản phẩm chốt ba câu hỏi mở (điều hướng cấp tác phẩm, Live Preview, phạm vi AI Chat) trước khi viết spec.
 
 | `id` | Tính năng | Trạng thái | Trên giao diện hiện nay | Điều kiện để làm thật / câu hỏi còn mở |
 | --- | --- | --- | --- | --- |

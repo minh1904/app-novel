@@ -34,7 +34,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
-| Trải nghiệm | [Redesign workspace dịch](experience/editor-redesign.md) | Đề xuất + mockup, đối chiếu quyết định hiện hành, chưa chốt |
+| Trải nghiệm | [Redesign workspace dịch](experience/editor-redesign.md) | Đề xuất, đối chiếu quyết định hiện hành, chưa chốt; ảnh mockup đã xóa, nội dung từng ảnh ghi lại trong trang |
 | Trải nghiệm | [Wireframe các màn còn lại](experience/wireframes/README.md) | Ba phương án mỗi màn, chờ chọn |
 | Trải nghiệm | [Màn cài đặt kết nối AI](experience/ai-connection-settings.md) | Audit + brief + quy ước app cùng loại + 7 wireframe; **đã chốt phương án F**, vào bằng nút bánh răng góc trên phải |
 | Trải nghiệm | [Design system](experience/design-system.md) | Baseline đã chốt + scaffold |
