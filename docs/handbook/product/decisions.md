@@ -4,6 +4,7 @@ Cập nhật 2026-10-03 ([ADR-005](../decisions/0005-ai-first-proposals-no-sente
 
 | Chủ đề | Đã chốt | Giới hạn của quyết định |
 | --- | --- | --- |
+| Linh vật | **2026-10-03:** chọn mẫu manga đen trắng do chủ sản phẩm cung cấp; giữ nhận diện, tóc bob, kính đen và trang phục khi tạo từng tài nguyên. Xem [brand](brand.md). | Đã có bộ PNG riêng; chưa thay icon hoặc giao diện ứng dụng. Wordmark và tagline còn mở. |
 | Tên | **Mira** là tên sản phẩm, đổi theo yêu cầu ngày 2026-09-29; xem [ADR-001](../decisions/0001-mira-brand.md). | Logo, wordmark và tagline chính thức chưa chốt. “Translation workspace” hiện chỉ là dòng mô tả chức năng. |
 | Nền tảng đầu | **Ứng dụng desktop cho Windows**, phần đọc/sửa/lưu cốt lõi dùng được **offline**. | Electron, CodeMirror 6 và `node:sqlite` đã chốt ([ADR-003](../decisions/0003-technology-stack.md)); đánh giá chuyển Tauri 2 ngày 2026-10-03 kết luận không chuyển ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)). Quy trình phát hành, ký bản cài và cập nhật chưa chốt. |
 | Người dùng đầu | Dịch giả cá nhân làm việc với **truyện dài, nhiều chương**; cặp ngôn ngữ P0 là **Anh → Việt, Trung (giản thể và phồn thể) → Việt, Nhật → Việt**. Ưu tiên người **dịch toàn bộ bằng AI từ raw** rồi soát/sửa, kế đến người tự dịch từ raw có AI hỗ trợ. Một truyện có thể có **nhiều nguồn raw**; người dùng chọn nguồn chính. | Có đường mở rộng sang dịch tài liệu/docs về sau; hỗ trợ docs đầy đủ chưa thuộc bản đầu. |
