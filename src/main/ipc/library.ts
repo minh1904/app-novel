@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { CHANNELS } from '../../shared/channels'
 import { ChapterTranslator } from '../providers/chapterTranslation'
 import { ConnectionService } from '../providers/connectionService'
+import { ChatService } from '../providers/chatService'
 import { electronSafeStorage } from '../storage/electronSafeStorage'
 import { SecretStore } from '../storage/secretStore'
 import type { LibraryStore } from '../storage/library'
@@ -58,9 +59,24 @@ export function registerLibraryHandlers(
     connections,
     now: () => library.appNow()
   })
+  const chat = new ChatService({
+    connections,
+    // The same store the rest of the app reads through, handed over **read-only by construction**:
+    // `ChatToolLibrary` names only `listChapters` and `readText`, so no tool can reach a writer.
+    library,
+    newId: () => library.newAppId(),
+    now: () => library.appNow()
+  })
   const handlers = guardHandlers(
-    createLibraryHandlers(library, electronFilePicker(), connections, translator),
-    isTrustedSender
+    createLibraryHandlers(library, electronFilePicker(), connections, translator, chat),
+    isTrustedSender,
+    // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để
+    // tầng handler không phải import Electron và test được không cần một cửa sổ thật.
+    (event) => ({
+      send: (channel, payload) => event.sender.send(channel, payload),
+      isDestroyed: () => event.sender.isDestroyed(),
+      onDestroyed: (callback) => event.sender.once('destroyed', callback)
+    })
   )
   for (const channel of Object.values(CHANNELS)) {
     ipcMain.handle(channel, (event, raw: unknown) => handlers[channel](event, raw))

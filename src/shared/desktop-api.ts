@@ -4,6 +4,7 @@ import type {
   CreateConnectionInput,
   UpdateConnectionInput
 } from './aiConnections'
+import type { ChatChunk, ChatSendInput } from './aiChat'
 import type {
   TranslateBatchInput,
   TranslateBatchResult,
@@ -117,6 +118,21 @@ export interface AiTranslateApi {
   batch(input: TranslateBatchInput): Promise<Result<TranslateBatchResult>>
 }
 
+/**
+ * Hỏi AI về chỗ đang sửa. Khác `AiTranslateApi` ở chỗ một lượt **không** là một lời gọi trả kết
+ * quả: `send` trả ngay một `requestId` rồi chữ về dần qua `onChunk`, và `cancel` dừng theo id đó.
+ */
+export interface AiChatApi {
+  /** Bắt đầu một lượt. Trả `requestId` **ngay**; nội dung không bao giờ đi qua đường trả về này. */
+  send(input: ChatSendInput): Promise<Result<{ requestId: string }>>
+  cancel(requestId: string): Promise<Result<void>>
+  /**
+   * Nghe từng phần của mọi lượt đang chạy. Trả về hàm bỏ đăng ký, nên chỗ gọi dọn được mà không
+   * cần biết tên kênh — và `useEffect` dọn được bằng chính giá trị trả về.
+   */
+  onChunk(listener: (chunk: ChatChunk) => void): () => void
+}
+
 export interface AiApi {
   list(): Promise<Result<{ connections: ConnectionView[] }>>
   create(input: CreateConnectionInput): Promise<Result<ConnectionView>>
@@ -129,6 +145,7 @@ export interface AiApi {
   removeKey(id: string, keyId: string): Promise<Result<ConnectionView>>
   setModels(id: string, models: string[]): Promise<Result<ConnectionView>>
   translate: AiTranslateApi
+  chat: AiChatApi
 }
 
 export interface DesktopApi {

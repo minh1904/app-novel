@@ -51,6 +51,26 @@ function roundUsd(value: number): number {
   return Math.round(value * 10_000) / 10_000
 }
 
+/**
+ * Tiền của một lượt đã chạy xong, từ `usage` **thật** nhà cung cấp báo.
+ *
+ * Khác `estimateCost` ở chỗ không ước lượng gì: không hệ số ký tự-trên-token, không tỷ lệ đầu ra,
+ * không prompt overhead — ba thứ đều là phỏng đoán chưa đo, và ở đây không cần tới chúng. Trả `null`
+ * khi chưa biết giá; **không bao giờ** trả 0, vì 0 đọc như "miễn phí".
+ */
+export function costOfUsage(
+  usage: { inputTokens: number; outputTokens: number },
+  model?: ModelInfo
+): number | null {
+  const inputPrice = model?.cost?.input
+  const outputPrice = model?.cost?.output
+  if (inputPrice === undefined || outputPrice === undefined) return null
+  const usd =
+    (Math.max(0, usage.inputTokens) / 1_000_000) * inputPrice +
+    (Math.max(0, usage.outputTokens) / 1_000_000) * outputPrice
+  return roundUsd(usd)
+}
+
 export function estimateCost(input: CostEstimateInput): CostEstimate {
   const { sourceChars, sourceLang, batchCount, model } = input
   const chars = Math.max(0, sourceChars)

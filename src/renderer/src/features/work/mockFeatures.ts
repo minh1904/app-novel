@@ -15,7 +15,8 @@ export const MOCK_FEATURES = {
   contextArea: { id: 'context-area', label: 'Ngữ cảnh' },
   sourcesArea: { id: 'sources-area', label: 'Nguồn' },
   jobsArea: { id: 'jobs-area', label: 'Tác vụ' },
-  aiPanel: { id: 'ai-chat-panel', label: 'Hỏi AI' },
+  // `aiPanel` was removed on 2026-10-02: the "Hỏi AI" panel calls a real provider and writes into the
+  // translation, so it is no longer a picture on screen (change `ai-chat`).
   sentenceModeToolbar: { id: 'sentence-mode-toolbar', label: 'Tìm & lọc hàng' },
   sentenceModeSidePanels: {
     id: 'sentence-mode-side-panels',

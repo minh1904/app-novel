@@ -1,4 +1,5 @@
 import { classifyHttpError, type ClassifiedError } from './classifyError'
+import { parseSseStream } from './chatStream'
 import { normalizeModelId } from './modelCatalog'
 import { reconcile } from './reconcile'
 import {
@@ -24,6 +25,35 @@ const BATCH_TARGET_TOKENS = 1500
 /** Phỏng đoán, chưa đo: dùng để ước lượng token của một segment khi chia lô. */
 const CHARS_PER_TOKEN = 2
 const MAX_RETRIES_PER_BATCH = 3
+
+/** Một lời gọi công cụ đã gom đủ mảnh. */
+export interface AssembledToolCall {
+  id: string
+  name: string
+  arguments: string
+}
+
+/** Một lượt trong hội thoại, đúng hình dạng endpoint tương thích OpenAI nhận. */
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant' | 'tool'
+  content: string
+  /** Lượt `assistant` đã yêu cầu gọi công cụ; phải gửi lại nguyên dạng ở vòng sau. */
+  tool_calls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }>
+  /** Lượt `tool` trả kết quả cho đúng lời gọi này. */
+  tool_call_id?: string
+}
+
+/**
+ * Những gì một lượt hội thoại trả ra: nhiều `delta`, rồi **đúng một** kết thúc — `done` khi model đã
+ * trả lời xong, hoặc `tool-calls` khi nó muốn đọc thêm trước khi trả lời.
+ *
+ * Lỗi **không** nằm trong kiểu này mà được ném: người tiêu thụ đã nhận các `delta` trước đó rồi, nên
+ * ném vẫn đúng nghĩa "phần đã có cộng một lỗi" mà không cần một kiểu thứ ba. Hủy ném `cancelled`.
+ */
+export type ChatStreamEvent =
+  | { kind: 'delta'; text: string }
+  | { kind: 'tool-calls'; calls: AssembledToolCall[]; usage: TranslateUsage | null }
+  | { kind: 'done'; usage: TranslateUsage | null }
 
 export const SYSTEM_PROMPT = [
   'Bạn là người dịch truyện sang tiếng Việt.',
@@ -133,6 +163,82 @@ function readUsage(usage: {
   return { inputTokens: input, outputTokens: output }
 }
 
+/** Một mảnh lời gọi công cụ. Tên tới một lần, tham số về dần qua nhiều khung. */
+export interface ToolCallFragment {
+  index: number
+  id?: string
+  name?: string
+  arguments?: string
+}
+
+/** Một khung của lượt hội thoại, đã bóc khỏi JSON. */
+export interface ChatFrame {
+  /** Phần chữ mới của khung này; rỗng là bình thường (khung mở đầu chỉ có `role`). */
+  text: string
+  usage: TranslateUsage | null
+  /** Mảnh lời gọi công cụ của khung này, nếu có. */
+  toolCalls: ToolCallFragment[]
+  /** Thân lỗi khi nhà cung cấp báo lỗi **giữa dòng** thay vì bằng mã HTTP. */
+  error?: Record<string, unknown>
+}
+
+/** Mảnh `tool_calls` của một khung, bỏ qua mọi thứ không đọc được. */
+function readToolFragments(raw: unknown): ToolCallFragment[] {
+  if (!Array.isArray(raw)) return []
+  const fragments: ToolCallFragment[] = []
+  for (const entry of raw) {
+    const item = entry as {
+      index?: unknown
+      id?: unknown
+      function?: { name?: unknown; arguments?: unknown }
+    }
+    // Thiếu `index` thì coi là lời gọi đầu tiên: một số endpoint bỏ nó khi chỉ có một lời gọi.
+    const index = typeof item?.index === 'number' ? item.index : 0
+    const fragment: ToolCallFragment = { index }
+    if (typeof item?.id === 'string') fragment.id = item.id
+    if (typeof item?.function?.name === 'string') fragment.name = item.function.name
+    if (typeof item?.function?.arguments === 'string') {
+      fragment.arguments = item.function.arguments
+    }
+    fragments.push(fragment)
+  }
+  return fragments
+}
+
+/**
+ * Đọc một khung `data:` của lượt hội thoại.
+ *
+ * Trả `null` cho khung không đọc được, và **không ném**: một dòng lạ của nhà cung cấp không đáng
+ * giết cả lượt khi phần còn lại vẫn dùng được. Khung lỗi thì khác — nó là tin thật, nên đi ra để
+ * bên gọi phân loại.
+ */
+export function parseChatFrame(data: string): ChatFrame | null {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(data)
+  } catch {
+    return null
+  }
+  if (parsed === null || typeof parsed !== 'object') return null
+  const payload = parsed as {
+    error?: unknown
+    usage?: { prompt_tokens?: unknown; completion_tokens?: unknown }
+    choices?: Array<{ delta?: { content?: unknown; tool_calls?: unknown } }>
+  }
+
+  if (payload.error !== null && typeof payload.error === 'object') {
+    return { text: '', usage: null, toolCalls: [], error: payload.error as Record<string, unknown> }
+  }
+
+  const delta = payload.choices?.[0]?.delta
+  const content = delta?.content
+  return {
+    text: typeof content === 'string' ? content : '',
+    usage: readUsage(payload.usage),
+    toolCalls: readToolFragments(delta?.tool_calls)
+  }
+}
+
 function toProviderError(error: ClassifiedError): ProviderError {
   return new ProviderError(error.kind, error.message, { retryAfterMs: error.retryAfterMs })
 }
@@ -153,13 +259,22 @@ export class OpenAiCompatibleProvider implements TranslationProvider {
    * nối**: báo nối được nhưng chưa liệt kê được, để người dùng khai model bằng tay.
    */
   async listModels(signal?: AbortSignal): Promise<{ models: string[]; listed: boolean }> {
-    const response = await this.send('models', { method: 'GET' }, signal)
+    // Phải gửi khóa như mọi lời gọi khác. Thiếu nó, Gemini trả **404 "Requested entity was not
+    // found."** cho `GET /v1beta/openai/models` — mà 404 không phải `auth` cũng không phải `network`,
+    // nên nó rơi đúng vào nhánh "endpoint không liệt kê model" bên dưới và kết nối hiện ra là nối
+    // được nhưng không có model nào. Một lỗi xác thực đội lốt một endpoint thiếu tính năng.
+    const lease = await this.acquireKey()
+    const response = await this.send('models', { method: 'GET', secret: lease.secret }, signal)
     if (!response.ok) {
       const error = await this.classify(response)
+      // Báo như mọi lần dùng khác: `auth` đánh dấu khóa hỏng, `rate_limited` đóng băng, còn lại để
+      // khóa yên (`decideFreeze`), nên một endpoint thật sự không có `/models` không phạt khóa.
+      if (lease.id !== null) await this.options.keys.report(lease.id, error)
       // Khóa sai hay không nối được là lỗi kết nối thật; còn lại chỉ là endpoint không liệt kê.
       if (error.kind === 'auth' || error.kind === 'network') throw toProviderError(error)
       return { models: [], listed: false }
     }
+    if (lease.id !== null) await this.options.keys.report(lease.id, 'ok')
     const body = (await response.json()) as { data?: Array<{ id?: unknown }> }
     const models = (body.data ?? [])
       .map((entry) => entry?.id)
@@ -253,11 +368,110 @@ export class OpenAiCompatibleProvider implements TranslationProvider {
     return { items: done, usage: reported ? spent : null }
   }
 
-  /** Một lần gọi tới nhà cung cấp, kể cả việc chọn khóa và báo kết quả cho tầng khóa. */
-  private async callOnce(
-    segments: SegmentText[],
-    signal?: AbortSignal
-  ): Promise<{ items: SegmentText[]; usage: TranslateUsage | null }> {
+  /**
+   * Một lượt hội thoại, trả về theo dòng.
+   *
+   * Khác `translate()` ở mọi điểm đáng kể, nên nó **không** nằm trong `TranslationProvider`: không
+   * chia lô, không khớp theo ID, không `reconcile`, không thử lại. Dùng chung đúng những thứ đáng
+   * dùng chung — chọn khóa, gắn `Authorization`, phân loại lỗi.
+   *
+   * Báo cho tầng khóa **đúng một lần, ở cuối**: `ok` khi xong êm, lỗi đã phân loại khi hỏng, và
+   * **không báo gì khi bị hủy** — một lần dùng chưa xong không kết luận được gì, nên nói `ok` là nói
+   * dối còn nói lỗi sẽ đóng băng một khóa hoàn toàn lành (D4 của change `ai-chat`).
+   */
+  async *chat(
+    messages: ChatMessage[],
+    { signal, tools }: TranslateOptions & { tools?: readonly unknown[] } = {}
+  ): AsyncGenerator<ChatStreamEvent> {
+    const lease = await this.acquireKey()
+
+    const body = {
+      model: this.options.model,
+      messages,
+      stream: true,
+      // Khai tường minh dù có nguồn nói Gemini vẫn trả `usage` khi thiếu: đó là nguồn diễn đàn, và
+      // lối gọi này cũng chạy trên gateway tự dựng — khai rõ thì đúng ở cả hai.
+      stream_options: { include_usage: true },
+      ...(tools && tools.length > 0 ? { tools } : {})
+    }
+
+    const response = await this.send(
+      'chat/completions',
+      { method: 'POST', body: JSON.stringify(body), secret: lease.secret },
+      signal
+    )
+
+    if (!response.ok) {
+      const classified = await this.classify(response)
+      if (lease.id !== null) await this.options.keys.report(lease.id, classified)
+      throw toProviderError(classified)
+    }
+    if (response.body === null) {
+      throw new ProviderError('invalid_response', 'Phản hồi không có thân để đọc.')
+    }
+
+    let usage: TranslateUsage | null = null
+    // Mảnh lời gọi công cụ gom theo `index`, vì tên tới một lần còn tham số về dần qua nhiều khung.
+    const pending = new Map<number, { id: string; name: string; arguments: string }>()
+    try {
+      for await (const event of parseSseStream(response.body)) {
+        // Kiểm `aborted` ngay trong vòng lặp, không chỉ dựa vào việc thân stream tự lỗi: `fetch` thật
+        // có hủy thân khi signal tắt, nhưng để việc hủy **phụ thuộc** vào điều đó nghĩa là một
+        // endpoint hay một lớp trung gian cư xử khác sẽ làm nút Hủy không có tác dụng.
+        if (signal?.aborted) throw new ProviderError('cancelled', 'Yêu cầu đã bị hủy.')
+        const frame = parseChatFrame(event.data)
+        if (frame === null) continue
+        if (frame.error !== undefined) {
+          // Lỗi giữa dòng: thân không có mã HTTP riêng, nên lấy `error.code` của chính nó và hạ về
+          // 500 khi thiếu — "trục trặc đường truyền, thử lại được" là mặc định an toàn hơn là
+          // `refused`, thứ sẽ chặn người dùng thử lại một lỗi tạm thời.
+          const classified = classifyHttpError({
+            status: typeof frame.error.code === 'number' ? frame.error.code : 500,
+            body: JSON.stringify({ error: frame.error }),
+            now: this.now()
+          })
+          if (lease.id !== null) await this.options.keys.report(lease.id, classified)
+          throw toProviderError(classified)
+        }
+        if (frame.usage !== null) usage = frame.usage
+        for (const fragment of frame.toolCalls) {
+          const current = pending.get(fragment.index) ?? { id: '', name: '', arguments: '' }
+          pending.set(fragment.index, {
+            id: fragment.id ?? current.id,
+            name: fragment.name ?? current.name,
+            arguments: current.arguments + (fragment.arguments ?? '')
+          })
+        }
+        if (frame.text !== '') yield { kind: 'delta', text: frame.text }
+      }
+    } catch (error) {
+      if (signal?.aborted) throw new ProviderError('cancelled', 'Yêu cầu đã bị hủy.')
+      if (error instanceof ProviderError) throw error
+      const message = error instanceof Error ? error.message : String(error)
+      const classified: ClassifiedError = { kind: 'network', message: 'Mất kết nối: ' + message }
+      if (lease.id !== null) await this.options.keys.report(lease.id, classified)
+      throw toProviderError(classified)
+    }
+
+    if (lease.id !== null) await this.options.keys.report(lease.id, 'ok')
+
+    // Lời gọi thiếu tên là mảnh hỏng, không phải một lời gọi: bỏ, đừng đẩy sang tầng thi hành.
+    const calls = [...pending.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([, call]) => call)
+      .filter((call) => call.name !== '')
+    if (calls.length > 0) {
+      yield { kind: 'tool-calls', calls, usage }
+      return
+    }
+    yield { kind: 'done', usage }
+  }
+
+  /**
+   * Khóa cho một lời gọi, hoặc một lỗi hết hạn mức nói rõ **mọi** khóa đang bị đóng băng. Dùng chung
+   * cho cả lối dịch và lối hội thoại, nên hai lối nói cùng một câu khi cạn khóa.
+   */
+  private async acquireKey(): Promise<KeyLease> {
     const lease = await this.options.keys.acquire()
     if ('exhausted' in lease) {
       const wait = lease.recoverAt === null ? '' : ' Thử lại sau.'
@@ -267,6 +481,15 @@ export class OpenAiCompatibleProvider implements TranslationProvider {
         lease.recoverAt === null ? {} : { retryAfterMs: Math.max(0, lease.recoverAt - this.now()) }
       )
     }
+    return lease
+  }
+
+  /** Một lần gọi tới nhà cung cấp, kể cả việc chọn khóa và báo kết quả cho tầng khóa. */
+  private async callOnce(
+    segments: SegmentText[],
+    signal?: AbortSignal
+  ): Promise<{ items: SegmentText[]; usage: TranslateUsage | null }> {
+    const lease = await this.acquireKey()
 
     const body = {
       model: this.options.model,

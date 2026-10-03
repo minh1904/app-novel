@@ -16,6 +16,8 @@ import type { SegmentLanguage } from '../../../../shared/segmenter'
 import type { TextRecord } from '../../../../shared/text'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'
+import { applyProposal, targetRange, type TargetRange, type TargetScope } from './chatRange'
+import { ReviewMode, reviewFinished } from './chatReview'
 import { createEditorState } from './editorState'
 import {
   EditorSession,
@@ -47,7 +49,16 @@ const theme = EditorView.theme({
   // No ring on focus: the blinking caret is the focus signal here, same as a code editor's pane
   // (unlike a button or field, where a ring is the only way to tell focus moved there at all).
   '&.cm-focused': { outline: 'none' },
-  '.cm-scroller': { fontFamily: 'inherit', lineHeight: '1.7', overflow: 'auto' },
+  // Scrolling stays enabled; only the visible track/thumb are suppressed, so the pane keeps its
+  // flush edge instead of a bar fighting the border next to it.
+  '.cm-scroller': {
+    fontFamily: 'inherit',
+    lineHeight: '1.7',
+    overflow: 'auto',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none'
+  },
+  '.cm-scroller::-webkit-scrollbar': { display: 'none' },
   '.cm-content': { padding: '12px 0', caretColor: 'var(--text-primary)' },
   '.cm-line': { padding: '0 8px' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
@@ -117,6 +128,24 @@ export interface TextEditorHandle {
   discard(): Promise<void>
   /** The text as it is now, saved or not. */
   getText(): string
+  /** The stretch an AI turn would be about: the selection, else the paragraph at the caret. */
+  targetRange(scope?: TargetScope): TargetRange | null
+  /**
+   * Writes a proposal in as one undoable step, or refuses when the anchored text has changed since
+   * it was asked for. Refusing is the point: this is the one path that can overwrite the user's own
+   * typing, so it never guesses where the text went.
+   */
+  applyProposal(range: TargetRange, replacement: string): 'applied' | 'stale'
+  /**
+   * Puts a proposal into the pane as a **reviewable layer**: the changed stretches are marked in
+   * place, each with its own accept and reject control, instead of being written outright.
+   *
+   * Same staleness rules as `applyProposal` — a proposal whose anchor moved on is refused here too,
+   * because showing a diff against text the question was never about is its own kind of wrong.
+   */
+  reviewProposal(range: TargetRange, replacement: string): 'reviewing' | 'stale'
+  /** Drops an unfinished review, leaving whatever the translator has already accepted. */
+  endReview(): void
 }
 
 export interface TextEditorProps {
@@ -138,6 +167,10 @@ export interface TextEditorProps {
   /** A save went through (or the stored text was reloaded): the figures on the screen follow it. */
   onSaved(record: TextRecord): void
   onStatusChange?(status: SessionStatus): void
+  /** The caret or selection moved: the stretch an AI turn would be about changed with it. */
+  onTargetChange?(range: TargetRange): void
+  /** Every chunk of a review has been accepted or rejected, so the review is over. */
+  onReviewDone?(): void
   handleRef?: Ref<TextEditorHandle>
 }
 
@@ -155,6 +188,8 @@ export function TextEditor({
   images,
   onSaved,
   onStatusChange,
+  onTargetChange,
+  onReviewDone,
   handleRef
 }: TextEditorProps): JSX.Element {
   const host = useRef<HTMLDivElement>(null)
@@ -166,9 +201,10 @@ export function TextEditor({
   const [empty, setEmpty] = useState(record.content === '')
   const [imageError, setImageError] = useState<string | null>(null)
   const hintId = useId()
-  const latest = useRef({ onSaved, onStatusChange, readOnly })
+  const [review] = useState(() => new ReviewMode())
+  const latest = useRef({ onSaved, onStatusChange, onTargetChange, onReviewDone, readOnly })
   useEffect(() => {
-    latest.current = { onSaved, onStatusChange, readOnly }
+    latest.current = { onSaved, onStatusChange, onTargetChange, onReviewDone, readOnly }
   })
 
   const status = useSyncExternalStore(
@@ -193,7 +229,39 @@ export function TextEditor({
         const loaded = await sessionRef.current?.reload()
         if (loaded) latest.current.onSaved(loaded)
       },
-      getText: () => view.current?.state.doc.toString() ?? ''
+      getText: () => view.current?.state.doc.toString() ?? '',
+      targetRange: (scope) => {
+        const editor = view.current
+        return editor ? targetRange(editor.state, scope) : null
+      },
+      reviewProposal: (range, replacement) => {
+        const editor = view.current
+        if (!editor) return 'stale'
+        const result = applyProposal(editor.state, range, replacement)
+        if (result.kind === 'stale') return 'stale'
+        // The text as it stands now becomes the thing the proposal is shown against, so it has to be
+        // captured before the change lands.
+        const original = editor.state.doc.toString()
+        editor.dispatch(result.spec)
+        editor.dispatch(review.start(original))
+        editor.focus()
+        return 'reviewing'
+      },
+      endReview: () => {
+        const editor = view.current
+        if (editor && review.isActive(editor.state)) editor.dispatch(review.stop())
+      },
+      applyProposal: (range, replacement) => {
+        const editor = view.current
+        if (!editor) return 'stale'
+        const result = applyProposal(editor.state, range, replacement)
+        if (result.kind === 'stale') return 'stale'
+        editor.dispatch(result.spec)
+        // Focus follows the text: the caret now sits after what was written, and the translator keeps
+        // typing from there instead of having to click back into the pane.
+        editor.focus()
+        return 'applied'
+      }
     }),
     [save]
   )
@@ -218,9 +286,22 @@ export function TextEditor({
             autocapitalize: 'off'
           }),
           lock.of(lockExtension(latest.current.readOnly)),
+          review.extension(),
           EditorView.updateListener.of((update) => {
             sessionRef.current?.onUpdate(update)
             if (update.docChanged) setEmpty(update.state.doc.length === 0)
+            // The AI panel has to follow the caret to be about anything at all, and only the editor
+            // knows when it moved. Fired on selection as well as text, because moving the caret
+            // changes which paragraph a question is about without changing a character.
+            if (update.selectionSet || update.docChanged) {
+              latest.current.onTargetChange?.(targetRange(update.state))
+            }
+            // A review ends itself once nothing is left to decide, so the translator never has to
+            // dismiss a bar that has no more work in it.
+            if (update.docChanged && review.isActive(update.state) && reviewFinished(update.state)) {
+              update.view.dispatch(review.stop())
+              latest.current.onReviewDone?.()
+            }
           }),
           segmentDecorations(),
           ...(livePreview

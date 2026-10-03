@@ -1,4 +1,5 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import type { ChatChunk, ChatSendInput } from '../shared/aiChat'
 import type {
   ConnectionTestResult,
   ConnectionView,
@@ -12,7 +13,7 @@ import type {
   TranslatePlanInput
 } from '../shared/aiTranslate'
 import type { BackupExported } from '../shared/backup'
-import { CHANNELS } from '../shared/channels'
+import { CHANNELS, EVENT_CHANNELS } from '../shared/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/chapters'
 import type { AppInfo, DesktopApi } from '../shared/desktop-api'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/library'
@@ -157,6 +158,21 @@ const desktopApi: DesktopApi = {
         ipcRenderer.invoke(CHANNELS.aiTranslateBatch, input) as Promise<
           Result<TranslateBatchResult>
         >
+    },
+    chat: {
+      send: (input: ChatSendInput) =>
+        ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<Result<{ requestId: string }>>,
+      cancel: (requestId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiChatCancel, { requestId }) as Promise<Result<void>>,
+      /**
+       * Tên kênh **đóng cứng ở đây**, không nhận từ renderer: phơi một `on(channel, cb)` tổng quát
+       * là mở cho renderer nghe mọi thứ main gửi, đúng thứ `contextIsolation` tồn tại để chặn.
+       */
+      onChunk: (listener: (chunk: ChatChunk) => void) => {
+        const handler = (_event: IpcRendererEvent, chunk: ChatChunk): void => listener(chunk)
+        ipcRenderer.on(EVENT_CHANNELS.aiChatChunk, handler)
+        return () => ipcRenderer.off(EVENT_CHANNELS.aiChatChunk, handler)
+      }
     }
   }
 }

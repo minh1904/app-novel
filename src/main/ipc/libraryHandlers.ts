@@ -1,4 +1,5 @@
-import { CHANNELS, type Channel } from '../../shared/channels'
+import { chatCancelSchema, chatSendSchema } from '../../shared/aiChat'
+import { CHANNELS, EVENT_CHANNELS, type Channel } from '../../shared/channels'
 import {
   chapterRefSchema,
   createChapterSchema,
@@ -31,7 +32,15 @@ import {
 import { translateBatchSchema, translatePlanSchema } from '../../shared/aiTranslate'
 import type { ConnectionService } from '../providers/connectionService'
 import type { ChapterTranslator } from '../providers/chapterTranslation'
-import { createAsyncHandler, createHandler, type RawHandler } from './handler'
+import type { ChatService } from '../providers/chatService'
+import {
+  createAsyncHandler,
+  createHandler,
+  createSinkHandler,
+  noChunkSink,
+  type ChunkSink,
+  type RawHandler
+} from './handler'
 import { noFilePicker, type FilePicker } from './filePicker'
 
 /** Channel → validated handler. Free of Electron imports so tests can call it directly. */
@@ -39,7 +48,8 @@ export function createLibraryHandlers(
   library: LibraryStore,
   files: FilePicker = noFilePicker,
   connections?: ConnectionService,
-  translator?: ChapterTranslator
+  translator?: ChapterTranslator,
+  chat?: ChatService
 ): Record<Channel, RawHandler<unknown>> {
   /** Kênh kết nối AI chỉ dùng được khi kho khóa mở được; nếu không thì nói rõ thay vì im lặng. */
   const ai = (): ConnectionService => {
@@ -53,6 +63,12 @@ export function createLibraryHandlers(
       throw new StorageError('io', 'Chưa mở được kho cài đặt kết nối AI.')
     }
     return translator
+  }
+  const chatting = (): ChatService => {
+    if (!chat) {
+      throw new StorageError('io', 'Chưa mở được kho cài đặt kết nối AI.')
+    }
+    return chat
   }
   return {
     [CHANNELS.worksList]: createHandler(null, () => library.list()),
@@ -152,7 +168,26 @@ export function createLibraryHandlers(
     ),
     [CHANNELS.aiTranslateBatch]: createAsyncHandler(translateBatchSchema, (input) =>
       translate().runBatch(input)
-    )
+    ),
+    /**
+     * Bắt đầu một lượt chat. Trả **chỉ** `requestId`: nội dung câu trả lời không bao giờ đi qua
+     * đường trả về của `invoke`, nó đi bằng `EVENT_CHANNELS.aiChatChunk`.
+     */
+    [CHANNELS.aiChatSend]: createSinkHandler(chatSendSchema, (input, sink) => {
+      const service = chatting()
+      // Cửa sổ đóng hay reload giữa lượt: dọn mọi lượt đang chạy. Mira là ứng dụng một cửa sổ, nên
+      // "cửa sổ này đi" đồng nghĩa với "không còn ai nhận chữ" — nếu sau này có nhiều cửa sổ thì chỗ
+      // này phải nhóm lượt theo cửa sổ, và đó là lý do ghi chú nằm ở đây chứ không ở `ChatService`.
+      sink.onDestroyed(() => service.cancelAll())
+      const requestId = service.start(input, (chunk) => {
+        if (sink.isDestroyed()) return
+        sink.send(EVENT_CHANNELS.aiChatChunk, chunk)
+      })
+      return { requestId }
+    }),
+    [CHANNELS.aiChatCancel]: createHandler(chatCancelSchema, ({ requestId }) => {
+      chatting().cancel(requestId)
+    })
   }
 }
 
@@ -162,7 +197,9 @@ export function createLibraryHandlers(
  */
 export function guardHandlers<E>(
   handlers: Record<Channel, RawHandler<unknown>>,
-  isTrustedSender: (event: E) => boolean
+  isTrustedSender: (event: E) => boolean,
+  /** Cửa sổ của lời gọi, cho kênh đẩy sự kiện về. Thiếu thì không kênh nào đẩy được gì. */
+  sinkOf: (event: E) => ChunkSink = () => noChunkSink
 ): Record<Channel, (event: E, raw: unknown) => Result<unknown> | Promise<Result<unknown>>> {
   const guarded = {} as Record<
     Channel,
@@ -171,7 +208,7 @@ export function guardHandlers<E>(
   for (const channel of Object.values(CHANNELS)) {
     guarded[channel] = (event, raw) =>
       isTrustedSender(event)
-        ? handlers[channel](raw)
+        ? handlers[channel](raw, sinkOf(event))
         : fail('untrusted_sender', 'Nguồn gửi yêu cầu không được tin cậy.')
   }
   return guarded

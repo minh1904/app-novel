@@ -32,7 +32,24 @@ export const CHANNELS = {
   aiKeysRemove: 'ai:connections:keys:remove',
   aiModelsSet: 'ai:connections:models:set',
   aiTranslatePlan: 'ai:translate:plan',
-  aiTranslateBatch: 'ai:translate:batch'
+  aiTranslateBatch: 'ai:translate:batch',
+  aiChatSend: 'ai:chat:send',
+  aiChatCancel: 'ai:chat:cancel'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]
+
+/**
+ * Kênh đi **main → renderer**, tách khỏi `CHANNELS` có chủ ý.
+ *
+ * `CHANNELS` là tập kênh `invoke`: main lặp qua từng giá trị của nó để gọi `ipcMain.handle`, và map
+ * handler khai kiểu `Record<Channel, …>` nên quên một kênh là lỗi biên dịch. Một kênh sự kiện
+ * **không có** handler `invoke`, nên để nó trong `CHANNELS` sẽ vừa đăng ký một handler vô nghĩa vừa
+ * phá đúng cái bảo đảm đang có giá trị. Hai nhóm, hai kiểu, cả hai vẫn đầy đủ.
+ */
+export const EVENT_CHANNELS = {
+  /** Từng phần câu trả lời của một lượt chat. Preload đóng cứng tên này (D9 của `ai-chat`). */
+  aiChatChunk: 'ai:chat:chunk'
+} as const
+
+export type EventChannel = (typeof EVENT_CHANNELS)[keyof typeof EVENT_CHANNELS]

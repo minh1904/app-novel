@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import { MaximizeSquareIcon } from '@solar-icons/react/linear/maximize-square'
@@ -14,11 +14,13 @@ import type { SessionStatus, TextStore } from '../editor/editorSession'
 import { insertImageEmbed } from '../editor/imageEmbed'
 import type { ImageStore } from '../editor/imageEmbedDecorations'
 import { useConfirmLeave, useRegisterLeaveGuard } from '../editor/leaveGuard'
+import type { TargetRange } from '../editor/chatRange'
 import { TextEditor, type TextEditorHandle } from '../editor/TextEditor'
 import { languages, type Work } from '../library/works'
 import { headingTitle } from '../work/chapterList'
 import { SOON_LABEL } from '../work/mockFeatures'
 import { AiPanel } from './AiPanel'
+import type { ChatEditor } from './useAiChat'
 import { AiTranslateDialog } from './AiTranslateDialog'
 import { EditorPane } from './EditorPane'
 import { SentenceMode, type SentenceModeHandle } from './SentenceMode'
@@ -93,6 +95,41 @@ export function ChapterWorkspace({
   const [mode, setMode] = useState<'full' | 'sentence'>('full')
   const sentence = useRef<SentenceModeHandle>(null)
   const [aiOpen, setAiOpen] = useState(false)
+  const [aiWidth, setAiWidth] = useState(420)
+  // The stretch the AI panel is about, reported by the translation pane as the caret moves. Without
+  // it the panel would be about nothing in particular.
+  const [aiRange, setAiRange] = useState<TargetRange | null>(null)
+  /**
+   * Bumped each time a review in the translation pane runs out of chunks to decide. The panel keeps
+   * the number it started a review at, so its notice can tell "still reviewing" from "all done"
+   * without anyone writing state inside an effect.
+   */
+  const [reviewsEnded, setReviewsEnded] = useState(0)
+  /**
+   * The two panes as the AI panel sees them: stable objects whose methods reach into the refs when
+   * called.
+   *
+   * Not `targetEditor.current` passed down directly — reading a ref during render is both a React
+   * violation and wrong in practice, because the ref filling in does not cause a re-render, so the
+   * panel could hold `null` for the pane that is right there. Reading **live** also matters on its
+   * own: the panel sends the text on screen, which is not always the text in storage.
+   */
+  const sourceText = useMemo(
+    () => ({ getText: (): string => sourceEditor.current?.getText() ?? '' }),
+    []
+  )
+  const targetChat = useMemo<ChatEditor>(
+    () => ({
+      getText: () => targetEditor.current?.getText() ?? '',
+      targetRange: (scope) => targetEditor.current?.targetRange(scope) ?? null,
+      applyProposal: (range, replacement) =>
+        targetEditor.current?.applyProposal(range, replacement) ?? 'stale',
+      reviewProposal: (range, replacement) =>
+        targetEditor.current?.reviewProposal(range, replacement) ?? 'stale',
+      endReview: () => targetEditor.current?.endReview()
+    }),
+    []
+  )
   const [translateOpen, setTranslateOpen] = useState(false)
   const translateOpener = useRef<HTMLElement | null>(null)
   const confirmLeave = useConfirmLeave()
@@ -141,20 +178,33 @@ export function ChapterWorkspace({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [saveCurrent])
 
-  // Ctrl+K (Cmd+K) opens "Hỏi AI" in Toàn văn; Esc closes it. Illustration only, see AiPanel.
+  /**
+   * One way in, used by both the button and Ctrl+K.
+   *
+   * Seeds the range on the way in: the caret may not have moved since the editor opened, so without
+   * this the panel would start out about nothing until the translator clicks somewhere.
+   */
+  const toggleAi = useCallback((): void => {
+    setAiOpen((open) => {
+      if (!open) setAiRange(targetEditor.current?.targetRange() ?? null)
+      return !open
+    })
+  }, [])
+
+  // Ctrl+K (Cmd+K) opens "Hỏi AI" in Toàn văn; Esc closes it.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.defaultPrevented) return
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && mode === 'full') {
         event.preventDefault()
-        setAiOpen((open) => !open)
+        toggleAi()
       } else if (event.key === 'Escape' && aiOpen) {
         setAiOpen(false)
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [mode, aiOpen])
+  }, [mode, aiOpen, toggleAi])
 
   useRegisterLeaveGuard({
     isDirty: () =>
@@ -209,7 +259,7 @@ export function ChapterWorkspace({
               aria-pressed={aiOpen}
               aria-label="Hỏi AI (Ctrl+K)"
               title="Hỏi AI (Ctrl+K)"
-              onClick={() => setAiOpen((open) => !open)}
+              onClick={toggleAi}
             >
               <StarsIcon size={15} />
             </Button>
@@ -323,9 +373,10 @@ export function ChapterWorkspace({
         <div
           className={
             aiOpen
-              ? 'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_420px] divide-x divide-line'
+              ? 'grid min-h-0 flex-1 divide-x divide-line'
               : 'grid min-h-0 flex-1 grid-cols-2 divide-x divide-line'
           }
+          style={aiOpen ? { gridTemplateColumns: `minmax(0,1fr) minmax(0,1fr) ${aiWidth}px` } : undefined}
         >
           <EditorPane
             title="Bản gốc"
@@ -375,13 +426,25 @@ export function ChapterWorkspace({
               emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
               onSaved={onTargetSaved}
               onStatusChange={setTargetStatus}
+              onTargetChange={setAiRange}
+              onReviewDone={() => setReviewsEnded((count) => count + 1)}
             />
           </EditorPane>
 
           {aiOpen && (
             <AiPanel
-              contextLabel={headingTitle(chapter) + ' · Đoạn văn 2'}
+              workId={work.id}
+              chapterId={chapter.id}
+              chapterLabel={headingTitle(chapter)}
+              sourceLang={work.sourceLanguage}
+              source={sourceText}
+              target={targetChat}
+              autoRange={aiRange}
+              reviewsEnded={reviewsEnded}
+              width={aiWidth}
+              onWidthChange={setAiWidth}
               onClose={() => setAiOpen(false)}
+              onOpenSettings={onOpenSettings}
             />
           )}
         </div>

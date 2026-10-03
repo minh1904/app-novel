@@ -1,17 +1,32 @@
-import { useId, useState, type JSX } from 'react'
+import { useId, useMemo, useState, type JSX } from 'react'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
+import { BookIcon } from '@solar-icons/react/linear/book'
 import { CheckIcon } from '@solar-icons/react/linear/check'
 import { CopyIcon } from '@solar-icons/react/linear/copy'
 import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import { StopCircleIcon } from '@solar-icons/react/linear/stop-circle'
+import type { ChatContextBlock } from '../../../../shared/aiChat'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
-import { SAMPLE, type ToolStep } from './aiChatSample'
+import { diffLines, diffSummary } from './lineDiff'
+import { proposalOf, type TurnView } from './chatTurns'
 
-/** Collapsed by default, both while running and once done — using a tool is routine, not a result. */
-function ToolSteps({ head, steps }: { head: string; steps: ToolStep[] }): JSX.Element {
+/**
+ * One question and its answer, as it actually happened.
+ *
+ * Two things here are load-bearing rather than decorative. The context list says "đã gửi kèm", not
+ * "đã dùng công cụ": Mira chose those blocks by rule, and claiming the model went and looked them up
+ * would misdescribe the mechanism. And Apply appears only under a finished Sửa turn that produced a
+ * fenced block — a cancelled or failed answer is a truncated one, and applying a truncated rewrite
+ * silently shortens the paragraph it replaces.
+ */
+
+/** Collapsed by default: what was sent is routine, and the answer is what the reader came for. */
+function SentContext({ blocks }: { blocks: ChatContextBlock[] }): JSX.Element | null {
   const [open, setOpen] = useState(false)
   const listId = useId()
+  if (blocks.length === 0) return null
 
   return (
     <div>
@@ -26,7 +41,7 @@ function ToolSteps({ head, steps }: { head: string; steps: ToolStep[] }): JSX.El
           size={14}
           className={cx('shrink-0 transition-transform', open && 'rotate-90')}
         />
-        <span>{head}</span>
+        <span>Đã gửi kèm {blocks.length} khối ngữ cảnh</span>
       </button>
       {/* grid-rows 0fr -> 1fr so the list slides instead of popping; `inert` keeps the closed rows
           out of Tab order without unmounting them. */}
@@ -38,17 +53,10 @@ function ToolSteps({ head, steps }: { head: string; steps: ToolStep[] }): JSX.El
       >
         <div className="min-h-0 overflow-hidden" id={listId} inert={!open}>
           <ul className="mt-2 ml-[7px] space-y-2 border-l border-line-strong pl-4">
-            {steps.map((step) => (
-              <li key={step.label} className="flex gap-1.5">
-                {step.state === 'error' ? (
-                  <DangerCircleIcon size={14} className="mt-px shrink-0 text-error" />
-                ) : (
-                  <CheckIcon size={14} className="mt-px shrink-0 text-ink-muted" />
-                )}
-                <div className="min-w-0">
-                  <p className="text-[12px] text-ink">{step.label}</p>
-                  <p className="text-[11px] leading-[1.5] text-ink-muted">{step.detail}</p>
-                </div>
+            {blocks.map((block, index) => (
+              <li key={block.label + String(index)}>
+                <p className="text-[12px] text-ink">{block.label}</p>
+                <p className="text-[11px] leading-[1.5] text-ink-muted">{block.detail}</p>
               </li>
             ))}
           </ul>
@@ -58,78 +66,182 @@ function ToolSteps({ head, steps }: { head: string; steps: ToolStep[] }): JSX.El
   )
 }
 
-/** Copy and regenerate. -ml-[7px] pulls the first icon flush with the answer text (size-7 box, 14px icon). */
-function ActionRow(): JSX.Element {
+/**
+ * How big the change is, and a way to put it in front of the text it would change.
+ *
+ * The diff itself is **not** drawn here any more. It used to be, and comparing two places while
+ * accepting all-or-nothing was the part that felt wrong: the proposal now goes into the translation
+ * pane as marked chunks, each accepted or rejected where it sits.
+ */
+function ProposalSummary({
+  before,
+  after,
+  onReview
+}: {
+  before: string
+  after: string
+  onReview(): void
+}): JSX.Element {
+  const lines = useMemo(() => diffLines(before, after), [before, after])
+  const { added, removed } = useMemo(() => diffSummary(lines), [lines])
+
   return (
-    <div className="-ml-[7px] flex items-center gap-0.5 pt-0.5">
-      {[
-        { icon: <CopyIcon size={14} />, label: 'Sao chép' },
-        { icon: <RefreshIcon size={14} />, label: 'Tạo lại' }
-      ].map((action) => (
-        <button
-          key={action.label}
-          type="button"
-          disabled
-          aria-label={action.label}
-          title="Chưa nối provider"
-          className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-muted hover:bg-selected hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {action.icon}
-        </button>
-      ))}
+    <div className="flex items-center gap-2 rounded-panel border border-line-strong px-2 py-1.5">
+      <span className="min-w-0 flex-1 text-[11px] text-ink-muted">
+        Đề xuất thay {removed} dòng, thêm {added} dòng
+      </span>
+      <Button size="sm" onClick={onReview}>
+        Xem trong bản dịch
+      </Button>
     </div>
   )
 }
 
-/**
- * One question and its answer. Everything is the fixed sample in `aiChatSample.ts`; the three
- * actions that would write into the translation stay disabled until there is a provider.
- */
-export function AiTurn(): JSX.Element {
+export function AiTurn({
+  turn,
+  onCancel,
+  onRetry,
+  onApply
+}: {
+  turn: TurnView
+  onCancel(requestId: string): void
+  onRetry(question: string): void
+  onApply(turn: TurnView, replacement: string): void
+}): JSX.Element {
+  const proposal = proposalOf(turn)
+  const running = turn.status === 'sending' || turn.status === 'running'
+
   return (
-    <>
-      <p className="ml-auto w-fit max-w-[85%] rounded-control bg-control px-2.5 py-1.5 text-[13px] leading-[1.55] whitespace-pre-wrap [overflow-wrap:anywhere]">
-        {SAMPLE.question}
+    <article className="flex flex-col gap-2">
+      <p className="w-fit self-end rounded-panel bg-control px-2.5 py-1.5 text-[13px] leading-[1.6] text-ink">
+        {turn.question}
       </p>
 
-      <div className="space-y-2.5">
-        <ToolSteps head="Đã dùng 3 công cụ" steps={[...SAMPLE.steps]} />
+      <SentContext blocks={turn.context} />
 
-        <div className="space-y-2 text-[13px] leading-[1.65]">
-          <p>{SAMPLE.lead}</p>
-          <p>{SAMPLE.proposal}</p>
-          <p className="text-[12px] text-ink-muted">{SAMPLE.note}</p>
+      {/* What the model went and looked up for itself. Separate from "đã gửi kèm" because the two are
+          different claims: one is what Mira chose to send, the other is what the model chose to read. */}
+      {turn.tools.length > 0 && (
+        <ul className="ml-[7px] space-y-1 border-l border-line-strong pl-4">
+          {turn.tools.map((step, index) => (
+            <li key={step.name + String(index)} className="flex items-center gap-1.5">
+              <BookIcon size={13} className="shrink-0 text-ink-muted" />
+              <span className="text-[11px] text-ink-muted">Đã đọc: {step.detail}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {turn.answer !== '' && (
+        <div className="text-[13px] leading-[1.7] whitespace-pre-wrap text-ink">{turn.answer}</div>
+      )}
+
+      {running && (
+        <div className="flex items-center gap-2 text-[11px] text-ink-muted">
+          <span className="animate-pulse">
+            {turn.status === 'sending' ? 'Đang gửi…' : 'Đang trả lời…'}
+          </span>
+          {turn.requestId !== null && (
+            <Button
+              variant="ghost-muted"
+              size="sm"
+              onClick={() => onCancel(turn.requestId as string)}
+            >
+              <StopCircleIcon size={14} />
+              Hủy
+            </Button>
+          )}
         </div>
+      )}
 
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          <Button size="xs" disabled>
-            Áp dụng
-          </Button>
-          <Button size="xs" variant="outline" disabled>
-            Chèn ở con trỏ
-          </Button>
-          <Button size="xs" variant="outline" disabled>
-            Sao chép
-          </Button>
+      {turn.status === 'cancelled' && (
+        <p className="text-[11px] text-ink-muted">
+          Đã hủy. Câu trả lời chưa trọn nên không áp dụng được; hỏi lại nếu cần.
+        </p>
+      )}
+
+      {turn.status === 'error' && turn.error !== null && (
+        <div className="flex flex-col gap-1.5 rounded-panel border border-error/40 bg-error/5 p-2">
+          <p className="flex gap-1.5 text-[12px] leading-[1.5] text-ink">
+            <DangerCircleIcon size={14} className="mt-px shrink-0 text-error" />
+            {turn.error.message}
+          </p>
+          {turn.error.recoverAt !== null && (
+            <p className="text-[11px] text-ink-muted">
+              Hạn mức hồi phục khoảng{' '}
+              {new Date(turn.error.recoverAt).toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+              .
+            </p>
+          )}
+          {turn.error.retryable && (
+            <Button
+              variant="ghost-muted"
+              size="sm"
+              className="self-start"
+              onClick={() => onRetry(turn.question)}
+            >
+              <RefreshIcon size={14} />
+              Hỏi lại
+            </Button>
+          )}
         </div>
+      )}
 
-        <ActionRow />
-      </div>
+      {proposal !== null && turn.range !== null && (
+        <ProposalSummary
+          before={turn.range.text}
+          after={proposal}
+          onReview={() => onApply(turn, proposal)}
+        />
+      )}
 
-      <div className="space-y-1.5">
-        <p className="text-[11px] text-ink-muted">Hỏi tiếp</p>
-        {SAMPLE.suggestions.map((suggestion) => (
+      {/* The model was asked for a fenced block and did not give one: read it as a plain reply rather
+          than guessing which part of the answer was meant to replace the paragraph. */}
+      {turn.mode === 'sua' && turn.status === 'done' && proposal === null && (
+        <p className="text-[11px] text-ink-muted">
+          Câu trả lời không có khối thay thế rõ ràng nên không có gì để áp dụng. Hỏi lại và nói rõ
+          phạm vi cần sửa.
+        </p>
+      )}
+
+      {turn.status === 'done' && (
+        <div className="-ml-[7px] flex items-center gap-0.5 pt-0.5">
           <button
-            key={suggestion}
             type="button"
-            disabled
-            title="Chưa nối provider"
-            className="block w-fit max-w-full cursor-pointer rounded-control border border-line-strong bg-control px-2.5 py-1.5 text-left text-[12.5px] text-ink hover:bg-selected disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Sao chép"
+            title="Sao chép"
+            onClick={() => void navigator.clipboard.writeText(turn.answer)}
+            className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-muted hover:bg-selected hover:text-ink"
           >
-            {suggestion}
+            <CopyIcon size={14} />
           </button>
-        ))}
-      </div>
-    </>
+          <button
+            type="button"
+            aria-label="Hỏi lại"
+            title="Hỏi lại"
+            onClick={() => onRetry(turn.question)}
+            className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-muted hover:bg-selected hover:text-ink"
+          >
+            <RefreshIcon size={14} />
+          </button>
+          <span className="ml-1 text-[11px] text-ink-muted">
+            {turn.usage === null
+              ? 'Nhà cung cấp không báo lượng dùng'
+              : turn.usage.inputTokens +
+                ' + ' +
+                turn.usage.outputTokens +
+                ' token · ' +
+                // A missing price means the snapshot has none for this model, which is not the same
+                // as free; saying "chưa biết giá" keeps that distinction.
+                (turn.usd === null ? 'chưa biết giá' : '$' + turn.usd.toFixed(4))}
+            {turn.keyTail !== null && ' · khóa …' + turn.keyTail}
+          </span>
+          <CheckIcon size={14} className="ml-auto shrink-0 text-success opacity-0" aria-hidden />
+        </div>
+      )}
+    </article>
   )
 }

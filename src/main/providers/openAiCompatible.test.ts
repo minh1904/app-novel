@@ -315,4 +315,56 @@ describe('listModels', () => {
     const fetchImpl = (async () => jsonResponse({}, 503)) as typeof fetch
     await expect(provider(fetchImpl).listModels()).rejects.toMatchObject({ kind: 'network' })
   })
+
+  /**
+   * Regression, 2026-10-02. Listing used to go out with **no `Authorization` header**, and the
+   * symptom was not an auth error: Gemini answers an unauthenticated `GET /v1beta/openai/models`
+   * with **404 "Requested entity was not found."**, which classifies as `refused` and so landed in
+   * the "connected but not listable" branch above. The settings screen then showed a healthy
+   * connection with no models at all.
+   *
+   * Every test in this block asserted the return value and none asserted the request, which is why
+   * the suite was green while the feature was broken.
+   */
+  it('sends the key, like every other call', async () => {
+    let sent: Record<string, string> = {}
+    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+      sent = (init?.headers ?? {}) as Record<string, string>
+      return jsonResponse({ data: [{ id: 'gemini-flash-latest' }] })
+    }) as typeof fetch
+
+    await provider(fetchImpl).listModels()
+    expect(sent.authorization).toBe('Bearer SECRET')
+  })
+
+  it('sends no key when the connection has none, so a local gateway still works', async () => {
+    let sent: Record<string, string> = {}
+    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+      sent = (init?.headers ?? {}) as Record<string, string>
+      return jsonResponse({ data: [] })
+    }) as typeof fetch
+
+    const keys = keySource([{ id: null, secret: null }])
+    await provider(fetchImpl, keys).listModels()
+    expect(sent.authorization).toBeUndefined()
+    expect(keys.reports).toEqual([])
+  })
+
+  it('records a successful listing as a good use of the key', async () => {
+    const keys = keySource()
+    const fetchImpl = (async () => jsonResponse({ data: [{ id: 'x' }] })) as typeof fetch
+    await provider(fetchImpl, keys).listModels()
+    expect(keys.reports).toEqual([{ keyId: 'k1', outcome: 'ok' }])
+  })
+
+  // An endpoint that genuinely has no /models must not cost the key anything: `decideFreeze` leaves
+  // everything but `auth` and `rate_limited` alone, and this is what hands it that decision.
+  it('reports a missing /models endpoint without blaming the key', async () => {
+    const keys = keySource()
+    const fetchImpl = (async () =>
+      jsonResponse({ error: { message: 'no such route' } }, 404)) as typeof fetch
+
+    await provider(fetchImpl, keys).listModels()
+    expect(keys.reports[0]?.outcome).toMatchObject({ kind: 'refused' })
+  })
 })
