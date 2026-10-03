@@ -49,6 +49,24 @@ const NO_TESTING = [
   'main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó.'
 ]
 
+const SHARED_PACKAGES = [
+  [
+    'electron',
+    'shared/ chạy ở main, preload và renderer nên không import electron. Mã cần Electron nằm ở src/main.'
+  ],
+  ['react', 'shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer.'],
+  ['react-dom', 'shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer.']
+]
+const SHARED_PATTERNS = [
+  [
+    '^node:',
+    'shared/ cũng chạy trong renderer và preload (sandbox) nên không dùng module Node (node:*).'
+  ],
+  [from('main'), 'shared/ không được import từ src/main.'],
+  [from('renderer'), 'shared/ không được import từ src/renderer.'],
+  [from('preload'), 'shared/ không được import từ src/preload.']
+]
+
 export default defineConfig(
   // scripts/ holds plain-JS tooling that runs outside the TypeScript projects.
   // Wireframe là script chạy thẳng trong trình duyệt để xem, không phải mã của app.
@@ -83,23 +101,16 @@ export default defineConfig(
       ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
-  boundary(['src/shared/**/*.ts'], {
-    packages: [
-      [
-        'electron',
-        'shared/ chạy ở main, preload và renderer nên không import electron. Mã cần Electron nằm ở src/main.'
-      ],
-      ['react', 'shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer.'],
-      ['react-dom', 'shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer.']
-    ],
+  boundary(['src/shared/**/*.ts'], { packages: SHARED_PACKAGES, patterns: SHARED_PATTERNS }),
+  // Khối sau ghi đè khối trước cho cùng một tệp, nên nhắc lại đủ luật của shared/.
+  boundary(['src/shared/contracts/**/*.ts'], {
+    packages: SHARED_PACKAGES,
     patterns: [
+      ...SHARED_PATTERNS,
       [
-        '^node:',
-        'shared/ cũng chạy trong renderer và preload (sandbox) nên không dùng module Node (node:*).'
-      ],
-      [from('main'), 'shared/ không được import từ src/main.'],
-      [from('renderer'), 'shared/ không được import từ src/renderer.'],
-      [from('preload'), 'shared/ không được import từ src/preload.']
+        from('algorithms'),
+        'contracts/ chỉ có kiểu, schema và tên kênh; không import từ algorithms/ (algorithms/ được dùng contracts/, không ngược lại).'
+      ]
     ]
   }),
   boundary(['src/renderer/**/*.{ts,tsx}'], {
