@@ -90,6 +90,19 @@ describe('LibraryStore', () => {
     expect(readdirSync(join(dir, 'works')).filter((n) => n.endsWith('.mira'))).toEqual([])
   })
 
+  it('leaves no partial file and lists nothing when a new work cannot be built', () => {
+    const dir = tempDir()
+    const store = open(dir)
+    // The language passes the title check and fails on the work file's own CHECK constraint, after
+    // the partial file exists. The part has to be removed and the failure has to be a storage error.
+    const code = codeOf(() => store.create({ title: 'Truyện', sourceLang: 'fr' as never }))
+    expect(code).toBeDefined()
+    expect(code).not.toBe('not-a-storage-error')
+    expect(store.list().works).toEqual([])
+    expect(readdirSync(join(dir, 'works')).filter((n) => n.endsWith('.mira'))).toEqual([])
+    expect(readdirSync(join(dir, 'works', '.tmp'))).toEqual([])
+  })
+
   it('keeps works, names and timestamps after the app is reopened', () => {
     const dir = tempDir()
     let store = open(dir)
