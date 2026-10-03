@@ -11,7 +11,7 @@ Bốn câu hỏi, đặt ra khi vỏ giao diện panel “Hỏi AI” đã dựn
 3. **CLI proxy** (bọc Claude Code / Gemini CLI / Copilot thành endpoint tương thích OpenAI) có dùng được không?
 4. **Model local** chạy thế nào, dùng model nào cho ZH/JA/EN → VI?
 
-Phương pháp: đọc tài liệu nhà cung cấp và bài so sánh công khai trong ngày 2026-10-02, đối chiếu với code hiện có (`src/main/providers/types.ts`, `mockProvider.ts`). **Chưa gọi thử provider thật nào, chưa benchmark, chưa đo chi phí.** Giá và tên model ở đây phần lớn lấy từ trang tổng hợp bên thứ ba, phải đọc lại trang giá chính chủ trước khi đưa vào code hoặc UI.
+Phương pháp: đọc tài liệu nhà cung cấp và bài so sánh công khai trong ngày 2026-10-02, đối chiếu với code hiện có (`src/main/infra/providers/types.ts`, `mockProvider.ts`). **Chưa gọi thử provider thật nào, chưa benchmark, chưa đo chi phí.** Giá và tên model ở đây phần lớn lấy từ trang tổng hợp bên thứ ba, phải đọc lại trang giá chính chủ trước khi đưa vào code hoặc UI.
 
 ## Quan sát 1 — “AI mode”: ba chế độ, không phải một
 
@@ -113,7 +113,7 @@ Cổng mặc định `8317`. Trong `server_routes.go`, **bốn giao thức cùng
 
 Thư mục `internal/translator/` chia theo giao thức: `openai`, `claude`, `gemini`, `codex`, `antigravity`, `interactions`, `common`.
 
-**Bài học ngược — chỗ không nên bắt chước:** CLIProxyAPI phải làm ma trận N×N vì nó là trung gian cho **client bất kỳ** (client nói giao thức nào cũng phải phục vụ). Mira là client duy nhất của chính nó: chỉ có **một định dạng nội bộ** (`TranslateRequest`/`TranslateResponse` có ID trong `providers/types.ts`) nên chỉ cần **N adapter một chiều**, không cần registry cặp. Sao chép kiến trúc translator vào Mira là nhập một chi phí không có lý do tồn tại.
+**Bài học ngược — chỗ không nên bắt chước:** CLIProxyAPI phải làm ma trận N×N vì nó là trung gian cho **client bất kỳ** (client nói giao thức nào cũng phải phục vụ). Mira là client duy nhất của chính nó: chỉ có **một định dạng nội bộ** (`TranslateRequest`/`TranslateResponse` có ID trong `infra/providers/types.ts`) nên chỉ cần **N adapter một chiều**, không cần registry cặp. Sao chép kiến trúc translator vào Mira là nhập một chi phí không có lý do tồn tại.
 
 Ngược lại, việc nó **tách streaming (`[][]byte`) khỏi non-streaming (`[]byte`) ngay ở tầng dịch** là xác nhận cho đề xuất hai contract: job dịch theo lô và Hỏi AI không nên dùng chung một hàm.
 
@@ -226,7 +226,7 @@ Bốn chi tiết đáng lấy:
    - **`openai-compatible`** (làm trước): một adapter phủ DeepSeek, Qwen, OpenRouter, Ollama, LM Studio, llama.cpp, gateway/proxy người dùng tự dựng. Chỉ cần `baseUrl` + `apiKey` + `model`.
    - **`anthropic`** và **`gemini`** (làm sau, khi job lớn cần tiết kiệm): dùng API gốc để có structured outputs có bảo đảm, prompt caching và Batch API — ba thứ mà lớp tương thích OpenAI **không** cho.
    - **`mock`**: giữ nguyên, đã có và đang gánh test.
-3. **Batch API khớp sẵn với thiết kế của Mira.** `custom_id` của batch chính là segment ID; “kết quả về theo thứ tự bất kỳ, khớp theo `custom_id`” đúng y nguyên tắc đã viết trong `providers/types.ts` (“keyed by segment id, never by position”). Job dịch một bộ truyện nghìn chương là ca kinh điển của batch: giảm 50%, chấp nhận chờ. Đề xuất: job dịch có **hai chế độ gửi** — *tương tác* (gọi thường, thấy kết quả ngay, dùng khi soát một chương) và *theo lô* (batch, rẻ một nửa, dùng khi dịch cả bộ).
+3. **Batch API khớp sẵn với thiết kế của Mira.** `custom_id` của batch chính là segment ID; “kết quả về theo thứ tự bất kỳ, khớp theo `custom_id`” đúng y nguyên tắc đã viết trong `infra/providers/types.ts` (“keyed by segment id, never by position”). Job dịch một bộ truyện nghìn chương là ca kinh điển của batch: giảm 50%, chấp nhận chờ. Đề xuất: job dịch có **hai chế độ gửi** — *tương tác* (gọi thường, thấy kết quả ngay, dùng khi soát một chương) và *theo lô* (batch, rẻ một nửa, dùng khi dịch cả bộ).
 4. **Registry model khai báo được** là điều kiện của ước lượng chi phí (đề xuất #7 trong [công cụ dịch AI](ai-translation-tools.md)): mỗi entry cần `id`, `baseUrl`, kiểu auth, **giá in/out**, và cờ năng lực (`structuredOutput`, `batch`, `promptCaching`, `contextWindow`). Không có bảng này thì UI không thể nói trước “chương này tốn khoảng bao nhiêu”, mà đó lại là điểm khác biệt đã nhận diện. **Không cần tự nhập bảng này**: `models.dev/api.json` (MIT) đã có đủ, kể cả `cost.cache_read`/`cache_write` — xem Quan sát 6.
 5. **Vercel AI SDK: xét, nhưng chỉ cho Hỏi AI.** AI SDK 6 (ra 2025-12-22) có `createProviderRegistry` và `createOpenAICompatible` đúng hình dạng cần. Đánh đổi: thêm một cây phụ thuộc lớn vào `main` process của Electron, v6 vừa có bốn trục breaking change, Ollama chỉ có community provider. Job dịch thì **không** cần nó — contract đã có, request là một lần gọi không streaming. Khuyến nghị: tự viết adapter mỏng cho job dịch; chỉ cân nhắc AI SDK nếu panel Hỏi AI phát triển thành có tool call.
 6. **Model local: hỗ trợ qua URL, không đóng kèm runtime.** Không nhúng llama.cpp vào installer (phình dung lượng, phải build theo CPU/GPU). Thay vào đó: dò `:11434` và `:1234` khi mở màn cài đặt để gợi ý sẵn, còn lại là ô URL tùy chỉnh. Đường local dùng định dạng dòng đánh số và tầng kiểm tra ID nghiêm hơn.

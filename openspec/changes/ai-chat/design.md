@@ -2,7 +2,7 @@
 
 Xem [proposal.md](proposal.md) phần Why cho động cơ, và [nghiên cứu phương thức](../../../docs/handbook/research/ai-chat-panel.md) cho tám quyết định Q1–Q8 đã chốt. Bốn ràng buộc của kho này quyết định hình dạng thiết kế:
 
-1. **Repo chỉ có `invoke`/`handle`.** `src/shared/channels.ts` có 32 kênh, tất cả đều `invoke`; `grep webContents.send` trong `src/main/` ra rỗng. Change này mở bề mặt main → renderer **đầu tiên**, nên nó cũng đặt khuôn cho mọi kênh sự kiện sau này.
+1. **Repo chỉ có `invoke`/`handle`.** `src/shared/contracts/channels.ts` có 32 kênh, tất cả đều `invoke`; `grep webContents.send` trong `src/main/` ra rỗng. Change này mở bề mặt main → renderer **đầu tiên**, nên nó cũng đặt khuôn cho mọi kênh sự kiện sau này.
 2. **Khóa API không ra khỏi main** (D2 của change `ai-connection` đã archive). Mọi lời gọi nhà cung cấp nằm trong main; renderer không bao giờ tự `fetch`.
 3. **Editor là bản thật, kho là bản đã lưu.** `TextEditor` giữ chữ chưa lưu. Bất kỳ ngữ cảnh nào đọc từ kho đều có thể **cũ hơn** cái người dùng đang nhìn.
 4. **`OpenAiCompatibleProvider` đã có đủ phần khó của một lời gọi** — chọn khóa qua `KeySource`, `classifyHttpError` đọc thân thô trước khi parse, `send()` biết gắn `Authorization` và biết phân biệt hủy với lỗi mạng. Phần thiếu chỉ là một lối gọi không đi qua `splitIntoBatches`/`reconcile`.
@@ -41,7 +41,7 @@ Cùng `baseUrl`, cùng `KeySource`, cùng `send()`, cùng `classify()`. Khác �
 
 `requestId` do **main** sinh bằng cùng `newId` mọi chỗ khác dùng, không do renderer tự đặt: renderer tự đặt thì hai cửa sổ (hoặc một bug) có thể trùng id, và main là chỗ giữ sổ `AbortController` nên nó phải là chủ của không gian id đó.
 
-**Phát hiện lúc triển khai — kênh sự kiện phải tách khỏi `CHANNELS`.** `src/main/ipc/library.ts` lặp qua **mọi** giá trị của `CHANNELS` để gọi `ipcMain.handle`, và `createLibraryHandlers` khai kiểu trả về là `Record<Channel, RawHandler<unknown>>` — nên quên một kênh là lỗi biên dịch, một bảo đảm đang có giá trị thật. Một kênh sự kiện **không có** handler `invoke`, nên để nó trong `CHANNELS` vừa đăng ký một handler vô nghĩa vừa phá bảo đảm đó. Vì vậy `aiChatChunk` nằm trong một export riêng `EVENT_CHANNELS` với kiểu `EventChannel` riêng: hai nhóm, hai kiểu, cả hai vẫn đầy đủ.
+**Phát hiện lúc triển khai — kênh sự kiện phải tách khỏi `CHANNELS`.** `src/main/electron/registerIpc.ts` lặp qua **mọi** giá trị của `CHANNELS` để gọi `ipcMain.handle`, và `createLibraryHandlers` khai kiểu trả về là `Record<Channel, RawHandler<unknown>>` — nên quên một kênh là lỗi biên dịch, một bảo đảm đang có giá trị thật. Một kênh sự kiện **không có** handler `invoke`, nên để nó trong `CHANNELS` vừa đăng ký một handler vô nghĩa vừa phá bảo đảm đó. Vì vậy `aiChatChunk` nằm trong một export riêng `EVENT_CHANNELS` với kiểu `EventChannel` riêng: hai nhóm, hai kiểu, cả hai vẫn đầy đủ.
 
 *Đã cân:* `MessageChannelMain` (một cặp port cho mỗi lượt, không cần `requestId`). Bỏ vì ba lý do cụ thể, không phải vì khẩu vị: `send`/`invoke` **không chuyển được MessagePort** nên nó buộc preload mang thêm `postMessage` làm cơ chế thứ hai; vòng đời port là mã thật phải viết và phải dọn, trong khi `requestId` là một chuỗi; và ưu thế của port chỉ trả tiền ở luồng dữ liệu liên tục, còn một lượt chat là vài chục đến vài trăm chunk.
 

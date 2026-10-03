@@ -21,14 +21,14 @@ Phương pháp: đọc code trong repo (đường dẫn cụ thể ở từng qu
 
 | Thành phần | Đường dẫn | Dùng lại được cho chat? |
 | --- | --- | --- |
-| Kho kết nối, khóa, `safeStorage` | `src/main/storage/connections.ts`, `secretStore.ts` | **Có, nguyên vẹn.** Chat không cần thêm một khái niệm kết nối nào. |
-| Xoay khóa, hai mức đóng băng, `fill-first` | `src/main/providers/keyPool.ts`, `connectionKeySource.ts` | **Có.** `KeySource` là interface, chat dùng đúng instance đó. |
-| Phân loại lỗi HTTP theo nhà cung cấp | `src/main/providers/classifyError.ts` | **Có.** Đã trả `ProviderErrorKind` + `retryAfterMs`. |
-| Catalog model, giá, giới hạn ngữ cảnh | `src/main/providers/modelCatalog.{ts,json}`, `costEstimate.ts` | **Có.** Menu model trong composer hiện là mảng cứng (`aiChatSample.ts`), thay bằng catalog thật là việc nối dây. |
-| Gọi HTTP tới endpoint tương thích OpenAI | `src/main/providers/openAiCompatible.ts` | **Một nửa.** `send()` và `classify()` dùng được; nhưng `callOnce()` là `private` và **hardcode `SYSTEM_PROMPT` dịch** cùng định dạng `[{id,src}] → [{id,dst}]`. Không có đường nào gửi một hội thoại tự do. |
+| Kho kết nối, khóa, `safeStorage` | `src/main/infra/storage/connections.ts`, `secretStore.ts` | **Có, nguyên vẹn.** Chat không cần thêm một khái niệm kết nối nào. |
+| Xoay khóa, hai mức đóng băng, `fill-first` | `src/main/infra/providers/keyPool.ts`, `connectionKeySource.ts` | **Có.** `KeySource` là interface, chat dùng đúng instance đó. |
+| Phân loại lỗi HTTP theo nhà cung cấp | `src/main/infra/providers/classifyError.ts` | **Có.** Đã trả `ProviderErrorKind` + `retryAfterMs`. |
+| Catalog model, giá, giới hạn ngữ cảnh | `src/main/infra/providers/modelCatalog.{ts,json}`, `src/main/services/ai/costEstimate.ts` | **Có.** Menu model trong composer hiện là mảng cứng (`aiChatSample.ts`), thay bằng catalog thật là việc nối dây. |
+| Gọi HTTP tới endpoint tương thích OpenAI | `src/main/infra/providers/openAiCompatible.ts` | **Một nửa.** `send()` và `classify()` dùng được; nhưng `callOnce()` là `private` và **hardcode `SYSTEM_PROMPT` dịch** cùng định dạng `[{id,src}] → [{id,dst}]`. Không có đường nào gửi một hội thoại tự do. |
 | Ghi một hàng dịch nguyên tử, có kiểm revision, có nguồn gốc | `src/main/ipc/rowHandlers` → `saveRow`, `provenance.ts` (`originFor`) | **Có, và đây là chỗ "Áp dụng" nên đi qua.** Đã biết văn bản, segment, liên kết, tác giả (`RowAuthor`). |
-| Luật AI không ghi đè bản người dùng | `src/main/providers/chapterTranslation.ts` (`isProtectedRow`) | **Có** — nhưng là hàm thuần nằm trong module dịch chương; chat muốn tuân cùng luật thì phải nâng nó lên chỗ dùng chung. |
-| Kênh main → renderer để đẩy từng chunk | — | **Không có một dòng nào.** `src/shared/channels.ts` chỉ có 32 kênh `invoke`; `grep webContents.send` trong `src/main/` ra **rỗng**. Đây là lý do job dịch được thiết kế thành "renderer điều phối từng lô" (ghi rõ trong doc-comment của `src/shared/aiTranslate.ts`). |
+| Luật AI không ghi đè bản người dùng | `src/main/services/ai/chapterTranslation.ts` (`isProtectedRow`) | **Có** — nhưng là hàm thuần nằm trong module dịch chương; chat muốn tuân cùng luật thì phải nâng nó lên chỗ dùng chung. |
+| Kênh main → renderer để đẩy từng chunk | — | **Không có một dòng nào.** `src/shared/contracts/channels.ts` chỉ có 32 kênh `invoke`; `grep webContents.send` trong `src/main/` ra **rỗng**. Đây là lý do job dịch được thiết kế thành "renderer điều phối từng lô" (ghi rõ trong doc-comment của `src/shared/contracts/aiTranslate.ts`). |
 | Hội thoại: kiểu dữ liệu, lưu trữ, lịch sử | — | **Không có.** Không bảng, không kênh, không kiểu. `aiChatSample.ts` là hằng số. |
 | Ngữ cảnh truyện thật (thuật ngữ, xưng hô, văn phong) | `ContextAreaMock.tsx` | **Không có.** Lõi nằm ở change `context-core` — **0/n task, chưa triển khai gì**. Ba chip "segment 88 / Thuật ngữ / Xưng hô" trong composer không trỏ vào dữ liệu nào. |
 
@@ -82,11 +82,11 @@ Chủ sản phẩm chốt ngày 2026-10-02: đề xuất của AI **được ph�
 
 Đường **qua kho** (`text.save` cả một side) có ba hệ quả đọc được thẳng trong schema:
 
-- `saveText()` trong `src/main/storage/textFile.ts` **xóa mọi segment không được mang theo `id`** rồi insert lại.
+- `saveText()` trong `src/main/infra/storage/textFile.ts` **xóa mọi segment không được mang theo `id`** rồi insert lại.
 - Trigger `segment_delete_flags_links` trong `workSchema.ts` lật `link.status` thành `needs_review` cho mọi liên kết có segment bị xóa — comment trong schema nói đúng chủ ý: *"Deleting a segment must not silently drop the alignment it took part in."* Không mất im lặng, nhưng một lần "áp dụng cả chương" sẽ **đánh dấu lại toàn bộ căn chỉnh của chương**.
 - Bảng `provenance` khóa theo `segment_id` với `ON DELETE CASCADE` — segment bị dựng lại thì **mất nguồn gốc** (ai dịch, provider nào, model nào).
 
-Đường **qua editor** không có ba hệ quả đó, vì nó không phải một lời ghi mới: AI trả văn bản thay thế, panel dispatch **một transaction CodeMirror** vào pane bản dịch đang mở, rồi để nguyên đường lưu sẵn có làm việc của nó. `applyEdits` trong `src/shared/segmentMap.ts` map segment qua `ChangeSet`, nên **đoạn không bị sửa giữ nguyên `id`** — liên kết và nguồn gốc của chúng sống sót; chỉ vùng thật sự bị thay mới được dựng lại. Thêm ba thứ đến miễn phí:
+Đường **qua editor** không có ba hệ quả đó, vì nó không phải một lời ghi mới: AI trả văn bản thay thế, panel dispatch **một transaction CodeMirror** vào pane bản dịch đang mở, rồi để nguyên đường lưu sẵn có làm việc của nó. `applyEdits` trong `src/shared/algorithms/segmentMap.ts` map segment qua `ChangeSet`, nên **đoạn không bị sửa giữ nguyên `id`** — liên kết và nguồn gốc của chúng sống sót; chỉ vùng thật sự bị thay mới được dựng lại. Thêm ba thứ đến miễn phí:
 
 - **`Ctrl+Z` hoàn tác được**, vì nó nằm trong history của CodeMirror. Đường ghi xuống kho không có lưới an toàn này.
 - Không cần kênh IPC ghi mới, không cần luật `isProtectedRow` — người dùng là người bấm Áp dụng trên một diff họ đã nhìn thấy.

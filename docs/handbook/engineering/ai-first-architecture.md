@@ -43,14 +43,14 @@ Trang này **không phải ADR** và không thay quyết định nào. Những g
 
 | Mảnh | Ở đâu | Ghi chú |
 | --- | --- | --- |
-| Kho một tệp mỗi tác phẩm | [`workSchema.ts`](../../../src/main/storage/workSchema.ts) | schema v5: `chapter_text`, `segment`, `link`, `link_member`, `provenance`, `cover`, `image` |
+| Kho một tệp mỗi tác phẩm | [`workSchema.ts`](../../../src/main/infra/storage/workSchema.ts) | schema v5: `chapter_text`, `segment`, `link`, `link_member`, `provenance`, `cover`, `image` |
 | Editor Toàn văn | [`TextEditor.tsx`](../../../src/renderer/src/features/editor/TextEditor.tsx) | CodeMirror 6, Live Preview nhẹ, ảnh `![[id]]` |
-| Ánh xạ segment khi gõ | [`segmentMap.ts`](../../../src/shared/segmentMap.ts), [`resegmenter.ts`](../../../src/renderer/src/features/editor/resegmenter.ts) | chia lại câu khi người dùng dừng gõ, chờ IME gõ xong |
-| Mode Từng câu | [`SentenceMode.tsx`](../../../src/renderer/src/features/chapter/SentenceMode.tsx), [`sentenceRows.ts`](../../../src/main/storage/sentenceRows.ts) | các kênh `links:list`, `rows:*` |
-| Dịch chương bằng AI | [`useAiTranslate.ts`](../../../src/renderer/src/features/chapter/useAiTranslate.ts), [`chapterTranslation.ts`](../../../src/main/providers/chapterTranslation.ts) | **vòng lặp lô ở renderer**; ghi từng hàng qua `saveRow` theo ID segment; hàng người đã viết trả về để chọn |
-| Chat Hỏi/Sửa | [`chatService.ts`](../../../src/main/providers/chatService.ts), [`chatTools.ts`](../../../src/main/providers/chatTools.ts), [`chatContext.ts`](../../../src/renderer/src/features/chapter/chatContext.ts) | stream qua `ai:chat:chunk`; 2 tool chỉ đọc; ngữ cảnh dựng ở renderer từ chữ đang mở |
+| Ánh xạ segment khi gõ | [`segmentMap.ts`](../../../src/shared/algorithms/segmentMap.ts), [`resegmenter.ts`](../../../src/renderer/src/features/editor/resegmenter.ts) | chia lại câu khi người dùng dừng gõ, chờ IME gõ xong |
+| Mode Từng câu | [`SentenceMode.tsx`](../../../src/renderer/src/features/chapter/SentenceMode.tsx), [`sentenceRows.ts`](../../../src/main/infra/storage/sentenceRows.ts) | các kênh `links:list`, `rows:*` |
+| Dịch chương bằng AI | [`useAiTranslate.ts`](../../../src/renderer/src/features/chapter/useAiTranslate.ts), [`chapterTranslation.ts`](../../../src/main/services/ai/chapterTranslation.ts) | **vòng lặp lô ở renderer**; ghi từng hàng qua `saveRow` theo ID segment; hàng người đã viết trả về để chọn |
+| Chat Hỏi/Sửa | [`chatService.ts`](../../../src/main/services/ai/chatService.ts), [`chatTools.ts`](../../../src/main/services/ai/chatTools.ts), [`chatContext.ts`](../../../src/renderer/src/features/chapter/chatContext.ts) | stream qua `ai:chat:chunk`; 2 tool chỉ đọc; ngữ cảnh dựng ở renderer từ chữ đang mở |
 | Duyệt đề xuất tại chỗ | [`chatReview.ts`](../../../src/renderer/src/features/editor/chatReview.ts) | `@codemirror/merge`, nhận/bỏ từng khối, không dựng lại editor nên giữ được undo |
-| Provider | [`openAiCompatible.ts`](../../../src/main/providers/openAiCompatible.ts), [`keyPool.ts`](../../../src/main/providers/keyPool.ts), [`classifyError.ts`](../../../src/main/providers/classifyError.ts) | một adapter, nhiều khóa `fill-first`; `usage` chưa lưu (task 4.7b) |
+| Provider | [`openAiCompatible.ts`](../../../src/main/infra/providers/openAiCompatible.ts), [`keyPool.ts`](../../../src/main/infra/providers/keyPool.ts), [`classifyError.ts`](../../../src/main/infra/providers/classifyError.ts) | một adapter, nhiều khóa `fill-first`; `usage` chưa lưu (task 4.7b) |
 
 Grep thấy khoảng **36 tệp không phải test** nhắc tới segment, liên kết hoặc hàng. Không phải tệp nào cũng bị xóa, nhưng đó là diện ảnh hưởng.
 
@@ -158,7 +158,7 @@ flowchart LR
   JOB --> API
 ```
 
-Các khối giữ đúng ranh giới đang có. Renderer chỉ gọi `DesktopApi` hẹp qua preload, và mọi lần chạm SQLite nằm sau adapter [`sqlite.ts`](../../../src/main/storage/sqlite.ts). Phần mới là **API miền** tách khỏi handler IPC, để tool của AI và MCP gọi được cùng hàm mà không đi qua Electron.
+Các khối giữ đúng ranh giới đang có. Renderer chỉ gọi `DesktopApi` hẹp qua preload, và mọi lần chạm SQLite nằm sau adapter [`sqlite.ts`](../../../src/main/infra/storage/sqlite.ts). Phần mới là **API miền** tách khỏi handler IPC, để tool của AI và MCP gọi được cùng hàm mà không đi qua Electron.
 
 ### 5.1 Đường ghi duy nhất
 
@@ -310,11 +310,11 @@ Một chỉnh nhỏ do bỏ câu: các chỗ trong đề xuất cũ ghi "2–5 s
 | Gỡ | Thay bằng |
 | --- | --- |
 | Bảng `segment`, `link`, `link_member`, `provenance` và trigger | `ai_mark`, `proposal`, `text_snapshot` (schema v6) |
-| [`sentenceRows.ts`](../../../src/main/storage/sentenceRows.ts), [`linkFile.ts`](../../../src/main/storage/linkFile.ts), [`provenance.ts`](../../../src/main/providers/provenance.ts) | API miền cho đề xuất và dấu |
+| [`sentenceRows.ts`](../../../src/main/infra/storage/sentenceRows.ts), [`linkFile.ts`](../../../src/main/infra/storage/linkFile.ts), [`provenance.ts`](../../../src/main/services/ai/provenance.ts) | API miền cho đề xuất và dấu |
 | Kênh `links:list`, `rows:save`, `rows:review`, `rows:autopair` | Kênh đề xuất và tác vụ |
-| [`SentenceMode.tsx`](../../../src/renderer/src/features/chapter/SentenceMode.tsx), [`SentenceModeMocks.tsx`](../../../src/renderer/src/features/chapter/SentenceModeMocks.tsx), [`useSentenceRows.ts`](../../../src/renderer/src/features/chapter/useSentenceRows.ts), [`rows.ts`](../../../src/shared/rows.ts), [`links.ts`](../../../src/shared/links.ts) | — |
-| [`resegmenter.ts`](../../../src/renderer/src/features/editor/resegmenter.ts), [`segmentDecorations.ts`](../../../src/renderer/src/features/editor/segmentDecorations.ts), phần ánh xạ ID trong [`segmentMap.ts`](../../../src/shared/segmentMap.ts) | `RangeSet` của dấu AI |
-| `segments` trong `text:save` và trong nhập raw ([`rawImport.ts`](../../../src/shared/rawImport.ts)) | `marks`; nhập raw chỉ chuẩn hóa và lưu |
+| [`SentenceMode.tsx`](../../../src/renderer/src/features/chapter/SentenceMode.tsx), [`SentenceModeMocks.tsx`](../../../src/renderer/src/features/chapter/SentenceModeMocks.tsx), [`useSentenceRows.ts`](../../../src/renderer/src/features/chapter/useSentenceRows.ts), [`rows.ts`](../../../src/shared/contracts/rows.ts), [`links.ts`](../../../src/shared/contracts/links.ts) | — |
+| [`resegmenter.ts`](../../../src/renderer/src/features/editor/resegmenter.ts), [`segmentDecorations.ts`](../../../src/renderer/src/features/editor/segmentDecorations.ts), phần ánh xạ ID trong [`segmentMap.ts`](../../../src/shared/algorithms/segmentMap.ts) | `RangeSet` của dấu AI |
+| `segments` trong `text:save` và trong nhập raw ([`rawImport.ts`](../../../src/shared/algorithms/rawImport.ts)) | `marks`; nhập raw chỉ chuẩn hóa và lưu |
 | Change `segment-auto-align` (cùng model embedding 118 MB); backlog `merge-split-rows`, `shared-undo-modes`, `edited-segment-link-review` | Hủy |
 
 **Giữ lại:** `segmenter.ts` để cắt lô, `reconcile`, `classifyError`, `keyPool`, `modelCatalog`, `chatReview.ts`, editor Toàn văn cùng Live Preview và ảnh, kho thư viện, backup và restore.

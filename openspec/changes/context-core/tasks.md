@@ -8,7 +8,7 @@ Ba con số dưới đây là **mặc định đề nghị**, không chặn vi�
 
 ## 1. Schema và kho dữ liệu
 
-- [ ] 1.1 Đọc lại `src/main/storage/workSchema.ts` lấy **số version kế tiếp thực tế** (đang ở 5 nhưng các change đang mở có thể đã tăng) — không hardcode số trong code trước khi kiểm
+- [ ] 1.1 Đọc lại `src/main/infra/storage/workSchema.ts` lấy **số version kế tiếp thực tế** (đang ở 5 nhưng các change đang mở có thể đã tăng) — không hardcode số trong code trước khi kiểm
 - [ ] 1.2 Version mới: `CREATE TABLE context_entry` (một bảng cho sáu kiểu, cột riêng theo kiểu để `NULL`, `CHECK` theo `kind` theo D1), `CREATE TABLE context_alias` với `UNIQUE (form)`, index cho truy vấn hiệu lực; `from_chapter_id`/`to_chapter_id` `REFERENCES chapter (id) ON DELETE SET NULL` (D2). Chỉ `CREATE`, không `ALTER` bảng cũ. Verify: `migrate.test.ts` nâng cấp từ version trước xanh, `schemaSnapshot.test.ts` xanh với fixture mới trong `__fixtures__/`
 - [ ] 1.3 `src/main/storage/contextEntries.ts`: tạo/sửa/xóa/đọc một mục, liệt kê có lọc theo kiểu và trạng thái, và **xóa nhân vật kéo theo cặp xưng hô** (đếm trước, xóa trong một transaction). Verify: test cho vòng đời một mục, test rằng xóa nhân vật trả về số cặp bị xóa và không để lại cặp mồ côi
 - [ ] 1.4 Truy vấn **tập mục hiệu lực tại một chương**: join `chapter` lấy `position`, áp quy ước `NULL` = từ đầu / còn hiệu lực, và khi hai mục cùng đối tượng thì lấy mốc gần nhất không vượt chương đang hỏi. Verify: test ca cặp xưng hô đổi ở chương 14 (hỏi tại chương 10 và 20), ca `from` ở chương 50 hỏi tại chương 3, ca `to` đã hết hiệu lực, ca chương làm mốc bị xóa
@@ -44,14 +44,14 @@ Ba con số dưới đây là **mặc định đề nghị**, không chặn vi�
 
 ## 5. Hợp đồng provider và mock
 
-- [ ] 5.1 Đổi `TranslateRequest.context` từ `string` sang `ContextBlocks | undefined` trong `src/main/providers/types.ts`; `TranslateResponse` mang lại `contextHash` khi yêu cầu có ngữ cảnh (D10, spec `translation-provider`). Verify: `pnpm typecheck` sạch, test cũ của `providers.test.ts` được cập nhật và xanh
+- [ ] 5.1 Đổi `TranslateRequest.context` từ `string` sang `ContextBlocks | undefined` trong `src/main/infra/providers/types.ts`; `TranslateResponse` mang lại `contextHash` khi yêu cầu có ngữ cảnh (D10, spec `translation-provider`). Verify: `pnpm typecheck` sạch, test cũ của `providers.test.ts` được cập nhật và xanh
 - [ ] 5.2 `MockProvider` ghi lại các khối đã nhận theo thứ tự để kiểm thử đọc lại (D9), và trả lại `contextHash` đã nhận. Verify: test đọc lại được đúng thứ tự A → B → C và nội dung từng khối
 - [ ] 5.3 Test "mục chưa duyệt không rời máy": dựng fixture có mục `pending`, gọi dịch qua mock, khẳng định không khối nào chứa nội dung của mục đó. Verify: test xanh và thất bại nếu bỏ bước lọc ở 3.3
 - [ ] 5.4 `provenance.ts`: lưu `contextHash` cùng nguồn gốc; phân biệt **không có ngữ cảnh** với **ngữ cảnh rỗng** (spec `content-model`). Verify: test ghi/đọc lại cả hai ca sau khi mở lại tệp
 
 ## 6. IPC
 
-- [ ] 6.1 Kênh mới trong `src/shared/channels.ts`: liệt kê (lọc theo kiểu, trạng thái, chương hiệu lực), tạo, sửa, xóa, duyệt, loại. Verify: `pnpm typecheck` sạch
+- [ ] 6.1 Kênh mới trong `src/shared/contracts/channels.ts`: liệt kê (lọc theo kiểu, trạng thái, chương hiệu lực), tạo, sửa, xóa, duyệt, loại. Verify: `pnpm typecheck` sạch
 - [ ] 6.2 `src/main/ipc/contextHandlers.ts`: xác thực đầu vào bằng `valibot`, kết quả bọc `Result` như các handler hiện có; tham chiếu không tồn tại → lỗi xác thực, không đổi dữ liệu. Verify: test cho ca liệt kê theo kiểu + chương, ca tạo cặp xưng hô trỏ nhân vật không tồn tại, ca đầu vào sai kiểu
 - [ ] 6.3 Verify bằng test rằng không hàm IPC nào trả về mục ở trạng thái đã loại khi người gọi hỏi tập dùng cho AI
 

@@ -24,7 +24,7 @@
 
 ## Impact
 
-- **Code:** `src/main/alignment/` mới (heuristic Bậc 0, embedding runner Bậc 1, hợp hai bậc thành danh sách cặp + confidence); `src/main/storage/sentenceRows.ts` (`autoPair` gọi engine mới thay vì ghép thứ tự thuần); test cho cả hai.
+- **Code:** `src/main/alignment/` mới (heuristic Bậc 0, embedding runner Bậc 1, hợp hai bậc thành danh sách cặp + confidence); `src/main/infra/storage/sentenceRows.ts` (`autoPair` gọi engine mới thay vì ghép thứ tự thuần); test cho cả hai.
 - **Phụ thuộc:** thêm `@huggingface/transformers` và model ONNX `multilingual-e5-small` (~118 MB) vào gói Electron — ảnh hưởng kích thước bản cài và thời gian tải model lần đầu; cần đo trong Electron thật (model chạy trong main process, không phải renderer).
 - **Hiệu năng:** `autoPair` hiện đã đo 464–562 ms cho 5.000 cặp (ghép thuần). Thêm embedding sẽ chậm hơn — cần đo lại ngân sách thời gian cho chương lớn, có thể cần giới hạn số segment chạy Bậc 1 trong một lần gọi.
 - **Dữ liệu:** không đổi schema; `confidence` và `status` của liên kết `kind: 'ai'` do `autoPair` tạo ra có giá trị thật thay vì hằng số.

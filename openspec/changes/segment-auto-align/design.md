@@ -3,7 +3,7 @@
 Lý do và phạm vi: xem `proposal.md`; yêu cầu: xem `specs/`. Nền đã có:
 
 - `sentenceRows.ts` `autoPair`: ghép thuần theo thứ tự, `kind: 'ai'`, `status: 'needs_review'`, `confidence: 0` cố định. Change này thay phần "ghép" bên trong, giữ chữ ký và transaction hiện có.
-- `LinkRecord.confidence: number | null` đã có sẵn trong schema (`src/shared/links.ts`) — chưa cột nào cần thêm.
+- `LinkRecord.confidence: number | null` đã có sẵn trong schema (`src/shared/contracts/links.ts`) — chưa cột nào cần thêm.
 - Nghiên cứu đã có ở [technical-feasibility.md §3](../../../docs/handbook/research/technical-feasibility.md) và [alignment.md](../../../docs/handbook/experience/alignment.md): khung Bậc 0 (không model) / Bậc 1 (embedding) / Bậc 2 (model lớn, không làm ở change này); nguyên lý hai pha neo-rẻ-trước/DP-cửa-sổ-hẹp học từ Bertalign (GPL-3.0, không lấy mã); model `multilingual-e5-small` (MIT) xác nhận hỗ trợ tiếng Việt, có benchmark BitextMining, chạy qua `@huggingface/transformers` (Transformers.js) trên Node — **chưa đo trong Electron thật, chưa đo độ chính xác trên văn bản ZH/JA/VI thật nào**.
 - `pnpm` dependencies hiện chưa có gói embedding/transformers nào (`package.json` kiểm tra ngày viết design này).
 - ADR-002: mọi thứ trừ bước gọi AI dịch chạy offline. Model embedding không phải "gọi AI dịch" nhưng là tài sản ngoài, cần quyết định cách lấy nó mà không phá nguyên tắc offline.
@@ -63,7 +63,7 @@ src/main/alignment/
   embeddings.test.ts    dùng embedding giả lập, không tải model thật
   align.ts              hợp Bậc 0 + Bậc 1 thành danh sách cặp đề xuất kèm confidence
   align.test.ts
-src/main/storage/sentenceRows.ts   autoPair gọi align.ts trước, ghép theo thứ tự cho phần còn lại
+src/main/infra/storage/sentenceRows.ts   autoPair gọi align.ts trước, ghép theo thứ tự cho phần còn lại
 ```
 
 ## Risks / Trade-offs

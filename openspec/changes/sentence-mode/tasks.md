@@ -1,12 +1,12 @@
 ## 1. Hàng và trạng thái (hàm thuần, dùng chung)
 
-- [x] 1.1 `src/shared/rows.ts`: kiểu `Row`/`RowState`, `rowState(links)` (quy tắc D4, thứ tự ưu tiên khi nhiều liên kết), `buildRows(source, target, links)` trả `rows`, `unlinkedTargets` và `counts`; văn bản dịch của hàng lấy từ đầu segment dịch đầu tới cuối segment dịch cuối
-- [x] 1.2 `src/shared/rows.test.ts`: hàng không liên kết, hàng một và nhiều segment dịch, trạng thái từng loại và thứ tự ưu tiên, `unlinkedTargets`, chương 5.000 hàng dựng dưới 50 ms
+- [x] 1.1 `src/shared/contracts/rows.ts`: kiểu `Row`/`RowState`, `rowState(links)` (quy tắc D4, thứ tự ưu tiên khi nhiều liên kết), `buildRows(source, target, links)` trả `rows`, `unlinkedTargets` và `counts`; văn bản dịch của hàng lấy từ đầu segment dịch đầu tới cuối segment dịch cuối
+- [x] 1.2 `src/shared/contracts/rows.test.ts`: hàng không liên kết, hàng một và nhiều segment dịch, trạng thái từng loại và thứ tự ưu tiên, `unlinkedTargets`, chương 5.000 hàng dựng dưới 50 ms
 
 ## 2. Ghi hàng ở main
 
 - [x] 2.1 `linkFile.ts`: `LinkRecord.reviewedAt` (đọc từ `reviewed_at`), `LinkInput.reviewedAt`, `deleteLink`, `markReviewed`; cập nhật test hiện có và dữ liệu mẫu nếu cần, không đổi schema
-- [x] 2.2 `src/main/storage/sentenceRows.ts` `saveRow`: kiểm `expectedRev` (conflict), từ chối liên kết nhiều–nhiều (validation), vùng của hàng hoặc vị trí chèn kèm ký tự ngăn cách theo spec, chuẩn hóa một đoạn, thay/chèn/xóa bằng `applyEdits` + `resegment(…, 'vi')`, xóa liên kết cũ rồi `saveText` rồi tạo liên kết `user` đã soát và `setProvenance` human cho segment dịch của hàng; một transaction
+- [x] 2.2 `src/main/infra/storage/sentenceRows.ts` `saveRow`: kiểm `expectedRev` (conflict), từ chối liên kết nhiều–nhiều (validation), vùng của hàng hoặc vị trí chèn kèm ký tự ngăn cách theo spec, chuẩn hóa một đoạn, thay/chèn/xóa bằng `applyEdits` + `resegment(…, 'vi')`, xóa liên kết cũ rồi `saveText` rồi tạo liên kết `user` đã soát và `setProvenance` human cho segment dịch của hàng; một transaction
 - [x] 2.3 `reviewRow` (đặt trạng thái ổn và thời điểm soát, từ chối hàng không có liên kết) và `autoPair` (ghép theo thứ tự các segment dịch chưa liên kết với hàng chưa dịch, liên kết `ai` ở `needs_review`, trả số cặp)
 - [x] 2.4 `sentenceRows.test.ts` với kho thật: viết cho hàng đầu/giữa/cuối chưa dịch (đúng vị trí, ký tự ngăn cách khi cùng dòng và khác dòng, ID các hàng khác giữ nguyên), sửa hàng đã dịch, hàng viết hai câu thành hai segment cùng liên kết, xóa trắng (không dấu cách đôi, hàng về *Chưa dịch*), hai hàng cùng dòng sửa một hàng, xung đột revision không đổi dữ liệu, liên kết nhiều–nhiều bị từ chối, xác nhận, ghép theo thứ tự lệch số lượng, mở lại thư viện cho cùng kết quả
 

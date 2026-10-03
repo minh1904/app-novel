@@ -9,7 +9,7 @@
 
 ## 2. Lõi thuần ánh xạ và chia lại segment
 
-- [x] 2.1 `src/shared/segmentMap.ts`: kiểu `Seg` (`id: string | null`, `from`, `to`, `edited`) và `applyEdits(segments, edits)`: dịch chuyển vùng, giữ ID segment không bị chạm, sửa bên trong giữ ID, chèn ở ranh giới thuộc segment bên trái (kể cả ca xuống dòng và đầu segment), xóa trùm (nối vào bên trái, bỏ trọn segment, phần đầu của segment sau); không đụng tới văn bản
+- [x] 2.1 `src/shared/algorithms/segmentMap.ts`: kiểu `Seg` (`id: string | null`, `from`, `to`, `edited`) và `applyEdits(segments, edits)`: dịch chuyển vùng, giữ ID segment không bị chạm, sửa bên trong giữ ID, chèn ở ranh giới thuộc segment bên trái (kể cả ca xuống dòng và đầu segment), xóa trùm (nối vào bên trái, bỏ trọn segment, phần đầu của segment sau); không đụng tới văn bản
 - [x] 2.2 `resegment(content, segments, lang)`: xác định cửa sổ bẩn (dòng chứa segment `edited` hoặc chữ không thuộc segment), chạy `segment()` của `segmenter.ts` trên cửa sổ, gán ID theo quy tắc trùng nhiều nhất (đồng hạng thì đứng trước), ghép với phần ngoài cửa sổ giữ nguyên, trả tập đã kiểm bất biến
 - [x] 2.3 Kiểm bất biến `checkSegments(content, segments)` dùng chung cho test và trước khi lưu: đúng thứ tự, không chồng, trong văn bản, không cắt cặp surrogate, mỗi ký tự không phải khoảng trắng thuộc đúng một segment, không vắt qua dòng, ID duy nhất
 - [x] 2.4 Test ca cụ thể cho từng scenario của `segment-mapping` (gõ giữa câu, thay vùng chọn, Enter cuối câu, gõ trước câu, gõ vào dòng trống, xóa trùm hai nửa, xóa trọn một câu, dán ba dòng, dán 40 dòng vào dòng trống, ký tự ngoài mặt phẳng cơ bản)

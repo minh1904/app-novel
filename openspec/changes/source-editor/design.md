@@ -2,8 +2,8 @@
 
 Lý do và phạm vi: xem `proposal.md`; yêu cầu: xem `specs/`. Nền đã có và ràng buộc cách làm:
 
-- **Kho** (`saveText` trong `src/main/storage/textFile.ts`): thay văn bản và toàn bộ segment của một bên trong một transaction, kiểm `expectedRev` (sai thì `conflict`), từ chối vùng chồng nhau hoặc vượt văn bản. Segment gửi kèm `id` thì giữ ID (ID phải đã thuộc chương và bên này, nếu không là `validation`); **segment không có `id` thì kho cấp ID mới**; segment cũ không có mặt trong danh sách bị xóa và liên kết dùng nó chuyển `needs_review`. Mọi segment được ghi `status = 'ok'`. Hệ quả cho thiết kế: editor không tự đặt ID cho segment mới; segment đã sửa nhưng còn giữ ID **không** làm liên kết của nó bị đánh dấu (xem Risks).
-- **Chia câu** (`src/shared/segmenter.ts`): `segment(text, lang)` trả vùng UTF-16, mỗi segment một câu, không vắt qua dòng, bỏ khoảng trắng hai đầu. Dùng lại cho việc chia lại vùng đã sửa; không viết bộ chia câu thứ hai.
+- **Kho** (`saveText` trong `src/main/infra/storage/textFile.ts`): thay văn bản và toàn bộ segment của một bên trong một transaction, kiểm `expectedRev` (sai thì `conflict`), từ chối vùng chồng nhau hoặc vượt văn bản. Segment gửi kèm `id` thì giữ ID (ID phải đã thuộc chương và bên này, nếu không là `validation`); **segment không có `id` thì kho cấp ID mới**; segment cũ không có mặt trong danh sách bị xóa và liên kết dùng nó chuyển `needs_review`. Mọi segment được ghi `status = 'ok'`. Hệ quả cho thiết kế: editor không tự đặt ID cho segment mới; segment đã sửa nhưng còn giữ ID **không** làm liên kết của nó bị đánh dấu (xem Risks).
+- **Chia câu** (`src/shared/algorithms/segmenter.ts`): `segment(text, lang)` trả vùng UTF-16, mỗi segment một câu, không vắt qua dòng, bỏ khoảng trắng hai đầu. Dùng lại cho việc chia lại vùng đã sửa; không viết bộ chia câu thứ hai.
 - **Màn chương** (`ChapterScreen`, `SegmentList`) đang hiển thị chỉ đọc; `useChapterScreen` đã giữ `source: TextRecord` (`content`, `rev`, `segments`) và có `applySource`.
 - **ADR-003** chọn CodeMirror 6 với một `EditorState` dùng chung, đo 0,3–0,5 ms mỗi phím với 200.000 ký tự và 1.000 segment, và ghi điều kiện xem lại là "IME thất bại trên CM6 nhưng qua trên `<textarea>`". Chủ sản phẩm đã chốt **không** có đường lùi này; xem D8.
 - Electron 44 (Chromium 149+ dòng lỗi mất lần gõ IME đầu tiên ở `contenteditable`; chưa loại trừ được cho Chromium 152).
@@ -112,8 +112,8 @@ Ngân sách trong spec: mở ≤ 500 ms, phím p95 ≤ 16 ms, đứng hình khi 
 ### D10. Cấu trúc mã
 
 ```text
-src/shared/segmentMap.ts          lõi thuần: applyEdits, resegment, kiểm bất biến
-src/shared/segmentMap.test.ts     ca cụ thể từ spec + kiểm thử ngẫu nhiên
+src/shared/algorithms/segmentMap.ts          lõi thuần: applyEdits, resegment, kiểm bất biến
+src/shared/algorithms/segmentMap.test.ts     ca cụ thể từ spec + kiểm thử ngẫu nhiên
 src/renderer/src/features/editor/
   SourceEditor.tsx                component, nhận { side, lang, record, onSaved, onDirtyChange }
   editorState.ts                  StateField segments, hiệu ứng, invertedEffects, history

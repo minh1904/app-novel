@@ -18,7 +18,7 @@
 
 ## 4. Tích hợp vào `autoPair`
 
-- [ ] 4.1 `src/main/storage/sentenceRows.ts` `autoPair`: gọi `estimateLinks` cho segment nguồn *chưa dịch* và segment dịch trong `unlinkedTargets`; với mỗi cặp được đề xuất, tạo liên kết `kind: 'ai'`, `status` theo ngưỡng ok/needs_review, `confidence` thật; phần còn lại (không được đề xuất) ghép theo thứ tự như cũ (`status: 'needs_review'`, `confidence: null`); trả về tổng số cặp đã ghép ở cả hai bước
+- [ ] 4.1 `src/main/infra/storage/sentenceRows.ts` `autoPair`: gọi `estimateLinks` cho segment nguồn *chưa dịch* và segment dịch trong `unlinkedTargets`; với mỗi cặp được đề xuất, tạo liên kết `kind: 'ai'`, `status` theo ngưỡng ok/needs_review, `confidence` thật; phần còn lại (không được đề xuất) ghép theo thứ tự như cũ (`status: 'needs_review'`, `confidence: null`); trả về tổng số cặp đã ghép ở cả hai bước
 - [ ] 4.2 `sentenceRows.test.ts` bổ sung: cặp đủ tin → `status: 'ok'`, hàng tương ứng hiện *AI đã dịch* (qua `rowState`); cặp tin cậy thấp → `status: 'needs_review'`, hàng hiện *Cần kiểm tra*; không có ứng viên ngữ nghĩa nào (embedding giả lập không khớp) → toàn bộ rơi về ghép theo thứ tự như hành vi cũ, kết quả giống test hiện có của `autoPair`; model lỗi/không có mạng (giả lập `embeddings.ts` trả lỗi) → vẫn hoàn tất bằng Bậc 0 + ghép theo thứ tự, không throw
 
 ## 5. Đo và kiểm chứng

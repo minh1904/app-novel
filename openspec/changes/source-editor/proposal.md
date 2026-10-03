@@ -26,7 +26,7 @@ Không thuộc change này: job dịch, mode "Từng câu" và mode "Toàn văn"
 
 ## Impact
 
-- **Phụ thuộc change khác:** dùng màn chương, `prepareImport`/chia câu (`src/shared/segmenter.ts`) và `text:get`/`text:save` của `chapter-source-import` và `content-backup-provider`. Phải archive `chapter-source-import` trước khi archive change này, vì delta `chapter-screen` sửa spec của nó.
+- **Phụ thuộc change khác:** dùng màn chương, `prepareImport`/chia câu (`src/shared/algorithms/segmenter.ts`) và `text:get`/`text:save` của `chapter-source-import` và `content-backup-provider`. Phải archive `chapter-source-import` trước khi archive change này, vì delta `chapter-screen` sửa spec của nó.
 - **Code mới:** `src/renderer/src/features/editor/` (editor, trạng thái, ánh xạ segment: phần thuần đặt ở `src/shared/` để kiểm thử độc lập), thay `SegmentList` trong `ChapterScreen`.
 - **Phụ thuộc mới:** `@codemirror/state`, `@codemirror/view`, `@codemirror/commands` (ADR-003 đã chọn).
 - **Dữ liệu và IPC:** không đổi schema, không thêm kênh IPC; main process chỉ thêm xử lý hộp xác nhận khi đóng cửa sổ còn thay đổi chưa lưu. Dùng `text:get`/`text:save` có sẵn. Cần kiểm tra khi triển khai việc cắt liên kết của kho khi segment đổi hay biến mất (xem design, câu hỏi mở).

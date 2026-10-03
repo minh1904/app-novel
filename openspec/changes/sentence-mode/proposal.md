@@ -27,6 +27,6 @@ Không thuộc change này: job dịch và provider (nên chưa có hàng "AI đ
 ## Impact
 
 - **Phụ thuộc change khác:** dùng workspace hai pane, `TextEditor`, `segmentMap` và chặn rời của `source-editor` và `translation-editor`; archive theo thứ tự `source-editor` → `translation-editor` → `sentence-mode`.
-- **Code:** `src/shared/rows.ts` (kiểu và hàm thuần dựng hàng từ segment và liên kết), `src/main/storage/sentenceRows.ts` (ghi hàng, xác nhận, ghép), `src/shared/channels.ts`, `src/main/ipc/libraryHandlers.ts`, `src/preload/index.ts`, `src/shared/desktop-api.ts` (bốn kênh mới), `src/renderer/src/features/chapter/SentenceMode.tsx` và `ChapterWorkspace.tsx`.
+- **Code:** `src/shared/contracts/rows.ts` (kiểu và hàm thuần dựng hàng từ segment và liên kết), `src/main/infra/storage/sentenceRows.ts` (ghi hàng, xác nhận, ghép), `src/shared/contracts/channels.ts`, `src/main/ipc/libraryHandlers.ts`, `src/preload/index.ts`, `src/shared/contracts/desktop-api.ts` (bốn kênh mới), `src/renderer/src/features/chapter/SentenceMode.tsx` và `ChapterWorkspace.tsx`.
 - **Dữ liệu:** không đổi schema; dùng `link`, `link_member`, `provenance` (nguồn `human` cho segment dịch do người viết); `LinkRecord` có thêm `reviewedAt`.
 - **Tài liệu:** `current-state.md`, `roadmap.md`, `backlog.md` (`sentence-mode` đã triển khai; thêm `merge-split-rows`, `shared-undo-modes`), `validation.md`, `changelog.md`.

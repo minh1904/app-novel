@@ -21,7 +21,7 @@ Lý do và phạm vi: xem `proposal.md`; yêu cầu: xem `specs/`. Nền đã c�
 
 ### D1. Hàng dựng ở renderer từ ba thứ có sẵn, bằng hàm thuần
 
-`buildRows(source, target, links)` (trong `src/shared/rows.ts`) nhận hai `TextRecord` và danh sách liên kết, trả: `rows` (một hàng cho mỗi segment nguồn: `index`, `sourceId`, văn bản nguồn, `targetIds`, văn bản dịch của hàng, `state`, `linkIds`), cùng `unlinkedTargets` (segment dịch không thuộc liên kết nào) và `counts` theo trạng thái. Hàm thuần nên kiểm thử được độc lập, và dùng lại ở main khi cần tra một hàng.
+`buildRows(source, target, links)` (trong `src/shared/contracts/rows.ts`) nhận hai `TextRecord` và danh sách liên kết, trả: `rows` (một hàng cho mỗi segment nguồn: `index`, `sourceId`, văn bản nguồn, `targetIds`, văn bản dịch của hàng, `state`, `linkIds`), cùng `unlinkedTargets` (segment dịch không thuộc liên kết nào) và `counts` theo trạng thái. Hàm thuần nên kiểm thử được độc lập, và dùng lại ở main khi cần tra một hàng.
 
 Văn bản dịch của hàng lấy từ đầu segment dịch đầu tới cuối segment dịch cuối trong `target.content` (kể cả ký tự ngăn cách giữa chúng), vì với hàng nhiều câu đó là cách chữ nằm trong văn bản.
 
@@ -79,10 +79,10 @@ Phân trang 50 hàng bằng `ChapterPager` có sẵn. "Hàng cần xử lý kế
 ### D10. Cấu trúc mã
 
 ```text
-src/shared/rows.ts                  kiểu Row, buildRows, rowState, schema valibot của bốn kênh
-src/shared/rows.test.ts
-src/main/storage/sentenceRows.ts    saveRow, reviewRow, autoPair (dùng segmentMap, linkFile, textFile)
-src/main/storage/sentenceRows.test.ts
+src/shared/contracts/rows.ts                  kiểu Row, buildRows, rowState, schema valibot của bốn kênh
+src/shared/contracts/rows.test.ts
+src/main/infra/storage/sentenceRows.ts    saveRow, reviewRow, autoPair (dùng segmentMap, linkFile, textFile)
+src/main/infra/storage/sentenceRows.test.ts
 src/renderer/src/features/chapter/
   useSentenceRows.ts                nạp, hàng đợi ghi, xung đột, hành động
   SentenceMode.tsx                  đầu màn (đếm, nút), danh sách trang, hàng

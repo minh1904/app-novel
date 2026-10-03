@@ -1,18 +1,18 @@
 ## 1. Lấy hình dạng thật trước khi viết test
 
-- [ ] 1.1 Gọi một lượt chat thật tới `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions` bằng khóa Gemini đã nối, `stream: true` + `stream_options: {include_usage: true}`; lưu **nguyên văn** toàn bộ dòng SSE vào một fixture dùng cho test. Xong khi fixture có trong `src/main/providers/__fixtures__/` và đọc được bằng mắt là một chuỗi event hợp lệ.
+- [ ] 1.1 Gọi một lượt chat thật tới `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions` bằng khóa Gemini đã nối, `stream: true` + `stream_options: {include_usage: true}`; lưu **nguyên văn** toàn bộ dòng SSE vào một fixture dùng cho test. Xong khi fixture có trong `src/main/infra/providers/__fixtures__/` và đọc được bằng mắt là một chuỗi event hợp lệ.
 - [ ] 1.2 Ghi lại từ fixture ở 1.1: chunk đầu có `role` hay không, `delta.content` thiếu ở chunk nào, chunk cuối có `usage` không, và `finish_reason` nằm ở đâu. Xong khi bốn câu trả lời đó được ghi thành comment ở đầu fixture — đây là nguồn sự thật cho mọi test sau.
 - [ ] 1.3 Lấy hình dạng **lỗi giữa dòng**: gửi một lượt với khóa đã cạn hạn mức (hoặc khóa sai), `stream: true`, lưu nguyên văn. Xong khi biết được lỗi về như một event SSE hay như một phản hồi HTTP không `ok` **trước khi** stream bắt đầu — hai ca này cần hai nhánh xử lý khác nhau.
 - [ ] 1.4 Thử hủy giữa dòng bằng `AbortController` và ghi lại `fetch` ném lỗi gì. Xong khi biết chắc nhánh "hủy" phân biệt được với nhánh "mạng đứt", vì `send()` hiện phân biệt hai thứ đó bằng `signal?.aborted`.
 
 ## 2. Kiểu dữ liệu dùng chung và kênh
 
-- [x] 2.1 Thêm `src/shared/aiChat.ts`: kiểu một lượt (`ChatTurn`), khối ngữ cảnh **có nhãn** (danh sách, không phải chuỗi — D6), `ChatChunk` ba kiểu `delta`/`done`/`error` đúng như D3, và schema valibot cho đầu vào `send` kèm **trần kích thước** cho ngữ cảnh + lịch sử + câu hỏi. Xong khi `typecheck:node` và `typecheck:web` sạch và có test khẳng định payload vượt trần bị từ chối với lỗi `validation`.
-- [x] 2.2 Thêm ba kênh vào `src/shared/channels.ts` (`aiChatSend`, `aiChatCancel`, `aiChatChunk`) và khai `ChatApi` trong `src/shared/desktop-api.ts` theo đúng hình dạng D9 (`send`, `cancel`, `onChunk` trả hàm bỏ đăng ký). Xong khi `typecheck` sạch ở cả hai phía.
+- [x] 2.1 Thêm `src/shared/contracts/aiChat.ts`: kiểu một lượt (`ChatTurn`), khối ngữ cảnh **có nhãn** (danh sách, không phải chuỗi — D6), `ChatChunk` ba kiểu `delta`/`done`/`error` đúng như D3, và schema valibot cho đầu vào `send` kèm **trần kích thước** cho ngữ cảnh + lịch sử + câu hỏi. Xong khi `typecheck:node` và `typecheck:web` sạch và có test khẳng định payload vượt trần bị từ chối với lỗi `validation`.
+- [x] 2.2 Thêm ba kênh vào `src/shared/contracts/channels.ts` (`aiChatSend`, `aiChatCancel`, `aiChatChunk`) và khai `ChatApi` trong `src/shared/contracts/desktop-api.ts` theo đúng hình dạng D9 (`send`, `cancel`, `onChunk` trả hàm bỏ đăng ký). Xong khi `typecheck` sạch ở cả hai phía.
 
 ## 3. Parser SSE
 
-- [x] 3.1 Viết `src/main/providers/chatStream.ts` — `parseSseStream(stream)` trả `AsyncIterable` các event, gom bộ đệm, cắt ở `\n\n`, bỏ dòng comment `:`, dừng ở `data: [DONE]`. Xong khi `chatStream.test.ts` qua với fixture của 1.1.
+- [x] 3.1 Viết `src/main/infra/providers/chatStream.ts` — `parseSseStream(stream)` trả `AsyncIterable` các event, gom bộ đệm, cắt ở `\n\n`, bỏ dòng comment `:`, dừng ở `data: [DONE]`. Xong khi `chatStream.test.ts` qua với fixture của 1.1.
 - [x] 3.2 Thêm test cho hai ca ép buộc của D5: một chunk mạng chứa **nửa** event (bộ đệm sống qua nhiều lần đọc), và một chunk chứa **nhiều** event (lặp cho hết bộ đệm). Xong khi cả hai test qua và cố tình làm hỏng một trong hai luật thì test đỏ.
 - [x] 3.3 Thêm test: stream kết thúc **không** có `[DONE]` (nhà cung cấp cắt sớm) không treo, mà kết thúc iterable. Xong khi test qua trong dưới một giây, không dùng timeout thật.
 
@@ -26,7 +26,7 @@
 
 ## 5. Vòng đời một lượt trong main
 
-- [x] 5.1 Viết `src/main/providers/chatService.ts`: sinh `requestId`, giữ `Map<requestId, AbortController>`, chạy `chat()` và phát chunk qua một hàm `emit` tiêm vào (không phụ thuộc `webContents`), tính `usd` bằng `costEstimate` + `modelCatalog`, xóa khỏi sổ khi lượt kết thúc theo bất kỳ đường nào. Xong khi test với `emit` giả khẳng định **ba luật bất biến của D3**: đúng một `done` hoặc `error`, không bao giờ cả hai, và không `delta` nào sau khi kết thúc.
+- [x] 5.1 Viết `src/main/services/ai/chatService.ts`: sinh `requestId`, giữ `Map<requestId, AbortController>`, chạy `chat()` và phát chunk qua một hàm `emit` tiêm vào (không phụ thuộc `webContents`), tính `usd` bằng `costEstimate` + `modelCatalog`, xóa khỏi sổ khi lượt kết thúc theo bất kỳ đường nào. Xong khi test với `emit` giả khẳng định **ba luật bất biến của D3**: đúng một `done` hoặc `error`, không bao giờ cả hai, và không `delta` nào sau khi kết thúc.
 - [x] 5.2 Từ chối sớm khi kết nối đang tắt, với cùng thông điệp lối gọi dịch đang dùng. Xong khi test khẳng định không có lời gọi `fetch` nào xảy ra.
 - [x] 5.3 Hai lượt chồng nhau: hai `requestId` khác nhau, chữ không trộn, hủy lượt một không dừng lượt hai. Xong khi test dựng hai stream chạy song le và khẳng định cả ba điều.
 - [x] 5.4 `usd` là `null` khi model không có giá trong bản chụp, **không phải 0**. Xong khi test qua với một id model không có trong `modelCatalog.json`.
@@ -66,7 +66,7 @@
 
 ## 10. Chạy cả vòng và dọn
 
-- [x] 10.1 Chạy `pnpm test`, `typecheck:node`, `typecheck:web`, `eslint`, `electron-vite build` và `openspec validate ai-chat --strict`. Xong khi tất cả sạch (hai lỗi lint có từ trước ở `src/shared/rawText.ts` vẫn ngoài phạm vi, không sửa ở change này).
+- [x] 10.1 Chạy `pnpm test`, `typecheck:node`, `typecheck:web`, `eslint`, `electron-vite build` và `openspec validate ai-chat --strict`. Xong khi tất cả sạch (hai lỗi lint có từ trước ở `src/shared/algorithms/rawText.ts` vẫn ngoài phạm vi, không sửa ở change này).
 - [ ] 10.2 **Lái tay trong Electron thật** — việc này không test tự động được: hỏi một câu và xem chữ chảy thật; hủy giữa dòng; gửi lượt thứ hai khi lượt đầu chưa xong; áp dụng một đề xuất rồi `Ctrl+Z`; sửa tay rồi bấm Áp dụng đề xuất cũ để thấy nó **từ chối**; rút mạng giữa dòng. Xong khi cả sáu ca được ghi lại kết quả, kèm ảnh sáng/tối ở 1280 px và không cuộn ngang.
 - [ ] 10.3 Đếm số liệu của hai bước kiểm chứng trong nghiên cứu: trong 20 lượt hỏi đầu, bao nhiêu lượt về phạm vi rộng hơn một câu; và tỷ lệ `Ctrl+Z` trong 30 giây sau mỗi lần Áp dụng. Xong khi hai số được ghi vào [nghiên cứu](../../../docs/handbook/research/ai-chat-panel.md) — số thứ hai là thứ quyết định có mở `@codemirror/merge` hay không.
 - [x] 10.4 Cập nhật tài liệu: `engineering/current-state.md`, `delivery/backlog.md` (`ai-chat-panel` chuyển trạng thái, và ghi phần nào vẫn chưa làm), `product/open-questions.md` (trần chi phí còn mở), `maintenance/changelog.md`. Xong khi không trang nào còn nói panel là "chỉ minh họa", và changelog ghi rõ cái gì **chưa** được kiểm.
@@ -88,7 +88,7 @@
 
 Những gì đã làm xong nhưng **chưa được một lượt gọi thật xác nhận**, để không ai đọc dấu `[x]` thành "đã kiểm chứng":
 
-- **Nhóm 4 chạy trên hình dạng khung theo quy ước endpoint tương thích OpenAI**, không trên bản chụp thật của nhóm 1 (`src/main/providers/__fixtures__/` vẫn chưa có). Khung chữ và khung `usage` là quy ước ổn định; phần **chưa biết** là Gemini báo lỗi giữa dòng bằng cách nào. Lối gọi vì vậy cài **cả hai** nhánh — lỗi bằng mã HTTP trước khi stream mở, và lỗi bằng một khung giữa dòng — và test phủ cả hai. Task 1.3 chỉ còn việc xác nhận nhánh nào thật sự xảy ra, không còn là điều kiện để viết mã.
+- **Nhóm 4 chạy trên hình dạng khung theo quy ước endpoint tương thích OpenAI**, không trên bản chụp thật của nhóm 1 (`src/main/infra/providers/__fixtures__/` vẫn chưa có). Khung chữ và khung `usage` là quy ước ổn định; phần **chưa biết** là Gemini báo lỗi giữa dòng bằng cách nào. Lối gọi vì vậy cài **cả hai** nhánh — lỗi bằng mã HTTP trước khi stream mở, và lỗi bằng một khung giữa dòng — và test phủ cả hai. Task 1.3 chỉ còn việc xác nhận nhánh nào thật sự xảy ra, không còn là điều kiện để viết mã.
 - **Hình dạng 429 trong test lấy từ cùng giả định mà `classifyError` đã dựng trên đó** (`RetryInfo.retryDelay`, `quotaId` chứa `PerDay`) — nguồn là issue và diễn đàn bên thứ ba, đã ghi trong `ai-provider-live-verification`. Lối chat **dùng lại đúng bộ phân loại đó**, nên nó thừa hưởng cùng một điều chưa kiểm chứ không thêm phỏng đoán mới.
 - **`typecheck:web` còn 3 lỗi có trước change này**, ở `components/SearchField.tsx` (một lỗi) và `features/chapter/useAiTranslate.ts` (hai lỗi, biến `spent` bị suy ra `never`). `git diff HEAD` cho hai tệp đó rỗng — chúng tồn tại ngay ở HEAD, nằm ngoài phạm vi change này. Task 10.1 phải quyết: sửa kèm hay để riêng.
 
