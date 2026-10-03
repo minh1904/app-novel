@@ -70,6 +70,6 @@ Chạy `pnpm dev`, mở một chương đã có bản gốc. Dùng pane **Bản 
 | T2  | Gõ dở một từ (chưa chốt) rồi nhấp sang pane **Bản gốc** (đã khóa) rồi nhấp lại                     |       |     | Từ được chốt đúng chỗ, không mất chữ, không nhảy                 |
 | T3  | Gõ dở một từ rồi bấm Tab để rời pane                                                               |       |     | Từ được chốt, không chèn ký tự Tab                               |
 | T4  | Gõ dở rồi bấm Ctrl+S (lưu cả hai bên)                                                              |       |     | Việc lưu đợi chốt chữ rồi mới ghi; chữ vừa chốt có trong bản lưu |
-| T5  | ~~Gõ một đoạn dài (≥ 200 chữ) rồi bấm "Đọc", đọc, bấm "Soạn thảo", gõ tiếp~~                       |       |     | Không còn áp dụng: Reading view đã bị gỡ (commit `81bbd2f`)       |
+| T5  | ~~Gõ một đoạn dài (≥ 200 chữ) rồi bấm "Đọc", đọc, bấm "Soạn thảo", gõ tiếp~~                       |       |     | Không còn áp dụng: Reading view đã bị gỡ (commit `81bbd2f`)      |
 | T6  | Mở khóa bản gốc ("Sửa bản gốc"), gõ Telex ở bản gốc rồi chuyển sang bản dịch gõ tiếp               |       |     | Cả hai bên nhận chữ đúng, không lẫn qua bên kia                  |
 | T7  | Dán một bản dịch dài vào pane trống rồi gõ ngay một từ Telex ở giữa                                |       |     | Chữ ra đúng chỗ; không nhấp nháy ở lề (cột số đã bỏ)             |

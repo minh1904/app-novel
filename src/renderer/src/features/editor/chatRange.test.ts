@@ -160,7 +160,9 @@ describe('applyProposal', () => {
 
   it('refuses an empty anchor in a document that has text', () => {
     const state = stateOf(DOC, { at: 0 })
-    expect(applyProposal(state, { from: 0, to: 0, text: '', targetIds: [] }, 'x').kind).toBe('stale')
+    expect(applyProposal(state, { from: 0, to: 0, text: '', targetIds: [] }, 'x').kind).toBe(
+      'stale'
+    )
   })
 
   // First translation of a chapter: the pane is empty, so the anchor is too. Nothing can be lost
@@ -192,8 +194,9 @@ describe('applyProposal', () => {
   it('refuses when the anchored text is gone entirely', () => {
     const before = stateOf(DOC, { at: DOC.indexOf('Đoạn ba') })
     const range = targetRange(before)
-    const after = before.update({ changes: { from: 0, to: before.doc.length, insert: 'khác hẳn' } })
-      .state
+    const after = before.update({
+      changes: { from: 0, to: before.doc.length, insert: 'khác hẳn' }
+    }).state
 
     expect(applyProposal(after, range, 'ĐÃ THAY').kind).toBe('stale')
   })
@@ -229,6 +232,8 @@ describe('applyProposal', () => {
 
     const next = state.update(result.spec).state
     expect(next.selection.main.empty).toBe(true)
-    expect(next.doc.sliceString(next.selection.main.head - 4, next.selection.main.head)).toBe('ngắn')
+    expect(next.doc.sliceString(next.selection.main.head - 4, next.selection.main.head)).toBe(
+      'ngắn'
+    )
   })
 })

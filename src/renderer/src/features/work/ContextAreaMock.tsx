@@ -179,7 +179,9 @@ function TermsTable(): JSX.Element {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-ink-muted">Tên người, địa danh, chiêu thức: bản gốc và cách dịch đã chốt.</p>
+        <p className="text-xs text-ink-muted">
+          Tên người, địa danh, chiêu thức: bản gốc và cách dịch đã chốt.
+        </p>
         <Button variant="outline" size="sm" disabled>
           <AddIcon size={13} />
           Thêm thuật ngữ
@@ -203,7 +205,10 @@ function TermsTable(): JSX.Element {
           {TERMS.map((term) => (
             <li
               key={term.source}
-              className={cx(termGrid, 'border-b border-line px-3 py-2.5 text-[13px] last:border-b-0')}
+              className={cx(
+                termGrid,
+                'border-b border-line px-3 py-2.5 text-[13px] last:border-b-0'
+              )}
             >
               <span className="font-medium" lang="zh-Hant">
                 {term.source}
@@ -236,7 +241,9 @@ function StylePanel(): JSX.Element {
       </div>
       <div className="grid gap-3 @min-[560px]:grid-cols-2">
         <div className="flex flex-col gap-1.5 rounded-control border border-line p-3">
-          <p className="text-[11px] font-medium text-ink-muted">Bản dịch cũ (nguồn học văn phong)</p>
+          <p className="text-[11px] font-medium text-ink-muted">
+            Bản dịch cũ (nguồn học văn phong)
+          </p>
           <p className="text-[12.5px] leading-[1.6] text-ink-muted italic">
             “Nàng chỉ lặng im, ánh mắt dõi theo bóng hắn khuất dần sau rặng trúc.”
           </p>

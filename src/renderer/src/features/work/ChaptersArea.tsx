@@ -208,7 +208,6 @@ export function ChaptersArea({
           <>
             {importButton}
             <Button
-             
               onClick={() => {
                 setAdding(true)
                 setAddKey((key) => key + 1)
@@ -267,7 +266,6 @@ export function ChaptersArea({
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button
-                 
                   onClick={() => {
                     setAdding(true)
                     setAddKey((key) => key + 1)
@@ -305,7 +303,6 @@ export function ChaptersArea({
                   Không có chương nào khớp “{filterText}”.
                 </p>
                 <Button
-                 
                   variant="secondary"
                   onClick={() => {
                     setQuery('')

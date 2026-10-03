@@ -1,4 +1,9 @@
-import { EditorSelection, Transaction, type EditorState, type TransactionSpec } from '@codemirror/state'
+import {
+  EditorSelection,
+  Transaction,
+  type EditorState,
+  type TransactionSpec
+} from '@codemirror/state'
 import { segmentsField } from './editorState'
 
 /**

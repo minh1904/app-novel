@@ -54,7 +54,11 @@ const JOBS: JobRow[] = [
 const statusMeta: Record<JobStatus, { label: string; icon: JSX.Element; tone: string }> = {
   running: { label: 'Đang chạy', icon: <RefreshIcon size={12} />, tone: 'bg-info/12 text-info' },
   error: { label: 'Lỗi', icon: <DangerTriangleIcon size={12} />, tone: 'bg-error/14 text-error' },
-  done: { label: 'Hoàn tất', icon: <CheckCircleIcon size={12} />, tone: 'bg-success/14 text-success' }
+  done: {
+    label: 'Hoàn tất',
+    icon: <CheckCircleIcon size={12} />,
+    tone: 'bg-success/14 text-success'
+  }
 }
 
 const jobGrid =
@@ -102,7 +106,10 @@ export function JobsAreaMock(): JSX.Element {
             return (
               <li
                 key={index}
-                className={cx(jobGrid, 'border-b border-line px-3 py-2.5 text-[13px] last:border-b-0')}
+                className={cx(
+                  jobGrid,
+                  'border-b border-line px-3 py-2.5 text-[13px] last:border-b-0'
+                )}
               >
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -127,9 +134,7 @@ export function JobsAreaMock(): JSX.Element {
                     </div>
                   )}
                 </div>
-                <span className={cx('text-right text-ink-muted', hideBelow620)}>
-                  {job.cost}
-                </span>
+                <span className={cx('text-right text-ink-muted', hideBelow620)}>{job.cost}</span>
                 <span className={cx('truncate text-ink-muted', hideBelow620)}>{job.time}</span>
                 <span className="flex justify-end">
                   {job.status === 'error' && (

@@ -33,7 +33,13 @@ const SOURCES: SourceRow[] = [
     total: 12,
     updated: 'Cập nhật 3 ngày trước'
   },
-  { language: 'ja', label: 'Bản dịch tiếng Nhật', matched: 0, total: 12, updated: 'Chưa nhập chương nào' }
+  {
+    language: 'ja',
+    label: 'Bản dịch tiếng Nhật',
+    matched: 0,
+    total: 12,
+    updated: 'Chưa nhập chương nào'
+  }
 ]
 
 /**
@@ -91,8 +97,13 @@ export function SourcesAreaMock(): JSX.Element {
             <div className="flex items-center gap-2">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-control">
                 <div
-                  className={cx('h-full rounded-full', source.matched === 0 ? 'bg-ink-muted/30' : 'bg-info')}
-                  style={{ width: (source.total === 0 ? 0 : (source.matched / source.total) * 100) + '%' }}
+                  className={cx(
+                    'h-full rounded-full',
+                    source.matched === 0 ? 'bg-ink-muted/30' : 'bg-info'
+                  )}
+                  style={{
+                    width: (source.total === 0 ? 0 : (source.matched / source.total) * 100) + '%'
+                  }}
                 />
               </div>
               <span className="shrink-0 text-[11px] whitespace-nowrap text-ink-muted">

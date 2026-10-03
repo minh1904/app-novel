@@ -93,7 +93,11 @@ export function beginTurn(
 
 /** Main answered the send call. Until this lands the turn cannot be matched to any chunk. */
 export function attachRequestId(session: Session, localId: string, requestId: string): Session {
-  return mapTurn(session, (turn) => turn.localId === localId, (turn) => ({ ...turn, requestId }))
+  return mapTurn(
+    session,
+    (turn) => turn.localId === localId,
+    (turn) => ({ ...turn, requestId })
+  )
 }
 
 /** The send call itself failed, so no chunk will ever arrive for this turn. */

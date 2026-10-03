@@ -298,7 +298,11 @@ export function TextEditor({
             }
             // A review ends itself once nothing is left to decide, so the translator never has to
             // dismiss a bar that has no more work in it.
-            if (update.docChanged && review.isActive(update.state) && reviewFinished(update.state)) {
+            if (
+              update.docChanged &&
+              review.isActive(update.state) &&
+              reviewFinished(update.state)
+            ) {
               update.view.dispatch(review.stop())
               latest.current.onReviewDone?.()
             }

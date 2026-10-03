@@ -115,7 +115,6 @@ export function WorkHeader({
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {work.lastChapter ? (
               <Button
-               
                 onClick={actions.onContinue}
                 title={'Tiếp tục chương ' + work.lastChapter.number}
               >

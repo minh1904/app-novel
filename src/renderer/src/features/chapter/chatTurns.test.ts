@@ -283,9 +283,9 @@ describe('history sent with the next question', () => {
 
     expect(result.dropped).toBe(2)
     // The two kept are the newest, and the question text proves which.
-    expect(result.history.map((turn) => turn.text).filter((text) => text.startsWith('Câu'))).toEqual(
-      ['Câu 3', 'Câu 4']
-    )
+    expect(
+      result.history.map((turn) => turn.text).filter((text) => text.startsWith('Câu'))
+    ).toEqual(['Câu 3', 'Câu 4'])
   })
 
   it('keeps the newest turn even when it alone exceeds the budget', () => {
