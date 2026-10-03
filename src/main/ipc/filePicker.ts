@@ -1,7 +1,7 @@
 /**
  * The two system dialogs backup needs. An interface so handlers can be tested without Electron;
- * the real one lives in ipc/library.ts. Paths come back from the user's choice and never from the
- * renderer.
+ * the real one lives in electron/registerIpc.ts. Paths come back from the user's choice and never
+ * from the renderer.
  */
 export interface FilePicker {
   /** Resolves to the chosen path, or null when the user cancels. */

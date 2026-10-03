@@ -8,7 +8,7 @@ import { StorageError } from './errors'
  * - Giá trị khóa **không rời main process** sau khi lưu; tầng giao diện chỉ nhận dạng che.
  *
  * Phần mã hoá được tiêm vào thay vì gọi thẳng `electron.safeStorage`, để test chạy được ngoài
- * Electron. Bản thật nằm ở `electronSafeStorage.ts`.
+ * Electron. Bản thật nằm ở `main/electron/safeStorage.ts`.
  */
 
 export interface DecryptResult {
