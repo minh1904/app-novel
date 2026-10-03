@@ -5,7 +5,10 @@ import { cx } from './cx'
 /** `sm` fits a 42px toolbar; `default` is the standalone size. */
 export type SearchFieldSize = 'sm' | 'default'
 
-export interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+// `size` is omitted along with `type`: the HTML attribute is a number (characters wide) and this one
+// is a design-system scale, so the two cannot both live on the same prop.
+export interface SearchFieldProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   label: string
   shortcut?: string
   size?: SearchFieldSize

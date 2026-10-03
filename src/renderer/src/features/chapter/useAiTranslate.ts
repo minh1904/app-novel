@@ -226,11 +226,15 @@ export function useAiTranslate(
         if (batch.held.length > 0) setHeld((items) => [...items, ...batch.held])
         if (batch.failed.length > 0) setFailed((ids) => [...new Set([...ids, ...batch.failed])])
         if (batch.usage) {
-          spent = {
-            inputTokens: (spent?.inputTokens ?? 0) + batch.usage.inputTokens,
-            outputTokens: (spent?.outputTokens ?? 0) + batch.usage.outputTokens
+          // Accumulate into a fresh binding rather than reading `spent` inside its own assignment:
+          // the self-reference narrowed it to `never` and broke the typecheck.
+          const previous = spent
+          const total: TranslateUsage = {
+            inputTokens: (previous?.inputTokens ?? 0) + batch.usage.inputTokens,
+            outputTokens: (previous?.outputTokens ?? 0) + batch.usage.outputTokens
           }
-          setUsage(spent)
+          spent = total
+          setUsage(total)
         }
         if (batch.keyTail !== null) {
           if (lastTail !== null && batch.keyTail !== lastTail) {
