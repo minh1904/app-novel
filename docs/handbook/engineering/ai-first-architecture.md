@@ -127,6 +127,8 @@ flowchart TD
 
 ## 5. Kiến trúc tổng thể (Đề xuất)
 
+Vị trí thư mục của từng khối nằm ở [Cấu trúc mã nguồn](architecture.md#cấu-trúc-mã-nguồn-và-luật-ranh-giới); mục này chỉ nói khối nào cần có và chúng nối với nhau thế nào.
+
 ```mermaid
 flowchart LR
   subgraph R[Renderer — React]

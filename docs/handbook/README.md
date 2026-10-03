@@ -32,6 +32,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Nghiên cứu | [Màn chi tiết truyện và danh sách chương](research/work-detail-screen.md) | So sánh sản phẩm; cấu trúc bốn khu vực đã chốt, chi tiết khác còn đề xuất |
 | Nghiên cứu | [Tính năng Markdown của Obsidian](research/obsidian-markdown-features.md) | Bảng kiểm đối chiếu với Mira, đã tick cái nào xong |
 | Nghiên cứu | [Panel Hỏi AI chạy thật: phương thức](research/ai-chat-panel.md) | Đọc code + tài liệu Gemini/Electron 2026-10-02; sáu quyết định chờ chốt, chưa gọi provider thật |
+| Nghiên cứu | [Kiến trúc các app Electron mã nguồn mở](research/electron-architecture.md) | Quan sát 2026-10-03: cây thư mục của 11 sản phẩm qua GitHub API (chưa chạy thử), bảy khuôn và khuôn nào Mira học |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
@@ -40,7 +41,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Trải nghiệm | [Màn cài đặt kết nối AI](experience/ai-connection-settings.md) | Audit + brief + quy ước app cùng loại + 7 wireframe; **đã chốt phương án F**, vào bằng nút bánh răng góc trên phải |
 | Trải nghiệm | [Design system](experience/design-system.md) | Baseline đã chốt + scaffold |
 | Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Đối chiếu code ngày 2026-09-29 |
-| Kỹ thuật | [Kiến trúc và spike](engineering/architecture.md) | Scaffold + công nghệ đề xuất |
+| Kỹ thuật | [Kiến trúc và spike](engineering/architecture.md) | Scaffold + công nghệ đề xuất; mục "Cấu trúc mã nguồn và luật ranh giới" đã triển khai 2026-10-03 |
 | Kỹ thuật | [Luồng làm việc và kiến trúc AI-first](engineering/ai-first-architecture.md) | Đề xuất 2026-10-03, chưa chốt: bỏ Từng câu, đơn vị là đoạn, AI chỉ đề xuất, tác vụ dịch chạy trong main; học từ Obsidian, Notion, Logseq; bảy câu chờ chốt |
 | Phát triển | [Roadmap theo điều kiện hoàn thành](delivery/roadmap.md) | Đề xuất thứ tự; không cam kết lịch |
 | Phát triển | [Backlog tính năng chưa triển khai](delivery/backlog.md) | Mục “Sắp có” trên giao diện và điều kiện làm thật |
