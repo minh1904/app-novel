@@ -95,9 +95,21 @@ Luật dùng `regex` (không dùng `group`) cho đường dẫn vì chuỗi tư�
 
 Đối chứng (phải **không** có lỗi `no-restricted-imports`): `electron/` → gói `electron`; `services` → `infra`; `ipc` → `services`; một tệp `*.test.ts` → `testing/`; một tệp `crash*.ts` → `testing/`. Cả năm sạch.
 
-### R4 (task 5.5), R3 (task 4.2)
+### R3, tính đầy đủ theo kiểu còn nguyên (task 4.2)
 
-_Điền khi làm các task tương ứng._
+Mỗi tệp khu vực trả `AreaHandlers<tiền tố>` (chỉ các kênh mang tiền tố đó, và không kênh nào khác); `createLibraryHandlers` vẫn trả `Record<Channel, …>` nên phải phủ đủ mọi kênh. Ba lần phá cố ý, mỗi lần khôi phục nguyên byte (`cmp`), sau cùng `tsc` thoát 0:
+
+| Phá cố ý | Lỗi `tsc` thấy được |
+| --- | --- |
+| Gỡ `chapters:move` khỏi `handlers/chapters.ts` | TS2741: Property '"chapters:move"' is missing in type … |
+| Thêm `[CHANNELS.textGet]` (kênh của khu vực khác) vào `handlers/works.ts` | TS2353: … '[CHANNELS.textGet]' does not exist in type 'AreaHandlers<"works">' |
+| Bỏ `...chatHandlers(deps)` khỏi `createLibraryHandlers` | TS2739: Type '{ "ai:connections:list": … }' is missing the properties … (các kênh `ai:chat:*`) |
+
+Đây là bảo đảm **mạnh hơn** trước: trước đây chỉ có kiểm tra tổng; nay thêm kênh `works:foo` mà quên handler lỗi ngay ở `works.ts`.
+
+### R4 (task 5.5)
+
+_Điền khi làm task tương ứng._
 
 ## 6. Phân loại test do công cụ dời đề xuất (task 3.2)
 

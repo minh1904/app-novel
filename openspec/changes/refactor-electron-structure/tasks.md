@@ -31,11 +31,11 @@
 
 ## 4. R3 — Tách IPC và dây lắp service
 
-- [ ] 4.1 Tách `ipc/libraryHandlers.ts` thành `ipc/handlers/{works,chapters,text,rows,images,backup,ai,chat}.ts` và `deps.ts` (D7); `libraryHandlers.ts` còn lại là bộ gộp **giữ nguyên chữ ký** `createLibraryHandlers`. Xong khi `tsc` qua, 12 tệp test trong `ipc/` qua và `git diff` của chúng rỗng
-- [ ] 4.2 Chứng minh tính đầy đủ theo kiểu còn nguyên: gỡ tạm handler `chaptersMove` khỏi `handlers/chapters.ts`, chạy `tsc` và ghi lỗi thấy được (phải nêu thiếu `chapters:move`), rồi hoàn lại. Xong khi `baseline.md` có thông điệp lỗi và `git status` sạch
-- [ ] 4.3 Commit `refactor(ipc): split the handler table by area`. Xong khi `node scripts/check.mjs` xanh, số test không đổi
-- [ ] 4.4 Thêm `services/createServices.ts` nhận `{ library, crypto: SecretCrypto }` trả `{ connections, translator, chat }`; `electron/registerIpc.ts` gọi nó và chỉ còn gắn `ipcMain`, `ChunkSink`, hộp thoại thật. Thêm test với `SecretCrypto` giả chạy trong môi trường Node trần. Xong khi test mới qua (tức không có `electron` trong đường import), `registerIpc.ts` không còn `new ConnectionService`/`ChapterTranslator`/`ChatService`, và lint 0 lỗi
-- [ ] 4.5 Commit `refactor(main): build services outside the Electron layer`. Xong khi `node scripts/check.mjs --build` xanh: 863 test cũ cộng test mới đều qua; đẩy nếu được phép
+- [x] 4.1 Tách `ipc/libraryHandlers.ts` thành `ipc/handlers/{works,chapters,text,rows,images,backup,ai,chat}.ts` và `deps.ts` (D7); `libraryHandlers.ts` còn lại là bộ gộp **giữ nguyên chữ ký** `createLibraryHandlers`. Xong khi `tsc` qua, 12 tệp test trong `ipc/` qua và `git diff` của chúng rỗng
+- [x] 4.2 Chứng minh tính đầy đủ theo kiểu còn nguyên: gỡ tạm handler `chaptersMove` khỏi `handlers/chapters.ts`, chạy `tsc` và ghi lỗi thấy được (phải nêu thiếu `chapters:move`), rồi hoàn lại. Xong khi `baseline.md` có thông điệp lỗi và `git status` sạch
+- [x] 4.3 Commit `refactor(ipc): split the handler table by area`. Xong khi `node scripts/check.mjs` xanh, số test không đổi
+- [x] 4.4 Thêm `services/createServices.ts` nhận `{ library, crypto: SecretCrypto }` trả `{ connections, translator, chat }`; `electron/registerIpc.ts` gọi nó và chỉ còn gắn `ipcMain`, `ChunkSink`, hộp thoại thật. Thêm test với `SecretCrypto` giả. Xong khi test mới qua (khóa đi qua `SecretCrypto` được tiêm và không lưu ở dạng đọc được; không bảo vệ được thì từ chối lưu), `registerIpc.ts` không còn `new ConnectionService`/`ChapterTranslator`/`ChatService`, và lint 0 lỗi (luật `services → electron` là bằng chứng không dính Electron, không phải việc test import được)
+- [x] 4.5 Commit `refactor(main): build services outside the Electron layer`. Xong khi `node scripts/check.mjs --build` xanh: 863 test cũ cộng test mới đều qua; đẩy nếu được phép
 
 ## 5. R4 — Tách `shared/` thành `contracts/` và `algorithms/`
 
