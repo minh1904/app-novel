@@ -188,7 +188,27 @@ Không có test trực tiếp cho `syncIndex` khi cập nhật chỉ mục lỗi
 
 ## 8. So sánh trước/sau (task 8.2)
 
-_Điền khi làm task 8.2._
+Trước: commit `0600221` (điểm xuất phát). Sau: `44fe5f6` (commit xóa công cụ), đo ngày 2026-10-03. Mọi số "sau" lấy từ lần chạy cuối của `node scripts/check.mjs --build`, `smoke-sqlite.mjs` dưới Electron và `out/`.
+
+| Chỉ số | Trước | Sau |
+| --- | --- | --- |
+| Test | 863; **đỏ chập chờn** khi chạy cả bộ song song (mục 2) | **867**, xanh qua `check.mjs` (hai pha) mỗi lần từ R1 đến nay |
+| Lỗi lint | 2 | **0** |
+| Cảnh báo lint | 30.576 (khoảng 30.500 là nhiễu CRLF) | **63** (khác biệt định dạng thật có từ trước) |
+| `tsc` | 399 + 812 tệp | 411 + 812 tệp (+12: 9 tệp `ipc/handlers/`, `createServices.ts` và test của nó, `workFiles.ts`) |
+| `require` của preload | `electron` ×1, 5.823 byte | **giống hệt** |
+| External của `main` | `electron`, `node:crypto`, `node:fs`, `node:path`, `node:sqlite`, `valibot` | **giống hệt** |
+| JS renderer | 2.176,05 kB | **2.176,05 kB** |
+| `smoke:sqlite` | lỗi cú pháp từ ngày thêm; **chưa từng chạy được** | **qua** (Electron 44.4.5, node 24.21.0, sqlite 3.53.4) |
+| `crash.test.ts` riêng ×3 | 13,31 / 12,91 / 13,63 s, 4/4 | 13,40 / 13,44 / 15,26 s, 4/4. Cả ba lần qua; lần 15,26 s cao hơn dải baseline nhưng các lần đo ở R2 và R6 là 13,2–14,0 s, nên đây là dao động của máy chứ không phải chậm đi có hệ thống (không đo tải) |
+| Git nhận ra đổi tên | — | **105/105** tệp dời (80 ở R2, 25 ở R4) |
+| Câu import `shared` | `main` 108, `renderer` 81, `preload` 12 | `main` **118**, `renderer` 81, `preload` 12. `main` +10 gồm +9 từ R3 (9 tệp `handlers/` thêm 18 import, `libraryHandlers.ts` bỏ 9) và +1 từ R6 (`workFiles.ts`) |
+| Tệp lớn nhất | `LibraryStore` 567 dòng; `libraryHandlers.ts` 215; `ipc/library.ts` 85 | `library.ts` **354** (+ `workFiles.ts` 287); `libraryHandlers.ts` **66**; `registerIpc.ts` **66** |
+| Thư mục của `main` | `storage/` 43 tệp, `providers/` 27, `ipc/` 16 (trộn nhiều vai) | `infra/`, `services/`, `ipc/`, `electron/`, `testing/`; `shared/` thành `contracts/` + `algorithms/` |
+| Ranh giới | giữ bằng kỷ luật | **9 khối lint**, mỗi luật đã chứng minh bắt được (11 + 14 + 4 ca vi phạm, 5 + 3 ca đối chứng sạch) |
+| Commit | — | 34 commit sau `0600221` |
+
+Ba dòng khác baseline và vì sao: `tsc` thêm 12 tệp (đúng các tệp mới nêu trên); `main` thêm 10 câu import (đã giải thích đến từng tệp); `crash.test.ts` lần thứ ba chậm hơn dải cũ (dao động). Không có chỉ số chất lượng nào tệ đi.
 
 ## 9. Nhật ký thực hiện
 

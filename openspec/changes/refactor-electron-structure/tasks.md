@@ -66,7 +66,7 @@
 
 ## 8. Kết thúc
 
-- [ ] 8.1 Xóa `scripts/restructure/` ở commit riêng `chore(scripts): remove the one-off module move tool` và ghi hash commit của công cụ vào changelog. Xong khi `node scripts/check.mjs` vẫn xanh (không phụ thuộc công cụ)
-- [ ] 8.2 Chạy lần cuối `node scripts/check.mjs --build` và lập bảng trước/sau trong `baseline.md`: số test, lỗi và cảnh báo lint, danh sách `require` của preload, `smoke:sqlite`. Xong khi bảng có đủ bốn dòng và không có dòng nào tệ hơn baseline
+- [x] 8.1 Xóa `scripts/restructure/` ở commit riêng `chore(scripts): remove the one-off module move tool` và ghi hash commit của công cụ vào changelog. Xong khi `node scripts/check.mjs` vẫn xanh (không phụ thuộc công cụ)
+- [x] 8.2 Chạy lần cuối `node scripts/check.mjs --build` và lập bảng trước/sau trong `baseline.md`: số test, lỗi và cảnh báo lint, danh sách `require` của preload, `smoke:sqlite`. Xong khi bảng có đủ bốn dòng và không có dòng nào tệ hơn baseline
 - [ ] 8.3 **Lái tay (chủ sản phẩm; không tự động được):** mở app, tạo tác phẩm, thêm chương, dán raw, gõ tiếng Việt ở pane dịch, mở panel Hỏi AI, sao lưu rồi khôi phục. Xong khi chủ sản phẩm xác nhận không khác trước
 - [ ] 8.4 Lưu trữ change bằng `openspec archive refactor-electron-structure` sau 8.3 (không có delta spec để gộp vì `skip_specs: true`). Xong khi `openspec list` không còn change này và thư mục nằm trong `openspec/changes/archive/`
