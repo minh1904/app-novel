@@ -11,8 +11,8 @@
 // node and the package's own entry file, so neither pnpm nor a .cmd shim is involved.
 //
 // Tests run in two phases. Five files assert on wall-clock time or kill child processes on a timer, and
-// they fail intermittently when 60 files compete for the CPU (measured: see openspec/changes/
-// refactor-electron-structure/baseline.md). Phase A runs everything else in parallel; phase B runs those
+// they fail intermittently when 60 files compete for the CPU (measured: see openspec/changes/archive/
+// 2026-10-03-refactor-electron-structure/baseline.md). Phase A runs everything else in parallel; phase B runs those
 // five one at a time. Every test still runs exactly once and has to pass.
 import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
