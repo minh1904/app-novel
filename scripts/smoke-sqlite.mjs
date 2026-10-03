@@ -12,7 +12,7 @@ function check(condition, message) {
   if (!condition) throw new Error(message)
 }
 
-app.whenReady().then((): void => {
+app.whenReady().then(() => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mira-smoke-'))
   let code = 0
   try {
