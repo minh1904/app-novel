@@ -123,8 +123,9 @@ function chapterBlocks(sourceText: string, targetText: string): ChatContextBlock
  *
  * The source counterpart of a paragraph is still matched **by paragraph index**, and still only when
  * both sides have the same number of paragraphs. That rule stays deliberately dumb — real alignment
- * is change `segment-auto-align` and does not exist yet — but now it only adds a convenience block;
- * when it does not fire, the model still has the whole source above it.
+ * was planned as change `segment-auto-align`, which ADR-005 cancelled (paragraph counts that differ
+ * are a QA flag, not a link to repair) — and it only adds a convenience block; when it does not
+ * fire, the model still has the whole source above it.
  */
 export function buildChatContext(input: ChatContextInput): ChatContextBlock[] {
   const { sourceText, targetText, range, scope, radius } = input

@@ -28,9 +28,10 @@ import { SentenceMode, type SentenceModeHandle } from './SentenceMode'
 const IDLE: SessionStatus = { state: 'saved', message: null, dirty: false }
 
 /**
- * Tạm ẩn tab "Từng câu" khỏi giao diện: "Ghép theo thứ tự" hiện chỉ ghép theo thứ tự xuất hiện,
- * chưa có ước lượng theo ngữ nghĩa (chờ change `segment-auto-align`, xem backlog.md). Phần còn lại
- * của mode (state, switchMode, SentenceMode) giữ nguyên để bật lại chỉ bằng đổi hằng số này.
+ * Tab "Từng câu" bị ẩn khỏi giao diện và sẽ bị gỡ cùng dữ liệu câu (ADR-005,
+ * docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md). Mã của mode còn lại (state,
+ * switchMode, SentenceMode) chỉ vì đường dịch hiện vẫn ghi theo hàng; nó bị xóa trong change gỡ segment,
+ * không bật lại.
  */
 const SENTENCE_MODE_ENABLED = false
 
