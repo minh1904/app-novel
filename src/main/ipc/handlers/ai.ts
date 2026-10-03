@@ -5,9 +5,9 @@ import {
   removeConnectionKeySchema,
   setConnectionModelsSchema,
   updateConnectionSchema
-} from '../../../shared/aiConnections'
-import { translateBatchSchema, translatePlanSchema } from '../../../shared/aiTranslate'
-import { CHANNELS } from '../../../shared/channels'
+} from '../../../shared/contracts/aiConnections'
+import { translateBatchSchema, translatePlanSchema } from '../../../shared/contracts/aiTranslate'
+import { CHANNELS } from '../../../shared/contracts/channels'
 import { createAsyncHandler, createHandler } from '../handler'
 import { connectionsOf, translatorOf, type AreaHandlers, type HandlerDeps } from './deps'
 

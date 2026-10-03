@@ -5,8 +5,8 @@ import type {
   CreateConnectionInput,
   ModelInfoView,
   UpdateConnectionInput
-} from '../../../../shared/aiConnections'
-import type { IpcError } from '../../../../shared/result'
+} from '../../../../shared/contracts/aiConnections'
+import type { IpcError } from '../../../../shared/contracts/result'
 
 export type ConnectionsLoad = 'loading' | 'ready' | 'failed'
 

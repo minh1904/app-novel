@@ -1,6 +1,6 @@
 import { useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
-import type { WorkSummary } from '../../../../shared/library'
+import type { WorkSummary } from '../../../../shared/contracts/library'
 import { Banner } from '../../components/Banner'
 import { Button } from '../../components/Button'
 import { backupWork, savedMessage } from './backup'

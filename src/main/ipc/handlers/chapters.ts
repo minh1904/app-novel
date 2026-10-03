@@ -1,11 +1,11 @@
-import { CHANNELS } from '../../../shared/channels'
+import { CHANNELS } from '../../../shared/contracts/channels'
 import {
   chapterRefSchema,
   createChapterSchema,
   listChaptersSchema,
   moveChapterSchema,
   renameChapterSchema
-} from '../../../shared/chapters'
+} from '../../../shared/contracts/chapters'
 import { createHandler } from '../handler'
 import type { AreaHandlers, HandlerDeps } from './deps'
 

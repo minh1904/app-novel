@@ -3,7 +3,7 @@ import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/
 import { undo } from '@codemirror/commands'
 import { applyProposal, targetRange } from './chatRange'
 import { createEditorState } from './editorState'
-import type { SegmentRecord } from '../../../../shared/text'
+import type { SegmentRecord } from '../../../../shared/contracts/text'
 
 /**
  * Which stretch a turn is about, and whether a proposal may be written.

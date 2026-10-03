@@ -7,7 +7,7 @@ import {
   type ChatMode,
   type ChatTurn,
   type ChatUsage
-} from '../../../../shared/aiChat'
+} from '../../../../shared/contracts/aiChat'
 import type { TargetRange } from '../editor/chatRange'
 
 /**

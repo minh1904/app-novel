@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { WorkPatch, WorkSummary } from '../../../../shared/library'
-import type { Result } from '../../../../shared/result'
+import type { WorkPatch, WorkSummary } from '../../../../shared/contracts/library'
+import type { Result } from '../../../../shared/contracts/result'
 import { CoverImageError, fileToCoverDataUrl } from '../library/coverImage'
 import { describe } from '../library/useLibrary'
 import { toWork, type Work } from '../library/works'

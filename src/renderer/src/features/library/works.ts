@@ -1,4 +1,4 @@
-import type { WorkSummary } from '../../../../shared/library'
+import type { WorkSummary } from '../../../../shared/contracts/library'
 
 export type SourceLanguage = 'en' | 'zh-Hans' | 'zh-Hant' | 'ja'
 

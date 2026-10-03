@@ -1,4 +1,4 @@
-import type { ChapterItem } from '../../../../shared/chapters'
+import type { ChapterItem } from '../../../../shared/contracts/chapters'
 
 /** Pure rules of the chapter list: names, search, jumping and paging. No React, no IPC. */
 

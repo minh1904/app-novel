@@ -1,6 +1,6 @@
 import type { EditorState, TransactionSpec } from '@codemirror/state'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { segment } from '../../../../shared/segmenter'
+import { segment } from '../../../../shared/algorithms/segmenter'
 import { createEditorState, segmentsField } from './editorState'
 import { IdleResegmenter, afterComposition, resegmentNow, type ViewLike } from './resegmenter'
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ChapterItem } from '../../../../shared/chapters'
-import type { WorkSummary } from '../../../../shared/library'
-import type { IpcError, Result } from '../../../../shared/result'
+import type { ChapterItem } from '../../../../shared/contracts/chapters'
+import type { WorkSummary } from '../../../../shared/contracts/library'
+import type { IpcError, Result } from '../../../../shared/contracts/result'
 
 export type ChaptersLoad = 'loading' | 'ready' | 'failed'
 

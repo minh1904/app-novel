@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SEGMENTS_MAX, TEXT_MAX_UNITS } from '../../../shared/text'
+import { SEGMENTS_MAX, TEXT_MAX_UNITS } from '../../../shared/contracts/text'
 import { StorageError } from './errors'
 import { checkText, cutsSurrogatePair } from './textRules'
 

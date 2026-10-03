@@ -1,4 +1,4 @@
-import type { ChatChunk, ChatSendInput, ChatUsage } from '../../../shared/aiChat'
+import type { ChatChunk, ChatSendInput, ChatUsage } from '../../../shared/contracts/aiChat'
 import { buildChatMessages } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,

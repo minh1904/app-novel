@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
-import type { WorkSummary } from '../../../../shared/library'
+import type { WorkSummary } from '../../../../shared/contracts/library'
 import { cx } from '../../components/cx'
 import { displayTitle } from '../work/chapterList'
 import { useChapters } from '../work/useChapters'

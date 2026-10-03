@@ -3,7 +3,7 @@ import {
   type ChatContextBlock,
   type ChatMode,
   type ChatSendInput
-} from '../../../shared/aiChat'
+} from '../../../shared/contracts/aiChat'
 import type { ChatMessage } from '../../infra/providers/openAiCompatible'
 
 /**

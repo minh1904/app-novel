@@ -1,7 +1,7 @@
 import { useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import { PlugCircleIcon } from '@solar-icons/react/linear/plug-circle'
-import { CONNECTION_PRESETS } from '../../../../shared/aiConnections'
+import { CONNECTION_PRESETS } from '../../../../shared/contracts/aiConnections'
 import { Banner } from '../../components/Banner'
 import { Button } from '../../components/Button'
 import { EmptyState } from '../../components/EmptyState'

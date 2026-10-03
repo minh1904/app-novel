@@ -1,6 +1,6 @@
 import * as v from 'valibot'
-import type { EventChannel } from '../../shared/channels'
-import { fail, ok, type FieldError, type Result } from '../../shared/result'
+import type { EventChannel } from '../../shared/contracts/channels'
+import { fail, ok, type FieldError, type Result } from '../../shared/contracts/result'
 import { StorageError } from '../infra/storage/errors'
 
 /**

@@ -1,5 +1,5 @@
-import type { TextApi } from './desktop-api'
-import type { SourceLanguage } from './library'
+import type { TextApi } from '../contracts/desktop-api'
+import type { SourceLanguage } from '../contracts/library'
 import {
   countReplacements,
   decodeRaw,
@@ -10,8 +10,8 @@ import {
   type NormalizeChange
 } from './rawText'
 import { segment, longSegments, type SegmentRange } from './segmenter'
-import type { Result } from './result'
-import { SEGMENTS_MAX, TEXT_MAX_UNITS, type TextRecord } from './text'
+import type { Result } from '../contracts/result'
+import { SEGMENTS_MAX, TEXT_MAX_UNITS, type TextRecord } from '../contracts/text'
 
 /** Largest file taken in; bigger is almost certainly the wrong file. */
 export const FILE_MAX_BYTES = 8 * 1024 * 1024

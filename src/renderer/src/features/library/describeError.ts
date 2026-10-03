@@ -1,4 +1,4 @@
-import type { IpcError } from '../../../../shared/result'
+import type { IpcError } from '../../../../shared/contracts/result'
 
 /** An error from the main process in words a user can act on. */
 export function describe(error: IpcError): string {

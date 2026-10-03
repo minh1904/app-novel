@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import type { SegmentInput, TextSide } from '../../../shared/text'
+import type { SegmentInput, TextSide } from '../../../shared/contracts/text'
 import { StorageError } from '../../infra/storage/errors'
 import { CHAPTER_SELECT } from '../../infra/storage/chapterFile'
 import { LibraryStore } from './library'

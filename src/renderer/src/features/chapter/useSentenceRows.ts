@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { LinkRecord } from '../../../../shared/links'
-import { buildRows, normalizeRowText, type RowsView } from '../../../../shared/rows'
-import type { TextRecord } from '../../../../shared/text'
+import type { LinkRecord } from '../../../../shared/contracts/links'
+import { buildRows, normalizeRowText, type RowsView } from '../../../../shared/contracts/rows'
+import type { TextRecord } from '../../../../shared/contracts/text'
 import { describe } from '../library/describeError'
 
 /**

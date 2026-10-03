@@ -1,5 +1,5 @@
-import { backupExportSchema } from '../../../shared/backup'
-import { CHANNELS } from '../../../shared/channels'
+import { backupExportSchema } from '../../../shared/contracts/backup'
+import { CHANNELS } from '../../../shared/contracts/channels'
 import { StorageError } from '../../infra/storage/errors'
 import { backupFileName } from '../../infra/storage/backupName'
 import { createAsyncHandler } from '../handler'

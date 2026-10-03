@@ -1,5 +1,5 @@
 import { segment, type SegmentLanguage, type SegmentRange } from './segmenter'
-import type { SegmentInput, SegmentRecord } from './text'
+import type { SegmentInput, SegmentRecord } from '../contracts/text'
 
 /**
  * How segment regions follow the text as it is edited, and how the regions an edit disturbed are

@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from 'react'
-import type { WorkPatch } from '../../../../shared/library'
-import type { Result } from '../../../../shared/result'
+import type { WorkPatch } from '../../../../shared/contracts/library'
+import type { Result } from '../../../../shared/contracts/result'
 import { Dialog } from '../../components/Dialog'
 import type { Work } from '../library/works'
 import { WorkForm } from './WorkForm'

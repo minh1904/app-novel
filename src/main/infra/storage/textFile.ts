@@ -4,7 +4,7 @@ import type {
   SegmentStatus,
   TextRecord,
   TextSide
-} from '../../../shared/text'
+} from '../../../shared/contracts/text'
 import { StorageError } from './errors'
 import type { Db } from './sqlite'
 import { checkText } from './textRules'

@@ -1,26 +1,26 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import type { ChatChunk, ChatSendInput } from '../shared/aiChat'
+import type { ChatChunk, ChatSendInput } from '../shared/contracts/aiChat'
 import type {
   ConnectionTestResult,
   ConnectionView,
   CreateConnectionInput,
   UpdateConnectionInput
-} from '../shared/aiConnections'
+} from '../shared/contracts/aiConnections'
 import type {
   TranslateBatchInput,
   TranslateBatchResult,
   TranslatePlan,
   TranslatePlanInput
-} from '../shared/aiTranslate'
-import type { BackupExported } from '../shared/backup'
-import { CHANNELS, EVENT_CHANNELS } from '../shared/channels'
-import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/chapters'
-import type { AppInfo, DesktopApi } from '../shared/desktop-api'
-import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/library'
-import type { LinkRecord } from '../shared/links'
-import type { Result } from '../shared/result'
-import type { RowSaved } from '../shared/rows'
-import type { SegmentInput, TextRecord, TextSide } from '../shared/text'
+} from '../shared/contracts/aiTranslate'
+import type { BackupExported } from '../shared/contracts/backup'
+import { CHANNELS, EVENT_CHANNELS } from '../shared/contracts/channels'
+import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/contracts/chapters'
+import type { AppInfo, DesktopApi } from '../shared/contracts/desktop-api'
+import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/contracts/library'
+import type { LinkRecord } from '../shared/contracts/links'
+import type { Result } from '../shared/contracts/result'
+import type { RowSaved } from '../shared/contracts/rows'
+import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/text'
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,

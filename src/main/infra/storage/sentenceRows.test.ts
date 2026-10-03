@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { buildRows, type RowsView } from '../../../shared/rows'
-import { segment } from '../../../shared/segmenter'
+import { buildRows, type RowsView } from '../../../shared/contracts/rows'
+import { segment } from '../../../shared/algorithms/segmenter'
 import { StorageError } from './errors'
 import { LibraryStore } from '../../services/library/library'
 import { createTempDirs } from '../../testing/testing'

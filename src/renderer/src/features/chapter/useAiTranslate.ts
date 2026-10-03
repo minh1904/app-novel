@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ConnectionView } from '../../../../shared/aiConnections'
+import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
 import type {
   HeldSuggestion,
   TranslateFailure,
   TranslatePlan,
   TranslateUsage
-} from '../../../../shared/aiTranslate'
-import type { TextRecord } from '../../../../shared/text'
+} from '../../../../shared/contracts/aiTranslate'
+import type { TextRecord } from '../../../../shared/contracts/text'
 import { describe } from '../library/describeError'
 
 /**

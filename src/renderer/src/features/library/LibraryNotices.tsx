@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import type { WorkProblem } from '../../../../shared/library'
+import type { WorkProblem } from '../../../../shared/contracts/library'
 import { Banner } from '../../components/Banner'
 import { Button } from '../../components/Button'
 

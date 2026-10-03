@@ -1,10 +1,10 @@
-import { CHANNELS } from '../../../shared/channels'
+import { CHANNELS } from '../../../shared/contracts/channels'
 import {
   createWorkSchema,
   getWorkSchema,
   setCoverSchema,
   updateWorkSchema
-} from '../../../shared/library'
+} from '../../../shared/contracts/library'
 import { createHandler } from '../handler'
 import type { AreaHandlers, HandlerDeps } from './deps'
 

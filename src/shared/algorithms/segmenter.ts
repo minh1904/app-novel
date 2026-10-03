@@ -1,4 +1,4 @@
-import type { SourceLanguage } from './library'
+import type { SourceLanguage } from '../contracts/library'
 import {
   ABBREVIATIONS_ALWAYS,
   ABBREVIATIONS_UNLESS_CAPITAL,

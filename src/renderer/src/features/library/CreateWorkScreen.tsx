@@ -1,6 +1,6 @@
 import { useRef, type JSX } from 'react'
-import type { CreateWorkInput } from '../../../../shared/library'
-import type { Result } from '../../../../shared/result'
+import type { CreateWorkInput } from '../../../../shared/contracts/library'
+import type { Result } from '../../../../shared/contracts/result'
 import { WorkForm } from '../work/WorkForm'
 import type { WorkFormValues } from '../work/workFormValues'
 import type { Work } from './works'

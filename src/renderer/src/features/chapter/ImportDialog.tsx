@@ -7,21 +7,21 @@ import {
   type JSX,
   type RefObject
 } from 'react'
-import type { SourceLanguage } from '../../../../shared/library'
+import type { SourceLanguage } from '../../../../shared/contracts/library'
 import {
   FILE_MAX_BYTES,
   describeSaveFailure,
   prepareImport,
   saveImport,
   type ImportPlan
-} from '../../../../shared/rawImport'
+} from '../../../../shared/algorithms/rawImport'
 import {
   ENCODINGS,
   describeChange,
   encodingLabel,
   type EncodingId
-} from '../../../../shared/rawText'
-import type { TextRecord } from '../../../../shared/text'
+} from '../../../../shared/algorithms/rawText'
+import type { TextRecord } from '../../../../shared/contracts/text'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'
 import { Select } from '../../components/Select'

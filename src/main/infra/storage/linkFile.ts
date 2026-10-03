@@ -1,4 +1,4 @@
-import type { LinkKind, LinkRecord, LinkStatus } from '../../../shared/links'
+import type { LinkKind, LinkRecord, LinkStatus } from '../../../shared/contracts/links'
 import { StorageError } from './errors'
 import type { Db } from './sqlite'
 

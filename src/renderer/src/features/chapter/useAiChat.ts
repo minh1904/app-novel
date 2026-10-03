@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ChatContextBlock, ChatMode } from '../../../../shared/aiChat'
-import type { ConnectionView } from '../../../../shared/aiConnections'
-import type { SourceLanguage } from '../../../../shared/library'
+import type { ChatContextBlock, ChatMode } from '../../../../shared/contracts/aiChat'
+import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
+import type { SourceLanguage } from '../../../../shared/contracts/library'
 import type { TargetRange, TargetScope } from '../editor/chatRange'
 import { buildChatContext, type ContextScope } from './chatContext'
 import {

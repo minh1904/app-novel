@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { ChapterItem } from '../../../shared/chapters'
-import type { TextRecord, TextSide } from '../../../shared/text'
+import type { ChapterItem } from '../../../shared/contracts/chapters'
+import type { TextRecord, TextSide } from '../../../shared/contracts/text'
 import {
   CHAT_TOOL_DEFINITIONS,
   createChatTools,

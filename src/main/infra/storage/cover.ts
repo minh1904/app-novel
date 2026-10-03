@@ -1,4 +1,4 @@
-import { COVER_DATA_URL_PREFIX, COVER_MAX_BYTES } from '../../../shared/library'
+import { COVER_DATA_URL_PREFIX, COVER_MAX_BYTES } from '../../../shared/contracts/library'
 import { StorageError } from './errors'
 
 export interface CoverImage {

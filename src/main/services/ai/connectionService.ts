@@ -4,7 +4,7 @@ import type {
   CreateConnectionInput,
   ModelInfoView,
   UpdateConnectionInput
-} from '../../../shared/aiConnections'
+} from '../../../shared/contracts/aiConnections'
 import {
   addKey,
   deleteConnection,

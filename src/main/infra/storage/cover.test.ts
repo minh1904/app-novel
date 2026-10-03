@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { COVER_DATA_URL_PREFIX, COVER_MAX_BYTES } from '../../../shared/library'
+import { COVER_DATA_URL_PREFIX, COVER_MAX_BYTES } from '../../../shared/contracts/library'
 import { decodeCover, encodeCover } from './cover'
 import { StorageError } from './errors'
 import { fakeJpegBytes, fakeJpegDataUrl } from '../../testing/testCover'

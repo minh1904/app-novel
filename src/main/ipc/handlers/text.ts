@@ -1,5 +1,5 @@
-import { CHANNELS } from '../../../shared/channels'
-import { saveTextSchema, textRefSchema } from '../../../shared/text'
+import { CHANNELS } from '../../../shared/contracts/channels'
+import { saveTextSchema, textRefSchema } from '../../../shared/contracts/text'
 import { createHandler } from '../handler'
 import type { AreaHandlers, HandlerDeps } from './deps'
 

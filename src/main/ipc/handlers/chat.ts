@@ -1,5 +1,5 @@
-import { chatCancelSchema, chatSendSchema } from '../../../shared/aiChat'
-import { CHANNELS, EVENT_CHANNELS } from '../../../shared/channels'
+import { chatCancelSchema, chatSendSchema } from '../../../shared/contracts/aiChat'
+import { CHANNELS, EVENT_CHANNELS } from '../../../shared/contracts/channels'
 import { createHandler, createSinkHandler } from '../handler'
 import { chatOf, type AreaHandlers, type HandlerDeps } from './deps'
 

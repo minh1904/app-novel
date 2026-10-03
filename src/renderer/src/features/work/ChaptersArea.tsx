@@ -10,7 +10,7 @@ import {
 import { AddIcon } from '@solar-icons/react/linear/add'
 import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { ImportIcon } from '@solar-icons/react/linear/import'
-import type { ChapterItem } from '../../../../shared/chapters'
+import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import { SearchField } from '../../components/SearchField'

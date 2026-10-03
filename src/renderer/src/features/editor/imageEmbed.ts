@@ -2,8 +2,8 @@ import {
   IMAGE_ACCEPTED_MIMES,
   IMAGE_MAX_BYTES,
   IMAGE_MAX_DIMENSION
-} from '../../../../shared/images'
-import { fail, ok, type Result } from '../../../../shared/result'
+} from '../../../../shared/contracts/images'
+import { fail, ok, type Result } from '../../../../shared/contracts/result'
 
 /**
  * Turns a pasted or dropped file into the data URL that gets stored as an embedded image. Mirrors

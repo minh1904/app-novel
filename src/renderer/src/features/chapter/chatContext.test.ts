@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CHAT_BLOCK_TEXT_MAX } from '../../../../shared/aiChat'
+import { CHAT_BLOCK_TEXT_MAX } from '../../../../shared/contracts/aiChat'
 import { buildChatContext, paragraphsOf, rangeLabel, type ContextScope } from './chatContext'
 import type { TargetRange } from '../editor/chatRange'
 

@@ -1,4 +1,4 @@
-import type { SourceLanguage } from '../../../shared/library'
+import type { SourceLanguage } from '../../../shared/contracts/library'
 
 /**
  * The contract every translation provider meets: the mock one now, real ones later. Requests and

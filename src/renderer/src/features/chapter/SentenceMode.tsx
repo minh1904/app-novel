@@ -10,8 +10,8 @@ import {
   type KeyboardEvent,
   type Ref
 } from 'react'
-import type { Row, RowState } from '../../../../shared/rows'
-import type { TextRecord } from '../../../../shared/text'
+import type { Row, RowState } from '../../../../shared/contracts/rows'
+import type { TextRecord } from '../../../../shared/contracts/text'
 import { Button } from '../../components/Button'
 import { clampPage, pageOfPosition, pageCount, slicePage } from '../work/chapterList'
 import { ChapterPager } from '../work/ChapterPager'

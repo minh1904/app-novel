@@ -1,5 +1,5 @@
 import { useState, type JSX } from 'react'
-import type { ChapterItem } from '../../../../shared/chapters'
+import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'
 import { TextField } from '../../components/TextField'

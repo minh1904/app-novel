@@ -1,4 +1,4 @@
-import { COVER_DATA_URL_PREFIX } from '../../shared/library'
+import { COVER_DATA_URL_PREFIX } from '../../shared/contracts/library'
 
 /** A byte sequence that looks like a JPEG to the guards (start and end markers) without being one. */
 export function fakeJpegBytes(size = 64, fill = 0x11): Uint8Array {

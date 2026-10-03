@@ -6,7 +6,7 @@ import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { NotebookIcon } from '@solar-icons/react/linear/notebook'
 import { cx } from '../../components/cx'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
-import { CHAT_MODES, type ChatMode } from '../../../../shared/aiChat'
+import { CHAT_MODES, type ChatMode } from '../../../../shared/contracts/aiChat'
 import type { AiChatController } from './useAiChat'
 
 /**

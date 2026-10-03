@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { IMAGE_ACCEPTED_MIMES, IMAGE_MAX_BYTES } from '../../../shared/images'
+import { IMAGE_ACCEPTED_MIMES, IMAGE_MAX_BYTES } from '../../../shared/contracts/images'
 import { decodeImage, encodeImage } from './image'
 import { StorageError } from './errors'
 import { fakeImageBytes, fakeImageDataUrl } from '../../testing/testImage'

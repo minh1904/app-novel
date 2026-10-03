@@ -7,7 +7,7 @@ import {
   type ConnectionKeyView,
   type ConnectionView,
   type ModelInfoView
-} from '../../../../shared/aiConnections'
+} from '../../../../shared/contracts/aiConnections'
 import { Badge, type BadgeTone } from '../../components/Badge'
 import { Button } from '../../components/Button'
 import { Panel } from '../../components/Panel'

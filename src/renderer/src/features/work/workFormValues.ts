@@ -1,4 +1,4 @@
-import type { SourceLanguage, WorkPatch } from '../../../../shared/library'
+import type { SourceLanguage, WorkPatch } from '../../../../shared/contracts/library'
 
 export interface WorkFormValues {
   title: string

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FENCE, type ChatSendInput } from '../../../shared/aiChat'
+import { FENCE, type ChatSendInput } from '../../../shared/contracts/aiChat'
 import { buildChatMessages, systemPrompt } from './chatPrompt'
 
 /**

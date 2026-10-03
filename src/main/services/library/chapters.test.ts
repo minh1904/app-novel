@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import type { ChapterItem } from '../../../shared/chapters'
+import type { ChapterItem } from '../../../shared/contracts/chapters'
 import { StorageError } from '../../infra/storage/errors'
 import { LibraryStore } from './library'
 import { openDatabase } from '../../infra/storage/sqlite'

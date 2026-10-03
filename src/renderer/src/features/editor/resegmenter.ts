@@ -1,6 +1,6 @@
 import type { EditorState, Extension, TransactionSpec } from '@codemirror/state'
 import { ViewPlugin } from '@codemirror/view'
-import type { SegmentLanguage } from '../../../../shared/segmenter'
+import type { SegmentLanguage } from '../../../../shared/algorithms/segmenter'
 import { resegmentSpec } from './editorState'
 
 /**

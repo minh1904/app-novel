@@ -1,4 +1,4 @@
-import type { ImageMime } from '../../shared/images'
+import type { ImageMime } from '../../shared/contracts/images'
 
 /** Byte sequences with the right magic numbers for each accepted format, for `sniffMime` to read. */
 const SIGNATURES: Record<ImageMime, number[]> = {

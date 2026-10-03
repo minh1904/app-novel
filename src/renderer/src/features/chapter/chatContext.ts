@@ -1,4 +1,4 @@
-import { CHAT_BLOCK_TEXT_MAX, type ChatContextBlock } from '../../../../shared/aiChat'
+import { CHAT_BLOCK_TEXT_MAX, type ChatContextBlock } from '../../../../shared/contracts/aiChat'
 import type { TargetRange } from '../editor/chatRange'
 
 /**

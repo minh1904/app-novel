@@ -1,5 +1,5 @@
-import type { ChapterItem } from '../../../shared/chapters'
-import type { TextRecord, TextSide } from '../../../shared/text'
+import type { ChapterItem } from '../../../shared/contracts/chapters'
+import type { TextRecord, TextSide } from '../../../shared/contracts/text'
 
 /**
  * What the model may look up for itself, and nothing more.

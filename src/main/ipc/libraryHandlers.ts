@@ -1,5 +1,5 @@
-import { CHANNELS, type Channel } from '../../shared/channels'
-import { fail, type Result } from '../../shared/result'
+import { CHANNELS, type Channel } from '../../shared/contracts/channels'
+import { fail, type Result } from '../../shared/contracts/result'
 import type { ChapterTranslator } from '../services/ai/chapterTranslation'
 import type { ChatService } from '../services/ai/chatService'
 import type { ConnectionService } from '../services/ai/connectionService'

@@ -13,9 +13,9 @@ import {
   segFromRecord,
   type Edit,
   type Seg
-} from '../../../../shared/segmentMap'
-import type { SegmentLanguage } from '../../../../shared/segmenter'
-import type { SegmentRecord } from '../../../../shared/text'
+} from '../../../../shared/algorithms/segmentMap'
+import type { SegmentLanguage } from '../../../../shared/algorithms/segmenter'
+import type { SegmentRecord } from '../../../../shared/contracts/text'
 
 /**
  * The editor state around the shared segment rules: one field holds the segments, every edit moves

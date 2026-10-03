@@ -1,4 +1,4 @@
-import type { SourceLanguage } from './library'
+import type { SourceLanguage } from '../contracts/library'
 
 /**
  * Turning the bytes of a text file into the text a chapter will store: which encoding, and the few

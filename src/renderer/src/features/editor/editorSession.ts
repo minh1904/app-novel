@@ -5,16 +5,16 @@ import {
   toSegmentInputs,
   type Edit,
   type Seg
-} from '../../../../shared/segmentMap'
-import type { SegmentLanguage } from '../../../../shared/segmenter'
-import type { Result } from '../../../../shared/result'
+} from '../../../../shared/algorithms/segmentMap'
+import type { SegmentLanguage } from '../../../../shared/algorithms/segmenter'
+import type { Result } from '../../../../shared/contracts/result'
 import {
   SEGMENTS_MAX,
   TEXT_MAX_UNITS,
   type SegmentInput,
   type TextRecord
-} from '../../../../shared/text'
-import { describeSaveFailure } from '../../../../shared/rawImport'
+} from '../../../../shared/contracts/text'
+import { describeSaveFailure } from '../../../../shared/algorithms/rawImport'
 import { savedTextsOf, segmentsField, setSaved, setSegments } from './editorState'
 import { afterComposition, resegmentNow, type ViewLike } from './resegmenter'
 

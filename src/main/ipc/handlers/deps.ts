@@ -1,4 +1,4 @@
-import type { Channel } from '../../../shared/channels'
+import type { Channel } from '../../../shared/contracts/channels'
 import { StorageError } from '../../infra/storage/errors'
 import type { ChapterTranslator } from '../../services/ai/chapterTranslation'
 import type { ChatService } from '../../services/ai/chatService'

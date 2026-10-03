@@ -1,5 +1,5 @@
-import { CHANNELS } from '../../../shared/channels'
-import { deleteImageSchema, getImageSchema, putImageSchema } from '../../../shared/images'
+import { CHANNELS } from '../../../shared/contracts/channels'
+import { deleteImageSchema, getImageSchema, putImageSchema } from '../../../shared/contracts/images'
 import { createHandler } from '../handler'
 import type { AreaHandlers, HandlerDeps } from './deps'
 

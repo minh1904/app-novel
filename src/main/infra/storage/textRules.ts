@@ -1,4 +1,4 @@
-import { SEGMENTS_MAX, TEXT_MAX_UNITS, type SegmentInput } from '../../../shared/text'
+import { SEGMENTS_MAX, TEXT_MAX_UNITS, type SegmentInput } from '../../../shared/contracts/text'
 import { StorageError } from './errors'
 
 /** Pure rules for chapter text and its segments. Offsets are UTF-16 code units. */

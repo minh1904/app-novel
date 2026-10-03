@@ -1,4 +1,4 @@
-import type { SourceLanguage } from '../../../shared/library'
+import type { SourceLanguage } from '../../../shared/contracts/library'
 import type { ModelInfo } from '../../infra/providers/modelCatalog'
 
 /**

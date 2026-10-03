@@ -1,8 +1,8 @@
 import { redo, undo } from '@codemirror/commands'
 import { EditorState, Transaction, type TransactionSpec } from '@codemirror/state'
 import { describe, expect, it } from 'vitest'
-import { segment, type SegmentLanguage } from '../../../../shared/segmenter'
-import type { SegmentRecord } from '../../../../shared/text'
+import { segment, type SegmentLanguage } from '../../../../shared/algorithms/segmenter'
+import type { SegmentRecord } from '../../../../shared/contracts/text'
 import { createEditorState, resegmentSpec, segmentsField, setSegments } from './editorState'
 
 function open(content: string, lang: SegmentLanguage = 'en'): EditorState {

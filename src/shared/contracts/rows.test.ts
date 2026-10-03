@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { LinkRecord } from './links'
 import { buildRows, normalizeRowText, rowState } from './rows'
-import { segment } from './segmenter'
+import { segment } from '../algorithms/segmenter'
 import type { SegmentRecord, TextRecord } from './text'
 
 function record(content: string, prefix: string, lang: 'en' | 'vi'): TextRecord {

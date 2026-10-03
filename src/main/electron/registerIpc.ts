@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
-import { CHANNELS } from '../../shared/channels'
+import { CHANNELS } from '../../shared/contracts/channels'
 import { createServices } from '../services/createServices'
 import { electronSafeStorage } from './safeStorage'
 import type { LibraryStore } from '../services/library/library'

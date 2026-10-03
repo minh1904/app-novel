@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve } from 'node:path'
-import type { ChapterChange, ChapterItem, ChaptersChange } from '../../../shared/chapters'
+import type { ChapterChange, ChapterItem, ChaptersChange } from '../../../shared/contracts/chapters'
 import type {
   CreateWorkInput,
   WorkList,
   WorkPatch,
   WorkProblem,
   WorkSummary
-} from '../../../shared/library'
-import { IMAGE_MAX_PER_WORK } from '../../../shared/images'
+} from '../../../shared/contracts/library'
+import { IMAGE_MAX_PER_WORK } from '../../../shared/contracts/images'
 import {
   deleteChapter,
   insertChapter,
@@ -18,8 +18,8 @@ import {
   openChapter,
   renameChapter
 } from '../../infra/storage/chapterFile'
-import type { SegmentInput, TextRecord, TextSide } from '../../../shared/text'
-import type { RowSaved } from '../../../shared/rows'
+import type { SegmentInput, TextRecord, TextSide } from '../../../shared/contracts/text'
+import type { RowSaved } from '../../../shared/contracts/rows'
 import { createLink, getProvenance, listLinks, setProvenance } from '../../infra/storage/linkFile'
 import type { LinkInput, LinkRecord, ProvenanceRecord } from '../../infra/storage/linkFile'
 import {

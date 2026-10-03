@@ -1,5 +1,5 @@
-import { CHANNELS } from '../../../shared/channels'
-import { chapterLinksSchema, rowRefSchema, saveRowSchema } from '../../../shared/rows'
+import { CHANNELS } from '../../../shared/contracts/channels'
+import { chapterLinksSchema, rowRefSchema, saveRowSchema } from '../../../shared/contracts/rows'
 import { createHandler } from '../handler'
 import type { AreaHandlers, HandlerDeps } from './deps'
 

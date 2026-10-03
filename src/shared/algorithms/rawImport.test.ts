@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { FILE_MAX_BYTES, prepareImport, type ImportSource } from './rawImport'
-import { TEXT_MAX_UNITS } from './text'
+import { TEXT_MAX_UNITS } from '../contracts/text'
 
 const paste = (text: string): ImportSource => ({ kind: 'paste', text })
 const file = (bytes: Uint8Array, name = 'chuong-1.txt'): ImportSource => ({

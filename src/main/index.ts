@@ -8,7 +8,7 @@ import {
   type IpcMainInvokeEvent
 } from 'electron'
 import { join } from 'node:path'
-import type { AppInfo } from '../shared/desktop-api'
+import type { AppInfo } from '../shared/contracts/desktop-api'
 import { registerLibraryHandlers } from './electron/registerIpc'
 import { LibraryStore } from './services/library/library'
 

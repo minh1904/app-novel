@@ -6,8 +6,8 @@ import type {
   TranslatePlan,
   TranslatePlanInput,
   TranslateUsage
-} from '../../../shared/aiTranslate'
-import { buildRows, normalizeRowText, type Row } from '../../../shared/rows'
+} from '../../../shared/contracts/aiTranslate'
+import { buildRows, normalizeRowText, type Row } from '../../../shared/contracts/rows'
 import { StorageError } from '../../infra/storage/errors'
 import type { LibraryStore } from '../library/library'
 import type { RowAuthor } from '../../infra/storage/sentenceRows'

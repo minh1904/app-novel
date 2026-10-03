@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChatChunk, ChatError } from '../../../../shared/aiChat'
+import type { ChatChunk, ChatError } from '../../../../shared/contracts/aiChat'
 import type { TargetRange } from '../editor/chatRange'
 import {
   applyChunk,

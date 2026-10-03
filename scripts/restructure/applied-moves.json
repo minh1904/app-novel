@@ -80,5 +80,32 @@
     "src/main/storage/workFile.ts": "src/main/infra/storage/workFile.ts",
     "src/main/storage/workSchema.test.ts": "src/main/infra/storage/workSchema.test.ts",
     "src/main/storage/workSchema.ts": "src/main/infra/storage/workSchema.ts"
+  },
+  "shared": {
+    "src/shared/aiChat.test.ts": "src/shared/contracts/aiChat.test.ts",
+    "src/shared/aiChat.ts": "src/shared/contracts/aiChat.ts",
+    "src/shared/aiConnections.ts": "src/shared/contracts/aiConnections.ts",
+    "src/shared/aiTranslate.ts": "src/shared/contracts/aiTranslate.ts",
+    "src/shared/backup.ts": "src/shared/contracts/backup.ts",
+    "src/shared/channels.ts": "src/shared/contracts/channels.ts",
+    "src/shared/chapters.ts": "src/shared/contracts/chapters.ts",
+    "src/shared/desktop-api.ts": "src/shared/contracts/desktop-api.ts",
+    "src/shared/images.ts": "src/shared/contracts/images.ts",
+    "src/shared/library.ts": "src/shared/contracts/library.ts",
+    "src/shared/links.ts": "src/shared/contracts/links.ts",
+    "src/shared/rawImport.test.ts": "src/shared/algorithms/rawImport.test.ts",
+    "src/shared/rawImport.ts": "src/shared/algorithms/rawImport.ts",
+    "src/shared/rawText.test.ts": "src/shared/algorithms/rawText.test.ts",
+    "src/shared/rawText.ts": "src/shared/algorithms/rawText.ts",
+    "src/shared/result.ts": "src/shared/contracts/result.ts",
+    "src/shared/rows.test.ts": "src/shared/contracts/rows.test.ts",
+    "src/shared/rows.ts": "src/shared/contracts/rows.ts",
+    "src/shared/segmentMap.test.ts": "src/shared/algorithms/segmentMap.test.ts",
+    "src/shared/segmentMap.ts": "src/shared/algorithms/segmentMap.ts",
+    "src/shared/segmenter.test.ts": "src/shared/algorithms/segmenter.test.ts",
+    "src/shared/segmenter.ts": "src/shared/algorithms/segmenter.ts",
+    "src/shared/segmenterCorpus.ts": "src/shared/algorithms/segmenterCorpus.ts",
+    "src/shared/segmenterData.ts": "src/shared/algorithms/segmenterData.ts",
+    "src/shared/text.ts": "src/shared/contracts/text.ts"
   }
 }

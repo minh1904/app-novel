@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChapterItem } from '../../../../shared/chapters'
+import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import {
   clampPage,
   displayTitle,

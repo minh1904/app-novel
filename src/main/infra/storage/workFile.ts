@@ -1,5 +1,5 @@
-import type { CreateWorkInput, WorkPatch, WorkSummary } from '../../../shared/library'
-import type { ImageMime } from '../../../shared/images'
+import type { CreateWorkInput, WorkPatch, WorkSummary } from '../../../shared/contracts/library'
+import type { ImageMime } from '../../../shared/contracts/images'
 import type { CoverImage } from './cover'
 import { StorageError } from './errors'
 import type { StoredImage } from './image'

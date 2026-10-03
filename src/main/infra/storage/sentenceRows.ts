@@ -1,5 +1,5 @@
-import type { LinkRecord } from '../../../shared/links'
-import { buildRows, normalizeRowText, type RowSaved } from '../../../shared/rows'
+import type { LinkRecord } from '../../../shared/contracts/links'
+import { buildRows, normalizeRowText, type RowSaved } from '../../../shared/contracts/rows'
 import {
   applyEdits,
   resegment,
@@ -7,8 +7,8 @@ import {
   toSegmentInputs,
   type Edit,
   type Seg
-} from '../../../shared/segmentMap'
-import type { TextRecord } from '../../../shared/text'
+} from '../../../shared/algorithms/segmentMap'
+import type { TextRecord } from '../../../shared/contracts/text'
 import { StorageError } from './errors'
 import {
   createLink,

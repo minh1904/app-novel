@@ -7,8 +7,8 @@ import {
   type DecorationSet,
   type ViewUpdate
 } from '@codemirror/view'
-import type { Result } from '../../../../shared/result'
-import { IMAGE_MIN_WIDTH } from '../../../../shared/images'
+import type { Result } from '../../../../shared/contracts/result'
+import { IMAGE_MIN_WIDTH } from '../../../../shared/contracts/images'
 import { selectionTouches } from './selectionTouches'
 
 /**

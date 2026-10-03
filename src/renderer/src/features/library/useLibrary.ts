@@ -5,8 +5,8 @@ import type {
   WorkPatch,
   WorkProblem,
   WorkSummary
-} from '../../../../shared/library'
-import type { Result } from '../../../../shared/result'
+} from '../../../../shared/contracts/library'
+import type { Result } from '../../../../shared/contracts/result'
 import { backupWork, savedMessage } from '../work/backup'
 import { describe, describeBackupError } from './describeError'
 import { CoverImageError, fileToCoverDataUrl } from './coverImage'

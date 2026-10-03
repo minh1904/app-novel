@@ -1,4 +1,4 @@
-import type { ErrorCode } from '../../../shared/result'
+import type { ErrorCode } from '../../../shared/contracts/result'
 
 export class StorageError extends Error {
   readonly code: ErrorCode

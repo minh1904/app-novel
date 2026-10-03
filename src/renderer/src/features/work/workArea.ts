@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { WorkSummary } from '../../../../shared/library'
+import type { WorkSummary } from '../../../../shared/contracts/library'
 
 /** What the frame hands to every area of the work detail screen. */
 export interface WorkAreaProps {

@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { CHANNELS } from '../../shared/channels'
-import type { TextApi } from '../../shared/desktop-api'
+import { CHANNELS } from '../../shared/contracts/channels'
+import type { TextApi } from '../../shared/contracts/desktop-api'
 import {
   describeSaveFailure,
   prepareImport,
   saveImport,
   type ImportPlan
-} from '../../shared/rawImport'
-import type { Result } from '../../shared/result'
-import { segment } from '../../shared/segmenter'
-import type { TextRecord } from '../../shared/text'
+} from '../../shared/algorithms/rawImport'
+import type { Result } from '../../shared/contracts/result'
+import { segment } from '../../shared/algorithms/segmenter'
+import type { TextRecord } from '../../shared/contracts/text'
 import { LibraryStore } from '../services/library/library'
 import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
