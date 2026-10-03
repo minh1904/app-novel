@@ -107,9 +107,17 @@ Mỗi tệp khu vực trả `AreaHandlers<tiền tố>` (chỉ các kênh mang t
 
 Đây là bảo đảm **mạnh hơn** trước: trước đây chỉ có kiểm tra tổng; nay thêm kênh `works:foo` mà quên handler lỗi ngay ở `works.ts`.
 
-### R4 (task 5.5)
+### R4, `contracts` ≮ `algorithms` (task 5.5): 4/4 vi phạm bị bắt, 3/3 ca đối chứng sạch
 
-_Điền khi làm task tương ứng._
+| Ca | Kết quả |
+| --- | --- |
+| `contracts` → `../algorithms/segmenter` | bắt: contracts/ chỉ có kiểu, schema và tên kênh; không import từ algorithms/ |
+| `contracts` → `node:fs` | bắt (luật của `shared/` được nhắc lại trong khối `contracts`) |
+| `contracts` → `react` | bắt (như trên) |
+| `algorithms` → `node:fs` | bắt (luật của `shared/`) |
+| CONTROL `algorithms` → `../contracts/library` | sạch (chiều được phép) |
+| CONTROL `contracts` → `./library` | sạch |
+| CONTROL test trong `contracts` → `../algorithms/segmenter` | sạch (test được miễn; `rows.test.ts` đang làm đúng điều này) |
 
 ## 6. Phân loại test do công cụ dời đề xuất (task 3.2)
 
@@ -179,3 +187,21 @@ Commit: `4e5bce3` tách handler theo khu vực; `33faf01` `createServices`; `361
 **Nguyên nhân gốc của test đỏ (lỗi đua trong bài test, không phải mất dữ liệu).** Tiến trình con xóa chương rồi mới báo `deleted`; `SIGKILL` đến giữa hai việc đó thì bên cha đòi chương còn, nên báo "acknowledged chapter missing after a kill". Thực nghiệm A: chèn tạm 60 ms giữa lệnh xóa và dòng báo, test cũ đỏ tất định với đúng thông điệp. Sửa: tiến trình con báo `deleting` trước khi xóa, bên cha chấp nhận chương đã bắt đầu xóa là có thể đã mất (các chương khác vẫn bị đòi nguyên vẹn). Thực nghiệm B: cùng cửa sổ 60 ms, test đã sửa xanh 3/3; độ trễ tạm đã gỡ. Sau sửa: `crash.test.ts` riêng 5/5, bộ kiểm đầy đủ xanh 866/866. Lỗi này cũng là phần lớn các lần `crash.test.ts` đỏ ở mục 2.
 
 **Đính chính thiết kế.** D7 từng nói test "import được trong Node trần" là bằng chứng `services/` không dính Electron; không đúng vì `import 'electron'` trong Node trần không ném lỗi. Bằng chứng là luật lint (task 3.7). Đã sửa D7 và task 4.4.
+
+### R4, xong (tasks 5.1–5.6)
+
+Commit: `d0db504` công cụ thêm pha `shared`; `84affc4` luật lint; `86c6ebc` **lần tách**; `57c4a08` bọc 2 dòng import.
+
+| Kiểm | Kết quả |
+| --- | --- |
+| Git nhận ra đổi tên | **25/25**, độ giống thấp nhất 96%; 128 tệp, +246 / −219 dòng |
+| `--prove` | 127 tệp chỉ khác `HEAD` ở tham chiếu |
+| `--verify` | 841 tham chiếu đều giải ra; không còn import đường dẫn cũ |
+| Câu import `shared` | renderer 81 và preload 12 **đúng baseline**; main 117 = 108 + 9 (9 tệp `handlers/` thêm 18 import, `libraryHandlers.ts` bỏ 9) |
+| Test | 866 = 752 + 114 |
+| `tsc` | 410 + 812 tệp |
+| Lint | 0 lỗi, 63 cảnh báo (như sau R2/R3) |
+| `out/preload/index.js` | `require` chỉ `electron`, 5.823 byte, **giống hệt baseline** (task 5.4) |
+| `out/main/index.js` | phần external giống baseline |
+
+Phát hiện: dry-run `shared` đếm 219 câu viết lại = 201 của `main`/`renderer`/`preload` + 18 import chéo trong `shared`. Đường dẫn dài thêm làm 2 dòng import vượt 100 cột (`image.ts`, `WorkForm.tsx`); bọc ở commit riêng như ở R2. Công cụ cũng được sửa để coi một tệp chỉ khác ở kiểu xuống dòng là sạch: trình soạn thảo của chủ sản phẩm chuẩn hóa vài tệp sang LF trong lúc làm việc.

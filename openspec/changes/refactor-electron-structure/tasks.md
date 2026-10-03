@@ -39,12 +39,12 @@
 
 ## 5. R4 — Tách `shared/` thành `contracts/` và `algorithms/`
 
-- [ ] 5.1 Thêm phần `shared/` vào `moves.json` theo D8 (`contracts/`: aiChat, aiConnections, aiTranslate, backup, channels, chapters, desktop-api, images, library, links, result, rows, text; `algorithms/`: rawImport, rawText, segmentMap, segmenter, segmenterData, segmenterCorpus; test đi theo) rồi `--dry-run`. Xong khi bảng cho thấy tổng câu import đổi khớp baseline (main 108, renderer 81, preload 12) và không có specifier không giải được
-- [ ] 5.2 Thêm luật lint `shared/contracts` ≮ `shared/algorithms` (D3). Xong khi lint 0 lỗi trước khi dời
-- [ ] 5.3 Áp dụng, rồi `--verify` và `--prove`. Xong khi cả hai sạch
-- [ ] 5.4 So danh sách `require` của `out/preload/index.js` sau `electron-vite build` với baseline 1.1. Xong khi **giống hệt** (chỉ `electron`)
-- [ ] 5.5 Chứng minh luật mới bắt được: cho một tệp `contracts/` import `algorithms/` ở bản tạm không commit và ghi thông điệp. Xong khi `git status` sạch
-- [ ] 5.6 Commit nguyên tử `refactor(shared): split contracts from algorithms`. Xong khi `node scripts/check.mjs --build` xanh với số test như sau 4.5; đẩy nếu được phép
+- [x] 5.1 Thêm phần `shared/` vào `moves.json` theo D8 (`contracts/`: aiChat, aiConnections, aiTranslate, backup, channels, chapters, desktop-api, images, library, links, result, rows, text; `algorithms/`: rawImport, rawText, segmentMap, segmenter, segmenterData, segmenterCorpus; test đi theo) rồi `--dry-run`. Xong khi bảng cho thấy tổng câu import đổi khớp baseline (main 108, renderer 81, preload 12) và không có specifier không giải được
+- [x] 5.2 Thêm luật lint `shared/contracts` ≮ `shared/algorithms` (D3). Xong khi lint 0 lỗi trước khi dời
+- [x] 5.3 Áp dụng, rồi `--verify` và `--prove`. Xong khi cả hai sạch
+- [x] 5.4 So danh sách `require` của `out/preload/index.js` sau `electron-vite build` với baseline 1.1. Xong khi **giống hệt** (chỉ `electron`)
+- [x] 5.5 Chứng minh luật mới bắt được: cho một tệp `contracts/` import `algorithms/` ở bản tạm không commit và ghi thông điệp. Xong khi `git status` sạch
+- [x] 5.6 Commit nguyên tử `refactor(shared): split contracts from algorithms`. Xong khi `node scripts/check.mjs --build` xanh với số test như sau 4.5; đẩy nếu được phép
 
 ## 6. R5 — Tài liệu
 
