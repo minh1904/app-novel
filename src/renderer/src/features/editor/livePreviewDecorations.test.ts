@@ -1,111 +1,107 @@
+import { ensureSyntaxTree } from '@codemirror/language'
+import { EditorState } from '@codemirror/state'
 import { describe, expect, it } from 'vitest'
-import { HEADING_RE, INLINE_RE, LIST_RE, QUOTE_RE } from './livePreviewDecorations'
+import { planLivePreview, type PlanItem } from './livePreviewDecorations'
+import { markdownSupport } from './markdownSyntax'
 
 /**
  * `build()` needs a real `EditorView` (DOM), which the `node` test environment does not provide, so
- * these test the regexes the decoration builder runs on each line — the part that decides what gets
- * marked. Nothing here covers the actual rendering in a real window; that has not been checked.
+ * these test `planLivePreview`, the pure part that decides what gets marked and — the part IME safety
+ * rests on — which delimiters hide and which stay visible. Nothing here covers the actual rendering
+ * in a real window; that has not been checked.
  */
 
-describe('HEADING_RE', () => {
-  it('matches 1 to 3 leading #, requiring a space and more text', () => {
-    expect(HEADING_RE.exec('# Tiêu đề')?.[1]).toBe('#')
-    expect(HEADING_RE.exec('## Tiêu đề')?.[1]).toBe('##')
-    expect(HEADING_RE.exec('### Tiêu đề')?.[1]).toBe('###')
-  })
-
-  it('does not match more than 3 #, no text after, or # mid-line', () => {
-    expect(HEADING_RE.exec('#### Quá nhiều')).toBeNull()
-    expect(HEADING_RE.exec('#   ')).toBeNull()
-    expect(HEADING_RE.exec('Một câu # giữa dòng')).toBeNull()
-  })
-})
-
-describe('QUOTE_RE', () => {
-  it('matches a leading > followed by a space and text', () => {
-    const match = QUOTE_RE.exec('> Lời thoại được trích')
-    expect(match?.[0]).toBe('> ')
-  })
-
-  it('does not match > with no text after, or > mid-line', () => {
-    expect(QUOTE_RE.exec('>   ')).toBeNull()
-    expect(QUOTE_RE.exec('Giá > 10')).toBeNull()
-  })
-})
-
-describe('LIST_RE', () => {
-  it.each([
-    ['- Một ý', '-'],
-    ['* Một ý', '*'],
-    ['+ Một ý', '+'],
-    ['1. Một ý', '1.'],
-    ['12. Một ý', '12.']
-  ])('matches %s', (line, marker) => {
-    expect(LIST_RE.exec(line)?.[1]).toBe(marker)
-  })
-
-  it('does not match a bare delimiter with no space (so "**bold**" is untouched)', () => {
-    expect(LIST_RE.exec('**đậm** rồi chữ')).toBeNull()
-    expect(LIST_RE.exec('*nghiêng* rồi chữ')).toBeNull()
-  })
-
-  it('does not match with nothing after the marker', () => {
-    expect(LIST_RE.exec('-   ')).toBeNull()
-  })
-})
-
-function matches(text: string): Array<{ kind: string; inner: string }> {
-  INLINE_RE.lastIndex = 0
-  const found: Array<{ kind: string; inner: string }> = []
-  let match: RegExpExecArray | null
-  while ((match = INLINE_RE.exec(text))) {
-    if (match[1] !== undefined) found.push({ kind: 'bold', inner: match[1] })
-    else if (match[2] !== undefined) found.push({ kind: 'strike', inner: match[2] })
-    else if (match[3] !== undefined) found.push({ kind: 'italic', inner: match[3] })
-    else found.push({ kind: 'italic', inner: match[4] })
-  }
-  return found
+function plan(
+  text: string,
+  touches: (from: number, to: number) => boolean = () => false
+): PlanItem[] {
+  const state = EditorState.create({ doc: text, extensions: markdownSupport() })
+  const tree = ensureSyntaxTree(state, state.doc.length, 5000)!
+  return planLivePreview(tree, state.doc, [{ from: 0, to: state.doc.length }], touches)
 }
 
-describe('INLINE_RE', () => {
-  it('finds bold with ** on both sides', () => {
-    expect(matches('Một câu có **từ quan trọng** ở giữa')).toEqual([
-      { kind: 'bold', inner: 'từ quan trọng' }
+describe('delimiters of a complete span', () => {
+  it('hide when the selection does not touch the span', () => {
+    expect(plan('Một **đậm** nữa')).toEqual([
+      { from: 4, to: 6, kind: 'hidden' },
+      { from: 6, to: 9, kind: 'bold' },
+      { from: 9, to: 11, kind: 'hidden' }
     ])
   })
 
-  it('finds italic with * or _ on both sides', () => {
-    expect(matches('Một câu có *từ quan trọng* ở giữa')).toEqual([
-      { kind: 'italic', inner: 'từ quan trọng' }
-    ])
-    expect(matches('Một câu có _từ quan trọng_ ở giữa')).toEqual([
-      { kind: 'italic', inner: 'từ quan trọng' }
-    ])
-  })
-
-  it('finds strikethrough with ~~ on both sides', () => {
-    expect(matches('Một câu có ~~từ cũ~~ đã bỏ')).toEqual([{ kind: 'strike', inner: 'từ cũ' }])
-  })
-
-  it('does not read a bold pair as two nested italics', () => {
-    expect(matches('Một câu có **từ quan trọng** ở giữa')).toEqual([
-      { kind: 'bold', inner: 'từ quan trọng' }
+  it('stay visible, only dimmed, when the selection touches the span', () => {
+    expect(plan('Một **đậm** nữa', () => true)).toEqual([
+      { from: 4, to: 6, kind: 'marker' },
+      { from: 6, to: 9, kind: 'bold' },
+      { from: 9, to: 11, kind: 'marker' }
     ])
   })
 
-  it('finds several marks on the same line in order', () => {
-    expect(matches('**đậm** rồi *nghiêng* rồi ~~gạch~~')).toEqual([
-      { kind: 'bold', inner: 'đậm' },
-      { kind: 'italic', inner: 'nghiêng' },
-      { kind: 'strike', inner: 'gạch' }
+  it('ask about the whole span, delimiters included, so the edge counts as touching', () => {
+    const asked: Array<[number, number]> = []
+    plan('Một **đậm** nữa', (from, to) => {
+      asked.push([from, to])
+      return false
+    })
+    expect(asked).toEqual([[4, 11]])
+  })
+
+  it('decide for each span on its own', () => {
+    const text = '*a* và *b*'
+    const items = plan(text, (from) => from === 0)
+    expect(items.filter((item) => item.kind === 'marker').map((i) => i.from)).toEqual([0, 2])
+    expect(items.filter((item) => item.kind === 'hidden').map((i) => i.from)).toEqual([7, 9])
+  })
+
+  it('are never planned for a span that is not closed yet', () => {
+    expect(plan('Một câu có **từ quan trọng')).toEqual([])
+  })
+
+  it('are never planned for look-alikes: code, escapes, snake_case, URLs', () => {
+    expect(plan('`a*b*c`')).toEqual([])
+    expect(plan('snake_case_name')).toEqual([])
+    expect(plan('[x](http://a_b_c.com/x_y_z)')).toEqual([])
+    expect(plan('2 * 3 * 4')).toEqual([])
+  })
+})
+
+describe('line prefixes', () => {
+  it('keep a heading marker visible and size the text after it', () => {
+    expect(plan('## Tên chương')).toEqual([
+      { from: 0, to: 3, kind: 'marker' },
+      { from: 3, to: 13, kind: 'h2' }
     ])
   })
 
-  it('does not match a lone * or _ with a space right after it', () => {
-    expect(matches('* Một ý không phải nghiêng')).toEqual([])
+  it('never hide a heading, quote or list marker, whatever the selection', () => {
+    for (const text of ['# Tên', '> Lời', '- Ý', '1. Ý']) {
+      for (const touching of [true, false]) {
+        const items = plan(text, () => touching)
+        expect(items.some((item) => item.kind === 'hidden')).toBe(false)
+        expect(items[0].kind).toBe('marker')
+      }
+    }
   })
 
-  it('finds nothing on a line without any inline syntax', () => {
-    expect(matches('Một câu bình thường, không có gì đặc biệt.')).toEqual([])
+  it('style a quote with its marker dimmed', () => {
+    expect(plan('> Lời thoại')).toEqual([
+      { from: 0, to: 2, kind: 'marker' },
+      { from: 2, to: 11, kind: 'quote' }
+    ])
+  })
+
+  it('dim only the marker of a list item', () => {
+    expect(plan('- Một ý')).toEqual([{ from: 0, to: 2, kind: 'marker' }])
+  })
+
+  it('also hide the delimiters of emphasis inside a heading or a list item', () => {
+    expect(plan('- một **đậm**').filter((item) => item.kind === 'hidden')).toHaveLength(2)
+    expect(plan('# Tên **chương**').filter((item) => item.kind === 'hidden')).toHaveLength(2)
+  })
+
+  it('leave a deeper heading, a face and a bare > as plain text', () => {
+    expect(plan('#### Quá nhiều')).toEqual([])
+    expect(plan('>_<')).toEqual([])
+    expect(plan('Giá > 10')).toEqual([])
   })
 })

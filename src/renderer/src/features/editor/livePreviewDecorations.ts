@@ -1,4 +1,5 @@
-import { RangeSetBuilder, type Extension } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import type { Extension, Range, Text } from '@codemirror/state'
 import {
   Decoration,
   EditorView,
@@ -6,6 +7,13 @@ import {
   type DecorationSet,
   type ViewUpdate
 } from '@codemirror/view'
+import {
+  markdownSupport,
+  scanMarkdown,
+  type DocRange,
+  type InlineKind,
+  type SyntaxTree
+} from './markdownSyntax'
 import { selectionTouches } from './selectionTouches'
 
 /**
@@ -18,108 +26,89 @@ import { selectionTouches } from './selectionTouches'
  * them, once the caret and selection are not touching that span — `selectionTouches` below decides
  * per span, the same rule `imageEmbedDecorations` uses for images. This is still IME-safe for the
  * same reason images are: the delimiters only ever hide for a span that is *complete* (the closing
- * delimiter has already been typed) and that the caret has *left*. While composing inside the span —
- * which is the entire window an input method can be mid-composition — the span is incomplete or the
- * caret is still in it, so nothing hides; during an active composition the whole plugin skips
- * rebuilding regardless (`update.view.composing`), same as every other decoration here. Headings,
- * quotes and lists are left as plain dimmed markers rather than given the same hide treatment,
- * matching `source-editor` D7's general caution: narrower exposure, easier to verify by hand.
+ * delimiter has already been typed — the Markdown parser only reports a span once it is closed) and
+ * that the caret has *left*. While composing inside the span — which is the entire window an input
+ * method can be mid-composition — the span is incomplete or the caret is still in it, so nothing
+ * hides; during an active composition the whole plugin skips rebuilding regardless
+ * (`update.view.composing`), same as every other decoration here. Headings, quotes and lists are left
+ * as plain dimmed markers rather than given the same hide treatment, matching `source-editor` D7's
+ * general caution: narrower exposure, easier to verify by hand.
+ *
+ * What counts as emphasis, a heading, a quote or a list comes from the Markdown syntax tree
+ * (`markdownSyntax.ts`), not from regular expressions, so code spans, escapes, `snake_case` and URLs
+ * are left alone.
  */
 
-export const HEADING_RE = /^(#{1,3})(\s+)(?=\S)/
-export const QUOTE_RE = /^(>)(\s+)(?=\S)/
-export const LIST_RE = /^([-*+]|\d+\.)(\s+)(?=\S)/
-/**
- * One pass over bold, strikethrough and italic (star or underscore) together, tried in this order at
- * each position, so `**bold**` is never mistaken for two nested italics and a skipped category never
- * leaves a stale high-water mark for the next one (each line is scanned once, not once per category).
- */
-export const INLINE_RE = /\*\*([^*\n]+)\*\*|~~([^~\n]+)~~|\*([^\s*][^*\n]*?)\*|_([^\s_][^_\n]*?)_/g
+/** One decoration to draw, before it is turned into a CodeMirror `Decoration`. */
+export type PlanKind = 'marker' | 'hidden' | 'quote' | 'h1' | 'h2' | 'h3' | InlineKind
 
-const marker = Decoration.mark({ class: 'cm-livepreview-marker' })
-/** No widget: an empty replace just removes the delimiter from the layout, nothing fills its place. */
-const hidden = Decoration.replace({})
-const bold = Decoration.mark({ class: 'cm-livepreview-bold' })
-const italic = Decoration.mark({ class: 'cm-livepreview-italic' })
-const strikethrough = Decoration.mark({ class: 'cm-livepreview-strikethrough' })
-const quoteContent = Decoration.mark({ class: 'cm-livepreview-quote' })
-const headingMarks = {
-  1: Decoration.mark({ class: 'cm-livepreview-h1' }),
-  2: Decoration.mark({ class: 'cm-livepreview-h2' }),
-  3: Decoration.mark({ class: 'cm-livepreview-h3' })
-} as const
-
-/** Which inline mark a match of `INLINE_RE` is, and how long its delimiter is on each side. */
-function inlineMarkOf(match: RegExpExecArray): { inner: string; mark: Decoration; delim: number } {
-  if (match[1] !== undefined) return { inner: match[1], mark: bold, delim: 2 }
-  if (match[2] !== undefined) return { inner: match[2], mark: strikethrough, delim: 2 }
-  if (match[3] !== undefined) return { inner: match[3], mark: italic, delim: 1 }
-  return { inner: match[4], mark: italic, delim: 1 }
+export interface PlanItem {
+  from: number
+  to: number
+  kind: PlanKind
 }
 
-function addInline(
-  view: EditorView,
-  builder: RangeSetBuilder<Decoration>,
-  line: { from: number; text: string },
-  fromIndex: number,
-  covered: number
-): number {
-  INLINE_RE.lastIndex = fromIndex
-  let match: RegExpExecArray | null
-  let next = covered
-  while ((match = INLINE_RE.exec(line.text))) {
-    const start = line.from + match.index
-    if (start < next) continue
-    const { inner, mark, delim } = inlineMarkOf(match)
-    const innerFrom = start + delim
-    const innerTo = innerFrom + inner.length
-    const end = innerTo + delim
-    const delimiter = selectionTouches(view, start, end) ? marker : hidden
-    builder.add(start, innerFrom, delimiter)
-    builder.add(innerFrom, innerTo, mark)
-    builder.add(innerTo, end, delimiter)
-    next = end
+const HEADING_KINDS = { 1: 'h1', 2: 'h2', 3: 'h3' } as const
+
+/**
+ * Decides what to draw over `ranges`: which delimiters stay visible (dimmed) and which hide. Pure —
+ * `touches` stands in for "does the selection touch this stretch", so the hide/show rule that the
+ * IME safety rests on can be tested without an `EditorView`.
+ */
+export function planLivePreview(
+  tree: SyntaxTree,
+  doc: Text,
+  ranges: readonly DocRange[],
+  touches: (from: number, to: number) => boolean
+): PlanItem[] {
+  const { inline, lines } = scanMarkdown(tree, doc, ranges)
+  const plan: PlanItem[] = []
+
+  for (const line of lines) {
+    if (line.markFrom < line.markTo)
+      plan.push({ from: line.markFrom, to: line.markTo, kind: 'marker' })
+    if (line.contentFrom >= line.contentTo) continue
+    if (line.kind === 'heading' && line.level) {
+      plan.push({ from: line.contentFrom, to: line.contentTo, kind: HEADING_KINDS[line.level] })
+    } else if (line.kind === 'quote') {
+      plan.push({ from: line.contentFrom, to: line.contentTo, kind: 'quote' })
+    }
   }
-  return next
+
+  for (const span of inline) {
+    const delimiter: PlanKind = touches(span.from, span.to) ? 'marker' : 'hidden'
+    plan.push({ from: span.from, to: span.innerFrom, kind: delimiter })
+    plan.push({ from: span.innerFrom, to: span.innerTo, kind: span.kind })
+    plan.push({ from: span.innerTo, to: span.to, kind: delimiter })
+  }
+  return plan
+}
+
+const DECORATIONS: Record<PlanKind, Decoration> = {
+  marker: Decoration.mark({ class: 'cm-livepreview-marker' }),
+  /** No widget: an empty replace just removes the delimiter from the layout, nothing fills its place. */
+  hidden: Decoration.replace({}),
+  bold: Decoration.mark({ class: 'cm-livepreview-bold' }),
+  italic: Decoration.mark({ class: 'cm-livepreview-italic' }),
+  strikethrough: Decoration.mark({ class: 'cm-livepreview-strikethrough' }),
+  quote: Decoration.mark({ class: 'cm-livepreview-quote' }),
+  h1: Decoration.mark({ class: 'cm-livepreview-h1' }),
+  h2: Decoration.mark({ class: 'cm-livepreview-h2' }),
+  h3: Decoration.mark({ class: 'cm-livepreview-h3' })
 }
 
 function build(view: EditorView): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>()
-  let covered = 0
-  for (const { from, to } of view.visibleRanges) {
-    const firstLine = view.state.doc.lineAt(Math.max(from, covered)).number
-    const lastLine = view.state.doc.lineAt(to).number
-    for (let number = firstLine; number <= lastLine; number++) {
-      const line = view.state.doc.line(number)
-      if (line.to <= covered) continue
-      const headingMatch = HEADING_RE.exec(line.text)
-      if (headingMatch) {
-        const level = Math.min(headingMatch[1].length, 3) as 1 | 2 | 3
-        const prefixEnd = line.from + headingMatch[0].length
-        builder.add(Math.max(line.from, covered), prefixEnd, marker)
-        builder.add(prefixEnd, line.to, headingMarks[level])
-        covered = line.to
-        continue
-      }
-      const quoteMatch = QUOTE_RE.exec(line.text)
-      if (quoteMatch) {
-        const prefixEnd = line.from + quoteMatch[0].length
-        builder.add(Math.max(line.from, covered), prefixEnd, marker)
-        builder.add(prefixEnd, line.to, quoteContent)
-        covered = line.to
-        continue
-      }
-      const listMatch = LIST_RE.exec(line.text)
-      if (listMatch) {
-        const prefixEnd = line.from + listMatch[0].length
-        builder.add(Math.max(line.from, covered), prefixEnd, marker)
-        covered = line.to
-        continue
-      }
-      covered = addInline(view, builder, line, Math.max(0, covered - line.from), covered)
-    }
+  const plan = planLivePreview(
+    syntaxTree(view.state),
+    view.state.doc,
+    view.visibleRanges,
+    (from, to) => selectionTouches(view, from, to)
+  )
+  const ranges: Range<Decoration>[] = []
+  for (const item of plan) {
+    if (item.from < item.to) ranges.push(DECORATIONS[item.kind].range(item.from, item.to))
   }
-  return builder.finish()
+  return Decoration.set(ranges, true)
 }
 
 const livePreviewMarks = ViewPlugin.fromClass(
@@ -137,8 +126,15 @@ const livePreviewMarks = ViewPlugin.fromClass(
         return
       }
       // A caret move alone (no text change) can cross a span's boundary — arrow keys, a click — so
-      // that alone must also re-show or re-hide its delimiters, not just edits.
-      if (update.docChanged || update.viewportChanged || update.selectionSet) {
+      // that alone must also re-show or re-hide its delimiters, not just edits. The parser also works
+      // in the background, so a new tree for an unchanged document (a long chapter filling in below
+      // the first screen) needs a rebuild as well.
+      if (
+        update.docChanged ||
+        update.viewportChanged ||
+        update.selectionSet ||
+        syntaxTree(update.startState) !== syntaxTree(update.state)
+      ) {
         this.decorations = build(update.view)
       }
     }
@@ -163,5 +159,5 @@ const livePreviewTheme = EditorView.baseTheme({
 })
 
 export function livePreviewDecorations(): Extension {
-  return [livePreviewMarks, livePreviewTheme]
+  return [markdownSupport(), livePreviewMarks, livePreviewTheme]
 }
