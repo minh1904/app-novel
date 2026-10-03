@@ -10,8 +10,8 @@ import {
 import type { Result } from '../../shared/result'
 import { segment } from '../../shared/segmenter'
 import type { TextRecord } from '../../shared/text'
-import { LibraryStore } from '../storage/library'
-import { createTempDirs } from '../storage/testing'
+import { LibraryStore } from '../services/library/library'
+import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
 
 /**

@@ -10,9 +10,16 @@ import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 // `renderer`, `preload`) phải là duy nhất trong repo. Tệp test được miễn: test dựng bối cảnh nên được
 // import chéo vùng (hai test của renderer còn đọc tệp bằng node:fs).
 //
-// Đây là bản theo bố cục hiện tại. Change `refactor-electron-structure` thay các khối `main` bằng
-// bản theo tầng infra < services < ipc < electron ở bước R2.
+// Trong `src/main` có bốn tầng, mỗi tầng chỉ được import tầng dưới nó:
+//
+//   infra < services < ipc < electron (cùng `index.ts`)
+//
+// Chỉ `electron/` và `index.ts` được import gói `electron`, nên mọi thứ còn lại chạy được trong Node
+// trần (test không cần dựng cửa sổ) và có thể chuyển sang tiến trình khác về sau. Thêm một tầng hay
+// một quy tắc là thêm một khối `boundary(...)` ở dưới; xem docs/handbook/engineering/architecture.md.
 const TESTS = ['**/*.test.ts', '**/*.test.tsx']
+/** Tiến trình con của `crash.test.ts`: không phải test nhưng là công cụ test, nên được miễn luật. */
+const NOT_ENFORCED = [...TESTS, '**/crash*.ts']
 const from = (folder) => '(^|/)' + folder + '/'
 
 /** Một vùng, một danh sách import bị cấm. Mỗi phần tử là [tên gói hoặc regex, thông điệp]. */
@@ -32,11 +39,14 @@ function boundary(files, { packages = [], patterns = [] }, ignores = TESTS) {
   }
 }
 
-// Chỉ ba tệp của main được import electron. Danh sách này co lại còn `main/electron/` ở bước R2.
-const MAIN_ELECTRON_ALLOWED = [
-  'src/main/index.ts',
-  'src/main/ipc/library.ts',
-  'src/main/storage/electronSafeStorage.ts'
+const NO_ELECTRON = [
+  'electron',
+  'Chỉ index.ts và main/electron/ được import electron. Mã khác phải chạy được không cần Electron.'
+]
+const NO_RENDERER = [from('renderer'), 'Main không import từ src/renderer.']
+const NO_TESTING = [
+  from('testing'),
+  'main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó.'
 ]
 
 export default defineConfig(
@@ -116,20 +126,71 @@ export default defineConfig(
     ]
   }),
   boundary(
-    ['src/main/**/*.ts'],
+    ['src/main/infra/**/*.ts'],
     {
-      packages: [
-        [
-          'electron',
-          'Chỉ index.ts, ipc/library.ts và storage/electronSafeStorage.ts được import electron. Mã khác phải chạy được không cần Electron.'
-        ]
-      ],
-      patterns: [[from('renderer'), 'Main không import từ src/renderer.']]
+      packages: [NO_ELECTRON],
+      patterns: [
+        [from('services'), 'infra/ là tầng thấp nhất của main: không import từ services/.'],
+        [from('ipc'), 'infra/ không import từ ipc/.'],
+        [from('electron'), 'infra/ không import từ electron/.'],
+        NO_RENDERER,
+        NO_TESTING
+      ]
     },
-    [...TESTS, ...MAIN_ELECTRON_ALLOWED]
+    NOT_ENFORCED
   ),
-  boundary(MAIN_ELECTRON_ALLOWED, {
-    patterns: [[from('renderer'), 'Main không import từ src/renderer.']]
-  }),
+  boundary(
+    ['src/main/services/**/*.ts'],
+    {
+      packages: [NO_ELECTRON],
+      patterns: [
+        [from('ipc'), 'services/ không import từ ipc/ (ipc gọi services, không ngược lại).'],
+        [from('electron'), 'services/ không import từ electron/.'],
+        NO_RENDERER,
+        NO_TESTING
+      ]
+    },
+    NOT_ENFORCED
+  ),
+  // Khối sau ghi đè khối trước cho cùng một tệp, nên nhắc lại đủ các luật của services/.
+  boundary(
+    ['src/main/services/library/**/*.ts'],
+    {
+      packages: [NO_ELECTRON],
+      patterns: [
+        [from('ipc'), 'services/ không import từ ipc/ (ipc gọi services, không ngược lại).'],
+        [from('electron'), 'services/ không import từ electron/.'],
+        [
+          from('ai'),
+          'services/library không import từ services/ai (dịch chương dùng LibraryStore, không ngược lại).'
+        ],
+        NO_RENDERER,
+        NO_TESTING
+      ]
+    },
+    NOT_ENFORCED
+  ),
+  boundary(
+    ['src/main/ipc/**/*.ts'],
+    {
+      packages: [NO_ELECTRON],
+      patterns: [
+        [
+          from('electron'),
+          'ipc/ không import từ electron/. Giữ handler thuần để test không cần dựng cửa sổ.'
+        ],
+        NO_RENDERER,
+        NO_TESTING
+      ]
+    },
+    NOT_ENFORCED
+  ),
+  boundary(
+    ['src/main/electron/**/*.ts', 'src/main/index.ts'],
+    {
+      patterns: [NO_RENDERER, NO_TESTING]
+    },
+    NOT_ENFORCED
+  ),
   eslintConfigPrettier
 )

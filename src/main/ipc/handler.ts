@@ -1,7 +1,7 @@
 import * as v from 'valibot'
 import type { EventChannel } from '../../shared/channels'
 import { fail, ok, type FieldError, type Result } from '../../shared/result'
-import { StorageError } from '../storage/errors'
+import { StorageError } from '../infra/storage/errors'
 
 /**
  * Nơi main đẩy sự kiện về: đúng cửa sổ đã gọi, không phải "một cửa sổ nào đó".

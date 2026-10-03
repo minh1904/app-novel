@@ -1,0 +1,84 @@
+import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
+import { join } from 'node:path'
+import { CHANNELS } from '../../shared/channels'
+import { ChapterTranslator } from '../services/ai/chapterTranslation'
+import { ConnectionService } from '../services/ai/connectionService'
+import { ChatService } from '../services/ai/chatService'
+import { electronSafeStorage } from './safeStorage'
+import { SecretStore } from '../infra/storage/secretStore'
+import type { LibraryStore } from '../services/library/library'
+import type { FilePicker } from '../ipc/filePicker'
+import { createLibraryHandlers, guardHandlers } from '../ipc/libraryHandlers'
+
+const MIRA_FILTER = { name: 'Tác phẩm Mira', extensions: ['mira'] }
+
+/** The real dialogs, parented to the main window so they stay on top of it. */
+function electronFilePicker(): FilePicker {
+  const parent = (): BrowserWindow | undefined =>
+    BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+  return {
+    async chooseSavePath(suggestedName) {
+      const options = {
+        title: 'Sao lưu tác phẩm',
+        defaultPath: join(app.getPath('documents'), suggestedName),
+        filters: [MIRA_FILTER]
+      }
+      const window = parent()
+      const result = window
+        ? await dialog.showSaveDialog(window, options)
+        : await dialog.showSaveDialog(options)
+      return result.canceled || !result.filePath ? null : result.filePath
+    },
+    async chooseOpenPath() {
+      const options = {
+        title: 'Mở tác phẩm có sẵn',
+        properties: ['openFile' as const],
+        filters: [MIRA_FILTER]
+      }
+      const window = parent()
+      const result = window
+        ? await dialog.showOpenDialog(window, options)
+        : await dialog.showOpenDialog(options)
+      return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
+    }
+  }
+}
+
+export function registerLibraryHandlers(
+  library: LibraryStore,
+  isTrustedSender: (event: IpcMainInvokeEvent) => boolean
+): void {
+  const connections = new ConnectionService({
+    db: library.appDb,
+    secrets: new SecretStore(electronSafeStorage),
+    now: () => library.appNow(),
+    newId: () => library.newAppId()
+  })
+  const translator = new ChapterTranslator({
+    library,
+    connections,
+    now: () => library.appNow()
+  })
+  const chat = new ChatService({
+    connections,
+    // The same store the rest of the app reads through, handed over **read-only by construction**:
+    // `ChatToolLibrary` names only `listChapters` and `readText`, so no tool can reach a writer.
+    library,
+    newId: () => library.newAppId(),
+    now: () => library.appNow()
+  })
+  const handlers = guardHandlers(
+    createLibraryHandlers(library, electronFilePicker(), connections, translator, chat),
+    isTrustedSender,
+    // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để
+    // tầng handler không phải import Electron và test được không cần một cửa sổ thật.
+    (event) => ({
+      send: (channel, payload) => event.sender.send(channel, payload),
+      isDestroyed: () => event.sender.isDestroyed(),
+      onDestroyed: (callback) => event.sender.once('destroyed', callback)
+    })
+  )
+  for (const channel of Object.values(CHANNELS)) {
+    ipcMain.handle(channel, (event, raw: unknown) => handlers[channel](event, raw))
+  }
+}

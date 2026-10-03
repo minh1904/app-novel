@@ -3,9 +3,9 @@ import { CHANNELS, type Channel } from '../../shared/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../../shared/chapters'
 import type { WorkSummary } from '../../shared/library'
 import type { Result } from '../../shared/result'
-import { LibraryStore } from '../storage/library'
-import { fakeJpegDataUrl } from '../storage/testCover'
-import { createTempDirs } from '../storage/testing'
+import { LibraryStore } from '../services/library/library'
+import { fakeJpegDataUrl } from '../testing/testCover'
+import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers, guardHandlers } from './libraryHandlers'
 
 const tempDir = createTempDirs()

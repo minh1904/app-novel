@@ -4,8 +4,8 @@ import type { LinkRecord } from '../../shared/links'
 import type { Result } from '../../shared/result'
 import type { RowSaved } from '../../shared/rows'
 import { segment } from '../../shared/segmenter'
-import { LibraryStore } from '../storage/library'
-import { createTempDirs } from '../storage/testing'
+import { LibraryStore } from '../services/library/library'
+import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
 
 /** The row channels as the app calls them: checked input, results, and the error codes. */

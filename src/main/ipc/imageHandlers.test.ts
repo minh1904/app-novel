@@ -3,9 +3,9 @@ import { CHANNELS, type Channel } from '../../shared/channels'
 import { IMAGE_MAX_PER_WORK } from '../../shared/images'
 import type { WorkSummary } from '../../shared/library'
 import type { Result } from '../../shared/result'
-import { LibraryStore } from '../storage/library'
-import { fakeImageDataUrl } from '../storage/testImage'
-import { createTempDirs } from '../storage/testing'
+import { LibraryStore } from '../services/library/library'
+import { fakeImageDataUrl } from '../testing/testImage'
+import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
 
 const tempDir = createTempDirs()

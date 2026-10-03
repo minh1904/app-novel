@@ -9,8 +9,8 @@ import {
 } from 'electron'
 import { join } from 'node:path'
 import type { AppInfo } from '../shared/desktop-api'
-import { registerLibraryHandlers } from './ipc/library'
-import { LibraryStore } from './storage/library'
+import { registerLibraryHandlers } from './electron/registerIpc'
+import { LibraryStore } from './services/library/library'
 
 app.enableSandbox()
 

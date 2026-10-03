@@ -17,10 +17,10 @@ import { deleteImageSchema, getImageSchema, putImageSchema } from '../../shared/
 import { chapterLinksSchema, rowRefSchema, saveRowSchema } from '../../shared/rows'
 import { fail, type Result } from '../../shared/result'
 import { saveTextSchema, textRefSchema } from '../../shared/text'
-import type { LibraryStore } from '../storage/library'
+import type { LibraryStore } from '../services/library/library'
 import { backupExportSchema } from '../../shared/backup'
-import { backupFileName } from '../storage/backupName'
-import { StorageError } from '../storage/errors'
+import { backupFileName } from '../infra/storage/backupName'
+import { StorageError } from '../infra/storage/errors'
 import {
   addConnectionKeySchema,
   connectionRefSchema,
@@ -30,9 +30,9 @@ import {
   updateConnectionSchema
 } from '../../shared/aiConnections'
 import { translateBatchSchema, translatePlanSchema } from '../../shared/aiTranslate'
-import type { ConnectionService } from '../providers/connectionService'
-import type { ChapterTranslator } from '../providers/chapterTranslation'
-import type { ChatService } from '../providers/chatService'
+import type { ConnectionService } from '../services/ai/connectionService'
+import type { ChapterTranslator } from '../services/ai/chapterTranslation'
+import type { ChatService } from '../services/ai/chatService'
 import {
   createAsyncHandler,
   createHandler,

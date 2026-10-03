@@ -3,8 +3,8 @@ import { CHANNELS, type Channel } from '../../shared/channels'
 import type { ChapterChange, ChapterItem } from '../../shared/chapters'
 import type { Result } from '../../shared/result'
 import { TEXT_MAX_UNITS, type TextRecord } from '../../shared/text'
-import { LibraryStore } from '../storage/library'
-import { createTempDirs } from '../storage/testing'
+import { LibraryStore } from '../services/library/library'
+import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers, guardHandlers } from './libraryHandlers'
 
 const tempDir = createTempDirs()

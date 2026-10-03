@@ -18,6 +18,7 @@ const OUT = join(
   '..',
   'src',
   'main',
+  'infra',
   'providers',
   'modelCatalog.json'
 )

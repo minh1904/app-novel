@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { CHANNELS, type Channel } from '../../shared/channels'
 import type { WorkList, WorkSummary } from '../../shared/library'
 import type { Result } from '../../shared/result'
-import { LibraryStore } from '../storage/library'
-import { createTempDirs } from '../storage/testing'
+import { LibraryStore } from '../services/library/library'
+import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers, guardHandlers } from './libraryHandlers'
 
 const tempDir = createTempDirs()
