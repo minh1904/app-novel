@@ -38,10 +38,10 @@ src/
     ipc/                   handler.ts, filePicker.ts, libraryHandlers.ts (bộ gộp) + handlers/ mỗi khu vực một tệp
     services/
       createServices.ts    dây lắp các service AI từ một library và một SecretCrypto
-      library/             LibraryStore và nhóm test crash
+      library/             LibraryStore (nghiệp vụ của một tác phẩm) và nhóm test crash
       ai/                  kết nối, chat, dịch chương, chi phí
     infra/
-      storage/             SQLite, migration, schema, hàm SQL theo bảng, __fixtures__
+      storage/             SQLite, migration, schema, hàm SQL theo bảng, WorkFiles (tệp và chỉ mục), __fixtures__
       providers/           adapter HTTP, hợp đồng provider, bảng model
     testing/               công cụ chỉ dành cho test
   preload/index.ts         chỉ electron và shared/contracts
@@ -58,6 +58,8 @@ Mỗi tầng chỉ được import tầng **dưới** nó (và `shared`): `infra
 | `services/` | Nghiệp vụ: `LibraryStore`, kết nối AI, chat, dịch chương. `services/library` không được import `services/ai` (dịch chương dùng `LibraryStore`, không ngược lại) | `ipc/`, `electron/`, `electron` |
 | `ipc/` | Kênh → handler đã kiểm đầu vào, một tệp mỗi khu vực. Thuần, nên test gọi trực tiếp không cần cửa sổ | `electron/`, `electron` |
 | `electron/` + `index.ts` | Mọi thứ của Electron: `ipcMain`, hộp thoại, `safeStorage`, cửa sổ | không có |
+
+`LibraryStore` giữ nghiệp vụ của một tác phẩm (chương, văn bản, hàng, ảnh bìa, ảnh). Việc tệp nằm ở đâu và được tạo, nhập, xuất, đối soát với chỉ mục thế nào là của `WorkFiles` (`infra/storage/workFiles.ts`). Việc tách này mở đường để các service tiếp theo dùng `library.db` và tệp tác phẩm mà không phụ thuộc vào lớp nghiệp vụ; hiện `LibraryStore` vẫn là chỗ duy nhất dựng `WorkFiles`, và `appDb` vẫn là đường vào `library.db`.
 
 `main/testing/` nằm ngoài các tầng. Mã chạy thật không được import nó; test thì được. Test và các tiến trình con `crash*.ts` được miễn luật tầng vì chúng dựng bối cảnh bằng cách import chéo.
 
