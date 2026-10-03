@@ -31,6 +31,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Nghiên cứu | [Ngữ cảnh truyện: so sánh và đề xuất](research/story-context.md) | Quan sát 2026-10-02: công cụ dịch, CAT, công cụ viết AI + 2 bài nghiên cứu; sáu lớp ngữ cảnh và ba tầng prompt, đề xuất chưa chốt |
 | Nghiên cứu | [Màn chi tiết truyện và danh sách chương](research/work-detail-screen.md) | So sánh sản phẩm; cấu trúc bốn khu vực đã chốt, chi tiết khác còn đề xuất |
 | Nghiên cứu | [Tính năng Markdown của Obsidian](research/obsidian-markdown-features.md) | Bảng kiểm đối chiếu với Mira, đã tick cái nào xong |
+| Nghiên cứu | [Panel Hỏi AI chạy thật: phương thức](research/ai-chat-panel.md) | Đọc code + tài liệu Gemini/Electron 2026-10-02; sáu quyết định chờ chốt, chưa gọi provider thật |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | Đề xuất, chưa benchmark |
