@@ -36,6 +36,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và **làm vi
 | Nghiên cứu | [Kiến trúc các app Electron mã nguồn mở](research/electron-architecture.md) | Quan sát 2026-10-03: cây thư mục của 11 sản phẩm qua GitHub API (chưa chạy thử), bảy khuôn và khuôn nào Mira học |
 | Nghiên cứu | [Lõi AI: kiến trúc provider và cách sản phẩm khác dựng](research/ai-core-architecture.md) | Quan sát 2026-10-03: mã Mira + 20 sản phẩm (agent lập trình, app desktop, công cụ dịch, SDK/gateway); đề xuất bốn lớp, chưa chốt; chưa gọi provider thật |
 | Nghiên cứu | [Chia lô dịch truyện và giữ mạch giữa các lô](research/chunking-translation.md) | Quan sát 2026-10-03: mã LinguaGacha (đọc lại phần planner) + hơn 10 công cụ khác + 9 bài báo; đề xuất C1–C8 cho bước chia lô, chưa chốt; chưa chạy thử, chưa có fixture |
+| Nghiên cứu | [Chất lượng dịch: đo, prompt, lượt soát lại, chọn model](research/translation-quality.md) | Quan sát 2026-10-03: cách đo chất lượng →Việt (kiểm tất định, giám khảo LLM so cặp, người chấm), prompt và tham số, quy ước tiếng Việt, refine, giá model; đề xuất E/G/R chưa chốt; chưa chạy model nào |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | **Superseded phần lớn bởi ADR-005** (căn chỉnh và liên kết bị hủy); giữ làm hồ sơ |
