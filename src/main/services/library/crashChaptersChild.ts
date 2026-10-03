@@ -26,6 +26,9 @@ for (let n = 0; ; n++) {
   report(JSON.stringify({ op: 'moved', id: chapter.id, n }))
 
   if (n % 4 === 3) {
+    // Said before it is done: a kill can land after the delete commits and before `deleted` is
+    // reported, and the parent must not then expect the chapter to still exist.
+    report(JSON.stringify({ op: 'deleting', id: chapter.id, n }))
     store.deleteChapter(work.id, chapter.id)
     report(JSON.stringify({ op: 'deleted', id: chapter.id, n }))
   } else {

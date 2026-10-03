@@ -78,7 +78,7 @@ function integrityOk(path: string): boolean {
 }
 
 interface ChapterAck {
-  op: 'work' | 'created' | 'renamed' | 'moved' | 'opened' | 'deleted'
+  op: 'work' | 'created' | 'renamed' | 'moved' | 'opened' | 'deleting' | 'deleted'
   id: string
   title?: string
 }
@@ -116,12 +116,17 @@ describe('killing the process while it edits chapters', () => {
         expect(chapters.map((c) => c.number)).toEqual(chapters.map((_, i) => i + 1))
 
         const present = new Map(chapters.map((c) => [c.id, c]))
-        const deleted = new Set(acks.filter((a) => a.op === 'deleted').map((a) => a.id))
+        // A deletion that was started may or may not have committed when the kill landed, so a
+        // chapter whose deletion began is allowed to be gone. Every other acknowledged chapter
+        // still has to be there.
+        const mayBeGone = new Set(
+          acks.filter((a) => a.op === 'deleting' || a.op === 'deleted').map((a) => a.id)
+        )
         for (const ack of acks) {
-          if (ack.op === 'created' && !deleted.has(ack.id)) {
+          if (ack.op === 'created' && !mayBeGone.has(ack.id)) {
             expect(present.has(ack.id), 'acknowledged chapter missing after a kill').toBe(true)
           }
-          if (ack.op === 'renamed' && !deleted.has(ack.id)) {
+          if (ack.op === 'renamed' && !mayBeGone.has(ack.id)) {
             expect(present.get(ack.id)?.title).toBe(ack.title)
           }
           if (ack.op === 'deleted') expect(present.has(ack.id)).toBe(false)
