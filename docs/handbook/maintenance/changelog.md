@@ -1,5 +1,23 @@
 # Nhật ký handbook
 
+## Thí nghiệm prompt B2a và luật "trượt vị trí" của bộ chấm — 2026-10-03
+
+- **Đổi gì:**
+  - Thêm mục B2a ở [chất lượng dịch](../research/translation-quality.md#b2a--quy-ước-tiếng-việt-trong-system-prompt-2026-10-03).
+  - Bộ chấm `scripts/bench/score.ts` coi một lần là **trượt vị trí** khi số đoạn bằng nhau nhưng hơn 15% đoạn lệch độ dài; B1 và B2a đều đã được chấm lại theo luật này.
+  - Đánh dấu xong việc 2 ở lộ trình.
+- **Kết quả:** 5 chương tiếng Nhật × 3 lần, system prompt có quy ước tiếng Việt.
+  - Sửa được: thoại “…” ở 15/15 lần (B1: 「」 hoặc lẫn kiểu ở 8/15 lần), 母様 chỉ còn "mẹ", 伯父上 thành "bác" (đúng vai vế).
+  - Không sửa được: tên Irene/Irène lẫn nhau ở mọi chương; おば様 vẫn không ra "mợ".
+  - Xấu đi: sót 14 câu (B1: 0); ghép được từng đoạn 7/15 (B1: 11/15); token ra +37%, thời gian ×1,6.
+  - Nguyên nhân sót câu: model gộp câu khi được bảo "viết tự nhiên", mà app gửi theo đơn vị câu.
+- **Hệ quả:** không giữ B2a nguyên trạng (E6). Lõi dịch phải đổi đơn vị sang đoạn trước khi thêm chỉ dẫn văn phong; tên và quan hệ phải đi qua glossary và ma trận xưng hô.
+
+## Dựng lại motion reel Mira — 2026-10-04
+
+- Theo yêu cầu làm lại sau phản hồi video 60 giây chưa hấp dẫn: tạo [reel 15 giây bản 2](../../../assets/motion/v2/README.md), 1080p60, chữ và chuyển động đồ họa, nhạc mới; tham khảo nhịp video Revid người dùng gửi.
+- Không dùng footage/âm thanh nguồn. Đã kiểm khung hình và giải mã đủ 900 khung; bản mới chưa được chủ sản phẩm nghiệm thu. Không thay mã ứng dụng.
+
 ## Fixture, công cụ đo tạm và baseline đầu tiên — 2026-10-03
 
 - **Đổi gì:**

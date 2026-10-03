@@ -288,7 +288,10 @@ Bảng module 0–9 viết sáng 2026-10-03 (ADR-005) ánh xạ sang thứ tự 
 *(Cập nhật cuối ngày 2026-10-03.)* Đã xong: fixture nháp ở [`fixtures/`](../../../fixtures/README.md) (5 chương Nhật riêng tư, 3 chương công khai) và lượt B1 baseline chỉ với T0 ([kết quả](../research/translation-quality.md#kết-quả-đo-của-mira)).
 
 1. **Chủ sản phẩm duyệt bảng văn phong của fixture**: 40 chỗ đánh dấu `decision: true` trong glossary và ma trận xưng hô. Khi chưa duyệt, con số "glossary đúng" chưa có nghĩa. Cùng lúc ghi lại các điểm chưa ổn của luồng áp dụng hiện tại, để dùng ở module Đề xuất.
-2. **Thí nghiệm prompt đầu tiên (B2):** đưa quy ước tiếng Việt vào system prompt, chạy lại 5 chương tiếng Nhật, so với B1.
+2. ~~**Thí nghiệm prompt đầu tiên (B2a)**~~: đã chạy 2026-10-03 ([kết quả](../research/translation-quality.md#b2a--quy-ước-tiếng-việt-trong-system-prompt-2026-10-03)).
+   - Quy ước trong prompt sửa được kiểu thoại và cách gọi.
+   - Nhưng với đơn vị câu của MVP, model gộp câu nên sót câu và trượt đoạn; tên vẫn trôi.
+   - Hệ quả cho module Lõi dịch: đổi đơn vị gửi sang **đoạn** trước khi thêm chỉ dẫn văn phong, và đo mức thinking (B3) trước khi kéo dài prompt.
 3. **Viết change openspec cho Bộ đo**: định dạng fixture, T0 thành hàm thuần trong `src/shared/algorithms/`, T1 cần khóa của một hãng khác Gemini, T3, quy tắc quyết định E6. Thay công cụ tạm `scripts/bench/`.
 4. **Viết change cho Lõi dịch.** Khi tới module Thuật ngữ thì tách `context-core` thành hai change Thuật ngữ và Xưng hô.
 

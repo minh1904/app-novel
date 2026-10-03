@@ -457,6 +457,50 @@ Số đo do chính Mira chạy, bằng công cụ tạm [`scripts/bench/`](../..
 - đưa quy ước thoại và tên vào prompt (G1–G2);
 - chuẩn hóa xuống dòng trong câu dịch và parse JSON khoan dung hơn (G5).
 
+### B2a — quy ước tiếng Việt trong system prompt (2026-10-03)
+
+**Cấu hình:**
+- Như B1, chỉ khác system prompt: thay bằng [`ja-vi-conventions.txt`](../../../scripts/bench/prompts/ja-vi-conventions.txt).
+- Prompt giữ nguyên hợp đồng JSON của app, thêm brief và quy ước theo G1–G2: thoại “…”, ngoặc lồng ‘…’, không dùng 「」; tên katakana khôi phục chữ Latinh và giữ một cách viết; không xưng hô cổ phong (con gọi "mẹ", "cha"); chọn và giữ cặp xưng hô theo vai vế; "dst" không chứa xuống dòng.
+- Chỉ đổi nội dung system message, ở lớp `fetch`; 100/100 yêu cầu đã được thay.
+- 5 chương tiếng Nhật × 3 lần.
+
+**So với B1 trên cùng 5 chương:**
+
+| | B1 baseline | B2a quy ước |
+| --- | --- | --- |
+| Kiểu thoại | 「」 hoặc lẫn kiểu ở 8/15 lần | **“…” ở 15/15 lần, không còn 「」** |
+| 母様 | "mẫu thân" 25 lần, "mẹ" 73 lần | **chỉ "mẹ"** (116 lần) |
+| 伯父上 (chương 05) | "chú" | **"bác"** (đúng vai vế) |
+| Tên イレーヌ | "Irene" ở chương 01–03; "Irène"/"Irenne" ở chương 04 | **"Irene" và "Irène" lẫn nhau ở mọi chương** |
+| おば様 | "dì" 9 lần, "bác" | "dì" 3 lần, "bác", chưa lần nào "mợ" |
+| Câu bị sót (sau một lần gửi lại) | 0 | **14** |
+| Ghép được từng đoạn | 11/15 | **7/15** (3 lần số đoạn bằng nhau nhưng các đoạn trượt vị trí) |
+| Token ra | 253.249 | 346.685 (+37%) |
+| Thời gian | 1.246 giây | 2.030 giây (×1,6) |
+
+**Quan sát:**
+
+1. **Quy ước trong prompt sửa được những gì là quy tắc chung:** kiểu thoại, cách con gọi mẹ, và cả một quan hệ suy ra được từ chính câu chữ (伯父上 là chồng của chị gái cha, nên gọi "bác").
+2. **Quy ước không sửa được những gì cần biết trước:**
+   - Cách viết tên: イレーヌ đọc được cả "Irene" lẫn "Irène", nên model lần nào chọn lại lần đó, kể cả trong cùng một chương.
+   - Quan hệ không nói ra trong chương: Loretta là cháu của chồng Irene nên gọi Irene là "mợ".
+
+   Hai việc này thuộc module Thuật ngữ và Xưng hô, không thuộc prompt.
+3. **Prompt "viết tự nhiên" làm model gộp câu, và với đơn vị câu thì gộp câu thành mất câu.**
+   - App MVP gửi mỗi câu một ID. Ví dụ: model gộp 「あっ」 và dòng ngay sau (小さな声がした) thành một câu dịch, nên dòng sau mất ID và mất khỏi bản dịch.
+   - Một dòng dư ở chỗ khác bù lại, nên số đoạn vẫn bằng nhau, nhưng mọi đoạn ở giữa trượt một vị trí.
+   - Tổng độ dài bản dịch vẫn bằng 95–100% của B1: nội dung phần lớn còn, chỉ bị dồn sang câu bên cạnh.
+4. **Chi phí tăng:** token ra +37%, thời gian ×1,6. Prompt dài hơn khiến model nghĩ nhiều hơn.
+
+**Kết luận:** theo quy tắc E6, B2a **không được giữ nguyên trạng**, vì T0 xấu đi (sót câu, trượt đoạn). Nhưng nó chỉ ra thứ tự đúng cho module Lõi dịch:
+- (a) đổi đơn vị gửi sang **đoạn** có ID `[n]`, để gộp câu trong một đoạn không còn làm mất gì, rồi mới thêm chỉ dẫn "viết tự nhiên";
+- (b) giữ các quy ước chung (thoại, cách gọi, không cổ phong) trong tầng A;
+- (c) tên và quan hệ đi qua glossary và ma trận xưng hô;
+- (d) đo mức thinking (B3) trước khi thêm chữ vào prompt, vì chi phí tăng theo độ dài prompt.
+
+**Bài học cho Bộ đo:** "số đoạn bằng nhau" không có nghĩa là ghép đúng. Bộ chấm nay coi một lần là trượt vị trí khi hơn 15% đoạn lệch độ dài, và khi đó không so từng đoạn nữa. Cả B1 và B2a ở trên đã được chấm lại theo luật này. Module Bộ đo cần một cách ghép đoạn theo nội dung, hoặc nhờ ID đoạn của Lõi dịch.
+
 **Giới hạn của lượt đo:**
 - Một model, mỗi chương 3 lần, chỉ có T0.
 - Hai chương tiếng Trung là văn cổ điển và cận đại, không phải truyện mạng.
