@@ -58,11 +58,11 @@
 
 ## 7. R6 — Tách `WorkFiles` khỏi `LibraryStore`
 
-- [ ] 7.1 Đọc `LibraryStore` và lập bảng trách nhiệm trong `baseline.md`: mỗi phương thức và trường (công khai lẫn riêng tư) thuộc `WorkFiles` hay ở lại `LibraryStore` (D9). Xong khi mọi thành viên được gán, kể cả `appDb`, `appNow`, `newAppId` (ở lại, ủy quyền)
-- [ ] 7.2 Kiểm test hiện có đã phủ các hành vi sẽ chuyển chưa: mở lần đầu, tệp tác phẩm hỏng, `library.db` hỏng được đặt sang bên và dựng lại, dọn `.tmp` lúc khởi động, khôi phục từ tệp sao lưu, đổi tên thành điểm cam kết. Lập bảng "hành vi → test"; **thiếu chỗ nào thì thêm test trên mã chưa đổi** và commit riêng `test(library): pin work file lifecycle before extracting it`. Xong khi bảng đầy đủ và `node scripts/check.mjs` xanh
-- [ ] 7.3 Tạo `infra/storage/workFiles.ts`, chuyển mã nguyên văn và **giữ nguyên thứ tự thao tác**; `LibraryStore` dựng và dùng `WorkFiles`, giữ mọi phương thức công khai. Xong khi `tsc` qua mà **không tệp nào ngoài `library.ts` và tệp mới bị sửa** (`git diff --stat`), và số dòng của `library.ts` được ghi lại
-- [ ] 7.4 Chạy `crash.test.ts` riêng ba lần, cả bộ test, và `smoke:sqlite`. Xong khi xanh và khớp mốc ở 1.2
-- [ ] 7.5 Commit `refactor(storage): extract work file lifecycle from LibraryStore`. Xong khi `node scripts/check.mjs --build` xanh; đẩy nếu được phép
+- [x] 7.1 Đọc `LibraryStore` và lập bảng trách nhiệm trong `baseline.md`: mỗi phương thức và trường (công khai lẫn riêng tư) thuộc `WorkFiles` hay ở lại `LibraryStore` (D9). Xong khi mọi thành viên được gán, kể cả `appDb`, `appNow`, `newAppId` (ở lại, ủy quyền)
+- [x] 7.2 Kiểm test hiện có đã phủ các hành vi sẽ chuyển chưa: mở lần đầu, tệp tác phẩm hỏng, `library.db` hỏng được đặt sang bên và dựng lại, dọn `.tmp` lúc khởi động, khôi phục từ tệp sao lưu, đổi tên thành điểm cam kết. Lập bảng "hành vi → test"; **thiếu chỗ nào thì thêm test trên mã chưa đổi** và commit riêng `test(library): pin work file lifecycle before extracting it`. Xong khi bảng đầy đủ và `node scripts/check.mjs` xanh
+- [x] 7.3 Tạo `infra/storage/workFiles.ts`, chuyển mã nguyên văn và **giữ nguyên thứ tự thao tác**; `LibraryStore` dựng và dùng `WorkFiles`, giữ mọi phương thức công khai. Xong khi `tsc` qua mà **không tệp nào ngoài `library.ts` và tệp mới bị sửa** (`git diff --stat`), và số dòng của `library.ts` được ghi lại (ngoại lệ đã ghi ở `baseline.md` mục 7.1: hai test đọc thành viên private đã chuyển, `backup.test.ts` và `ipc/backupHandlers.test.ts`)
+- [x] 7.4 Chạy `crash.test.ts` riêng ba lần, cả bộ test, và `smoke:sqlite`. Xong khi xanh và khớp mốc ở 1.2
+- [x] 7.5 Commit `refactor(storage): extract work file lifecycle from LibraryStore`. Xong khi `node scripts/check.mjs --build` xanh; đẩy nếu được phép
 
 ## 8. Kết thúc
 

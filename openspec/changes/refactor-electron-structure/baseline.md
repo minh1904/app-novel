@@ -138,7 +138,53 @@ Một tham chiếu đọc **mã nguồn** bằng `join(__dirname, …)` cần vi
 
 ## 7. Bảng trách nhiệm `LibraryStore` → `WorkFiles` (task 7.1) và bảng hành vi → test (task 7.2)
 
-_Điền khi làm các task tương ứng._
+### 7.1 Mỗi thành viên của `LibraryStore` (567 dòng) thuộc đâu
+
+Nguyên tắc: `WorkFiles` giữ mọi thứ về **tệp và chỉ mục trên đĩa** (bố cục thư mục dữ liệu, mở và phục hồi `library.db`, mở tệp tác phẩm, tạo tệp nguyên tử, nhập và xuất, đối soát); `LibraryStore` giữ **nghiệp vụ** (tác phẩm, chương, văn bản, hàng, ảnh bìa, ảnh) và mọi phương thức công khai. Mã chuyển **nguyên văn**, thứ tự thao tác giữ nguyên.
+
+| Thành viên | Đi đâu | Ghi chú |
+| --- | --- | --- |
+| `dataDir`, `worksDir`, `tmpDir` | **WorkFiles** | bố cục thư mục dữ liệu |
+| `index: Db`, `problems` | **WorkFiles** | `library.db` và kết quả đối soát; `LibraryStore.appDb` ủy quyền sang `index` |
+| `now` | cả hai | `LibraryStore` giữ; `WorkFiles` nhận cùng hàm đó, chỉ gọi ở nhánh chỉ mục hỏng (`.corrupt-<now>`). Các test dùng đồng hồ đếm nên **số lần và thứ tự gọi `now()` không được đổi** |
+| `newId`, `newChapterId`, `newContentId` | ở lại | sinh ID là nghiệp vụ |
+| constructor (tạo `.tmp`, mở chỉ mục) và `open` (đối soát) | **WorkFiles.open** | `LibraryStore.open` dựng `WorkFiles` rồi `LibraryStore` |
+| `appDb`, `newAppId`, `appNow` | ở lại | `appDb` ủy quyền |
+| `list` | **WorkFiles.list** | truy vấn `work_index` và `problems` là chuyện chỉ mục; `LibraryStore.list` ủy quyền |
+| `get`, `update`, `listChapters`, `createChapter`, `renameChapter`, `moveChapter`, `deleteChapter`, `readText`, `saveText`, `createLink`, `listLinks`, `saveRow`, `reviewRow`, `autoPairRows`, `setProvenance`, `getProvenance`, `openChapter`, `getCover`, `setCover`, `putImage`, `getImage`, `deleteImage`, `changeChapters` | ở lại | dùng `files.withWork` và `files.syncIndex` |
+| `create` | **tách đôi** | ở lại: kiểm tên, giải mã bìa, sinh ID, đọc `now`, `insertWork` + `writeCover`. Sang `WorkFiles.createWorkFile`: tệp `.part`, mở, chạy bước dựng, đổi tên là điểm cam kết, dọn khi lỗi |
+| `restoreWork` | **tách đôi** | ở lại: kiểm đường dẫn tuyệt đối, sinh ID. Sang `WorkFiles.importWorkFile`: sao chép, kiểm tra, đổi ID, checkpoint, đổi tên, dọn khi lỗi |
+| `exportWork` | **WorkFiles.exportWork** | kiểm đích nằm ngoài thư mục dữ liệu là chuyện bố cục thư mục |
+| `workPath`, `withWork`, `removeWorkFiles`, `openIndex`, `openAndMigrateIndex`, `reconcile`, `readSummaryFromFile`, `syncIndex`, `upsertIndex` | **WorkFiles** | |
+| `WORK_EXTENSION`, `PART_EXTENSION`, `IndexRow` | **WorkFiles** | |
+| `close` | ủy quyền | đóng `index` |
+
+Một tham chiếu phải đổi ngoài `library.ts`: `backup.test.ts` dòng 364 đọc thành viên **private** `library['worksDir']`, mà `worksDir` chuyển sang `WorkFiles`. Test đã biết thư mục dữ liệu nó tạo, nên dùng thẳng đường dẫn đó thay vì thò vào lớp. Đây là chỗ cần ngoại lệ cho tiêu chí "không sửa tệp nào ngoài `library.ts` và tệp mới". **Khi làm thật còn thêm một chỗ nữa tôi đã bỏ sót ở bước phân tích:** `ipc/backupHandlers.test.ts` dòng 121 đọc `library['dataDir']` (tôi chỉ tìm `worksDir`, `tmpDir`, `index`). `tsc` không bắt được truy cập bằng ngoặc vào thành viên đã biến mất; chỉ bộ test báo lỗi. Hai test, cả hai sửa để dùng thư mục dữ liệu chúng tự tạo.
+
+### 7.2 Hành vi chuyển đi → test đang khóa nó
+
+| Hành vi | Test |
+| --- | --- |
+| Mở lần đầu, kho rỗng | `library`: starts empty on first run without errors |
+| Tệp tác phẩm hỏng không làm hỏng các tác phẩm khác, được báo | `library`: keeps other works usable when one work file is corrupt and reports the problem |
+| `library.db` hỏng được đặt sang bên và dựng lại | `library`: sets aside a corrupt library.db and rebuilds it |
+| Thiếu `library.db` thì dựng lại từ tệp tác phẩm | `library`: rebuilds the index from work files when library.db is missing |
+| Chỉ mục lệch tệp thì được sửa | `library`: repairs an index that drifted from the work file |
+| Tệp từ schema mới hơn bị từ chối, không bị sửa | `library`: refuses a work file from a newer schema without modifying it |
+| Tên tệp không khớp ID bên trong thì được báo | `library`: reports a work file whose name does not match the work inside |
+| Dọn `.tmp` lúc khởi động | `library`: removes leftover partial files on startup…; `backup`: cleans a half-finished restore left in .tmp at the next start |
+| ID lạ và ID không phải UUID | `library`: reports unknown ids as not found and refuses ids that are not UUIDs |
+| Tên rỗng không tạo tệp | `library`: rejects an empty or whitespace-only title and creates nothing |
+| Bìa sai không tạo tệp | `libraryCover`: rejects an invalid cover without changing the work or creating a file |
+| **Lỗi sau khi tệp `.part` đã có thì tệp bị dọn** | **khoảng trống đã được lấp**: `library`: leaves no partial file and lists nothing when a new work cannot be built (thêm trên mã chưa đổi; đột biến bỏ lệnh dọn thì test đỏ, khôi phục thì xanh) |
+| Khôi phục: đủ nội dung, ngày, trạng thái, bìa; tác phẩm độc lập | `backup`: restores onto a clean profile…, keeps status, the last chapter and the dates…, adds an independent work… |
+| Khôi phục từ chối tệp không đúng, và không đổi gì | `backup`: refuses what is not a good backup (8 ca: tệp văn bản, rỗng, SQLite lạ, cắt ngắn, trang hỏng, schema mới, thiếu bảng, hai tác phẩm) |
+| Khôi phục nâng cấp bản cũ | `backup`: upgrades an older backup on the way in… |
+| Xuất: đích ngoài thư mục dữ liệu, đường dẫn tuyệt đối, không để lại tệp dở | `backup`: refuses to back up into its own data directory or to a relative path; fails cleanly, leaving no partial file… |
+| Tệp tác phẩm là đầy đủ hoặc không có, kể cả khi bị giết giữa chừng | `crash`: killing the process while it writes / edits chapters / saves chapter text / restores a backup |
+| `library.db` dùng chung làm `appDb` | `connections` và `createServices` (`appDb` dùng để lưu kết nối và khóa) |
+
+Không có test trực tiếp cho `syncIndex` khi cập nhật chỉ mục lỗi (chỉ `console.error`); đường đó chuyển nguyên văn và được chỉ mục tự sửa ở lần mở sau (`repairs an index that drifted`).
 
 ## 8. So sánh trước/sau (task 8.2)
 
@@ -205,3 +251,20 @@ Commit: `d0db504` công cụ thêm pha `shared`; `84affc4` luật lint; `86c6ebc
 | `out/main/index.js` | phần external giống baseline |
 
 Phát hiện: dry-run `shared` đếm 219 câu viết lại = 201 của `main`/`renderer`/`preload` + 18 import chéo trong `shared`. Đường dẫn dài thêm làm 2 dòng import vượt 100 cột (`image.ts`, `WorkForm.tsx`); bọc ở commit riêng như ở R2. Công cụ cũng được sửa để coi một tệp chỉ khác ở kiểu xuống dòng là sạch: trình soạn thảo của chủ sản phẩm chuẩn hóa vài tệp sang LF trong lúc làm việc.
+
+### R6, xong (tasks 7.1–7.5)
+
+Commit: `9f81de3` test khóa hành vi; `8493169` **lần tách**; `3d7b044` mốc 867 test.
+
+| Kiểm | Kết quả |
+| --- | --- |
+| Kích thước | `library.ts` 567 → **354** dòng; `workFiles.ts` mới **287** dòng |
+| So từng dòng với bản cũ | 25 dòng cũ "biến mất", đều giải thích được: 5 import đã chuyển, 12 lời gọi chỉ thêm tiền tố `files.`, constructor/`open` dựng lại, các hàm `private` thành public ở `WorkFiles`; thân `upsertIndex`, `reconcile`, `openIndex`, `readSummaryFromFile` không có trong danh sách khác biệt |
+| Test | **867** = 863 + 3 (`createServices`) + 1 (khóa hành vi); 6 tệp `services/library` qua (104 test) |
+| `crash.test.ts` riêng ×3 | 4/4 qua, 14,04 / 13,60 / 13,57 s (baseline 13,31 / 12,91 / 13,63 s) |
+| `smoke:sqlite` | qua dưới Electron 44.4.5, node 24.21.0, sqlite 3.53.4 |
+| `tsc` | 411 + 812 tệp (+1: `workFiles.ts`) |
+| Lint | 0 lỗi, 63 cảnh báo (không thêm) |
+| Bundle | `require` của preload chỉ `electron`, 5.823 byte; phần external của main như baseline |
+
+Phát hiện: (1) test khóa hành vi được kiểm bằng đột biến: bỏ lệnh dọn `.part` trong `create` thì test đỏ ("expected [ Array(1) ] to deeply equal []"), khôi phục thì xanh. (2) Bộ kiểm bắt được test thò vào thành viên private mà `tsc` bỏ sót (mục 7.1); lần chạy đầu của chuỗi kiểm dừng ở đó và không chạy tiếp smoke test, đúng như thiết kế `&&`.
