@@ -2,7 +2,7 @@
 
 Xem [proposal.md](proposal.md) — Why. Ba ràng buộc từ code hiện có định hình thiết kế:
 
-- **Dữ liệu tác phẩm là một tệp SQLite riêng** (`works/<id>.mira`, `workSchema.ts` đang ở version 5), SQL thuần, không ORM ([ADR-003](../../../docs/handbook/decisions/0003-technology-stack.md)); renderer không chạm dữ liệu, chỉ đi qua IPC (`work-storage`).
+- **Dữ liệu tác phẩm là một tệp SQLite riêng** (`works/<id>.mira`, `workSchema.ts` đang ở version 5; version kế tiếp là của change gỡ segment), SQL thuần, không ORM ([ADR-003](../../../docs/handbook/decisions/0003-technology-stack.md)); renderer không chạm dữ liệu, chỉ đi qua IPC (`work-storage`).
 - **Hợp đồng provider đã tồn tại** với `TranslateRequest.context?: string` chưa ai dùng, và `MockProvider` đang gánh toàn bộ test luồng AI.
 - **Chương có `position` đổi được** (`chapters:move` trong `work-detail-screen`), nên bất kỳ thứ gì "hiệu lực từ chương N" phải chịu được việc người dùng sắp lại mục lục.
 
@@ -48,11 +48,11 @@ Dựng một regex từ mọi từ khóa và dạng viết đã escape, sắp d�
 
 *Vì sao:* JavaScript chọn nhánh alternation **đầu tiên khớp được**, nên "dài trước" thành ra đúng quy tắc "khớp dài trước" mà không cần logic riêng; không thêm dependency. *Đã loại:* Aho–Corasick (đúng hơn về độ phức tạp nhưng là một thư viện hoặc ~150 dòng tự viết cho một bài toán chưa đo); vòng lặp `indexOf` theo từng mục (O(mục × độ dài) và phải tự xử lý chồng lấp). *Ngưỡng độ dài tối thiểu* chặn mục một ký tự, có cờ cho phép ép khớp — đây là bản có tên của mẹo "họ và tên trên hai dòng" của GalTransl.
 
-### D5. `contextHash` **không** gồm văn bản nguồn và **không** gồm các segment liền trước
+### D5. `contextHash` **không** gồm văn bản nguồn và **không** gồm các đoạn liền trước
 
-Băm trên chuỗi đã tuần tự hóa của: tầng A, tầng B, và danh sách mục thuật ngữ đã khớp của tầng C (id + nội dung đã duyệt). `sha256` của `node:crypto`, lấy 16 ký tự hex đầu.
+Băm trên chuỗi đã tuần tự hóa của: tầng A, tầng B, và danh sách mục thuật ngữ đã khớp của tầng C (id + nội dung đã duyệt). `sha256`, lấy 16 ký tự hex đầu; hàm băm do người gọi tiêm vào (D12).
 
-*Vì sao đây là quyết định quan trọng nhất của change:* nếu băm gồm văn bản nguồn thì mọi lần sửa lỗi chính tả bản raw cũng làm segment "ngữ cảnh đã đổi" — sai nghĩa. Nếu băm gồm các segment liền trước (vốn là **bản dịch** của segment trước) thì dịch segment 5 làm đổi băm của segment 6, segment 6 làm đổi segment 7 — một làn sóng đánh dấu lan vô hạn không mang thông tin nào. Băm phải trả lời đúng một câu: *"ngữ cảnh do người dùng quản đã đổi chưa?"* Khối segment liền trước vẫn được gửi cho provider, chỉ không vào băm.
+*Vì sao đây là quyết định quan trọng nhất của change:* nếu băm gồm văn bản nguồn thì mọi lần sửa lỗi chính tả bản raw cũng làm đoạn "ngữ cảnh đã đổi" — sai nghĩa. Nếu băm gồm các đoạn liền trước (vốn là **bản dịch** của đoạn trước) thì dịch đoạn 5 làm đổi băm của đoạn 6, đoạn 6 làm đổi đoạn 7 — một làn sóng đánh dấu lan vô hạn không mang thông tin nào. Băm phải trả lời đúng một câu: *"ngữ cảnh do người dùng quản đã đổi chưa?"* Khối đoạn liền trước vẫn được gửi cho provider, chỉ không vào băm.
 
 ### D6. Ngân sách tính bằng **ước lượng** token, có biên an toàn
 
@@ -78,14 +78,26 @@ Thêm vào mock một chỗ đọc lại các khối đã nhận theo thứ tự
 
 `context?: string` → `context?: ContextBlocks`. Không có dữ liệu người dùng nào phụ thuộc trường này (chưa provider thật nào dùng), nên để lại cả hai dạng chỉ tạo hai đường code phải nuôi.
 
+### D11. `contextHash` lưu ở `proposal` và `job_item`, không ở `provenance`
+
+ADR-005 gỡ `provenance`. Theo [kiến trúc AI-first §5.3](../../../docs/handbook/engineering/ai-first-architecture.md) mỗi lần gọi AI đã có bản ghi riêng: `job_item` (một chương của một tác vụ dịch, đã ghi `contextHash` trong sơ đồ) và `proposal` (đề xuất từ chat hoặc từ ngoài). Change này **không tạo bảng nào cho việc đó**: nó dùng hai bảng ấy và thêm cột `context_hash` vào `proposal` nếu module đề xuất chưa có (sơ đồ §5.3 mới liệt kê cột này ở `job_item`; P4 "mỗi lần gọi AI tái hiện được" đòi cả hai). `NULL` nghĩa là **không có ngữ cảnh**, còn ngữ cảnh rỗng có mã băm thật — để giữ được phép phân biệt mà spec `content-model` yêu cầu.
+
+*Hệ quả, ghi rõ để không ai ngạc nhiên:* các task lưu băm (5.4) và đánh dấu đoạn chịu ảnh hưởng (7.2) **phụ thuộc module đề xuất và module tác vụ dịch** (thứ tự ở [lộ trình](../../../docs/handbook/delivery/roadmap.md)). Lõi khớp, lắp, kiểm tra và IPC (mục 1–4, 6) không phụ thuộc và nghiệm thu được bằng mock provider.
+
+*Độ mịn là điểm hở:* sơ đồ §5.3 có một `contextHash` mỗi `job_item` (mỗi chương), trong khi tầng C đổi theo đoạn nên băm khác nhau giữa các lô. Spec `content-model` viết ở mức **đoạn** (đúng năm đoạn bị đánh dấu); muốn đạt mức đó thì module tác vụ phải lưu băm theo lô (hoặc theo vùng dấu AI). Nếu nó chỉ lưu theo chương, hạ spec xuống mức chương. Chốt khi thiết kế module tác vụ, không chốt ở đây.
+
+### D12. Hàm băm được tiêm vào `buildContext`
+
+`buildContext` nằm ở `src/shared/algorithms/` để tác vụ dịch (main) và chat dùng chung, mà luật lint cấm `shared/**` import `node:*` — nên không gọi được `node:crypto`. `buildContext` nhận thêm tham số `hash: (input: string) => string`; main truyền `sha256` của `node:crypto` (lấy 16 ký tự hex đầu), test truyền một hàm băm giả đơn giản. Hàm vẫn **thuần**: cùng đầu vào và cùng hàm băm cho cùng đầu ra.
+
 ## Risks / Trade-offs
 
 - **Ước lượng token lệch nhiều với tiếng Việt** → biên an toàn mặc định 15%, luôn báo phần bị cắt, và ghi `usage` thực để hiệu chỉnh; không dùng con số này cho ước lượng chi phí (đã có registry model cho việc đó).
 - **Khớp quá nhiều với glossary lớn** → ngưỡng độ dài tối thiểu, khớp dài trước, một dạng viết thuộc đúng một mục, và trần số mục mỗi đoạn; bước kiểm chứng 4 trong nghiên cứu là phép đo cho rủi ro này.
-- **Schema version đụng nhau với change đang mở** (`segment-auto-align`, `ai-connection` cũng có thể tăng version của tệp tác phẩm) → đọc lại `workSchema.ts` ngay trước khi viết migrate và lấy số kế tiếp thực tế; không hardcode "version 6" trong tasks.
+- **Schema version đụng nhau với change khác** (change gỡ segment, module đề xuất và module tác vụ cũng nâng version của tệp tác phẩm; `segment-auto-align` đã hủy, `ai-connection` đã archive) → đọc lại `workSchema.ts` ngay trước khi viết migrate và lấy số kế tiếp thực tế; không hardcode số version trong tasks.
 - **Lõi không có UI nên không soát được bằng mắt** → nghiệm thu bằng test với fixture hai chương thật (một ZH nhiều thuật ngữ, một nhiều hội thoại) và bằng mock provider ghi lại ngữ cảnh; chấp nhận rằng change này không chứng minh được gì về trải nghiệm.
 - **`entriesRev` làm cache sai nếu quên tăng** → đặt việc tăng bộ đếm trong cùng một chỗ ghi duy nhất của tầng storage, không rải ở các handler.
-- **Băm loại bỏ khối segment liền trước** nghĩa là hai bản dịch có cùng `contextHash` vẫn có thể nhận prompt khác nhau ở khối đó → ghi rõ trong tài liệu rằng băm trả lời "ngữ cảnh do người dùng quản", không phải "toàn bộ prompt"; nếu sau này cần tái hiện bit-exact thì lưu thêm một băm prompt đầy đủ, không sửa nghĩa của băm này.
+- **Băm loại bỏ khối đoạn liền trước** nghĩa là hai bản dịch có cùng `contextHash` vẫn có thể nhận prompt khác nhau ở khối đó → ghi rõ trong tài liệu rằng băm trả lời "ngữ cảnh do người dùng quản", không phải "toàn bộ prompt"; nếu sau này cần tái hiện bit-exact thì lưu thêm một băm prompt đầy đủ, không sửa nghĩa của băm này.
 
 ## Migration Plan
 
@@ -99,3 +111,5 @@ Thêm vào mock một chỗ đọc lại các khối đã nhận theo thứ tự
 - **Trần token mặc định** cho ngữ cảnh (đề xuất ~40% của một lần gọi) và **biên an toàn** (đề xuất 15%): tinh chỉnh được sau khi có số đo, không đổi spec hay task.
 - **Hệ số ước lượng token cho tiếng Việt**: chờ `usage` thực từ lần gọi đầu tiên.
 - **Ngưỡng độ dài tối thiểu của từ khóa** (một hay hai ký tự Hán): chọn mặc định rồi đo ở bước kiểm chứng 4.
+- **Độ mịn của băm lưu** (theo chương, theo lô hay theo vùng dấu AI): xem D11; phụ thuộc thiết kế module tác vụ dịch.
+- **Định nghĩa đoạn** (mỗi dòng không trống, chờ xác nhận trên fixture ZH/JA/EN, Q3 của ADR-005): quyết định "đoạn liền trước" là gì và hai đoạn có thật sự khớp một-một giữa nguồn và bản dịch hay không.

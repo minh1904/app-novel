@@ -1,7 +1,7 @@
 # context-assembly Specification
 
 ## Purpose
-Chọn đúng các mục ngữ cảnh cho một đoạn đang dịch và lắp chúng thành các khối prompt có thứ tự cố định, có trần token và có mã băm, để cùng một đoạn với cùng một trạng thái ngữ cảnh luôn sinh ra đúng một prompt — điều kiện để tái hiện bản dịch và để biết segment nào chịu ảnh hưởng khi ngữ cảnh đổi.
+Chọn đúng các mục ngữ cảnh cho một đoạn đang dịch và lắp chúng thành các khối prompt có thứ tự cố định, có trần token và có mã băm, để cùng một đoạn với cùng một trạng thái ngữ cảnh luôn sinh ra đúng một prompt — điều kiện để tái hiện bản dịch và để biết đoạn nào chịu ảnh hưởng khi ngữ cảnh đổi.
 
 ## ADDED Requirements
 
@@ -39,7 +39,7 @@ Khớp văn bản SHALL theo ngôn ngữ nguồn của tác phẩm: với tiến
 
 ### Requirement: Ba tầng có thứ tự bắt buộc
 
-Ngữ cảnh SHALL được trả về thành ba tầng theo đúng thứ tự: **tầng A** ổn định trong cả một lần dịch (hướng dẫn, định dạng đầu ra theo ID, văn phong đã duyệt), **tầng B** ổn định trong một chương (cặp xưng hô có hiệu lực và nhân vật của chương), **tầng C** biến thiên theo đoạn (thuật ngữ đã khớp, các segment liền trước, văn bản nguồn). Không nội dung nào của tầng C SHALL được đặt trước tầng A hoặc tầng B. Hai đoạn khác nhau trong cùng một chương SHALL nhận **cùng nội dung tầng A và tầng B**, từng ký tự.
+Ngữ cảnh SHALL được trả về thành ba tầng theo đúng thứ tự: **tầng A** ổn định trong cả một lần dịch (hướng dẫn, định dạng đầu ra theo ID, văn phong đã duyệt), **tầng B** ổn định trong một chương (cặp xưng hô có hiệu lực và nhân vật của chương), **tầng C** biến thiên theo đoạn (thuật ngữ đã khớp, các đoạn liền trước, văn bản nguồn). Không nội dung nào của tầng C SHALL được đặt trước tầng A hoặc tầng B. Hai đoạn khác nhau trong cùng một chương SHALL nhận **cùng nội dung tầng A và tầng B**, từng ký tự.
 
 #### Scenario: Thứ tự khối không đổi
 - **WHEN** lắp ngữ cảnh cho một đoạn có cả ba tầng
@@ -51,10 +51,10 @@ Ngữ cảnh SHALL được trả về thành ba tầng theo đúng thứ tự: 
 
 ### Requirement: Ngân sách có thứ tự cắt tĩnh và báo lại phần bị cắt
 
-Việc lắp ngữ cảnh SHALL nhận một trần token và SHALL NOT vượt trần đó. Khi vượt trần, hệ thống SHALL bỏ nội dung theo một thứ tự ưu tiên cố định, bắt đầu từ ví dụ văn phong, rồi các segment liền trước, rồi hồ sơ nhân vật. Hệ thống SHALL NOT tự bỏ cặp xưng hô có hiệu lực hoặc mục thuật ngữ đã khớp. Khi riêng hai nhóm không được bỏ đó đã vượt trần, hệ thống SHALL báo lỗi cho người gọi thay vì cắt bớt chúng. Mọi phần bị bỏ SHALL được trả về cho người gọi dưới dạng liệt kê được, không bỏ im lặng.
+Việc lắp ngữ cảnh SHALL nhận một trần token và SHALL NOT vượt trần đó. Khi vượt trần, hệ thống SHALL bỏ nội dung theo một thứ tự ưu tiên cố định, bắt đầu từ ví dụ văn phong, rồi các đoạn liền trước, rồi hồ sơ nhân vật. Hệ thống SHALL NOT tự bỏ cặp xưng hô có hiệu lực hoặc mục thuật ngữ đã khớp. Khi riêng hai nhóm không được bỏ đó đã vượt trần, hệ thống SHALL báo lỗi cho người gọi thay vì cắt bớt chúng. Mọi phần bị bỏ SHALL được trả về cho người gọi dưới dạng liệt kê được, không bỏ im lặng.
 
 #### Scenario: Cắt theo thứ tự
-- **WHEN** ngữ cảnh vượt trần token và có cả ví dụ văn phong, segment liền trước và hồ sơ nhân vật
+- **WHEN** ngữ cảnh vượt trần token và có cả ví dụ văn phong, đoạn liền trước và hồ sơ nhân vật
 - **THEN** ví dụ văn phong bị bỏ trước, và phần bị bỏ được báo lại cho người gọi
 
 #### Scenario: Không cắt hai nhóm bắt buộc
