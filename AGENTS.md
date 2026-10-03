@@ -10,6 +10,18 @@ Update the canonical handbook chapter when its behavior or decision changes; leg
 `docs/` are redirect pages. Follow the [maintenance guide](docs/handbook/maintenance/handbook-guide.md)
 when adding research, specifications, or decision records. Write handbook content in Vietnamese.
 
+## Checks
+
+Run `node scripts/check.mjs` before committing and `node scripts/check.mjs --build` before pushing. It
+runs the typecheck (node and web projects), the tests, and lint, and a step that shows no evidence it
+ran counts as a failure. The tests run in two phases because five files assert on wall-clock time and
+fail when 60 files compete for the CPU; see the comments at the top of the script.
+
+Do not trust `pnpm test`, `pnpm lint` or `pnpm typecheck` when the global pnpm is newer than the pinned
+`packageManager` (pnpm 8.9.0): they can print a warning and exit 0 without running anything. For the same
+reason do not run `pnpm add` or `pnpm install` with such a pnpm; it rewrites `pnpm-lock.yaml` from
+lockfileVersion 6.0 to 9.0.
+
 ## Commits
 
 Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) with the type set from `@commitlint/config-conventional`. Write commit messages in English.
