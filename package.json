@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke:sqlite": "electron scripts/smoke-sqlite.mjs",
+    "smoke:net": "electron scripts/smoke-net-fetch.mjs",
     "dev": "electron --version && electron-vite dev",
     "preview": "electron --version && electron-vite preview",
     "build": "pnpm typecheck && electron-vite build",
