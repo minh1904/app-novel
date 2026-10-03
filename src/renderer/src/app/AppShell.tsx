@@ -3,6 +3,7 @@ import { MoonIcon } from '@solar-icons/react/linear/moon'
 import { SettingsIcon } from '@solar-icons/react/linear/settings'
 import { SidebarMinimalisticIcon } from '@solar-icons/react/linear/sidebar-minimalistic'
 import { SunIcon } from '@solar-icons/react/linear/sun'
+import logoUrl from '../assets/logo.png'
 import { Button } from '../components/Button'
 import { cx } from '../components/cx'
 import { TopBarSlotContext } from './topBarSlot'
@@ -86,7 +87,10 @@ export function AppShell({
         >
           <SidebarMinimalisticIcon size={16} />
         </Button>
-        <span className="text-[15px] font-semibold tracking-[-0.05em]">Mira</span>
+        <span className="flex items-center gap-1.5">
+          <img src={logoUrl} alt="" className="size-5 shrink-0" draggable={false} />
+          <span className="text-[15px] font-semibold tracking-[-0.05em]">Mira</span>
+        </span>
         <span className="h-4 w-px shrink-0 bg-line" aria-hidden="true" />
         <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">{title}</div>
         <div className="flex shrink-0 items-center gap-1">

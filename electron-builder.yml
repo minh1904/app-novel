@@ -1,5 +1,7 @@
 appId: app.mira.desktop
 productName: Mira
+directories:
+  buildResources: resources
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -7,9 +9,12 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asarUnpack:
+  - resources/**
 win:
   target: nsis
   executableName: Mira
+  icon: resources/icon.ico
 nsis:
   artifactName: mira-setup.exe
   shortcutName: Mira

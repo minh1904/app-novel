@@ -8,6 +8,7 @@ import {
   type IpcMainInvokeEvent
 } from 'electron'
 import { join } from 'node:path'
+import icon from '../../resources/icon.png?asset'
 import type { AppInfo } from '../shared/contracts/desktop-api'
 import { registerLibraryHandlers } from './electron/registerIpc'
 import { CHROME_COLORS, OVERLAY_TITLE_BAR, TOP_BAR_HEIGHT } from './electron/titleBar'
@@ -45,6 +46,8 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     title: 'Mira',
+    // The installed exe carries icon.ico, but `pnpm dev` runs electron.exe, whose icon would show.
+    icon,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#191919' : '#f1f1f1',
     // The page starts in the system theme (see useTheme), so the buttons start in it too and are
     // corrected through `app:chrome-theme` if the page then picks the other one.
