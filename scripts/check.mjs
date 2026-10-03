@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** Raise this when tests are removed on purpose; it must never drop by accident. */
-const BASELINE_TESTS = 866
+const BASELINE_TESTS = 867
 
 /** Matched by file name, not by path, so the list survives files being moved. */
 const TIMING_SENSITIVE = [
