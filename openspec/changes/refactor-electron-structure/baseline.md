@@ -290,3 +290,11 @@ Commit: `9f81de3` test khóa hành vi; `8493169` **lần tách**; `3d7b044` mố
 | Bundle | `require` của preload chỉ `electron`, 5.823 byte; phần external của main như baseline |
 
 Phát hiện: (1) test khóa hành vi được kiểm bằng đột biến: bỏ lệnh dọn `.part` trong `create` thì test đỏ ("expected [ Array(1) ] to deeply equal []"), khôi phục thì xanh. (2) Bộ kiểm bắt được test thò vào thành viên private mà `tsc` bỏ sót (mục 7.1); lần chạy đầu của chuỗi kiểm dừng ở đó và không chạy tiếp smoke test, đúng như thiết kế `&&`.
+
+### Kết thúc (tasks 8.1–8.4)
+
+Commit: `44fe5f6` xóa công cụ dời tệp; `efc1271` bảng trước/sau; `14d5737` bằng chứng khởi động ứng dụng; rồi hai commit lưu trữ.
+
+**Kiểm tay (8.3).** Chủ sản phẩm báo đã tự kiểm tay trong app thật và không thấy khác trước (2026-10-03). Người thực hiện không lái được cửa sổ Electron nên không có số đo của riêng mình cho bước này; bằng chứng tự động duy nhất là lần khởi động ứng dụng đã build ở mục 8.
+
+**Lưu trữ (8.4).** Không có delta spec để gộp (`skip_specs: true`); thư mục chuyển sang `openspec/changes/archive/2026-10-03-refactor-electron-structure/`.
