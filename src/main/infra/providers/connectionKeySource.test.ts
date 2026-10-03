@@ -14,7 +14,7 @@ import { openDatabase, type Db } from '../storage/sqlite'
 import { createTempDirs } from '../../testing/testing'
 import { classifyHttpError } from './classifyError'
 import { createConnectionKeySource } from './connectionKeySource'
-import { OpenAiCompatibleProvider } from './openAiCompatible'
+import { OpenAiCompatibleProvider, type KeyLease, type KeySource } from './openAiCompatible'
 import type { TranslateRequest } from './types'
 
 const tempDir = createTempDirs()
@@ -61,6 +61,13 @@ async function setup(
   return { db, secrets, connection, crypto }
 }
 
+/** A key handed out for real, so the result can be reported against the call that used it. */
+async function lease(source: KeySource): Promise<KeyLease> {
+  const result = await source.acquire()
+  if ('exhausted' in result) throw new Error('expected a key, every key is frozen')
+  return result
+}
+
 const PER_DAY = JSON.stringify({
   error: {
     message: 'You exceeded your current quota.',
@@ -93,7 +100,10 @@ describe('createConnectionKeySource', () => {
     const { db, secrets } = await setup(['KEY-ONE', 'KEY-TWO'])
     const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => NOW })
 
-    await source.report('k0', classifyHttpError({ status: 429, body: PER_DAY, now: NOW }))
+    await source.report(
+      await lease(source),
+      classifyHttpError({ status: 429, body: PER_DAY, now: NOW })
+    )
 
     const frozen = getConnection(db, 'c1').keys[0]
     expect(frozen.frozenScope).toBe('day')
@@ -106,7 +116,10 @@ describe('createConnectionKeySource', () => {
   it('reports exhaustion with the earliest recovery once every key is frozen', async () => {
     const { db, secrets } = await setup(['KEY-ONE'])
     const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => NOW })
-    await source.report('k0', classifyHttpError({ status: 429, body: PER_DAY, now: NOW }))
+    await source.report(
+      await lease(source),
+      classifyHttpError({ status: 429, body: PER_DAY, now: NOW })
+    )
 
     const result = await source.acquire()
     expect(result).toMatchObject({ exhausted: true })
@@ -117,7 +130,7 @@ describe('createConnectionKeySource', () => {
   it('marks a wrong key invalid and moves on, without a timer', async () => {
     const { db, secrets } = await setup(['BAD', 'GOOD'])
     const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => NOW })
-    await source.report('k0', classifyHttpError({ status: 401, body: '', now: NOW }))
+    await source.report(await lease(source), classifyHttpError({ status: 401, body: '', now: NOW }))
 
     expect(getConnection(db, 'c1').keys[0]).toMatchObject({ state: 'invalid', frozenUntil: null })
     await expect(source.acquire()).resolves.toEqual({ id: 'k1', secret: 'GOOD' })
@@ -127,7 +140,7 @@ describe('createConnectionKeySource', () => {
   it('leaves the key alone when the failure was not the key', async () => {
     const { db, secrets } = await setup(['KEY-ONE'])
     const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => NOW })
-    await source.report('k0', classifyHttpError({ status: 503, body: '', now: NOW }))
+    await source.report(await lease(source), classifyHttpError({ status: 503, body: '', now: NOW }))
 
     expect(getConnection(db, 'c1').keys[0]).toMatchObject({ state: 'ok', frozenUntil: null })
     db.close()
@@ -135,18 +148,109 @@ describe('createConnectionKeySource', () => {
 
   it('doubles the blind freeze while the same key keeps failing, then clears it on success', async () => {
     const { db, secrets } = await setup(['KEY-ONE'])
+    let clock = NOW
+    const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => clock })
+    const blind = (): ReturnType<typeof classifyHttpError> =>
+      classifyHttpError({ status: 429, body: 'Too Many Requests', now: clock })
+
+    await source.report(await lease(source), blind())
+    const first = getConnection(db, 'c1').keys[0].frozenUntil as number
+    expect(first - clock).toBe(60_000)
+
+    // The freeze runs out; the key gets one probe call, which fails again.
+    clock = first
+    const probe = await lease(source)
+    await source.report(probe, blind())
+    const second = getConnection(db, 'c1').keys[0].frozenUntil as number
+    expect(second - clock).toBe(2 * 60_000)
+    expect(readKeyCiphers(db, 'c1')[0].freezeStrikes).toBe(2)
+
+    // Next time the probe works: the freeze and the count are gone.
+    clock = second
+    await source.report(await lease(source), 'ok')
+    expect(getConnection(db, 'c1').keys[0]).toMatchObject({ frozenUntil: null })
+    expect(readKeyCiphers(db, 'c1')[0].freezeStrikes).toBe(0)
+    db.close()
+  })
+
+  it('counts six simultaneous 429s on one key as one strike (measured: it was thirty minutes)', async () => {
+    const { db, secrets } = await setup(['KEY-ONE', 'KEY-TWO'])
     const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => NOW })
     const blind = classifyHttpError({ status: 429, body: 'Too Many Requests', now: NOW })
 
-    await source.report('k0', blind)
-    const first = getConnection(db, 'c1').keys[0].frozenUntil as number
-    await source.report('k0', blind)
-    const second = getConnection(db, 'c1').keys[0].frozenUntil as number
-    expect(second - NOW).toBe(2 * (first - NOW))
+    const inFlight = await Promise.all(Array.from({ length: 6 }, () => lease(source)))
+    expect(new Set(inFlight.map((l) => l.id))).toEqual(new Set(['k0']))
+    for (const call of inFlight) await source.report(call, blind)
 
-    await source.report('k0', 'ok')
-    expect(getConnection(db, 'c1').keys[0]).toMatchObject({ frozenUntil: null })
+    expect(readKeyCiphers(db, 'c1')[0].freezeStrikes).toBe(1)
+    expect(getConnection(db, 'c1').keys[0].frozenUntil).toBe(NOW + 60_000)
+    db.close()
+  })
+
+  it('does not un-freeze a key because a call that began before the failure finished well', async () => {
+    const { db, secrets } = await setup(['KEY-ONE', 'KEY-TWO'])
+    const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => NOW })
+
+    const early = await lease(source)
+    const unlucky = await lease(source)
+    await source.report(
+      unlucky,
+      classifyHttpError({ status: 429, body: 'Too Many Requests', now: NOW })
+    )
+    await source.report(early, 'ok')
+
+    expect(getConnection(db, 'c1').keys[0].frozenUntil).toBe(NOW + 60_000)
+    expect(readKeyCiphers(db, 'c1')[0].freezeStrikes).toBe(1)
+    // And the next call already goes to the other key.
+    expect((await lease(source)).id).toBe('k1')
+    db.close()
+  })
+
+  it('leaves a key alone when the call was cancelled or timed out', async () => {
+    const { db, secrets } = await setup(['KEY-ONE'])
+    const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => NOW })
+    await source.report(await lease(source), 'neutral')
+    expect(getConnection(db, 'c1').keys[0]).toMatchObject({ state: 'ok', frozenUntil: null })
     expect(readKeyCiphers(db, 'c1')[0].freezeStrikes).toBe(0)
+    db.close()
+  })
+
+  it('lets only one call through a key on probation, and a second key serves the rest', async () => {
+    const { db, secrets } = await setup(['KEY-ONE', 'KEY-TWO'])
+    let clock = NOW
+    const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => clock })
+    await source.report(
+      await lease(source),
+      classifyHttpError({ status: 429, body: 'Too Many Requests', now: clock })
+    )
+
+    clock = NOW + 61_000
+    const probe = await lease(source)
+    expect(probe.id).toBe('k0')
+    expect((await lease(source)).id).toBe('k1')
+    db.close()
+  })
+
+  it('does not strand a probe when the key cannot be opened', async () => {
+    const { db, secrets } = await setup(['KEY-ONE'])
+    let clock = NOW
+    const source = createConnectionKeySource({ db, connectionId: 'c1', secrets, now: () => clock })
+    await source.report(
+      await lease(source),
+      classifyHttpError({ status: 429, body: 'Too Many Requests', now: clock })
+    )
+    clock = NOW + 61_000
+
+    const open = secrets.open.bind(secrets)
+    let fail = true
+    secrets.open = async (cipher) => {
+      if (fail) throw new Error('the OS key store is locked')
+      return open(cipher)
+    }
+    await expect(source.acquire()).rejects.toThrow('locked')
+    fail = false
+    // The probe slot was given back, so the key is offered again instead of staying "being probed" forever.
+    expect((await lease(source)).id).toBe('k0')
     db.close()
   })
 

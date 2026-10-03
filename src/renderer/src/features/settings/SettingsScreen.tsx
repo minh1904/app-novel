@@ -122,7 +122,7 @@ export function SettingsScreen({ onBack }: { onBack(): void }): JSX.Element {
           onTest={() => void connections.test(connection.id)}
           onAddKey={(secret) => connections.addKey(connection.id, secret)}
           onRemoveKey={(keyId) => void connections.removeKey(connection.id, keyId)}
-          onSetModels={(models) => void connections.setModels(connection.id, models)}
+          entries={connections.entries}
         />
       ))}
     </div>

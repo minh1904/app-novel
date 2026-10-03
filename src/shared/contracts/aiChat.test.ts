@@ -27,7 +27,7 @@ function input(patch: Partial<ChatSendInput> = {}): unknown {
     workId: ID,
     chapterId: CHAPTER_ID,
     connectionId: ID,
-    model: 'gemini-flash-latest',
+    entryId: ID,
     mode: 'hoi',
     sourceLang: 'en',
     question: 'Dịch tự nhiên hơn giúp tôi.',
@@ -54,6 +54,15 @@ function firstIssue(raw: unknown): string | null {
 describe('chatSendSchema', () => {
   it('nhận một lượt hợp lệ', () => {
     expect(firstIssue(input())).toBeNull()
+  })
+
+  it('chọn model bằng id của mục, không phải tên model', () => {
+    expect(v.safeParse(chatSendSchema, input({ entryId: ID })).success).toBe(true)
+    // A model name is no longer an accepted way to say which model: the entry carries the settings too.
+    expect(v.safeParse(chatSendSchema, input({ entryId: 'gemini-flash-latest' })).success).toBe(
+      false
+    )
+    expect(v.safeParse(chatSendSchema, { ...(input() as object), model: 'x' }).success).toBe(false)
   })
 
   it('từ chối câu hỏi rỗng', () => {

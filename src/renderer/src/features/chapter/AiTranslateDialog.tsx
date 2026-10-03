@@ -5,8 +5,8 @@ import type { TextRecord } from '../../../../shared/contracts/text'
 import { Banner } from '../../components/Banner'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'
-import { Select } from '../../components/Select'
-import { targetKey, useAiTranslate } from './useAiTranslate'
+import { ModelSelectionMenu } from '../models/ModelSelectionMenu'
+import { useAiTranslate } from './useAiTranslate'
 
 /**
  * Hộp thoại "Dịch bằng AI" cho một chương.
@@ -141,8 +141,8 @@ function TranslateFlow({
         {notice}
         <p className="m-0 text-[12px] leading-[1.6] text-ink-muted">
           Chưa có kết nối AI nào đang bật, hoặc kết nối đang bật chưa chọn model nào. Khai một
-          endpoint tương thích OpenAI — gateway bạn tự dựng, hoặc API key của Google — rồi chọn model
-          trong màn Cài đặt.
+          endpoint tương thích OpenAI — gateway bạn tự dựng, hoặc API key của Google — rồi chọn
+          model trong màn Cài đặt.
         </p>
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="ghost-muted" onClick={onClose}>
@@ -263,18 +263,27 @@ function TranslateFlow({
   return (
     <div className="flex flex-col gap-3">
       {notice}
-      <Select
-        label="Kết nối và model"
-        value={run.chosen ?? ''}
-        options={run.targets.map((target) => ({
-          value: targetKey(target.connectionId, target.model),
-          label: target.label
-        }))}
-        onChange={(value) => {
-          setConfirmedRedo(false)
-          run.choose(value)
-        }}
-      />
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[12px] font-semibold">Model dùng để dịch</span>
+        <ModelSelectionMenu
+          variant="field"
+          label="Model dùng để dịch"
+          connections={run.connections}
+          selected={run.selection}
+          onSelect={(selection) => {
+            setConfirmedRedo(false)
+            void run.pick(selection)
+          }}
+          onSelectThinking={(selection, choice) => {
+            setConfirmedRedo(false)
+            void run.pick(selection, choice)
+          }}
+        />
+        <span className="text-[12px] leading-[1.55] text-ink-muted">
+          Bấm một mục để chọn nó; rê sang phải để chọn mức suy luận, và mức đó được ghi vào cài đặt
+          của mục.
+        </span>
+      </div>
 
       {run.stage === 'planning' && (
         <p role="status" className="m-0 text-[12px] text-ink-muted">

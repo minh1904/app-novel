@@ -73,7 +73,7 @@ const view: ConnectionView = {
   baseUrl: 'http://127.0.0.1:8317/v1',
   enabled: true,
   providerId: 'google',
-  defaultModel: 'gemini-flash-latest',
+  defaultEntryId: null,
   checkedAt: null,
   keys: [{ id: 'k1', tail: '9f3a', state: 'ok', frozenUntil: null, frozenScope: null }],
   models: [],
@@ -82,9 +82,12 @@ const view: ConnectionView = {
 
 function connections(fetchImpl: typeof fetch): ChatConnections {
   return {
-    translator(_id, model): ConnectionTranslator {
+    translator(_id, entryId): ConnectionTranslator {
+      const model = 'gemini-flash-latest'
       return {
         connection: view,
+        entry: { id: entryId, name: model, model, settings: {} },
+        settingsKey: 'k'.repeat(64),
         provider: new OpenAiCompatibleProvider({
           baseUrl: view.baseUrl,
           model,
@@ -144,7 +147,7 @@ const input = (patch: Record<string, unknown> = {}): unknown => ({
   workId: WORK_ID,
   chapterId: CHAPTER_ID,
   connectionId: CONNECTION_ID,
-  model: 'gemini-flash-latest',
+  entryId: '5d6e7f80-9a1b-4c2d-8e3f-405162738495',
   mode: 'hoi',
   sourceLang: 'en',
   question: 'Dịch tự nhiên hơn',

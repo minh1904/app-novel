@@ -6,6 +6,7 @@ import type { TextRecord } from '../../../shared/contracts/text'
 import { StorageError } from '../../infra/storage/errors'
 import { ChatService, type ChatConnections } from './chatService'
 import type { ConnectionTranslator } from './connectionService'
+import type { Generation } from '../../infra/providers/generation'
 import { OpenAiCompatibleProvider, type KeySource } from '../../infra/providers/openAiCompatible'
 
 /**
@@ -21,6 +22,7 @@ const NOW = 1_700_000_000_000
 const CONNECTION_ID = '7f1c2e5a-5b4d-4d5e-9c3a-1b2c3d4e5f60'
 const WORK_ID = '11111111-2222-4333-8444-555555555555'
 const CHAPTER_ID = '66666666-7777-4888-8999-aaaaaaaaaaaa'
+const ENTRY_ID = '5d6e7f80-9a1b-4c2d-8e3f-405162738495'
 
 const delta = (text: string): string =>
   'data: ' + JSON.stringify({ choices: [{ delta: { content: text } }] }) + '\n\n'
@@ -31,6 +33,10 @@ const usageFrame = (input: number, output: number): string =>
   '\n\n'
 
 const DONE = 'data: [DONE]\n\n'
+
+/** Khung đóng lựa chọn, mang `finish_reason`. */
+const finish = (reason: string): string =>
+  'data: ' + JSON.stringify({ choices: [{ delta: {}, finish_reason: reason }] }) + '\n\n'
 
 /** Phát từng chunk, chờ `gate` trước mỗi chunk khi có — để dựng hai lượt chạy song le. */
 function sseResponse(
@@ -69,7 +75,7 @@ function connection(patch: Partial<ConnectionView> = {}): ConnectionView {
     baseUrl: 'http://127.0.0.1:8317/v1',
     enabled: true,
     providerId: 'google',
-    defaultModel: 'gemini-flash-latest',
+    defaultEntryId: null,
     checkedAt: null,
     keys: [{ id: 'k1', tail: '9f3a', state: 'ok', frozenUntil: null, frozenScope: null }],
     models: [],
@@ -80,20 +86,33 @@ function connection(patch: Partial<ConnectionView> = {}): ConnectionView {
 /** Một `ChatConnections` giả: mỗi lần `translator` được gọi thì dựng provider trên `fetchImpl`. */
 function connections(
   fetchImpl: typeof fetch,
-  options: { view?: ConnectionView; throws?: StorageError } = {}
-): ChatConnections & { calls: number } {
+  options: {
+    view?: ConnectionView
+    throws?: StorageError
+    /** Tên model thật của mục; quyết định giá lấy từ bảng dữ liệu. */
+    model?: string
+    /** Tham số sinh của mục, như `ConnectionService` dựng từ cài đặt của nó. */
+    generation?: Generation
+  } = {}
+): ChatConnections & { calls: number; asked: string[] } {
   const holder = {
     calls: 0,
-    translator(_id: string, model: string): ConnectionTranslator {
+    asked: [] as string[],
+    translator(_id: string, entryId: string): ConnectionTranslator {
       holder.calls += 1
+      holder.asked.push(entryId)
       if (options.throws) throw options.throws
       const view = options.view ?? connection()
+      const model = options.model ?? 'gemini-flash-latest'
       return {
         connection: view,
+        entry: { id: entryId, name: model, model, settings: {} },
+        settingsKey: 'k'.repeat(64),
         provider: new OpenAiCompatibleProvider({
           baseUrl: view.baseUrl,
           model,
           keys,
+          generation: options.generation,
           fetchImpl,
           now: () => NOW
         }),
@@ -109,7 +128,7 @@ function input(patch: Partial<ChatSendInput> = {}): ChatSendInput {
     workId: WORK_ID,
     chapterId: CHAPTER_ID,
     connectionId: CONNECTION_ID,
-    model: 'gemini-flash-latest',
+    entryId: ENTRY_ID,
     mode: 'hoi',
     sourceLang: 'en',
     question: 'Dịch tự nhiên hơn',
@@ -173,7 +192,9 @@ describe('ChatService', () => {
   // Task 5.1
   it('trả requestId ngay và phát chữ rồi đúng một done', async () => {
     const sink = collector()
-    const conns = connections(async () => sseResponse([delta('Nhờ '), delta('ngoại hình'), usageFrame(100, 20), DONE]))
+    const conns = connections(async () =>
+      sseResponse([delta('Nhờ '), delta('ngoại hình'), usageFrame(100, 20), DONE])
+    )
     const chat = service(conns)
 
     const requestId = chat.start(input(), sink.emit)
@@ -188,7 +209,9 @@ describe('ChatService', () => {
 
   it('done mang usage, tiền và bốn ký tự cuối của khóa', async () => {
     const sink = collector()
-    const conns = connections(async () => sseResponse([delta('a'), usageFrame(1_000_000, 1_000_000), DONE]))
+    const conns = connections(async () =>
+      sseResponse([delta('a'), usageFrame(1_000_000, 1_000_000), DONE])
+    )
     const chat = service(conns)
     const requestId = chat.start(input(), sink.emit)
     await sink.settled(requestId)
@@ -200,6 +223,38 @@ describe('ChatService', () => {
       usd: 4.5,
       keyTail: '9f3a'
     })
+  })
+
+  it('done nói câu trả lời bị cắt khi nhà cung cấp báo hết giới hạn đầu ra', async () => {
+    const sink = collector()
+    const conns = connections(async () => sseResponse([delta('Nửa câu'), finish('length'), DONE]))
+    const chat = service(conns)
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+
+    expect(sink.chunks.find((c) => c.kind === 'done')).toMatchObject({ finishReason: 'length' })
+  })
+
+  it('done nói câu trả lời xong êm khi nhà cung cấp báo stop', async () => {
+    const sink = collector()
+    const chat = service(
+      connections(async () => sseResponse([delta('Xong'), finish('stop'), DONE]))
+    )
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+
+    expect(sink.chunks.find((c) => c.kind === 'done')).toMatchObject({ finishReason: 'stop' })
+  })
+
+  it('done không có finishReason khi nhà cung cấp không nói: thiếu nghĩa là không biết', async () => {
+    const sink = collector()
+    const chat = service(connections(async () => sseResponse([delta('a'), DONE])))
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+
+    const done = sink.chunks.find((c) => c.kind === 'done')
+    expect(done).toBeDefined()
+    expect(done).not.toHaveProperty('finishReason')
   })
 
   it('dọn sổ sau khi lượt kết thúc, dù êm hay lỗi', async () => {
@@ -229,7 +284,10 @@ describe('ChatService', () => {
   it('lỗi ngay từ đầu nói partial là false', async () => {
     const sink = collector()
     const chat = service(
-      connections(async () => new Response(JSON.stringify({ error: { message: 'sai khóa' } }), { status: 401 }))
+      connections(
+        async () =>
+          new Response(JSON.stringify({ error: { message: 'sai khóa' } }), { status: 401 })
+      )
     )
     const requestId = chat.start(input(), sink.emit)
     await sink.settled(requestId)
@@ -248,7 +306,9 @@ describe('ChatService', () => {
         details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '30s' }]
       }
     }
-    const chat = service(connections(async () => new Response(JSON.stringify(body), { status: 429 })))
+    const chat = service(
+      connections(async () => new Response(JSON.stringify(body), { status: 429 }))
+    )
     const requestId = chat.start(input(), sink.emit)
     await sink.settled(requestId)
 
@@ -380,8 +440,12 @@ describe('ChatService', () => {
   // Task 5.4
   it('usd là null khi model không có giá, không phải 0', async () => {
     const sink = collector()
-    const chat = service(connections(async () => sseResponse([delta('a'), usageFrame(1000, 500), DONE])))
-    const requestId = chat.start(input({ model: 'gemma-4-31b-it' }), sink.emit)
+    const chat = service(
+      connections(async () => sseResponse([delta('a'), usageFrame(1000, 500), DONE]), {
+        model: 'gemma-4-31b-it'
+      })
+    )
+    const requestId = chat.start(input(), sink.emit)
     await sink.settled(requestId)
 
     const done = sink.chunks.find((c) => c.kind === 'done')
@@ -390,8 +454,12 @@ describe('ChatService', () => {
 
   it('usd là null khi model không có trong bản chụp', async () => {
     const sink = collector()
-    const chat = service(connections(async () => sseResponse([delta('a'), usageFrame(1000, 500), DONE])))
-    const requestId = chat.start(input({ model: 'model-khong-ton-tai' }), sink.emit)
+    const chat = service(
+      connections(async () => sseResponse([delta('a'), usageFrame(1000, 500), DONE]), {
+        model: 'model-khong-ton-tai'
+      })
+    )
+    const requestId = chat.start(input(), sink.emit)
     await sink.settled(requestId)
 
     expect(sink.chunks.find((c) => c.kind === 'done')).toMatchObject({ usd: null })
@@ -578,6 +646,44 @@ describe('đọc bằng công cụ', () => {
     expect(textOf(sink.chunks, requestId)).toBe('đành trả lời vậy')
     // Three offered rounds, then one final round with no tools on the table.
     expect(round).toBe(4)
+  })
+
+  it('đọc mục model một lần ở đầu lượt, và mọi vòng đọc công cụ gửi cùng một cấu hình', async () => {
+    const sink = collector()
+    const library = fakeLibrary()
+    const bodies: Array<Record<string, unknown>> = []
+    let round = 0
+    const conns = connections(
+      async (_url, init) => {
+        bodies.push(JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>)
+        round += 1
+        // Two reads, then the answer: three calls to the provider in one turn.
+        if (round <= 2) {
+          return sseResponse([
+            toolFrame({
+              index: 0,
+              id: 'c' + round,
+              function: { name: 'list_chapters', arguments: '{}' }
+            }),
+            DONE
+          ])
+        }
+        return sseResponse([delta('xong'), DONE])
+      },
+      { generation: { temperature: 0.3, reasoningEffort: 'none', extraBody: { top_k: 5 } } }
+    )
+
+    const chat = serviceWithTools(conns, library)
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+
+    expect(bodies).toHaveLength(3)
+    for (const body of bodies) {
+      expect(body).toMatchObject({ temperature: 0.3, reasoning_effort: 'none', top_k: 5 })
+    }
+    // The entry was read once, for the turn. A setting edited while the turn runs belongs to the next one.
+    expect(conns.calls).toBe(1)
+    expect(conns.asked).toEqual([ENTRY_ID])
   })
 
   it('không có kho thì lượt vẫn chạy, chỉ là không mời công cụ', async () => {

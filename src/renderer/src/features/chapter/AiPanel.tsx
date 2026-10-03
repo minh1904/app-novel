@@ -161,6 +161,24 @@ export function AiPanel({
           </p>
         )}
 
+        {chat.modelNotice !== null && (
+          <p
+            role="alert"
+            className="flex items-start justify-between gap-2 rounded-control border border-error/40 bg-error/5 px-2 py-1.5 text-[12px] leading-[1.5]"
+          >
+            <span className="min-w-0 break-words">
+              Không đổi được mức suy luận: {chat.modelNotice}
+            </span>
+            <button
+              type="button"
+              className="shrink-0 cursor-pointer text-ink-muted underline hover:text-ink"
+              onClick={chat.dismissModelNotice}
+            >
+              Đóng
+            </button>
+          </p>
+        )}
+
         {chat.loadError === null && chat.usable.length === 0 && (
           <div className="flex flex-col items-start gap-2 rounded-panel border border-line bg-canvas p-3">
             <p className="text-[12px] leading-[1.6] text-ink-muted">

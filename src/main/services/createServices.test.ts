@@ -67,6 +67,29 @@ describe('createServices', () => {
     expect(Buffer.from(stored[0].secret).toString('utf-8')).not.toContain('AIzaSyFAKEKEY01')
   })
 
+  it('sends provider requests through the fetch it was given', async () => {
+    const library = openLibrary()
+    const seen: string[] = []
+    const fetchLike = (async (url: string | URL | Request) => {
+      seen.push(String(url))
+      return new Response(JSON.stringify({ data: [{ id: 'gemini-test' }] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' }
+      })
+    }) as typeof fetch
+    const { connections } = createServices({ library, crypto: countingCrypto(), fetch: fetchLike })
+    const created = connections.create({
+      name: 'Gateway thử',
+      baseUrl: 'http://127.0.0.1:8317/v1/chat/completions',
+      providerId: null
+    })
+
+    const result = await connections.test(created.id)
+    // The pasted endpoint was cut back to its base, and the request went out through the injected fetch.
+    expect(seen).toEqual(['http://127.0.0.1:8317/v1/models'])
+    expect(result.models.map((model) => model.id)).toEqual(['gemini-test'])
+  })
+
   it('refuses to keep a key when the crypto cannot protect it', async () => {
     const library = openLibrary()
     const crypto = { ...countingCrypto(), isEncryptionAvailable: () => false }

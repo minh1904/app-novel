@@ -1,6 +1,6 @@
 import * as v from 'valibot'
 import { idSchema, SOURCE_LANGUAGES } from './library'
-import { MODEL_ID_MAX } from './aiConnections'
+import type { TokenUsage } from './usage'
 
 /**
  * Hỏi AI về chỗ đang sửa: những gì đi qua IPC.
@@ -73,7 +73,8 @@ export interface ChatSendInput {
   workId: string
   chapterId: string
   connectionId: string
-  model: string
+  /** Mục model dùng cho lượt này; cấu hình của nó được đọc một lần ở đầu lượt. */
+  entryId: string
   mode: ChatMode
   sourceLang: (typeof SOURCE_LANGUAGES)[number]
   question: string
@@ -85,7 +86,9 @@ export interface ChatSendInput {
 export type ChatErrorKind =
   | 'rate_limited'
   | 'network'
+  | 'timeout'
   | 'auth'
+  | 'quota'
   | 'refused'
   | 'invalid_response'
   | 'cancelled'
@@ -99,10 +102,10 @@ export interface ChatError {
   recoverAt: number | null
 }
 
-export interface ChatUsage {
-  inputTokens: number
-  outputTokens: number
-}
+export type ChatUsage = TokenUsage
+
+/** Lý do một câu trả lời dừng, theo lời của app. `unknown` không được gửi đi: thiếu trường là "không biết". */
+export type ChatFinishReason = 'stop' | 'length' | 'tool_calls' | 'filter'
 
 /**
  * Một thông điệp của lượt đang chạy, đi main → renderer.
@@ -126,6 +129,12 @@ export type ChatChunk =
       usd: number | null
       /** Bốn ký tự cuối của khóa đã dùng; `null` khi kết nối không có khóa. */
       keyTail: string | null
+      /**
+       * Vì sao câu trả lời dừng, **chỉ khi nhà cung cấp nói rõ**. `length` nghĩa là bị cắt vì hết giới hạn
+       * đầu ra — câu trả lời chưa đủ — và trước đây không có gì phân biệt nó với một lượt xong êm.
+       * Thiếu trường này nghĩa là không biết, không phải xong êm. Panel chưa dùng nó.
+       */
+      finishReason?: ChatFinishReason
     }
   | {
       requestId: string
@@ -193,16 +202,12 @@ export function extractFence(answer: string): string | null {
  */
 export const CHAT_HISTORY_CHARS_BUDGET = 24_000
 
-const model = v.pipe(
-  v.string('Tên model phải là chữ.'),
-  v.trim(),
-  v.minLength(1, 'Chưa chọn model.'),
-  v.maxLength(MODEL_ID_MAX, 'Tên model quá dài.')
-)
-
 const turnSchema = v.strictObject({
   role: v.picklist(['user', 'assistant'], 'Vai của lượt không hợp lệ.'),
-  text: v.pipe(v.string('Nội dung lượt phải là chữ.'), v.maxLength(CHAT_TURN_TEXT_MAX, 'Một lượt trong hội thoại quá dài.'))
+  text: v.pipe(
+    v.string('Nội dung lượt phải là chữ.'),
+    v.maxLength(CHAT_TURN_TEXT_MAX, 'Một lượt trong hội thoại quá dài.')
+  )
 })
 
 const contextBlockSchema = v.strictObject({
@@ -226,12 +231,9 @@ function totalTextLength(input: ChatSendInput): number {
 export const chatSendSchema = v.pipe(
   v.strictObject({
     workId: idSchema,
-    chapterId: v.pipe(
-      v.string('ID chương phải là chữ.'),
-      v.uuid('ID chương không hợp lệ.')
-    ),
+    chapterId: v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.')),
     connectionId: idSchema,
-    model,
+    entryId: idSchema,
     mode: v.picklist(CHAT_MODES, 'Chế độ không hợp lệ.'),
     sourceLang: v.picklist(SOURCE_LANGUAGES, 'Ngôn ngữ nguồn không hợp lệ.'),
     question: v.pipe(

@@ -90,7 +90,9 @@ describe('list_chapters', () => {
 describe('read_chapter', () => {
   it('reads the source of a chapter by its number', () => {
     const library = libraryOf({ 'ch-2/source': 'Nội dung chương hai.' })
-    const result = createChatTools(library, WORK).run(call('read_chapter', { chapter: 2, side: 'source' }))
+    const result = createChatTools(library, WORK).run(
+      call('read_chapter', { chapter: 2, side: 'source' })
+    )
 
     expect(result.content).toContain('Nội dung chương hai.')
     expect(result.detail).toContain('Chương 2 · bản gốc')
@@ -107,7 +109,9 @@ describe('read_chapter', () => {
 
   it('cuts an overlong chapter and says it cut', () => {
     const library = libraryOf({ 'ch-1/source': 'x'.repeat(TOOL_TEXT_MAX + 100) })
-    const result = createChatTools(library, WORK).run(call('read_chapter', { chapter: 1, side: 'source' }))
+    const result = createChatTools(library, WORK).run(
+      call('read_chapter', { chapter: 1, side: 'source' })
+    )
 
     expect(result.content).toContain('Đã cắt')
     expect(result.detail).toContain('đã cắt')

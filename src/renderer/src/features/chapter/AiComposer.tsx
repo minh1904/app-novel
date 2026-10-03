@@ -7,6 +7,7 @@ import { NotebookIcon } from '@solar-icons/react/linear/notebook'
 import { cx } from '../../components/cx'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
 import { CHAT_MODES, type ChatMode } from '../../../../shared/contracts/aiChat'
+import { ModelSelectionMenu } from '../models/ModelSelectionMenu'
 import type { AiChatController } from './useAiChat'
 
 /**
@@ -142,55 +143,14 @@ export function AiComposer({
             </MenuPopup>
           </MenuRoot>
 
-          <MenuRoot>
-            <MenuTrigger
-              className={pickerClass}
-              disabled={chat.usable.length === 0}
-              title="Kết nối và model, khai trong Cài đặt"
-            >
-              {chat.model ?? 'chưa có model'}
-              <AltArrowDownIcon size={12} className="shrink-0" />
-            </MenuTrigger>
-            <MenuPopup align="start">
-              <div className="w-[276px]">
-                {chat.usable.map((connection) => (
-                  <div key={connection.id}>
-                    <p className="px-1.5 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
-                      {connection.name}
-                    </p>
-                    {(connection.models.length > 0
-                      ? connection.models
-                      : connection.defaultModel
-                        ? [connection.defaultModel]
-                        : []
-                    ).map((name) => (
-                      <MenuItem
-                        key={connection.id + name}
-                        onClick={() => {
-                          chat.setConnection(connection.id)
-                          chat.setModel(name)
-                        }}
-                      >
-                        <span className="min-w-0 flex-1 truncate text-[12.5px]">{name}</span>
-                        <CheckIcon
-                          size={14}
-                          className={cx(
-                            'shrink-0',
-                            connection.id === chat.connection?.id && name === chat.model
-                              ? 'text-ink'
-                              : 'opacity-0'
-                          )}
-                        />
-                      </MenuItem>
-                    ))}
-                  </div>
-                ))}
-                <p className="mt-1 border-t border-line px-1.5 pt-1.5 pb-0.5 text-[10px] leading-[1.5] text-ink-muted">
-                  Danh sách lấy từ kết nối đã khai. Thêm khóa và endpoint trong Cài đặt.
-                </p>
-              </div>
-            </MenuPopup>
-          </MenuRoot>
+          <ModelSelectionMenu
+            label="Model để hỏi"
+            connections={chat.usable}
+            selected={chat.selection}
+            onSelect={chat.selectModel}
+            onSelectThinking={(selection, choice) => void chat.setThinking(selection, choice)}
+            onOpen={chat.refreshConnections}
+          />
 
           <span className="ml-auto flex shrink-0 items-center gap-0.5">
             <button

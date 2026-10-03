@@ -1,4 +1,4 @@
-import type { ChatChunk, ChatSendInput, ChatUsage } from '../../../shared/contracts/aiChat'
+import type { ChatChunk, ChatFinishReason, ChatSendInput } from '../../../shared/contracts/aiChat'
 import { buildChatMessages } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,
@@ -10,6 +10,7 @@ import type { ConnectionTranslator } from './connectionService'
 import { costOfUsage } from './costEstimate'
 import { lookupModel } from '../../infra/providers/modelCatalog'
 import { ProviderError } from '../../infra/providers/types'
+import { addUsage, toWireUsage, type Usage } from '../../infra/providers/usage'
 
 /**
  * Vòng đời một lượt hội thoại trong main.
@@ -34,7 +35,7 @@ export type ChatEmit = (chunk: ChatChunk) => void
  * không liên quan gì tới kho.
  */
 export interface ChatConnections {
-  translator(id: string, model: string): ConnectionTranslator
+  translator(id: string, entryId: string): ConnectionTranslator
 }
 
 export interface ChatServiceOptions {
@@ -56,21 +57,6 @@ export interface ChatServiceOptions {
  * có câu trả lời, chỉ là nó dựa trên ít dữ liệu hơn model muốn.
  */
 const MAX_TOOL_ROUNDS = 3
-
-/**
- * Cộng dồn lượng dùng qua các vòng đọc.
- *
- * Một lượt có tool là **nhiều** lời gọi, mỗi lời gọi một hóa đơn; ghi đè thay vì cộng sẽ báo cho
- * người dùng đúng chi phí của vòng cuối và giấu mất phần còn lại.
- */
-function addUsage(total: ChatUsage | null, next: ChatUsage | null): ChatUsage | null {
-  if (next === null) return total
-  if (total === null) return next
-  return {
-    inputTokens: total.inputTokens + next.inputTokens,
-    outputTokens: total.outputTokens + next.outputTokens
-  }
-}
 
 /** Lỗi của nhà cung cấp về renderer như **dữ liệu trong chunk**, không phải lỗi của kênh IPC. */
 function toChatError(error: unknown, now: number): ChatChunk & { kind: 'error' } {
@@ -119,7 +105,9 @@ export class ChatService {
     // Cùng một đường với lối dịch: nó dựng provider trên kho khóa của kết nối và từ chối kết nối
     // đang tắt với đúng câu hộp thoại dịch đang dùng. Tên method nói "translator" vì nó có trước;
     // thứ nó trả về là một kết nối đã sẵn sàng gọi, không riêng gì việc dịch.
-    const session = connections.translator(input.connectionId, input.model)
+    // Cài đặt của mục được đọc ở đây, **một lần**, và nằm trong `session`: mọi vòng đọc công cụ của lượt dùng
+    // nguyên bộ đó, nên sửa cài đặt giữa chừng chỉ có hiệu lực từ lượt kế tiếp.
+    const session = connections.translator(input.connectionId, input.entryId)
 
     const requestId = newId()
     const controller = new AbortController()
@@ -150,7 +138,11 @@ export class ChatService {
   ): Promise<void> {
     const { now } = this.options
     let partial = false
-    let usage: ChatUsage | null = null
+    // Mỗi vòng đọc là một lời gọi có hóa đơn riêng, nên cộng dồn (`addUsage`) thay vì ghi đè: ghi đè
+    // sẽ báo đúng chi phí của vòng cuối và giấu phần còn lại.
+    let usage: Usage | null = null
+    // Vì sao vòng **cuối** dừng — vòng trả lời thật, không phải vòng đọc công cụ trước đó.
+    let finishReason: ChatFinishReason | undefined
 
     try {
       const { library } = this.options
@@ -176,6 +168,7 @@ export class ChatService {
           } else {
             // Mỗi vòng là một lần gọi có hóa đơn riêng, nên cộng dồn thay vì ghi đè.
             usage = addUsage(usage, event.usage)
+            finishReason = event.finishReason === 'unknown' ? undefined : event.finishReason
             if (event.kind === 'tool-calls') calls = event.calls
           }
         }
@@ -208,9 +201,10 @@ export class ChatService {
       emit({
         requestId,
         kind: 'done',
-        usage,
-        usd: usage === null ? null : costOfUsage(usage, this.modelInfo(session, input.model)),
-        keyTail: session.lastKeyTail()
+        usage: usage === null ? null : toWireUsage(usage),
+        usd: usage === null ? null : costOfUsage(usage, this.modelInfo(session)),
+        keyTail: session.lastKeyTail(),
+        ...(finishReason === undefined ? {} : { finishReason })
       })
     } catch (error) {
       if (!this.running.has(requestId)) return
@@ -221,10 +215,7 @@ export class ChatService {
     }
   }
 
-  private modelInfo(
-    session: ConnectionTranslator,
-    model: string
-  ): ReturnType<typeof lookupModel> {
-    return lookupModel(model, session.connection.providerId ?? undefined)
+  private modelInfo(session: ConnectionTranslator): ReturnType<typeof lookupModel> {
+    return lookupModel(session.entry.model, session.connection.providerId ?? undefined)
   }
 }

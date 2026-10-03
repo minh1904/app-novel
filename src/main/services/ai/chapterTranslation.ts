@@ -7,6 +7,7 @@ import type {
   TranslatePlanInput,
   TranslateUsage
 } from '../../../shared/contracts/aiTranslate'
+import { taskLimit } from '../../../shared/contracts/modelSettings'
 import { buildRows, normalizeRowText, type Row } from '../../../shared/contracts/rows'
 import { StorageError } from '../../infra/storage/errors'
 import type { LibraryStore } from '../library/library'
@@ -17,6 +18,7 @@ import { CATALOG_READ_AT, lookupModel } from '../../infra/providers/modelCatalog
 import { splitIntoBatches } from '../../infra/providers/openAiCompatible'
 import { originFor } from './provenance'
 import { ProviderError, type SegmentText } from '../../infra/providers/types'
+import { toWireUsage } from '../../infra/providers/usage'
 
 /**
  * Dịch bản gốc của một chương bằng AI.
@@ -63,9 +65,9 @@ function toSegmentText(row: Row): SegmentText {
 export class ChapterTranslator {
   constructor(private readonly options: ChapterTranslatorOptions) {}
 
-  plan({ workId, chapterId, connectionId, model }: TranslatePlanInput): TranslatePlan {
+  plan({ workId, chapterId, connectionId, entryId }: TranslatePlanInput): TranslatePlan {
     const { library, connections } = this.options
-    const { connection } = connections.translator(connectionId, model)
+    const { connection, entry, settingsKey } = connections.translator(connectionId, entryId)
     const work = library.get(workId)
     const source = library.readText(workId, chapterId, 'source')
     if (source.segments.length === 0) {
@@ -78,7 +80,12 @@ export class ChapterTranslator {
       throw new StorageError('validation', 'Bản gốc của chương này không có câu nào để dịch.')
     }
 
-    const batches = splitIntoBatches(sendable.map(toSegmentText)).map((batch) => ({
+    // Cỡ lô là giới hạn token đầu vào của mục (0 là mặc định). Provider dùng đúng con số này để chia lại một
+    // lô khi dịch, nên một lô đã chia ở đây đi ra thành một lời gọi.
+    const batches = splitIntoBatches(
+      sendable.map(toSegmentText),
+      taskLimit(entry.settings.inputTokenLimit)
+    ).map((batch) => ({
       sourceIds: batch.map((segment) => segment.id),
       sourceChars: batch.reduce((total, segment) => total + segment.text.length, 0)
     }))
@@ -86,7 +93,10 @@ export class ChapterTranslator {
     return {
       connectionId,
       connectionName: connection.name,
-      model,
+      entryId,
+      entryName: entry.name,
+      model: entry.model,
+      settingsKey,
       catalogReadAt: CATALOG_READ_AT,
       segmentCount: sendable.length,
       batches,
@@ -96,7 +106,7 @@ export class ChapterTranslator {
         sourceChars: batches.reduce((total, batch) => total + batch.sourceChars, 0),
         sourceLang: work.sourceLang,
         batchCount: batches.length,
-        model: lookupModel(model, connection.providerId ?? undefined)
+        model: lookupModel(entry.model, connection.providerId ?? undefined)
       }),
       targetRev: library.readText(workId, chapterId, 'target').rev
     }
@@ -104,8 +114,17 @@ export class ChapterTranslator {
 
   async runBatch(input: TranslateBatchInput): Promise<TranslateBatchResult> {
     const { library, connections, now } = this.options
-    const { workId, chapterId, connectionId, model, sourceIds, expectedRev } = input
-    const translator = connections.translator(connectionId, model)
+    const { workId, chapterId, connectionId, entryId, settingsKey, sourceIds, expectedRev } = input
+    // Mục bị xóa giữa chừng thì ném `not_found` ở đây, trước khi gửi gì.
+    const translator = connections.translator(connectionId, entryId)
+    // Cấu hình của mục phải còn y như lúc lập kế hoạch (design D6). Provider vừa dựng và khóa vừa so cùng đọc
+    // từ một lần đọc mục, nên lô gửi đi dùng đúng bộ cấu hình có khóa khớp, không có kẽ hở giữa hai việc.
+    if (translator.settingsKey !== settingsKey) {
+      throw new StorageError(
+        'conflict',
+        'Cấu hình model đã đổi giữa lúc đang dịch. Hãy lập kế hoạch lại để dịch phần còn lại bằng cấu hình mới; phần đã dịch vẫn được giữ.'
+      )
+    }
     const work = library.get(workId)
 
     const target = library.readText(workId, chapterId, 'target')
@@ -136,7 +155,7 @@ export class ChapterTranslator {
         segments
       })
       items = response.items
-      usage = response.usage ?? null
+      usage = response.usage === undefined ? null : toWireUsage(response.usage)
       // Nguồn gốc theo đúng một quy ước: provider giả lập không bao giờ được ghi là `ai`.
       by = {
         origin: originFor(response.provider),

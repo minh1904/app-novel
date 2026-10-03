@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import type { SchemaSpec } from './migrate'
+import type { Db } from './sqlite'
 
 /** "MIRL" in ASCII: the library index, distinct from work files. */
 export const LIBRARY_APPLICATION_ID = 0x4d49524c
@@ -83,6 +85,75 @@ CREATE TABLE ai_model (
 );
 `
 
+const version5Table = `
+CREATE TABLE ai_model (
+  id TEXT PRIMARY KEY,
+  connection_id TEXT NOT NULL REFERENCES ai_connection (id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  ord INTEGER NOT NULL,
+  settings TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX ai_model_connection ON ai_model (connection_id, ord);
+`
+
+/**
+ * Model là một **mục** có id riêng, nhân bản được, thay cho cặp `(kết nối, tên model)` (design D1–D2 của
+ * change `ai-model-settings`). Hai mục cùng `model_id` hợp lệ, nên khóa chính cũ phải bỏ; SQLite không đổi
+ * khóa chính tại chỗ nên bảng được dựng lại. Viết bằng hàm chứ không phải một chuỗi SQL vì mỗi mục cần một
+ * uuid, và vì `ai_connection.default_model` (trước là tên model) phải đổi thành id của mục tương ứng.
+ *
+ * Chạy trong transaction của `migrate`, cùng với việc nâng `user_version`: hỏng giữa chừng thì tệp ở nguyên
+ * v4. Mọi mục sinh ra có `settings = '{}'`, tức không gửi gì thêm, nên hành vi không đổi cho tới khi người
+ * dùng đặt một tham số.
+ */
+function version5(db: Db): void {
+  const oldModels = db
+    .prepare('SELECT connection_id, model_id, ord FROM ai_model ORDER BY connection_id, ord')
+    .all<{ connection_id: string; model_id: string; ord: number }>()
+  const connections = db
+    .prepare('SELECT id, default_model FROM ai_connection')
+    .all<{ id: string; default_model: string | null }>()
+
+  db.exec('DROP TABLE ai_model')
+  db.exec(version5Table)
+
+  const insert = db.prepare(
+    'INSERT INTO ai_model (id, connection_id, name, model_id, ord, settings) VALUES (?, ?, ?, ?, ?, ?)'
+  )
+  // Mục đầu tiên của mỗi (kết nối, tên model) cũ; dùng để tìm mục mà model mặc định cũ trỏ tới.
+  const entryOf = new Map<string, string>()
+  const nextOrd = new Map<string, number>()
+  const key = (connectionId: string, modelId: string): string => connectionId + '\u0000' + modelId
+
+  for (const row of oldModels) {
+    const id = randomUUID()
+    insert.run(id, row.connection_id, row.model_id, row.model_id, row.ord, '{}')
+    entryOf.set(key(row.connection_id, row.model_id), id)
+    nextOrd.set(row.connection_id, Math.max(nextOrd.get(row.connection_id) ?? 0, row.ord + 1))
+  }
+
+  const setDefault = db.prepare('UPDATE ai_connection SET default_model = ? WHERE id = ?')
+  for (const connection of connections) {
+    const modelId = connection.default_model
+    if (modelId === null) continue
+    if (modelId === '') {
+      setDefault.run(null, connection.id)
+      continue
+    }
+    let id = entryOf.get(key(connection.id, modelId))
+    if (id === undefined) {
+      // Model mặc định không nằm trong danh sách đã chọn (trước đây vẫn dùng được, `targetsOf` đưa nó vào
+      // danh sách dịch). Giữ nó dùng được bằng cách tạo mục cho nó, thay vì âm thầm mất mặc định.
+      id = randomUUID()
+      const ord = nextOrd.get(connection.id) ?? 0
+      insert.run(id, connection.id, modelId, modelId, ord, '{}')
+      nextOrd.set(connection.id, ord + 1)
+    }
+    setDefault.run(id, connection.id)
+  }
+}
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -110,6 +181,10 @@ export const librarySchema: SchemaSpec = {
       up(db) {
         db.exec(version4)
       }
+    },
+    {
+      version: 5,
+      up: version5
     }
   ]
 }

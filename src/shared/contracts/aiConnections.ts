@@ -1,5 +1,13 @@
 import * as v from 'valibot'
+import { normalizeBaseUrl } from './endpointUrl'
 import { idSchema } from './library'
+import {
+  entryModelSchema,
+  entryNameSchema,
+  modelSettingsPatchSchema,
+  type ModelEntryView
+} from './modelSettings'
+import type { TokenUsage } from './usage'
 
 /**
  * Kết nối AI: những gì đi qua IPC giữa main và renderer.
@@ -11,7 +19,6 @@ import { idSchema } from './library'
 export const CONNECTION_NAME_MAX = 80
 export const CONNECTION_URL_MAX = 300
 export const API_KEY_MAX = 400
-export const MODEL_ID_MAX = 120
 
 export type KeyState = 'ok' | 'invalid'
 export type QuotaScope = 'minute' | 'day'
@@ -32,10 +39,12 @@ export interface ConnectionView {
   baseUrl: string
   enabled: boolean
   providerId: string | null
-  defaultModel: string | null
+  /** Id của **mục** model mặc định (không phải tên model); `null` khi chưa chọn. */
+  defaultEntryId: string | null
   checkedAt: number | null
   keys: ConnectionKeyView[]
-  models: string[]
+  /** Mục model của kết nối, theo thứ tự người dùng xếp, kèm khả năng của từng model. */
+  models: ModelEntryView[]
 }
 
 /** Giá và giới hạn của một model, lấy từ bản chụp đi kèm bản cài. */
@@ -134,17 +143,13 @@ const baseUrl = v.pipe(
   v.trim(),
   v.minLength(1, 'Địa chỉ không được để trống.'),
   v.maxLength(CONNECTION_URL_MAX, 'Địa chỉ quá dài.'),
-  v.regex(/^https?:\/\/\S+$/i, 'Địa chỉ phải bắt đầu bằng http:// hoặc https://')
+  v.regex(/^https?:\/\/\S+$/i, 'Địa chỉ phải bắt đầu bằng http:// hoặc https://'),
+  // Dán nguyên đường dẫn endpoint cũng được: lưu dạng gốc để không bị nối đôi `/chat/completions`.
+  v.transform(normalizeBaseUrl)
 )
 
 const providerId = v.nullable(
   v.pipe(v.string('Nhà cung cấp phải là chữ.'), v.maxLength(60, 'Tên nhà cung cấp quá dài.'))
-)
-
-const modelId = v.pipe(
-  v.string('Tên model phải là chữ.'),
-  v.trim(),
-  v.maxLength(MODEL_ID_MAX, 'Tên model quá dài.')
 )
 
 export const createConnectionSchema = v.strictObject({
@@ -160,7 +165,7 @@ export const updateConnectionSchema = v.strictObject({
     baseUrl: v.optional(baseUrl),
     providerId: v.optional(providerId),
     enabled: v.optional(v.boolean('Giá trị bật/tắt không hợp lệ.')),
-    defaultModel: v.optional(v.nullable(modelId))
+    defaultEntryId: v.optional(v.nullable(idSchema))
   })
 })
 
@@ -179,13 +184,53 @@ export const addConnectionKeySchema = v.strictObject({
 
 export const removeConnectionKeySchema = v.strictObject({ id: connectionId, keyId })
 
-export const setConnectionModelsSchema = v.strictObject({
-  id: connectionId,
-  models: v.pipe(
-    v.array(modelId, 'Danh sách model không hợp lệ.'),
-    v.maxLength(200, 'Chọn quá nhiều model.')
+/** Thêm một hay nhiều mục model vào cuối danh sách của kết nối. Mỗi mục mới có cài đặt trống. */
+export const addModelEntriesSchema = v.strictObject({
+  connectionId,
+  items: v.pipe(
+    v.array(
+      v.strictObject({ model: entryModelSchema, name: v.optional(entryNameSchema) }),
+      'Danh sách model không hợp lệ.'
+    ),
+    v.minLength(1, 'Chưa chọn model nào.'),
+    v.maxLength(100, 'Thêm quá nhiều model một lần.')
   )
 })
 
+/**
+ * Sửa một mục: tên hiển thị, tên model thật, và/hoặc cài đặt (một bản vá, xem `modelSettingsPatchSchema`).
+ * Mỗi hộp thoại chỉ gửi nhóm của nó nên không ghi đè nhóm khác.
+ */
+export const updateModelEntrySchema = v.strictObject({
+  entryId: idSchema,
+  patch: v.strictObject({
+    name: v.optional(entryNameSchema),
+    model: v.optional(entryModelSchema),
+    settings: v.optional(modelSettingsPatchSchema)
+  })
+})
+
+/** Nhân bản, xóa, hay kiểm tra một mục: chỉ cần biết mục nào. */
+export const modelEntryRefSchema = v.strictObject({ entryId: idSchema })
+
+/**
+ * Xếp lại thứ tự các mục của một kết nối. `ids` phải đúng là các mục đang có, mỗi mục một lần; main từ chối
+ * nếu không khớp thay vì đoán, vì giao diện đang xếp một danh sách đã cũ.
+ */
+export const reorderModelEntriesSchema = v.strictObject({
+  connectionId,
+  ids: v.pipe(v.array(idSchema, 'Danh sách mục không hợp lệ.'), v.maxLength(500, 'Quá nhiều mục.'))
+})
+
+/** Kết quả nút "Kiểm tra" một mục: nhà cung cấp nhận cấu hình của mục. Thất bại đi như một lỗi, kèm lời gốc. */
+export interface ModelEntryTestResult {
+  /** Thời gian từ lúc gửi đến lúc có phản hồi, ms. Gồm cả thời gian chờ lượt nếu mục có RPM. */
+  ms: number
+  /** Thiếu khi nhà cung cấp không báo. */
+  usage: TokenUsage | null
+}
+
 export type CreateConnectionInput = v.InferOutput<typeof createConnectionSchema>
 export type UpdateConnectionInput = v.InferOutput<typeof updateConnectionSchema>
+export type AddModelEntriesInput = v.InferOutput<typeof addModelEntriesSchema>
+export type UpdateModelEntryInput = v.InferOutput<typeof updateModelEntrySchema>

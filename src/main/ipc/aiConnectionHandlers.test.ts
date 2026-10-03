@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { CHANNELS } from '../../shared/contracts/channels'
-import type { ConnectionTestResult, ConnectionView } from '../../shared/contracts/aiConnections'
+import type {
+  ConnectionTestResult,
+  ConnectionView,
+  ModelEntryTestResult
+} from '../../shared/contracts/aiConnections'
 import type { Result } from '../../shared/contracts/result'
 import { ConnectionService } from '../services/ai/connectionService'
 import { LibraryStore } from '../services/library/library'
@@ -180,20 +184,6 @@ describe('ai connection channels', () => {
     expect(result).toMatchObject({ listed: false, models: [] })
   })
 
-  it('keeps the chosen models, in order', async () => {
-    const handlers = setup()
-    const created = unwrap(
-      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, gatewayInput)
-    )
-    const withModels = unwrap(
-      await call<ConnectionView>(handlers, CHANNELS.aiModelsSet, {
-        id: created.id,
-        models: ['b', 'a']
-      })
-    )
-    expect(withModels.models).toEqual(['b', 'a'])
-  })
-
   it('reports a missing connection as not_found rather than crashing', async () => {
     const handlers = setup()
     const result = await call(handlers, CHANNELS.aiConnectionsUpdate, {
@@ -202,5 +192,380 @@ describe('ai connection channels', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error.code).toBe('not_found')
+  })
+})
+
+describe('model entries over IPC', () => {
+  const googleInput = { ...gatewayInput, name: 'Gemini', providerId: 'google' }
+
+  async function connectionWithEntry(
+    handlers: ReturnType<typeof createLibraryHandlers>,
+    model = 'gemini-2.5-flash'
+  ): Promise<{ connection: ConnectionView; entryId: string }> {
+    const created = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, googleInput)
+    )
+    const withEntry = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsAdd, {
+        connectionId: created.id,
+        items: [{ model }]
+      })
+    )
+    return { connection: withEntry, entryId: withEntry.models[0]!.id }
+  }
+
+  it('adds entries in order, each named after its model, with no settings', async () => {
+    const handlers = setup()
+    const created = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, googleInput)
+    )
+    const view = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsAdd, {
+        connectionId: created.id,
+        items: [{ model: 'b' }, { model: 'a', name: 'Tên của tôi' }]
+      })
+    )
+    expect(view.models.map((entry) => [entry.name, entry.model, entry.settings])).toEqual([
+      ['b', 'b', {}],
+      ['Tên của tôi', 'a', {}]
+    ])
+  })
+
+  it('tells the screen what each model supports, from the data shipped with the app', async () => {
+    const handlers = setup()
+    const { connection } = await connectionWithEntry(handlers, 'gemini-2.5-flash')
+    expect(connection.models[0]!.capability).toEqual({
+      thinkingLevels: ['off', 'low', 'medium', 'high'],
+      temperature: true
+    })
+  })
+
+  it('offers only the default for a model it knows nothing about', async () => {
+    const handlers = setup()
+    const { connection } = await connectionWithEntry(handlers, 'ten-rieng-cua-toi')
+    expect(connection.models[0]!.capability).toEqual({ thinkingLevels: [], temperature: true })
+  })
+
+  it('adds nothing at all when one item of a batch is bad, rather than half of them', async () => {
+    const handlers = setup()
+    const created = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, googleInput)
+    )
+    const result = await call(handlers, CHANNELS.aiModelsAdd, {
+      connectionId: created.id,
+      items: [{ model: 'good' }, { model: '   ' }]
+    })
+    expect(result.ok).toBe(false)
+    const list = unwrap(
+      await call<{ connections: ConnectionView[] }>(handlers, CHANNELS.aiConnectionsList)
+    )
+    expect(list.connections[0]!.models).toEqual([])
+  })
+
+  describe('settings', () => {
+    it('saves a patch, and keeps it across a reload of the list', async () => {
+      const handlers = setup()
+      const { entryId } = await connectionWithEntry(handlers)
+      unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: {
+            settings: { thinking: 'off', temperature: { enabled: true, value: 0.3 }, rpmLimit: 6 }
+          }
+        })
+      )
+      const list = unwrap(
+        await call<{ connections: ConnectionView[] }>(handlers, CHANNELS.aiConnectionsList)
+      )
+      expect(list.connections[0]!.models[0]!.settings).toEqual({
+        thinking: 'off',
+        temperature: { enabled: true, value: 0.3 },
+        rpmLimit: 6
+      })
+    })
+
+    it('changes only what a patch names, so two dialogs cannot overwrite each other', async () => {
+      const handlers = setup()
+      const { entryId } = await connectionWithEntry(handlers)
+      const update = async (settings: unknown): Promise<ConnectionView> =>
+        unwrap(
+          await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+            entryId,
+            patch: { settings }
+          })
+        )
+      await update({ thinking: 'low', rpmLimit: 6 })
+      const after = await update({ temperature: { enabled: true, value: 0.3 } })
+      expect(after.models[0]!.settings).toEqual({
+        thinking: 'low',
+        rpmLimit: 6,
+        temperature: { enabled: true, value: 0.3 }
+      })
+    })
+
+    it('clears a field with null, which puts it back to the default', async () => {
+      const handlers = setup()
+      const { entryId } = await connectionWithEntry(handlers)
+      const update = async (settings: unknown): Promise<ConnectionView> =>
+        unwrap(
+          await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+            entryId,
+            patch: { settings }
+          })
+        )
+      await update({ thinking: 'low', rpmLimit: 6 })
+      const cleared = await update({ thinking: null })
+      expect(cleared.models[0]!.settings).toEqual({ rpmLimit: 6 })
+    })
+
+    it('renames an entry and changes its model without touching its settings', async () => {
+      const handlers = setup()
+      const { entryId } = await connectionWithEntry(handlers)
+      unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: { settings: { thinking: 'low' } }
+        })
+      )
+      const view = unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: { name: 'Flash nhanh', model: 'gemini-2.5-pro' }
+        })
+      )
+      expect(view.models[0]).toMatchObject({
+        name: 'Flash nhanh',
+        model: 'gemini-2.5-pro',
+        settings: { thinking: 'low' }
+      })
+      // The capability follows the model, not the name: 2.5 Pro cannot be switched off.
+      expect(view.models[0]!.capability.thinkingLevels).toEqual(['low', 'medium', 'high'])
+    })
+
+    it.each<[string, unknown, RegExp]>([
+      ['a temperature out of range', { temperature: { enabled: true, value: 5 } }, /Nhiệt độ/],
+      ['an RPM out of range', { rpmLimit: 10_001 }, /RPM/],
+      [
+        'an extra_body that overwrites a core field',
+        { extraBody: { enabled: true, value: { stream: false } } },
+        /stream/
+      ],
+      [
+        'an extra header that carries the key',
+        { extraHeaders: { enabled: true, value: { Authorization: 'Bearer x' } } },
+        /Authorization/
+      ]
+    ])('refuses %s as a validation error that says why', async (_label, settings, message) => {
+      const handlers = setup()
+      const { entryId } = await connectionWithEntry(handlers)
+      const result = await call(handlers, CHANNELS.aiModelsUpdate, { entryId, patch: { settings } })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.code).toBe('validation')
+        // The reason travels in `details`, with the path of the field it is about, so the dialog can put
+        // it next to the right input.
+        const reasons = result.error.details ?? []
+        expect(reasons.some((reason) => message.test(reason.message))).toBe(true)
+        expect(reasons.every((reason) => reason.path.startsWith('patch.settings'))).toBe(true)
+      }
+      // And nothing was saved.
+      const list = unwrap(
+        await call<{ connections: ConnectionView[] }>(handlers, CHANNELS.aiConnectionsList)
+      )
+      expect(list.connections[0]!.models[0]!.settings).toEqual({})
+    })
+
+    it('reports an entry that is not there as not_found', async () => {
+      const handlers = setup()
+      const result = await call(handlers, CHANNELS.aiModelsUpdate, {
+        entryId: '00000000-0000-4000-8000-0000000000ff',
+        patch: { name: 'x' }
+      })
+      expect(result.ok).toBe(false)
+      if (!result.ok) expect(result.error.code).toBe('not_found')
+    })
+  })
+
+  it('duplicates an entry with its settings, deletes it, and keeps the others', async () => {
+    const handlers = setup()
+    const { entryId } = await connectionWithEntry(handlers)
+    unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+        entryId,
+        patch: { settings: { thinking: 'off' } }
+      })
+    )
+    const duplicated = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsDuplicate, { entryId })
+    )
+    expect(duplicated.models).toHaveLength(2)
+    expect(duplicated.models[1]).toMatchObject({
+      model: 'gemini-2.5-flash',
+      settings: { thinking: 'off' }
+    })
+    expect(duplicated.models[1]!.id).not.toBe(entryId)
+
+    const deleted = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsDelete, { entryId })
+    )
+    expect(deleted.models.map((entry) => entry.id)).toEqual([duplicated.models[1]!.id])
+  })
+
+  it('makes an entry the default, and has no default again when that entry is deleted', async () => {
+    const handlers = setup()
+    const { connection, entryId } = await connectionWithEntry(handlers)
+    const set = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsUpdate, {
+        id: connection.id,
+        patch: { defaultEntryId: entryId }
+      })
+    )
+    expect(set.defaultEntryId).toBe(entryId)
+    const deleted = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsDelete, { entryId })
+    )
+    expect(deleted.defaultEntryId).toBeNull()
+  })
+
+  it('refuses a default that is an entry of another connection', async () => {
+    const handlers = setup()
+    const a = await connectionWithEntry(handlers)
+    const other = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, googleInput)
+    )
+    const result = await call(handlers, CHANNELS.aiConnectionsUpdate, {
+      id: other.id,
+      patch: { defaultEntryId: a.entryId }
+    })
+    expect(result.ok).toBe(false)
+  })
+
+  it('arranges the entries as the screen sends them, and refuses a stale list', async () => {
+    const handlers = setup()
+    const created = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, googleInput)
+    )
+    const added = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsAdd, {
+        connectionId: created.id,
+        items: [{ model: 'a' }, { model: 'b' }, { model: 'c' }]
+      })
+    )
+    const [a, b, c] = added.models.map((entry) => entry.id)
+    const reordered = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsReorder, {
+        connectionId: created.id,
+        ids: [c, a, b]
+      })
+    )
+    expect(reordered.models.map((entry) => entry.model)).toEqual(['c', 'a', 'b'])
+
+    const stale = await call(handlers, CHANNELS.aiModelsReorder, {
+      connectionId: created.id,
+      ids: [c, a]
+    })
+    expect(stale.ok).toBe(false)
+  })
+
+  describe('testing an entry', () => {
+    const ok = (): Response =>
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: 'OK' }, finish_reason: 'stop' }],
+          usage: { prompt_tokens: 12, completion_tokens: 2, total_tokens: 14 }
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )
+
+    it('sends one small request with the saved settings and reports time and tokens', async () => {
+      const bodies: Array<Record<string, unknown>> = []
+      const fetchImpl = (async (_url: string, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+        return ok()
+      }) as typeof fetch
+      const handlers = setup(fetchImpl)
+      const { entryId } = await connectionWithEntry(handlers)
+      unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: { settings: { thinking: 'off', temperature: { enabled: true, value: 0.3 } } }
+        })
+      )
+
+      const result = unwrap(
+        await call<ModelEntryTestResult>(handlers, CHANNELS.aiModelsTest, { entryId })
+      )
+      expect(bodies).toHaveLength(1)
+      expect(bodies[0]).toMatchObject({
+        model: 'gemini-2.5-flash',
+        temperature: 0.3,
+        reasoning_effort: 'none'
+      })
+      expect(result.usage).toEqual({ inputTokens: 12, outputTokens: 2 })
+      expect(result.ms).toBeGreaterThanOrEqual(0)
+    })
+
+    it('says what the provider said when it refuses the settings, and changes nothing', async () => {
+      const fetchImpl = (async () =>
+        new Response(
+          JSON.stringify([
+            {
+              error: {
+                code: 400,
+                message: 'Unsupported value: temperature',
+                status: 'INVALID_ARGUMENT'
+              }
+            }
+          ]),
+          { status: 400, headers: { 'content-type': 'application/json' } }
+        )) as typeof fetch
+      const handlers = setup(fetchImpl)
+      const { entryId } = await connectionWithEntry(handlers)
+      unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: { settings: { temperature: { enabled: true, value: 0.3 } } }
+        })
+      )
+
+      const result = await call(handlers, CHANNELS.aiModelsTest, { entryId })
+      expect(result.ok).toBe(false)
+      if (!result.ok) expect(result.error.message).toContain('Unsupported value: temperature')
+
+      const list = unwrap(
+        await call<{ connections: ConnectionView[] }>(handlers, CHANNELS.aiConnectionsList)
+      )
+      expect(list.connections[0]!.models[0]!.settings).toEqual({
+        temperature: { enabled: true, value: 0.3 }
+      })
+    })
+
+    it('does not test an entry of a connection that is switched off', async () => {
+      let calls = 0
+      const fetchImpl = (async () => {
+        calls++
+        return ok()
+      }) as typeof fetch
+      const handlers = setup(fetchImpl)
+      const { connection, entryId } = await connectionWithEntry(handlers)
+      unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiConnectionsUpdate, {
+          id: connection.id,
+          patch: { enabled: false }
+        })
+      )
+      const result = await call(handlers, CHANNELS.aiModelsTest, { entryId })
+      expect(result.ok).toBe(false)
+      expect(calls).toBe(0)
+    })
+
+    it('reports an entry that is not there as not_found', async () => {
+      const handlers = setup()
+      const result = await call(handlers, CHANNELS.aiModelsTest, {
+        entryId: '00000000-0000-4000-8000-0000000000ff'
+      })
+      expect(result.ok).toBe(false)
+      if (!result.ok) expect(result.error.code).toBe('not_found')
+    })
   })
 })

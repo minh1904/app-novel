@@ -5,14 +5,15 @@ import {
   CONNECTION_PRESETS,
   SHARED_QUOTA_PROVIDERS,
   type ConnectionKeyView,
-  type ConnectionView,
-  type ModelInfoView
+  type ConnectionView
 } from '../../../../shared/contracts/aiConnections'
 import { Badge, type BadgeTone } from '../../components/Badge'
 import { Button } from '../../components/Button'
 import { Panel } from '../../components/Panel'
 import { Switch } from '../../components/Switch'
 import { TextField } from '../../components/TextField'
+import type { ModelEntryActions } from '../models/modelEntryActions'
+import { ModelEntries } from '../models/ModelEntries'
 import type { TestState } from './useConnections'
 
 /** Khoảng thời gian còn lại, nói bằng chữ người đọc được chứ không phải một mốc epoch. */
@@ -56,26 +57,16 @@ function connectionBadge(
   return { tone: 'success', label: 'Đang chạy' }
 }
 
-function priceOf(model: ModelInfoView): string {
-  if (model.inputCost === undefined || model.outputCost === undefined) return 'chưa biết giá'
-  return model.inputCost + ' / ' + model.outputCost + ' $/1M'
-}
-
 export interface ConnectionCardProps {
   connection: ConnectionView
   test: TestState
   now: number
-  onPatch(patch: {
-    name?: string
-    baseUrl?: string
-    enabled?: boolean
-    defaultModel?: string | null
-  }): void
+  onPatch(patch: { name?: string; baseUrl?: string; enabled?: boolean }): void
   onDelete(): void
   onTest(): void
   onAddKey(secret: string): Promise<boolean>
   onRemoveKey(keyId: string): void
-  onSetModels(models: string[]): void
+  entries: ModelEntryActions
 }
 
 export function ConnectionCard({
@@ -87,7 +78,7 @@ export function ConnectionCard({
   onTest,
   onAddKey,
   onRemoveKey,
-  onSetModels
+  entries
 }: ConnectionCardProps): JSX.Element {
   const [name, setName] = useState(connection.name)
   const [baseUrl, setBaseUrl] = useState(connection.baseUrl)
@@ -112,9 +103,6 @@ export function ConnectionCard({
     setAdding(false)
     if (okay) setSecret('')
   }
-
-  const models =
-    test.models.length > 0 ? test.models : connection.models.map((id) => ({ id, name: id }))
 
   return (
     <Panel aria-label={connection.name}>
@@ -233,73 +221,7 @@ export function ConnectionCard({
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-baseline gap-2">
-          <p className="m-0 text-[12px] font-semibold">Model dùng trong Mira</p>
-          {test.models.length > 0 && (
-            <span className="text-[12px] text-ink-muted">{test.models.length} model</span>
-          )}
-        </div>
-        {models.length === 0 ? (
-          <p className="m-0 text-[12px] text-ink-muted">
-            {test.listed === false && test.models.length === 0 && connection.checkedAt !== null
-              ? 'Nối được nhưng endpoint này không liệt kê model. Khai tên model bằng tay khi dịch.'
-              : 'Bấm “Kiểm tra kết nối” để lấy danh sách model.'}
-          </p>
-        ) : (
-          <ul className="m-0 flex list-none flex-col p-0">
-            {models.map((model) => {
-              const chosen = connection.models.includes(model.id)
-              const info = test.models.find((item) => item.id === model.id)
-              return (
-                <li
-                  key={model.id}
-                  className="flex flex-wrap items-center gap-2 border-b border-line py-1.5 last:border-b-0"
-                >
-                  <input
-                    type="checkbox"
-                    className="size-4 shrink-0"
-                    checked={chosen}
-                    aria-label={'Dùng ' + model.id}
-                    onChange={(event) =>
-                      onSetModels(
-                        event.target.checked
-                          ? [...connection.models, model.id]
-                          : connection.models.filter((id) => id !== model.id)
-                      )
-                    }
-                  />
-                  <span className="font-mono text-[12px]">{model.id}</span>
-                  {connection.defaultModel === model.id && <Badge tone="muted">Mặc định</Badge>}
-                  {info?.status === 'deprecated' && (
-                    <Badge tone="warning">Nhà cung cấp đã khai tử</Badge>
-                  )}
-                  {chosen && connection.defaultModel !== model.id && (
-                    <Button
-                      variant="ghost-muted"
-                      size="xs"
-                      onClick={() => onPatch({ defaultModel: model.id })}
-                    >
-                      Đặt mặc định
-                    </Button>
-                  )}
-                  <span className="ml-auto flex shrink-0 items-center gap-3 text-[12px] text-ink-muted">
-                    {info?.contextLimit !== undefined && (
-                      <span>{info.contextLimit.toLocaleString('vi-VN')} token</span>
-                    )}
-                    {info && <span>{priceOf(info)}</span>}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-        {test.models.length > 0 && (
-          <p className="m-0 text-[12px] text-ink-muted">
-            Giá tham khảo, bảng dữ liệu cập nhật {test.catalogReadAt}.
-          </p>
-        )}
-      </div>
+      <ModelEntries connection={connection} test={test} actions={entries} onFetchModels={onTest} />
 
       <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
         <span className="w-full basis-full text-[12px] text-ink-muted">

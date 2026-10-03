@@ -1,10 +1,13 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { ChatChunk, ChatSendInput } from '../shared/contracts/aiChat'
 import type {
+  AddModelEntriesInput,
   ConnectionTestResult,
   ConnectionView,
   CreateConnectionInput,
-  UpdateConnectionInput
+  ModelEntryTestResult,
+  UpdateConnectionInput,
+  UpdateModelEntryInput
 } from '../shared/contracts/aiConnections'
 import type {
   TranslateBatchInput,
@@ -151,8 +154,30 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke(CHANNELS.aiKeysAdd, { id, secret }) as Promise<Result<ConnectionView>>,
     removeKey: (id: string, keyId: string) =>
       ipcRenderer.invoke(CHANNELS.aiKeysRemove, { id, keyId }) as Promise<Result<ConnectionView>>,
-    setModels: (id: string, models: string[]) =>
-      ipcRenderer.invoke(CHANNELS.aiModelsSet, { id, models }) as Promise<Result<ConnectionView>>,
+    models: {
+      add: (connectionId: string, items: AddModelEntriesInput['items']) =>
+        ipcRenderer.invoke(CHANNELS.aiModelsAdd, { connectionId, items }) as Promise<
+          Result<ConnectionView>
+        >,
+      update: (entryId: string, patch: UpdateModelEntryInput['patch']) =>
+        ipcRenderer.invoke(CHANNELS.aiModelsUpdate, { entryId, patch }) as Promise<
+          Result<ConnectionView>
+        >,
+      duplicate: (entryId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiModelsDuplicate, { entryId }) as Promise<
+          Result<ConnectionView>
+        >,
+      delete: (entryId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiModelsDelete, { entryId }) as Promise<Result<ConnectionView>>,
+      reorder: (connectionId: string, ids: string[]) =>
+        ipcRenderer.invoke(CHANNELS.aiModelsReorder, { connectionId, ids }) as Promise<
+          Result<ConnectionView>
+        >,
+      test: (entryId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiModelsTest, { entryId }) as Promise<
+          Result<ModelEntryTestResult>
+        >
+    },
     translate: {
       plan: (input: TranslatePlanInput) =>
         ipcRenderer.invoke(CHANNELS.aiTranslatePlan, input) as Promise<Result<TranslatePlan>>,

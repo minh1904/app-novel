@@ -1,0 +1,45 @@
+{
+  "scenario": "probe-gemini-3.1-pro-preview-top-p",
+  "capturedAt": "2026-10-03T14:57:07.339Z",
+  "model": "gemini-3.1-pro-preview",
+  "request": {
+    "method": "POST",
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    "headers": {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "authorization": "Bearer <redacted>"
+    },
+    "body": {
+      "model": "gemini-3.1-pro-preview",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Dịch sang tiếng Việt, chỉ trả bản dịch: 你好，世界。今天天气很好。"
+        }
+      ],
+      "top_p": 0.9
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "cache-control": "private",
+      "content-encoding": "gzip",
+      "content-type": "application/json",
+      "date": "Sat, 03 Oct 2026 14:57:05 GMT",
+      "expires": "Sat, 03 Oct 2026 14:57:05 GMT",
+      "p3p": "CP=\"This is not a P3P policy! See g.co/p3phelp for more info.\"",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=3982",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-xss-protection": "0"
+    },
+    "bodyText": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"Xin chào thế giới. Hôm nay thời tiết rất đẹp.\",\"extra_content\":{\"google\":{\"thought_signature\":\"EsUJCsIJAWkUfRNE6u5E/BIa8111Uqawib6uHDBKMQKqiCBGzQ7+ATnJcSCpg/BJcWoYqsQGhYgopfn4aR5/O12KG2Qmw82Q3H6oJqh2v1QKSOF9a0wTpvA3JzKtHHCZ3S0LSMUF3aYbazy65ZnKSki106nDu/ipmlgOfHXZXjZltGNfJ974pMMxRKxBwL3poBC+rQz8U9QDhaCDG3+lGCZWBMY0+x9X7M1uErY4SU6vSrfpni1wGyeKK5+awxyTn5+JP2Yc+5R5Xjq5XgAWqVW1WH9zIkqIdb8l4W6tRgFqymlnWmHPmTz4Gx+wXUhS4u+wUGkfRGOqFU8GobLPGnLWAPnq1SYcGNgBSBzMRmp4rUzOS0bex+uFY5iI99+ka4+7mgG+x3kC8bo2yKfGhf//9qUasI6Rnle1HP6qSNB54ah9iWsVoUYbdPhGlIdOM8gJ/iIjA5wRSaIq7YrATbHfICggumlisEREk9wvgT+BAyEFfSojvb/Ii8BrfonvpGosoTbeL5VfZWBf4+iOczBBM6BFbzdzAp01SSILDOS7famQg8YC1v6wdxXeggOnyLD5oxo3U1MrqhwaxzthpDRJ5vgEFwySSVjXayLklS5bFl3VrYz5mjj2cSHKcWf9K8jYQ/GYqEZtWv66I+AgT3pFUI/RHhEP9YKYskDmBlwe0PjmltJUWavr1iUJqVJntAsHO+TsxE2r5ZEUxJpw2oqw8Ltm9nKVGXULdfitqmG8FqHjfCesYwhUGQIwBF5OUQXHbcdcC7pnAx9dM/vu7XK/jK8heEQstqoi/RKtiqiepKwZKWd0TZq6c+IjFfQ/Ho6JWRdCgOjp0TuSvd+sjL4XpvTTTOUzdLd5odjN4U+EMJjkf95zfjGI6z/4nzLv7icrY9PHteH2dx6ePOt4vZNjXnCXwlvHk8RlW6e1TYWg0wqvlERPsDz/SwxPFp2h0BDvrk0VnoRI+Ow7u3V3B670cYxXZLQwIlEd1wg/01NQOQithxkh7wRDDViKzuHj4uA7wBOeLCqjHXBMjofvgFrkIsmIxpQusz0Btq/iR56uVxZskdRE1xER8qIFjE+XwKqIAstXqrdCcYYip8W+7ZmAFJ2hMv+W+YCViO3+ITMbnM1z572e/hX5zao5q73ztPNCgbWuNO6gbM/D/neyka772Xf8A9+/ykkrVBb9d/zgXp4nVYxQgY1P76tDuX/7h/9OiYbeCl9f1JNu5xF5ITJubZzADAxFW/ny+kSWi06LcemTg1rjYshSxv1g69cXAE09oHsB21dYqAFqPkPWgauYur6XWCXtyPmBPRG29Uc+Eb08YsgseQtWalNsIfK+3Yo0ju+gor0604lw3vmXua4Obp59n9zglzzANA6peKPfuYleG3fIghetpO/fPDNHuKp7CkRqoQ6yu+RrGj5oLCAkSMU6XXZt5zC1rKcdTINcLGTSzelMdiMPYA7ecf8ti3r39us5TF9jLLFmfU79RiFriyc+r4jhNkK9IeoDgOJgbpiBESKyv3ypoSqG79od2wIrhcyR9rDVMGSrJrqGXrNvFZCuuTM2IVSoKvcWdTf3ijSHp0wiNLBeKdGa2q8e1DyBn9U4m1B7oVhvjffh2S8DYa65T9rm\"}},\"role\":\"assistant\"}}],\"created\":1791039425,\"id\":\"vRfBaujUFvfx2roPp4ORwQw\",\"model\":\"gemini-3.1-pro-preview\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":12,\"prompt_tokens\":21,\"total_tokens\":302}}"
+  },
+  "elapsedMs": 4027
+}

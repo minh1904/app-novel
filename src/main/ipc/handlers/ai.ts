@@ -1,18 +1,23 @@
 import {
   addConnectionKeySchema,
+  addModelEntriesSchema,
   connectionRefSchema,
   createConnectionSchema,
+  modelEntryRefSchema,
   removeConnectionKeySchema,
-  setConnectionModelsSchema,
-  updateConnectionSchema
+  reorderModelEntriesSchema,
+  updateConnectionSchema,
+  updateModelEntrySchema
 } from '../../../shared/contracts/aiConnections'
 import { translateBatchSchema, translatePlanSchema } from '../../../shared/contracts/aiTranslate'
 import { CHANNELS } from '../../../shared/contracts/channels'
 import { createAsyncHandler, createHandler } from '../handler'
 import { connectionsOf, translatorOf, type AreaHandlers, type HandlerDeps } from './deps'
 
-/** Kết nối AI (khóa, model) và dịch chương bằng AI. */
-export function aiHandlers(deps: HandlerDeps): AreaHandlers<'ai:connections' | 'ai:translate'> {
+/** Kết nối AI (khóa), mục model của chúng, và dịch chương bằng AI. */
+export function aiHandlers(
+  deps: HandlerDeps
+): AreaHandlers<'ai:connections' | 'ai:models' | 'ai:translate'> {
   return {
     [CHANNELS.aiConnectionsList]: createHandler(null, () => connectionsOf(deps).list()),
     [CHANNELS.aiConnectionsCreate]: createHandler(createConnectionSchema, (input) =>
@@ -33,8 +38,23 @@ export function aiHandlers(deps: HandlerDeps): AreaHandlers<'ai:connections' | '
     [CHANNELS.aiKeysRemove]: createHandler(removeConnectionKeySchema, ({ id, keyId }) =>
       connectionsOf(deps).removeApiKey(id, keyId)
     ),
-    [CHANNELS.aiModelsSet]: createHandler(setConnectionModelsSchema, ({ id, models }) =>
-      connectionsOf(deps).setModels(id, models)
+    [CHANNELS.aiModelsAdd]: createHandler(addModelEntriesSchema, ({ connectionId, items }) =>
+      connectionsOf(deps).addModels(connectionId, items)
+    ),
+    [CHANNELS.aiModelsUpdate]: createHandler(updateModelEntrySchema, ({ entryId, patch }) =>
+      connectionsOf(deps).updateEntry(entryId, patch)
+    ),
+    [CHANNELS.aiModelsDuplicate]: createHandler(modelEntryRefSchema, ({ entryId }) =>
+      connectionsOf(deps).duplicateEntry(entryId)
+    ),
+    [CHANNELS.aiModelsDelete]: createHandler(modelEntryRefSchema, ({ entryId }) =>
+      connectionsOf(deps).deleteEntry(entryId)
+    ),
+    [CHANNELS.aiModelsReorder]: createHandler(reorderModelEntriesSchema, ({ connectionId, ids }) =>
+      connectionsOf(deps).reorderEntries(connectionId, ids)
+    ),
+    [CHANNELS.aiModelsTest]: createAsyncHandler(modelEntryRefSchema, ({ entryId }) =>
+      connectionsOf(deps).testEntry(entryId)
     ),
     [CHANNELS.aiTranslatePlan]: createHandler(translatePlanSchema, (input) =>
       translatorOf(deps).plan(input)

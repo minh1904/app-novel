@@ -1,3 +1,9 @@
+import {
+  ENTRY_MODEL_MAX,
+  ENTRY_NAME_MAX,
+  readModelSettings,
+  type ModelSettings
+} from '../../../shared/contracts/modelSettings'
 import { StorageError } from './errors'
 import type { Db } from './sqlite'
 
@@ -7,6 +13,10 @@ import type { Db } from './sqlite'
  * Quy tắc xuyên suốt: **không hàm nào ở đây trả khóa dạng rõ**. `ConnectionView` là thứ đi qua IPC
  * và chỉ có bốn ký tự cuối. Bản mã chỉ lấy được bằng `readKeyCiphers`, dùng trong main process để
  * gọi nhà cung cấp (D2 của change `ai-connection`).
+ *
+ * Model là các **mục** (`ModelEntry`) có id riêng, nhân bản được (change `ai-model-settings`). Ở đây một mục
+ * chỉ là dữ liệu đã lưu; khả năng của model (mức suy luận nào được đưa ra) thuộc tầng dịch vụ, nơi biết
+ * bảng giá đi kèm bản cài.
  */
 
 export type KeyState = 'ok' | 'invalid'
@@ -23,6 +33,16 @@ export interface ConnectionKeyView {
   frozenScope: QuotaScope | null
 }
 
+/** Một model người dùng dùng trong Mira, như đã lưu. Hai mục có thể trỏ cùng một `model`. */
+export interface ModelEntry {
+  id: string
+  /** Tên hiển thị của người dùng; mặc định bằng tên model thật. */
+  name: string
+  /** Tên model thật gửi cho nhà cung cấp. */
+  model: string
+  settings: ModelSettings
+}
+
 export interface ConnectionView {
   id: string
   name: string
@@ -30,11 +50,12 @@ export interface ConnectionView {
   enabled: boolean
   /** Id nhà cung cấp của preset, để tra bảng giá; `null` khi người dùng tự nhập URL. */
   providerId: string | null
-  defaultModel: string | null
+  /** Id của **mục** mặc định (không phải tên model); `null` khi chưa chọn. */
+  defaultEntryId: string | null
   checkedAt: number | null
   keys: ConnectionKeyView[]
-  /** Model người dùng chọn dùng trong Mira, theo thứ tự hiển thị. */
-  models: string[]
+  /** Mục model của kết nối, theo thứ tự người dùng xếp. */
+  models: ModelEntry[]
 }
 
 export interface ConnectionInput {
@@ -49,7 +70,8 @@ export interface ConnectionPatch {
   baseUrl?: string
   providerId?: string | null
   enabled?: boolean
-  defaultModel?: string | null
+  /** Phải là id một mục của chính kết nối này, hoặc `null`. */
+  defaultEntryId?: string | null
   checkedAt?: number | null
 }
 
@@ -82,6 +104,28 @@ interface KeyRow {
   frozen_scope: string | null
 }
 
+interface EntryRow {
+  id: string
+  connection_id: string
+  name: string
+  model_id: string
+  settings: string
+}
+
+/**
+ * Cài đặt đọc không bao giờ ném: dữ liệu có thể hỏng hoặc do một bản sau ghi. Trường hỏng bị bỏ riêng
+ * trường đó (không gửi giá trị hỏng cho nhà cung cấp) và mục vẫn dùng được. Kho không có chỗ ghi log nên
+ * `dropped` không đi đâu; tầng dưới không thể nói gì với người dùng về nó.
+ */
+function toEntry(row: EntryRow): ModelEntry {
+  return {
+    id: row.id,
+    name: row.name,
+    model: row.model_id,
+    settings: readModelSettings(row.settings).settings
+  }
+}
+
 function toKeyState(value: string): KeyState {
   return value === 'invalid' ? 'invalid' : 'ok'
 }
@@ -111,8 +155,11 @@ export function listConnections(db: Db): ConnectionView[] {
     )
     .all<KeyRow>()
   const models = db
-    .prepare('SELECT connection_id, model_id FROM ai_model ORDER BY connection_id, ord')
-    .all<{ connection_id: string; model_id: string }>()
+    .prepare(
+      'SELECT id, connection_id, name, model_id, settings FROM ai_model' +
+        ' ORDER BY connection_id, ord'
+    )
+    .all<EntryRow>()
 
   return rows.map((row) => ({
     id: row.id,
@@ -120,7 +167,7 @@ export function listConnections(db: Db): ConnectionView[] {
     baseUrl: row.base_url,
     enabled: row.enabled !== 0,
     providerId: row.provider_id,
-    defaultModel: row.default_model,
+    defaultEntryId: row.default_model,
     checkedAt: row.checked_at,
     keys: keys
       .filter((key) => key.connection_id === row.id)
@@ -131,7 +178,7 @@ export function listConnections(db: Db): ConnectionView[] {
         frozenUntil: key.frozen_until,
         frozenScope: toQuotaScope(key.frozen_scope)
       })),
-    models: models.filter((model) => model.connection_id === row.id).map((m) => m.model_id)
+    models: models.filter((model) => model.connection_id === row.id).map(toEntry)
   }))
 }
 
@@ -172,6 +219,18 @@ export function patchConnection(
   if (name === '') throw new StorageError('validation', 'Tên kết nối không được để trống.')
   if (baseUrl === '') throw new StorageError('validation', 'Địa chỉ không được để trống.')
 
+  const defaultEntryId =
+    patch.defaultEntryId === undefined ? current.defaultEntryId : patch.defaultEntryId
+  // Một mục của kết nối khác, hay một id không còn, làm "mặc định" trỏ vào khoảng không. Chỉ kiểm khi lần
+  // này có đặt nó: sửa tên một kết nối không được vướng vì một mặc định cũ hỏng.
+  if (
+    patch.defaultEntryId !== undefined &&
+    patch.defaultEntryId !== null &&
+    !current.models.some((entry) => entry.id === patch.defaultEntryId)
+  ) {
+    throw new StorageError('not_found', 'Mục model này không thuộc kết nối.')
+  }
+
   db.prepare(
     'UPDATE ai_connection SET name = ?, base_url = ?, enabled = ?, provider_id = ?,' +
       ' default_model = ?, checked_at = ?, updated_at = ? WHERE id = ?'
@@ -180,7 +239,7 @@ export function patchConnection(
     baseUrl,
     (patch.enabled ?? current.enabled) ? 1 : 0,
     patch.providerId === undefined ? current.providerId : patch.providerId,
-    patch.defaultModel === undefined ? current.defaultModel : patch.defaultModel,
+    defaultEntryId,
     patch.checkedAt === undefined ? current.checkedAt : patch.checkedAt,
     now,
     id
@@ -219,22 +278,167 @@ export function removeKey(db: Db, keyId: string): void {
   if (result.changes === 0) throw new StorageError('not_found', 'Không có khóa này.')
 }
 
-/** Đặt lại danh sách model đã chọn, giữ đúng thứ tự người dùng xếp. */
-export function setModels(db: Db, connectionId: string, modelIds: string[]): ConnectionView {
+export interface ModelEntryInput {
+  /** Tên model thật gửi cho nhà cung cấp. Gõ tay được, kể cả khi endpoint không liệt kê nó. */
+  model: string
+  /** Tên hiển thị; thiếu thì bằng tên model. */
+  name?: string
+  settings?: ModelSettings
+}
+
+export interface ModelEntryPatch {
+  name?: string
+  model?: string
+  /** Thay **cả bộ** cài đặt; nơi gọi ghép phần của từng hộp thoại lên bộ hiện có. */
+  settings?: ModelSettings
+}
+
+function cleanModel(value: string): string {
+  const model = value.trim()
+  if (model === '') throw new StorageError('validation', 'Tên model không được để trống.')
+  if (model.length > ENTRY_MODEL_MAX) throw new StorageError('validation', 'Tên model quá dài.')
+  return model
+}
+
+function cleanName(value: string): string {
+  const name = value.trim()
+  if (name === '') throw new StorageError('validation', 'Tên mục không được để trống.')
+  if (name.length > ENTRY_NAME_MAX) throw new StorageError('validation', 'Tên mục quá dài.')
+  return name
+}
+
+function entryRow(db: Db, entryId: string): EntryRow {
+  const row = db
+    .prepare('SELECT id, connection_id, name, model_id, settings FROM ai_model WHERE id = ?')
+    .get<EntryRow>(entryId)
+  if (!row) throw new StorageError('not_found', 'Không có mục model này.')
+  return row
+}
+
+/**
+ * Một mục của một kết nối. Mục của kết nối khác cũng là `not_found`: dịch và chat nhận id mục từ giao
+ * diện, và id đó không được dẫn tới model của một kết nối mà người dùng không chọn.
+ */
+export function getModelEntry(db: Db, connectionId: string, entryId: string): ModelEntry {
+  const row = entryRow(db, entryId)
+  if (row.connection_id !== connectionId) {
+    throw new StorageError('not_found', 'Mục model này không thuộc kết nối.')
+  }
+  return toEntry(row)
+}
+
+/**
+ * Một mục và kết nối của nó, khi chỉ biết id mục. Giao diện sửa, nhân bản, xóa và kiểm tra một mục chỉ gửi
+ * id của nó; kết nối là thứ phải tra ra.
+ */
+export function findModelEntry(
+  db: Db,
+  entryId: string
+): { connectionId: string; entry: ModelEntry } {
+  const row = entryRow(db, entryId)
+  return { connectionId: row.connection_id, entry: toEntry(row) }
+}
+
+/** Thêm một mục vào cuối danh sách. Hai mục cùng tên model thật là hợp lệ. */
+export function addModelEntry(
+  db: Db,
+  connectionId: string,
+  entryId: string,
+  input: ModelEntryInput
+): ConnectionView {
   getConnection(db, connectionId)
-  db.transaction(() => {
-    db.prepare('DELETE FROM ai_model WHERE connection_id = ?').run(connectionId)
-    const insert = db.prepare(
-      'INSERT INTO ai_model (connection_id, model_id, ord) VALUES (?, ?, ?)'
-    )
-    const seen = new Set<string>()
-    let ord = 0
-    for (const modelId of modelIds) {
-      const id = modelId.trim()
-      if (id === '' || seen.has(id)) continue
-      seen.add(id)
-      insert.run(connectionId, id, ord++)
+  const model = cleanModel(input.model)
+  const name = cleanName(input.name ?? model)
+  const ord = nextOrd(
+    db,
+    'SELECT MAX(ord) + 1 AS next FROM ai_model WHERE connection_id = ?',
+    connectionId
+  )
+  db.prepare(
+    'INSERT INTO ai_model (id, connection_id, name, model_id, ord, settings)' +
+      ' VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(entryId, connectionId, name, model, ord, JSON.stringify(input.settings ?? {}))
+  return getConnection(db, connectionId)
+}
+
+/** Sửa tên, tên model thật hoặc cài đặt của một mục; trường không nêu thì giữ nguyên. Chỉ đụng mục này. */
+export function updateModelEntry(db: Db, entryId: string, patch: ModelEntryPatch): ConnectionView {
+  const row = entryRow(db, entryId)
+  const name = patch.name === undefined ? row.name : cleanName(patch.name)
+  const model = patch.model === undefined ? row.model_id : cleanModel(patch.model)
+  const settings = patch.settings === undefined ? row.settings : JSON.stringify(patch.settings)
+  db.prepare('UPDATE ai_model SET name = ?, model_id = ?, settings = ? WHERE id = ?').run(
+    name,
+    model,
+    settings,
+    entryId
+  )
+  return getConnection(db, row.connection_id)
+}
+
+/**
+ * Nhân bản một mục: cùng tên model thật và cùng cài đặt, id mới, đặt ngay sau bản gốc. Tên thêm "(bản sao)"
+ * để hai mục không giống hệt nhau trong menu chọn.
+ */
+export function duplicateModelEntry(db: Db, entryId: string, newId: string): ConnectionView {
+  const row = entryRow(db, entryId)
+  const suffix = ' (bản sao)'
+  const name = row.name.slice(0, ENTRY_NAME_MAX - suffix.length) + suffix
+  const ord = (
+    db.prepare('SELECT ord FROM ai_model WHERE id = ?').get<{ ord: number }>(entryId) as {
+      ord: number
     }
+  ).ord
+  db.transaction(() => {
+    // Chừa chỗ ngay sau bản gốc; thứ tự của các mục sau đó giữ nguyên tương đối.
+    db.prepare('UPDATE ai_model SET ord = ord + 1 WHERE connection_id = ? AND ord > ?').run(
+      row.connection_id,
+      ord
+    )
+    db.prepare(
+      'INSERT INTO ai_model (id, connection_id, name, model_id, ord, settings)' +
+        ' VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(newId, row.connection_id, name, row.model_id, ord + 1, row.settings)
+  })
+  return getConnection(db, row.connection_id)
+}
+
+/** Xóa một mục. Nếu nó là mục mặc định thì kết nối về không có mặc định, thay vì trỏ vào chỗ trống. */
+export function deleteModelEntry(db: Db, entryId: string): ConnectionView {
+  const row = entryRow(db, entryId)
+  db.transaction(() => {
+    db.prepare(
+      'UPDATE ai_connection SET default_model = NULL WHERE id = ? AND default_model = ?'
+    ).run(row.connection_id, entryId)
+    db.prepare('DELETE FROM ai_model WHERE id = ?').run(entryId)
+  })
+  return getConnection(db, row.connection_id)
+}
+
+/**
+ * Xếp lại thứ tự các mục của một kết nối. `orderedIds` phải đúng là các mục đang có, mỗi mục một lần: thiếu
+ * hay thừa một id nghĩa là giao diện đang xếp một danh sách đã cũ, và đoán thứ tự cho phần còn lại sẽ làm
+ * mục nào đó nhảy chỗ mà người dùng không hay.
+ */
+export function reorderModelEntries(
+  db: Db,
+  connectionId: string,
+  orderedIds: string[]
+): ConnectionView {
+  const current = getConnection(db, connectionId).models.map((entry) => entry.id)
+  const same =
+    orderedIds.length === current.length &&
+    new Set(orderedIds).size === orderedIds.length &&
+    orderedIds.every((id) => current.includes(id))
+  if (!same) {
+    throw new StorageError(
+      'validation',
+      'Danh sách mục không khớp với những gì đang có. Hãy mở lại.'
+    )
+  }
+  db.transaction(() => {
+    const update = db.prepare('UPDATE ai_model SET ord = ? WHERE id = ?')
+    orderedIds.forEach((id, index) => update.run(index, id))
   })
   return getConnection(db, connectionId)
 }

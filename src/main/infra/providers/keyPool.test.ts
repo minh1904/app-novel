@@ -131,6 +131,72 @@ describe('classifyHttpError', () => {
       'upstream exploded'
     )
   })
+
+  describe('out of credit (kind `quota`)', () => {
+    it('reads HTTP 402 as quota: OpenRouter answers that way for an account without credit', () => {
+      const body = JSON.stringify({ error: { code: 402, message: 'Insufficient credits' } })
+      expect(classifyHttpError({ status: 402, body, now: NOW }).kind).toBe('quota')
+    })
+
+    it('reads the OpenAI insufficient_quota 429 as quota, not as a rate limit to wait out', () => {
+      const body = JSON.stringify({
+        error: {
+          message: 'You exceeded your current quota',
+          type: 'insufficient_quota',
+          code: 'insufficient_quota'
+        }
+      })
+      const result = classifyHttpError({ status: 429, body, now: NOW })
+      expect(result.kind).toBe('quota')
+      expect(result.quotaScope).toBeUndefined()
+    })
+
+    it('keeps the Gemini per-day limit a rate limit even though its text also mentions quota and billing', () => {
+      const body = JSON.stringify({
+        error: {
+          code: 429,
+          message: 'You exceeded your current quota, please check your plan and billing details.',
+          status: 'RESOURCE_EXHAUSTED',
+          details: [
+            {
+              '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
+              violations: [{ quotaId: 'GenerateRequestsPerDayPerProjectPerModel-FreeTier' }]
+            }
+          ]
+        }
+      })
+      const result = classifyHttpError({ status: 429, body, now: NOW })
+      expect(result.kind).toBe('rate_limited')
+      expect(result.quotaScope).toBe('day')
+    })
+  })
+
+  describe('what the error carries', () => {
+    it('keeps the status, the moment the answer arrived, and an excerpt of the body', () => {
+      const result = classifyHttpError({ status: 503, body: 'overloaded', now: NOW })
+      expect(result).toMatchObject({
+        kind: 'network',
+        status: 503,
+        receivedAt: NOW,
+        bodySnippet: 'overloaded'
+      })
+    })
+
+    it('scrubs a key the provider echoed back, from the message and the excerpt alike', () => {
+      const secret = 'AIzaSyD-live-key-1234567890'
+      const body = JSON.stringify({
+        error: { message: 'API key not valid: ' + secret + '. Pass a valid key.' }
+      })
+      const result = classifyHttpError({ status: 400, body, now: NOW, secrets: [secret] })
+      expect(result.message).not.toContain(secret)
+      expect(result.bodySnippet).not.toContain(secret)
+      expect(result.message).toContain('Pass a valid key.')
+    })
+
+    it('leaves out the excerpt when the body is empty', () => {
+      expect(classifyHttpError({ status: 500, body: '', now: NOW }).bodySnippet).toBeUndefined()
+    })
+  })
 })
 
 describe('chooseKey (fill-first)', () => {
@@ -199,6 +265,19 @@ describe('decideFreeze (two levels)', () => {
   it('caps the doubling instead of freezing a good key for a day', () => {
     const error = classifyHttpError({ status: 429, body: 'Too Many Requests', now: NOW })
     expect(decideFreeze({ error, strikes: 20, now: NOW }).until).toBe(NOW + MAX_SHORT_FREEZE_MS)
+  })
+
+  it('parks a key that is out of credit until the daily reset, and does not call it invalid', () => {
+    const error = classifyHttpError({ status: 402, body: '', now: NOW })
+    const decision = decideFreeze({ error, strikes: 0, now: NOW })
+    expect(decision).toMatchObject({ scope: 'day', invalid: false, strikes: 1 })
+    expect(decision.until).toBe(nextDailyReset(NOW))
+  })
+
+  it('leaves the key alone when the call simply timed out', () => {
+    expect(
+      decideFreeze({ error: { kind: 'timeout', message: 'no answer' }, strikes: 2, now: NOW })
+    ).toEqual({ until: null, scope: null, strikes: 2, invalid: false })
   })
 })
 

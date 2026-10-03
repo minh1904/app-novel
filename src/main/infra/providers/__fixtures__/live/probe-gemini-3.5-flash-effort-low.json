@@ -1,0 +1,45 @@
+{
+  "scenario": "probe-gemini-3.5-flash-effort-low",
+  "capturedAt": "2026-10-03T14:57:19.827Z",
+  "model": "gemini-3.5-flash",
+  "request": {
+    "method": "POST",
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    "headers": {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "authorization": "Bearer <redacted>"
+    },
+    "body": {
+      "model": "gemini-3.5-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Dịch sang tiếng Việt, chỉ trả bản dịch: 你好，世界。今天天气很好。"
+        }
+      ],
+      "reasoning_effort": "low"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "cache-control": "private",
+      "content-encoding": "gzip",
+      "content-type": "application/json",
+      "date": "Sat, 03 Oct 2026 14:57:17 GMT",
+      "expires": "Sat, 03 Oct 2026 14:57:17 GMT",
+      "p3p": "CP=\"This is not a P3P policy! See g.co/p3phelp for more info.\"",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=1808",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-xss-protection": "0"
+    },
+    "bodyText": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"Xin chào, thế giới. Hôm nay thời tiết rất đẹp.\",\"extra_content\":{\"google\":{\"thought_signature\":\"EoYGCoMGAWkUfRPrwpBIqHyLpZMlkyt6zy5kUfZ6IuhUL2DVAMvPQ8X/f1hwmTNcmMr1g6LJ1Je9tVy/3YAVPWMTw6BOK1aCn31UnpjT9WM9O0AoxphTpgcVl6sfmob/yAPJEMSDFpEPA+zJO4v1RFDx4W66jfFI+FqJFTRaaT8FEvsH+jei1X8FugXLiaU6InCEmNyi4bk9FS2yXbsuyOl2XH4Nfq3yIPDbT+vc4pzKnR9Ap5Nh9QC+A6d9fkR/ypoy14z2Z3mtoY6Yn1UMNBVVSL/3B8Qb9//ZUiL399eJd6sf39fgSyq02uEkeV+b79Gj2Z5ET793HJxUKQHmT/Pd0Gw/DV+thbcFGtQ5qoBlBOigKFyBeZz4TtXdNjyauZJxYfTdAVPhAMs7lmk9/uuYpZS36ktWkqh0le7pAkzOJLGobs1UaMn9RAPuP/vCN330dIf72u0Lwgj/DAcolG9fSE+i3XIiEQIAQxxBCjpE+jKDHXzR1UAONpTGIPEiSCP+zpr6+0Fhm15+HiD1s+c6arqPIqQBh5Ts3A91OO8jLjAXbuPOciXrFNcNpXdkPtdHWF699RyVN/JiqK2g2BEZPE49xKs7Uq/F70TFXwodMtj/vw1+RWgz3yi6Jk1ALC9n/9WQTUuDc/xzjaBsdAO+LIDa8U33tQJR92D834L3FnnlfiV/+0dIGlNoeTxqDNOzwIAx7ADQWSwqzFt5X2HlN1TAFump4Rj2FkwCrsf9ECQH6BvIcqOAyYn/14/XkWCmlgGPjjAXxCSbAV8Nz+Ugj5wVxa6L0pzRYJyst575BZHv1ne2r/pWqEjB4UiQUuJi5Re4nWnsrPIgnbWC3PVvwW2ABfrINT8Rnq/1Wh+xU9lrnN9FCmms/d1sIzLB9nMA1dqYTBpuyn4SSBxIuv3+dDdg3QF7putJHJVWUaWc/pahB3MS8lHK4VRxXnb+ar9G/ufljPwCbr740IZWvgtD2JYo+o6qm7UOrkmV6X/HlEuashFGA64aoG8qBeTifIRofjY7WrEm\"}},\"role\":\"assistant\"}}],\"created\":1791039437,\"id\":\"zBfBaqS2BOXLrfcPgoSYKA\",\"model\":\"gemini-3.5-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":13,\"prompt_tokens\":21,\"total_tokens\":201}}"
+  },
+  "elapsedMs": 1836
+}

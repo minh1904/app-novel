@@ -1,0 +1,42 @@
+{
+  "scenario": "probe-gemini-3.1-pro-preview-effort-minimal",
+  "capturedAt": "2026-10-03T14:56:48.037Z",
+  "model": "gemini-3.1-pro-preview",
+  "request": {
+    "method": "POST",
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    "headers": {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "authorization": "Bearer <redacted>"
+    },
+    "body": {
+      "model": "gemini-3.1-pro-preview",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Dịch sang tiếng Việt, chỉ trả bản dịch: 你好，世界。今天天气很好。"
+        }
+      ],
+      "reasoning_effort": "minimal"
+    }
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "content-encoding": "gzip",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Sat, 03 Oct 2026 14:56:45 GMT",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=318",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-xss-protection": "0"
+    },
+    "bodyText": "[{\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Thinking level MINIMAL is not supported for this model. Please retry with other thinking level.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n]"
+  },
+  "elapsedMs": 348
+}

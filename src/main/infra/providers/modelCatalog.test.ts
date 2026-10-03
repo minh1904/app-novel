@@ -58,6 +58,71 @@ describe('catalog snapshot', () => {
   })
 })
 
+describe('reasoning options', () => {
+  // These rows are read from the shipped snapshot on purpose: the test fails if a refresh drops the field
+  // again (the refresh script once kept only `reasoning: true`), and it names the models whose shape the
+  // capability table in `modelCapability` is built around.
+  it('keeps the toggle and the budget of a model that can switch thinking off', () => {
+    expect(lookupModel('gemini-2.5-flash', 'google')?.reasoningOptions).toEqual([
+      { type: 'toggle' },
+      { type: 'budget_tokens', min: 0, max: 24576 }
+    ])
+  })
+
+  it('keeps a budget that cannot reach zero, so the model cannot be switched off', () => {
+    expect(lookupModel('gemini-2.5-pro', 'google')?.reasoningOptions).toEqual([
+      { type: 'budget_tokens', min: 128, max: 32768 }
+    ])
+  })
+
+  it('keeps the effort levels a model names, without inventing a "none"', () => {
+    expect(lookupModel('gemini-3.5-flash', 'google')?.reasoningOptions).toEqual([
+      { type: 'effort', values: ['minimal', 'low', 'medium', 'high'] }
+    ])
+  })
+
+  it('leaves the field out when the source says nothing, instead of writing an empty list', () => {
+    for (const provider of catalogProviderIds()) {
+      for (const model of listModels(provider)) {
+        if (model.reasoningOptions !== undefined) {
+          expect(model.reasoningOptions.length, provider + '/' + model.id).toBeGreaterThan(0)
+        }
+      }
+    }
+  })
+
+  it('only holds shapes the capability table knows how to read', () => {
+    for (const provider of catalogProviderIds()) {
+      for (const model of listModels(provider)) {
+        for (const option of model.reasoningOptions ?? []) {
+          expect(['effort', 'toggle', 'budget_tokens']).toContain(option.type)
+          if (option.type === 'effort') expect(option.values.length).toBeGreaterThan(0)
+        }
+      }
+    }
+  })
+})
+
+describe('temperature flag', () => {
+  it('is written only where the source says the model does not take a temperature', () => {
+    const noTemperature = catalogProviderIds()
+      .flatMap((provider) => listModels(provider))
+      .filter((model) => model.temperature !== undefined)
+    expect(noTemperature.length).toBeGreaterThan(0)
+    for (const model of noTemperature) expect(model.temperature).toBe(false)
+  })
+
+  it('is false for a reasoning model that refuses it', () => {
+    const model = lookupModel('o4-mini', 'openai')
+    expect(model?.reasoning).toBe(true)
+    expect(model?.temperature).toBe(false)
+  })
+
+  it('is absent for a model that takes it', () => {
+    expect(lookupModel('gemini-2.5-flash', 'google')?.temperature).toBeUndefined()
+  })
+})
+
 describe('estimateCost', () => {
   const model = { id: 'm', name: 'M', cost: { input: 1, output: 2 } }
 

@@ -8,6 +8,9 @@ import type {
 } from '../../../../shared/contracts/aiTranslate'
 import type { TextRecord } from '../../../../shared/contracts/text'
 import { describe } from '../library/describeError'
+import { targetKey, targetsOf, type TranslateTarget } from './translateTargets'
+import type { ModelSelection } from '../models/ModelSelectionMenu'
+import { replaceById, thinkingPatch, type ThinkingChoice } from '../models/modelSettingsForm'
 
 /**
  * Dịch cả chương bằng AI, **điều phối từng lô từ đây**.
@@ -28,28 +31,27 @@ export type TranslateStage =
   | 'cancelling'
   | 'finished'
 
-/** Lỗi khiến chạy tiếp là vô nghĩa: khóa sai, hết mọi khóa, hoặc bản dịch đã đổi ở nơi khác. */
+/** Lỗi khiến chạy tiếp là vô nghĩa: khóa sai, hết tín dụng, hết mọi khóa, hoặc bản dịch đã đổi ở nơi khác. */
 const STOPS_THE_RUN = new Set<TranslateFailure['kind']>([
   'auth',
+  'quota',
   'refused',
   'rate_limited',
   'conflict',
   'cancelled'
 ])
 
-export interface TranslateTarget {
-  connectionId: string
-  model: string
-  label: string
-}
-
 export interface AiTranslateController {
   stage: TranslateStage
-  /** Các cặp kết nối–model dùng được. Rỗng nghĩa là chưa khai gì ở Cài đặt. */
+  /** Các cặp kết nối–mục model dùng được. Rỗng nghĩa là chưa khai gì ở Cài đặt. */
   targets: TranslateTarget[]
+  /** Các kết nối đang bật, với mục model của chúng: thứ menu chọn model cần. */
+  connections: ConnectionView[]
+  /** Mục đang chọn, ở dạng menu chọn model nhận. */
+  selection: ModelSelection | null
+  /** Chọn một mục và (nếu có) ghi mức suy luận vào cài đặt của nó. Kế hoạch tính lại theo cấu hình mới. */
+  pick(selection: ModelSelection, choice?: ThinkingChoice): Promise<void>
   loadingTargets: boolean
-  chosen: string | null
-  choose(key: string): void
   plan: TranslatePlan | null
   /** Lỗi của bước lập kế hoạch hoặc của một lời gọi lẻ, đã thành câu đọc được. */
   notice: string | null
@@ -73,27 +75,6 @@ export interface AiTranslateController {
   acceptHeld(item: HeldSuggestion): Promise<void>
   /** Bỏ một đề xuất: giữ bản của người dùng. */
   keepMine(sourceId: string): void
-}
-
-export const targetKey = (connectionId: string, model: string): string => connectionId + '|' + model
-
-/** Mỗi model đã chọn của mỗi kết nối đang bật là một lựa chọn; không có model thì không gọi được. */
-function targetsOf(connections: ConnectionView[]): TranslateTarget[] {
-  const targets: TranslateTarget[] = []
-  for (const connection of connections) {
-    if (!connection.enabled) continue
-    const models = [
-      ...new Set(
-        [connection.defaultModel, ...connection.models].filter(
-          (model): model is string => typeof model === 'string' && model !== ''
-        )
-      )
-    ]
-    for (const model of models) {
-      targets.push({ connectionId: connection.id, model, label: connection.name + ' · ' + model })
-    }
-  }
-  return targets
 }
 
 interface Planned {
@@ -122,6 +103,7 @@ export function useAiTranslate(
   const [usage, setUsage] = useState<TranslateUsage | null>(null)
   const [keyNotice, setKeyNotice] = useState<string | null>(null)
   const [cancelled, setCancelled] = useState(false)
+  const [replan, setReplan] = useState(0)
 
   const rev = useRef(0)
   const stop = useRef(false)
@@ -132,21 +114,43 @@ export function useAiTranslate(
   })
 
   // Hộp thoại đóng giữa lượt thì coi như Hủy: lô đang bay vẫn được ghi, lô sau không gửi nữa.
-  useEffect(
-    () => () => {
+  // Cờ được bật lại ở thân effect, không chỉ đặt `false` ở dọn dẹp: React (StrictMode, ở chế độ dev) dựng
+  // rồi tháo rồi dựng lại effect, và nếu chỉ có phần dọn dẹp thì cờ ở lại `false` — mọi phản hồi sau đó bị bỏ
+  // và hộp thoại kẹt ở "Đang đọc cài đặt kết nối".
+  useEffect(() => {
+    live.current = true
+    return () => {
       live.current = false
       stop.current = true
-    },
-    []
-  )
+    }
+  }, [])
 
   const targets = useMemo(() => targetsOf(connections ?? []), [connections])
+  const enabledConnections = useMemo(
+    () => (connections ?? []).filter((connection) => connection.enabled),
+    [connections]
+  )
   // Chưa chọn thì cặp đầu tiên là mặc định — suy ra, không đặt bằng effect.
   const chosen =
-    picked ?? (targets.length > 0 ? targetKey(targets[0].connectionId, targets[0].model) : null)
+    picked ?? (targets.length > 0 ? targetKey(targets[0].connectionId, targets[0].entryId) : null)
   const current = useMemo(
-    () => targets.find((target) => targetKey(target.connectionId, target.model) === chosen) ?? null,
+    () =>
+      targets.find((target) => targetKey(target.connectionId, target.entryId) === chosen) ?? null,
     [targets, chosen]
+  )
+
+  const pick = useCallback(
+    async (selection: ModelSelection, choice?: ThinkingChoice): Promise<void> => {
+      setPicked(targetKey(selection.connectionId, selection.entryId))
+      if (choice === undefined) return
+      const result = await window.mira.ai.models.update(selection.entryId, {
+        settings: thinkingPatch(choice)
+      })
+      if (!live.current) return
+      if (result.ok) setConnections((current) => replaceById(current ?? [], result.value))
+      else setNotice(describe(result.error))
+    },
+    []
   )
 
   useEffect(() => {
@@ -160,16 +164,18 @@ export function useAiTranslate(
     })
   }, [])
 
-  // Ước lượng là thứ người dùng mở hộp thoại để xem, nên tính ngay khi biết cặp kết nối–model.
+  // Ước lượng là thứ người dùng mở hộp thoại để xem, nên tính ngay khi biết cặp kết nối–mục model. `replan`
+  // tăng khi một lô báo cấu hình hay bản dịch đã đổi: kế hoạch cũ không dùng được nữa, lập lại để có khóa
+  // cấu hình và revision mới.
   useEffect(() => {
     if (!current) return
-    const key = targetKey(current.connectionId, current.model)
+    const key = targetKey(current.connectionId, current.entryId)
     void window.mira.ai.translate
       .plan({
         workId,
         chapterId,
         connectionId: current.connectionId,
-        model: current.model
+        entryId: current.entryId
       })
       .then((result) => {
         if (!live.current) return
@@ -180,7 +186,7 @@ export function useAiTranslate(
           message: result.ok ? null : describe(result.error)
         })
       })
-  }, [current, workId, chapterId])
+  }, [current, workId, chapterId, replan])
 
   const settled = planned !== null && planned.target === chosen
   const plan = settled ? planned.plan : null
@@ -193,7 +199,7 @@ export function useAiTranslate(
 
   /** Chạy một dãy lô liên tiếp, ghi ngay từng lô, dừng khi bị hủy hay gặp lỗi không đi tiếp được. */
   const runBatches = useCallback(
-    async (batches: string[][], target: TranslateTarget): Promise<void> => {
+    async (batches: string[][], target: TranslateTarget, settingsKey: string): Promise<void> => {
       stop.current = false
       setStopping(false)
       setCancelled(false)
@@ -210,13 +216,16 @@ export function useAiTranslate(
           workId,
           chapterId,
           connectionId: target.connectionId,
-          model: target.model,
+          entryId: target.entryId,
+          settingsKey,
           sourceIds,
           expectedRev: rev.current
         })
         if (!result.ok) {
           setFailure({ kind: 'conflict', message: describe(result.error), recoverAt: null })
           setFailed((ids) => [...new Set([...ids, ...sourceIds])])
+          // Cấu hình của mục hay bản dịch đã đổi giữa chừng: lập kế hoạch lại để lô chạy lại dùng khóa mới.
+          if (result.error.code === 'conflict') setReplan((count) => count + 1)
           break
         }
 
@@ -273,16 +282,17 @@ export function useAiTranslate(
     setUsage(null)
     await runBatches(
       plan.batches.map((batch) => batch.sourceIds),
-      current
+      current,
+      plan.settingsKey
     )
   }, [plan, current, runBatches])
 
   const retryFailed = useCallback(async (): Promise<void> => {
-    if (!current || failed.length === 0) return
+    if (!current || !plan || failed.length === 0) return
     const again = [...failed]
     setFailed([])
-    await runBatches([again], current)
-  }, [current, failed, runBatches])
+    await runBatches([again], current, plan.settingsKey)
+  }, [current, plan, failed, runBatches])
 
   const acceptHeld = useCallback(
     async (item: HeldSuggestion): Promise<void> => {
@@ -307,9 +317,11 @@ export function useAiTranslate(
   return {
     stage,
     targets,
+    connections: enabledConnections,
+    selection:
+      current === null ? null : { connectionId: current.connectionId, entryId: current.entryId },
+    pick,
     loadingTargets: connections === null,
-    chosen,
-    choose: setPicked,
     plan,
     notice: notice ?? (settled ? planned.message : null),
     dismissNotice: () => setNotice(null),
@@ -328,7 +340,6 @@ export function useAiTranslate(
     },
     retryFailed,
     acceptHeld,
-    keepMine: (sourceId) =>
-      setHeld((items) => items.filter((entry) => entry.sourceId !== sourceId))
+    keepMine: (sourceId) => setHeld((items) => items.filter((entry) => entry.sourceId !== sourceId))
   }
 }

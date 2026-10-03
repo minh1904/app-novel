@@ -1,5 +1,6 @@
 import type { SourceLanguage } from '../../../shared/contracts/library'
 import type { ModelInfo } from '../../infra/providers/modelCatalog'
+import type { Usage } from '../../infra/providers/usage'
 
 /**
  * Ước lượng chi phí trước khi chạy một job dịch.
@@ -57,16 +58,22 @@ function roundUsd(value: number): number {
  * Khác `estimateCost` ở chỗ không ước lượng gì: không hệ số ký tự-trên-token, không tỷ lệ đầu ra,
  * không prompt overhead — ba thứ đều là phỏng đoán chưa đo, và ở đây không cần tới chúng. Trả `null`
  * khi chưa biết giá; **không bao giờ** trả 0, vì 0 đọc như "miễn phí".
+ *
+ * `usage.inputTokens` là phần đầu vào **không** đọc từ cache (xem `Usage`). Phần đọc/ghi cache tính
+ * theo giá cache của model; bảng giá thiếu giá đó thì tính như đầu vào thường, vì đó là mức cao hơn
+ * hoặc bằng và một con số hơi dư dễ chấp nhận hơn một con số thiếu. Token suy luận nằm **trong**
+ * `outputTokens` nên đã được tính theo giá đầu ra.
  */
-export function costOfUsage(
-  usage: { inputTokens: number; outputTokens: number },
-  model?: ModelInfo
-): number | null {
+export function costOfUsage(usage: Usage, model?: ModelInfo): number | null {
   const inputPrice = model?.cost?.input
   const outputPrice = model?.cost?.output
   if (inputPrice === undefined || outputPrice === undefined) return null
+  const cacheReadPrice = model?.cost?.cacheRead ?? inputPrice
+  const cacheWritePrice = model?.cost?.cacheWrite ?? inputPrice
   const usd =
     (Math.max(0, usage.inputTokens) / 1_000_000) * inputPrice +
+    (Math.max(0, usage.cacheReadTokens ?? 0) / 1_000_000) * cacheReadPrice +
+    (Math.max(0, usage.cacheWriteTokens ?? 0) / 1_000_000) * cacheWritePrice +
     (Math.max(0, usage.outputTokens) / 1_000_000) * outputPrice
   return roundUsd(usd)
 }

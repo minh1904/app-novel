@@ -1,6 +1,7 @@
 import * as v from 'valibot'
 import { idSchema } from './library'
-import { MODEL_ID_MAX } from './aiConnections'
+import { settingsKeySchema } from './modelSettings'
+import type { TokenUsage } from './usage'
 
 /**
  * Dịch bản gốc của một chương bằng AI: những gì đi qua IPC.
@@ -28,7 +29,17 @@ export interface TranslateEstimate {
 export interface TranslatePlan {
   connectionId: string
   connectionName: string
+  /** Mục model đã chọn: dịch bằng cấu hình của chính mục này (design D1). */
+  entryId: string
+  /** Tên hiển thị của mục, để hộp thoại nói "dịch bằng …". */
+  entryName: string
+  /** Tên model thật mục đó gửi cho nhà cung cấp. */
   model: string
+  /**
+   * Khóa của cấu hình lúc lập kế hoạch. Mỗi lô gửi lại nó; nếu mục đã bị sửa giữa chừng thì lô không được
+   * gửi (`conflict`) và người dùng lập kế hoạch lại, thay vì một chương mang hai cấu hình lẫn nhau.
+   */
+  settingsKey: string
   /** Ngày của bản chụp giá đi kèm bản cài, để nói "giá tham khảo, cập nhật ngày…". */
   catalogReadAt: string
   /** Số segment sẽ gửi. */
@@ -59,7 +70,9 @@ export interface HeldSuggestion {
 export type TranslateErrorKind =
   | 'rate_limited'
   | 'network'
+  | 'timeout'
   | 'auth'
+  | 'quota'
   | 'refused'
   | 'invalid_response'
   | 'cancelled'
@@ -73,10 +86,7 @@ export interface TranslateFailure {
 }
 
 /** Lượng token nhà cung cấp báo đã dùng thật. Thiếu khi endpoint không báo. */
-export interface TranslateUsage {
-  inputTokens: number
-  outputTokens: number
-}
+export type TranslateUsage = TokenUsage
 
 export interface TranslateBatchResult {
   /** Segment đã ghi vào bản dịch. */
@@ -97,23 +107,17 @@ const chapterRef = {
   chapterId: v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.'))
 }
 
-const model = v.pipe(
-  v.string('Tên model phải là chữ.'),
-  v.trim(),
-  v.minLength(1, 'Chưa chọn model.'),
-  v.maxLength(MODEL_ID_MAX, 'Tên model quá dài.')
-)
-
 export const translatePlanSchema = v.strictObject({
   ...chapterRef,
   connectionId: idSchema,
-  model
+  entryId: idSchema
 })
 
 export const translateBatchSchema = v.strictObject({
   ...chapterRef,
   connectionId: idSchema,
-  model,
+  entryId: idSchema,
+  settingsKey: settingsKeySchema,
   sourceIds: v.pipe(
     v.array(
       v.pipe(v.string('ID segment phải là chữ.'), v.uuid('ID segment không hợp lệ.')),

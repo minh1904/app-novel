@@ -6,7 +6,8 @@ import type {
   ModelInfoView,
   UpdateConnectionInput
 } from '../../../../shared/contracts/aiConnections'
-import type { IpcError } from '../../../../shared/contracts/result'
+import type { IpcError, Result } from '../../../../shared/contracts/result'
+import { messageOf, type EntryOutcome, type ModelEntryActions } from '../models/modelEntryActions'
 
 export type ConnectionsLoad = 'loading' | 'ready' | 'failed'
 
@@ -34,7 +35,8 @@ export interface ConnectionsController {
   remove(id: string): Promise<void>
   addKey(id: string, secret: string): Promise<boolean>
   removeKey(id: string, keyId: string): Promise<void>
-  setModels(id: string, models: string[]): Promise<void>
+  /** Mọi thao tác trên mục model; mỗi cái trả về kết nối đã đổi vào đúng chỗ của nó trong danh sách. */
+  entries: ModelEntryActions
   test(id: string): Promise<void>
 }
 
@@ -114,6 +116,33 @@ export function useConnections(): ConnectionsController {
     [applyOne]
   )
 
+  /**
+   * Như `run` nhưng báo lỗi cho **nơi gọi** thay vì đẩy lên biểu ngữ của cả màn: một ô trong hộp thoại cần
+   * lý do nằm ngay cạnh nó, và biểu ngữ phía sau một hộp thoại không ai thấy.
+   */
+  const attempt = useCallback(
+    async (action: () => Promise<Result<ConnectionView>>): Promise<EntryOutcome> => {
+      const result = await action()
+      if (result.ok) {
+        applyOne(result.value)
+        return { ok: true }
+      }
+      return { ok: false, message: messageOf(result.error) }
+    },
+    [applyOne]
+  )
+
+  const entries: ModelEntryActions = {
+    add: (connectionId, items) => attempt(() => window.mira.ai.models.add(connectionId, items)),
+    update: (entryId, patch) => attempt(() => window.mira.ai.models.update(entryId, patch)),
+    duplicate: (entryId) => attempt(() => window.mira.ai.models.duplicate(entryId)),
+    remove: (entryId) => attempt(() => window.mira.ai.models.delete(entryId)),
+    reorder: (connectionId, ids) => attempt(() => window.mira.ai.models.reorder(connectionId, ids)),
+    setDefault: (connectionId, entryId) =>
+      attempt(() => window.mira.ai.update(connectionId, { defaultEntryId: entryId })),
+    test: (entryId) => window.mira.ai.models.test(entryId)
+  }
+
   const setTest = useCallback((id: string, patch: Partial<TestState>) => {
     setTests((current) => ({ ...current, [id]: { ...(current[id] ?? emptyTest), ...patch } }))
   }, [])
@@ -153,9 +182,7 @@ export function useConnections(): ConnectionsController {
     async removeKey(id, keyId) {
       await run(() => window.mira.ai.removeKey(id, keyId))
     },
-    async setModels(id, models) {
-      await run(() => window.mira.ai.setModels(id, models))
-    },
+    entries,
     async test(id) {
       setTest(id, { running: true, error: null })
       const result = await window.mira.ai.test(id)

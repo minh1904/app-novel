@@ -2,20 +2,26 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   addKey,
+  addModelEntry,
   clearKeyFreeze,
   deleteConnection,
+  deleteModelEntry,
+  duplicateModelEntry,
   freezeKey,
   getConnection,
+  getModelEntry,
   insertConnection,
   listConnections,
   markKeyInvalid,
   patchConnection,
   readKeyCiphers,
   removeKey,
+  reorderModelEntries,
   reSealKey,
-  setModels,
+  updateModelEntry,
   type ConnectionView
 } from './connections'
+import { StorageError } from './errors'
 import { LibraryStore } from '../../services/library/library'
 import { librarySchema } from './librarySchema'
 import { migrate } from './migrate'
@@ -103,24 +109,23 @@ describe('connections store', () => {
   it('patches only the fields it is given', () => {
     const db = openIndex()
     insertConnection(db, 'c1', { name: 'A', baseUrl: 'https://a/v1', providerId: 'google' }, 1)
-    const patched = patchConnection(db, 'c1', { defaultModel: 'gemini-flash-latest' }, 2)
+    addModelEntry(db, 'c1', 'e1', { model: 'gemini-flash-latest' })
+    const patched = patchConnection(db, 'c1', { defaultEntryId: 'e1' }, 2)
     expect(patched).toMatchObject({
       name: 'A',
       baseUrl: 'https://a/v1',
       providerId: 'google',
-      defaultModel: 'gemini-flash-latest',
+      defaultEntryId: 'e1',
       enabled: true
     })
-    expect(patchConnection(db, 'c1', { enabled: false }, 3).defaultModel).toBe(
-      'gemini-flash-latest'
-    )
+    expect(patchConnection(db, 'c1', { enabled: false }, 3).defaultEntryId).toBe('e1')
     db.close()
   })
 
   it('removes keys and models with the connection they belong to', async () => {
     const db = openIndex()
     await seed(db)
-    setModels(db, 'c1', ['gemini-flash-latest'])
+    addModelEntry(db, 'c1', 'e1', { model: 'gemini-flash-latest' })
     deleteConnection(db, 'c1')
     expect(listConnections(db)).toEqual([])
     expect(db.prepare('SELECT COUNT(*) AS n FROM ai_key').get<{ n: number }>()?.n).toBe(0)
@@ -128,11 +133,23 @@ describe('connections store', () => {
     db.close()
   })
 
-  it('keeps the chosen models in order and drops blanks and repeats', () => {
+  it('refuses a default that is not an entry of this connection', () => {
     const db = openIndex()
     insertConnection(db, 'c1', { name: 'A', baseUrl: 'https://a/v1' }, 1)
-    const connection = setModels(db, 'c1', ['b', ' ', 'a', 'b', ' c '])
-    expect(connection.models).toEqual(['b', 'a', 'c'])
+    insertConnection(db, 'c2', { name: 'B', baseUrl: 'https://b/v1' }, 1)
+    addModelEntry(db, 'c2', 'other', { model: 'm' })
+    // Another connection's entry, and an id that is nowhere, would both leave the default pointing at nothing.
+    expect(() => patchConnection(db, 'c1', { defaultEntryId: 'other' }, 2)).toThrow(StorageError)
+    expect(() => patchConnection(db, 'c1', { defaultEntryId: 'nowhere' }, 2)).toThrow(StorageError)
+    expect(patchConnection(db, 'c1', { defaultEntryId: null }, 2).defaultEntryId).toBeNull()
+    db.close()
+  })
+
+  it('lets a connection be renamed even if its stored default has gone stale', () => {
+    const db = openIndex()
+    insertConnection(db, 'c1', { name: 'A', baseUrl: 'https://a/v1' }, 1)
+    db.prepare("UPDATE ai_connection SET default_model = 'stale' WHERE id = 'c1'").run()
+    expect(patchConnection(db, 'c1', { name: 'B' }, 2).name).toBe('B')
     db.close()
   })
 
@@ -179,6 +196,202 @@ describe('connections store', () => {
     removeKey(db, 'k1')
     expect(getConnection(db, 'c1').keys).toEqual([])
     expect(() => removeKey(db, 'k1')).toThrow()
+    db.close()
+  })
+})
+
+describe('model entries', () => {
+  function withConnection(): Db {
+    const db = openIndex()
+    insertConnection(db, 'c1', { name: 'A', baseUrl: 'https://a/v1' }, 1)
+    return db
+  }
+
+  const names = (view: ConnectionView): string[] => view.models.map((entry) => entry.name)
+
+  it('adds an entry named after its model unless told otherwise, with no settings', () => {
+    const db = withConnection()
+    const view = addModelEntry(db, 'c1', 'e1', { model: ' gemini-2.5-flash ' })
+    expect(view.models).toEqual([
+      { id: 'e1', name: 'gemini-2.5-flash', model: 'gemini-2.5-flash', settings: {} }
+    ])
+    db.close()
+  })
+
+  it('takes any model name, because the endpoint may not list it', () => {
+    const db = withConnection()
+    const view = addModelEntry(db, 'c1', 'e1', { model: 'ten-rieng-cua-toi', name: 'Của tôi' })
+    expect(view.models[0]).toMatchObject({ name: 'Của tôi', model: 'ten-rieng-cua-toi' })
+    db.close()
+  })
+
+  it('refuses a blank model or name, and one that is too long', () => {
+    const db = withConnection()
+    expect(() => addModelEntry(db, 'c1', 'e1', { model: '  ' })).toThrow(StorageError)
+    expect(() => addModelEntry(db, 'c1', 'e1', { model: 'm', name: ' ' })).toThrow(StorageError)
+    expect(() => addModelEntry(db, 'c1', 'e1', { model: 'x'.repeat(121) })).toThrow(StorageError)
+    expect(() => addModelEntry(db, 'c1', 'e1', { model: 'm', name: 'x'.repeat(81) })).toThrow(
+      StorageError
+    )
+    expect(getConnection(db, 'c1').models).toEqual([])
+    db.close()
+  })
+
+  it('refuses to add to a connection that is not there', () => {
+    const db = openIndex()
+    expect(() => addModelEntry(db, 'nowhere', 'e1', { model: 'm' })).toThrow(StorageError)
+    db.close()
+  })
+
+  it('keeps two entries that point at the same real model, each with its own settings', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'gemini-2.5-flash' })
+    addModelEntry(db, 'c1', 'e2', {
+      model: 'gemini-2.5-flash',
+      name: 'Flash nhanh',
+      settings: { thinking: 'off' }
+    })
+    const view = getConnection(db, 'c1')
+    expect(view.models.map((entry) => entry.model)).toEqual([
+      'gemini-2.5-flash',
+      'gemini-2.5-flash'
+    ])
+    expect(view.models[0].settings).toEqual({})
+    expect(view.models[1].settings).toEqual({ thinking: 'off' })
+    db.close()
+  })
+
+  it('updates the settings of one entry without touching another that shares its model', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm' })
+    addModelEntry(db, 'c1', 'e2', { model: 'm' })
+    const view = updateModelEntry(db, 'e2', {
+      settings: { temperature: { enabled: true, value: 0.3 }, rpmLimit: 6 }
+    })
+    expect(view.models[0].settings).toEqual({})
+    expect(view.models[1].settings).toEqual({
+      temperature: { enabled: true, value: 0.3 },
+      rpmLimit: 6
+    })
+    db.close()
+  })
+
+  it('changes only the fields of a patch', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm', name: 'Tên', settings: { thinking: 'low' } })
+    expect(updateModelEntry(db, 'e1', { name: 'Tên mới' }).models[0]).toEqual({
+      id: 'e1',
+      name: 'Tên mới',
+      model: 'm',
+      settings: { thinking: 'low' }
+    })
+    expect(updateModelEntry(db, 'e1', { model: 'm2' }).models[0]).toMatchObject({
+      name: 'Tên mới',
+      model: 'm2',
+      settings: { thinking: 'low' }
+    })
+    db.close()
+  })
+
+  it('refuses to update an entry that is not there', () => {
+    const db = withConnection()
+    expect(() => updateModelEntry(db, 'nowhere', { name: 'x' })).toThrow(StorageError)
+    db.close()
+  })
+
+  it('duplicates an entry with its settings and a new id, right after the original', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm', name: 'A', settings: { rpmLimit: 6 } })
+    addModelEntry(db, 'c1', 'e2', { model: 'n', name: 'B' })
+    const view = duplicateModelEntry(db, 'e1', 'e3')
+    expect(names(view)).toEqual(['A', 'A (bản sao)', 'B'])
+    expect(view.models[1]).toMatchObject({ id: 'e3', model: 'm', settings: { rpmLimit: 6 } })
+    // The original is untouched, and the copy owns its settings rather than sharing them.
+    updateModelEntry(db, 'e3', { settings: { rpmLimit: 12 } })
+    expect(getModelEntry(db, 'c1', 'e1').settings).toEqual({ rpmLimit: 6 })
+    db.close()
+  })
+
+  it('keeps a long name within the limit when it is duplicated', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm', name: 'x'.repeat(80) })
+    const copy = duplicateModelEntry(db, 'e1', 'e2').models[1]
+    expect(copy.name.length).toBeLessThanOrEqual(80)
+    expect(copy.name.endsWith('(bản sao)')).toBe(true)
+    db.close()
+  })
+
+  it('deletes one entry and leaves the others, including one with the same model', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm' })
+    addModelEntry(db, 'c1', 'e2', { model: 'm' })
+    const view = deleteModelEntry(db, 'e1')
+    expect(view.models.map((entry) => entry.id)).toEqual(['e2'])
+    db.close()
+  })
+
+  it('leaves the connection with no default when the default entry is deleted', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm' })
+    addModelEntry(db, 'c1', 'e2', { model: 'n' })
+    patchConnection(db, 'c1', { defaultEntryId: 'e1' }, 2)
+    expect(deleteModelEntry(db, 'e1').defaultEntryId).toBeNull()
+    db.close()
+  })
+
+  it('keeps the default when some other entry is deleted', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm' })
+    addModelEntry(db, 'c1', 'e2', { model: 'n' })
+    patchConnection(db, 'c1', { defaultEntryId: 'e1' }, 2)
+    expect(deleteModelEntry(db, 'e2').defaultEntryId).toBe('e1')
+    db.close()
+  })
+
+  it('keeps the order the user arranged, and appends new entries at the end', () => {
+    const db = withConnection()
+    for (const id of ['a', 'b', 'c']) addModelEntry(db, 'c1', id, { model: 'm', name: id })
+    expect(names(reorderModelEntries(db, 'c1', ['c', 'a', 'b']))).toEqual(['c', 'a', 'b'])
+    expect(names(addModelEntry(db, 'c1', 'd', { model: 'm', name: 'd' }))).toEqual([
+      'c',
+      'a',
+      'b',
+      'd'
+    ])
+    db.close()
+  })
+
+  it('refuses an order that is missing an entry, repeats one, or names one that is not there', () => {
+    const db = withConnection()
+    for (const id of ['a', 'b']) addModelEntry(db, 'c1', id, { model: 'm', name: id })
+    expect(() => reorderModelEntries(db, 'c1', ['a'])).toThrow(StorageError)
+    expect(() => reorderModelEntries(db, 'c1', ['a', 'a'])).toThrow(StorageError)
+    expect(() => reorderModelEntries(db, 'c1', ['a', 'zzz'])).toThrow(StorageError)
+    expect(() => reorderModelEntries(db, 'c1', ['a', 'b', 'a'])).toThrow(StorageError)
+    expect(names(getConnection(db, 'c1'))).toEqual(['a', 'b'])
+    db.close()
+  })
+
+  it('finds an entry only inside its own connection', () => {
+    const db = withConnection()
+    insertConnection(db, 'c2', { name: 'B', baseUrl: 'https://b/v1' }, 1)
+    addModelEntry(db, 'c1', 'e1', { model: 'm' })
+    expect(getModelEntry(db, 'c1', 'e1').model).toBe('m')
+    expect(() => getModelEntry(db, 'c2', 'e1')).toThrow(StorageError)
+    expect(() => getModelEntry(db, 'c1', 'nowhere')).toThrow(StorageError)
+    db.close()
+  })
+
+  it('reads settings that went bad as far as it can, and never throws', () => {
+    const db = withConnection()
+    addModelEntry(db, 'c1', 'e1', { model: 'm' })
+    db.prepare('UPDATE ai_model SET settings = ? WHERE id = ?').run(
+      JSON.stringify({ thinking: 'low', temperature: { enabled: true, value: 9 } }),
+      'e1'
+    )
+    expect(getConnection(db, 'c1').models[0].settings).toEqual({ thinking: 'low' })
+    db.prepare('UPDATE ai_model SET settings = ? WHERE id = ?').run('{not json', 'e1')
+    expect(getConnection(db, 'c1').models[0].settings).toEqual({})
     db.close()
   })
 })

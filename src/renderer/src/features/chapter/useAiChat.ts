@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatContextBlock, ChatMode } from '../../../../shared/contracts/aiChat'
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
+import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
+import { messageOf } from '../models/modelEntryActions'
+import type { ModelSelection } from '../models/ModelSelectionMenu'
+import { replaceById, thinkingPatch, type ThinkingChoice } from '../models/modelSettingsForm'
 import type { SourceLanguage } from '../../../../shared/contracts/library'
 import type { TargetRange, TargetScope } from '../editor/chatRange'
 import { buildChatContext, type ContextScope } from './chatContext'
@@ -77,10 +81,19 @@ export interface AiChatController {
   /** Connections that can actually be called: enabled, and with a model to call. */
   usable: ConnectionView[]
   connection: ConnectionView | null
+  /** Id of the chosen model entry. */
   model: string | null
-  models: string[]
-  setConnection(id: string): void
-  setModel(model: string): void
+  models: ModelEntryView[]
+  /** The connection and entry in use, in the shape the model menu takes. */
+  selection: ModelSelection | null
+  selectModel(selection: ModelSelection): void
+  /** Picks the entry and writes the level into its settings, like any other setting. */
+  setThinking(selection: ModelSelection, choice: ThinkingChoice): Promise<void>
+  /** Reloads the connections; the panel lives as long as the chapter, so its copy goes stale. */
+  refreshConnections(): void
+  /** Why the last attempt to change a model's level failed, if it did. */
+  modelNotice: string | null
+  dismissModelNotice(): void
   mode: ChatMode
   setMode(mode: ChatMode): void
   /** True once a connection and model are chosen and the range is not empty for Sửa. */
@@ -101,11 +114,9 @@ export interface AiChatController {
 const usableOf = (connections: ConnectionView[]): ConnectionView[] =>
   connections.filter((connection) => connection.enabled)
 
-/** The models a connection offers: what `test` found, else just its default. */
-function modelsOf(connection: ConnectionView | null): string[] {
-  if (!connection) return []
-  if (connection.models.length > 0) return connection.models
-  return connection.defaultModel ? [connection.defaultModel] : []
+/** The model entries a connection offers, in the order the person arranged them. */
+function modelsOf(connection: ConnectionView | null): ModelEntryView[] {
+  return connection ? connection.models : []
 }
 
 export function useAiChat(options: AiChatOptions): AiChatController {
@@ -113,6 +124,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
 
   const [connections, setConnections] = useState<ConnectionView[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [modelNotice, setModelNotice] = useState<string | null>(null)
   const [connectionId, setConnectionId] = useState<string | null>(null)
   const [model, setModelState] = useState<string | null>(null)
   // `null` means "still following the chapter"; any pick freezes it.
@@ -149,13 +161,46 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     }
   }, [])
 
+  const refreshConnections = useCallback(() => {
+    void window.mira.ai.list().then((result) => {
+      if (result.ok) setConnections(result.value.connections)
+    })
+  }, [])
+
+  const selectModel = useCallback((selection: ModelSelection) => {
+    setConnectionId(selection.connectionId)
+    setModelState(selection.entryId)
+  }, [])
+
+  const setThinking = useCallback(
+    async (selection: ModelSelection, choice: ThinkingChoice): Promise<void> => {
+      selectModel(selection)
+      const result = await window.mira.ai.models.update(selection.entryId, {
+        settings: thinkingPatch(choice)
+      })
+      if (result.ok) {
+        setConnections((current) => replaceById(current, result.value))
+        setModelNotice(null)
+      } else {
+        setModelNotice(messageOf(result.error))
+      }
+    },
+    [selectModel]
+  )
+
   const usable = useMemo(() => usableOf(connections), [connections])
   const connection = useMemo(
     () => usable.find((entry) => entry.id === connectionId) ?? usable[0] ?? null,
     [usable, connectionId]
   )
   const models = useMemo(() => modelsOf(connection), [connection])
-  const chosenModel = model !== null && models.includes(model) ? model : (models[0] ?? null)
+  // The connection's default entry when nothing was picked, else the first one.
+  const chosenModel =
+    model !== null && models.some((entry) => entry.id === model)
+      ? model
+      : (models.find((entry) => entry.id === connection?.defaultEntryId)?.id ??
+        models[0]?.id ??
+        null)
 
   // One subscription for the life of the panel, torn down with the function `onChunk` returns. Any
   // other shape here leaks a listener per open/close cycle.
@@ -266,7 +311,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
         workId,
         chapterId,
         connectionId: connection.id,
-        model: chosenModel,
+        entryId: chosenModel,
         mode,
         sourceLang: current.sourceLang,
         question: asked,
@@ -317,8 +362,15 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     connection,
     model: chosenModel,
     models,
-    setConnection: setConnectionId,
-    setModel: setModelState,
+    selection:
+      connection !== null && chosenModel !== null
+        ? { connectionId: connection.id, entryId: chosenModel }
+        : null,
+    selectModel,
+    setThinking,
+    refreshConnections,
+    modelNotice,
+    dismissModelNotice: () => setModelNotice(null),
     mode,
     setMode: setPickedMode,
     canSend,

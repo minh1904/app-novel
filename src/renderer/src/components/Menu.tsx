@@ -1,5 +1,6 @@
 import type { JSX, ReactNode } from 'react'
 import { Menu as BaseMenu } from '@base-ui/react/menu'
+import { CheckIcon } from '@solar-icons/react/linear/check'
 import { cx } from './cx'
 
 export function MenuRoot(props: BaseMenu.Root.Props): JSX.Element {
@@ -50,4 +51,53 @@ export function MenuItem({
 
 export function MenuSeparator(): JSX.Element {
   return <BaseMenu.Separator className="mx-1 my-1 h-px bg-line" />
+}
+
+const itemClass =
+  'flex h-[30px] cursor-default items-center gap-2 rounded-[7px] px-2 outline-none select-none data-disabled:opacity-50 data-highlighted:bg-selected'
+
+/** A menu inside a menu: `MenuSubmenuTrigger` is the row that opens it, `MenuSubmenuPopup` is what opens. */
+export function MenuSubmenu(props: BaseMenu.SubmenuRoot.Props): JSX.Element {
+  return <BaseMenu.SubmenuRoot {...props} />
+}
+
+export function MenuSubmenuTrigger({
+  className,
+  ...props
+}: Omit<BaseMenu.SubmenuTrigger.Props, 'className'> & { className?: string }): JSX.Element {
+  return <BaseMenu.SubmenuTrigger className={cx(itemClass, className)} {...props} />
+}
+
+export function MenuSubmenuPopup({ children }: { children: ReactNode }): JSX.Element {
+  return (
+    <BaseMenu.Portal>
+      <BaseMenu.Positioner sideOffset={4} alignOffset={-5} align="start">
+        <BaseMenu.Popup className="min-w-[164px] rounded-control border border-line bg-popover p-1 text-xs text-ink shadow-[0_8px_28px_rgb(0_0_0/0.14)] outline-none">
+          {children}
+        </BaseMenu.Popup>
+      </BaseMenu.Positioner>
+    </BaseMenu.Portal>
+  )
+}
+
+export function MenuRadioGroup(props: BaseMenu.RadioGroup.Props): JSX.Element {
+  return <BaseMenu.RadioGroup {...props} />
+}
+
+/** A choice among several, marked with a check. The check is the only thing that says which is chosen. */
+export function MenuRadioItem({
+  className,
+  children,
+  ...props
+}: Omit<BaseMenu.RadioItem.Props, 'className'> & { className?: string }): JSX.Element {
+  return (
+    <BaseMenu.RadioItem className={cx(itemClass, 'pr-3', className)} {...props}>
+      <span className="flex size-3.5 shrink-0 items-center justify-center">
+        <BaseMenu.RadioItemIndicator>
+          <CheckIcon size={13} />
+        </BaseMenu.RadioItemIndicator>
+      </span>
+      {children}
+    </BaseMenu.RadioItem>
+  )
 }

@@ -20,7 +20,7 @@ function input(patch: Partial<ChatSendInput> = {}): ChatSendInput {
     workId: WORK,
     chapterId: CHAPTER,
     connectionId: CONNECTION,
-    model: 'gemini-flash-latest',
+    entryId: '5d6e7f80-9a1b-4c2d-8e3f-405162738495',
     mode: 'hoi',
     sourceLang: 'en',
     question: 'Dịch chương này',

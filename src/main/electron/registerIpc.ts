@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'el
 import { join } from 'node:path'
 import { CHANNELS } from '../../shared/contracts/channels'
 import { createServices } from '../services/createServices'
+import { electronFetch } from './netFetch'
 import { electronSafeStorage } from './safeStorage'
 import type { LibraryStore } from '../services/library/library'
 import type { FilePicker } from '../ipc/filePicker'
@@ -47,7 +48,8 @@ export function registerLibraryHandlers(
 ): void {
   const { connections, translator, chat } = createServices({
     library,
-    crypto: electronSafeStorage
+    crypto: electronSafeStorage,
+    fetch: electronFetch
   })
   const handlers = guardHandlers(
     createLibraryHandlers(library, electronFilePicker(), connections, translator, chat),

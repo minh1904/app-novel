@@ -87,7 +87,9 @@ function failed(call: ToolCall, message: string): ToolResult {
 function readArgs(call: ToolCall): Record<string, unknown> | null {
   try {
     const parsed: unknown = JSON.parse(call.args === '' ? '{}' : call.args)
-    return parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
+    return parsed !== null && typeof parsed === 'object'
+      ? (parsed as Record<string, unknown>)
+      : null
   } catch {
     return null
   }

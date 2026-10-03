@@ -1,0 +1,45 @@
+{
+  "scenario": "probe-gemini-3.1-pro-preview-temperature",
+  "capturedAt": "2026-10-03T14:57:03.311Z",
+  "model": "gemini-3.1-pro-preview",
+  "request": {
+    "method": "POST",
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    "headers": {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "authorization": "Bearer <redacted>"
+    },
+    "body": {
+      "model": "gemini-3.1-pro-preview",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Dịch sang tiếng Việt, chỉ trả bản dịch: 你好，世界。今天天气很好。"
+        }
+      ],
+      "temperature": 0.3
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "cache-control": "private",
+      "content-encoding": "gzip",
+      "content-type": "application/json",
+      "date": "Sat, 03 Oct 2026 14:57:01 GMT",
+      "expires": "Sat, 03 Oct 2026 14:57:01 GMT",
+      "p3p": "CP=\"This is not a P3P policy! See g.co/p3phelp for more info.\"",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=4140",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-xss-protection": "0"
+    },
+    "bodyText": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"Xin chào thế giới. Hôm nay thời tiết rất đẹp.\",\"extra_content\":{\"google\":{\"thought_signature\":\"EpkICpYIAWkUfRMSLB6g95N3tveqjjV2hzk91cyiWiVjdF3jCx1r6e8TfJ7ZaB99pJG/sVNK6GRA6q+xNbLsWZ2fzU3SuigQBDL5hzHkGqrdRC2UuX8CTef6vC7KXkFhJV3bllh0EEe/9HwjKsxnes0M5s4IOxScYvkVJp6czVjQRcKECzRq6c76lpVhqS60QxcVwmtwvbmKwBrTuVA+BpAOCQQ/1DoLRWlQBDCxsrzT4qHJzA3yBmw8Hy8rSfJZhnDg4msJhsPqMEg3wjseMeec7jjFwlV0zp/rq2YmU9zQ0FOWrULg6fv6QbmNBOQcRun5apGVPr02U5foizDh7ds/lFV6cSSbpfcnhgL5lwOSno6iKvEUK2h65APQ9APC9/E9g6YXR4T/j/6JatW3D4nFQdtN7FyBz9Lc2ScLJx2Cmy7ObKZVPd7qb867v52oP1DcdO1Z8NFmM8LK6chGel69pTaiFQTEsLWkcDLecCxsUBJSBVAzQZY6VaYjPwRMqi5ww+Azd9yBAUiECQ99DG7xEvZ+tMne2Bchxg+sA/xd8EBEnUefCQl5Rk4PTaIPW4SY1d91LzfS/2wH7J+AuJtsSE+F4SPjjH4R1AbgLMoWzDxjiDfPkI/FZrnm5iub1Tuny0RMymJa0SPQGZTL4L+AxYtbGK2DFCKkR7oIpgUaKOytY5PLJAmh167fl8ly0W+IZXt2JsoMAUSHsWXgfAkv2BL/IVTMv7wKYng31VCbbDv80TzEyt3HstSrxQSj6thPOkKP5jVclrKTVxf4tkmoHJVmeXFYBK6gaj7vimHgq+5xPhGmoTxhRwMTJSuywDWavfBVjI9Xl3le47g0MD+I/utwSzKnlCxNKAPRfR9cWtDd7GsWeGzHzL3Q82OP+35iTElO6Nkb9eVelJfsk4WLNB86h017njj2bEz8R5K6l7X+2rrscVrdVutzgpqrG71wY7z2Y3ftJiyNXdPx1+6rwU550904HhIdIzDfaomqJHQB+2M/KK8fqeS7Cb07hjOTRlYP+6aVaChgqvWmiHzZ5WWItidQeGMOR8/HN069ooVMUkIomB3CqnFrngi1YT/P5V2MVUMli5mzVUOQOaHN86KznxXw+UsKkmZ4dMmnRTrBzXOPzpGNmQkqnGkE/2vF12X1PPvmYJQ+Nz9QWXt1NhQ8XUJe3vZ8+s3vCq+dpHVMNPTU56maOf+98LEYnGd3CHDVyskYgUAV7otlnZdY6c8k8jrb2tPt3zzV0/JF9ZFfp1SdXjjoXLEE8Uf5n3IxI6Wy4ZnJct53oqGdoAaH7MAkna4IXFz4zHtQ3Mys2W0oiaAZC/yIeqtf+i8TznIAJshOO8UTVblpGQb3HGTBgWfWE0YODyqwTmbxHQVZYASsbc9DMAKyPug=\"}},\"role\":\"assistant\"}}],\"created\":1791039421,\"id\":\"uRfBarWiFZPrrfcP_o2uQA\",\"model\":\"gemini-3.1-pro-preview\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":12,\"prompt_tokens\":21,\"total_tokens\":279}}"
+  },
+  "elapsedMs": 4185
+}

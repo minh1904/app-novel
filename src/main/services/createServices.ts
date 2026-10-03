@@ -19,16 +19,23 @@ export interface Services {
  */
 export function createServices({
   library,
-  crypto
+  crypto,
+  fetch: fetchImpl
 }: {
   library: LibraryStore
   crypto: SecretCrypto
+  /**
+   * How requests reach the provider. The Electron layer passes `net.fetch` so they follow the system proxy;
+   * left out, the global `fetch` is used, which is what tests and any non-Electron caller want.
+   */
+  fetch?: typeof fetch
 }): Services {
   const connections = new ConnectionService({
     db: library.appDb,
     secrets: new SecretStore(crypto),
     now: () => library.appNow(),
-    newId: () => library.newAppId()
+    newId: () => library.newAppId(),
+    fetchImpl
   })
   const translator = new ChapterTranslator({
     library,

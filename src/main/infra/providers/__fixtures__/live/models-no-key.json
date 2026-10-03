@@ -1,0 +1,30 @@
+{
+  "scenario": "models-no-key",
+  "capturedAt": "2026-10-03T12:28:43.498Z",
+  "model": "gemini-2.5-flash",
+  "request": {
+    "method": "GET",
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai/models",
+    "headers": {
+      "accept": "application/json"
+    }
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "content-encoding": "gzip",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Sat, 03 Oct 2026 12:28:41 GMT",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=29",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-xss-protection": "0"
+    },
+    "bodyText": "{\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"Requested entity was not found.\",\n    \"status\": \"NOT_FOUND\"\n  }\n}\n"
+  },
+  "elapsedMs": 58
+}

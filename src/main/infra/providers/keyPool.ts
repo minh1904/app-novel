@@ -42,7 +42,7 @@ export function chooseKey<T extends Pick<KeyCipher, 'state' | 'frozenUntil'>>(
 
 /** Mốc sớm nhất có khóa sống lại, để báo cho người dùng biết chờ tới bao giờ. */
 export function earliestRecovery(
-  keys: Array<Pick<KeyCipher, 'state' | 'frozenUntil'>>,
+  keys: ReadonlyArray<Pick<KeyCipher, 'state' | 'frozenUntil'>>,
   now: number
 ): number | null {
   const times = keys
@@ -103,7 +103,15 @@ export function decideFreeze(input: {
     return { until: null, scope: null, strikes, invalid: true }
   }
 
-  // Mạng hỏng, nội dung bị từ chối, phản hồi hỏng: lỗi không nằm ở khóa, nên đừng phạt khóa.
+  // Hết tín dụng: khóa không dùng được cho tới khi người dùng nạp thêm, nhưng không phải khóa sai.
+  // Đóng băng tới mốc cấp lại hạn mức theo ngày rồi thăm dò một lượt, thay vì đánh dấu `invalid`
+  // (người dùng nạp tiền xong thì khóa tự dùng lại được, không phải dán lại).
+  if (error.kind === 'quota') {
+    return { until: nextDailyReset(now), scope: 'day', strikes: strikes + 1, invalid: false }
+  }
+
+  // Mạng hỏng, hết thời hạn, nội dung bị từ chối, phản hồi hỏng: lỗi không nằm ở khóa, nên đừng
+  // phạt khóa.
   if (error.kind !== 'rate_limited') {
     return { until: null, scope: null, strikes, invalid: false }
   }

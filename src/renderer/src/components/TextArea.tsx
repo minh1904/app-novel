@@ -39,14 +39,14 @@ export function TextArea({
         aria-invalid={error ? true : undefined}
         {...props}
       />
-      {hint && (
-        <span id={hintId} className="text-[12px] text-ink-muted">
-          {hint}
-        </span>
-      )}
       {error && (
         <span id={errorId} role="alert" className="text-[12px] text-error">
           {error}
+        </span>
+      )}
+      {hint && (
+        <span id={hintId} className="text-[12px] text-ink-muted">
+          {hint}
         </span>
       )}
     </div>

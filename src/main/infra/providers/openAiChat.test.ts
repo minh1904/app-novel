@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { ClassifiedError } from './classifyError'
 import {
   OpenAiCompatibleProvider,
   parseChatFrame,
   type ChatStreamEvent,
   type KeyExhausted,
   type KeyLease,
+  type KeyOutcome,
   type KeySource
 } from './openAiCompatible'
 import { ProviderError } from './types'
@@ -26,16 +26,16 @@ const NOW = 1_700_000_000_000
 
 function keySource(
   leases: Array<KeyLease | KeyExhausted> = [{ id: 'k1', secret: 'SECRET' }]
-): KeySource & { reports: Array<{ keyId: string; outcome: 'ok' | ClassifiedError }> } {
+): KeySource & { reports: Array<{ keyId: string; outcome: KeyOutcome }> } {
   const queue = [...leases]
-  const reports: Array<{ keyId: string; outcome: 'ok' | ClassifiedError }> = []
+  const reports: Array<{ keyId: string; outcome: KeyOutcome }> = []
   return {
     reports,
     async acquire() {
       return queue.length > 1 ? (queue.shift() as KeyLease) : queue[0]
     },
-    async report(keyId, outcome) {
-      reports.push({ keyId, outcome })
+    async report(lease, outcome) {
+      reports.push({ keyId: lease.id as string, outcome })
     }
   }
 }
@@ -69,7 +69,11 @@ const usageFrame = (input: number, output: number): string =>
   JSON.stringify({ choices: [], usage: { prompt_tokens: input, completion_tokens: output } }) +
   '\n\n'
 
-function jsonResponse(body: unknown, status: number, headers: Record<string, string> = {}): Response {
+function jsonResponse(
+  body: unknown,
+  status: number,
+  headers: Record<string, string> = {}
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json', ...headers }
@@ -85,6 +89,8 @@ function provider(
     model: 'gemini-flash-latest',
     keys,
     fetchImpl,
+    // Một lần thử lại có chờ; test không cần chờ thật.
+    sleep: async () => {},
     now: () => NOW
   })
 }
@@ -117,11 +123,13 @@ describe('parseChatFrame', () => {
   })
 
   it('khung mở đầu chỉ có role cho chữ rỗng, không phải lỗi', () => {
-    expect(parseChatFrame(JSON.stringify({ choices: [{ delta: { role: 'assistant' } }] }))).toEqual({
-      text: '',
-      usage: null,
-      toolCalls: []
-    })
+    expect(parseChatFrame(JSON.stringify({ choices: [{ delta: { role: 'assistant' } }] }))).toEqual(
+      {
+        text: '',
+        usage: null,
+        toolCalls: []
+      }
+    )
   })
 
   it('đọc usage ở khung cuối', () => {
@@ -148,14 +156,20 @@ describe('chat', () => {
   it('ghép chữ theo dòng và lấy usage ở khung cuối', async () => {
     const keys = keySource()
     const p = provider(
-      async () => sseResponse([delta('Nhờ '), delta('ngoại hình'), usageFrame(120, 30), 'data: [DONE]\n\n']),
+      async () =>
+        sseResponse([delta('Nhờ '), delta('ngoại hình'), usageFrame(120, 30), 'data: [DONE]\n\n']),
       keys
     )
     const { events, error } = await drain(p.chat(ASK))
 
     expect(error).toBeNull()
     expect(textOf(events)).toBe('Nhờ ngoại hình')
-    expect(events.at(-1)).toEqual({ kind: 'done', usage: { inputTokens: 120, outputTokens: 30 } })
+    // `finishReason` là trường mới của change `ai-gateway`: endpoint không báo thì là `unknown`, không phải lỗi.
+    expect(events.at(-1)).toEqual({
+      kind: 'done',
+      usage: { inputTokens: 120, outputTokens: 30 },
+      finishReason: 'unknown'
+    })
   })
 
   it('gửi stream và stream_options, cùng khóa ở header', async () => {
@@ -188,7 +202,7 @@ describe('chat', () => {
     const p = provider(async () => sseResponse([delta('a'), 'data: [DONE]\n\n']), keys)
     const { events, error } = await drain(p.chat(ASK))
     expect(error).toBeNull()
-    expect(events.at(-1)).toEqual({ kind: 'done', usage: null })
+    expect(events.at(-1)).toEqual({ kind: 'done', usage: null, finishReason: 'unknown' })
   })
 
   // Task 4.2 — lỗi trước khi stream bắt đầu, đi qua đúng bộ phân loại của lối dịch.
@@ -216,7 +230,9 @@ describe('chat', () => {
             error: {
               code: 429,
               message: 'Quota exceeded',
-              details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '34.4s' }]
+              details: [
+                { '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '34.4s' }
+              ]
             }
           },
           429
@@ -291,12 +307,15 @@ describe('chat', () => {
   })
 
   // Task 4.4 — hủy không kết luận gì về khóa, nên không báo gì cả.
-  it('hủy giữa dòng ném cancelled và không báo gì cho tầng khóa', async () => {
+  it('hủy giữa dòng ném cancelled và báo `neutral` cho tầng khóa, không phạt cũng không khôi phục', async () => {
     const keys = keySource()
     const controller = new AbortController()
     const p = provider(
       async () =>
-        sseResponse([delta('một'), delta('hai'), delta('ba'), 'data: [DONE]\n\n'], controller.signal),
+        sseResponse(
+          [delta('một'), delta('hai'), delta('ba'), 'data: [DONE]\n\n'],
+          controller.signal
+        ),
       keys
     )
 
@@ -312,7 +331,9 @@ describe('chat', () => {
     }
 
     expect((caught as ProviderError).kind).toBe('cancelled')
-    expect(keys.reports).toEqual([])
+    // `neutral`, không phải im lặng: tầng khóa phải biết lượt này đã kết thúc (một lượt thăm dò bị hủy mà
+    // không ai báo sẽ giữ khóa ở trạng thái "đang thăm dò" mãi), nhưng nó không chứng minh gì về khóa.
+    expect(keys.reports).toEqual([{ keyId: 'k1', outcome: 'neutral' }])
     // Dừng sớm, nhưng **không** khẳng định dừng ở đúng delta nào: stream pull sẵn một chunk trước
     // (highWaterMark 1), nên một delta đã đệm vẫn được giao sau lệnh hủy — đúng như thân fetch thật.
     // Hợp đồng là "kết thúc bằng cancelled, không có done", không phải "cắt đúng tại ký tự nào".
@@ -334,13 +355,17 @@ describe('chat', () => {
         controller.abort()
       }
     } catch {
-      // Lượt bị hủy; điều cần kiểm là tầng khóa không bị nói gì.
+      // Lượt bị hủy; điều cần kiểm là khóa không bị phạt.
     }
 
     const second = provider(async () => sseResponse([delta('ok'), 'data: [DONE]\n\n']), keys)
     const { error } = await drain(second.chat(ASK))
     expect(error).toBeNull()
-    expect(keys.reports).toEqual([{ keyId: 'k1', outcome: 'ok' }])
+    // Lượt bị hủy báo `neutral` (không phạt khóa), lượt sau thành công báo `ok`.
+    expect(keys.reports).toEqual([
+      { keyId: 'k1', outcome: 'neutral' },
+      { keyId: 'k1', outcome: 'ok' }
+    ])
   })
 
   // Task 4.5 — cùng một câu với lối dịch khi cạn khóa.
@@ -355,7 +380,9 @@ describe('chat', () => {
 
     expect(called).toBe(false)
     expect((error as ProviderError).kind).toBe('rate_limited')
-    expect((error as ProviderError).message).toContain('Mọi khóa của kết nối này đều đang hết hạn mức.')
+    expect((error as ProviderError).message).toContain(
+      'Mọi khóa của kết nối này đều đang hết hạn mức.'
+    )
     expect((error as ProviderError).retryAfterMs).toBe(5_000)
   })
 
@@ -371,5 +398,52 @@ describe('chat', () => {
     expect(error).toBeNull()
     expect(headers.authorization).toBeUndefined()
     expect(keys.reports).toEqual([])
+  })
+})
+
+describe('chat through the gateway (change `ai-gateway`)', () => {
+  it('tries again when the connection fails before any text, and streams the second answer', async () => {
+    let calls = 0
+    const p = provider(async () => {
+      if (++calls === 1) throw new TypeError('fetch failed')
+      return sseResponse([delta('xin'), 'data: [DONE]\n\n'])
+    }, keySource())
+    const { events, error } = await drain(p.chat(ASK))
+    expect(error).toBeNull()
+    expect(textOf(events)).toBe('xin')
+    expect(calls).toBe(2)
+  })
+
+  it('never tries again once text has been delivered: the reader already has it', async () => {
+    let calls = 0
+    const midStreamError =
+      'data: ' + JSON.stringify({ error: { code: 503, message: 'overloaded' } }) + '\n\n'
+    const p = provider(async () => {
+      calls++
+      return sseResponse([delta('một nửa'), midStreamError])
+    }, keySource())
+    const { events, error } = await drain(p.chat(ASK))
+    expect(textOf(events)).toBe('một nửa')
+    expect((error as ProviderError).kind).toBe('network')
+    expect(calls).toBe(1)
+  })
+
+  it('moves to the next key before any text when the first one is rate limited', async () => {
+    const keys = keySource([
+      { id: 'k1', secret: 'KEY-ONE' },
+      { id: 'k2', secret: 'KEY-TWO' }
+    ])
+    const seen: Array<string | null> = []
+    const p = provider(async (_url, init) => {
+      const authorization = new Headers(init?.headers).get('authorization')
+      seen.push(authorization)
+      if (authorization === 'Bearer KEY-ONE')
+        return jsonResponse({ error: { message: 'slow down' } }, 429)
+      return sseResponse([delta('ổn'), 'data: [DONE]\n\n'])
+    }, keys)
+    const { events, error } = await drain(p.chat(ASK))
+    expect(error).toBeNull()
+    expect(textOf(events)).toBe('ổn')
+    expect(seen).toEqual(['Bearer KEY-ONE', 'Bearer KEY-TWO'])
   })
 })

@@ -1,0 +1,45 @@
+{
+  "scenario": "probe-gemini-3.5-flash-effort-none",
+  "capturedAt": "2026-10-03T14:57:16.790Z",
+  "model": "gemini-3.5-flash",
+  "request": {
+    "method": "POST",
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    "headers": {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "authorization": "Bearer <redacted>"
+    },
+    "body": {
+      "model": "gemini-3.5-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Dịch sang tiếng Việt, chỉ trả bản dịch: 你好，世界。今天天气很好。"
+        }
+      ],
+      "reasoning_effort": "none"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "cache-control": "private",
+      "content-encoding": "gzip",
+      "content-type": "application/json",
+      "date": "Sat, 03 Oct 2026 14:57:14 GMT",
+      "expires": "Sat, 03 Oct 2026 14:57:14 GMT",
+      "p3p": "CP=\"This is not a P3P policy! See g.co/p3phelp for more info.\"",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=1104",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-xss-protection": "0"
+    },
+    "bodyText": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"Chào thế giới. Hôm nay thời tiết rất đẹp.\",\"extra_content\":{\"google\":{\"thought_signature\":\"EmgKZgFpFH0TJ9c5XZ24+nM/YN8Vq/RHaE+WwTQ2+WkSwvutfIoFW2te03n4I0H8NICrBU49NcW2lDB2kcBj81/tGHQxMdAMIo4WHLkFpyegy/tomKYq279Q9D8jdRkZuhiOk9HoXj6A6A==\"}},\"role\":\"assistant\"}}],\"created\":1791039434,\"id\":\"yRfBaoPrKKmf0-kPu8KQsAQ\",\"model\":\"gemini-3.5-flash\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":11,\"prompt_tokens\":21,\"total_tokens\":32}}"
+  },
+  "elapsedMs": 1264
+}

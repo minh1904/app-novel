@@ -1,8 +1,11 @@
 import type {
+  AddModelEntriesInput,
   ConnectionTestResult,
   ConnectionView,
   CreateConnectionInput,
-  UpdateConnectionInput
+  ModelEntryTestResult,
+  UpdateConnectionInput,
+  UpdateModelEntryInput
 } from './aiConnections'
 import type { ChatChunk, ChatSendInput } from './aiChat'
 import type {
@@ -136,6 +139,28 @@ export interface AiChatApi {
   onChunk(listener: (chunk: ChatChunk) => void): () => void
 }
 
+/**
+ * Mục model của một kết nối: thêm, sửa, nhân bản, xóa, xếp thứ tự, và kiểm tra. Mọi lời gọi trả về kết nối đã
+ * cập nhật (trừ `test`), nên giao diện thay đúng kết nối đó mà không phải tải lại cả danh sách.
+ */
+export interface AiModelsApi {
+  /** Thêm mục vào cuối danh sách, mỗi mục một model (gõ tay được, kể cả khi endpoint không liệt kê). */
+  add(connectionId: string, items: AddModelEntriesInput['items']): Promise<Result<ConnectionView>>
+  /**
+   * Sửa tên, tên model thật hay cài đặt. `patch.settings` là một bản vá: chỉ trường nêu thì đổi, `null` là bỏ
+   * trường (về mặc định).
+   */
+  update(entryId: string, patch: UpdateModelEntryInput['patch']): Promise<Result<ConnectionView>>
+  duplicate(entryId: string): Promise<Result<ConnectionView>>
+  delete(entryId: string): Promise<Result<ConnectionView>>
+  reorder(connectionId: string, ids: string[]): Promise<Result<ConnectionView>>
+  /**
+   * Gửi một yêu cầu nhỏ bằng đúng cài đặt **đã lưu** của mục. Thành công trả thời gian và token; thất bại là
+   * một lỗi mang lời gốc của nhà cung cấp. Không đổi gì đã lưu, và có tốn một ít token.
+   */
+  test(entryId: string): Promise<Result<ModelEntryTestResult>>
+}
+
 export interface AiApi {
   list(): Promise<Result<{ connections: ConnectionView[] }>>
   create(input: CreateConnectionInput): Promise<Result<ConnectionView>>
@@ -146,7 +171,7 @@ export interface AiApi {
   /** Lần duy nhất khóa đi từ giao diện vào; về sau chỉ nhận lại bốn ký tự cuối. */
   addKey(id: string, secret: string): Promise<Result<ConnectionView>>
   removeKey(id: string, keyId: string): Promise<Result<ConnectionView>>
-  setModels(id: string, models: string[]): Promise<Result<ConnectionView>>
+  models: AiModelsApi
   translate: AiTranslateApi
   chat: AiChatApi
 }

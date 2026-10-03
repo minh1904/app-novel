@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import type { ClassifiedError } from './classifyError'
 import {
   OpenAiCompatibleProvider,
   joinUrl,
@@ -7,6 +6,7 @@ import {
   splitIntoBatches,
   type KeyExhausted,
   type KeyLease,
+  type KeyOutcome,
   type KeySource
 } from './openAiCompatible'
 import { ProviderError, type TranslateRequest } from './types'
@@ -25,16 +25,16 @@ const request = (count: number, size = 10): TranslateRequest => ({
 /** Nguồn khóa giả, ghi lại mọi lần báo kết quả để test xem adapter có báo đúng không. */
 function keySource(
   leases: Array<KeyLease | KeyExhausted> = [{ id: 'k1', secret: 'SECRET' }]
-): KeySource & { reports: Array<{ keyId: string; outcome: 'ok' | ClassifiedError }> } {
+): KeySource & { reports: Array<{ keyId: string; outcome: KeyOutcome }> } {
   const queue = [...leases]
-  const reports: Array<{ keyId: string; outcome: 'ok' | ClassifiedError }> = []
+  const reports: Array<{ keyId: string; outcome: KeyOutcome }> = []
   return {
     reports,
     async acquire() {
       return queue.length > 1 ? (queue.shift() as KeyLease) : queue[0]
     },
-    async report(keyId, outcome) {
-      reports.push({ keyId, outcome })
+    async report(lease, outcome) {
+      reports.push({ keyId: lease.id as string, outcome })
     }
   }
 }
@@ -65,6 +65,8 @@ function provider(fetchImpl: typeof fetch, keys = keySource()): OpenAiCompatible
     model: 'gemini-flash-latest',
     keys,
     fetchImpl,
+    // Một lần thử lại có chờ; test không cần chờ thật.
+    sleep: async () => {},
     now: () => NOW
   })
 }
@@ -73,6 +75,13 @@ describe('joinUrl', () => {
   it('works whether or not the user typed a trailing slash', () => {
     expect(joinUrl('http://x/v1', 'models')).toBe('http://x/v1/models')
     expect(joinUrl('http://x/v1/', '/models')).toBe('http://x/v1/models')
+  })
+
+  it('does not double the endpoint when a connection saved the full path', () => {
+    expect(joinUrl('http://x/v1/chat/completions', 'chat/completions')).toBe(
+      'http://x/v1/chat/completions'
+    )
+    expect(joinUrl('http://x/v1/chat/completions/', 'models')).toBe('http://x/v1/models')
   })
 })
 
@@ -275,6 +284,88 @@ describe('translate', () => {
     })
   })
 
+  describe('who retries what (change `ai-gateway`)', () => {
+    it('counts a retry for a network failure apart from the retries for missing ids', async () => {
+      // One network failure, then three answers that each miss an id, then the full answer. Under one shared
+      // budget of three the batch would have run out of tries before the full answer; with two separate
+      // counters the network failure costs the content budget nothing.
+      const replies: Array<() => Response> = [
+        () => {
+          throw new TypeError('fetch failed')
+        },
+        () => completionFor(['s0']),
+        () => completionFor(['s1']),
+        () => completionFor(['s2'])
+      ]
+      let calls = 0
+      const fetchImpl = (async () =>
+        replies[Math.min(calls++, replies.length - 1)]!()) as typeof fetch
+
+      const result = await provider(fetchImpl).translate(request(3))
+      expect(result.items.map((item) => item.id).sort()).toEqual(['s0', 's1', 's2'])
+      expect(calls).toBe(4)
+    })
+
+    it('does not retry content when the failure is the network: the gateway already did, then it stopped', async () => {
+      let calls = 0
+      const fetchImpl = (async () => {
+        calls++
+        throw new TypeError('fetch failed')
+      }) as typeof fetch
+      await expect(provider(fetchImpl).translate(request(1))).rejects.toMatchObject({
+        kind: 'network'
+      })
+      // The first try and the gateway's two retries. Not 3 x 3: the content loop does not retry the wire.
+      expect(calls).toBe(3)
+    })
+
+    it('says the answer was cut off, and why that matters, when the endpoint ran out of room', async () => {
+      const fetchImpl = (async () =>
+        jsonResponse({
+          choices: [{ message: { content: '[{"id":"s0","dst":"VI' }, finish_reason: 'length' }]
+        })) as typeof fetch
+      const error = await provider(fetchImpl)
+        .translate(request(1))
+        .catch((e: unknown) => e)
+      expect(error).toBeInstanceOf(ProviderError)
+      expect((error as ProviderError).kind).toBe('invalid_response')
+      expect((error as ProviderError).message).toContain('bị cắt')
+    })
+
+    it('counts a cut-off answer as a good use of the key: the key worked, the answer was too long', async () => {
+      const keys = keySource()
+      const fetchImpl = (async () =>
+        jsonResponse({
+          choices: [{ message: { content: '[{"id"' }, finish_reason: 'length' }]
+        })) as typeof fetch
+      await provider(fetchImpl, keys)
+        .translate(request(1))
+        .catch(() => undefined)
+      expect(keys.reports.every((report) => report.outcome === 'ok')).toBe(true)
+    })
+
+    it('moves to the next key inside one call, so the batch is asked for once, not twice', async () => {
+      const keys = keySource([
+        { id: 'k1', secret: 'KEY-ONE' },
+        { id: 'k2', secret: 'KEY-TWO' }
+      ])
+      const seen: Array<string | null> = []
+      const fetchImpl = (async (_url: string, init?: RequestInit) => {
+        const authorization = new Headers(init?.headers).get('authorization')
+        seen.push(authorization)
+        if (authorization === 'Bearer KEY-ONE')
+          return jsonResponse({ error: { message: 'slow down' } }, 429)
+        return completionFor(idsOf(init))
+      }) as typeof fetch
+
+      // The fake key source hands out its leases in order and never freezes anything, so the second acquire
+      // is KEY-TWO. What this pins down: one `translate` call, one answer, and the missing-id counter untouched.
+      const result = await provider(fetchImpl, keys).translate(request(2))
+      expect(result.items).toHaveLength(2)
+      expect(seen).toEqual(['Bearer KEY-ONE', 'Bearer KEY-TWO'])
+    })
+  })
+
   it('reports a cancelled request as cancelled', async () => {
     const controller = new AbortController()
     const fetchImpl = (async () => {
@@ -366,5 +457,202 @@ describe('listModels', () => {
 
     await provider(fetchImpl, keys).listModels()
     expect(keys.reports[0]?.outcome).toMatchObject({ kind: 'refused' })
+  })
+})
+
+describe('settings of a model entry', () => {
+  /** A provider built the way `ConnectionService` builds one for an entry. */
+  function entryProvider(
+    fetchImpl: typeof fetch,
+    over: Partial<ConstructorParameters<typeof OpenAiCompatibleProvider>[0]> = {}
+  ): OpenAiCompatibleProvider {
+    return new OpenAiCompatibleProvider({
+      baseUrl: 'http://127.0.0.1:8317/v1',
+      model: 'gemini-2.5-flash',
+      keys: keySource(),
+      fetchImpl,
+      sleep: async () => {},
+      now: () => NOW,
+      ...over
+    })
+  }
+
+  /** Records every body that was sent, and answers a translation of whatever ids it was asked about. */
+  function recording(): { fetchImpl: typeof fetch; bodies: Array<Record<string, unknown>> } {
+    const bodies: Array<Record<string, unknown>> = []
+    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+      return completionFor(idsOf(init))
+    }) as typeof fetch
+    return { fetchImpl, bodies }
+  }
+
+  describe('translate', () => {
+    it('sends the request it always sent when the entry has no settings', async () => {
+      const { fetchImpl, bodies } = recording()
+      await entryProvider(fetchImpl, { generation: {} }).translate(request(2))
+      expect(Object.keys(bodies[0]!).sort()).toEqual(['messages', 'model'])
+    })
+
+    it('sends the generation parameters of the entry with every batch', async () => {
+      const { fetchImpl, bodies } = recording()
+      // Big enough for several batches at the default size, so "every batch" is a real claim.
+      await entryProvider(fetchImpl, {
+        generation: { temperature: 0.3, topP: 0.9, reasoningEffort: 'none', maxTokens: 4000 }
+      }).translate(request(40, 200))
+      expect(bodies.length).toBeGreaterThan(1)
+      for (const body of bodies) {
+        expect(body).toMatchObject({
+          temperature: 0.3,
+          top_p: 0.9,
+          reasoning_effort: 'none',
+          max_completion_tokens: 4000
+        })
+      }
+    })
+
+    it('cuts the work into more batches when the input limit is smaller', async () => {
+      const a = recording()
+      await entryProvider(a.fetchImpl).translate(request(40, 200))
+      const b = recording()
+      await entryProvider(b.fetchImpl, { inputTokenLimit: 400 }).translate(request(40, 200))
+      expect(b.bodies.length).toBeGreaterThan(a.bodies.length)
+    })
+
+    it('cuts the work into fewer batches when the input limit is larger', async () => {
+      const a = recording()
+      await entryProvider(a.fetchImpl).translate(request(40, 200))
+      const b = recording()
+      await entryProvider(b.fetchImpl, { inputTokenLimit: 6000 }).translate(request(40, 200))
+      expect(b.bodies.length).toBeLessThan(a.bodies.length)
+    })
+
+    it('treats an input limit of 0 as the default size', async () => {
+      const a = recording()
+      await entryProvider(a.fetchImpl).translate(request(40, 200))
+      const b = recording()
+      await entryProvider(b.fetchImpl, { inputTokenLimit: 0 }).translate(request(40, 200))
+      expect(b.bodies.length).toBe(a.bodies.length)
+    })
+
+    it('cuts a batch the plan made with the same limit exactly as the plan did', async () => {
+      // A batch the planner cut at 800 must go out as one call: if the provider cut it again at the default
+      // size, one planned batch would become two requests.
+      const planned = splitIntoBatches(request(40, 200).segments, 3000)
+      const { fetchImpl, bodies } = recording()
+      const entry = entryProvider(fetchImpl, { inputTokenLimit: 3000 })
+      for (const batch of planned) await entry.translate({ ...request(0), segments: batch })
+      expect(bodies).toHaveLength(planned.length)
+    })
+  })
+
+  describe('chat', () => {
+    it('sends the generation parameters of the entry', async () => {
+      const bodies: Array<Record<string, unknown>> = []
+      const fetchImpl = (async (_url: string, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+        return new Response('data: [DONE]\n\n', {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' }
+        })
+      }) as typeof fetch
+      const chat = entryProvider(fetchImpl, {
+        generation: { temperature: 0.3, reasoningEffort: 'low', extraBody: { top_k: 5 } }
+      }).chat([{ role: 'user', content: 'xin chào' }])
+      for await (const event of chat) void event
+      expect(bodies[0]).toMatchObject({ temperature: 0.3, reasoning_effort: 'low', top_k: 5 })
+    })
+  })
+
+  describe('probe', () => {
+    it('sends one small request with exactly the entry settings, and reports time and tokens', async () => {
+      const bodies: Array<Record<string, unknown>> = []
+      let clock = NOW
+      const fetchImpl = (async (_url: string, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+        clock += 420
+        return jsonResponse({
+          choices: [{ message: { content: 'OK' }, finish_reason: 'stop' }],
+          usage: { prompt_tokens: 12, completion_tokens: 2, total_tokens: 14 }
+        })
+      }) as typeof fetch
+      const result = await entryProvider(fetchImpl, {
+        now: () => clock,
+        generation: { temperature: 0.3, reasoningEffort: 'none' }
+      }).probe()
+
+      expect(bodies).toHaveLength(1)
+      expect(bodies[0]).toMatchObject({
+        model: 'gemini-2.5-flash',
+        temperature: 0.3,
+        reasoning_effort: 'none'
+      })
+      expect(result.ms).toBe(420)
+      expect(result.usage).toMatchObject({ inputTokens: 12, outputTokens: 2 })
+    })
+
+    it('sends nothing extra for an entry with no settings', async () => {
+      const bodies: Array<Record<string, unknown>> = []
+      const fetchImpl = (async (_url: string, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+        return jsonResponse({ choices: [{ message: { content: 'OK' } }] })
+      }) as typeof fetch
+      await entryProvider(fetchImpl).probe()
+      expect(Object.keys(bodies[0]!).sort()).toEqual(['messages', 'model'])
+    })
+
+    it('throws what the provider said, and asks once, when a setting is refused', async () => {
+      let calls = 0
+      const keys = keySource()
+      const fetchImpl = (async () => {
+        calls++
+        return jsonResponse(
+          { error: { code: 400, message: 'Unsupported value: temperature does not support 0.3' } },
+          400
+        )
+      }) as typeof fetch
+      const error = await entryProvider(fetchImpl, {
+        keys,
+        generation: { temperature: 0.3 }
+      })
+        .probe()
+        .catch((caught: unknown) => caught)
+
+      expect(error).toBeInstanceOf(ProviderError)
+      expect((error as ProviderError).kind).toBe('refused')
+      expect((error as ProviderError).message).toContain('temperature does not support 0.3')
+      // Not tried again without the setting, and not tried again at all: a 400 about the request does not
+      // improve by repeating it, and dropping the setting is the person's decision.
+      expect(calls).toBe(1)
+    })
+
+    it('does not blame the key for a setting the provider refused', async () => {
+      const keys = keySource()
+      const fetchImpl = (async () =>
+        jsonResponse(
+          { error: { code: 400, message: 'Unsupported parameter' } },
+          400
+        )) as typeof fetch
+      await entryProvider(fetchImpl, { keys, generation: { temperature: 0.3 } })
+        .probe()
+        .catch(() => undefined)
+      // `refused` leaves the key alone; the same 400 for a bad key is `auth`, and Gemini says that differently.
+      expect(keys.reports[0]?.outcome).toMatchObject({ kind: 'refused' })
+    })
+
+    it('stops at once when cancelled, without sending anything', async () => {
+      let calls = 0
+      const fetchImpl = (async () => {
+        calls++
+        return jsonResponse({ choices: [{ message: { content: 'OK' } }] })
+      }) as typeof fetch
+      const controller = new AbortController()
+      controller.abort()
+      const error = await entryProvider(fetchImpl)
+        .probe(controller.signal)
+        .catch((caught: unknown) => caught)
+      expect((error as ProviderError).kind).toBe('cancelled')
+      expect(calls).toBe(0)
+    })
   })
 })

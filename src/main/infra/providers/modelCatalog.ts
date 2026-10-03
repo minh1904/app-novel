@@ -17,6 +17,15 @@ export interface ModelCost {
   cacheWrite?: number
 }
 
+/**
+ * Cách một model nhận mức suy luận, theo ba dạng của models.dev. Một model có thể có nhiều dạng (Gemini 2.5
+ * Flash có cả `toggle` lẫn `budget_tokens`). `modelCapability` đọc chúng thành các mức người dùng chọn.
+ */
+export type ReasoningOption =
+  | { type: 'effort'; values: string[] }
+  | { type: 'toggle' }
+  | { type: 'budget_tokens'; min?: number; max?: number }
+
 export interface ModelInfo {
   id: string
   name: string
@@ -26,6 +35,10 @@ export interface ModelInfo {
   structuredOutput?: boolean
   toolCall?: boolean
   reasoning?: boolean
+  /** Vắng nghĩa là nguồn không nói gì, không phải "không có suy luận": xem `reasoning`. */
+  reasoningOptions?: ReasoningOption[]
+  /** Chỉ có mặt khi nguồn nói rõ model không nhận nhiệt độ; vắng nghĩa là để mở. */
+  temperature?: false
   /** Nhà cung cấp đánh dấu, ví dụ `deprecated`. */
   status?: string
 }
