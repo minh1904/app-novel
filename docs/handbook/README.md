@@ -17,7 +17,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và **làm vi
 | --- | --- | --- |
 | Sản phẩm | [Định hướng và người dùng](product/vision.md) | Ràng buộc đã chốt + giả thuyết giá trị |
 | Sản phẩm | [Quyết định hiện hành](product/decisions.md) | Nguồn chính của quyết định đã chốt |
-| Sản phẩm | [Brand Mira](product/brand.md) | Tên đã chốt, nhận diện còn mở |
+| Sản phẩm | [Brand Mira](product/brand.md) | Tên và mẫu linh vật đã chốt; bộ ảnh riêng đã có, chưa tích hợp |
 | Sản phẩm | [Scope bản đầu](product/scope.md) | Bảng ưu tiên S0–S3 (v0.3, theo ADR-005), ánh xạ sang module |
 | Sản phẩm | [Câu hỏi còn mở](product/open-questions.md) | Những điều chưa khóa |
 | Nghiên cứu | [Thị trường nguồn đóng và nguồn mở](research/market-landscape.md) | Tài liệu công khai, chưa benchmark |
@@ -29,10 +29,13 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và **làm vi
 | Nghiên cứu | [Chế độ AI, nhà cung cấp, CLI proxy, model local](research/ai-provider-integration.md) | Quan sát 2026-10-02 + đề xuất adapter; chưa gọi provider thật |
 | Nghiên cứu | [Hai hướng provider: gateway và khóa Google](research/provider-gemini-gateway.md) | Tài liệu Gemini + mã CLIProxyAPI, 2026-10-02; chưa gọi thật, chưa dựng gateway |
 | Nghiên cứu | [Ngữ cảnh truyện: so sánh và đề xuất](research/story-context.md) | Quan sát 2026-10-02: công cụ dịch, CAT, công cụ viết AI + 2 bài nghiên cứu; sáu lớp ngữ cảnh và ba tầng prompt, đề xuất chưa chốt |
+| Nghiên cứu | [Hệ thống ngữ cảnh, đợt 2](research/context-system.md) | Quan sát 2026-10-03: bộ đệm prompt của provider Mira dùng, chọn lọc so với ngữ cảnh dài, ai nói với ai, văn phong từ đề xuất đã duyệt, hàng chờ trích, đánh dấu xem lại; đề xuất K1–K9 chưa chốt; chưa gọi provider thật |
 | Nghiên cứu | [Màn chi tiết truyện và danh sách chương](research/work-detail-screen.md) | So sánh sản phẩm; cấu trúc bốn khu vực đã chốt, chi tiết khác còn đề xuất |
 | Nghiên cứu | [Tính năng Markdown của Obsidian](research/obsidian-markdown-features.md) | Bảng kiểm đối chiếu với Mira, đã tick cái nào xong |
 | Nghiên cứu | [Panel Hỏi AI chạy thật: phương thức](research/ai-chat-panel.md) | Đọc code + tài liệu Gemini/Electron 2026-10-02; quyết định đã chốt và **đã triển khai** (change `ai-chat`), chưa gọi provider thật |
 | Nghiên cứu | [Kiến trúc các app Electron mã nguồn mở](research/electron-architecture.md) | Quan sát 2026-10-03: cây thư mục của 11 sản phẩm qua GitHub API (chưa chạy thử), bảy khuôn và khuôn nào Mira học |
+| Nghiên cứu | [Lõi AI: kiến trúc provider và cách sản phẩm khác dựng](research/ai-core-architecture.md) | Quan sát 2026-10-03: mã Mira + 20 sản phẩm (agent lập trình, app desktop, công cụ dịch, SDK/gateway); đề xuất bốn lớp, chưa chốt; chưa gọi provider thật |
+| Nghiên cứu | [Chia lô dịch truyện và giữ mạch giữa các lô](research/chunking-translation.md) | Quan sát 2026-10-03: mã LinguaGacha (đọc lại phần planner) + hơn 10 công cụ khác + 9 bài báo; đề xuất C1–C8 cho bước chia lô, chưa chốt; chưa chạy thử, chưa có fixture |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | **Superseded phần lớn bởi ADR-005** (căn chỉnh và liên kết bị hủy); giữ làm hồ sơ |
