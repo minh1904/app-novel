@@ -46,6 +46,10 @@ Mỗi fixture ghi nguồn/quyền sử dụng, ngôn ngữ, độ dài, phiên b
 | V13 / tác vụ dịch | Chạy tác vụ dịch nhiều chương, giết app giữa chừng một lô, mở lại | Tiếp tục đúng chương và đúng lô; không dịch lại đoạn đã ghi; không chương nào ghi dở; mọi khóa đang hạ nhiệt thì tác vụ tạm dừng có hẹn giờ, không báo lỗi |
 | V14 / Q3 | Fixture ZH, JA, EN: định nghĩa đoạn là mỗi dòng không trống; cho AI dịch rồi đếm đoạn hai bên | Số đoạn hai bên khớp ở cả ba nhóm; ca không khớp được ghi lại để quyết định giữ hay đổi định nghĩa đoạn (ADR-005, quyết định 3) |
 | V15 / storage | Mở tệp `.mira` v5 (có segment, liên kết, hàng “Đã soát”) bằng bản v6, dùng snapshot schema đóng băng v5 | Mở được; chữ và ảnh giữ nguyên từng byte; thông tin “Đã soát” theo câu mất là hệ quả đã chấp nhận trong ADR-005, còn chữ không mất |
+| V16 / Bộ đo | Chạy cùng một điều kiện dịch hai lần trên fixture rồi cho giám khảo LLM so hai bản (A/A) | Tỷ lệ thắng nằm quanh 50%; độ rộng khoảng nhiễu được ghi lại và dùng làm nền cho mọi thí nghiệm sau |
+| V17 / Bộ đo | Người chấm mù và giám khảo LLM cùng chấm 50–100 cặp đoạn | Đồng thuận judge–người được đo và ghi lại; ngưỡng tin judge chỉ đặt sau bước này |
+| V18 / Thuật ngữ | Fixture có glossary viết tay; dịch có và không có glossary | Tỷ lệ đoạn chứa đúng `target` của mục đã khớp tăng, có khoảng tin cậy; mục chưa duyệt không xuất hiện trong bất kỳ request nào |
+| V19 / Xưng hô | Chương thoại dày, ba điều kiện: không ma trận / ma trận theo dàn nhân vật / ma trận + nhãn người nói–người nghe | Đếm đại từ sai cặp (V3 của [hệ thống ngữ cảnh](../research/context-system.md)); điều kiện có ma trận phải ít lỗi hơn không ma trận |
 
 ## Cách đo và quyết định
 
@@ -54,6 +58,13 @@ Không mất nội dung đã xác nhận lưu là điều kiện bắt buộc. S
 Đối với căn chỉnh: bản đầu **không có** (ADR-005 bỏ liên kết giữa câu gốc và câu dịch), nên các chỉ số precision/coverage của nhóm tự đề xuất không còn áp dụng. Nếu sau này có căn chỉnh tạm cho văn phong từ bản dịch cũ (S3.2, S3.5 — [chưa có thiết kế](../decisions/0005-ai-first-proposals-no-sentence-mode.md)), mới phải đo lại: precision của nhóm tự đề xuất, coverage, số vùng cần sửa và thời gian review; precision cao nhưng coverage rất thấp chưa chứng minh hữu ích, và chưa khóa ngưỡng số trước khi có baseline.
 
 Đối với đề xuất của AI: đo tỷ lệ `Ctrl+Z` trong 30 giây sau mỗi lần nhận (cao nghĩa là phần khác biệt hiện quá muộn, không phải đường ghi sai), tỷ lệ đề xuất bị đánh dấu *cũ*, và số đoạn lệch giữa hai bên sau khi AI dịch. V11–V15 là điều kiện qua cổng của từng module trong [lộ trình](roadmap.md), không phải bài đo sau cùng.
+
+Đối với chất lượng bản dịch: đo ba tầng như ở [chất lượng dịch](../research/translation-quality.md) E2–E6:
+- **Kiểm tất định:** số đoạn, chữ nguồn còn sót, tỷ lệ độ dài, vòng lặp, tuân thủ thuật ngữ.
+- **Giám khảo LLM so cặp mù**, khác họ với model dịch, chạy cả hai thứ tự.
+- **Người chấm mù:** 60–80 cặp đoạn mỗi thí nghiệm.
+
+Mỗi điều kiện chạy 3 lần, phân tích theo cặp ở mức chương. Một cải tiến chỉ được giữ khi kiểm tất định không xấu đi **và** cận dưới khoảng tin cậy 95% của tỷ lệ thắng trên 50%. BLEU và COMET không dùng để quyết định. Kết quả âm cũng phải ghi lại.
 
 Đối với UX/performance: thời gian hoàn thành vòng, lỗi cần hỗ trợ, thời gian mở/chuyển chương, độ trễ gõ/cuộn, RAM và kích thước installer trên máy ghi cấu hình. Không gộp tiến độ dịch với phần chữ AI chưa được soát.
 

@@ -1,3 +1,5 @@
+> **Cập nhật 2026-10-03, lần 2:** lộ trình mới đặt change này (tách thành module Thuật ngữ và Xưng hô) **trước** module Đề xuất, ngay sau Bộ đo và Lõi dịch; xem [proposal.md](proposal.md). Câu "làm sau module đề xuất" dưới đây là kế hoạch cũ; ràng buộc về định nghĩa đoạn (Q3) vẫn đúng và được đóng ở module Bộ đo.
+>
 > **Điều kiện bắt đầu (ADR-005):** làm sau khi có module đề xuất (`proposal`) và sau định nghĩa đoạn trên fixture (Q3). Mục 1–4 và 6 không phụ thuộc hai module đó; task 5.4 và 7.2 thì có. Lý do ở [proposal.md](proposal.md) và `design.md` D11. Kiểm tra bằng `node scripts/check.mjs` (không dùng `pnpm typecheck/lint/test`: pnpm toàn cục mới hơn bản ghim có thể thoát mã 0 mà không chạy gì).
 
 ## 0. Hằng số cần chốt khi triển khai

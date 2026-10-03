@@ -1,3 +1,13 @@
+## Cập nhật 2026-10-03, lần 2 (lộ trình đổi thứ tự)
+
+Chủ sản phẩm chốt **ưu tiên chất lượng dịch trước luồng ghi đề xuất** ([lộ trình](../../../docs/handbook/delivery/roadmap.md)). Ba hệ quả cho change này:
+
+- **"Điều kiện bắt đầu" ở mục dưới (làm sau module đề xuất) không còn đúng.**
+- **Khi bắt đầu, change được tách thành hai**, cả hai đi **trước** module Đề xuất và nghiệm thu bằng Bộ đo cộng mock provider:
+  - **Thuật ngữ:** kiểu `term`, tầng khớp, chèn tầng C, kiểm tuân thủ thuật ngữ, IPC, và màn Thuật ngữ. Màn này trước đây nằm ngoài change.
+  - **Xưng hô:** `character`, `dyad`, dàn nhân vật, tầng B, kiểm xưng hô, và màn Xưng hô.
+- **Task 5.4, 7.1 và 7.2 chờ tới khi có `proposal`/`job_item`.** Đó là lưu băm, nối vào tác vụ, và đánh dấu đoạn chịu ảnh hưởng. [Hệ thống ngữ cảnh](../../../docs/handbook/research/context-system.md) K8 đề xuất lưu thêm danh sách id và phiên bản các mục đã gửi, không chỉ băm. Thứ tự tầng A → B → C giữ nguyên; [chất lượng dịch](../../../docs/handbook/research/translation-quality.md) G1 đề xuất nội dung tầng A.
+
 ## Cập nhật 2026-10-03 (ADR-005)
 
 [ADR-005](../../../docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md) bỏ mode Từng câu và dữ liệu câu; đơn vị làm việc là **đoạn**. Change này **chưa làm** (0/41 task), nên chỉ đổi kế hoạch cho khớp, không đổi ý tưởng. Đã đổi:

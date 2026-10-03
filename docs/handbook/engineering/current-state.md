@@ -2,7 +2,7 @@
 
 Cập nhật: **2026-10-03** · Trạng thái: quan sát repository, không phải cam kết tính năng. Cập nhật trang này khi code thay đổi, không dùng roadmap làm bằng chứng đã hoàn thành.
 
-**Repo hiện tại là bản MVP để thử nghiệm.** Mọi thứ dưới đây chạy được nhưng chưa phải bản hoàn chỉnh; từ [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) từng module được làm lại hoàn chỉnh theo [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Cột **Số phận** cho biết phần đó được *giữ*, *viết lại* hay *gỡ* khi làm lại; số trong ngoặc là module ở [mục 10 của kiến trúc](ai-first-architecture.md#10-lộ-trình-theo-module).
+**Repo hiện tại là bản MVP để thử nghiệm.** Mọi thứ dưới đây chạy được nhưng chưa phải bản hoàn chỉnh; từ [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) từng module được làm lại hoàn chỉnh theo [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Cột **Số phận** cho biết phần đó được *giữ*, *viết lại* hay *gỡ* khi làm lại; tên trong ngoặc là module ở [lộ trình](../delivery/roadmap.md). (Trước lần đổi thứ tự ngày 2026-10-03, trang này ghi module bằng số; bảng đối chiếu số cũ nằm cuối lộ trình.)
 
 Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận và gỡ các ghi chú "cập nhật ngày…" chồng lên nhau. Nội dung kỹ thuật lấy từ các lần đối chiếu code 2026-09-29 đến 2026-10-03 và từ bản cũ của trang này; **không kiểm tra lại từng dòng**. Working tree lúc viết có sửa dở ở `markdownSyntax`, `formatCommands`, `livePreviewDecorations` của editor; trang mô tả bản đã commit.
 
@@ -14,17 +14,17 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 | UI shell | Chạy | Giữ |
 | Thư viện, tác phẩm, chi tiết tác phẩm | Chạy trên kho thật | Giữ |
 | Danh sách chương | Chạy, đo tới 5.000 chương | Giữ |
-| Nội dung chương: văn bản, revision, segment, liên kết | Chạy | **Viết lại (5)**: bỏ segment, liên kết, nguồn gốc theo câu; thêm dấu AI, đề xuất, snapshot |
-| Nhập bản gốc | Chạy | **Viết lại phần chia segment (2)**; giải mã và chuẩn hóa giữ |
-| Mode Từng câu | Đã dựng, **đã ẩn** khỏi giao diện | **Gỡ (5)**, bị hủy ở ADR-005 |
-| Editor Toàn văn hai pane | Chạy | Giữ; bỏ ánh xạ segment khi gỡ (5) |
-| Soạn thảo và ánh xạ segment | Chạy | **Viết lại (5)** thành dấu AI |
-| Hỏi AI (chat) | Chạy, **chưa gọi nhà cung cấp thật lần nào** | Giữ; kiểm chứng ở (0), gỡ `targetIds` ở (5) |
-| Dịch chương bằng AI | Chạy, vòng lặp lô ở renderer | **Viết lại (3, 4)**: đề xuất, tác vụ bền trong main |
-| Provider và kết nối AI | Chạy: transport + gateway (change `ai-gateway`, đã lưu trữ; gọi Gemini thật một lần), một adapter, nhiều khóa; model là **mục** có cài đặt riêng (change `ai-model-settings`, đã lưu trữ; đã đo tham số trên Gemini 3.x, đường đầy đủ chưa chạy thật) | Giữ phần kết nối; mã dịch MVP ở mặt tiền viết lại ở (3), phần ID segment đổi sang ID tạm theo đoạn (3) |
-| Sao lưu và khôi phục | Chạy | Giữ; migration v6 (5) |
-| Lưu và phục hồi (SQLite) | Chạy; `.mira` v5, `library.db` v5 | Giữ; lên v6 ở (5) |
-| Minh họa “Sắp có” | Có | Giữ tới khi có màn thật; mock của Từng câu gỡ cùng mode (5) |
+| Nội dung chương: văn bản, revision, segment, liên kết | Chạy | **Viết lại (Gỡ Từng câu)**: bỏ segment, liên kết, nguồn gốc theo câu; thêm dấu AI. Đề xuất và snapshot thêm ở (Đề xuất) |
+| Nhập bản gốc | Chạy | **Viết lại phần chia segment (Gỡ Từng câu)**; giải mã và chuẩn hóa giữ; định nghĩa đoạn kiểm ở (Bộ đo) |
+| Mode Từng câu | Đã dựng, **đã ẩn** khỏi giao diện | **Gỡ (Gỡ Từng câu)**, bị hủy ở ADR-005 |
+| Editor Toàn văn hai pane | Chạy | Giữ; bỏ ánh xạ segment khi gỡ (Gỡ Từng câu) |
+| Soạn thảo và ánh xạ segment | Chạy | **Viết lại (Gỡ Từng câu)** thành dấu AI |
+| Hỏi AI (chat) | Chạy; có một bằng chứng gọi Gemini thật trong Electron (xem mục Provider), task kiểm chứng chưa đóng | Giữ; kiểm chứng song song (lộ trình), gỡ `targetIds` ở (Gỡ Từng câu) |
+| Dịch chương bằng AI | Chạy, vòng lặp lô ở renderer | **Viết lại (Lõi dịch, Đề xuất, Tác vụ)**: prompt và chia lô, đường đề xuất, tác vụ bền trong main |
+| Provider và kết nối AI | Chạy: transport + gateway (change `ai-gateway`, đã lưu trữ; gọi Gemini thật một lần), một adapter, nhiều khóa; model là **mục** có cài đặt riêng (change `ai-model-settings`, đã lưu trữ; đã đo tham số trên Gemini 3.x, đường đầy đủ chưa chạy thật) | Giữ phần kết nối; mã dịch MVP ở mặt tiền viết lại ở (Lõi dịch); đơn vị đổi từ segment sang đoạn ở (Đề xuất) |
+| Sao lưu và khôi phục | Chạy | Giữ; migration theo các bảng mới |
+| Lưu và phục hồi (SQLite) | Chạy; `.mira` v5, `library.db` v5 | Giữ; bảng mới thêm dần từ (Thuật ngữ), số version chốt lúc làm |
+| Minh họa “Sắp có” | Có | Giữ tới khi có màn thật; mock của Từng câu gỡ cùng mode (Gỡ Từng câu) |
 | Build và kiểm tra | 1453 test | Giữ |
 | Cấu trúc mã nguồn | Bốn tầng, lint ép | Giữ |
 
@@ -35,7 +35,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - Electron main/preload, sandbox, context isolation. Bridge có kiểu (`DesktopApi`) cho tác phẩm, ảnh bìa, chương, văn bản, ảnh nhúng, kết nối AI, dịch chương và chat; schema `valibot`, kết quả bọc `Result`, lỗi trả dạng dữ liệu; chỉ nhận yêu cầu từ khung chính.
 - Khóa API đi vào một lần, không có kênh nào đọc ra. Kênh **main → renderer đầu tiên** của kho là `ai:chat:chunk` (chat).
 - Bằng chứng: [main](../../../src/main/index.ts), [preload](../../../src/preload/index.ts), [IPC](../../../src/main/ipc), [types](../../../src/shared/contracts/desktop-api.ts).
-- Chưa có: kênh cho đề xuất và tác vụ (3, 4); `services`/`infra` ở `utilityProcess`.
+- Chưa có: kênh cho đề xuất và tác vụ (Đề xuất, Tác vụ); `services`/`infra` ở `utilityProcess`.
 
 ### UI shell, thư viện, tác phẩm
 
@@ -52,13 +52,13 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - Bằng chứng: [chapterFile](../../../src/main/infra/storage/chapterFile.ts), [ChaptersArea](../../../src/renderer/src/features/work/ChaptersArea.tsx), [chapterList](../../../src/renderer/src/features/work/chapterList.ts).
 - Chưa có: thùng rác, nhóm theo tập ([backlog](../delivery/backlog.md)).
 
-### Nội dung chương (kho văn bản) — viết lại ở (5)
+### Nội dung chương (kho văn bản) — viết lại ở (Gỡ Từng câu)
 
 - Văn bản gốc/dịch theo bên, có revision và `expectedRev` (xung đột trả `conflict`). **Segment có ID ổn định** với vùng theo UTF-16, ghi cùng văn bản trong một transaction; giới hạn 2.000.000 đơn vị/văn bản và 50.000 segment/bên. Liên kết n:m và nguồn gốc ở mức repository. IPC `text:get`/`text:save`.
 - Bằng chứng: [textFile](../../../src/main/infra/storage/textFile.ts), [textRules](../../../src/main/infra/storage/textRules.ts), [linkFile](../../../src/main/infra/storage/linkFile.ts), [text](../../../src/shared/contracts/text.ts).
-- **Sẽ bỏ** (ADR-005): `segment`, `link`, `link_member`, `provenance`, trigger giữa chúng, và `segments` trong `text:save`. Thay bằng `ai_mark`, `proposal`, `text_snapshot`, `job`, `job_item` (schema v6).
+- **Sẽ bỏ** (ADR-005): `segment`, `link`, `link_member`, `provenance`, trigger giữa chúng, và `segments` trong `text:save`. Thay bằng `ai_mark`, `proposal`, `text_snapshot`, `job`, `job_item`, thêm dần qua các module Đề xuất, Tác vụ và Gỡ Từng câu (ADR-005 gọi chung là "schema v6"; số version thật chốt lúc làm vì bảng ngữ cảnh của module Thuật ngữ nay đi trước).
 
-### Nhập bản gốc — chia segment viết lại ở (2)
+### Nhập bản gốc — chia segment viết lại ở (Gỡ Từng câu)
 
 - Màn chương (`ChapterScreen`) hiện bản gốc, phông theo ngôn ngữ nguồn. Hộp thoại nhập: dán hoặc chọn/kéo tệp `.txt`/`.md` (tối đa 8 MB), xem trước, lưu.
 - Giải mã theo BOM, UTF-8 nghiêm ngặt, rồi đoán theo ngôn ngữ nguồn (GB18030, Big5, Shift_JIS, EUC-JP, Windows-1252); đổi bảng mã tay được. Chuẩn hóa tám việc: bỏ BOM; đổi CRLF/CR/U+2028/U+2029 thành LF; bỏ ký tự điều khiển; cắt khoảng trắng dư cuối dòng; gộp dấu cách/tab liên tiếp giữa dòng; cắt khoảng trắng hai đầu; không đổi NFC/NFD; giữ U+3000, thụt đầu dòng và dấu câu.
@@ -68,13 +68,13 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - Chưa có: phân biệt Big5/GB18030 khi cả hai đọc sạch (`encoding-detect-cjk`); nhập nhiều chương từ một tệp vẫn là minh họa.
 - **Số phận:** giải mã, chuẩn hóa và giới hạn giữ. Phần chia segment và liên kết bỏ; nhập raw chỉ chuẩn hóa và lưu; `segmenter.ts` giữ lại để cắt lô gửi AI. Đoạn đổi sang “mỗi dòng không trống” (Q3).
 
-### Mode Từng câu — đã ẩn, gỡ ở (5)
+### Mode Từng câu — đã ẩn, gỡ ở (Gỡ Từng câu)
 
 - Đã dựng ngày 2026-10-01: mỗi segment bản gốc là một hàng, ô bản dịch `<textarea>`, trạng thái hàng suy từ liên kết (Chưa dịch / AI đã dịch / Đã soát / Cần kiểm tra), bốn kênh `links:list`, `rows:save`, `rows:review`, `rows:autopair`, “Ghép theo thứ tự” (ước đoán theo thứ tự xuất hiện), thanh lọc và panel gợi ý **minh họa**.
 - **Đã ẩn khỏi giao diện** bằng `SENTENCE_MODE_ENABLED = false` ở `ChapterWorkspace.tsx`. Comment ở đó từng ghi “chờ `segment-auto-align`”, nay change đó đã bị hủy.
 - Số đo MVP (mode đã bỏ, giữ làm lịch sử): 5.000 hàng, bản dịch 625.000 ký tự: mở 180–199 ms, đổi trang 111–114 ms, ghi một hàng 135–143 ms.
 - Mã còn trong repo: [SentenceMode](../../../src/renderer/src/features/chapter/SentenceMode.tsx), [SentenceModeMocks](../../../src/renderer/src/features/chapter/SentenceModeMocks.tsx), [useSentenceRows](../../../src/renderer/src/features/chapter/useSentenceRows.ts), [sentenceRows](../../../src/main/infra/storage/sentenceRows.ts), [rows](../../../src/shared/contracts/rows.ts), [links](../../../src/shared/contracts/links.ts).
-- **Sống tới (5)** vì đường dịch MVP còn ghi theo hàng; xem ngoại lệ ở P6 của kiến trúc.
+- **Sống tới (Gỡ Từng câu)** vì đường dịch MVP còn ghi theo hàng; xem ngoại lệ ở P6 của kiến trúc.
 
 ### Editor Toàn văn
 
@@ -88,7 +88,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - Bằng chứng: [ChapterWorkspace](../../../src/renderer/src/features/chapter/ChapterWorkspace.tsx), [EditorPane](../../../src/renderer/src/features/chapter/EditorPane.tsx), [TextEditor](../../../src/renderer/src/features/editor/TextEditor.tsx), [livePreviewDecorations](../../../src/renderer/src/features/editor/livePreviewDecorations.ts), [imageEmbedDecorations](../../../src/renderer/src/features/editor/imageEmbedDecorations.ts), [imageEmbed](../../../src/renderer/src/features/editor/imageEmbed.ts), [formatCommands](../../../src/renderer/src/features/editor/formatCommands.ts), [markdownSyntax](../../../src/renderer/src/features/editor/markdownSyntax.ts), [test của bộ quét](../../../src/renderer/src/features/editor/markdownSyntax.test.ts).
 - Chưa có: Reading view; bảng ca IME cho các phần mới ([imeCases.md](../../../src/renderer/src/features/editor/imeCases.md)); chạy `ViewPlugin` và `Decoration.replace` trên `EditorView` thật (môi trường test không có DOM, nên chỉ phần thuần `scanMarkdown`, `planLivePreview`, `toggleWrapChanges` có test).
 
-### Soạn thảo và ánh xạ segment — viết lại ở (5)
+### Soạn thảo và ánh xạ segment — viết lại ở (Gỡ Từng câu)
 
 - Mỗi chỉnh sửa dịch chuyển vùng segment qua hàm thuần `applyEdits` ([segmentMap](../../../src/shared/algorithms/segmentMap.ts)): segment không bị đụng tới giữ ID và nguyên văn; vùng đã sửa được chia lại bằng `segment()` khi người dùng dừng gõ 800 ms hoặc khi lưu, **không bao giờ lúc đang soạn bằng bộ gõ**. Hoàn tác/làm lại một lịch sử khôi phục cả ID. Lưu qua `text:save` với `expectedRev`; xung đột báo lỗi và giữ chữ đang sửa; chặn rời khi chưa lưu. Nền xen kẽ và gạch dưới chấm cho segment đã sửa, không chèn phần tử vào dòng; không có cột số dòng.
 - Đo (chương 5.000 segment, 206.000 ký tự): mở 95 ms, xử lý mỗi phím p95 1,7 ms, lưu 179 ms không đứng giao diện.
@@ -96,7 +96,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - Chưa có: tự lưu định kỳ (`autosave`).
 - **Số phận:** cơ chế dịch vùng khi gõ giữ lại nhưng đổi thành `RangeSet` của **dấu AI** (không chia lại câu, không ID ổn định, không liên kết); IME rule “không chia lại lúc đang soạn” vẫn áp dụng.
 
-### Hỏi AI (chat) — giữ, kiểm chứng ở (0)
+### Hỏi AI (chat) — giữ, kiểm chứng song song
 
 - Panel `AiPanel` làm cột thứ ba cạnh hai pane (Ctrl+K hoặc nút “Hỏi AI”). **Gọi nhà cung cấp thật** (change `ai-chat`): chữ chảy về qua `ai:chat:chunk`; hủy giữa dòng; hai lượt chồng nhau không trộn chữ.
 - Hai chế độ: **Hỏi** (chỉ đọc) và **Sửa** (trả một khối thay thế trong hàng rào ```). Đề xuất của Sửa vào pane bản dịch bằng `@codemirror/merge`: người dùng nhận/bỏ **từng chỗ** ngay trong pane; một lần áp dụng là một transaction nên `Ctrl+Z` hoàn tác cả lượt; không ghi thẳng xuống kho. Đề xuất đã cũ **bị từ chối**, không đoán vị trí (neo theo nội dung, ba bậc). Pane bản dịch **rỗng** thì bản dịch vào thẳng.
@@ -105,18 +105,18 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - Chat đọc được chương khác của cùng tác phẩm bằng hai công cụ **chỉ đọc** (`list_chapters`, `read_chapter`); phạm vi khóa trong một tác phẩm bằng cấu trúc; trần 3 vòng tool. Luật: **tool được đọc và được trỏ; chỉ người dùng mới được ghi.**
 - Hội thoại **chỉ sống trong phiên**. Model chọn bằng `ModelSelectionMenu` (kết nối → mục model → mức suy luận), dùng chung với hộp thoại dịch; cài đặt của mục được đọc **một lần ở đầu lượt** nên mọi vòng đọc công cụ của lượt gửi cùng một cấu hình. Mỗi lượt hiện token thật và tiền (thiếu giá thì “chưa biết giá”).
 - Bằng chứng: [AiPanel](../../../src/renderer/src/features/chapter/AiPanel.tsx), [AiTurn](../../../src/renderer/src/features/chapter/AiTurn.tsx), [useAiChat](../../../src/renderer/src/features/chapter/useAiChat.ts), [chatService](../../../src/main/services/ai/chatService.ts), [chatTools](../../../src/main/services/ai/chatTools.ts), [chatReview](../../../src/renderer/src/features/editor/chatReview.ts), [aiChat](../../../src/shared/contracts/aiChat.ts).
-- **Chưa gọi nhà cung cấp thật lần nào, và chưa ai nhìn thấy panel chạy trong Electron**: task 1.x, 10.2, 10.3, 12.5 của change `ai-chat` còn mở. Hành vi của `acceptChunk`/`rejectChunk` là giả định lấy từ tài liệu thư viện, vì test chạy không có DOM.
+- **Bằng chứng chạy thật mới có một:** ảnh chụp của chủ sản phẩm (Electron, 2026-10-03) cho thấy hai lượt chat với `usage` thật (xem mục Provider). Task 1.x, 10.2, 10.3, 12.5 của change `ai-chat` (fixture SSE thật, lái tay có hệ thống, đo tỷ lệ `Ctrl+Z`) **vẫn chưa đóng**; change đã bị gỡ khỏi `openspec/changes/` ngày 2026-10-03 nên các task này nay theo dõi ở mục "Việc song song" của [lộ trình](../delivery/roadmap.md). Hành vi của `acceptChunk`/`rejectChunk` là giả định lấy từ tài liệu thư viện, vì test chạy không có DOM.
 - Chưa có: trần chi phí cho chế độ hỏi; tool đọc ngữ cảnh truyện (cần `context-core`).
-- Gỡ ở (5): `targetIds` trong `chatRange.ts` và `aiChat.ts` (chỉ được tạo ra, chat không đọc).
+- Gỡ ở (Gỡ Từng câu): `targetIds` trong `chatRange.ts` và `aiChat.ts` (chỉ được tạo ra, chat không đọc).
 
-### Dịch chương bằng AI — viết lại ở (3, 4)
+### Dịch chương bằng AI — viết lại ở (Lõi dịch, Đề xuất, Tác vụ)
 
 - Menu “…” trên màn chương có “Dịch bằng AI”; mở hộp thoại đi qua `registry.confirmLeave()` trước (AI ghi thẳng vào kho nên chữ chưa lưu phải xử lý xong). Hộp thoại nói trước: mục model + mức suy luận (menu `ModelSelectionMenu`; chọn mức là ghi vào cài đặt của mục), số câu, số lô, token và chi phí **ước lượng** kèm ngày của bảng giá (thiếu giá thì “chưa biết giá”); chương đã có bản dịch phải xác nhận thêm một bước. Chạy xong hiện lượng dùng **thật** nhà cung cấp báo.
 - **Cấu hình không trộn giữa các lô:** kế hoạch mang `settingsKey` (SHA-256 của tên model thật và các tham số ảnh hưởng nội dung hay cách chia lô); mỗi lô gửi lại nó, và nếu mục bị sửa giữa chừng thì lô đó **không được gửi** (`conflict`), hộp thoại lập kế hoạch lại và "Dịch lại phần lỗi" chạy tiếp với khóa mới. Sửa riêng đồng thời hay RPM không gây xung đột. Cỡ lô lấy từ giới hạn token đầu vào của mục.
 - **Vòng lặp lô ở renderer** (`useAiTranslate`), mỗi lô là một lời gọi `ai:translate:batch` và được ghi ngay; Hủy chỉ là “không gửi lô tiếp”; đóng hộp thoại cũng dừng. Kết quả ghi theo segment ID qua `saveRow` với nguồn `ai` (hàng hiện là “AI đã dịch”). **Không ghi đè hàng người dùng đã viết hay đã soát**; những câu đó quay về hộp thoại dạng hai bản cạnh nhau (“Dùng bản AI” / “Giữ bản của tôi”). Lô lỗi được liệt kê kèm lý do và có “Dịch lại phần lỗi”.
 - Bằng chứng: [AiTranslateDialog](../../../src/renderer/src/features/chapter/AiTranslateDialog.tsx), [useAiTranslate](../../../src/renderer/src/features/chapter/useAiTranslate.ts), [chapterTranslation](../../../src/main/services/ai/chapterTranslation.ts), [aiTranslate](../../../src/shared/contracts/aiTranslate.ts), [test](../../../src/main/ipc/aiTranslateHandlers.test.ts).
 - **Chưa gọi nhà cung cấp thật lần nào**, chưa xem bằng mắt trong Electron thật (task 5.1–5.4 của `ai-connection`). `usage` thật chưa lưu lại; chưa có tác vụ nhiều chương; ngữ cảnh (thuật ngữ, xưng hô) chưa đi vào prompt.
-- **Số phận:** thay bằng đề xuất (3) và `JobRunner` trong main (4). `reconcile`, chia lô, thử lại, `classifyError`, `keyPool` giữ lại; luật “không ghi đè hàng người đã viết” (`isProtectedRow`) được thay bằng luật đề xuất.
+- **Số phận:** prompt, chia lô và ánh xạ ID viết lại ở (Lõi dịch); đường ghi thay bằng đề xuất (Đề xuất) và `JobRunner` trong main (Tác vụ). `reconcile`, chia lô, thử lại, `classifyError`, `keyPool` giữ lại; luật “không ghi đè hàng người đã viết” (`isProtectedRow`) được thay bằng luật đề xuất.
 
 ### Provider và kết nối AI
 
@@ -124,7 +124,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - **Ba tầng** (change `ai-gateway`, 2026-10-03; xem [nghiên cứu lõi AI](../research/ai-core-architecture.md)):
   - **Transport** `OpenAiChatTransport`: một lượt gọi (thường hoặc stream) tới `/chat/completions` bằng `fetch` trần, không SDK nhà cung cấp. Nhận khóa từ ngoài, **chỉ gửi tham số mà người gọi đặt**; trả nội dung, `finish_reason`, `usage` chuẩn hóa và trạng thái HTTP; thời hạn tổng/đầu/im lặng với hủy được ưu tiên hơn hết hạn; lỗi có kiểu (`timeout`, `quota` mới) mang trạng thái, thời gian chờ, phạm vi hạn mức và một đoạn thân đã **che khóa**.
   - **Gateway** (`infra/providers/gateway/`): một chủ thử lại duy nhất (mạng/timeout/5xx, tối đa 2 lần, chờ có xáo trộn, hủy được), **đổi khóa ngay không chờ** với lỗi riêng của khóa (429, hết tín dụng, khóa sai), chỉ trước byte đầu của stream; trần đồng thời **mỗi mục model** (mặc định 4, hàng FIFO, người dùng đặt được và đổi được khi đang chạy) cùng giãn nhịp RPM theo mục (`RatePacer`, đặt chỗ theo thời gian, hủy được); bộ lập lịch khóa vẫn theo kết nối; bộ lập lịch khóa an toàn khi gọi song song (bộ đếm lượt: lỗi cùng đợt chỉ tính một lần, `ok` đến muộn không gỡ đóng băng, một lượt thăm dò duy nhất sau hạn). `GatewayRegistry` do `ConnectionService` giữ, mỗi kết nối một phần trạng thái.
-  - **Mặt tiền** `OpenAiCompatibleProvider` (`translate`, `chat`, `listModels` giữ chữ ký) vẫn cầm **mã dịch MVP**: prompt, chia lô ở ranh giới segment, JSON có ID, `reconcile`, hỏi lại theo nội dung (tối đa 3 lần/lô, bộ đếm **riêng** với thử lại hạ tầng); một lô thiếu vài câu sau khi thử lại vẫn trả phần đã có. Phần này sẽ được viết lại ở module 3, không thuộc change `ai-gateway`.
+  - **Mặt tiền** `OpenAiCompatibleProvider` (`translate`, `chat`, `listModels` giữ chữ ký) vẫn cầm **mã dịch MVP**: prompt, chia lô ở ranh giới segment, JSON có ID, `reconcile`, hỏi lại theo nội dung (tối đa 3 lần/lô, bộ đếm **riêng** với thử lại hạ tầng); một lô thiếu vài câu sau khi thử lại vẫn trả phần đã có. Phần này sẽ được viết lại ở module Lõi dịch, không thuộc change `ai-gateway`.
 - **`usage` một kiểu** (chưa gồm cache; cache đọc/ghi, reasoning tách riêng) và chi phí dùng giá cache khi có. Với Gemini, token thinking **nằm ngoài `completion_tokens`** và chỉ lộ qua `total_tokens`; phần chênh được cộng vào đầu ra (đo thật: 21 vào, 13 + 91 ra).
 - `classifyError` đọc lỗi ba lớp suy giảm êm (thân kiểu Google, **kể cả thân bọc mảng** → kiểu OpenAI → quét chuỗi thô → chỉ mã HTTP). Khóa Gemini sai trả **HTTP 400**, được nhận là `auth`. `keyPool` chọn khóa `fill-first` và quyết hai mức đóng băng (theo phút dùng đúng `retryDelay`, theo ngày tới mốc reset; hết tín dụng đóng băng tới mốc reset theo ngày). Bảng model/giá là snapshot models.dev (MIT) vendored trong repo, làm mới bằng `node scripts/refresh-model-catalog.mjs`; ước lượng chi phí dùng hệ số phỏng đoán chưa đo, đặt một chỗ.
 - **Mạng của app dùng `net.fetch` của Electron** (tiêm từ `electron/netFetch.ts` qua `createServices`), nên theo proxy hệ thống; `fetch` của Node thì không. Đã đo trong Electron 44.4.5 bằng `pnpm smoke:net`: stream đến từng mảnh, hủy giữa dòng dừng ngay, địa chỉ máy nội bộ nối thẳng, `net.fetch` qua proxy còn `fetch` Node thì không. **Chưa thử** proxy hệ thống thật của Windows (PAC/WPAD/xác thực).
@@ -150,12 +150,12 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - `node:sqlite` trong main: `library.db` (chỉ mục dựng lại được; **version 4**, có ba bảng `ai_connection`/`ai_key`/`ai_model`) và một tệp `.mira` mỗi tác phẩm (**schema v5**: v4 thêm `chapter_text.size` và index phủ để danh sách chương biết chương nào có nội dung mà không đọc văn bản; v5 thêm bảng `image`). WAL, `synchronous=FULL`, migration theo `user_version`; nâng cấp tại chỗ đã kiểm chứng trong Electron thật. Snapshot đóng băng schema ở [`__fixtures__`](../../../src/main/infra/storage/__fixtures__) (`library` v1–v4, `work` v1–v5).
 - Test kill tiến trình đang ghi: không mất thay đổi đã xác nhận, không tệp dở. Chưa thử mất điện đột ngột.
 - Bằng chứng: [storage](../../../src/main/infra/storage), [LibraryStore](../../../src/main/services/library/library.ts), [crash test](../../../src/main/services/library/crash.test.ts), [ADR-003](../decisions/0003-technology-stack.md).
-- Chưa có: autosave, lịch sử có giao diện. Schema v6 ở (5).
+- Chưa có: autosave, lịch sử có giao diện. Bảng mới thêm dần từ module Thuật ngữ ([lộ trình](../delivery/roadmap.md)).
 
 ### Minh họa “Sắp có”
 
 - “Nhập từ .txt” và ba khu vực Ngữ cảnh/Nguồn/Tác vụ là minh họa: không đọc tệp, không gọi IPC, không ghi dữ liệu. Test bảo đảm mỗi mục có một hàng trong [backlog](../delivery/backlog.md) (`mockFeatures.test.ts`, `workAreas.test.ts`).
-- Mock của mode Từng câu (`SentenceModeMocks`: thanh lọc, panel gợi ý) vẫn nằm trong danh sách này tới khi mode bị gỡ ở (5).
+- Mock của mode Từng câu (`SentenceModeMocks`: thanh lọc, panel gợi ý) vẫn nằm trong danh sách này tới khi mode bị gỡ ở (Gỡ Từng câu).
 - Bằng chứng: [mockFeatures](../../../src/renderer/src/features/work/mockFeatures.ts), [ImportTxtMockDialog](../../../src/renderer/src/features/work/ImportTxtMockDialog.tsx).
 
 ### Thiết kế
@@ -178,7 +178,7 @@ Token, font local, component Base UI ([tokens](../../../src/renderer/src/styles/
 
 ## Điểm vào cho lần phát triển tiếp
 
-Đọc [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md), [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Việc kế tiếp: đóng bảy task kiểm chứng của `ai-chat` (module 0), thu fixture văn bản thật ZH/JA/EN để chốt định nghĩa đoạn (module 2), rồi làm module Đề xuất (3). Làm đúng thứ tự: đường dịch MVP còn ghi theo hàng nên phải có đường đề xuất trước khi gỡ segment (5).
+Đọc [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md), [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Việc kế tiếp theo lộ trình đổi ngày 2026-10-03 (chất lượng dịch trước luồng ghi): thu fixture văn bản thật ZH/JA/EN và dựng **Bộ đo** (cũng chốt định nghĩa đoạn), rồi **Lõi dịch**, **Thuật ngữ**, **Xưng hô**; sau đó mới tới **Đề xuất**. Kiểm chứng chat chạy song song, không chặn. Ràng buộc giữ nguyên: đường dịch MVP còn ghi theo hàng nên phải có đường đề xuất trước khi gỡ segment (Gỡ Từng câu).
 
 Khi một module làm xong: cập nhật dòng tương ứng ở trên bằng bằng chứng file/API, luồng đã chạy, trường hợp lỗi và giới hạn. Chỉ ghi “đã triển khai” cho đúng phạm vi; build thành công không chứng minh dữ liệu an toàn.
 

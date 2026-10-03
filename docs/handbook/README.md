@@ -47,7 +47,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và **làm vi
 | Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Bản MVP thử nghiệm, ghi số phận từng phần theo module; viết lại 2026-10-03 |
 | Kỹ thuật | [Kiến trúc kỹ thuật và luật ranh giới](engineering/architecture.md) | Stack đã chốt (ADR-003); mục "Cấu trúc mã nguồn và luật ranh giới" đã triển khai 2026-10-03 và lint ép |
 | Kỹ thuật | [Luồng làm việc và kiến trúc AI-first](engineering/ai-first-architecture.md) | **Hướng đã chốt (ADR-005, 2026-10-03):** bỏ Từng câu, đơn vị là đoạn, AI chỉ đề xuất, tác vụ dịch chạy trong main; học từ Obsidian, Notion, Logseq. Thiết kế từng module còn là đề xuất; Q4–Q7 còn mở |
-| Phát triển | [Lộ trình theo module](delivery/roadmap.md) | Thứ tự đã chốt (ADR-005): làm lại hoàn chỉnh từng module; không cam kết lịch |
+| Phát triển | [Lộ trình theo module](delivery/roadmap.md) | **Đổi 2026-10-03:** chất lượng dịch trước (Bộ đo → Lõi dịch → Thuật ngữ → Xưng hô), rồi Đề xuất, Xuất, Tác vụ, Gỡ Từng câu, QA; hướng đã chốt, chia module còn là đề xuất; không cam kết lịch |
 | Phát triển | [Backlog tính năng chưa triển khai](delivery/backlog.md) | Mục “Sắp có” trên giao diện và điều kiện làm thật |
 | Phát triển | [Kế hoạch kiểm chứng](delivery/validation.md) | Người dùng, dữ liệu, nghiệm thu |
 | Duy trì | [Cách xây và cập nhật handbook](maintenance/handbook-guide.md) | Quy ước làm việc đề xuất |

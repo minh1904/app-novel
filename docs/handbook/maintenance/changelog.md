@@ -1,5 +1,32 @@
 # Nhật ký handbook
 
+## Đổi thứ tự lộ trình: chất lượng dịch trước luồng ghi; nghiên cứu chất lượng dịch — 2026-10-03
+
+- **Quyết định (chủ sản phẩm, qua trao đổi):** cải thiện khả năng dịch trước khi làm kỹ luồng áp dụng đề xuất. Đo trước khi cải tiến; thuật ngữ trước xưng hô; bộ đệm prompt là phép đo, không phải tính năng riêng. Ghi ở [quyết định hiện hành](../product/decisions.md), dòng "Cách làm". Cách chia module là đề xuất, chốt từng module khi viết change.
+- **Đổi gì:**
+  - Viết lại [lộ trình](../delivery/roadmap.md) thành 11 module, ba giai đoạn:
+    - **Chất lượng dịch:** Bộ đo → Lõi dịch → Thuật ngữ → Xưng hô.
+    - **Ghi vào văn bản:** Đề xuất → Xuất → Tác vụ → Gỡ Từng câu → QA.
+    - **Ngữ cảnh tự học:** Ngữ cảnh tự động → Văn phong.
+  - Lộ trình có thêm: cổng thử với dịch giả, mục "việc song song", mục "bộ đệm nằm ở đâu", và bảng ánh xạ số module cũ.
+  - Thêm nghiên cứu [chất lượng dịch](../research/translation-quality.md) và nguồn S36–S38.
+  - [Kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 10 thu về các ràng buộc kỹ thuật, để thứ tự chỉ nằm ở một chỗ.
+  - [Hiện trạng](../engineering/current-state.md) và câu hỏi mở gọi module **bằng tên** thay vì số.
+  - Thêm bốn câu hỏi mở (fixture, giám khảo, quy ước tiếng Việt còn tranh cãi, luồng áp dụng chưa ổn ở đâu), V16–V19 ở [kế hoạch kiểm chứng](../delivery/validation.md), và ghi chú đầu change `context-core` (tách thành Thuật ngữ và Xưng hô, đi trước Đề xuất).
+- **Kết luận chính của nghiên cứu:**
+  1. Chưa có metric nào được kiểm chứng cho văn học →Việt, và metric lẫn LLM-judge đều lệch khỏi người ở văn học. Vì vậy đo ba tầng: kiểm tất định, giám khảo LLM so cặp mù khác họ model dịch, và người chấm 60–80 cặp.
+  2. Thinking không giúp dịch một lượt. Gemini 3 không tắt được thinking, và `max_tokens` chặn cả thinking.
+  3. Tầng A khoảng 1.200–2.500 token, dưới ngưỡng cache 4.096 của Gemini 3.x, nên cache trên Gemini 3 cần tầng B.
+  4. Refine chủ yếu làm văn mượt hơn, còn độ đúng nghĩa không tăng hoặc giảm. Bản đầu không có refine cả chương; thay bằng kiểm tất định rồi dịch lại đúng đoạn bị cờ.
+  5. Các nguồn đồng thuận: tên gốc Trung đọc Hán-Việt, không pinyin. Chỗ còn tranh cãi ("y", kiểu thoại, kính ngữ) làm thành cài đặt.
+- **Sửa cho khớp hiện trạng:** hiện trạng và câu hỏi mở từng ghi chat "chưa gọi nhà cung cấp thật lần nào", trong khi chính trang hiện trạng có bằng chứng ảnh chụp chat với `usage` thật. Đã sửa thành "một bằng chứng; task kiểm chứng chưa đóng". Các task đó chuyển về mục "việc song song" của lộ trình, vì change `ai-chat` đã bị gỡ khỏi `openspec/changes/`.
+- **Chưa làm / chưa kiểm:**
+  - Chưa chạy model, metric hay thí nghiệm nào; chưa có fixture.
+  - Ba agent đọc web phần lớn qua công cụ tóm tắt; chỉ các hàng † đã đối chiếu số trên văn bản thô.
+  - Tên model đời mới và giá chỉ đọc qua trang giá, và giá đổi nhanh.
+  - Không đổi ADR, code hay spec chính.
+  - Chưa commit.
+
 ## Lưu trữ hai spec của lớp AI — 2026-10-03
 
 - **Đổi gì:** theo yêu cầu của chủ sản phẩm ("tạm thời là hoàn thiện spec"), lưu trữ hai change bằng `openspec archive`: [`ai-gateway`](../../../openspec/changes/archive/2026-10-03-ai-gateway/) (24/25 task) và [`ai-model-settings`](../../../openspec/changes/archive/2026-10-03-ai-model-settings/) (26/27 task). Spec gộp vào `openspec/specs/`: **mới** `ai-gateway` (9 yêu cầu) và `ai-model-settings` (13 yêu cầu), **sửa** `translation-provider` (Lỗi có phân loại) và `ai-connection` (Danh sách model và model mặc định). `openspec validate --specs --strict` qua 13/13 spec.
