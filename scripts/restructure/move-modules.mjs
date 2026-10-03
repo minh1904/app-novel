@@ -278,6 +278,18 @@ function layerPreflight(tree, moveOf, layerRank) {
   const problems = []
   const exempt = (path) =>
     /\.test\.(ts|tsx)$/.test(path) || /\/crash[A-Za-z]*\.ts$/.test(path) || path.startsWith('src/main/testing/')
+  // shared/contracts must not depend on shared/algorithms (design D8); the other direction is fine.
+  for (const file of tree.files) {
+    if (!file.startsWith('src/shared/') || !TEXT_EXT.test(file) || /\.test\.(ts|tsx)$/.test(file)) continue
+    const fromNew = moveOf(file) ?? file
+    if (!fromNew.startsWith('src/shared/contracts/')) continue
+    for (const target of moduleTargets(file, readFileSync(toOs(file), 'utf8'), tree.files)) {
+      const targetNew = moveOf(target) ?? target
+      if (targetNew.startsWith('src/shared/algorithms/')) {
+        problems.push(fromNew + ' (contracts) imports ' + targetNew + ' (algorithms)')
+      }
+    }
+  }
   for (const file of tree.files) {
     if (!file.startsWith('src/main/') || !TEXT_EXT.test(file)) continue
     const fromNew = moveOf(file) ?? file
@@ -362,7 +374,20 @@ function dryRun(phaseName) {
 
 function apply(phaseName) {
   const status = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' })
-  const dirty = status.split('\n').filter((line) => line.trim() !== '' && !line.includes('winget') && !line.includes('openspec/changes/refactor-electron-structure'))
+  const dirty = status
+    .split('\n')
+    .filter((line) => line.trim() !== '' && !line.includes('winget') && !line.includes('openspec/changes/refactor-electron-structure'))
+    // A file that differs from HEAD only in line endings (an editor normalising to LF) is not dirty.
+    .filter((line) => {
+      const path = line.slice(3).trim()
+      if (line.slice(0, 2) !== ' M') return true
+      try {
+        execFileSync('git', ['diff', '--ignore-cr-at-eol', '--quiet', '--', path], { cwd: root })
+        return false
+      } catch {
+        return true
+      }
+    })
   if (dirty.length > 0) {
     console.log('refusing to run on a dirty tree:\n' + dirty.join('\n'))
     return 1
