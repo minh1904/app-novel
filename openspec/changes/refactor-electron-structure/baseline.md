@@ -208,6 +208,8 @@ Trước: commit `0600221` (điểm xuất phát). Sau: `44fe5f6` (commit xóa c
 | Ranh giới | giữ bằng kỷ luật | **9 khối lint**, mỗi luật đã chứng minh bắt được (11 + 14 + 4 ca vi phạm, 5 + 3 ca đối chứng sạch) |
 | Commit | — | 34 commit sau `0600221` |
 
+**Khởi động ứng dụng đã build** (bằng chứng thêm, không có baseline để so; không thay cho kiểm tay ở 8.3): chạy `electron .` với `MIRA_DATA_DIR` và `--user-data-dir` trỏ vào thư mục tạm. Sống sau 9 giây, cửa sổ tên "Mira", tiến trình main tạo `library.db` (cùng `-wal`, `-shm`) và `works/.tmp` đúng như `WorkFiles.open` phải làm, stderr và stdout trống, không còn tiến trình sót. Dữ liệu thật của người dùng không bị đụng.
+
 Ba dòng khác baseline và vì sao: `tsc` thêm 12 tệp (đúng các tệp mới nêu trên); `main` thêm 10 câu import (đã giải thích đến từng tệp); `crash.test.ts` lần thứ ba chậm hơn dải cũ (dao động). Không có chỉ số chất lượng nào tệ đi.
 
 ## 9. Nhật ký thực hiện
