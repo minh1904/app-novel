@@ -41,6 +41,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và đối ch
 | Trải nghiệm | [Design system](experience/design-system.md) | Baseline đã chốt + scaffold |
 | Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Đối chiếu code ngày 2026-09-29 |
 | Kỹ thuật | [Kiến trúc và spike](engineering/architecture.md) | Scaffold + công nghệ đề xuất |
+| Kỹ thuật | [Luồng làm việc và kiến trúc AI-first](engineering/ai-first-architecture.md) | Đề xuất 2026-10-03, chưa chốt: bỏ Từng câu, đơn vị là đoạn, AI chỉ đề xuất, tác vụ dịch chạy trong main; học từ Obsidian, Notion, Logseq; bảy câu chờ chốt |
 | Phát triển | [Roadmap theo điều kiện hoàn thành](delivery/roadmap.md) | Đề xuất thứ tự; không cam kết lịch |
 | Phát triển | [Backlog tính năng chưa triển khai](delivery/backlog.md) | Mục “Sắp có” trên giao diện và điều kiện làm thật |
 | Phát triển | [Kế hoạch kiểm chứng](delivery/validation.md) | Người dùng, dữ liệu, nghiệm thu |

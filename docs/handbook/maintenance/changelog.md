@@ -1,5 +1,14 @@
 # Nhật ký handbook
 
+## Đề xuất luồng và kiến trúc AI-first — 2026-10-03
+
+- Chủ sản phẩm hỏi qua ba bước: có nên chuyển Tauri 2 không; ý định ban đầu là "trình gõ như Obsidian, AI đọc/sửa được" thì kiến trúc nên ra sao; và *"Mira dự định bỏ dịch từng câu, vì mục tiêu chính là làm việc với AI nhiều hơn"*. Gom kết luận vào [Luồng làm việc và kiến trúc AI-first](../engineering/ai-first-architecture.md), trạng thái **Đề xuất, chưa chốt**.
+- Không đổi quyết định nào. Bỏ mode Từng câu đụng tới ADR-002 và dòng "Hai mode" trong `decisions.md`, nên trang ghi rõ cần ADR-005 và liệt kê bảy câu chờ chốt (Q1–Q7).
+- **Tauri: không chuyển.** Electron 44.4.5 ghim Chromium 152.0.7977.130 (đo bằng `process.versions`), bản đã qua thử tay IME. WebView2 Evergreen không ghim được, và lỗi mất lần gõ IME đầu đã được báo cho WebView2 149+. Chuyển Tauri phải viết lại main bằng Rust.
+- **Đổi khuyến nghị giữa chừng, ghi lại để không lặp:** ban đầu nghiêng về tệp `.md` làm nguồn sự thật. Đọc lý do Logseq bỏ đồ thị tệp (hai nguồn sự thật, ID phải chèn vào chữ, mất dữ liệu khi sync) và cách Notion chiếu block thành Markdown cho AI thì đổi sang **SQLite là nguồn sự thật, Markdown là cách chiếu**.
+- Phát hiện cần kiểm: `paragraphsOf()` coi một đoạn là cụm dòng ngăn bởi dòng trống. Raw truyện mạng thường mỗi đoạn một dòng, không có dòng trống, nên cả chương có thể thành một đoạn (Q3).
+- Không thêm nguồn vào [sổ nguồn](../research/sources.md), vì sổ đang có mã S27 trùng chưa đánh số lại. Nguồn ghi ngay trong trang kèm ngày đọc.
+
 ## Diff của AI về nằm trong pane bản dịch — đảo quyết định Q7 — 2026-10-03
 
 - Chủ sản phẩm dùng thử rồi nói *"tương tác với editor khá kém"*. Chẩn đoán đúng, và vấn đề không phải tiểu tiết mà là **chọn sai bề mặt**: panel tự vẽ diff ở cột thứ ba, rồi chữ hạ xuống một nơi khác, và nhận thì nhận cả khối.
