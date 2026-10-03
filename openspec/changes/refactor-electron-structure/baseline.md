@@ -74,13 +74,47 @@ Cách làm: với mỗi luật, tạo một tệp vi phạm tạm (không commit
 
 Luật dùng `regex` (không dùng `group`) cho đường dẫn vì chuỗi tương đối kiểu `../main/…` được so khớp đúng; đã kiểm bằng chính các ca trên.
 
-### R2 (task 3.7), R4 (task 5.5), R3 (task 4.2)
+### R2, bố cục theo tầng (task 3.7): 14/14 vi phạm bị bắt, 5/5 ca đối chứng sạch
+
+| Vi phạm cố ý | Thông điệp thấy được (rút gọn) |
+| --- | --- |
+| `infra` → `services/` | infra/ là tầng thấp nhất của main: không import từ services/ |
+| `infra` → `electron` (gói) | Chỉ index.ts và main/electron/ được import electron |
+| `infra` → `electron/` (thư mục) | infra/ không import từ electron/ |
+| `infra` → `ipc/` | infra/ không import từ ipc/ |
+| `infra` → `testing/` (không phải test) | main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó |
+| `services` → `ipc/` | services/ không import từ ipc/ (ipc gọi services, không ngược lại) |
+| `services` → `electron` (gói) | Chỉ index.ts và main/electron/ được import electron |
+| `services` → `electron/` (thư mục) | services/ không import từ electron/ |
+| `services/library` → `services/ai` | services/library không import từ services/ai (dịch chương dùng LibraryStore, không ngược lại) |
+| `services/library` → `electron` (gói) | Chỉ index.ts và main/electron/ được import electron |
+| `ipc` → `electron` (gói) | Chỉ index.ts và main/electron/ được import electron |
+| `ipc` → `electron/` (thư mục) | ipc/ không import từ electron/. Giữ handler thuần để test không cần dựng cửa sổ |
+| `electron/` → `testing/` (không phải test) | main/testing/ là công cụ chỉ dành cho test |
+| `electron/` → `renderer` | Main không import từ src/renderer |
+
+Đối chứng (phải **không** có lỗi `no-restricted-imports`): `electron/` → gói `electron`; `services` → `infra`; `ipc` → `services`; một tệp `*.test.ts` → `testing/`; một tệp `crash*.ts` → `testing/`. Cả năm sạch.
+
+### R4 (task 5.5), R3 (task 4.2)
 
 _Điền khi làm các task tương ứng._
 
 ## 6. Phân loại test do công cụ dời đề xuất (task 3.2)
 
-_Điền khi làm task 3.2._
+`node scripts/restructure/move-modules.mjs main --dry-run`: **80 tệp** dời (24 là test đặt theo quy tắc), **57 tệp** đổi nội dung (15 không dời), **174** câu `from` và **1** đường dẫn `join(__dirname, …)` được viết lại, **không có** specifier không giải được, **layer preflight: không vi phạm** trên bố cục đề xuất.
+
+Quy tắc: test đi theo **mô-đun cùng tên** (trong cùng thư mục cũ); chỉ test không có mô-đun cùng tên mới đi theo tầng cao nhất nó import. Quy tắc "tầng cao nhất" đơn thuần (bản đầu của D2) đẩy 3 test lên `services/` chỉ vì chúng import thêm một service để kiểm thử tích hợp, nên đã đổi.
+
+| Đích | Test |
+| --- | --- |
+| `services/library/` | `library`, `libraryCover`, `backup`, `chapters`, `content`, `crash` (+ 5 tệp `crash*` hỗ trợ, đặt tay) |
+| `services/ai/` | `chatService`, `chatPrompt`, `chatTools`, `providers` |
+| `infra/storage/` | `sqlite`, `migrate`, `schemaSnapshot` (đặt tay cùng `__fixtures__`), `workSchema`, `sentenceRows`, `connections`, `textRules`, `backupName`, `cover`, `image` |
+| `infra/providers/` | `chatStream`, `keyPool`, `connectionKeySource`, `modelCatalog`, `openAiChat`, `openAiCompatible` |
+
+Ba test mang tên một mô-đun ở `infra` nhưng cũng import một mô-đun tầng cao hơn: `modelCatalog.test.ts` (import `services/ai`), `connections.test.ts` và `sentenceRows.test.ts` (import `services/library`). Chúng ở lại cạnh mô-đun mang tên mình; test được miễn luật tầng nên không vi phạm gì.
+
+Một tham chiếu đọc **mã nguồn** bằng `join(__dirname, …)` cần viết lại: `backup.test.ts` đọc `backupFile.ts` (dời sang `infra/storage`) và `library.ts` (sang `services/library`). Công cụ viết lại đúng 1 đường dẫn (`backupFile.ts`); `library.ts` cùng thư mục nên giữ. `crash.test.ts` và `schemaSnapshot.test.ts` dời cùng nhóm với tiến trình con và `__fixtures__`, đường dẫn tương đối giữ nguyên. `main/index.ts` có `join(__dirname, '../preload/index.js')` trỏ tới bản dựng, được bỏ qua có chủ ý.
 
 ## 7. Bảng trách nhiệm `LibraryStore` → `WorkFiles` (task 7.1) và bảng hành vi → test (task 7.2)
 
@@ -89,3 +123,29 @@ _Điền khi làm các task tương ứng._
 ## 8. So sánh trước/sau (task 8.2)
 
 _Điền khi làm task 8.2._
+
+## 9. Nhật ký thực hiện
+
+### R1, xong (tasks 1.1–2.9)
+
+Commit: `264f0e0` lệnh kiểm; `1d6d511` prettier `endOfLine: auto`; `7863072` `rawText.ts`; `f48baee` luật ranh giới; `44ee234` `AGENTS.md`; `f65d41a` hồ sơ change. Đã đẩy `origin/main`.
+
+Phát hiện: bộ test song song chập chờn (mục 2) nên `check.mjs` chạy hai pha; một phiên `electron-vite dev` chạy nền làm tệ hơn.
+
+### R2, xong (tasks 3.1–3.10)
+
+Commit: `47c0ed8` công cụ dời; `74eadc7` sửa `smoke-sqlite.mjs`; `e69245e` sửa `--prove`; `ead59be` **lần dời**; `7d1cd89` bọc 3 dòng import; và một commit chú thích.
+
+| Kiểm | Kết quả |
+| --- | --- |
+| Git nhận ra đổi tên | **80/80**, độ giống thấp nhất 72%; 98 tệp, 339 dòng thêm / 193 xóa |
+| `--prove` | 95 tệp chỉ khác `HEAD` ở tham chiếu; bộ chứng minh được thử bằng một sửa đổi cố ý (đỏ), rồi khôi phục (xanh) |
+| `--verify` | 790 tham chiếu tương đối đều giải ra |
+| `tsc` | 399 + 812 tệp (bằng baseline) |
+| Test | 863 = 749 + 114 |
+| Lint | 0 lỗi, 63 cảnh báo (baseline 64) |
+| Bundle | `require` của preload chỉ `electron` (5.823 byte, như baseline); phần external của main như baseline; JS renderer 2.125 KiB = 2.176 kB như baseline |
+| `smoke:sqlite` | qua dưới Electron 44.4.5, node 24.21.0, sqlite 3.53.4 |
+| `crash.test.ts` riêng ×3 | 4/4 qua, 13,27 / 13,21 / 13,24 s (baseline 13,31 / 12,91 / 13,63 s) |
+
+Phát hiện: (1) `scripts/smoke-sqlite.mjs` có chú thích kiểu TypeScript từ ngày thêm (2026-09-29) nên **chưa từng chạy được**; đã sửa ở commit riêng. (2) `--prove` ban đầu báo sai 93 tệp vì CRLF của bản làm việc; đã sửa và kiểm lại bằng một sửa đổi cố ý. (3) Quy tắc đặt test đổi sang "mô-đun cùng tên trước" (mục 6). (4) Đường dẫn dài thêm làm 3 dòng import vượt 100 cột; bọc ở commit riêng để commit dời giữ là một lần dời thuần.

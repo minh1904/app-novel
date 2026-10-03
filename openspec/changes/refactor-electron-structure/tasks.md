@@ -18,16 +18,16 @@
 
 ## 3. R2 — Dời tệp trong `main/`
 
-- [ ] 3.1 Viết `scripts/restructure/moves.json` (bảng D2, quy tắc "test đi theo mô-đun cao tầng nhất") và `scripts/restructure/move-modules.mjs` với `--dry-run`, `--prove`, `--verify` (D4). Xong khi `--dry-run` chạy trên repo hiện tại không lỗi và in bảng "tệp → vị trí mới", phân loại test, và số câu import đổi theo từng dạng (`from`, `import()`, `vi.mock`, `export … from`, `require`)
-- [ ] 3.2 Duyệt kết quả dry-run: mọi tệp và mọi test có đích, không có "unclassified" hay specifier không giải được; đối chiếu phân loại test với dự kiến ở D2 và ghi chênh lệch. Xong khi bảng được dán vào `baseline.md` và chủ sản phẩm hoặc người làm xác nhận các test nằm ở ranh giới `services/library` / `infra/storage`
-- [ ] 3.3 Commit `build(scripts): add a one-off tool to move modules`. Xong khi `git show --stat` chỉ có hai tệp trong `scripts/restructure/`
-- [ ] 3.4 Chạy công cụ thật cho `main/` (không `--dry-run`), rồi `--verify` và `--prove`. Xong khi `--verify` báo mọi specifier tương đối giải ra tệp có thật và `--prove` báo 0 tệp khác ngoài specifier
-- [ ] 3.5 Sửa `scripts/refresh-model-catalog.mjs` trỏ tới `src/main/infra/providers/modelCatalog.json` (không chạy script vì cần mạng). Xong khi một lệnh `node` tính đường dẫn của script ra đúng tệp JSON đang tồn tại
-- [ ] 3.6 Thay luật lint ở 2.6 bằng **bảng đầy đủ D3** (bỏ danh sách cho phép; thêm luật `services/library` ≮ `services/ai` và luật `testing/`). Xong khi `eslint --quiet .` 0 lỗi
-- [ ] 3.7 Chứng minh từng luật tầng bắt được (bản tạm, không commit): `infra`→`services`, `infra`→`electron`, `services`→`ipc`, `services`→`electron`, `ipc`→`electron`, `services/library`→`services/ai`, tệp không phải test →`testing/`. Xong khi `baseline.md` có bảy dòng thông điệp và `git status` sạch
-- [ ] 3.8 Chạy `node scripts/check.mjs --build` và `smoke:sqlite` (`electron scripts/smoke-sqlite.mjs` bằng bản Electron trong `node_modules`). Xong khi cả hai xanh, 863 test qua, và `require` của `out/preload/index.js` giống baseline
-- [ ] 3.9 Chạy `crash.test.ts` riêng ba lần ở vị trí mới. Xong khi kết quả khớp mốc ở 1.2 (không tệ hơn)
-- [ ] 3.10 Commit nguyên tử `refactor(main): arrange modules into electron, ipc, services, infra`, mô tả kèm kết luận `--prove` và `git diff -M --stat`. Xong khi `git show --stat -M` cho thấy các tệp được nhận là đổi tên (ghi số tệp **không** được nhận là đổi tên, nếu có) và không có tệp nào đổi nội dung ngoài import; đẩy nếu được phép
+- [x] 3.1 Viết `scripts/restructure/moves.json` (bảng D2, quy tắc test "đi theo mô-đun cùng tên, không có thì theo tầng cao nhất nó import") và `scripts/restructure/move-modules.mjs` với `--dry-run`, `--prove`, `--verify` (D4). Xong khi `--dry-run` chạy trên repo hiện tại không lỗi và in bảng "tệp → vị trí mới", phân loại test, và số câu import đổi theo từng dạng (`from`, `import()`, `vi.mock`, `export … from`, `require`)
+- [x] 3.2 Duyệt kết quả dry-run: mọi tệp và mọi test có đích, không có "unclassified" hay specifier không giải được; đối chiếu phân loại test với dự kiến ở D2 và ghi chênh lệch. Xong khi bảng được dán vào `baseline.md` và chủ sản phẩm hoặc người làm xác nhận các test nằm ở ranh giới `services/library` / `infra/storage`
+- [x] 3.3 Commit `build(scripts): add a one-off tool to move modules`. Xong khi `git show --stat` chỉ có hai tệp trong `scripts/restructure/`
+- [x] 3.4 Chạy công cụ thật cho `main/` (không `--dry-run`), rồi `--verify` và `--prove`. Xong khi `--verify` báo mọi specifier tương đối giải ra tệp có thật và `--prove` báo 0 tệp khác ngoài specifier
+- [x] 3.5 Sửa `scripts/refresh-model-catalog.mjs` trỏ tới `src/main/infra/providers/modelCatalog.json` (không chạy script vì cần mạng). Xong khi một lệnh `node` tính đường dẫn của script ra đúng tệp JSON đang tồn tại
+- [x] 3.6 Thay luật lint ở 2.6 bằng **bảng đầy đủ D3** (bỏ danh sách cho phép; thêm luật `services/library` ≮ `services/ai` và luật `testing/`). Xong khi `eslint --quiet .` 0 lỗi
+- [x] 3.7 Chứng minh từng luật tầng bắt được (bản tạm, không commit): `infra`→`services`, `infra`→`electron`, `services`→`ipc`, `services`→`electron`, `ipc`→`electron`, `services/library`→`services/ai`, tệp không phải test →`testing/`. Xong khi `baseline.md` có bảy dòng thông điệp và `git status` sạch
+- [x] 3.8 Chạy `node scripts/check.mjs --build` và `smoke:sqlite` (`electron scripts/smoke-sqlite.mjs` bằng bản Electron trong `node_modules`). Xong khi cả hai xanh, 863 test qua, và `require` của `out/preload/index.js` giống baseline
+- [x] 3.9 Chạy `crash.test.ts` riêng ba lần ở vị trí mới. Xong khi kết quả khớp mốc ở 1.2 (không tệ hơn)
+- [x] 3.10 Commit nguyên tử `refactor(main): arrange modules into electron, ipc, services, infra`, mô tả kèm kết luận `--prove` và `git diff -M --stat`. Xong khi `git show --stat -M` cho thấy các tệp được nhận là đổi tên (ghi số tệp **không** được nhận là đổi tên, nếu có) và không có tệp nào đổi nội dung ngoài import; đẩy nếu được phép
 
 ## 4. R3 — Tách IPC và dây lắp service
 
