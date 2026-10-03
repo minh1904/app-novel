@@ -1,11 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { CHANNELS } from '../../shared/channels'
-import { ChapterTranslator } from '../services/ai/chapterTranslation'
-import { ConnectionService } from '../services/ai/connectionService'
-import { ChatService } from '../services/ai/chatService'
+import { createServices } from '../services/createServices'
 import { electronSafeStorage } from './safeStorage'
-import { SecretStore } from '../infra/storage/secretStore'
 import type { LibraryStore } from '../services/library/library'
 import type { FilePicker } from '../ipc/filePicker'
 import { createLibraryHandlers, guardHandlers } from '../ipc/libraryHandlers'
@@ -48,24 +45,9 @@ export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
 ): void {
-  const connections = new ConnectionService({
-    db: library.appDb,
-    secrets: new SecretStore(electronSafeStorage),
-    now: () => library.appNow(),
-    newId: () => library.newAppId()
-  })
-  const translator = new ChapterTranslator({
+  const { connections, translator, chat } = createServices({
     library,
-    connections,
-    now: () => library.appNow()
-  })
-  const chat = new ChatService({
-    connections,
-    // The same store the rest of the app reads through, handed over **read-only by construction**:
-    // `ChatToolLibrary` names only `listChapters` and `readText`, so no tool can reach a writer.
-    library,
-    newId: () => library.newAppId(),
-    now: () => library.appNow()
+    crypto: electronSafeStorage
   })
   const handlers = guardHandlers(
     createLibraryHandlers(library, electronFilePicker(), connections, translator, chat),
