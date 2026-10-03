@@ -219,10 +219,16 @@ function checkRule(rule: Rule, source: string[], target: string[], aligned: bool
     : { rule: label, status: 'fail', detail: problems.join('; ') }
 }
 
+/** Quá tỷ lệ này đoạn lệch độ dài thì coi là các đoạn đã trượt vị trí, dù số đoạn hai bên bằng nhau. */
+const SHIFT_THRESHOLD = 0.15
+
 export interface Score {
   sourceParagraphs: number
   targetParagraphs: number
+  /** Ghép được từng đoạn: số đoạn bằng nhau và không có dấu hiệu trượt vị trí. */
   aligned: boolean
+  /** Số đoạn bằng nhau nhưng các đoạn đã trượt vị trí (một dòng mất, một dòng dư). */
+  shifted: boolean
   segments: number
   written: number
   residue: number
@@ -257,8 +263,24 @@ export function score(
 ): Score {
   const source = paragraphs(normalizedSource)
   const target = paragraphs(targetText)
-  const aligned = source.length === target.length
+  const sameCount = source.length === target.length
   const cjk = chapter.lang !== 'en'
+
+  // Số đoạn bằng nhau chưa chắc đã ghép đúng: một dòng mất ở chỗ này và một dòng dư ở chỗ khác làm mọi đoạn ở
+  // giữa trượt một vị trí. Đoạn lệch độ dài nhiều bất thường là dấu hiệu của việc trượt đó.
+  let lengthChecked = 0
+  let lengthOutliers = 0
+  if (sameCount) {
+    const [low, high] = LENGTH_BAND[chapter.lang]
+    source.forEach((p, i) => {
+      if (visibleLength(p) < 20) return
+      lengthChecked++
+      const ratio = visibleLength(target[i]) / visibleLength(p)
+      if (ratio < low || ratio > high) lengthOutliers++
+    })
+  }
+  const shifted = sameCount && lengthChecked > 0 && lengthOutliers / lengthChecked > SHIFT_THRESHOLD
+  const aligned = sameCount && !shifted
 
   const exempt = (i: number): boolean =>
     aligned && chapter.residueExempt.some((s) => source[i].includes(s))
@@ -269,17 +291,6 @@ export function score(
   const dialogueStyle =
     withVi === 0 && withCjk === 0 ? 'none' : withCjk === 0 ? 'vi' : withVi === 0 ? 'cjk' : 'mixed'
 
-  let lengthChecked = 0
-  let lengthOutliers = 0
-  if (aligned) {
-    const [low, high] = LENGTH_BAND[chapter.lang]
-    source.forEach((p, i) => {
-      if (visibleLength(p) < 20) return
-      lengthChecked++
-      const ratio = visibleLength(target[i]) / visibleLength(p)
-      if (ratio < low || ratio > high) lengthOutliers++
-    })
-  }
   const repetition =
     target.filter((p) => repeatsTooMuch(p)).length +
     target.filter((p, i) => i > 0 && p === target[i - 1]).length
@@ -311,6 +322,7 @@ export function score(
     sourceParagraphs: source.length,
     targetParagraphs: target.length,
     aligned,
+    shifted,
     segments,
     written,
     residue: residueParas.length,
@@ -353,7 +365,9 @@ export function summarize(
     runs: scores.length,
     sourceParagraphs: scores[0]?.sourceParagraphs ?? 0,
     targetParagraphs: scores.map((s) => s.targetParagraphs),
-    aligned: `${scores.filter((s) => s.aligned).length}/${scores.length}`,
+    aligned:
+      `${scores.filter((s) => s.aligned).length}/${scores.length}` +
+      (scores.some((s) => s.shifted) ? ` (trượt ${scores.filter((s) => s.shifted).length})` : ''),
     untranslatedSegments: sum((s) => s.segments - s.written),
     residue: sum((s) => s.residue),
     cjkBrackets: scores.map((s) => s.cjkBrackets),
