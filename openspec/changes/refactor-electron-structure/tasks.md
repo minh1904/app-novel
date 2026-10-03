@@ -48,13 +48,13 @@
 
 ## 6. R5 — Tài liệu
 
-- [ ] 6.1 Mở rộng công cụ để dùng `moves.json` sửa tài liệu (D10): liên kết markdown và đường dẫn trong backtick ở `docs/handbook/**` và `openspec/changes/*/` **trừ** `archive/`, trừ chính `refactor-electron-structure/`, và trừ chữ `src/…` trong các mục đã đóng ngày của `changelog.md` (liên kết ở đó vẫn sửa). `--dry-run` đếm. Xong khi số đếm khớp dự kiến (108 liên kết, 65 đường dẫn ở `docs/handbook`; 66 ở các change đang mở) hoặc chênh lệch được giải thích
-- [ ] 6.2 Áp dụng, rồi chạy hai bộ kiểm: mọi liên kết tương đối trong `docs/handbook/` trỏ tới tệp có thật; mọi đường dẫn `src/main|shared/…` trong tài liệu sống (ngoài các ngoại lệ ở 6.1) tồn tại. Xong khi cả hai báo 0 lỗi
-- [ ] 6.3 Commit `docs: point handbook links at the new module paths`. Xong khi `git diff --stat` chỉ chạm tệp `.md` và không có dòng chữ nào đổi ngoài đường dẫn (xem mẫu bằng mắt)
-- [ ] 6.4 Thêm mục "Cấu trúc mã nguồn và luật ranh giới" vào `docs/handbook/engineering/architecture.md`: cây thư mục, bảng tầng, bảng luật lint và nơi sửa luật, ba bước "thêm một khu vực IPC / một service mới", chỗ đặt các lõi của giai đoạn AI-first (dòng "Luật quá chặt" ở mục Risks của `design.md`). Cập nhật bằng chứng ở `current-state.md` và đường dẫn ở `ai-first-architecture.md`. Xong khi bộ kiểm liên kết ở 6.2 vẫn 0 lỗi
-- [ ] 6.5 Viết `docs/handbook/research/electron-architecture.md`: bảng 11 sản phẩm, bảy khuôn, nguồn kèm URL và **ngày đọc 2026-10-03**, và giới hạn bằng chứng (đọc cây thư mục qua GitHub API, chưa chạy thử); thêm một dòng vào mục lục `README.md`. Xong khi liên kết và URL có đủ và bộ kiểm liên kết sạch
-- [ ] 6.6 Ghi mục mới vào `docs/handbook/maintenance/changelog.md`: gì đổi, gì **không** đổi, baseline trước và sau. Xong khi mục có và nhắc rõ rằng `archive/` và nhật ký cũ giữ nguyên chữ
-- [ ] 6.7 Commit `docs: describe the module layers and the survey behind them`; đẩy nếu được phép
+- [x] 6.1 Mở rộng công cụ để dùng `moves.json` sửa tài liệu (D10): liên kết markdown và đường dẫn trong backtick ở `docs/handbook/**` và `openspec/changes/*/` **trừ** `archive/`, trừ chính `refactor-electron-structure/`, và trừ chữ `src/…` trong các mục đã đóng ngày của `changelog.md` (liên kết ở đó vẫn sửa). `--dry-run` đếm. Xong khi số đếm khớp dự kiến (108 liên kết, 65 đường dẫn ở `docs/handbook`; 66 ở các change đang mở) hoặc chênh lệch được giải thích
+- [x] 6.2 Áp dụng, rồi chạy hai bộ kiểm: mọi liên kết tương đối trong `docs/handbook/` trỏ tới tệp có thật; mọi đường dẫn `src/main|shared/…` trong tài liệu sống (ngoài các ngoại lệ ở 6.1) tồn tại. Xong khi không còn mục nào **do việc dời gây ra**; các mục có từ trước hoặc là tệp dự kiến chưa tạo (24 mục) được liệt kê và kiểm chứng bằng `git cat-file` ở commit `0600221`, rồi để nguyên
+- [x] 6.3 Commit `docs: point handbook links at the new module paths`. Xong khi `git diff --stat` chỉ chạm tệp `.md` và không có dòng chữ nào đổi ngoài đường dẫn (xem mẫu bằng mắt)
+- [x] 6.4 Thêm mục "Cấu trúc mã nguồn và luật ranh giới" vào `docs/handbook/engineering/architecture.md`: cây thư mục, bảng tầng, bảng luật lint và nơi sửa luật, ba bước "thêm một khu vực IPC / một service mới", chỗ đặt các lõi của giai đoạn AI-first (dòng "Luật quá chặt" ở mục Risks của `design.md`). Cập nhật bằng chứng ở `current-state.md` và đường dẫn ở `ai-first-architecture.md`. Xong khi bộ kiểm liên kết ở 6.2 vẫn 0 lỗi
+- [x] 6.5 Viết `docs/handbook/research/electron-architecture.md`: bảng 11 sản phẩm, bảy khuôn, nguồn kèm URL và **ngày đọc 2026-10-03**, và giới hạn bằng chứng (đọc cây thư mục qua GitHub API, chưa chạy thử); thêm một dòng vào mục lục `README.md`. Xong khi liên kết và URL có đủ và bộ kiểm liên kết sạch
+- [x] 6.6 Ghi mục mới vào `docs/handbook/maintenance/changelog.md`: gì đổi, gì **không** đổi, baseline trước và sau. Xong khi mục có và nhắc rõ rằng `archive/` và nhật ký cũ giữ nguyên chữ
+- [x] 6.7 Commit `docs: describe the module layers and the survey behind them`; đẩy nếu được phép
 
 ## 7. R6 — Tách `WorkFiles` khỏi `LibraryStore`
 
