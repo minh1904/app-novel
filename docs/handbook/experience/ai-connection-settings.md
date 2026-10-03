@@ -6,6 +6,8 @@ Người dùng chốt phạm vi ngày 2026-10-02: “trước tiên tôi cần A
 
 *(Cập nhật 2026-10-03, [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md): màn Cài đặt và các kết nối **không đổi**. Chỉ phần **hộp thoại Dịch bằng AI** bên dưới là thiết kế của bản MVP và sẽ được làm lại thành module tác vụ dịch: đơn vị đếm và tiến độ là **đoạn** (không phải segment/câu), tác vụ chạy trong `main` và bền qua khởi động lại, và bản dịch đã có chữ thì kết quả vào dạng **đề xuất** để duyệt trong pane thay cho hai bản cạnh nhau "Dùng bản AI / Giữ bản của tôi". Chữ "segment" trong mục đó đọc là "đoạn" khi làm lại; xem [kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 6.1.)*
 
+*(Cập nhật 2026-10-03, change `ai-model-settings`: phần **danh sách model dạng hàng checkbox** trong thẻ kết nối của các wireframe bên dưới là demo và được thay bằng danh sách "mục model" có cài đặt riêng, làm theo LinguaGacha; xem mục [Cài đặt model — đối chiếu LinguaGacha](#cài-đặt-model--đối-chiếu-linguagacha-2026-10-03) ở cuối. Chỗ đặt màn Cài đặt (phương án F) và các trạng thái của kết nối **không đổi**.)*
+
 ## Hiểu đề thế nào
 
 Câu “AI qua cliproxy + APIkey của Google” có hai cách đọc: (a) Mira gọi CLI proxy, proxy đó cấu hình bằng API key Gemini; (b) hai đường song song — một qua proxy, một gọi Google trực tiếp bằng API key. **Thiết kế dưới đây phục vụ cả hai mà không cần chọn**, vì cả hai đi qua đúng một adapter `openai-compatible` và đúng một biểu mẫu: URL + khóa (tùy chọn) + danh sách model. Khác biệt duy nhất là giá trị điền vào ô URL. Nên sự mơ hồ này không chặn gì; nếu ý là (a) thì chỉ cần một kết nối, nếu là (b) thì khai hai.
@@ -157,6 +159,65 @@ Hai lý do bỏ popup, đo trên chính wireframe chứ không theo khẩu vị:
 **Bỏ thanh bên con của phương án A** vì ba mục nó liệt kê — Giao diện, Lưu trữ và backup, Về Mira — **đều chưa tồn tại**; vẽ ra là hứa ba màn chưa có. Còn nếu bỏ ba mục đó thì thanh bên chỉ còn một mục. Khi có mục cài đặt thứ hai mới thêm điều hướng; lúc đó là thay đổi nhỏ, không phải dựng lại.
 
 **Phương án G (panel trượt phải)** giữ lại làm phương án dự phòng nếu sau này "không rời chương" trở nên quan trọng: đo sạch ở 620px, nhưng che gần hết pane bản dịch ở 1280 và không có chỗ cho mục cài đặt khác.
+
+## Cài đặt model — đối chiếu LinguaGacha (2026-10-03)
+
+Cập nhật: **2026-10-03** · Trạng thái: **Đã dựng theo ghi chú này** (nhóm 7 của change `ai-model-settings`); mới xem ô soạn chat trong Electron thật · Chủ trì: design/engineering · Liên quan: change `ai-model-settings`, [nghiên cứu lõi AI](../research/ai-core-architecture.md)
+
+**Câu hỏi:** người dùng chọn model và kiểm soát cách nó sinh văn bản ở những màn nào, bằng thành phần nào? **Chủ sản phẩm chốt (2026-10-03): theo y hệt LinguaGacha, kể cả giao diện chat, không thêm thừa.** Giao diện AI hiện tại là demo nên không ràng buộc; phần danh sách model dạng checkbox ở các wireframe trên bị thay, còn màn Cài đặt (phương án F) giữ nguyên.
+
+**Cách đọc:** chỉ đọc mã, **chưa chạy LinguaGacha**. Hành vi ghi dưới đây suy ra từ mã nguồn tại commit [`5a0058d`](https://github.com/neavo/LinguaGacha/tree/5a0058d) (2026-10-01). Giấy phép của LinguaGacha chưa xác nhận (xem [nghiên cứu lõi AI](../research/ai-core-architecture.md)), nên **chỉ học ý tưởng, không chép mã**.
+
+### Bốn bề mặt của LinguaGacha ánh xạ sang Mira
+
+| LinguaGacha | Mira dùng | Chỗ đọc trong mã của họ |
+| --- | --- | --- |
+| Danh sách mục model; menu "…" của mỗi mục: **Cơ bản, Tác vụ, Nâng cao, Sao chép, Xóa** | Hàng trong `ConnectionCard` ở màn Cài đặt; `Menu` có sẵn | [`model-item-menu.tsx`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/frontend/pages/model-page/components/model-item-menu.tsx) |
+| Hộp thoại **Cơ bản**: tên, tên model thật với nút **Nhập / Lấy / Kiểm tra**, mức suy luận | `Dialog` + `TextField` + `Select` mức suy luận (như họ); URL và khóa **không** có ở đây vì ở Mira chúng thuộc kết nối | [`model-basic-settings-dialog.tsx`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/frontend/pages/model-page/dialogs/model-basic-settings-dialog.tsx) |
+| Hộp thoại **Tác vụ**: token vào, token ra, đồng thời, RPM; số 0 là mặc định | `Dialog` + bốn `TextField` số, mỗi ô có chữ mô tả tĩnh nói 0 nghĩa là gì | [`model-task-settings-dialog.tsx`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/frontend/pages/model-page/dialogs/model-task-settings-dialog.tsx) |
+| Hộp thoại **Nâng cao**: nhiệt độ và `top_p` (thanh trượt), header thêm và `extra_body` (JSON); mỗi cái một công tắc, giữ giá trị khi tắt | `Dialog` + `Slider` + `Switch` + `TextArea`; cả ba đã có trong `components/` | [`model-advanced-settings-dialog.tsx`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/frontend/pages/model-page/dialogs/model-advanced-settings-dialog.tsx) |
+| Hộp thoại **chọn model** từ danh sách lấy về, có ô lọc | `Dialog` + `SearchField` + danh sách | [`model-selector-dialog.tsx`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/frontend/pages/model-page/dialogs/model-selector-dialog.tsx) |
+| Menu **"mục → mức suy luận"**, chỉ đưa mức model hỗ trợ | `Menu`, dùng ở hộp thoại dịch và ô soạn chat. Có menu con hay hai cấp trong một popup thì quyết khi dựng (task 7.5) | [`model-selection-menu.tsx`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/frontend/features/model-selection/model-selection-menu.tsx), [`model-capability.ts`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/backend/llm/model-capability.ts) |
+| Nút model ở ô soạn chat hiện "tên · mức" | Thay nút chọn model có sẵn trong `AiComposer` (cùng `pickerClass` với nút chế độ) | [`agent-composer-model-controls.tsx`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/frontend/pages/agent-page/agent-composer-model-controls.tsx) |
+| Chữ mô tả từng ô; cờ `*_custom_enable` tách bật/tắt khỏi giá trị | Chữ tĩnh dưới ô; `{ enabled, value }` trong `ModelSettings` (design D3) | các tệp hộp thoại ở trên, [`model.ts`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/domain/model.ts) |
+| Cấu hình chốt theo từng lần chạy (`config_snapshot`) | `settingsKey` so ở mỗi lô (design D6), vì Mira chưa có tác vụ lưu bền | [`batch-translation-runner.ts`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/backend/batch-translation/core/batch-translation-runner.ts) |
+| Hàng chờ đồng thời và nhịp RPM theo từng model; khóa theo kết nối | `EntryRuntime` (limiter + `RatePacer`) theo mục, `KeyScheduler` theo kết nối (design D9) | [`translation-request-scheduler.ts`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/backend/batch-translation/core/translation-request-scheduler.ts), [`request-rate.ts`](https://github.com/neavo/LinguaGacha/blob/5a0058d/src/backend/batch-translation/core/request-rate.ts) |
+
+### Không lấy
+
+| Thứ LinguaGacha có | Vì sao Mira chưa lấy |
+| --- | --- |
+| Đồng thời **tự động** (thăm dò, giảm một nửa khi 429) | Chỉ có nghĩa khi nhiều lô chạy song song; thuộc module Tác vụ. Hôm nay đồng thời chỉ là trần do người dùng đặt |
+| Mức tốc độ dịch vụ `speed_level` | Chỉ giao thức Responses; Mira chưa có |
+| Model dựng sẵn với nút "đặt lại", đăng nhập ChatGPT | Mira không có model dựng sẵn hay đăng nhập kiểu đó |
+| Nút "model dịch hàng loạt", ghi nhớ chọn model theo mục đích | Chưa ai cần; hộp thoại dịch mặc định là mục mặc định của kết nối |
+| % ngữ cảnh ở ô soạn chat | Agent của họ cần nén ngữ cảnh; chat của Mira không có việc đó |
+| Penalty, `seed` | Không thuộc bộ cài đặt đã chốt; `extra_body` đủ cho ai cần |
+
+### Khác LinguaGacha có chủ ý
+
+- **Header thêm không ghi đè được header xác thực** (`authorization`, `x-api-key`, `x-goog-api-key`, `api-key`, `host`, `content-type`, `content-length`), và `extra_body` không ghi đè được `model`, `messages`, `stream`, `stream_options`, `tools`: khóa của kết nối đi qua một đường duy nhất để bộ lập lịch khóa và bước che khóa khỏi lỗi còn đúng.
+- **Nhà cung cấp từ chối một tham số thì lỗi mang thông điệp gốc, Mira không tự bỏ tham số rồi gọi lại.** Nút **Kiểm tra** là chỗ người dùng biết trước.
+- **Mức suy luận lấy từ models.dev**, không phải bảng riêng trong mã; model không có trong đó chỉ có mức "Mặc định".
+
+### Kết quả thật so với ghi chú (2026-10-03)
+
+Đã dựng đúng cấu trúc ở bảng trên. Xem bằng mắt ở **chế độ trình duyệt với `window.mira` giả** (renderer thật, dữ liệu giả; sáng và tối, 1280 × 860), kèm đi bàn phím. Những chỗ **khác** ghi chú:
+
+- **Mức suy luận ở một cấp menu con, "Mặc định" ở cuối** (menu con của Base UI): bấm mục là chọn nó và đóng menu; rê hoặc mũi tên phải để mở các mức. Chạy được bằng bàn phím (Enter mở menu và dồn sẵn vào mục đầu, mũi tên phải mở mức, Enter chọn, trả focus về nút).
+- **Nhập / Lấy / Kiểm tra** là ba nút ở hàng "Tên model" của hộp thoại Cơ bản; Nhập mở một hộp thoại nhỏ để gõ tên. Kết quả Kiểm tra hiện **chữ** ("Nhà cung cấp nhận cài đặt này" / "Không dùng được") kèm biểu tượng, không chỉ màu, và tự ẩn khi cài đặt của mục đổi (một kết quả cũ không còn nói về mục này).
+- **Mỗi ô lưu ngay**, không có nút Lưu, để Kiểm tra luôn gửi đúng cái đang hiện trên màn. Ô JSON lưu khi rời ô và chỉ khi hợp lệ.
+- **Thêm so với LinguaGacha, vì Mira cần:** "Đặt làm mặc định" và "Chuyển lên / Chuyển xuống" trong menu của mục; ô "Thêm model" gõ tay và nút "Chọn từ danh sách…" ở thẻ kết nối; hộp thoại xác nhận khi xóa mục.
+- **Hộp thoại chọn model tự lấy danh sách** lần đầu mở (bấm "Lấy" nghĩa là hỏi endpoint); có chế độ nhiều mục (thêm) và một mục (chọn cho mục đang sửa); đánh dấu "Đã có N mục" mà vẫn cho thêm tiếp, vì hai mục cùng model là hợp lệ. Chọn model mới cho một mục còn mang tên cũ tự đặt thì tên đi theo model mới.
+- **Mức đã lưu mà model mới không hỗ trợ** vẫn hiện, kèm "(model này không hỗ trợ)", để màn không nói một mức trong khi mục giữ mức khác. Quan sát khi đổi 2.5 Flash (đang "Tắt") sang 2.5 Pro.
+
+Lỗi tìm thấy khi chạy thật mà test không bắt được:
+
+- Hộp thoại chọn model báo "endpoint không liệt kê model" khi chưa hỏi lần nào (đọc `listed` trước khi có lần kiểm tra nào trong phiên). Sửa: "đã hỏi" tính theo việc có kết quả kiểm tra trong phiên.
+- Hộp thoại dịch **kẹt ở "Đang đọc cài đặt kết nối…" ở chế độ dev**: `useAiTranslate` đặt cờ `live = false` khi dọn dẹp mà không bật lại khi dựng lại, và StrictMode tháo-lắp hook một lần. Lỗi có từ trước change này; chỉ lộ khi xem bằng mắt. Đã sửa (bật cờ ở thân effect). Bản đóng gói không chạy StrictMode hai lần nên không dính.
+- Thông báo lỗi của ô `extra_body` nằm **dưới** đoạn mô tả dài của ô, dễ bỏ sót: `TextArea` đã đổi để lỗi đứng trước mô tả như `TextField`.
+
+**Chưa kiểm:** trong Electron thật mới thấy ô soạn chat (ảnh chủ sản phẩm 2026-10-03), chưa thấy menu "…", ba hộp thoại, hộp thoại chọn model và hộp thoại dịch; chưa có ảnh chụp từ bản đóng gói; không có test DOM nên hộp thoại và menu không nằm trong bộ test (phần thuần nằm trong `modelSettingsForm`, `modelInfoText`, `translateTargets`); thử bằng chuột chỉ qua công cụ tự động nên chưa thử trên cảm ứng; chưa đo tương phản của các màu mới (dùng token có sẵn). Việc menu mức rộng 276 px cắt tên mục rất dài bằng dấu chấm lửng chưa thử với tên 80 ký tự.
 
 ---
 
