@@ -158,7 +158,7 @@ const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g
  * The only changes made to a text on its way into a chapter: the byte order mark, line endings
  * (to LF), control characters, space/tab runs left dangling at a line's end or doubled up inside
  * one, and blank lines or trailing spaces at the two ends of the whole text. The indentation at
- * the start of a line is left alone — full-width (　) or not, it is how the source marks a new
+ * the start of a line is left alone — full-width (U+3000) or not, it is how the source marks a new
  * paragraph, not a typo. Punctuation, case, Han forms and Unicode normalisation are untouched too,
  * and each change made is counted.
  */
@@ -196,7 +196,7 @@ export function normalizeRaw(input: string): Normalized {
   // Two or more spaces/tabs in a row inside a line (not the indentation it starts with) collapse
   // to one: almost always a slip from pasting out of a word processor or PDF.
   let spaces = 0
-  text = text.replace(/(?<=[^\n　])[ \t]{2,}/g, () => (spaces++, ' '))
+  text = text.replace(/(?<=[^\n\u3000])[ \t]{2,}/g, () => (spaces++, ' '))
   note('space', spaces)
 
   // Blank lines before the first real line go, but the first line keeps its own indentation.
