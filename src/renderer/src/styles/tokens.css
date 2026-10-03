@@ -15,20 +15,21 @@ html[data-theme='dark'] {
   --font-ui: 'Google Sans Flex', 'Segoe UI', sans-serif;
   --font-code: 'Cascadia Code', Consolas, monospace;
 
-  --surface-canvas: #000000;
-  --surface-sidebar: #191919;
-  --surface-chrome: #0e0e0e;
-  --surface-control: #232323;
-  --surface-selected: #2f2f2f;
-  --surface-popover: #1e1e1e;
+  /* Obsidian default dark: editor #1e1e1e, side panes #262626, title bar #363636. */
+  --surface-canvas: #1e1e1e;
+  --surface-sidebar: #262626;
+  --surface-chrome: #363636;
+  --surface-control: #2e2e2e;
+  --surface-selected: #404040;
+  --surface-popover: #2b2b2b;
 
-  --text-primary: #ebebeb;
-  --text-muted: #b3b3b3;
-  --border-subtle: #66666633;
-  --border-strong: #66666666;
+  --text-primary: #dadada;
+  --text-muted: #a0a0a0;
+  --border-subtle: #ffffff1a;
+  --border-strong: #ffffff2e;
   --action-primary: #fafafa;
   --action-on-primary: #171717;
-  --focus-ring: #8c8c8c;
+  --focus-ring: #8a5cf4;
 
   --status-info: #3080ff;
   --status-warning: #f99c00;

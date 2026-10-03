@@ -20,6 +20,6 @@ export const TOP_BAR_HEIGHT = 41
  * `titleBar.test.ts` fails when the two drift apart.
  */
 export const CHROME_COLORS: Record<ChromeTheme, { color: string; symbolColor: string }> = {
-  dark: { color: '#0e0e0e', symbolColor: '#b3b3b3' },
+  dark: { color: '#363636', symbolColor: '#a0a0a0' },
   light: { color: '#f6f6f7', symbolColor: '#666666' }
 }

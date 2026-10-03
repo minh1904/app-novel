@@ -48,7 +48,7 @@ function createWindow(): void {
     title: 'Mira',
     // The installed exe carries icon.ico, but `pnpm dev` runs electron.exe, whose icon would show.
     icon,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#191919' : '#f1f1f1',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#262626' : '#f1f1f1',
     // The page starts in the system theme (see useTheme), so the buttons start in it too and are
     // corrected through `app:chrome-theme` if the page then picks the other one.
     ...(OVERLAY_TITLE_BAR && {
