@@ -2,6 +2,5 @@ singleQuote: true
 semi: false
 printWidth: 100
 trailingComma: none
-# .editorconfig says lf, but git's core.autocrlf checks files out as CRLF on Windows (git stores LF),
-# which made eslint report "Delete ␍" on every line. Let each file keep the ending it has.
-endOfLine: auto
+# Working files use CRLF (.gitattributes checks them out that way; git stores LF), matching .editorconfig.
+endOfLine: crlf
