@@ -352,7 +352,8 @@ describe('backup and restore', () => {
     expect(readPragmas(old).userVersion).toBe(3)
     old.close()
 
-    const library = open(tempDir())
+    const dataDir = tempDir()
+    const library = open(dataDir)
     const restored = library.restoreWork(path)
     expect(restored).toMatchObject({ title: 'Bản cũ', chapterCount: 2, coverVersion: null })
 
@@ -361,7 +362,7 @@ describe('backup and restore', () => {
       [true, false],
       [false, false]
     ])
-    const db = openDatabase(join(library['worksDir'], restored.id + '.mira'), { readOnly: true })
+    const db = openDatabase(join(dataDir, 'works', restored.id + '.mira'), { readOnly: true })
     try {
       expect(readPragmas(db).userVersion).toBe(latestVersion(workSchema))
     } finally {

@@ -38,11 +38,14 @@ function fakePicker(): FakePicker {
 
 function setup(): {
   library: LibraryStore
+  /** The data directory the library was opened on. */
+  dataDir: string
   picker: FakePicker
   workId: string
   call<T = unknown>(channel: Channel, raw?: unknown): Promise<Result<T>>
 } {
-  const library = LibraryStore.open({ dataDir: tempDir() })
+  const dataDir = tempDir()
+  const library = LibraryStore.open({ dataDir })
   stores.push(library)
   const picker = fakePicker()
   const handlers = createLibraryHandlers(library, picker)
@@ -50,6 +53,7 @@ function setup(): {
   library.createChapter(work.id, 'Một')
   return {
     library,
+    dataDir,
     picker,
     workId: work.id,
     call: async (channel, raw) => (await handlers[channel](raw)) as Result<never>
@@ -117,8 +121,8 @@ describe('backup IPC handlers', () => {
   })
 
   it('refuses a save path inside the data directory', async () => {
-    const { call, picker, library, workId } = setup()
-    picker.save = join(library['dataDir'], 'works', workId + '.mira')
+    const { call, picker, dataDir, workId } = setup()
+    picker.save = join(dataDir, 'works', workId + '.mira')
     const result = await call(CHANNELS.backupExport, { workId })
     expect(codeOf(result)).toBe('validation')
   })
