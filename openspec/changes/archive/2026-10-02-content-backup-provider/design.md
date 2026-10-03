@@ -2,7 +2,7 @@
 
 Lý do và phạm vi: xem `proposal.md`. Nền đã có (change `m0-storage-foundation`, đã archive): adapter SQLite với `transaction()` lồng được, migration theo `user_version`, tệp tác phẩm `.mira` với đủ bảng `chapter_text`, `segment`, `link`, `link_member`, `provenance`, `cover`, thư viện có chỉ mục dựng lại được, IPC có kiểu trả `Result`, kiểm tra người gửi. Từ change `work-detail-screen` (đã archive) có thêm: kho chương (`chapterFile.ts`, vị trí liền mạch trong một transaction), kênh `chapters:*`, `works:update` nhận `cover`, khung màn chi tiết với danh mục khu vực, menu tác phẩm ở thư viện và ở màn chi tiết, hộp xóa chương, và `delivery/backlog.md` ghi các mục chỉ-minh-họa. Chương hiện **không có hàng nào trong `chapter_text`**; xóa chương xóa con qua khóa ngoại `ON DELETE CASCADE`.
 
-Quyết định công nghệ đã chốt ở [ADR-003](../../../docs/handbook/decisions/0003-technology-stack.md): `node:sqlite`, SQL thuần + repository, valibot, Vitest, IPC tự viết.
+Quyết định công nghệ đã chốt ở [ADR-003](../../../../docs/handbook/decisions/0003-technology-stack.md): `node:sqlite`, SQL thuần + repository, valibot, Vitest, IPC tự viết.
 
 ## Goals / Non-Goals
 

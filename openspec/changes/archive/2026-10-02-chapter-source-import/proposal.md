@@ -1,6 +1,6 @@
 ## Why
 
-Kho đã lưu được văn bản và segment của chương (change `content-backup-provider`), nhưng không có đường nào đưa văn bản vào: chương mở ra vẫn là màn giữ chỗ. Luồng chính của Mira là "nhập raw → chia segment → AI dịch → soát"; không có bước đầu thì các bước sau (job dịch, hai mode soát) không có gì để làm. Đây là lát cắt nhỏ nhất của mốc M1 (S1.1 và S1.2 trong [scope](../../../docs/handbook/product/scope.md)) và là thứ đầu tiên người dịch phải làm với một chương.
+Kho đã lưu được văn bản và segment của chương (change `content-backup-provider`), nhưng không có đường nào đưa văn bản vào: chương mở ra vẫn là màn giữ chỗ. Luồng chính của Mira là "nhập raw → chia segment → AI dịch → soát"; không có bước đầu thì các bước sau (job dịch, hai mode soát) không có gì để làm. Đây là lát cắt nhỏ nhất của mốc M1 (S1.1 và S1.2 trong [scope](../../../../docs/handbook/product/scope.md)) và là thứ đầu tiên người dịch phải làm với một chương.
 
 ## What Changes
 
@@ -9,7 +9,7 @@ Kho đã lưu được văn bản và segment của chương (change `content-ba
 - Thêm **màn chương** thay màn giữ chỗ: chưa có bản gốc thì hiện hai lối nhập; đã có thì hiện bản gốc theo segment (chỉ đọc), số segment, và lối "Thay bản gốc" có xác nhận khi sẽ ảnh hưởng bản dịch hoặc liên kết.
 - Không thêm kênh IPC: nhập dùng `text:get` và `text:save` đã có; việc giải mã, chuẩn hóa và chia câu là hàm thuần dùng chung, kiểm thử độc lập.
 
-Không thuộc change này: nhập nhiều chương từ một tệp (`import-txt` trong [backlog](../../../docs/handbook/delivery/backlog.md) vẫn là minh họa), EPUB, người dùng chỉnh quy tắc tách, sửa văn bản (editor, S1.4–S1.6), job dịch, tự đặt tên chương từ dòng đầu.
+Không thuộc change này: nhập nhiều chương từ một tệp (`import-txt` trong [backlog](../../../../docs/handbook/delivery/backlog.md) vẫn là minh họa), EPUB, người dùng chỉnh quy tắc tách, sửa văn bản (editor, S1.4–S1.6), job dịch, tự đặt tên chương từ dòng đầu.
 
 ## Capabilities
 

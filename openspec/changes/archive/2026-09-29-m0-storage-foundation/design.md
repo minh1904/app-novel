@@ -7,7 +7,7 @@ Lý do và phạm vi: xem `proposal.md`. Hiện trạng liên quan:
 - Main process chỉ có một IPC `app:info`, kèm kiểm tra người gửi; preload phơi `window.mira` qua `contextBridge`; renderer chạy sandbox, CSP chặt.
 - Thư viện chạy trên `sampleWorks` trong `App.tsx`; kiểu `Work` và hàm định dạng nằm trong `features/library/works.ts`.
 - Chưa có test runner. `package.json` khai `engines.node >=22.12`.
-- Điều đã chốt ở handbook: một file SQLite mỗi tác phẩm + `library.db` nhỏ, WAL, `synchronous=FULL`, backup bằng `VACUUM INTO`, link trỏ segment ID ([khả thi kỹ thuật](../../../docs/handbook/research/technical-feasibility.md)).
+- Điều đã chốt ở handbook: một file SQLite mỗi tác phẩm + `library.db` nhỏ, WAL, `synchronous=FULL`, backup bằng `VACUUM INTO`, link trỏ segment ID ([khả thi kỹ thuật](../../../../docs/handbook/research/technical-feasibility.md)).
 
 **Bằng chứng mới (2026-09-29):** smoke-test chạy trong Electron 44.4.5 (Node 24.21.0) xác nhận `node:sqlite` load được không cần flag, SQLite 3.53.4, `journal_mode=WAL`, ghi/đọc `xin chào 你好` đúng, `VACUUM INTO ?` với tham số tạo được tệp, và có hàm `backup`. Chưa kiểm chứng: đóng gói bằng electron-vite/electron-builder, chịu crash thật, chạy sau khi cài.
 

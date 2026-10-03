@@ -1,6 +1,6 @@
 ## Why
 
-Mira chưa lưu được gì: thư viện chạy trên dữ liệu mẫu trong bộ nhớ, mở lại là mất. Mọi mốc sau (chương, editor, AI dịch) đều cần một kho dữ liệu bền và an toàn, và [handbook](../../../docs/handbook/delivery/roadmap.md) đã chốt "nền dữ liệu trước". Làm phần này trước để mọi màn hình về sau đọc/ghi dữ liệu thật ngay từ đầu.
+Mira chưa lưu được gì: thư viện chạy trên dữ liệu mẫu trong bộ nhớ, mở lại là mất. Mọi mốc sau (chương, editor, AI dịch) đều cần một kho dữ liệu bền và an toàn, và [handbook](../../../../docs/handbook/delivery/roadmap.md) đã chốt "nền dữ liệu trước". Làm phần này trước để mọi màn hình về sau đọc/ghi dữ liệu thật ngay từ đầu.
 
 ## What Changes
 

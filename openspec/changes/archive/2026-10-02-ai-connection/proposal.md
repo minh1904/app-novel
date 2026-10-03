@@ -1,8 +1,8 @@
 ## Why
 
-Vòng chính của Mira là **nhập raw → AI dịch → soát/sửa hai mode** ([ADR-002](../../../docs/handbook/decisions/0002-ai-first-translation.md)), nhưng hiện chỉ có `MockProvider`: `src/main/providers/` có hợp đồng `TranslationProvider` và một provider giả lập, không có đường nào gọi ra ngoài và không có chỗ nào khai khóa. Màn Toàn văn đã hiển thị và lưu được bản dịch (`translation-editor`), nên thiếu đúng một mảnh để vòng chính chạy thật: **kết nối tới một nhà cung cấp và một điểm gọi**.
+Vòng chính của Mira là **nhập raw → AI dịch → soát/sửa hai mode** ([ADR-002](../../../../docs/handbook/decisions/0002-ai-first-translation.md)), nhưng hiện chỉ có `MockProvider`: `src/main/providers/` có hợp đồng `TranslationProvider` và một provider giả lập, không có đường nào gọi ra ngoài và không có chỗ nào khai khóa. Màn Toàn văn đã hiển thị và lưu được bản dịch (`translation-editor`), nên thiếu đúng một mảnh để vòng chính chạy thật: **kết nối tới một nhà cung cấp và một điểm gọi**.
 
-Người dùng chốt phạm vi ngày 2026-10-02: *“trước tiên tôi cần AI qua cliproxy + APIkey của Google trước”*. [ADR-004](../../../docs/handbook/decisions/0004-ai-provider-layer.md) đã chốt kiến trúc cho việc này — **đúng một adapter tương thích OpenAI**, nhiều khóa với `fill-first`, bảng giá từ snapshot models.dev, khóa lưu bằng `safeStorage` — nên change này là lát hiện thực đầu tiên của ADR đó, không phải một quyết định mới.
+Người dùng chốt phạm vi ngày 2026-10-02: *“trước tiên tôi cần AI qua cliproxy + APIkey của Google trước”*. [ADR-004](../../../../docs/handbook/decisions/0004-ai-provider-layer.md) đã chốt kiến trúc cho việc này — **đúng một adapter tương thích OpenAI**, nhiều khóa với `fill-first`, bảng giá từ snapshot models.dev, khóa lưu bằng `safeStorage` — nên change này là lát hiện thực đầu tiên của ADR đó, không phải một quyết định mới.
 
 Hai cách đọc của đề (“proxy cấu hình bằng khóa Google” hay “proxy *và* khóa Google là hai đường”) **đi qua cùng một adapter và cùng một biểu mẫu**, chỉ khác giá trị ô URL, nên change này phục vụ cả hai mà không cần chọn.
 
@@ -35,5 +35,5 @@ Không thuộc change này: job dịch bền vững (tiếp tục sau crash, hà
 - **Code:** `src/main/providers/` (adapter thật, chọn khóa, registry model), `src/main/ipc/` (kênh mới cho cài đặt kết nối và dịch), `src/main/storage/` (bảng cài đặt trong `library.db`, **không** trong tệp `.mira` của tác phẩm — kết nối thuộc cả app), `src/renderer/src/features/settings/` (mới), `src/renderer/src/features/chapter/` (nút và hộp thoại dịch), `src/renderer/src/App.tsx` (nhánh `View` mới), `src/shared/channels.ts`.
 - **Dữ liệu và IPC:** schema `library.db` tăng version (bảng kết nối + khóa đã mã hóa + model đã chọn); **khóa không bao giờ đi qua IPC về renderer** sau khi lưu — renderer chỉ nhận dạng che và trạng thái.
 - **Nguyên tố giao diện mới:** công tắc bật/tắt kết nối, badge trạng thái, khối rỗng — dựng theo khuôn `Button`/`Panel`/`TextField` đang có, không thêm dependency.
-- **Chờ quyết định trước khi dựng:** chỗ đặt màn cài đặt và việc có vẽ wireframe hay không — hai lựa chọn ở cuối [thiết kế màn kết nối AI](../../../docs/handbook/experience/ai-connection-settings.md).
+- **Chờ quyết định trước khi dựng:** chỗ đặt màn cài đặt và việc có vẽ wireframe hay không — hai lựa chọn ở cuối [thiết kế màn kết nối AI](../../../../docs/handbook/experience/ai-connection-settings.md).
 - **Tài liệu:** `current-state.md`, `roadmap.md`, `backlog.md`, `validation.md` (ca hai khóa Gemini free hết quota), `changelog.md`.

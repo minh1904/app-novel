@@ -13,7 +13,7 @@ Sao lưu cần có trước khi dữ liệu thật tích lũy: hộp xóa chươ
 - Thêm interface provider dịch (yêu cầu và phản hồi theo segment ID, lỗi có phân loại, hủy), hàm đối chiếu ID thuần và provider giả lập chạy offline. Chỉ có test đơn vị, chưa có IPC hay giao diện gọi.
 - Nối nút "Mở tác phẩm có sẵn" ở thư viện thành khôi phục từ tệp sao lưu và thêm "Sao lưu…" vào menu tác phẩm **ở cả thư viện và màn chi tiết**. Sau khi khôi phục có thông báo và cho mở tác phẩm vừa khôi phục.
 
-Không thuộc change này: nhập raw, chia câu, editor và ánh xạ segment qua chỉnh sửa, job dịch, gọi AI thật, cột "có raw / có bản dịch" trên giao diện (chỉ có dữ liệu; xem [backlog](../../../docs/handbook/delivery/backlog.md)), sao lưu cả thư viện hay sao lưu định kỳ.
+Không thuộc change này: nhập raw, chia câu, editor và ánh xạ segment qua chỉnh sửa, job dịch, gọi AI thật, cột "có raw / có bản dịch" trên giao diện (chỉ có dữ liệu; xem [backlog](../../../../docs/handbook/delivery/backlog.md)), sao lưu cả thư viện hay sao lưu định kỳ.
 
 ## Capabilities
 

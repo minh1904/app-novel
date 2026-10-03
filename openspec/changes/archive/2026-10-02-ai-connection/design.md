@@ -7,7 +7,7 @@ Lý do và phạm vi: xem `proposal.md`; yêu cầu: xem `specs/`. Nền đã c�
 - **Lưu trữ:** `library.db` giữ chỉ mục tác phẩm và **cài đặt cấp app**; mỗi tác phẩm là một tệp `.mira` riêng. `migrate.ts` nâng cấp nguyên tử theo version, có fixture schema trong `__fixtures__/`.
 - **IPC** tự viết (`src/main/ipc/handler.ts` + `src/shared/channels.ts`), kiểu dùng `valibot`, kết quả bọc `Result` (`src/shared/result.ts`).
 - **Giao diện:** Tailwind v4 + Base UI; `Banner`, `Button`, `Dialog`, `Panel`, `Select`, `TextField` đã có; **chưa có** công tắc, badge, khối rỗng, và **chưa có màn cài đặt nào**. `View` là union trong `App.tsx`, không có router.
-- **Quyết định sản phẩm:** [ADR-004](../../../docs/handbook/decisions/0004-ai-provider-layer.md) chốt một adapter, `fill-first` cố định, snapshot models.dev, `safeStorage` async, không đóng kèm gateway, không OAuth thuê bao, không preset đặt tên theo CLI thuê bao.
+- **Quyết định sản phẩm:** [ADR-004](../../../../docs/handbook/decisions/0004-ai-provider-layer.md) chốt một adapter, `fill-first` cố định, snapshot models.dev, `safeStorage` async, không đóng kèm gateway, không OAuth thuê bao, không preset đặt tên theo CLI thuê bao.
 
 ## Goals / Non-Goals
 
@@ -23,7 +23,7 @@ Lý do và phạm vi: xem `proposal.md`; yêu cầu: xem `specs/`. Nền đã c�
 
 ### D1. Kiểm tra kết nối bằng `GET {baseUrl}/models`, không bằng một lần chat thử
 
-Một lần chat thử tốn tiền, tốn thời gian, và có thể fail vì lý do chẳng liên quan tới kết nối (model sai tên, nội dung bị từ chối). `GET /models` rẻ, không tính tiền ở hầu hết nhà cung cấp, và **trả về luôn danh sách model** — nên một lần bấm làm hai việc: xác nhận URL + khóa, và nạp danh sách để người dùng chọn. Đây là quy ước chung của các client BYOK công khai ([thiết kế màn](../../../docs/handbook/experience/ai-connection-settings.md)).
+Một lần chat thử tốn tiền, tốn thời gian, và có thể fail vì lý do chẳng liên quan tới kết nối (model sai tên, nội dung bị từ chối). `GET /models` rẻ, không tính tiền ở hầu hết nhà cung cấp, và **trả về luôn danh sách model** — nên một lần bấm làm hai việc: xác nhận URL + khóa, và nạp danh sách để người dùng chọn. Đây là quy ước chung của các client BYOK công khai ([thiết kế màn](../../../../docs/handbook/experience/ai-connection-settings.md)).
 
 Endpoint không có `/models` (một số gateway tối giản) thì kiểm tra báo *“nối được nhưng không liệt kê được model”* và cho khai model tay — **không coi là lỗi kết nối**.
 
@@ -45,11 +45,11 @@ Không cho chọn chiến lược vì: `fill-first` đúng cho ca free tier (dù
 
 ### D5. Tầng kiểm tra ID chạy vô điều kiện
 
-Thứ tự kiểm: parse được → tập ID khớp chính xác (không thiếu, không thừa, không trùng) → không `dst` rỗng. Chạy **kể cả khi** nhà cung cấp khai có structured output, vì lớp tương thích OpenAI của Anthropic bỏ qua `strict` và các gateway ở giữa có thể biến đổi payload ([nghiên cứu](../../../docs/handbook/research/ai-provider-integration.md)). Thiếu ID → lỗi `invalid_response` (thử lại được) và **chỉ gửi lại các ID lỗi**; thừa ID → bỏ qua; trùng ID → lấy bản đầu, ghi cảnh báo. Dùng `reconcile.ts` đã có.
+Thứ tự kiểm: parse được → tập ID khớp chính xác (không thiếu, không thừa, không trùng) → không `dst` rỗng. Chạy **kể cả khi** nhà cung cấp khai có structured output, vì lớp tương thích OpenAI của Anthropic bỏ qua `strict` và các gateway ở giữa có thể biến đổi payload ([nghiên cứu](../../../../docs/handbook/research/ai-provider-integration.md)). Thiếu ID → lỗi `invalid_response` (thử lại được) và **chỉ gửi lại các ID lỗi**; thừa ID → bỏ qua; trùng ID → lấy bản đầu, ghi cảnh báo. Dùng `reconcile.ts` đã có.
 
 ### D6. Chia đoạn gửi theo ranh giới đoạn, dừng ở một hằng số
 
-Lát cắt này gửi **~1–2k token nguồn mỗi lần**, chỉ cắt ở ranh giới đoạn, không kèm ngữ cảnh (ngữ cảnh là change sau). Hằng số đặt một chỗ, có comment nói rõ đây là **phỏng đoán chưa đo** — [nghiên cứu](../../../docs/handbook/research/ai-translation-tools.md) ghi “chưa khóa kích thước đoạn trước khi có số liệu”.
+Lát cắt này gửi **~1–2k token nguồn mỗi lần**, chỉ cắt ở ranh giới đoạn, không kèm ngữ cảnh (ngữ cảnh là change sau). Hằng số đặt một chỗ, có comment nói rõ đây là **phỏng đoán chưa đo** — [nghiên cứu](../../../../docs/handbook/research/ai-translation-tools.md) ghi “chưa khóa kích thước đoạn trước khi có số liệu”.
 
 ### D7. Ước lượng chi phí: đếm ký tự × tỷ lệ, nói rõ là ước lượng
 
@@ -65,7 +65,7 @@ Mira không khởi động, không quản lý, không dò process gateway nào. 
 
 ### D10. Đọc lỗi theo ba lớp, suy giảm êm — không một bảng ánh xạ cứng
 
-Hai đường của lát cắt đầu trả lỗi khác hình dạng, và [nghiên cứu hai hướng provider](../../../docs/handbook/research/provider-gemini-gateway.md) cho thấy **Gemini 429 không có header `Retry-After`**: thời gian chờ nằm trong thân JSON ở `error.details[]` với `@type: type.googleapis.com/google.rpc.RetryInfo`. Gateway ở giữa có thể nuốt mất phần đó. Nên bộ phân loại đọc theo thứ tự, trượt lớp nào thì xuống lớp dưới:
+Hai đường của lát cắt đầu trả lỗi khác hình dạng, và [nghiên cứu hai hướng provider](../../../../docs/handbook/research/provider-gemini-gateway.md) cho thấy **Gemini 429 không có header `Retry-After`**: thời gian chờ nằm trong thân JSON ở `error.details[]` với `@type: type.googleapis.com/google.rpc.RetryInfo`. Gateway ở giữa có thể nuốt mất phần đó. Nên bộ phân loại đọc theo thứ tự, trượt lớp nào thì xuống lớp dưới:
 
 1. Thân kiểu Google: `error.details[]` → `RetryInfo.retryDelay`, `QuotaFailure.violations[].quotaId`.
 2. Thân kiểu OpenAI: `error.message`, `error.code`, `error.type`.
@@ -113,7 +113,7 @@ Hệ quả: Mira **không được giả định `id` model khớp snapshot mode
 Có SDK chính chủ: **`@google/genai`** là SDK hợp nhất, GA từ 05/2025, thay `@google/generative-ai` (ngừng hỗ trợ 2025-11-30, lưu trữ repo 2025-12-16). Vẫn **không dùng**, vì ba lý do theo đúng thứ tự quan trọng:
 
 1. **SDK làm mất đúng thứ D10/D11 cần.** Đọc `src/_api_client.ts` của [`js-genai`](https://github.com/googleapis/js-genai): lỗi được ném bằng `new ApiError({ message, status })` — **chỉ status và message**; thân lỗi bị `JSON.stringify` nhét vào `message`, `error.details` không còn là trường có cấu trúc. Nghĩa là `retryDelay` và `quotaId` chỉ lấy lại được bằng cách **phân tích chuỗi** — đúng việc mà lớp 3 của D10 làm, nhưng qua một lớp trung gian nữa. Cùng vấn đề đã ghi ở [vercel/ai #18627](https://github.com/vercel/ai/issues/18627) và [python-genai #1875](https://github.com/googleapis/python-genai/issues/1875).
-2. **SDK chỉ phục vụ một trong hai hướng.** `@google/genai` nói giao thức Gemini, không nói endpoint tương thích OpenAI của gateway. Dùng nó là có hai đường mã cho hai hướng — trái D13 và trái [ADR-004](../../../docs/handbook/decisions/0004-ai-provider-layer.md).
+2. **SDK chỉ phục vụ một trong hai hướng.** `@google/genai` nói giao thức Gemini, không nói endpoint tương thích OpenAI của gateway. Dùng nó là có hai đường mã cho hai hướng — trái D13 và trái [ADR-004](../../../../docs/handbook/decisions/0004-ai-provider-layer.md).
 3. **Không cần dependency nào.** Electron 44 đi kèm Node 24 nên `fetch` và `AbortSignal` có sẵn; `valibot` đã có trong repo để kiểm hình dạng phản hồi. Thêm một SDK vào main process là thêm bề mặt cập nhật cho thứ chỉ gọi hai endpoint.
 
 **Điều kiện xem lại:** nếu bước kiểm chứng 5.2a cho thấy lớp tương thích OpenAI của Gemini **nuốt mất** `error.details`, lựa chọn đúng **không phải** là thêm SDK mà là thêm một **biến thể ánh xạ request/response theo giao thức Gemini gốc bên trong cùng adapter** — cùng chỗ đọc lỗi, cùng chỗ chọn khóa, chỉ khác hàm dựng body. Gateway cũng phơi `/v1beta/models/*action` nên biến thể đó chạy được cho cả hai hướng nếu cần.
@@ -123,10 +123,10 @@ Có SDK chính chủ: **`@google/genai`** là SDK hợp nhất, GA từ 05/2025,
 - **Mất bảo đảm schema và prompt caching** khi đi qua lớp tương thích OpenAI (ADR-004 đã chấp nhận). Bù bằng D5. Rủi ro còn lại: tỷ lệ ID hỏng cao hơn mức chấp nhận được — đo ở `tasks.md` mục kiểm chứng, và nếu vượt ngưỡng thì điều kiện kích hoạt adapter native trong ADR-004 đã mở.
 - **Hệ số ước lượng chi phí là phỏng đoán.** Ước lượng lệch làm mất lòng tin vào chính điểm khác biệt của sản phẩm. Giảm thiểu: luôn ghi “ước lượng”, ghi `usage` thật để đối chiếu, và không hiện con số nào khi chưa biết giá.
 - **Phụ thuộc models.dev.** Nguồn ngoài ngừng thì snapshot vẫn dùng được nhưng cũ dần. Chấp nhận; ADR-004 ghi đây là điều kiện xem lại.
-- **Màn cài đặt mới mở thêm một trục điều hướng.** Nếu chọn phương án hộp thoại (B) để rẻ hơn thì sẽ phải dựng lại khi thêm mục cài đặt thứ hai — ghi rõ trong [thiết kế màn](../../../docs/handbook/experience/ai-connection-settings.md).
+- **Màn cài đặt mới mở thêm một trục điều hướng.** Nếu chọn phương án hộp thoại (B) để rẻ hơn thì sẽ phải dựng lại khi thêm mục cài đặt thứ hai — ghi rõ trong [thiết kế màn](../../../../docs/handbook/experience/ai-connection-settings.md).
 
 ## Open Questions
 
 - **Chỗ đặt màn cài đặt** (màn riêng / hộp thoại / khu trong màn tác phẩm) — chờ chủ sản phẩm chọn; `tasks.md` không bắt đầu phần giao diện trước khi có câu trả lời.
 - **Có vẽ wireframe trước không** — chờ chủ sản phẩm.
-- **Model mặc định khi cài mới** và **trần chi phí mỗi job**: [câu hỏi còn mở](../../../docs/handbook/product/open-questions.md) vẫn ghi là chưa chốt; lát cắt này không áp trần, chỉ hiện ước lượng.
+- **Model mặc định khi cài mới** và **trần chi phí mỗi job**: [câu hỏi còn mở](../../../../docs/handbook/product/open-questions.md) vẫn ghi là chưa chốt; lát cắt này không áp trần, chỉ hiện ước lượng.

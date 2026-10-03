@@ -2,7 +2,7 @@
 
 - [x] 0.1 Chỗ đặt màn cài đặt: **màn riêng**
 - [x] 0.2 Vẽ wireframe trước: **có** — bảy phương án (A–G), đã probe ở 1280 và 375, hai theme, hai nấc màu
-- [x] 0.3 Chọn phương án: **F — màn riêng, không thanh bên con**, vào bằng **nút bánh răng góc trên bên phải** (cạnh nút sáng/tối, có ở mọi màn), đóng thì quay lại đúng màn trước. Lý do và số đo ở [thiết kế màn kết nối AI](../../../docs/handbook/experience/ai-connection-settings.md)
+- [x] 0.3 Chọn phương án: **F — màn riêng, không thanh bên con**, vào bằng **nút bánh răng góc trên bên phải** (cạnh nút sáng/tối, có ở mọi màn), đóng thì quay lại đúng màn trước. Lý do và số đo ở [thiết kế màn kết nối AI](../../../../docs/handbook/experience/ai-connection-settings.md)
 
 Mục 1–3 (main process, không có giao diện) không phụ thuộc phần giao diện và chạy song song được.
 
@@ -46,11 +46,11 @@ Mục 1–3 (main process, không có giao diện) không phụ thuộc phần g
 
 ## 5. Kiểm chứng
 
-- [ ] 5.1 **Ca quyết định ADR-004 đúng hay sai #1:** đo tỷ lệ phản hồi hỏng ID trên fixture hai chương thật, qua ba đường — gateway tự dựng, Gemini trực tiếp, và (nếu dựng được) một endpoint có structured output gốc. Ghi số vào [nghiên cứu](../../../docs/handbook/research/ai-provider-integration.md) và `delivery/validation.md`; vượt ngưỡng chấp nhận thì kích hoạt điều kiện làm adapter native trong ADR-004
+- [ ] 5.1 **Ca quyết định ADR-004 đúng hay sai #1:** đo tỷ lệ phản hồi hỏng ID trên fixture hai chương thật, qua ba đường — gateway tự dựng, Gemini trực tiếp, và (nếu dựng được) một endpoint có structured output gốc. Ghi số vào [nghiên cứu](../../../../docs/handbook/research/ai-provider-integration.md) và `delivery/validation.md`; vượt ngưỡng chấp nhận thì kích hoạt điều kiện làm adapter native trong ADR-004
 - [ ] 5.2 **Ca quyết định #2:** hai khóa Gemini free, dịch tới khi khóa 1 hết hạn mức; xác nhận job **không đứt**, chuyển sang khóa 2, **không dịch lại segment đã xong**, và màn kết nối hiện đúng khóa nào đang đóng băng
 - [ ] 5.2a **Lấy nguyên văn hai thân lỗi 429 của Gemini** — một lần chạm giới hạn theo phút, một lần cạn hạn mức theo ngày — rồi đối chiếu với giả định của D10/D11. Đây là dữ liệu quyết định hai quyết định đó đúng hay sai; làm **trước** khi tin bộ phân loại
 - [ ] 5.2b **Xác minh phạm vi hạn mức** (D12): hai khóa **cùng một project** Google Cloud và hai khóa **khác project**; đo xem hạn mức theo ngày có dùng chung không. Dùng chung thì câu nhắc ở 4.3 là bắt buộc; không dùng chung thì gỡ câu nhắc và sửa D12
-- [ ] 5.2c So **cùng một lô** qua gateway và gọi thẳng Gemini: tên model trả về, `retryDelay` có được chuyển tiếp không, 429 có giữ nguyên dạng không. Ghi kết quả vào [nghiên cứu hai hướng provider](../../../docs/handbook/research/provider-gemini-gateway.md)
+- [ ] 5.2c So **cùng một lô** qua gateway và gọi thẳng Gemini: tên model trả về, `retryDelay` có được chuyển tiếp không, 429 có giữ nguyên dạng không. Ghi kết quả vào [nghiên cứu hai hướng provider](../../../../docs/handbook/research/provider-gemini-gateway.md)
 - [ ] 5.2d Thử `response_format` dạng `json_schema` thô trên một lô có ID; so tỷ lệ hỏng ID với khi chỉ dặn bằng prompt — tài liệu Gemini **không cam kết** cú pháp này
 - [ ] 5.3 Đo lệch giữa ước lượng và `usage` thật trên cùng fixture; hiệu chỉnh hệ số ở 1.3 hoặc ghi lại độ lệch nếu chưa đủ dữ liệu
 - [ ] 5.4 **Chưa chạy được** — Playwright không gắn được vào Electron trong môi trường này (quá trình thoát ngay sau khi khởi động, dù chạy `electron.exe --inspect=0 --remote-debugging-port=0 .` bằng tay thì lên bình thường). Màn Cài đặt **chưa được xem bằng mắt trong app thật**. Chạy trong Electron thật: khai kết nối local khi proxy **chưa chạy** (phải ra lỗi mạng cạnh ô URL, có gợi ý), rồi khi proxy đã chạy; dán khóa sai (lỗi cạnh ô khóa); dịch một chương, hủy giữa chừng, dịch lại phần lỗi; chụp màn hình sáng/tối ở 1280 px, kiểm tra không cuộn ngang
