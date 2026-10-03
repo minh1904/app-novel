@@ -15,7 +15,7 @@ import type {
 import type { BackupExported } from '../shared/contracts/backup'
 import { CHANNELS, EVENT_CHANNELS } from '../shared/contracts/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/contracts/chapters'
-import type { AppInfo, DesktopApi } from '../shared/contracts/desktop-api'
+import type { AppInfo, ChromeTheme, DesktopApi } from '../shared/contracts/desktop-api'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/contracts/library'
 import type { LinkRecord } from '../shared/contracts/links'
 import type { Result } from '../shared/contracts/result'
@@ -24,6 +24,8 @@ import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/tex
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,
+  setChromeTheme: (theme: ChromeTheme) =>
+    ipcRenderer.invoke('app:chrome-theme', theme) as Promise<void>,
   works: {
     list: () => ipcRenderer.invoke(CHANNELS.worksList) as Promise<Result<WorkList>>,
     get: (id: string) =>

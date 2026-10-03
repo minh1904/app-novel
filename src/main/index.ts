@@ -10,6 +10,7 @@ import {
 import { join } from 'node:path'
 import type { AppInfo } from '../shared/contracts/desktop-api'
 import { registerLibraryHandlers } from './electron/registerIpc'
+import { CHROME_COLORS, OVERLAY_TITLE_BAR, TOP_BAR_HEIGHT } from './electron/titleBar'
 import { LibraryStore } from './services/library/library'
 
 app.enableSandbox()
@@ -45,6 +46,15 @@ function createWindow(): void {
     show: false,
     title: 'Mira',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#191919' : '#f1f1f1',
+    // The page starts in the system theme (see useTheme), so the buttons start in it too and are
+    // corrected through `app:chrome-theme` if the page then picks the other one.
+    ...(OVERLAY_TITLE_BAR && {
+      titleBarStyle: 'hidden' as const,
+      titleBarOverlay: {
+        ...CHROME_COLORS[nativeTheme.shouldUseDarkColors ? 'dark' : 'light'],
+        height: TOP_BAR_HEIGHT
+      }
+    }),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -120,6 +130,16 @@ app.whenReady().then(() => {
       version: app.getVersion(),
       platform: process.platform
     }
+  })
+
+  ipcMain.handle('app:chrome-theme', (event, theme: unknown): void => {
+    if (!isTrustedSender(event)) {
+      throw new Error('Untrusted IPC sender')
+    }
+    if (theme !== 'light' && theme !== 'dark') {
+      throw new Error('Unknown chrome theme')
+    }
+    if (OVERLAY_TITLE_BAR) mainWindow?.setTitleBarOverlay(CHROME_COLORS[theme])
   })
 
   createWindow()

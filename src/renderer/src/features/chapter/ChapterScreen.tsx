@@ -4,6 +4,7 @@ import { ClipboardTextIcon } from '@solar-icons/react/linear/clipboard-text'
 import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import type { WorkSummary } from '../../../../shared/contracts/library'
 import type { TextSide } from '../../../../shared/contracts/text'
+import { TopBarActions } from '../../app/TopBarActions'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import type { TextStore } from '../editor/editorSession'
@@ -160,23 +161,25 @@ export function ChapterScreen({
   /** Keeps the chapter inside the same frame as a chapter that has a source, so only the middle changes. */
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
+      {/* Same place as the chapter's own controls once it has text: the window's top bar. */}
+      <TopBarActions>
+        <Button
+          variant="ghost-muted"
+          size="icon"
+          aria-label="Về tác phẩm"
+          title="Về tác phẩm"
+          onClick={onBackToWork}
+        >
+          <AltArrowLeftIcon size={16} />
+        </Button>
+      </TopBarActions>
+      <header className="flex h-[36px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
         <h2 className="min-w-0 truncate text-[12.5px] font-semibold">
           {headingTitle(chapter)}{' '}
           <span className="font-normal text-ink-muted">
             · {work.title} · {languages[work.sourceLanguage].short} → Việt
           </span>
         </h2>
-        <Button
-          variant="ghost-muted"
-          size="icon"
-          className="ml-auto"
-          aria-label="Về tác phẩm"
-          title="Về tác phẩm"
-          onClick={onBackToWork}
-        >
-          <AltArrowLeftIcon size={15} />
-        </Button>
       </header>
 
       {fileInput}

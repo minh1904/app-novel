@@ -25,6 +25,9 @@ export interface AppInfo {
   platform: NodeJS.Platform
 }
 
+/** The two looks of the window chrome; the same two values the renderer's theme takes. */
+export type ChromeTheme = 'light' | 'dark'
+
 export interface WorksApi {
   list(): Promise<Result<WorkList>>
   get(id: string): Promise<Result<WorkSummary>>
@@ -150,6 +153,11 @@ export interface AiApi {
 
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
+  /**
+   * Tells the window which colours its minimise/maximise/close buttons should wear. The OS draws
+   * them over the page's own top bar, so they have to follow the page's theme to look like part of it.
+   */
+  setChromeTheme(theme: ChromeTheme): Promise<void>
   works: WorksApi
   chapters: ChaptersApi
   text: TextApi

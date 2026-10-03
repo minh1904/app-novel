@@ -7,6 +7,7 @@ import { MinimizeSquareIcon } from '@solar-icons/react/linear/minimize-square'
 import { StarsIcon } from '@solar-icons/react/linear/stars'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { TextRecord } from '../../../../shared/contracts/text'
+import { TopBarActions } from '../../app/TopBarActions'
 import { Button } from '../../components/Button'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
 import { TabsList, TabsRoot, TabsTab } from '../../components/Tabs'
@@ -236,92 +237,97 @@ export function ChapterWorkspace({
     setMode(next)
   }
 
-
   const sourceLanguage = languages[work.sourceLanguage]
 
   const focusLabel = focused ? 'Hiện điều hướng' : 'Tập trung'
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Which chapter, whether it is safe, and the two controls used every few minutes. */}
-      <header className="flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
-        <h2 className="min-w-0 truncate text-[12.5px] font-semibold">
+      {/* Ask AI, focus, save and the chapter menu sit in the window's top bar, in the same row as the
+          window buttons. They still belong to this screen: the bar only gives them a place. */}
+      <TopBarActions>
+        {mode === 'full' && (
+          <Button
+            variant="ghost-muted"
+            size="icon"
+            aria-pressed={aiOpen}
+            aria-label="Hỏi AI (Ctrl+K)"
+            title="Hỏi AI (Ctrl+K)"
+            onClick={toggleAi}
+          >
+            <StarsIcon size={16} />
+          </Button>
+        )}
+        <Button
+          variant="ghost-muted"
+          size="icon"
+          aria-pressed={focused}
+          aria-label={focusLabel}
+          title={focusLabel}
+          onClick={onToggleFocus}
+        >
+          {focused ? <MaximizeSquareIcon size={16} /> : <MinimizeSquareIcon size={16} />}
+        </Button>
+        {mode === 'full' && (
+          // Quiet while there is nothing to save, solid once there is: in a bar of icons a solid
+          // button that does nothing is the loudest thing in it.
+          <Button
+            variant={dirty ? 'default' : 'secondary'}
+            disabled={saving || !dirty}
+            onClick={() => void saveAll()}
+            title="Lưu (Ctrl+S)"
+          >
+            Lưu
+          </Button>
+        )}
+        <MenuRoot>
+          <MenuTrigger
+            aria-label="Thêm thao tác chương"
+            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
+          >
+            <MenuDotsIcon size={16} />
+          </MenuTrigger>
+          <MenuPopup>
+            <MenuItem
+              onClick={() => {
+                void confirmLeave({ reloadOnDiscard: true }).then((proceed) => {
+                  if (proceed) onReplaceSource()
+                })
+              }}
+            >
+              <DocumentAddIcon size={14} className="text-ink-muted" />
+              Thay bản gốc
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                translateOpener.current =
+                  document.activeElement instanceof HTMLElement ? document.activeElement : null
+                // Bản dịch đang có chữ chưa lưu thì xử lý trước: AI ghi thẳng vào kho.
+                void confirmLeave({ reloadOnDiscard: true }).then((proceed) => {
+                  if (proceed) setTranslateOpen(true)
+                })
+              }}
+            >
+              <StarsIcon size={14} className="text-ink-muted" />
+              Dịch bằng AI
+            </MenuItem>
+            <MenuItem onClick={onBackToWork}>
+              <AltArrowLeftIcon size={14} className="text-ink-muted" />
+              Về tác phẩm
+            </MenuItem>
+          </MenuPopup>
+        </MenuRoot>
+      </TopBarActions>
+
+      {/* Which chapter, then the mode and the context the translator reads while working. One row, so the panes keep the height. */}
+      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-chrome px-2.5">
+        <h2 className="min-w-0 flex-1 truncate text-[12.5px] font-semibold">
           {headingTitle(chapter)}{' '}
           <span className="font-normal text-ink-muted">
             · {work.title} · {sourceLanguage.short} → Việt · gốc {figures(source)}
             {target.content !== '' && ' · dịch ' + figures(target)}
           </span>
         </h2>
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          {mode === 'full' && (
-            <Button
-              variant="ghost-muted"
-              size="icon"
-              aria-pressed={aiOpen}
-              aria-label="Hỏi AI (Ctrl+K)"
-              title="Hỏi AI (Ctrl+K)"
-              onClick={toggleAi}
-            >
-              <StarsIcon size={15} />
-            </Button>
-          )}
-          <Button
-            variant="ghost-muted"
-            size="icon"
-            aria-pressed={focused}
-            aria-label={focusLabel}
-            title={focusLabel}
-            onClick={onToggleFocus}
-          >
-            {focused ? <MaximizeSquareIcon size={15} /> : <MinimizeSquareIcon size={15} />}
-          </Button>
-          {mode === 'full' && (
-            <Button disabled={saving || !dirty} onClick={() => void saveAll()} title="Lưu (Ctrl+S)">
-              Lưu
-            </Button>
-          )}
-          <MenuRoot>
-            <MenuTrigger
-              aria-label="Thêm thao tác chương"
-              className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
-            >
-              <MenuDotsIcon size={15} />
-            </MenuTrigger>
-            <MenuPopup>
-              <MenuItem
-                onClick={() => {
-                  void confirmLeave({ reloadOnDiscard: true }).then((proceed) => {
-                    if (proceed) onReplaceSource()
-                  })
-                }}
-              >
-                <DocumentAddIcon size={14} className="text-ink-muted" />
-                Thay bản gốc
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  translateOpener.current =
-                    document.activeElement instanceof HTMLElement ? document.activeElement : null
-                  // Bản dịch đang có chữ chưa lưu thì xử lý trước: AI ghi thẳng vào kho.
-                  void confirmLeave({ reloadOnDiscard: true }).then((proceed) => {
-                    if (proceed) setTranslateOpen(true)
-                  })
-                }}
-              >
-                <StarsIcon size={14} className="text-ink-muted" />
-                Dịch bằng AI
-              </MenuItem>
-              <MenuItem onClick={onBackToWork}>
-                <AltArrowLeftIcon size={14} className="text-ink-muted" />
-                Về tác phẩm
-              </MenuItem>
-            </MenuPopup>
-          </MenuRoot>
-        </div>
-      </header>
-
-      {/* The mode, and the context the translator reads while working. One row, so the panes keep the height. */}
-      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-chrome px-2.5">
         {SENTENCE_MODE_ENABLED && (
           <>
             <TabsRoot
@@ -377,7 +383,9 @@ export function ChapterWorkspace({
               ? 'grid min-h-0 flex-1 divide-x divide-line'
               : 'grid min-h-0 flex-1 grid-cols-2 divide-x divide-line'
           }
-          style={aiOpen ? { gridTemplateColumns: `minmax(0,1fr) minmax(0,1fr) ${aiWidth}px` } : undefined}
+          style={
+            aiOpen ? { gridTemplateColumns: `minmax(0,1fr) minmax(0,1fr) ${aiWidth}px` } : undefined
+          }
         >
           <EditorPane
             title="Bản gốc"

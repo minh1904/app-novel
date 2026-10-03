@@ -101,3 +101,16 @@ html[data-theme='light'] {
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/*
+ * The top bar is also the window's title bar (Electron window controls overlay), so it is what you
+ * grab to move the window. Everything you can press inside it must opt out, or the click starts a
+ * drag instead; listing the elements here means a new button in the bar needs no extra class.
+ */
+.window-drag {
+  -webkit-app-region: drag;
+}
+
+.window-drag :is(button, a, input, select, textarea, [role='button'], [role='menuitem']) {
+  -webkit-app-region: no-drag;
+}

@@ -140,7 +140,7 @@ export function AiPanel({
             disabled={chat.session.turns.length === 0}
             onClick={chat.newConversation}
           >
-            <PenNewRoundIcon size={14} />
+            <PenNewRoundIcon size={16} />
           </Button>
           <Button
             variant="ghost-muted"
@@ -149,7 +149,7 @@ export function AiPanel({
             title="Đóng (Esc)"
             onClick={onClose}
           >
-            <CloseIcon size={15} />
+            <CloseIcon size={16} />
           </Button>
         </span>
       </div>
@@ -164,8 +164,8 @@ export function AiPanel({
         {chat.loadError === null && chat.usable.length === 0 && (
           <div className="flex flex-col items-start gap-2 rounded-panel border border-line bg-canvas p-3">
             <p className="text-[12px] leading-[1.6] text-ink-muted">
-              Chưa có kết nối AI nào đang bật, nên chưa gửi được câu hỏi nào. Khai một kết nối và dán
-              khóa trong Cài đặt, rồi quay lại đây.
+              Chưa có kết nối AI nào đang bật, nên chưa gửi được câu hỏi nào. Khai một kết nối và
+              dán khóa trong Cài đặt, rồi quay lại đây.
             </p>
             <Button variant="outline" size="sm" onClick={onOpenSettings}>
               <SettingsIcon size={14} />
