@@ -2,6 +2,14 @@
 
 Ngày đọc: **2026-10-02** · Trạng thái: Quan sát (code + tài liệu nhà cung cấp) + suy luận; **sáu quyết định Q1–Q6 đã chốt ngày 2026-10-02**, chưa triển khai dòng mã nào · Chủ trì: research/engineering · Liên quan: [ADR-004](../decisions/0004-ai-provider-layer.md), [chế độ AI và nhà cung cấp](ai-provider-integration.md), [hai hướng provider](provider-gemini-gateway.md), [ngữ cảnh truyện](story-context.md), [câu hỏi còn mở](../product/open-questions.md) (UX panel Hỏi AI), backlog `ai-chat-panel`
 
+> **Cập nhật 2026-10-03: đã triển khai (change `ai-chat`).** Trang này là bản ghi nghiên cứu ngày 2026-10-02, **trước khi** panel được làm; giữ nguyên làm hồ sơ quyết định. Đối chiếu với mã ngày 2026-10-03:
+>
+> - **Lỗi thời:** Quan sát 1 ("mọi chữ trong panel là dữ liệu mẫu cố định", "không có kênh main → renderer", "không có kiểu/lưu trữ hội thoại") là ảnh chụp trước change. Nay `aiChatSample.ts` đã xóa; `AiPanel.tsx`, `AiTurn.tsx`, `AiComposer.tsx`, `useAiChat.ts` gọi nhà cung cấp thật; có kênh `ai:chat:send`, `ai:chat:cancel` và kênh sự kiện main → renderer `ai:chat:chunk` ([`channels.ts`](../../../src/shared/contracts/channels.ts)); kiểu `ChatChunk` ở [`aiChat.ts`](../../../src/shared/contracts/aiChat.ts); hội thoại vẫn chỉ sống trong phiên (Q4).
+> - **Đã đảo:** Q7 (diff tự dựng → `@codemirror/merge`, nhận/bỏ từng chỗ ngay trong pane) — đã ghi trong bảng Quyết định bên dưới; `@codemirror/merge` nay có trong `package.json`.
+> - **Đã bị ADR-005 thay:** các câu nói **mode Từng câu "đang tạm ẩn, chờ `segment-auto-align`"** (mục Suy luận 1 và mục "Không làm"). Change `segment-auto-align` bị hủy và mode Từng câu sẽ bị **gỡ** (không chỉ ẩn), xem [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md). Chat vì thế không còn câu hỏi "chat ở mode Từng câu".
+> - **Vẫn đúng:** hai contract tách nhau (chat không thay job dịch), áp dụng đi qua editor bằng một transaction CodeMirror (Quan sát 4b), ngữ cảnh lắp sẵn bằng luật, `webContents.send` + `requestId` cho streaming, model theo kết nối. Đánh đổi "sửa qua chat vào kho như chữ người dùng, không mang nguồn gốc `ai`" (Q2) được ADR-005 ghi lại trong mục Hệ quả, cùng cái giá của việc chuyển sang dấu AI mức vùng.
+> - **Còn mở:** các bước kiểm chứng ở cuối trang (gọi Gemini thật, `stream_options`, lỗi giữa dòng, hủy, hai lượt chồng nhau) — các task tương ứng của `ai-chat` vẫn mở; **chưa gọi nhà cung cấp thật lần nào**.
+
 ## Câu hỏi và phương pháp
 
 Khóa Gemini đã nối được và màn Cài đặt đã tạo được kết nối thật. Vỏ panel "Hỏi AI" đã dựng xong theo wireframe `man=hoi-ai&v=a` nhưng **mọi chữ trong đó là dữ liệu mẫu cố định** (`aiChatSample.ts`). Yêu cầu mới: panel phải **chat thật**, **sửa được bản dịch**, **dịch được truyện**. Trước khi viết spec, sáu câu hỏi:
@@ -137,7 +145,7 @@ Không có bảng chat ở cả `library.db` lẫn tệp `.mira`. Hai hướng:
 
 ## Suy luận và đề xuất cho Mira
 
-1. **Một lát cắt đầu hẹp, nhưng thật từ đầu đến cuối.** Nối đúng ba thứ: một kênh chat thật có streaming trên kết nối đã có → chữ chảy ra trong panel → nút Áp dụng dispatch một transaction vào pane bản dịch đang mở. Bỏ hết: tool call, lưu hội thoại qua phiên, ảnh đính kèm, chọn model riêng cho chat, và mode Từng câu (đang tạm ẩn).
+1. **Một lát cắt đầu hẹp, nhưng thật từ đầu đến cuối.** Nối đúng ba thứ: một kênh chat thật có streaming trên kết nối đã có → chữ chảy ra trong panel → nút Áp dụng dispatch một transaction vào pane bản dịch đang mở. Bỏ hết: tool call, lưu hội thoại qua phiên, ảnh đính kèm, chọn model riêng cho chat, và mode Từng câu (đang tạm ẩn). *(Cập nhật 2026-10-03: mode này sẽ bị gỡ theo [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md), không còn chờ gì.)*
 2. **Thêm `chat()` vào `OpenAiCompatibleProvider`, không tạo class mới.** Cùng `baseUrl`, cùng `KeySource`, cùng `classify()`, cùng `send()`. Khác: body mang `messages` thật thay vì JSON segment, và không đi qua `splitIntoBatches`/`reconcile`. Lợi thế vòng xoay khóa và phân loại lỗi đến **miễn phí**.
 3. **Streaming làm ngay, bằng `webContents.send` + `requestId` (phương án B).** Chọn B thay vì C vì ba lý do cụ thể: `requestId` là một chuỗi, trong khi vòng đời `MessagePortMain` là mã thật phải viết và phải dọn; `send`/`invoke` **không chuyển được MessagePort** nên C buộc thêm `postMessage` làm cơ chế IPC thứ hai của preload, trong khi B chỉ thêm một hàm `on`; và chuỗi chunk của **một lượt chat** (vài chục đến vài trăm chunk) không đủ dày để overhead Structured Clone thành vấn đề đo được — ưu thế của C chỉ trả tiền ở luồng dữ liệu liên tục.
 
@@ -197,7 +205,7 @@ Làm **trước** khi tin trang này, và phần lớn trùng với `ai-provider
 - **`MessageChannelMain`**: Suy luận mục 3 — ưu thế của nó chỉ trả tiền ở luồng dữ liệu liên tục, còn chi phí là một cơ chế IPC thứ hai trong preload.
 - **Ghi đề xuất của AI thẳng xuống kho**: Quan sát 4b — mất nguồn gốc của segment bị dựng lại, lật căn chỉnh cả chương sang `needs_review`, và không có `Ctrl+Z`.
 - **Ảnh đính kèm trong composer**: endpoint hỗ trợ, nhưng chưa có ca dùng nào trong scope dịch truyện; nút giữ `disabled`.
-- **Chat ở mode Từng câu**: mode đó hiện đang **tạm ẩn** khỏi giao diện (`ChapterWorkspace.tsx`), chờ `segment-auto-align`.
+- **Chat ở mode Từng câu**: mode đó hiện đang **tạm ẩn** khỏi giao diện (`ChapterWorkspace.tsx`), chờ `segment-auto-align`. *(Trước đó: lý do này đã hết hiệu lực — 2026-10-03 [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) hủy `segment-auto-align` và gỡ hẳn mode Từng câu; chat không bao giờ cần chạy ở mode đó.)*
 - ~~**`@codemirror/merge` ở lát cắt đầu** (Q7)~~ — **đã mở ngày 2026-10-03**, xem Q7. Chi phí thật: +62 kB vào bundle renderer, và một dependency nữa phải sống chung với live preview, nhúng ảnh và luật IME đã có.
 
 ---

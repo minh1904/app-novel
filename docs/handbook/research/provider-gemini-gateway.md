@@ -83,7 +83,7 @@ Ngày đọc: **2026-10-02** · Trạng thái: Quan sát + đề xuất · Chủ
 ## Bước kiểm chứng
 
 1. Gọi thật một lần tới `…/v1beta/openai/chat/completions` bằng khóa free tier, **ép chạm 429 theo phút** và **chạm 429 theo ngày**, lưu lại nguyên văn hai thân lỗi. Đây là dữ liệu quyết định mục 1 và 2 ở trên đúng hay sai.
-2. Thử `response_format` dạng `json_schema` thô trên một lô segment có ID; đo tỷ lệ hỏng ID so với khi chỉ dặn bằng prompt.
+2. Thử `response_format` dạng `json_schema` thô trên một lô đoạn có ID tạm `[n]` (trước ADR-005 viết là "segment có ID"; đơn vị gửi nay là đoạn); đo tỷ lệ hỏng ID so với khi chỉ dặn bằng prompt.
 3. Dựng CLIProxyAPI với một khóa Gemini, so **cùng một lô** qua gateway và gọi thẳng: tên model trả về, có `retryDelay` không, 429 có nguyên dạng không.
 4. Hai khóa Gemini **cùng một project** và hai khóa **khác project**: xác nhận hạn mức theo ngày có dùng chung hay không — quyết định mục 3.
 5. `GET /v1beta/openai/models`: ghi lại dạng `id` trả về (có tiền tố `models/` hay không) để chuẩn hoá trước khi so với snapshot models.dev.

@@ -30,11 +30,11 @@ Website [Solar Icons docs v2](https://solar-icons.vercel.app/docs/v2) phối **h
 
 - **Button:** anatomy, variant `default`, `outline`, `secondary`, `ghost`, `ghost-muted`, `destructive`, `link` và các chiều cao `18 / 22 / 24 / 28 / 34 / 40px` tham chiếu `D:\personal\point-cloud\packages\ui\src\button.tsx`; radius mặc định của novel là 10px. Focus, hover và disabled phải rõ.
 - **Panel và Slider:** cấu trúc tham chiếu point-cloud; panel preview rộng 256px và radius 14px, slider track cao 28px. Đây là mốc component, không khóa bề rộng mọi panel hay dùng lại màu Atelier.
-- **Field, tab, mode switch, segment row, prose editor:** đặc tả riêng cho sản phẩm dịch truyện. Preview chỉ quyết định hướng nhìn và token, chưa quyết định toàn bộ hành vi.
+- **Field, tab, mode switch, segment row, prose editor:** đặc tả riêng cho sản phẩm dịch truyện. Preview chỉ quyết định hướng nhìn và token, chưa quyết định toàn bộ hành vi. *(Cập nhật 2026-10-03, ADR-005: mode switch và segment row không còn, vì mode Từng câu bị bỏ; prose editor và lớp duyệt đề xuất trong pane là thứ còn lại cần đặc tả.)*
 
 ## Áp vào sản phẩm
 
-- **Toàn văn:** hai pane văn bản liên tục; bản gốc và bản dịch có thể lệch số dòng. **Từng câu:** các hàng segment đối chiếu. Cả hai mode dùng chung dữ liệu; xem [scope](../product/scope.md) và [alignment flow](alignment.md).
+- **Toàn văn:** hai pane văn bản liên tục; bản gốc và bản dịch có thể lệch số dòng. Đây là editor duy nhất sau [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md); AI hiện đề xuất trong chính pane bản dịch để người dịch nhận hoặc bỏ từng chỗ. *(Bản trước ghi thêm mode **Từng câu** với các hàng segment đối chiếu dùng chung dữ liệu; mode đó đã bị bỏ, [alignment flow](alignment.md) là hồ sơ.)* Xem [scope](../product/scope.md).
 - Chữ, khoảng trắng và đường chia là phân cấp chính. Card dành cho gợi ý hoặc thông tin có ranh giới; tránh lồng card trong vùng đọc dài.
 - Focus bàn phím nhìn rõ; trạng thái lưu/offline/cảnh báo/lỗi có chữ hoặc icon. Hỗ trợ zoom, reduced motion, nhập tiếng Việt và IME.
 - Tên sản phẩm là **Mira**. “NekoNovel Studio” cùng logo mèo thuộc ảnh tham khảo, không dùng làm nhận diện. Tagline và logo còn mở.

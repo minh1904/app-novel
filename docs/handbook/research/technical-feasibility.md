@@ -2,6 +2,8 @@
 
 Ngày đọc/chạy thử: **2026-09-29** · Trạng thái: Quan sát + đề xuất · Chủ trì: engineering · Liên quan: MIR-02, MIR-03, MIR-05, [kiến trúc](../engineering/architecture.md)
 
+> **Cập nhật 2026-10-03 ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)):** Mira **không còn lưu segment, liên kết n:m hay nguồn gốc theo câu**, và căn chỉnh offline **rời khỏi đường đi** (change `segment-auto-align` bị hủy, kèm model embedding 118 MB). Hệ quả cho trang này: **mục 1** (liên kết sống sót qua chỉnh sửa) và **lược đồ SQL ở mục 2** (`segment`, `link`, `link_member`, `provenance`) mô tả mô hình MVP sẽ bị gỡ; lược đồ mới nằm ở [kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 5.3 (`ai_mark`, `proposal`, `text_snapshot`). **Mục 3** là quan sát về công cụ tách câu và thuật toán căn chỉnh, **vẫn đúng như quan sát**; phần tách câu vẫn dùng được (chỉ để chia lô gửi AI, không lưu ranh giới câu). Kết luận ở mục 3 về chỗ căn chỉnh còn cần (nhập bản dịch cũ, đối chiếu nhiều nguồn raw) **không còn là kế hoạch**: ADR-005 để hai nhu cầu đó chưa có thiết kế. Phần lưu trữ (`node:sqlite`, WAL, snapshot, backup) không bị ảnh hưởng.
+
 ## Câu hỏi và phương pháp
 
 Ba rủi ro kỹ thuật lớn nhất của handbook 0.1: (1) liên kết nguồn–dịch có sống sót khi sửa tự do ở Toàn văn; (2) lưu trữ nào trong Electron 44; (3) căn chỉnh offline ZH/JA/EN → VI có khả thi. Đọc tài liệu chính thức và repo; một phần chạy thử trên Node 24.14 (ICU 78.2), **chưa chạy trong Electron 44**. Nhãn [I] là suy luận.
@@ -73,7 +75,7 @@ Cosine cặp dịch đúng ~0,86–0,96; **chưa đo cặp không liên quan**, 
 
 **Đề xuất bậc thang:** Bậc 0 (không model) — neo đoạn/thoại/số/glossary + DP theo độ dài và dấu câu; Bậc 1 — cộng cosine embedding 118 MB; Bậc 2 — LaBSE tùy chọn. Confidence mỗi cặp từ chi phí, khoảng cách với phương án thứ hai, z-score độ dài/cosine và loại quan hệ; mọi câu bỏ/thêm vào hàng đợi kiểm tra.
 
-**Sau [ADR-002](../decisions/0002-ai-first-translation.md):** segment do AI dịch đã có liên kết nên căn chỉnh rời khỏi đường chính. Vẫn cần cho nhập bản dịch cũ (văn phong), **đối chiếu nhiều nguồn raw** (EN ↔ ZH ↔ JA — nơi phương pháp theo độ dài yếu nhất, embedding có ích nhất) và sau khi sửa tự do. Lát cắt đầu chỉ cần Bậc 0.
+**Sau [ADR-002](../decisions/0002-ai-first-translation.md):** segment do AI dịch đã có liên kết nên căn chỉnh rời khỏi đường chính. Vẫn cần cho nhập bản dịch cũ (văn phong), **đối chiếu nhiều nguồn raw** (EN ↔ ZH ↔ JA — nơi phương pháp theo độ dài yếu nhất, embedding có ích nhất) và sau khi sửa tự do. Lát cắt đầu chỉ cần Bậc 0. *(Cập nhật 2026-10-03, ADR-005: câu này được viết khi còn mode Từng câu. Nay không còn "sau khi sửa tự do" vì không còn liên kết để sửa lại; hai nhu cầu còn lại, văn phong và nhiều nguồn raw, chưa có thiết kế.)*
 
 ## Bước kiểm chứng
 

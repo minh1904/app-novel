@@ -43,11 +43,11 @@ Người dịch truyện sang tiếng Việt làm việc thế nào, đăng ở 
 
 ## Suy luận cho Mira
 
-- Mira nên là nơi **tạo và soát bản dịch AI có kiểm soát**, không chỉ là editor. Lợi thế so với script cộng đồng: glossary/xưng hô/văn phong đi vào prompt, job dịch bền vững (tiếp tục sau lỗi), soát theo segment, QA nhất quán.
+- Mira nên là nơi **tạo và soát bản dịch AI có kiểm soát**, không chỉ là editor. Lợi thế so với script cộng đồng: glossary/xưng hô/văn phong đi vào prompt, job dịch bền vững (tiếp tục sau lỗi), soát theo segment, QA nhất quán. *(Cập nhật 2026-10-03, [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md): "soát theo segment" nay là duyệt đề xuất AI từng khối ngay trong editor; không còn đơn vị segment/câu.)*
 - **Import `Names.txt`/`VietPhrase.txt`** làm glossary khởi đầu là rẻ và khớp thói quen Trung–Việt.
 - **Ghi nguồn gốc bản dịch theo chương** (tay / AI / convert) giúp người dùng đăng đúng mục trên Hako.
 - **Xuất “dán sạch”** theo chương và tùy chọn kiểu lời thoại quan trọng hơn EPUB/DOCX cho việc đăng.
-- Điều có thể bác bỏ: nếu phỏng vấn cho thấy người dùng chỉ cần dịch nhanh để đọc, không soát, thì editor hai mode là chi phí thừa.
+- Điều có thể bác bỏ: nếu phỏng vấn cho thấy người dùng chỉ cần dịch nhanh để đọc, không soát, thì editor hai mode là chi phí thừa. *(Cập nhật 2026-10-03: chủ sản phẩm đã bỏ hai mode theo ADR-005 mà chưa chạy phiên quan sát này; nếu phiên cho thấy người dùng cần soát theo từng câu thì mở lại quyết định, xem mục "Điều có thể làm đảo quyết định" của ADR-005.)*
 
 ## Bước kiểm chứng
 

@@ -99,61 +99,6 @@ export const CHAPTERS = [
   { n: 12, title: 'Đôi mắt ẩn sau thư viện', day: '2 thg 9, 2026', done: false, active: true }
 ]
 
-// Ca biên trong các hàng: câu rất dài, câu chưa dịch, câu AI dịch chờ soát, câu cần kiểm tra.
-export const ROWS = [
-  {
-    n: 112,
-    src: 'in Barchester there was no longer any; so the bishop, dean, and',
-    vi: 'ở Barchester không còn nữa; vì vậy giám mục, viện trưởng và',
-    state: 'check'
-  },
-  {
-    n: 113,
-    src: 'warden, who took it in turn to put in the old men, generally',
-    vi: 'người quản lý, người thay phiên nhận vào những người già, thường là',
-    state: 'reviewed'
-  },
-  {
-    n: 114,
-    src: 'appointed some hangers-on of their own; worn-out gardeners, decrepit',
-    vi: 'bổ nhiệm một số người thân tín của riêng mình; những người làm vườn già yếu, tiều tụy',
-    state: 'ai',
-    active: true
-  },
-  {
-    n: 115,
-    src: 'grave-diggers, or octogenarian sextons, who thankfully received',
-    vi: 'những người đào mộ, hoặc những thủ từ đã ngoài tám mươi tuổi, vốn vui mừng nhận được',
-    state: 'reviewed'
-  },
-  {
-    n: 116,
-    src: 'comfortable lodging and one shilling and fourpence a day, such being',
-    vi: '',
-    state: 'untranslated'
-  },
-  {
-    n: 117,
-    src: 'the stipend to which, under the will of John Hiram, they were declared to be entitled by the founder, a sum which has not been altered since the day the charity was first endowed',
-    vi: 'khoản trợ cấp mà theo di chúc của John Hiram, họ đã được chỉ định là',
-    state: 'ai'
-  }
-]
-
-export const ROW_STATES = {
-  untranslated: { label: 'Chưa dịch', dot: 'bg-ink-muted' },
-  ai: { label: 'AI đã dịch', dot: 'bg-info' },
-  check: { label: 'Cần kiểm tra', dot: 'bg-warning' },
-  reviewed: { label: 'Đã soát', dot: 'bg-success' }
-}
-
-export const COUNTS = [
-  ['untranslated', 'Chưa dịch', 18],
-  ['ai', 'AI đã dịch', 46],
-  ['check', 'Cần kiểm tra', 7],
-  ['reviewed', 'Đã soát', 166]
-]
-
 // Mẫu cho màn Hỏi AI. Cùng chương với PREVIEW_ROWS trong screens.js (College Girls…, Ch.12)
 // nên hai màn nói về cùng một bản ghi (S6). Câu đang bàn là segment 88 — câu máy dịch còn cứng,
 // đúng nỗi đau của người hậu biên tập bản AI (ADR-002).

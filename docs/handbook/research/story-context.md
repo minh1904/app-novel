@@ -2,6 +2,8 @@
 
 Ngày đọc: **2026-10-02** · Trạng thái: Quan sát + đề xuất · Chủ trì: research/product · Liên quan: [ADR-002](../decisions/0002-ai-first-translation.md), [công cụ dịch AI](ai-translation-tools.md), [nhà cung cấp AI](ai-provider-integration.md), [màn chi tiết truyện](work-detail-screen.md), backlog `context-area`, [câu hỏi còn mở](../product/open-questions.md) (P0 ma trận xưng hô, P1 văn phong)
 
+> **Cập nhật 2026-10-03 ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)):** trang này viết khi Mira còn lưu segment theo câu. Đề xuất sáu lớp ngữ cảnh, ba tầng prompt, lọc thuật ngữ theo đoạn và xưng hô theo chương, và `buildContext` là hàm thuần có băm **không đổi**. Ba chỗ phải đọc theo mô hình mới: (1) **"segment liền trước" / "2–5 segment liền trước" (tầng C, mục 13, thứ tự cắt ngân sách) nay là "đoạn liền trước"**, theo [kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 6.3; (2) **`contextHash` không còn lưu "cùng segment đã dịch"** vì không còn segment bền; nó nằm ở `job_item` (kiến trúc AI-first mục 5.3), và "đổi glossary → đánh dấu segment chịu ảnh hưởng" thành đánh dấu ở mức đoạn hoặc chương, cách cụ thể chưa thiết kế; (3) **"ví dụ văn phong truy xuất theo độ tương tự"** (lớp L5, tầng C) từng dựa vào căn chỉnh bản dịch cũ với raw; ADR-005 hủy căn chỉnh và liên kết bền nên **hạng mục này (S3.2, S3.5 trong scope) chưa có thiết kế thay thế**, đây là mục mở. Phần quan sát về các sản phẩm khác không đổi.
+
 ## Câu hỏi và phương pháp
 
 Khu vực **Ngữ cảnh** (Thuật ngữ · Xưng hô · Văn phong) đã được chốt là một trong bốn khu vực cấp tác phẩm, nhưng đang là `ContextAreaMock` — dữ liệu mẫu cố định, không thao tác được. Trước khi viết spec thật, năm câu hỏi:

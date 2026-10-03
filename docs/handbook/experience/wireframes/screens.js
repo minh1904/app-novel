@@ -1,7 +1,7 @@
 // Mỗi màn có ba phương án. Phương án mang tag "Nhịp D" dùng đúng nhịp đã chốt ở màn chương
 // (thanh 42px/36px, chữ 12–13px, nút h-7/h-6); hai phương án còn lại đổi bố cục để so sánh.
 // Nội dung lấy từ data.js nên ba phương án cùng chữ, chỉ khác cách bày.
-import { AI_CHAT, AI_CONTEXT_CHIPS, AI_MODELS, AI_MODES, CHAPTERS, COUNTS, ROWS, ROW_STATES, WORKS } from './data.js'
+import { AI_CHAT, AI_CONTEXT_CHIPS, AI_MODELS, AI_MODES, CHAPTERS, WORKS } from './data.js'
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const icon = (name, cls = 'size-3.5') => `<i data-lucide="${name}" class="${cls}"></i>`
@@ -845,178 +845,6 @@ That was Miyako Shirakawa, aged twenty and now a sophomore.</textarea>
 }
 
 // ===================================================================
-// MÀN 5 — TỪNG CÂU
-// ===================================================================
-
-const counts = (size) => `
-<p role="status" aria-label="Số hàng theo trạng thái" class="flex flex-wrap items-center gap-x-3 gap-y-1 ${size}">
-  ${COUNTS.map(([k, label, n]) => `<span class="flex items-center gap-1.5 whitespace-nowrap text-ink-muted">${dot(ROW_STATES[k].dot)}${esc(label)} <span class="text-ink">${n}</span></span>`).join('')}
-</p>`
-
-const rowD = (r) => `
-<li class="grid grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)] items-start gap-x-3 border-b border-line px-2.5 py-2 ${r.active ? 'bg-control/50' : ''}">
-  <span class="pt-0.5 text-right text-[11px] text-ink-muted">${r.n}</span>
-  <p lang="en" class="text-[13px] leading-[1.65] break-words">${esc(r.src)}</p>
-  <div class="flex flex-col gap-1">
-    <div class="min-h-[22px] rounded-control ${r.active ? 'ring-2 ring-focus/40' : ''} text-[13px] leading-[1.65] ${r.vi ? '' : 'text-ink-muted'}">${esc(r.vi || 'Nhập bản dịch…')}</div>
-    <p class="flex items-center gap-1.5 text-[11px] text-ink-muted">${dot(ROW_STATES[r.state].dot)}${esc(ROW_STATES[r.state].label)}</p>
-  </div>
-</li>`
-
-const rowWide = (r) => `
-<li class="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] items-start gap-x-4 border-b border-line px-3 py-3 ${r.active ? 'bg-control/50' : ''}">
-  <span class="pt-0.5 text-right text-xs text-ink-muted">${r.n}</span>
-  <p lang="en" class="text-[14px] leading-[1.7] break-words">${esc(r.src)}</p>
-  <div class="flex flex-col gap-1.5">
-    <div class="min-h-6 rounded-control ${r.active ? 'ring-2 ring-focus/40' : ''} text-[14px] leading-[1.7] ${r.vi ? '' : 'text-ink-muted'}">${esc(r.vi || 'Nhập bản dịch…')}</div>
-    <p class="flex items-center gap-1.5 text-xs text-ink-muted">${dot(ROW_STATES[r.state].dot)}${esc(ROW_STATES[r.state].label)}</p>
-  </div>
-</li>`
-
-const sentenceShell = (bars, body) => `
-<div class="grid h-full min-h-0 grid-cols-[216px_minmax(0,1fr)] overflow-hidden">
-  ${chapterNav()}
-  <div class="flex min-h-0 min-w-0 flex-col bg-canvas">
-    ${chapterBar(iconBtn('minimize-2', 'Tập trung', { variant: 'outline' }) + iconBtn('more-horizontal', 'Thêm thao tác chương'))}
-    ${bars}
-    ${body}
-  </div>
-</div>`
-
-const modeBar = (extra = '') => `
-<div class="flex h-[36px] shrink-0 items-center gap-3 border-b border-line px-2.5">
-  <div class="inline-flex items-center gap-[2px] rounded-tab bg-control p-[2px]">
-    <span class="rounded-[7px] px-2.5 py-0.5 text-[12px] text-ink-muted">Toàn văn</span>
-    <span class="rounded-[7px] bg-selected px-2.5 py-0.5 text-[12px] text-ink">Từng câu</span>
-  </div>
-  <span class="h-4 w-px shrink-0 bg-line"></span>
-  ${extra}
-</div>`
-
-const TC_LOADING = loading('Đang đọc các hàng…')
-const TC_FAILED = failed('Không đọc được các hàng. Không đọc được tệp tác phẩm.')
-const TC_EMPTY = empty(
-  'rows-3',
-  'Chương này chưa có hàng nào',
-  'Hàng được dựng từ các segment của bản gốc. Nhập bản gốc cho chương để bắt đầu soát từng câu.',
-  btn('Nhập bản gốc', { variant: 'primary', ico: 'clipboard' })
-)
-
-const TUNG_CAU = {
-  name: 'Từng câu',
-  short: 'Từng câu',
-  states: ['du-lieu', 'dang-tai', 'rong', 'loi'],
-  variants: {
-    a: {
-      name: 'A · Bảng gọn theo nhịp D',
-      tag: 'Nhịp D',
-      why: 'Chip đếm và nút nhảy hàng nằm luôn trên thanh mode 36px; hàng co lại còn 13px/py-2 nên thấy nhiều câu hơn trong một màn.',
-      uu: [
-        'Thấy ~12 hàng cùng lúc thay vì ~7 — soát theo mạch, ít cuộn hơn',
-        'Không có thanh công cụ riêng, nên chiều cao chrome bằng đúng mode Toàn văn',
-        'Chuyển Toàn văn ↔ Từng câu không thấy khung nhảy'
-      ],
-      nhuoc: [
-        'Chữ 13px cho câu dịch nhỏ hơn 14px của mode Toàn văn — đọc lâu dễ mỏi',
-        'Chip đếm chen trên thanh 36px, màn hẹp sẽ phải cắt bớt'
-      ],
-      hopkhi: 'Soát lại bản AI đã dịch, chủ yếu là đọc và gật — ít gõ lại từ đầu.',
-      render: (tt) =>
-        sentenceShell(
-          modeBar(
-            `${counts('text-[11px]')}<div class="ml-auto shrink-0">${btn('Hàng cần xử lý kế tiếp', { size: 'sm', variant: 'secondary', ico: 'arrow-down' })}</div>`
-          ),
-          `<div data-wf-block="3" class="flex min-h-0 flex-1 flex-col p-3">
-             <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel border border-line bg-sidebar">
-               ${tt === 'dang-tai' ? TC_LOADING : tt === 'loi' ? TC_FAILED : tt === 'rong' ? TC_EMPTY : `<ol class="min-h-0 flex-1 overflow-y-auto">${ROWS.map(rowD).join('')}${ROWS.map(rowD).join('')}</ol>${pager('hàng', 101, 150, 237)}`}
-             </div>
-           </div>`
-        )
-    },
-    b: {
-      name: 'B · Hàng rộng (như hiện tại)',
-      tag: 'Đang chạy',
-      why: 'Giữ nguyên: chip đếm và nút nằm trên một thanh công cụ riêng, hàng 14px/py-3 cùng cỡ chữ với mode Toàn văn.',
-      uu: [
-        'Câu gốc và câu dịch cùng cỡ 14px với mode Toàn văn — đọc lâu không mỏi',
-        'Chip đếm có chỗ rộng rãi, không bị cắt ở màn hẹp',
-        'Không phải dựng lại gì'
-      ],
-      nhuoc: [
-        'Thanh công cụ riêng ăn thêm một hàng, chỉ thấy ~7 hàng mỗi màn',
-        'Chuyển từ Toàn văn sang là thấy chrome dày thêm một tầng'
-      ],
-      hopkhi: 'Người dịch gõ lại nhiều câu từ đầu chứ không chỉ soát.',
-      render: (tt) =>
-        sentenceShell(
-          modeBar(
-            `<div class="flex items-center gap-3 text-[12px] text-ink-muted"><span>Thuật ngữ</span><span>Xưng hô</span><span>Văn phong</span>${soon()}</div>`
-          ) +
-            `<div class="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-3 py-2.5">
-               ${counts('text-xs')}
-               ${btn('Hàng cần xử lý kế tiếp', { size: 'lg', variant: 'secondary', ico: 'arrow-down' })}
-             </div>`,
-          `<div data-wf-block="3" class="flex min-h-0 flex-1 flex-col p-3">
-             <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel border border-line">
-               ${tt === 'dang-tai' ? TC_LOADING : tt === 'loi' ? TC_FAILED : tt === 'rong' ? TC_EMPTY : `<ol class="min-h-0 flex-1 overflow-y-auto">${ROWS.map(rowWide).join('')}${ROWS.map(rowWide).join('')}</ol>${pager('hàng', 101, 150, 237)}`}
-             </div>
-           </div>`
-        )
-    },
-    c: {
-      name: 'C · Có lọc, và panel phụ dưới hàng',
-      tag: 'Backlog',
-      why: 'Thêm hai thứ đã nằm trong backlog (`sentence-mode-toolbar`, `sentence-mode-side-panels`): tìm/lọc riêng cho gốc và dịch, và panel Gợi ý / Thuật ngữ / Lịch sử / QA của đúng hàng đang chọn.',
-      uu: [
-        'Lọc được "chỉ hàng cần kiểm tra" thay vì nhảy từng hàng một',
-        'Gợi ý từ bản dịch cũ hiện ngay dưới hàng đang sửa, không phải tra tay',
-        'Gần với công cụ CAT mà người dịch đã quen (ảnh tham chiếu SmartCat)'
-      ],
-      nhuoc: [
-        'Hai khối mới ăn ~180px: vùng hàng chỉ còn ~5 hàng trên màn 900px',
-        'Cả hai khối còn là "Sắp có" — dựng khung trước khi có dữ liệu thì chỉ là chỗ trống có viền',
-        'Lọc và panel là hai lát cắt riêng, gộp vào một phương án dễ thành làm nửa vời cả hai'
-      ],
-      hopkhi: 'Sau khi job dịch AI chạy thật và có bản dịch cũ để lấy gợi ý.',
-      render: (tt) =>
-        sentenceShell(
-          modeBar(
-            `${counts('text-[11px]')}<div class="ml-auto shrink-0">${btn('Hàng cần xử lý kế tiếp', { size: 'sm', variant: 'secondary', ico: 'arrow-down' })}</div>`
-          ) +
-            `<div class="flex h-[36px] shrink-0 items-center gap-1.5 border-b border-line px-2.5">
-               <label class="flex h-6 min-w-[120px] flex-1 items-center gap-1.5 rounded-control border border-line-strong px-2">${icon('search', 'size-3 shrink-0 text-ink-muted')}<input class="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-ink-muted" placeholder="Tìm trong bản gốc…" /></label>
-               <label class="flex h-6 min-w-[120px] flex-1 items-center gap-1.5 rounded-control border border-line-strong px-2">${icon('search', 'size-3 shrink-0 text-ink-muted')}<input class="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-ink-muted" placeholder="Tìm trong bản dịch…" /></label>
-               ${btn('Mọi trạng thái', { size: 'sm', variant: 'outline', ico: 'filter' })}
-               ${btn('Gộp', { size: 'sm', variant: 'outline' })}
-               ${btn('Tách', { size: 'sm', variant: 'outline' })}
-               ${soon()}
-             </div>`,
-          `<div data-wf-block="3" class="flex min-h-0 flex-1 flex-col gap-3 p-3">
-             <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel border border-line bg-sidebar">
-               ${tt === 'dang-tai' ? TC_LOADING : tt === 'loi' ? TC_FAILED : tt === 'rong' ? TC_EMPTY : `<ol class="min-h-0 flex-1 overflow-y-auto">${ROWS.map(rowD).join('')}${ROWS.map(rowD).join('')}</ol>`}
-             </div>
-             <div data-wf-block="4" class="flex h-[150px] shrink-0 flex-col gap-2 rounded-panel border border-line bg-sidebar p-2.5">
-               <div class="flex items-center gap-3 text-[12px]">
-                 <span class="rounded-[7px] bg-selected px-2 py-0.5 text-ink">Gợi ý <span class="text-ink-muted">(1)</span></span>
-                 <span class="text-ink-muted">Thuật ngữ <span class="opacity-60">(3)</span></span>
-                 <span class="text-ink-muted">Lịch sử</span>
-                 <span class="text-ink-muted">QA <span class="opacity-60">(2)</span></span>
-                 ${soon('ml-auto')}
-               </div>
-               <div class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-3 overflow-y-auto rounded-control border border-line p-2.5 text-[12px]">
-                 <p>also warden of the almshouses, if the bishop in each case approved.</p>
-                 <p>cũng là người quản lý nhà tế bần, nếu giám mục trong mỗi trường hợp chấp thuận.</p>
-                 <span class="flex items-center gap-2">${btn('Chèn', { size: 'xs', variant: 'outline' })}<span class="text-[11px] text-success">100% khớp</span></span>
-               </div>
-             </div>
-           </div>`
-        )
-    }
-  }
-}
-
-
-// ===================================================================
 // MÀN 6 — HỎI AI (panel chat trong mode Toàn văn)
 // ===================================================================
 // Khuôn tin nhắn lấy từ references/components/chat.md của skill ui-ux, đổi sang token và nhịp
@@ -1537,7 +1365,6 @@ export const SCREENS = {
   'tao-tac-pham': TAO_TAC_PHAM,
   'chi-tiet': CHI_TIET,
   'chuong-rong': CHUONG_RONG,
-  'tung-cau': TUNG_CAU,
   'hoi-ai': HOI_AI
 }
 

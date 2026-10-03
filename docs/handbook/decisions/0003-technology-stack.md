@@ -12,7 +12,7 @@ Trước khi làm M0 cần chốt các lựa chọn khó đổi: engine SQLite, 
 | --- | --- | --- | --- |
 | Engine SQLite | **`node:sqlite`** sau một adapter mỏng | Không dependency, không file native để ký/đóng gói; ghi 50k ký tự chặn ~1 ms (ngang `better-sqlite3`); 100/100 lần kill giữa lúc ghi không lỗi; có sessions/changeset và `backup()`; bản cài nhỏ hơn 8,8 MB | API đổi/vỡ khi nâng Electron (đang ở mức release candidate); cần API ổn định theo semver |
 | Editor | **CodeMirror 6**, một `EditorState` dùng chung cho hai mode | Ánh xạ vùng segment qua chỉnh sửa và undo chung với thao tác căn chỉnh đã chạy; 0,3–0,5 ms mỗi phím với 200k ký tự + 1.000 segment trong Electron 44 | **Thử tay IME** (Telex, VNI, Pinyin) thất bại trên CM6 (lỗi Chromium 149+). **Không lùi về `<textarea>`** (chủ sản phẩm chốt 2026-10-01); xử lý theo thứ tự: phân định nguồn lỗi bằng CodeMirror trần cùng Chromium, sửa ở mã Mira, nâng hoặc vá CodeMirror, nâng Electron (D8 của change `source-editor`) |
-| Định dạng nội dung | **Markdown mức tối thiểu**, Source editor + Reading view; Live Preview để sau | Giữ văn bản thuần là nguồn duy nhất, không chuẩn hóa ngầm | Người dùng chính không dùng nổi Source mode |
+| Định dạng nội dung | **Markdown mức tối thiểu**, Source editor + Reading view *(2026-10-03: Reading view không còn trong giao diện từ commit `81bbd2f`; Live Preview nhẹ đã làm)*; Live Preview đầy đủ để sau | Giữ văn bản thuần là nguồn duy nhất, không chuẩn hóa ngầm | Người dùng chính không dùng nổi Source mode |
 | Tầng dữ liệu | **SQL thuần + repository viết tay**, migration theo `PRAGMA user_version` chạy theo từng tệp | Kysely/Drizzle không có đường `node:sqlite` ổn định; trigger, CHECK, `VACUUM INTO` cần lối thoát thô | Bề mặt truy vấn phình lên (bộ lọc động, tìm kiếm) |
 | Kiểm tra đầu vào IPC | **valibot** | 4,7 KB; 5.000 segment kiểm tra ~1,3 ms; kiểu suy ra từ schema | Muốn hệ sinh thái quen hơn thì zod |
 | Test | **Vitest 5** | Import `node:sqlite` chạy được; test kill tiến trình đã chạy; có jsdom cho React | — |
@@ -20,6 +20,8 @@ Trước khi làm M0 cần chốt các lựa chọn khó đổi: engine SQLite, 
 | Bố cục tệp | **Một tệp SQLite cho mỗi tác phẩm** + `library.db` chỉ mục; đuôi **`.mira`** | Backup/restore một tác phẩm là một tệp; lỗi không lan | Chưa đo riêng so với một DB duy nhất; đo nếu thấy chậm khi có hàng trăm tác phẩm |
 
 Đã loại: `better-sqlite3` (dự phòng tốt: bản 13 có binary dựng sẵn cho Electron 44, nhưng thêm file native chưa ký và cần `npmRebuild: false` trong electron-builder), libsql, sqlite3, sql.js/wa-sqlite, ProseMirror/TipTap, Lexical, Slate, Monaco, Kysely, Drizzle.
+
+**Cập nhật 2026-10-03 ([ADR-005](0005-ai-first-proposals-no-sentence-mode.md)):** bộ công nghệ **giữ nguyên** (`node:sqlite`, CodeMirror 6, SQL thuần, valibot, Vitest, IPC tự viết, một tệp `.mira` mỗi tác phẩm). Hai chi tiết bị thay: "một `EditorState` dùng chung cho **hai mode**" (chỉ còn một editor Toàn văn, vì mode Từng câu bị bỏ) và "neo segment" ở mục Hệ quả (ánh xạ vùng segment qua chỉnh sửa, cờ đã chạm/đã xóa, undo chung với căn chỉnh). Segment bị bỏ; thứ thay là **dấu AI** (`ai_mark`), một `RangeSet` tự dịch theo mỗi lần sửa của CodeMirror nhưng không cần chia lại câu, ID ổn định hay liên kết. Các số đo "5.000 segment" là số đo của thời điểm đó, giữ làm hồ sơ.
 
 ## Hệ quả
 

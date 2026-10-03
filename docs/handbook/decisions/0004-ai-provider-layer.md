@@ -70,6 +70,11 @@ Bằng chứng từ [nghiên cứu cùng ngày](../research/ai-provider-integrat
 
 **Kiểm chứng:** tám bước ở cuối [nghiên cứu](../research/ai-provider-integration.md). Hai bước quyết định ADR này đúng hay sai: (1) tỷ lệ phản hồi hỏng ID qua lớp compat so với API gốc; (2) ca hai key Gemini free với `fill-first` — job phải sống qua lúc key 1 hết quota mà không dịch lại segment đã xong.
 
+**Cập nhật 2026-10-03:** ADR này **giữ nguyên**; ba chi tiết đã đổi theo các quyết định sau nó.
+- **Đơn vị gửi AI là đoạn, không phải segment** ([ADR-005](0005-ai-first-proposals-no-sentence-mode.md)). "ID" trong định dạng gửi/nhận là số tạm `[n]` theo đoạn, chỉ sống trong một lần gọi; "không dịch lại segment đã xong" đọc là "không dịch lại đoạn đã ghi". Kiểm tra ID và `reconcile` vẫn chạy.
+- **Thứ tự panel Hỏi AI đã khác:** bảng "hoãn" ghi panel gọi provider thật *sau khi* job dịch chạy end-to-end, nhưng chủ sản phẩm chốt làm ngay ngày 2026-10-02 và đã dựng (change `ai-chat`, xem [nghiên cứu panel](../research/ai-chat-panel.md)); vẫn là contract thứ hai (streaming), không nhồi vào `translate()`.
+- **Agent mode vẫn ngoài scope.** ADR-005 giữ luật "AI chỉ đề xuất". Việc cho AI ngoài (Claude Code, Cursor) gọi vào Mira qua MCP/CLI, nếu làm, **cần ADR riêng** vì nó chạm đúng điều khoản này ([kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 7; câu Q6 ở ADR-005).
+
 ## Liên kết
 
 [ADR-002](0002-ai-first-translation.md) · [nghiên cứu nhà cung cấp AI](../research/ai-provider-integration.md) · [công cụ dịch AI](../research/ai-translation-tools.md) · [quyết định hiện hành](../product/decisions.md) · [câu hỏi còn mở](../product/open-questions.md)

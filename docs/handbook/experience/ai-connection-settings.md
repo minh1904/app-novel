@@ -4,6 +4,8 @@ Cập nhật: **2026-10-02** · Trạng thái: **Đề xuất, đang chờ hai l
 
 Người dùng chốt phạm vi ngày 2026-10-02: “trước tiên tôi cần AI qua cliproxy + APIkey của Google trước”. Trang này là phần **nghiên cứu và thiết kế giao diện** cho đúng lát cắt đó; hành vi viết thành yêu cầu ở change `ai-connection`.
 
+*(Cập nhật 2026-10-03, [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md): màn Cài đặt và các kết nối **không đổi**. Chỉ phần **hộp thoại Dịch bằng AI** bên dưới là thiết kế của bản MVP và sẽ được làm lại thành module tác vụ dịch: đơn vị đếm và tiến độ là **đoạn** (không phải segment/câu), tác vụ chạy trong `main` và bền qua khởi động lại, và bản dịch đã có chữ thì kết quả vào dạng **đề xuất** để duyệt trong pane thay cho hai bản cạnh nhau "Dùng bản AI / Giữ bản của tôi". Chữ "segment" trong mục đó đọc là "đoạn" khi làm lại; xem [kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 6.1.)*
+
 ## Hiểu đề thế nào
 
 Câu “AI qua cliproxy + APIkey của Google” có hai cách đọc: (a) Mira gọi CLI proxy, proxy đó cấu hình bằng API key Gemini; (b) hai đường song song — một qua proxy, một gọi Google trực tiếp bằng API key. **Thiết kế dưới đây phục vụ cả hai mà không cần chọn**, vì cả hai đi qua đúng một adapter `openai-compatible` và đúng một biểu mẫu: URL + khóa (tùy chọn) + danh sách model. Khác biệt duy nhất là giá trị điền vào ô URL. Nên sự mơ hồ này không chặn gì; nếu ý là (a) thì chỉ cần một kết nối, nếu là (b) thì khai hai.

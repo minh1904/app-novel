@@ -1,25 +1,24 @@
 # Đề xuất công nghệ cho bản Windows offline đầu tiên
 
-Cập nhật: 2026-09-23. Người dùng đã yêu cầu scaffold Electron; Electron + React + TypeScript + Tailwind CSS v4 + Base UI hiện là nền thử nghiệm trong repo. Các lớp editor, lưu trữ và đóng gói bên dưới vẫn là **đề xuất kỹ thuật**, chưa được khóa cho P0. Ràng buộc đã chốt: app Windows trước, biên tập cốt lõi chạy offline, app lưu dữ liệu nội bộ và cho xuất/backup. AI thuộc giai đoạn sau bản đầu. *(Cập nhật 2026-10-03: thêm mục “Cấu trúc mã nguồn và luật ranh giới”; các mục khác giữ ngày cũ.)*
+Cập nhật: 2026-10-03 (bản gốc 2026-09-23). Stack dưới đây đã được chọn và dùng trong **bản MVP thử nghiệm**: Electron + React + TypeScript + Tailwind CSS v4 + Base UI, CodeMirror 6 và `node:sqlite` đã chốt ở [ADR-003](../decisions/0003-technology-stack.md). Ràng buộc đã chốt: app Windows trước, biên tập cốt lõi chạy offline, app lưu dữ liệu nội bộ và cho xuất/backup. **AI là luồng chính của bản đầu** ([ADR-002](../decisions/0002-ai-first-translation.md)), không còn là giai đoạn sau. Hướng kiến trúc cho lần làm lại theo module là [kiến trúc AI-first](ai-first-architecture.md) ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)); trang này giữ phần stack và **luật ranh giới mã nguồn**, phần vẫn đúng sau ADR-005.
 
 ## Stack đề xuất
 
 | Lớp | Công nghệ | Lý do |
 | --- | --- | --- |
 | Desktop shell | **Electron** | Một Chromium đóng gói cùng app giúp trải nghiệm editor và hành vi nhập liệu nhất quán trên các bản Windows; có API hệ điều hành cho file, menu, cửa sổ. Tradeoff: bộ cài và RAM lớn hơn Tauri. |
-| UI | **React + TypeScript + Tailwind CSS v4 + Base UI** | Xây hai mode trên một mô hình tài liệu; Tailwind giữ token/style, Base UI cung cấp hành vi cho component tương tác dùng chung, TypeScript giữ type cho dữ liệu chương/segment. |
+| UI | **React + TypeScript + Tailwind CSS v4 + Base UI** | Một editor hai pane trên mô hình tài liệu chương/đoạn; Tailwind giữ token/style, Base UI cung cấp hành vi cho component tương tác dùng chung, TypeScript giữ type cho dữ liệu chương và hợp đồng IPC. |
 | Build | **electron-vite** | Tách main, preload, renderer và có quy trình phát triển với Vite. |
-| Editor toàn văn | **CodeMirror 6 + Markdown extension** | Văn bản dài, transaction/change set, selection và trang trí giao diện phù hợp prototype Markdown/Live Preview. Live Preview kiểu Obsidian là phần phải tự xây, không phải tính năng có sẵn chỉ nhờ cài CodeMirror. |
-| Editor từng câu | **React row UI + một editor hoạt động cho hàng đang sửa**; cân nhắc **TanStack Virtual** cho danh sách rất dài | Tránh tạo hàng nghìn editor cùng lúc; giao diện segment Smartcat-inspired dùng cùng nội dung chương. Virtualization cần thử kỹ với chiều cao hàng thay đổi và ô đang focus. |
-| Lưu local | **SQLite**, kèm xuất/nhập TXT/Markdown | Một kho dữ liệu app quản lý nội bộ cho project, document, văn bản, phiên bản và metadata căn chỉnh; transaction giúp cập nhật nhất quán. SQLite là đề xuất, chưa chốt một DB toàn thư viện hay một file DB mỗi project. |
+| Editor | **CodeMirror 6 + Markdown extension**, `@codemirror/merge` cho duyệt đề xuất | Văn bản dài, transaction/change set, selection và trang trí giao diện. Live Preview kiểu Obsidian là phần tự xây, không phải tính năng có sẵn chỉ nhờ cài CodeMirror. Đề xuất AI hiện ngay trong pane và nhận/bỏ từng chỗ, không dựng lại editor nên giữ được undo. |
+| Lưu local | **SQLite** (`node:sqlite`), kèm xuất/nhập TXT/Markdown | Đã chốt ở ADR-003: `library.db` cùng một tệp `.mira` mỗi tác phẩm, transaction trong main. SQLite là nguồn sự thật duy nhất; Markdown chỉ là cách chiếu ra cho editor, prompt và xuất ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)). |
 | Ranh giới quyền | Electron main/preload + **typed IPC/contextBridge** | Renderer không được truy cập trực tiếp filesystem/database. Bật context isolation, sandbox và tắt Node integration. |
 | Đóng gói Windows | **electron-builder** trong scaffold, thử installer NSIS | Có lệnh tạo installer cho người dùng thử. Cơ chế ký app và cập nhật sẽ chốt trước khi phân phối rộng. |
 
-AI thuộc giai đoạn sau P0; lúc đó có thể là adapter riêng gọi dịch vụ khi online. Việc chạy AI offline/chạy model local chưa được chốt. Truy cập internet không được chặn đọc, sửa, lưu, lịch sử, nhập/xuất hoặc backup.
+AI gọi dịch vụ qua **một adapter tương thích OpenAI** trong `main` ([ADR-004](../decisions/0004-ai-provider-layer.md)); model local (Ollama/LM Studio) đi cùng adapter đó chỉ khác `baseUrl`. Chỉ bước gọi AI cần mạng: truy cập internet không được chặn đọc, sửa, lưu, lịch sử, nhập/xuất hoặc backup.
 
-## Vì sao nghiêng Electron thay vì Tauri lúc này?
+## Vì sao giữ Electron thay vì Tauri?
 
-Tauri cũng dùng web UI với backend Rust và Windows WebView. Nó có thể giảm kích thước đóng gói, nhưng cần thêm bề mặt Rust/WebView vào đội ngũ và phải kiểm tương thích editor thật. Electron có cùng Chromium đóng gói và khớp với kỹ năng React/TypeScript của prototype trước; đây là **suy luận về thời gian giảm rủi ro cho MVP**, không phải khẳng định Tauri không đáp ứng được. Nếu prototype cho thấy chi phí RAM/bộ cài của Electron không chấp nhận được, thử Tauri trên đúng bộ chương mẫu trước khi đổi.
+Tauri cũng dùng web UI với backend Rust và Windows WebView, và có thể giảm kích thước đóng gói. Đánh giá ngày 2026-10-03 ([kiến trúc AI-first mục 8](ai-first-architecture.md#8-nền-desktop-giữ-electron-quan-sát--đề-xuất)) kết luận **không chuyển**: IME là rủi ro kỹ thuật số một, Electron 44.4.5 ghim Chromium 152.0.7977.130 đã qua thử tay Telex/VNI/Pinyin, còn WebView2 Evergreen không ghim được và lỗi mất lần gõ IME đầu được báo cho WebView2 149+; chuyển Tauri phải viết lại `main` bằng Rust (5.842 dòng TS cùng 8.587 dòng test) và lợi ích dung lượng/RAM chưa đo. Nếu sau này có yêu cầu dung lượng hay RAM cụ thể mà Electron không đáp ứng, thử Tauri trên đúng bộ chương mẫu trước khi đổi.
 
 ## Cấu trúc mã nguồn và luật ranh giới
 
@@ -92,7 +91,7 @@ Luật so khớp **chuỗi** trong câu import (bằng regex), nên tên thư m�
 3. **Một lời gọi ra ngoài** (HTTP, tiến trình khác). Đặt adapter ở `infra/providers/`.
 4. **Chạm API của Electron** (cửa sổ, hộp thoại, `safeStorage`, `ipcMain`). Chỉ ở `electron/` hoặc `index.ts`.
 
-Chỗ đặt dự kiến cho các lõi của [kiến trúc AI-first](ai-first-architecture.md) (đề xuất, **chưa làm**): kho đề xuất và sổ chi phí ở `infra/storage/`; máy chạy tác vụ và đề xuất ở `services/`; khu vực kênh mới ở `ipc/handlers/`; `buildContext` thuần ở `shared/algorithms/`.
+Chỗ đặt dự kiến cho các lõi của [kiến trúc AI-first](ai-first-architecture.md) (hướng đã chốt ở ADR-005, **chưa làm**): kho đề xuất, dấu AI và sổ chi phí ở `infra/storage/`; máy chạy tác vụ và đề xuất ở `services/`; khu vực kênh mới ở `ipc/handlers/`; `buildContext` thuần ở `shared/algorithms/` (không import `node:*`, nên hàm băm được tiêm từ `main`).
 
 ### Kiểm tra
 
@@ -104,20 +103,23 @@ Chỗ đặt dự kiến cho các lõi của [kiến trúc AI-first](ai-first-ar
 - **Không** làm: monorepo (mới có một app), hệ thống DI kiểu VS Code, bí danh `@shared`, đổi tên tệp cho đẹp.
 - **Đã loại:** chia theo môi trường chạy (`common/node/electron-main`) vì Mira chỉ có một tiến trình main; chia theo tính năng vì `LibraryStore` và các hàm SQL phục vụ nhiều tính năng cùng lúc.
 
-## Mô hình dữ liệu sơ bộ để hai mode dùng chung
+## Mô hình dữ liệu
 
-- Một chương có bản gốc và bản dịch toàn văn, mỗi bên có phiên bản. Markdown là định dạng soạn/xuất; không lấy “dòng hiển thị” làm ID.
-- Mode Từng câu hiển thị các segment được suy ra/duy trì từ cùng văn bản và metadata liên kết 1:1, 1:n, n:1, n:m. Sửa ở một mode phải cập nhật văn bản chung và đánh dấu liên kết chưa chắc cần kiểm tra.
-- SQLite giữ phiên bản, ghi chú, từ điển và liên kết; xuất Markdown/TXT giúp người dùng mang bản dịch đi. Quyết định **Markdown là dữ liệu chuẩn hay dạng xuất** vẫn cần prototype.
-- Tự động lưu phải có phục hồi sau crash và backup có thể mở độc lập với bản cài. Chưa chốt thời điểm snapshot và định dạng backup.
+Mô hình dữ liệu đích (chương → đoạn, dấu AI, đề xuất, snapshot, tác vụ, ngữ cảnh; SQLite là nguồn sự thật, Markdown là cách chiếu) nằm ở [kiến trúc AI-first mục 5](ai-first-architecture.md#5-kiến-trúc-tổng-thể-đề-xuất) và quyết định ở [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md). Mô hình **MVP đang chạy** (văn bản theo bên + segment + liên kết n:m + nguồn gốc theo câu) ghi ở [hiện trạng](current-state.md) và sẽ được thay ở schema v6. Không lấy “dòng hiển thị” làm ID ở cả hai mô hình.
 
-## Spike phải làm trước khi khóa stack
+Tự động lưu phải có phục hồi sau crash và backup có thể mở độc lập với bản cài; snapshot trước khi áp dụng đề xuất AI nằm trong module Đề xuất.
 
-1. Một chương dài thật: mở và sửa trong CodeMirror toàn văn; chuyển qua bảng segment; đo cuộn, focus, undo, tiếng Việt IME.
-2. Sửa/gộp/tách câu ở cả hai mode, lưu, đóng app, mở lại, kiểm tra văn bản và metadata căn chỉnh.
-3. Nhập TXT/MD, xuất lại, backup/restore, giả lập mất điện/crash giữa lúc lưu.
-4. Tạo bản cài Windows chạy offline trên máy sạch; đo kích thước, RAM và thời gian mở.
-5. Kiểm tra IPC, sandbox, CSP, nhập file không đáng tin và quyền ghi file.
+## Spike: đã làm và còn lại
+
+Đã làm trong MVP (bằng chứng ở [ADR-003](../decisions/0003-technology-stack.md) và [hiện trạng](current-state.md)): một chương dài thật mở và sửa trong CodeMirror, đo cuộn/phím/lưu ở 5.000 segment; IME Telex/VNI/Pinyin thử tay trên bản editor tối thiểu (2026-10-01); nhập TXT/MD, backup/restore, test kill tiến trình giữa lúc ghi.
+
+Còn lại:
+
+1. Chạy lại bảng ca IME cho các phần mới của editor (Live Preview ẩn dấu, ảnh, review đề xuất).
+2. Giả lập mất điện đột ngột (mới có kill tiến trình).
+3. Bản cài Windows chạy offline trên máy sạch; đo kích thước, RAM và thời gian mở.
+4. Kiểm tra IPC, sandbox, CSP, nhập file không đáng tin và quyền ghi file.
+5. Gọi nhà cung cấp AI thật để lấy hình dạng SSE và lỗi giữa dòng (task 1.x của `ai-chat`).
 
 ## Tài liệu gốc
 

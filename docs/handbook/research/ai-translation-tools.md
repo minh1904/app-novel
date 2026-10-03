@@ -2,6 +2,8 @@
 
 Ngày đọc: **2026-09-29** · Trạng thái: Quan sát + đề xuất · Chủ trì: research/engineering · Liên quan: MIR-09, MIR-13, MIR-14, MIR-15, [ADR-002](../decisions/0002-ai-first-translation.md)
 
+> **Cập nhật 2026-10-03 ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)):** các mục "Quan sát" về công cụ hiện có, nhiều nguồn, văn phong và OpenRouter **vẫn đúng như quan sát**. Mục "Đề xuất cho pipeline Mira" được viết khi Mira còn lưu segment; đọc lại theo mô hình mới: (2) "2–5 segment trước" → **đoạn liền trước**; (1) và (4) ID `id` trong JSON nay là **ID tạm `[n]` theo đoạn, chỉ sống trong một lần gọi**, không phải ID segment bền; (4) cờ "cần kiểm tra" gắn vào đoạn hoặc đề xuất, không gắn vào segment; (6) "lưu từng segment" → ghi theo đoạn/lô, đổi glossary thì đánh dấu ở mức đoạn hoặc chương (chưa thiết kế chi tiết); (9) "nguồn chính quyết định segment" → nguồn chính quyết định **đoạn**; (10) **"căn chỉnh bản cũ với raw" không còn đường nào** vì căn chỉnh và liên kết bền bị hủy, nên cách lấy ví dụ văn phong chưa có thiết kế (mục mở trong ADR-005). Pipeline dịch theo [kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 6.1.
+
 ## Câu hỏi và phương pháp
 
 Các công cụ dịch truyện/game bằng AI hiện có chia đoạn, giữ ánh xạ dòng, đưa glossary/nhân vật vào prompt, xử lý lỗi và QA thế nào; nhiều nguồn và văn phong bản cũ có tiền lệ không. Đọc README, wiki và một phần mã nguồn; **chưa chạy thử** công cụ nào. Chỉ học ý tưởng: mã (A)GPL không được sao chép vào Mira.

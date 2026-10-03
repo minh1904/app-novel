@@ -2,6 +2,8 @@
 
 Ngày đọc: **2026-10-02** · Trạng thái: Quan sát + đề xuất · Chủ trì: research/engineering · Liên quan: [ADR-002](../decisions/0002-ai-first-translation.md), [công cụ dịch AI](ai-translation-tools.md), [hệ sinh thái Việt](vietnam-ecosystem.md), backlog `ai-chat-panel`
 
+> **Cập nhật 2026-10-03:** các kết luận của trang (ba chế độ Ask/Edit/Job, **không làm Agent**, một adapter `openai-compatible`, Vercel AI SDK chỉ cân nhắc cho Hỏi AI khi có tool call, các hướng gateway/CLI proxy/model local) **không đổi**. Ba chỗ là ảnh chụp ngày 2026-10-02 và đã lệch: (1) cột "Trạng thái trong repo" ở Quan sát 1 ("vỏ `AiPanel.tsx`, hỏi/đáp là dữ liệu mẫu", "bốn nút đang `disabled`") — panel nay gọi nhà cung cấp thật, xem [panel Hỏi AI](ai-chat-panel.md) và change `ai-chat`; (2) chữ "theo segment có ID", "ngữ cảnh là segment đang chọn" — theo [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) đơn vị là **đoạn** và ID `[n]` chỉ sống trong một lần gọi; (3) "ghi provenance" khi áp dụng đề xuất — nay là **dấu AI mức vùng**, không còn nguồn gốc theo câu. Ranh giới "AI chỉ đề xuất, người ghi" ở cuối Quan sát 1 được ADR-005 mở rộng thành luật cho mọi nguồn AI. Quyết định AI ngoài (MCP/CLI) vẫn cần ADR riêng, vì ADR-004 cấm agent mode theo nghĩa AI tự chạy nhiều bước.
+
 ## Câu hỏi và phương pháp
 
 Bốn câu hỏi, đặt ra khi vỏ giao diện panel “Hỏi AI” đã dựng nhưng chưa có provider thật ([câu hỏi còn mở](../product/open-questions.md), mục UX panel Hỏi AI):

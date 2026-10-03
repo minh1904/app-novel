@@ -51,9 +51,9 @@ Chưa đủ nguồn chính chủ để gắn một nhãn nguồn đóng/mở chu
 ## Hàm ý cạnh tranh — suy luận cho Mira
 
 1. **Ngữ cảnh là giá trị thực dụng:** tên và danh xưng cần nhất quán xuyên chương. Từ điển tác phẩm thủ công phù hợp P0 hơn việc xây AI memory trước khi editor ổn định.
-2. **Hai mode là điểm khó cần chứng minh:** tài liệu đối thủ chứng minh segment, preview hoặc batch; chưa chứng minh chính tổ hợp round-trip tự do mà Mira đặt ra. Không được nâng điều này thành tuyên bố “duy nhất thị trường”.
+2. **Hai mode là điểm khó cần chứng minh:** tài liệu đối thủ chứng minh segment, preview hoặc batch; chưa chứng minh chính tổ hợp round-trip tự do mà Mira đặt ra. Không được nâng điều này thành tuyên bố “duy nhất thị trường”. *(Cập nhật 2026-10-03, [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md): Mira bỏ mode Từng câu và không còn đặt cược vào round-trip giữa hai mode; điểm khó nay là duyệt đề xuất AI ngay trong một editor Toàn văn. Nhận xét về tài liệu đối thủ vẫn đúng.)*
 3. **Niềm tin dữ liệu là điều kiện dùng lâu:** lưu/mở lại, export và restore phải có demo kiểm chứng; UI đẹp không bù được mất bản dịch.
-4. **Đừng cạnh tranh bằng số engine:** AI sau P0 vẫn phù hợp mục tiêu hiện tại. Nếu người dùng chủ yếu cần đọc dịch ngay, Mira có thể không phải lựa chọn đúng; phỏng vấn phải cho phép kết luận đó.
+4. **Đừng cạnh tranh bằng số engine:** AI sau P0 vẫn phù hợp mục tiêu hiện tại. *(Cập nhật: từ 2026-09-29 [ADR-002](../decisions/0002-ai-first-translation.md) đã đưa AI dịch từ raw thành luồng chính của bản đầu; ý "đừng cạnh tranh bằng số engine" vẫn đúng.)* Nếu người dùng chủ yếu cần đọc dịch ngay, Mira có thể không phải lựa chọn đúng; phỏng vấn phải cho phép kết luận đó.
 5. **Thị trường Việt cần quan sát riêng:** chất lượng xưng hô, tên Hán Việt, tiếng Việt IME và bản dịch thoát ý phải có corpus; hỗ trợ một ngôn ngữ trên danh sách không chứng minh chất lượng văn học.
 
 ## Kinh tế sản phẩm và khoảng trống nghiên cứu

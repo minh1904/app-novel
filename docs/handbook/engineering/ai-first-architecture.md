@@ -1,10 +1,10 @@
 # Luồng làm việc và kiến trúc AI-first
 
-Ngày: **2026-10-03** · Trạng thái: **Đề xuất — chưa chốt.** Phần ghi *Quan sát* có nguồn (code hoặc URL, đọc 2026-10-03); phần ghi *Đề xuất* là suy luận chờ chủ sản phẩm quyết. · Chủ trì: product + engineering · Liên quan: [ADR-002](../decisions/0002-ai-first-translation.md), [ADR-003](../decisions/0003-technology-stack.md), [ADR-004](../decisions/0004-ai-provider-layer.md), [hiện trạng](current-state.md), [ngữ cảnh truyện](../research/story-context.md), change `ai-chat`, `context-core`.
+Ngày: **2026-10-03** · Trạng thái: **hướng kiến trúc đã chốt ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md), 2026-10-03); thiết kế chi tiết của từng module vẫn là đề xuất cho tới khi change của module đó được duyệt.** Phần ghi *Quan sát* có nguồn (code hoặc URL, đọc 2026-10-03); phần ghi *Đề xuất* là thiết kế chờ làm thật và có thể đổi khi làm. · Chủ trì: product + engineering · Liên quan: [ADR-002](../decisions/0002-ai-first-translation.md), [ADR-003](../decisions/0003-technology-stack.md), [ADR-004](../decisions/0004-ai-provider-layer.md), [hiện trạng](current-state.md), [ngữ cảnh truyện](../research/story-context.md), [lộ trình theo module](../delivery/roadmap.md), change `ai-chat`, `context-core`.
 
-**Câu hỏi trang này trả lời:** chủ sản phẩm định **bỏ mode Từng câu** và lấy **làm việc cùng AI** làm trọng tâm, với ý định ban đầu là "trình gõ như Obsidian, AI tác động được vào văn bản để đọc và sửa". Vậy luồng sử dụng và kiến trúc của Mira nên là gì?
+**Câu hỏi trang này trả lời:** chủ sản phẩm **bỏ mode Từng câu** và lấy **làm việc cùng AI** làm trọng tâm, với ý định ban đầu là "trình gõ như Obsidian, AI tác động được vào văn bản để đọc và sửa". Vậy luồng sử dụng và kiến trúc của Mira nên là gì?
 
-Trang này **không phải ADR** và không thay quyết định nào. Những gì cần chốt nằm ở [mục 11](#11-quyết-định-cần-chủ-sản-phẩm-chốt).
+**Quan hệ với ADR-005.** ADR-005 là bản ghi quyết định (bỏ Từng câu, đơn vị là đoạn, AI chỉ đề xuất, làm lại theo module). Trang này là **thiết kế đứng sau quyết định đó**: luồng, kiến trúc, mô hình dữ liệu, ba động cơ AI, lộ trình. Repo hiện tại là **bản MVP để thử nghiệm**; kiến trúc dưới đây là đích của việc làm lại từng module, không phải mô tả mã đang chạy (mã đang chạy ở [hiện trạng](current-state.md)). Các câu hỏi còn lại ở [mục 11](#11-quyết-định-và-câu-còn-mở).
 
 ---
 
@@ -22,22 +22,25 @@ Trang này **không phải ADR** và không thay quyết định nào. Những g
    - *Ngữ cảnh*: thuật ngữ, nhân vật, xưng hô, tóm tắt.
 5. **Một API miền, nhiều nơi gọi:** renderer qua IPC, AI trong app qua tool, và giai đoạn sau là AI ngoài (Claude Code, Cursor…) qua MCP/CLI. AI ngoài cũng chỉ đề xuất.
 6. **Giữ Electron và `node:sqlite`.** Không chuyển Tauri, không đổi sang tệp làm nguồn sự thật, không dùng CRDT.
-7. **Thứ tự làm:** chuyển tác vụ dịch sang đường đề xuất *trước*, rồi mới gỡ segment và liên kết, vì đường dịch hiện vẫn ghi theo hàng (`saveRow`). Lộ trình ở [mục 10](#10-lộ-trình-đề-xuất).
+7. **Thứ tự làm:** chuyển tác vụ dịch sang đường đề xuất *trước*, rồi mới gỡ segment và liên kết, vì đường dịch hiện vẫn ghi theo hàng (`saveRow`). Lộ trình ở [mục 10](#10-lộ-trình-theo-module).
 
 ---
 
 ## 1. Bối cảnh: điều gì vừa đổi
 
-### 1.1 Quyết định đang có hiệu lực (Quan sát)
+### 1.1 Quyết định trước ADR-005 (Quan sát)
+
+Ba quyết định dưới đây là nền lúc viết trang này. **ADR-005 thay hai ý của hai quyết định đầu** (hai mode, segment ID); luật "AI không âm thầm ghi đè" và ranh giới agent mode giữ nguyên.
 
 - [ADR-002](../decisions/0002-ai-first-translation.md) chốt luồng chính: *nhập raw → chia segment → **AI dịch theo segment có ID** → soát ở Từng câu / sửa ở Toàn văn → QA → xuất.* ADR này giữ ràng buộc "hai mode" và "dữ liệu nội bộ có xuất/backup".
 - [Quyết định hiện hành](../product/decisions.md) có dòng **Hai mode**: Toàn văn và Từng câu (kiểu Smartcat), cùng luật **"AI không âm thầm ghi đè văn bản người dùng đã sửa"**.
 - [ADR-004](../decisions/0004-ai-provider-layer.md) đặt **agent mode** (AI tự chạy nhiều bước trên dữ liệu truyện) ra ngoài scope.
 
-### 1.2 Định hướng mới (2026-10-03, chưa ghi thành ADR)
+### 1.2 Định hướng mới (2026-10-03, đã ghi thành [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md))
 
 - Bỏ dịch từng câu, vì mục tiêu chính là làm việc với AI nhiều hơn.
 - Ý định ban đầu: trình gõ kiểu Obsidian, AI đọc và sửa được văn bản.
+- Repo tới nay là bản MVP để thử nghiệm; sắp tới làm lại hoàn chỉnh từng module theo trang này.
 
 ### 1.3 Code đang có liên quan (Quan sát)
 
@@ -50,9 +53,10 @@ Trang này **không phải ADR** và không thay quyết định nào. Những g
 | Dịch chương bằng AI | [`useAiTranslate.ts`](../../../src/renderer/src/features/chapter/useAiTranslate.ts), [`chapterTranslation.ts`](../../../src/main/services/ai/chapterTranslation.ts) | **vòng lặp lô ở renderer**; ghi từng hàng qua `saveRow` theo ID segment; hàng người đã viết trả về để chọn |
 | Chat Hỏi/Sửa | [`chatService.ts`](../../../src/main/services/ai/chatService.ts), [`chatTools.ts`](../../../src/main/services/ai/chatTools.ts), [`chatContext.ts`](../../../src/renderer/src/features/chapter/chatContext.ts) | stream qua `ai:chat:chunk`; 2 tool chỉ đọc; ngữ cảnh dựng ở renderer từ chữ đang mở |
 | Duyệt đề xuất tại chỗ | [`chatReview.ts`](../../../src/renderer/src/features/editor/chatReview.ts) | `@codemirror/merge`, nhận/bỏ từng khối, không dựng lại editor nên giữ được undo |
+| Phạm vi một lượt chat | [`chatRange.ts`](../../../src/renderer/src/features/editor/chatRange.ts) | đọc `segmentsField` để tính `targetIds` (kiểu `TargetRange`, `ChatRange` ở [`aiChat.ts`](../../../src/shared/contracts/aiChat.ts)). Trường này **chỉ được tạo ra, không nơi nào trong chat đọc** (grep ngày 2026-10-03), nên gỡ khi bỏ segment là việc nhỏ |
 | Provider | [`openAiCompatible.ts`](../../../src/main/infra/providers/openAiCompatible.ts), [`keyPool.ts`](../../../src/main/infra/providers/keyPool.ts), [`classifyError.ts`](../../../src/main/infra/providers/classifyError.ts) | một adapter, nhiều khóa `fill-first`; `usage` chưa lưu (task 4.7b) |
 
-Grep thấy khoảng **36 tệp không phải test** nhắc tới segment, liên kết hoặc hàng. Không phải tệp nào cũng bị xóa, nhưng đó là diện ảnh hưởng.
+Grep ngày 2026-10-03 thấy **37 tệp không phải test và 24 tệp test** nhắc tới segment, liên kết, hàng hoặc mode Từng câu (đếm rộng, nên là cận trên: có chữ trùng nghĩa khác, như lô gửi AI). Không phải tệp nào cũng bị xóa, nhưng đó là diện ảnh hưởng.
 
 ---
 
@@ -88,7 +92,7 @@ Mira **đã** đứng đúng chỗ ở hai điểm: một nguồn sự thật SQ
 | P3 | **Đơn vị là đoạn; không lưu ranh giới câu.** Câu chỉ được cắt tạm để chia lô gửi AI. | Gỡ `segment`/`link`; ID `[n]` chỉ sống trong một lần gọi. |
 | P4 | **Mỗi lần gọi AI tái hiện được và tính được tiền.** | Lưu `contextHash`, model, `usage` thật cho mỗi lần gọi. |
 | P5 | **Một API miền, nhiều nơi gọi.** | Renderer, tool của AI trong app và MCP/CLI gọi cùng các hàm; không nơi nào mở thẳng SQLite ngoài main. |
-| P6 | **Không giữ hai đường song song.** | Gỡ Từng câu trong một change riêng, không để chế độ ẩn. |
+| P6 | **Không giữ hai đường song song.** | Gỡ Từng câu trong một change riêng, không để chế độ ẩn. Ngoại lệ có thời hạn: mã mode đã ẩn còn sống tới module Kho v6 (mục 10, bước 5) vì đường dịch MVP còn ghi theo hàng. |
 | P7 | **Offline trừ bước gọi AI** (giữ nguyên từ ADR-002). | Đọc, sửa, duyệt, xuất, backup không cần mạng. |
 
 ---
@@ -205,7 +209,7 @@ sequenceDiagram
 | Xuất `.md`/`.txt` | Người dùng mang đi | Bản dịch thuần; ảnh đổi thành tệp rời hoặc bỏ (cần chốt) |
 | Thư mục check-out | AI ngoài sửa như tệp (giai đoạn sau, [mục 7](#7-ai-ngoài-claude-code-cursor--giai-đoạn-sau)) | `.md` kèm revision; sửa xong thành đề xuất |
 
-**Định nghĩa "đoạn" phải chốt.** `paragraphsOf()` trong `chatContext.ts` coi một đoạn là *một cụm dòng không trống, ngăn bởi dòng trống*. Raw truyện mạng thường đặt mỗi đoạn trên một dòng **không có dòng trống xen giữa**. Với định nghĩa hiện tại, cả chương sẽ thành một đoạn. Đề xuất: **đơn vị là mỗi dòng không trống**. Cần kiểm trên fixture thật của từng cặp ngôn ngữ trước khi chốt.
+**Định nghĩa "đoạn" (đã chốt theo Q3, chờ kiểm trên fixture).** `paragraphsOf()` trong `chatContext.ts` coi một đoạn là *một cụm dòng không trống, ngăn bởi dòng trống* (đã đọc mã ngày 2026-10-03). Raw truyện mạng thường đặt mỗi đoạn trên một dòng **không có dòng trống xen giữa**. Với định nghĩa hiện tại, cả chương sẽ thành một đoạn. Đã chốt: **đơn vị là mỗi dòng không trống**; `paragraphsOf()` phải đổi theo. Phải kiểm trên fixture thật của từng cặp ngôn ngữ (bước 2 ở mục 10) trước khi coi là chốt hẳn.
 
 ### 5.3 Mô hình dữ liệu
 
@@ -219,7 +223,7 @@ works/<id>.mira
   segment, link, link_member, provenance    (BỎ)
   ai_mark        (MỚI) chapter, side, from, to, origin, provider, model, job?, reviewed_at
   proposal       (MỚI) chapter, side, base_rev, base_hash, nội dung đề xuất, nguồn (chat|job|external),
-                       model, usage?, status (pending|applied|rejected|stale), created_at, decided_at
+                       model, usage?, context_hash?, status (pending|applied|rejected|stale), created_at, decided_at
   text_snapshot  (MỚI) chapter, side, rev, content, lý do (trước khi áp dụng AI | trước khi khôi phục), at
   job            (MỚI) loại, connection, model, tham số, trạng thái, trần chi phí, ước lượng, created/finished
   job_item       (MỚI) job, chapter, trạng thái, số lần thử, lỗi đã phân loại, proposal?, contextHash
@@ -317,7 +321,8 @@ Một chỉnh nhỏ do bỏ câu: các chỗ trong đề xuất cũ ghi "2–5 s
 | [`SentenceMode.tsx`](../../../src/renderer/src/features/chapter/SentenceMode.tsx), [`SentenceModeMocks.tsx`](../../../src/renderer/src/features/chapter/SentenceModeMocks.tsx), [`useSentenceRows.ts`](../../../src/renderer/src/features/chapter/useSentenceRows.ts), [`rows.ts`](../../../src/shared/contracts/rows.ts), [`links.ts`](../../../src/shared/contracts/links.ts) | — |
 | [`resegmenter.ts`](../../../src/renderer/src/features/editor/resegmenter.ts), [`segmentDecorations.ts`](../../../src/renderer/src/features/editor/segmentDecorations.ts), phần ánh xạ ID trong [`segmentMap.ts`](../../../src/shared/algorithms/segmentMap.ts) | `RangeSet` của dấu AI |
 | `segments` trong `text:save` và trong nhập raw ([`rawImport.ts`](../../../src/shared/algorithms/rawImport.ts)) | `marks`; nhập raw chỉ chuẩn hóa và lưu |
-| Change `segment-auto-align` (cùng model embedding 118 MB); backlog `merge-split-rows`, `shared-undo-modes`, `edited-segment-link-review` | Hủy |
+| `targetIds` trong [`chatRange.ts`](../../../src/renderer/src/features/editor/chatRange.ts) và `aiChat.ts` (chat không đọc nó) | — |
+| Change `segment-auto-align` (cùng model embedding 118 MB) và `sentence-mode`; backlog `merge-split-rows`, `shared-undo-modes`, `edited-segment-link-review`, `sentence-mode-toolbar`, `sentence-mode-side-panels` | Hủy. Spec và change đã **xóa** ngày 2026-10-03 ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)); lịch sử còn trong Git |
 
 **Giữ lại:** `segmenter.ts` để cắt lô, `reconcile`, `classifyError`, `keyPool`, `modelCatalog`, `chatReview.ts`, editor Toàn văn cùng Live Preview và ảnh, kho thư viện, backup và restore.
 
@@ -335,36 +340,42 @@ Một chỉnh nhỏ do bỏ câu: các chỗ trong đề xuất cũ ghi "2–5 s
 
 ---
 
-## 10. Lộ trình đề xuất
+## 10. Lộ trình theo module
 
-Mỗi bước có điều kiện xong. Thứ tự do phụ thuộc quyết định: đường dịch hiện ghi qua `saveRow`, nên phải có đường đề xuất trước khi gỡ segment.
+Repo hiện tại là MVP để thử nghiệm; từ đây **mỗi bước là một module làm lại hoàn chỉnh**, một change openspec riêng, và chỉ sang module kế khi module trước qua điều kiện xong (spec, test, nghiệm thu). Module nào thay mã MVP thì xóa mã MVP cùng change. [Lộ trình](../delivery/roadmap.md) là bản nhìn theo giao hàng; bảng dưới là thứ tự kỹ thuật và điều kiện xong.
 
-| # | Việc | Điều kiện xong |
-| --- | --- | --- |
-| 0 | Commit xong change `ai-chat` (working tree đang dở) | Test và typecheck sạch; không trộn việc gỡ bỏ vào |
-| 1 | **ADR-005**: bỏ Từng câu, đơn vị là đoạn, AI chỉ đề xuất. Cập nhật `decisions.md`, scope (S1.4, S1.6), roadmap (hủy căn chỉnh ở M3), đánh dấu phần liên quan của ADR-002 là *superseded* | Chủ sản phẩm chốt các câu ở mục 11 |
-| 2 | Chốt định nghĩa đoạn trên fixture thật (mục 5.2) | Số đoạn hai bên khớp sau khi AI dịch trên fixture ZH/JA/EN |
-| 3 | Bảng `proposal` + `text_snapshot`; tác vụ dịch một chương ghi theo luật mục 5.1 và duyệt bằng `chatReview.ts`; ID `[n]` theo đoạn | Dịch đè lên chương đã có chữ không đổi chữ nào khi người dùng bỏ hết đề xuất |
-| 4 | JobRunner trong main, lưu bền; sổ `usage` (task 4.7b); trần chi phí; khu vực Tác vụ thật | Kill app giữa tác vụ, mở lại thì tiếp tục đúng chương và đúng lô; không dịch lại đoạn đã ghi |
-| 5 | Gỡ segment/liên kết (schema v6), thêm `ai_mark` | Mọi test của kho, editor và crash qua; mở được tệp v5 cũ |
-| 6 | `context-core` với `buildContext` dùng chung; lượt sau mỗi chương (tóm tắt, trích mục mới) | Các bước kiểm chứng của [nghiên cứu ngữ cảnh](../research/story-context.md#bước-kiểm-chứng) |
-| 7 | QA tất định: số đoạn hai bên, tỷ lệ độ dài lệch thường, **còn chữ Hán/kana trong bản dịch**, thuật ngữ cấm, đoạn trống | Bắt được lỗi cài sẵn trên fixture |
-| 8 | Xuất `.md`/`.txt` (S1.8) từ hàm chiếu Markdown | Xuất rồi nhập lại giữ nguyên chữ |
-| 9 | (Tùy chọn, cần ADR) cổng MCP/CLI; thư mục check-out | Một agent ngoài đề xuất sửa được mà không ghi thẳng được |
+Thứ tự do phụ thuộc: đường dịch MVP ghi theo hàng (`saveRow`), nên phải có đường đề xuất (bước 3–4) **trước** khi gỡ segment (bước 5). Vì vậy tab Từng câu **đã ẩn từ trước** nhưng mã của nó còn sống tới bước 5; đó là ngoại lệ có chủ đích của nguyên tắc P6, không phải để chế độ ẩn vô hạn.
+
+| # | Module | Việc | Điều kiện xong | Trạng thái |
+| --- | --- | --- | --- | --- |
+| 0 | Chat Hỏi/Sửa (`ai-chat`) | Đã commit. Còn bảy task kiểm chứng và lái tay: lấy fixture SSE thật từ Gemini (1.1–1.4), lái tay trong Electron (10.2, 12.5), đếm số liệu (10.3) | Bảy task đóng; không trộn việc gỡ bỏ vào | 52/59 task xong, chưa gọi nhà cung cấp thật |
+| 1 | Quyết định | **ADR-005**; cập nhật `decisions.md`, scope, roadmap, ADR-002 (superseded một phần), xóa spec `sentence-mode` và `segment-auto-align` | Chủ sản phẩm chốt Q1–Q3 | **Xong 2026-10-03** |
+| 2 | Đoạn | Chốt định nghĩa đoạn trên fixture thật (mục 5.2); đổi nhập raw sang chỉ chuẩn hóa | Số đoạn hai bên khớp sau khi AI dịch trên fixture ZH/JA/EN | Chưa làm; repo chưa có fixture văn bản thật (`__fixtures__` chỉ có snapshot schema SQL v1–v5) |
+| 3 | Đề xuất | Bảng `proposal` + `text_snapshot`; tác vụ dịch một chương ghi theo luật mục 5.1 và duyệt bằng `chatReview.ts`; ID `[n]` theo đoạn | Dịch đè lên chương đã có chữ không đổi chữ nào khi người dùng bỏ hết đề xuất | Chưa làm |
+| 4 | Tác vụ | `JobRunner` trong main, lưu bền; sổ `usage` (task 4.7b); trần chi phí (Q4); khu vực Tác vụ thật | Kill app giữa tác vụ, mở lại thì tiếp tục đúng chương và đúng lô; không dịch lại đoạn đã ghi | Chưa làm |
+| 5 | Kho v6 và gỡ Từng câu | Gỡ `segment`/`link`/`link_member`/`provenance`, thêm `ai_mark`; gỡ mã mode Từng câu, kênh `links:*`/`rows:*`, `targetIds` của chat | Mọi test của kho, editor và crash qua; mở được tệp v5 cũ; không còn tham chiếu tới mode đã bỏ | Chưa làm |
+| 6 | Ngữ cảnh (`context-core`) | `buildContext` dùng chung; lượt sau mỗi chương (tóm tắt, trích mục mới) | Các bước kiểm chứng của [nghiên cứu ngữ cảnh](../research/story-context.md#bước-kiểm-chứng) | Chưa làm (0/41 task); kế hoạch đã đổi sang đoạn |
+| 7 | QA | Kiểm tất định: số đoạn hai bên, tỷ lệ độ dài lệch thường, **còn chữ Hán/kana trong bản dịch**, thuật ngữ cấm, đoạn trống | Bắt được lỗi cài sẵn trên fixture | Chưa làm |
+| 8 | Xuất | `.md`/`.txt` (S1.8) từ hàm chiếu Markdown | Xuất rồi nhập lại giữ nguyên chữ | Chưa làm |
+| 9 | AI ngoài (tùy chọn, cần ADR) | Cổng MCP/CLI; thư mục check-out | Một agent ngoài đề xuất sửa được mà không ghi thẳng được | Chưa làm; Q6 giả định làm sau |
 
 ---
 
-## 11. Quyết định cần chủ sản phẩm chốt
+## 11. Quyết định và câu còn mở
 
-| # | Câu hỏi | Giả định của trang này | Nếu trả lời khác |
+Chủ sản phẩm chấp nhận ba mặc định Q1–Q3 ngày 2026-10-03 (ghi ở [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)); Q4–Q7 giữ giả định cho tới khi module liên quan được làm.
+
+| # | Câu hỏi | Trạng thái | Nếu trả lời khác |
 | --- | --- | --- | --- |
-| Q1 | Bỏ Từng câu gồm cả **dữ liệu câu** (ID, liên kết), không chỉ giao diện? | Có | Giữ dữ liệu câu thì giữ gần hết độ phức tạp mà không còn giao diện dùng nó |
-| Q2 | Cần biết **câu nào đã soát**, hay "vùng nào AI viết mà chưa ai đụng tới" là đủ? | Mức vùng là đủ | Cần mức câu thì phải giữ một phần segment; mục 5.3 phải sửa |
-| Q3 | Đơn vị đoạn là **dòng không trống** hay **cụm dòng ngăn bởi dòng trống**? | Dòng không trống | Quyết định cách chia lô, ghép gốc ↔ dịch và QA |
-| Q4 | Trần chi phí mặc định mỗi tác vụ là bao nhiêu? | Chưa có số (ADR-004 còn mở) | — |
-| Q5 | Có lưu hội thoại chat theo chương không? | Không, giữ D10 | Lưu thì cần bảng `chat_thread` và giới hạn dung lượng |
-| Q6 | AI ngoài (MCP/CLI) có thuộc bản đầu không? | Không, làm sau | Có thì bước 9 lên trước bước 7 và cần ADR ngay |
-| Q7 | Ảnh khi xuất `.md`: tách thành tệp rời cạnh `.md` hay bỏ? | Tách tệp rời, cú pháp `![[tên.png]]` | — |
+| Q1 | Bỏ Từng câu gồm cả **dữ liệu câu** (ID, liên kết), không chỉ giao diện? | **Đã chốt: có** (2026-10-03) | Giữ dữ liệu câu thì giữ gần hết độ phức tạp mà không còn giao diện dùng nó |
+| Q2 | Cần biết **câu nào đã soát**, hay "vùng nào AI viết mà chưa ai đụng tới" là đủ? | **Đã chốt: mức vùng là đủ** (2026-10-03) | Cần mức câu thì phải giữ một phần segment; mục 5.3 phải sửa |
+| Q3 | Đơn vị đoạn là **dòng không trống** hay **cụm dòng ngăn bởi dòng trống**? | **Đã chốt: dòng không trống**, điều kiện xong là kiểm trên fixture ZH/JA/EN (bước 2 ở mục 10) | Quyết định cách chia lô, ghép gốc ↔ dịch và QA; nếu fixture bác bỏ thì sửa ADR-005 |
+| Q4 | Trần chi phí mặc định mỗi tác vụ là bao nhiêu? | Mở (ADR-004 còn mở); chặn module Tác vụ | — |
+| Q5 | Có lưu hội thoại chat theo chương không? | Giả định không, giữ D10 của `ai-chat` | Lưu thì cần bảng `chat_thread` và giới hạn dung lượng |
+| Q6 | AI ngoài (MCP/CLI) có thuộc bản đầu không? | Giả định không, làm sau; cần ADR riêng | Có thì bước 9 lên trước bước 7 và cần ADR ngay |
+| Q7 | Ảnh khi xuất `.md`: tách thành tệp rời cạnh `.md` hay bỏ? | Giả định tách tệp rời, cú pháp `![[tên.png]]` | — |
+
+**Câu mới do ADR-005 mở ra:** văn phong từ bản dịch cũ và căn chỉnh bản dịch có sẵn (S3.2, S3.5) từng dựa vào liên kết bền; khi liên kết bị bỏ thì cần cách khác (ví dụ căn chỉnh tạm khi nhập, không lưu liên kết). Chưa có thiết kế và không chặn gì ở các module 2–5.
 
 ---
 

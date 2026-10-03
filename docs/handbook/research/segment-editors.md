@@ -4,6 +4,8 @@
 
 Cập nhật: 2026-09-23. Phạm vi: tài liệu chính thức của Crowdin, Smartcat, Matecat và Phrase TMS. Đây là quan sát và suy luận thiết kế, chưa phải quyết định sản phẩm. “Segment/string” của các app có thể là câu, phần câu hoặc khối khác tùy dữ liệu và quy tắc tách.
 
+> **Cập nhật 2026-10-03 ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)):** Mira **bỏ mode Từng câu** và không lưu segment hay liên kết bền, nên trang này không còn là cơ sở thiết kế cho Mira. Bảng "Luồng được tài liệu hóa" là quan sát về Crowdin, Smartcat, Matecat, Phrase và **vẫn đúng như quan sát**. Kết luận 5 ("quay lại mode từng câu") và bốn câu hỏi cuối mục "Câu hỏi cần thử bằng prototype" **không còn là câu hỏi mở của Mira**: đơn vị làm việc là chương và đoạn, kết quả AI hiện trong chính pane dưới dạng đề xuất nhận/bỏ từng khối. Kết luận 3 (tách đơn vị tài liệu khỏi đơn vị thao tác) vẫn đúng và là lý do Mira chọn đoạn, không chọn câu. Giữ trang làm hồ sơ lịch sử.
+
 ## Luồng được tài liệu hóa
 
 | App | Người dùng thao tác từng câu như thế nào | Gộp/tách và xem toàn văn |

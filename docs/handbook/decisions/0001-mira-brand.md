@@ -12,7 +12,7 @@ Dùng **Mira** làm tên hiển thị và `mira` cho định danh mới; cập n
 
 ## Hệ quả
 
-Docs cũ giữ trang chuyển hướng. Bitmap cũ không tái tạo chỉ để sửa tên. Chưa khóa logo/tagline hoặc khả dụng thương mại. Định danh bản cài thay đổi; chưa có migration profile từ installer cũ. Mục tiêu Windows/offline/hai mode/AI sau P0 giữ nguyên.
+Docs cũ giữ trang chuyển hướng. Bitmap cũ không tái tạo chỉ để sửa tên. Chưa khóa logo/tagline hoặc khả dụng thương mại. Định danh bản cài thay đổi; chưa có migration profile từ installer cũ. Mục tiêu Windows/offline/hai mode/AI sau P0 giữ nguyên. *(Cập nhật 2026-10-03: hai vế này sau đó đã đổi và không thuộc quyết định tên: "AI sau P0" bị [ADR-002](0002-ai-first-translation.md) thay, "hai mode" bị [ADR-005](0005-ai-first-proposals-no-sentence-mode.md) thay. Windows và offline vẫn giữ.)*
 
 ## Thay thế
 

@@ -1,6 +1,6 @@
 # Nghiên cứu: tính năng Markdown của Obsidian, đối chiếu với Mira
 
-Cập nhật: 2026-10-02. Phạm vi: tài liệu chính thức Obsidian (help.obsidian.md — xem [S25](sources.md)) cho cú pháp Markdown, Live Preview, nhúng/resize ảnh, cộng với khảo sát mã nguồn Mira hiện tại ([`livePreviewDecorations.ts`](../../../src/renderer/src/features/editor/livePreviewDecorations.ts), [`imageEmbedDecorations.ts`](../../../src/renderer/src/features/editor/imageEmbedDecorations.ts), [`boldCommand.ts`](../../../src/renderer/src/features/editor/boldCommand.ts)). Đây là bảng kiểm để quyết định làm tiếp gì, không phải cam kết roadmap — xem [backlog](../delivery/backlog.md) cho thứ đã lên kế hoạch thật.
+Cập nhật: 2026-10-02. Phạm vi: tài liệu chính thức Obsidian (help.obsidian.md — xem [S25](sources.md)) cho cú pháp Markdown, Live Preview, nhúng/resize ảnh, cộng với khảo sát mã nguồn Mira hiện tại ([`livePreviewDecorations.ts`](../../../src/renderer/src/features/editor/livePreviewDecorations.ts), [`imageEmbedDecorations.ts`](../../../src/renderer/src/features/editor/imageEmbedDecorations.ts), [`formatCommands.ts`](../../../src/renderer/src/features/editor/formatCommands.ts)). Đây là bảng kiểm để quyết định làm tiếp gì, không phải cam kết roadmap — xem [backlog](../delivery/backlog.md) cho thứ đã lên kế hoạch thật.
 
 Ký hiệu trạng thái: ✅ Đã có · ◐ Một phần · ☐ Chưa có · — Không áp dụng (không hợp mô hình dữ liệu hoặc mục tiêu của Mira, xem giải thích ở Ghi chú).
 
@@ -68,20 +68,20 @@ Ký hiệu trạng thái: ✅ Đã có · ◐ Một phần · ☐ Chưa có · �
 | Tính năng | Obsidian làm gì | Trạng thái | Ghi chú |
 | --- | --- | --- | --- |
 | Live Preview (ẩn cú pháp khi con trỏ rời) | Ẩn hẳn mọi cú pháp khi không focus dòng đó | ◐ | Chỉ đậm/nghiêng/gạch ngang ẩn hẳn; tiêu đề/trích dẫn/danh sách chỉ mờ, luôn hiện (ẩn dấu đầu dòng sẽ mất luôn dấu hiệu "đây là gì" mà không có gì thay thế). |
-| Reading view | Render Markdown đầy đủ, chỉ đọc | ◐ | Có view riêng (`ReadingView.tsx`) nhưng hiện văn bản thuần theo đoạn — `#`, `*` vẫn hiện nguyên ký tự, chưa render thật. |
+| Reading view | Render Markdown đầy đủ, chỉ đọc | ✗ | *(Cập nhật 2026-10-03)* Từng có view riêng (`ReadingView.tsx`, hiện văn bản thuần theo đoạn) nhưng đã bị xóa ở commit `81bbd2f`; `readingParagraphs.ts` còn lại, chỉ test dùng. |
 | Source mode | Luôn hiện markdown thô | — | Không tách riêng khỏi Live Preview; bản gốc (readOnly) là một khái niệm khác, không phải "source mode" của bản dịch. |
 | Phím tắt định dạng | Ctrl+B, Ctrl+I, Ctrl+K (link)... | ◐ | Ctrl+B và Ctrl+I đã có (`formatCommands.ts`, cùng một hàm tham số hoá theo dấu bọc — xem `design.md` D8), cùng chặn không đọc nhầm `**` thành `*` lồng bên trong. Không làm phím cho gạch ngang (không có quy ước bàn phím chuẩn). **Ctrl+K đã bị dùng cho panel "Hỏi AI"**, không còn trống cho link. |
 | Backlinks panel | Danh sách note trỏ tới note hiện tại | — | Không có liên kết nhiều note để truy ngược. |
 | Outline (mục lục theo heading) | Cây heading của note, bấm nhảy tới | ☐ | Chưa làm — có thể hữu ích để nhảy giữa các đoạn dài trong một chương. |
 | Graph view | Mạng lưới note liên kết | — | Không hợp mô hình một tác phẩm → nhiều chương tuyến tính. |
 | Quick switcher | Ctrl+O mở nhanh note bất kỳ | — | Có ô tìm chương theo tên nhưng khác mục đích (điều hướng thư viện, không phải chuyển note tự do). |
-| Tìm trong văn bản đang mở | Ctrl+F trong note | ☐ | Chưa làm thật — có ô tìm/lọc minh họa "Sắp có" ở mode Từng câu (`SentenceFilterToolbarMock`), không đọc dữ liệu thật. |
+| Tìm trong văn bản đang mở | Ctrl+F trong note | ☐ | Chưa làm thật — có ô tìm/lọc minh họa "Sắp có" ở mode Từng câu (`SentenceFilterToolbarMock`), không đọc dữ liệu thật. *(Cập nhật 2026-10-03: mock này đi cùng mode Từng câu và sẽ bị gỡ theo [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md); việc tìm trong văn bản đang mở, nếu làm, là tìm trong editor Toàn văn.)* |
 
 ## Kết luận phục vụ thiết kế Mira
 
 1. **Phần "— Không áp dụng" không phải nợ kỹ thuật, mà là ranh giới mục tiêu thật.** Wikilink, backlinks, graph view, quick switcher, nhúng note đều dựa trên tiền đề "nhiều ghi chú liên kết nhau" của Obsidian — Mira không phải app ghi chú, mà là một tác phẩm dịch với chương tuyến tính. Bê các tính năng này sang sẽ cần bịa ra một mô hình dữ liệu mới (ghi chú rời, liên kết chương-tới-chương) không ai yêu cầu; không nên tự thêm vào roadmap chỉ vì Obsidian có.
 2. **Phần dễ làm nhất tiếp theo là hoàn thiện đúng những gì đã có**, không phải mở rộng cú pháp mới:
-   - Phím tắt Ctrl+I (nghiêng) và có thể một phím cho gạch ngang — cùng khuôn `boldCommand.ts` đã có, chỉ đổi delimiter.
+   - Phím tắt Ctrl+I (nghiêng) và có thể một phím cho gạch ngang — cùng khuôn `formatCommands.ts` (trước đây `boldCommand.ts`) đã có, chỉ đổi delimiter.
    - Outline theo heading trong một chương dài — hữu ích thật cho dịch truyện (nhảy giữa các đoạn), không phụ thuộc mô hình nhiều-note.
    - Tìm trong văn bản đang mở — đã có minh họa "Sắp có", là ứng viên tự nhiên để làm thật.
 3. **Phần có giá trị nhưng tốn công, cân nhắc sau:** Reading view render Markdown thật (hiện chỉ đọc đoạn thuần); bảng, code block, highlight — ít gặp trong văn xuôi dịch nhưng không phải không bao giờ cần (ví dụ truyện có đoạn trích dẫn hệ thống/UI game dùng code block).

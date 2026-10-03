@@ -1,6 +1,10 @@
 # Flow đề xuất: bản dịch toàn văn → từng câu
 
-Cập nhật: 2026-09-23. Đây là flow để prototype và kiểm chứng bằng chương truyện thật; chưa chốt thuật toán hoặc ngưỡng tin cậy.
+> **Trạng thái (2026-10-03): Superseded phần lớn bởi [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md).** Mode Từng câu bị bỏ cả giao diện lẫn dữ liệu câu, nên **không còn** những thứ trang này mô tả: liên kết n:m bền giữa câu gốc và câu dịch (`link`, `link_member`), hàng đợi "Kiểm tra liên kết", "Ghép theo thứ tự" ở mode Từng câu, và "mode từng câu đọc cùng bản dịch toàn văn". Đơn vị làm việc mới là chương, bên trong là đoạn; AI chỉ đề xuất và người duyệt trong pane, xem [kiến trúc AI-first](../engineering/ai-first-architecture.md).
+>
+> **Còn là câu hỏi mở:** căn chỉnh **bản dịch có sẵn** để lấy văn phong (S3.2) và nhập bản dịch không phải do Mira tạo (S3.5). Hai việc này từng dựa vào liên kết bền; ADR-005 chưa có thiết kế thay thế (ví dụ căn chỉnh tạm khi nhập, không lưu liên kết). Phần thuật toán và nguồn tham khảo bên dưới (Vecalign, Bertalign, memoQ) giữ lại làm hồ sơ cho đúng hai việc đó, **không** phải đặc tả sẽ làm.
+
+Cập nhật: 2026-09-23 (nội dung gốc, không sửa; xem trạng thái ở trên). Đây là flow để prototype và kiểm chứng bằng chương truyện thật; chưa chốt thuật toán hoặc ngưỡng tin cậy.
 
 ```mermaid
 flowchart TD
