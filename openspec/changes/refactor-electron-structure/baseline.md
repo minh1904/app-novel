@@ -161,3 +161,21 @@ Commit: `47c0ed8` công cụ dời; `74eadc7` sửa `smoke-sqlite.mjs`; `e69245e
 | `crash.test.ts` riêng ×3 | 4/4 qua, 13,27 / 13,21 / 13,24 s (baseline 13,31 / 12,91 / 13,63 s) |
 
 Phát hiện: (1) `scripts/smoke-sqlite.mjs` có chú thích kiểu TypeScript từ ngày thêm (2026-09-29) nên **chưa từng chạy được**; đã sửa ở commit riêng. (2) `--prove` ban đầu báo sai 93 tệp vì CRLF của bản làm việc; đã sửa và kiểm lại bằng một sửa đổi cố ý. (3) Quy tắc đặt test đổi sang "mô-đun cùng tên trước" (mục 6). (4) Đường dẫn dài thêm làm 3 dòng import vượt 100 cột; bọc ở commit riêng để commit dời giữ là một lần dời thuần.
+
+### R3, xong (tasks 4.1–4.5)
+
+Commit: `4e5bce3` tách handler theo khu vực; `33faf01` `createServices`; `361c6c6` mốc 866 test; `be9d6d5` hồ sơ; và một commit sửa lỗi đua của `crash.test.ts`.
+
+| Kiểm | Kết quả |
+| --- | --- |
+| Test | **866** = 863 + 3 mới (`createServices`); 12 tệp test của `ipc/` không đổi một dòng |
+| `tsc` | 410 + 812 tệp (+9 tệp `handlers/`, +2 `createServices`) |
+| Lint | 0 lỗi, 63 cảnh báo (không thêm) |
+| Bundle | `require` của preload vẫn chỉ `electron`, 5.823 byte |
+| Tính đầy đủ theo kiểu | 3/3 phá cố ý bị `tsc` chặn (mục 5) |
+
+**Sự cố quy trình của người thực hiện.** Khi đẩy R3, tôi nối `check && git fetch` bằng `&&` nhưng các lệnh sau bằng `;`, nên `check` báo đỏ mà `git push` vẫn chạy: commit `be9d6d5` lên `origin/main` khi một bước kiểm đang đỏ, trái với quy tắc "chỉ đẩy khi xanh" ở mục 4. Bước đỏ là `crash.test.ts` (đã có từ trước, xem dưới) và **không liên quan** tới nội dung R3 (kho, không phải handler hay `createServices`). Từ đó mọi lần đẩy dùng một chuỗi `&&` duy nhất.
+
+**Nguyên nhân gốc của test đỏ (lỗi đua trong bài test, không phải mất dữ liệu).** Tiến trình con xóa chương rồi mới báo `deleted`; `SIGKILL` đến giữa hai việc đó thì bên cha đòi chương còn, nên báo "acknowledged chapter missing after a kill". Thực nghiệm A: chèn tạm 60 ms giữa lệnh xóa và dòng báo, test cũ đỏ tất định với đúng thông điệp. Sửa: tiến trình con báo `deleting` trước khi xóa, bên cha chấp nhận chương đã bắt đầu xóa là có thể đã mất (các chương khác vẫn bị đòi nguyên vẹn). Thực nghiệm B: cùng cửa sổ 60 ms, test đã sửa xanh 3/3; độ trễ tạm đã gỡ. Sau sửa: `crash.test.ts` riêng 5/5, bộ kiểm đầy đủ xanh 866/866. Lỗi này cũng là phần lớn các lần `crash.test.ts` đỏ ở mục 2.
+
+**Đính chính thiết kế.** D7 từng nói test "import được trong Node trần" là bằng chứng `services/` không dính Electron; không đúng vì `import 'electron'` trong Node trần không ném lỗi. Bằng chứng là luật lint (task 3.7). Đã sửa D7 và task 4.4.
