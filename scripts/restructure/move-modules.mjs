@@ -540,9 +540,117 @@ function verify() {
   return 0
 }
 
+// ------------------------------------------------------------------------------ the docs modes
+
+/** A full path to a source file as the docs write it: `src/main/storage/library.ts`. */
+const DOC_PATH = /src\/(?:main|shared)\/[A-Za-z0-9_.\/-]*[A-Za-z0-9_]\.(?:ts|tsx|json|mjs|sql)\b/g
+/** The target of a markdown link that points at a source file. */
+const DOC_LINK_PATH = /(\]\([^)\s]*?)(src\/(?:main|shared)\/[^)\s#]+)/g
+/** Mentions of a directory that no longer exists (storage and providers were split up). */
+const DOC_GONE_DIR = /src\/main\/(?:storage|providers)(?![A-Za-z0-9_])/g
+/** `storage/library.ts` written without its `src/main/` prefix. */
+const DOC_PARTIAL = /(?<![A-Za-z0-9_\/])((?:storage|providers)\/[A-Za-z0-9_.-]+\.(?:ts|json))/g
+const CHANGELOG = 'docs/handbook/maintenance/changelog.md'
+
+/** Living docs: the handbook and the open changes, not the archive and not this change itself. */
+function listDocs() {
+  const list = []
+  if (existsSync(toOs('docs/handbook'))) walk('docs/handbook', list)
+  const changes = 'openspec/changes'
+  for (const entry of readdirSync(toOs(changes), { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name === 'archive' || entry.name === 'refactor-electron-structure') continue
+    walk(changes + '/' + entry.name, list)
+  }
+  return list.filter((file) => file.endsWith('.md')).sort()
+}
+
+function allAppliedMoves() {
+  const applied = JSON.parse(readFileSync(APPLIED_FILE, 'utf8'))
+  return new Map(Object.values(applied).flatMap((phase) => Object.entries(phase)))
+}
+
+function rewriteDoc(file, text, moves, notes) {
+  const swap = (path) => {
+    const next = moves.get(path)
+    if (next === undefined) return path
+    notes.rewritten++
+    return next
+  }
+  // Dated changelog entries are history: their prose keeps the paths of the day, but a link has to
+  // keep working, so only link targets are rewritten there.
+  if (file === CHANGELOG) {
+    return text.replace(DOC_LINK_PATH, (whole, before, path) => before + swap(path))
+  }
+  return text.replace(DOC_PATH, (path) => swap(path))
+}
+
+function docsRewrite(apply) {
+  const moves = allAppliedMoves()
+  const notes = { rewritten: 0 }
+  const changed = new Map()
+  for (const file of listDocs()) {
+    const text = readFileSync(toOs(file), 'utf8')
+    const next = rewriteDoc(file, text, moves, notes)
+    if (next !== text) changed.set(file, next)
+  }
+  console.log('docs: ' + notes.rewritten + ' path(s) rewritten in ' + changed.size + ' file(s)')
+  for (const file of changed.keys()) console.log('  ' + file)
+  if (apply) {
+    for (const [file, text] of changed) writeFileSync(toOs(file), text)
+    console.log('written')
+  } else console.log('dry-run: nothing was written')
+  return 0
+}
+
+/** Lists every reference in the living docs that does not resolve; the fixes that need a person. */
+function docsCheck() {
+  const moves = allAppliedMoves()
+  const problems = []
+  let links = 0
+  let paths = 0
+  for (const file of listDocs()) {
+    const text = readFileSync(toOs(file), 'utf8')
+    const lines = text.split('\n')
+    lines.forEach((line, index) => {
+      const where = file + ':' + (index + 1)
+      for (const match of line.matchAll(/\]\(([^)\s]+)\)/g)) {
+        const target = match[1].split('#')[0].split('?')[0]
+        if (target === '' || /^[a-z]+:/i.test(target)) continue
+        links++
+        const resolved = posix.normalize(posix.join(posix.dirname(file), target))
+        if (!existsSync(toOs(resolved))) problems.push(where + '  broken link  ' + match[1])
+      }
+      if (file === CHANGELOG) return
+      for (const match of line.matchAll(DOC_PATH)) {
+        paths++
+        if (!existsSync(toOs(match[0]))) problems.push(where + '  missing path  ' + match[0])
+      }
+      for (const match of line.matchAll(DOC_GONE_DIR)) {
+        problems.push(where + '  directory no longer exists  ' + match[0])
+      }
+      for (const match of line.matchAll(DOC_PARTIAL)) {
+        const full = 'src/main/' + match[1]
+        const suggestion = moves.get(full)
+        if (suggestion !== undefined) {
+          problems.push(where + '  old short path  ' + match[1] + '  ->  ' + suggestion.replace('src/main/', ''))
+        }
+      }
+    })
+  }
+  console.log('docs-check: ' + links + ' links and ' + paths + ' source paths checked')
+  if (problems.length > 0) {
+    console.log(problems.length + ' to fix:\n  ' + problems.join('\n  '))
+    return 1
+  }
+  console.log('OK: every link and source path in the living docs resolves')
+  return 0
+}
+
 function main() {
   const args = process.argv.slice(2)
   const phase = args.find((arg) => !arg.startsWith('--'))
+  if (args.includes('--docs-check')) return docsCheck()
+  if (args.includes('--docs')) return docsRewrite(args.includes('--apply'))
   if (args.includes('--verify')) return verify()
   if (phase === undefined) {
     console.log('usage: move-modules.mjs <phase> --dry-run | --apply | --prove   or   --verify')
