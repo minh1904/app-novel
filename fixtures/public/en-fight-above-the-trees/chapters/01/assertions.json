@@ -1,0 +1,22 @@
+{
+  "status": "draft",
+  "rules": [
+    { "where": "A burst of flames erupted from Thassalin's jaws as the colossal Thraki", "kind": "name", "mustContain": ["Thassalin", "Thraki"] },
+    { "where": "\"Come on, Tenuk, you've shapeshifted into a Thraki before!\"", "kind": "term", "mustContain": ["Tenuk", "Thraki", "biến hình"] },
+    { "where": "\"I APOLOGIZE BUT I PICKED UP A SCENT. I HAD TO DEAL WITH IT!\"", "kind": "style", "note": "Lời Thassalin luôn in hoa toàn bộ; bản dịch phải giữ in hoa." },
+    { "where": "\"He'll work it out...\" Nyssi tutted. \"Retvik's slow but he's not stupid.\"", "kind": "meaning", "mustNotContain": ["thông minh lắm"], "note": "Nghĩa là 'chậm nhưng không ngốc'. Bản tham chiếu dịch thành 'thông minh lắm đó', và 'tutted' thành 'nói chắc nịch'." },
+    { "where": "It was an Orothrack, a very rare, gold and white draconic creature.", "kind": "name", "mustContain": ["Orothrack"] },
+    { "where": "AS YISINI DEMANDS.", "kind": "name", "mustContain": ["YISINI"], "note": "Nằm trong lời in hoa của Thassalin." },
+    { "where": "pull out her own weapon, a trusty shotgun", "kind": "term", "mustNotContain": ["súng ngắn"], "note": "Shotgun không phải súng ngắn; bản tham chiếu sai ở đây." },
+    { "where": "Kayel tutted as he drew his rifle from his back", "kind": "term", "mustContain": ["súng trường"] },
+    { "where": "\"That was... one of the weirder shadowjumps I've ever done... Thanto kat'olon...\"", "kind": "term", "mustContain": ["Thanto kat'olon"], "dependsOnDraft": true, "note": "Câu tiếng loài khác: giữ nguyên." },
+    { "where": "shapeshifting back into his normal Spast form", "kind": "name", "mustContain": ["Spast"] },
+    { "where": "\"YOU KILLED THE CORRUPTIIDS!", "kind": "term", "dependsOnDraft": true, "note": "Tên Corruptiid và 'the Corruption' phải nhất quán với glossary sau khi chốt." },
+    { "where": "YOU REMIND ME OF MY OLD FRIEND ARKADIN", "kind": "name", "mustContain": ["ARKADIN"] },
+    { "where": "\"Kayel!\" Tenuk exclaimed as he glided out of the cloud", "kind": "structure", "note": "Lời thoại xen lời dẫn trong cùng đoạn: bản dịch phải giữ ngoặc kép cho cả hai mảnh thoại. Bản tham chiếu bỏ ngoặc ở mảnh đầu." },
+    { "where": "\"Hey, Tenuk, do you mind shapeshifting into something that can fly?\" Kayel asked.", "kind": "pronoun", "pair": ["Kayel", "Tenuk"] },
+    { "where": "\"Did you have to drag us along as well?\" Tenuk snapped", "kind": "pronoun", "pair": ["Tenuk", "Nyssi"], "note": "Tenuk đang nói với cả Nyssi và Thassalin." },
+    { "where": "\"I, uh, did not mean to do that. Are you all well?\"", "kind": "pronoun", "pair": ["Retvik", "nhóm bạn"] },
+    { "where": "\"THANK YOU, LITTLE ONE.", "kind": "pronoun", "pair": ["Thassalin", "Kayel"] }
+  ]
+}

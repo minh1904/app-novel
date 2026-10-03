@@ -1,0 +1,15 @@
+{
+  "slug": "zh-hant-xiyouji",
+  "lang": "zh-Hant",
+  "title": "西遊記",
+  "author": "吳承恩 (Ngô Thừa Ân, khoảng 1500–1582)",
+  "published": "thế kỷ 16",
+  "url": "https://zh.wikisource.org/wiki/西遊記/第002回",
+  "revision": 2449088,
+  "fetched": "2026-10-04, API parse của Wikisource, biến thể zh-hant",
+  "rights": "Phạm vi công cộng (tác phẩm thế kỷ 16).",
+  "edits": "Bỏ khung tiêu đề của Wikisource; thêm dòng tên hồi lấy từ khung đó. Thơ chen giữa văn xuôi giữ mỗi câu một dòng như bản Wikisource.",
+  "chapters": [
+    "02"
+  ]
+}

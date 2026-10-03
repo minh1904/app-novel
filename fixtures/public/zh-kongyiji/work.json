@@ -1,0 +1,15 @@
+{
+  "slug": "zh-kongyiji",
+  "lang": "zh-Hans",
+  "title": "孔乙己",
+  "author": "鲁迅 (Lỗ Tấn, 1881–1936)",
+  "published": "1919, 《新青年》; in lại trong 《吶喊》",
+  "url": "https://zh.wikisource.org/wiki/孔乙己",
+  "revision": 2605389,
+  "fetched": "2026-10-04, API parse của Wikisource, biến thể zh-hans",
+  "rights": "Phạm vi công cộng: tác giả mất năm 1936 (Wikisource ghi PD từ 1996-01-01 ở nước gốc và ở các nơi tính đời tác giả + 80 năm trở xuống). Bản văn theo 《魯迅全集》 1938.",
+  "edits": "Bỏ khung tiêu đề và chú thích bản quyền của Wikisource; thêm dòng tên truyện ở đầu. Giữ nguyên chữ dị thể (偸, 儍) và ngoặc 『』 của bản 1938.",
+  "chapters": [
+    "01"
+  ]
+}

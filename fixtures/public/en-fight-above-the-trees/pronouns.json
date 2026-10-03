@@ -1,0 +1,18 @@
+{
+  "status": "draft",
+  "note": "Xưng hô nháp, soạn 2026-10-04. Nhóm bạn đồng nghiệp hiện đại (có xe tải, đi làm) trong thế giới fantasy; bản tham chiếu dùng 'tôi – cậu' giữa họ. Tránh xưng hô cổ phong.",
+  "narration": [
+    { "chapters": ["01"], "pov": "ngôi thứ ba", "self": null, "thirdPerson": { "Thassalin": "cậu ta", "Kayel": "cậu ta", "Tenuk": "cậu ta", "Nyssi": "cô", "Retvik": "cậu ta" }, "note": "Bản tham chiếu gọi Thassalin lúc 'nó' (đoạn 7) lúc 'cậu ta' (đoạn 35, 51): không nhất quán. Chọn một.", "decision": true }
+  ],
+  "pairs": [
+    { "speaker": "Nyssi", "listener": "Tenuk", "self": "tôi", "address": "cậu", "fromChapter": "01" },
+    { "speaker": "Tenuk", "listener": "Nyssi", "self": "tôi", "address": "cậu", "fromChapter": "01" },
+    { "speaker": "Kayel", "listener": "Tenuk", "self": "tôi", "address": "cậu", "fromChapter": "01" },
+    { "speaker": "Tenuk", "listener": "Kayel", "self": "tôi", "address": "cậu", "fromChapter": "01" },
+    { "speaker": "Nyssi", "listener": "Kayel", "self": "tôi", "address": "cậu", "fromChapter": "01" },
+    { "speaker": "Kayel", "listener": "Thassalin", "self": "tôi", "address": "cậu", "fromChapter": "01" },
+    { "speaker": "Thassalin", "listener": "nhóm bạn", "self": "TÔI", "address": "CÁC CẬU", "fromChapter": "01", "note": "Thassalin nói bằng chữ in hoa; giữ in hoa." },
+    { "speaker": "Thassalin", "listener": "Kayel", "self": "TÔI", "address": "BÉ CON", "fromChapter": "01", "note": "'LITTLE ONE'." },
+    { "speaker": "Retvik", "listener": "nhóm bạn", "self": "tôi", "address": "các cậu", "fromChapter": "01", "note": "Retvik nói kiểu trịnh trọng ('May I ask', 'Are you all well?')." }
+  ]
+}

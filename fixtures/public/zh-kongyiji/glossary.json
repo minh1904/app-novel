@@ -1,0 +1,28 @@
+{
+  "status": "draft",
+  "note": "Nháp do Claude soạn ngày 2026-10-04 cho 《孔乙己》 (Lỗ Tấn, 1919). Tên riêng đọc Hán-Việt. Trường 'decision' là lựa chọn văn phong, cần chủ sản phẩm chốt.",
+  "entries": [
+    { "src": "孔乙己", "tgt": "Khổng Ất Kỷ", "type": "person" },
+    { "src": "上大人孔乙己", "tgt": "Thượng đại nhân Khổng Ất Kỷ", "type": "term", "note": "Câu trên giấy tập tô chữ, nguồn gốc biệt danh. Khớp dài trước 孔乙己." },
+    { "src": "鲁镇", "tgt": "Lỗ trấn", "type": "place" },
+    { "src": "咸亨酒店", "tgt": "quán rượu Hàm Hanh", "type": "place" },
+    { "src": "丁举人", "tgt": "cử nhân Đinh", "type": "person", "alternatives": ["ông cử Đinh"], "decision": true },
+    { "src": "何家", "tgt": "nhà họ Hà", "type": "place" },
+    { "src": "掌柜", "tgt": "ông chủ quán", "type": "address", "alternatives": ["chưởng quỹ"], "decision": true },
+    { "src": "伙计", "tgt": "người làm", "type": "term", "alternatives": ["chú hầu bàn", "tiểu nhị"], "decision": true },
+    { "src": "长衫", "tgt": "áo dài", "type": "term", "alternatives": ["áo trường sam"], "note": "Áo dài kiểu Trung Hoa, dấu hiệu tầng lớp có học; đối lập với 短衣帮.", "decision": true },
+    { "src": "短衣帮", "tgt": "bọn áo ngắn", "type": "term" },
+    { "src": "茴香豆", "tgt": "đậu hồi hương", "type": "term" },
+    { "src": "黄酒", "tgt": "rượu vàng", "type": "term", "alternatives": ["hoàng tửu"] },
+    { "src": "秀才", "tgt": "tú tài", "type": "title" },
+    { "src": "粉板", "tgt": "tấm bảng phấn", "type": "term" },
+    { "src": "描红纸", "tgt": "giấy tập tô chữ", "type": "term" },
+    { "src": "荐头", "tgt": "người giới thiệu", "type": "term" },
+    { "src": "服辩", "tgt": "tờ nhận tội", "type": "term" },
+    { "src": "之乎者也", "tgt": "chi hồ giả dã", "type": "term", "note": "Hư từ văn ngôn, chỉ lối nói sách vở." },
+    { "src": "君子固穷", "tgt": "quân tử cố cùng", "type": "term", "note": "Câu trong Luận Ngữ; giữ Hán-Việt như lời trích." },
+    { "src": "中秋", "tgt": "Trung thu", "type": "term" },
+    { "src": "端午", "tgt": "Đoan ngọ", "type": "term" },
+    { "src": "年关", "tgt": "cuối năm", "type": "term", "alternatives": ["ngày giáp Tết"] }
+  ]
+}

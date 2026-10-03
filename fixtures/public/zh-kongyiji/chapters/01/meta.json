@@ -1,0 +1,30 @@
+{
+  "id": "01",
+  "order": 1,
+  "lang": "zh-Hans",
+  "title": "孔乙己",
+  "pov": "người làm trong quán",
+  "paragraphs": 15,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng là trống",
+  "chars": 2614,
+  "tags": [
+    "dialogue-inline",
+    "pronoun-matrix",
+    "classical-quotes",
+    "variant-characters",
+    "wordplay"
+  ],
+  "notes": [
+    "Thoại nằm liền trong đoạn văn, nhiều lượt trong một dòng (khác truyện mạng mỗi lượt một dòng).",
+    "Dùng 『』 làm ngoặc thoại.",
+    "Đoạn chơi chữ 茴/回: giữ chữ Hán trong bản dịch là hợp lý, nên miễn kiểm sót chữ nguồn."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": [],
+      "exemptWhere": [
+        "茴香豆的茴字，怎样写的"
+      ]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "01",
+  "order": 1,
+  "lang": "en",
+  "title": null,
+  "pov": "ngôi thứ ba",
+  "paragraphs": 57,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng là trống",
+  "chars": 9373,
+  "tags": [
+    "dialogue",
+    "invented-names",
+    "all-caps-speech",
+    "action",
+    "has-reference"
+  ],
+  "notes": [
+    "57 đoạn, có bản tham chiếu tiếng Việt cùng thứ tự.",
+    "Rồng Thassalin nói bằng chữ in hoa."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": []
+    }
+  }
+}

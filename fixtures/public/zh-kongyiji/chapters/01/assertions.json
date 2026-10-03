@@ -1,0 +1,19 @@
+{
+  "status": "draft",
+  "rules": [
+    { "line": "孔乙己", "kind": "structure", "mustContain": ["Khổng Ất Kỷ"], "note": "Dòng tên truyện." },
+    { "where": "便在镇口的咸亨酒店里当伙计", "kind": "name", "mustContain": ["Hàm Hanh"] },
+    { "where": "从描红纸上的『上大人孔乙己』", "kind": "term", "mustContain": ["Thượng đại nhân Khổng Ất Kỷ"], "note": "Nguồn gốc biệt danh: bản dịch phải giữ được trò chơi chữ này." },
+    { "where": "『窃书不能算偸……窃书！……读书人的事，能算偸么？』", "kind": "meaning", "note": "Câu nổi tiếng: 窃 (văn ngôn) và 偸 (khẩu ngữ) cùng nghĩa 'trộm'; Khổng Ất Kỷ ngụy biện bằng chữ sang. Bản dịch phải giữ được hai cách nói khác tầng." },
+    { "where": "回字有四样写法，你知道么？", "kind": "meaning", "mustContain": ["bốn"], "note": "Chữ Hồi có bốn cách viết." },
+    { "where": "『不多不多！多乎哉？不多也。』", "kind": "meaning", "note": "Câu văn ngôn giữa lời nói thường; nên giữ dạng Hán-Việt hoặc lối cổ để thấy chất nhà nho." },
+    { "where": "竟偸到丁举人家里去了", "kind": "name", "mustContain": ["Đinh"], "dependsOnDraft": true },
+    { "where": "掌柜正在慢慢的结帐，取下粉板", "kind": "term", "mustContain": ["bảng"] },
+    { "where": "我到现在终于没有见——大约孔乙己的确死了。", "kind": "meaning", "mustContain": ["Khổng Ất Kỷ"], "note": "Câu kết; '大约…的确' là mâu thuẫn cố ý của Lỗ Tấn ('có lẽ… đúng là'), cần giữ." },
+    { "line": "（一九一九年三月。）", "kind": "structure", "mustContainAny": ["1919", "một chín một chín", "chín trăm mười chín"] },
+    { "where": "孔乙己睁大眼睛说：『你怎么这样凭空污人清白……』", "kind": "pronoun", "pair": ["Khổng Ất Kỷ", "khách uống rượu"], "note": "Đoạn này chứa nhiều lượt thoại liền nhau trong một dòng." },
+    { "where": "有一回对我说道，『你读过书么？』", "kind": "pronoun", "pair": ["Khổng Ất Kỷ", "người làm (cậu bé)"] },
+    { "where": "『谁要你教，不是草头底下一个来回的回字么？』", "kind": "pronoun", "pair": ["người làm (cậu bé)", "Khổng Ất Kỷ"] },
+    { "where": "『孔乙己么？你还欠十九个钱呢！』", "kind": "pronoun", "pair": ["ông chủ quán", "Khổng Ất Kỷ"] }
+  ]
+}

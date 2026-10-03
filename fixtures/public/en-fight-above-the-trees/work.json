@@ -1,0 +1,19 @@
+{
+  "slug": "en-fight-above-the-trees",
+  "lang": "en",
+  "title": "fight above the trees (WMT24++ literary, phần 1 và 2)",
+  "author": null,
+  "published": "WMT24++ (Deutsch et al., 2025), miền literary",
+  "url": "https://huggingface.co/datasets/google/wmt24pp",
+  "documents": [
+    "test-en-literary_fight_above_the_trees_chunk_1_words_996",
+    "test-en-literary_fight_above_the_trees_chunk_2_words_991"
+  ],
+  "fetched": "2026-10-04, datasets-server của Hugging Face, config en-vi_VN",
+  "rights": "Apache-2.0 (giấy phép của bộ dữ liệu google/wmt24pp). Giữ ghi nguồn khi dùng lại.",
+  "edits": "Ghép hai tài liệu liên tiếp thành một chương; mỗi segment một đoạn. reference.vi.txt là trường target (bản dịch người đã hậu biên tập), cùng thứ tự đoạn.",
+  "referenceCaveat": "Bản tham chiếu có lỗi (shotgun thành \"súng ngắn\", \"not stupid\" thành \"thông minh lắm\", bỏ ngoặc thoại không đều). Chỉ dùng cho metric cần tham chiếu, không làm chuẩn vàng.",
+  "chapters": [
+    "01"
+  ]
+}

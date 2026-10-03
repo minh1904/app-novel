@@ -1,0 +1,26 @@
+{
+  "status": "draft",
+  "rules": [
+    { "line": "第二回　悟徹菩提真妙理　斷魔歸本合元神", "kind": "structure", "mustContainAny": ["Hồi 2", "Hồi thứ hai", "Hồi hai"], "note": "Câu đối tên hồi: hai vế song song." },
+    { "where": "話表美猴王得了姓名", "kind": "name", "mustContain": ["Mỹ Hầu Vương", "Tôn Ngộ Không"] },
+    { "where": "那祖師即命大眾引孫悟空出二門外", "kind": "name", "mustContain": ["Tổ sư"] },
+    { "where": "「『道』字門中有三百六十傍門", "kind": "meaning", "mustContain": ["ba trăm sáu mươi"], "note": "Bốn cửa 術/流/靜/動 ở các đoạn sau phải giữ tên chữ như nhau xuyên suốt." },
+    { "where": "悟空道：「不學，不學。」", "kind": "meaning", "note": "Điệp khúc 'không học, không học' lặp ở bốn đoạn; bản dịch nên giữ nhịp lặp." },
+    { "line": "「難！難！難！道最玄，莫把金丹作等閑。不遇至人傳妙訣，空言口困舌頭乾！」", "kind": "term", "mustContain": ["kim đan"] },
+    { "where": "有一般天罡數，該三十六般變化；有一般地煞數，該七十二般變化", "kind": "term", "mustContain": ["Thiên Cương", "Địa Sát", "bảy mươi hai"] },
+    { "where": "傳你個觔斗雲罷", "kind": "term", "mustContain": ["cân đẩu vân"] },
+    { "where": "一觔斗就有十萬八千里路哩", "kind": "meaning", "mustContainAny": ["mười vạn tám nghìn", "mười vạn tám ngàn", "108.000", "một trăm lẻ tám nghìn"] },
+    { "where": "這個算不得騰雲，只算得爬雲而已", "kind": "meaning", "mustContain": ["bò mây"], "note": "Câu đùa đối lập cưỡi mây / bò mây." },
+    { "where": "喚做『陰火』", "kind": "term", "mustContain": ["âm hỏa"] },
+    { "where": "我自東勝神洲傲來國花果山水簾洞來的", "kind": "name", "mustContain": ["Đông Thắng Thần Châu", "Ngạo Lai", "núi Hoa Quả", "động Thủy Liêm"] },
+    { "where": "那廝自稱混世魔王", "kind": "name", "mustContain": ["Hỗn Thế Ma Vương"] },
+    { "where": "大王是老孫，我們都是二孫、三孫、細孫、小孫", "kind": "meaning", "note": "Chơi chữ họ Tôn (孫 = cháu): bản dịch phải giữ được ý 'Đại vương là lão Tôn, chúng con là Tôn hai, Tôn ba…'." },
+    { "line": "月明清露冷，八極迥無塵。", "kind": "structure", "note": "Thơ chen giữa văn xuôi: mỗi câu thơ là một đoạn riêng, giữ thành dòng riêng." },
+    { "line": "畢竟不知怎生結果，居此界終始如何，且聽下回分解。", "kind": "structure", "mustContainAny": ["hồi sau", "Hồi sau"], "note": "Câu kết chương hồi quen thuộc." },
+    { "where": "祖師道：「你既識妙音，我且問你，你到洞中多少時了？」", "kind": "pronoun", "pair": ["Tổ sư", "Ngộ Không"] },
+    { "where": "「你這潑猴，十分無狀。", "kind": "pronoun", "pair": ["các sư huynh", "Ngộ Không"] },
+    { "where": "「不瞞諸兄長說，一則是師父傳授", "kind": "pronoun", "pair": ["Ngộ Không", "các sư huynh"] },
+    { "where": "即開口叫道：「孩兒們，我來了也！」", "kind": "pronoun", "pair": ["Ngộ Không", "bầy khỉ"] },
+    { "where": "猴王喝道：「這潑魔這般眼大，看不見老孫。」", "kind": "pronoun", "pair": ["Ngộ Không", "Hỗn Thế Ma Vương"] }
+  ]
+}

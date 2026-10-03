@@ -1,0 +1,15 @@
+{
+  "status": "draft",
+  "note": "Xưng hô nháp cho 《孔乙己》, soạn 2026-10-04. Bối cảnh: quán rượu ở thị trấn Trung Hoa đầu thế kỷ 20; người kể là cậu bé 12 tuổi làm trong quán, kể lại sau hơn hai mươi năm.",
+  "narration": [
+    { "chapters": ["01"], "pov": "người làm trong quán (lúc kể đã lớn)", "self": "tôi" }
+  ],
+  "pairs": [
+    { "speaker": "khách uống rượu", "listener": "Khổng Ất Kỷ", "self": "tôi", "address": "lão", "alternatives": [{ "self": "tôi", "address": "anh" }], "fromChapter": "01", "note": "Chế giễu; Khổng Ất Kỷ đã có râu hoa râm.", "decision": true },
+    { "speaker": "Khổng Ất Kỷ", "listener": "khách uống rượu", "self": "tôi", "address": "anh", "alternatives": [{ "self": "tôi", "address": "các người" }], "fromChapter": "01", "decision": true },
+    { "speaker": "Khổng Ất Kỷ", "listener": "người làm (cậu bé)", "self": "tôi", "address": "chú", "alternatives": [{ "self": "ta", "address": "cháu" }], "fromChapter": "01", "note": "Ông đồ nghèo cố tỏ ra thầy giáo với cậu bé.", "decision": true },
+    { "speaker": "người làm (cậu bé)", "listener": "Khổng Ất Kỷ", "self": "tôi", "address": "ông", "alternatives": [{ "self": "tôi", "address": "lão" }], "fromChapter": "01", "note": "Cậu bé coi thường ('讨饭一样的人').", "decision": true },
+    { "speaker": "ông chủ quán", "listener": "Khổng Ất Kỷ", "self": "tôi", "address": "anh", "alternatives": [{ "self": "tôi", "address": "lão" }], "fromChapter": "01", "decision": true },
+    { "speaker": "ông chủ quán", "listener": "người làm (cậu bé)", "self": "tôi", "address": "mày", "fromChapter": "01", "note": "Chỉ có trong lời kể gián tiếp; không có thoại trực tiếp." }
+  ]
+}

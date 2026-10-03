@@ -1,0 +1,26 @@
+{
+  "status": "draft",
+  "note": "Nháp do Claude soạn ngày 2026-10-04 cho đoạn truyện fantasy 'fight above the trees' (WMT24++). Tên riêng và tên loài tự đặt giữ nguyên chữ. Trường 'decision' là lựa chọn văn phong.",
+  "entries": [
+    { "src": "Thassalin", "tgt": "Thassalin", "type": "person", "note": "Rồng Thraki khổng lồ màu hồng; nói bằng chữ in hoa." },
+    { "src": "Thraki", "tgt": "Thraki", "type": "term", "note": "Tên loài rồng tự đặt: giữ nguyên, không dịch thành 'rồng'." },
+    { "src": "Tenuk", "tgt": "Tenuk", "type": "person", "note": "Biến hình được; dạng thường là Spast." },
+    { "src": "Kayel", "tgt": "Kayel", "type": "person", "note": "Có năng lực bóng tối, dùng súng trường." },
+    { "src": "Nyssi", "tgt": "Nyssi", "type": "person", "note": "Nữ, tự lành vết thương, dùng shotgun." },
+    { "src": "Retvik", "tgt": "Retvik", "type": "person" },
+    { "src": "Lanex", "tgt": "Lanex", "type": "person" },
+    { "src": "Arkadin", "tgt": "Arkadin", "type": "person" },
+    { "src": "Yisini", "tgt": "Yisini", "type": "person" },
+    { "src": "Orothrack", "tgt": "Orothrack", "type": "term" },
+    { "src": "Temthan", "tgt": "Temthan", "type": "term" },
+    { "src": "Spast", "tgt": "Spast", "type": "term" },
+    { "src": "Corruptiids", "tgt": "Corruptiid", "type": "term", "alternatives": ["lũ quái vật nhiễm Tha Hóa"], "note": "Bản tham chiếu bỏ hẳn tên này ('lũ quái vật kỳ dị').", "decision": true },
+    { "src": "Corruption", "tgt": "Tha Hóa", "type": "term", "alternatives": ["Sự Thối Rữa", "lực lượng hủy diệt"], "decision": true },
+    { "src": "Thanto kat'olon", "tgt": "Thanto kat'olon", "type": "term", "note": "Câu tiếng của loài khác: giữ nguyên. Bản tham chiếu dịch thành 'Ơn trời'.", "decision": true },
+    { "src": "shadowjump", "tgt": "nhảy bóng", "type": "term", "alternatives": ["xuyên bóng tối"], "decision": true },
+    { "src": "shapeshift", "tgt": "biến hình", "type": "term" },
+    { "src": "shotgun", "tgt": "súng shotgun", "type": "term", "alternatives": ["súng săn", "súng hoa cải"], "forbidden": ["súng ngắn"], "note": "Bản tham chiếu dịch sai thành 'súng ngắn' (handgun)." },
+    { "src": "rifle", "tgt": "súng trường", "type": "term" },
+    { "src": "bandolier", "tgt": "băng đạn đeo chéo", "type": "term" }
+  ]
+}

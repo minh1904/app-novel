@@ -1,0 +1,19 @@
+{
+  "status": "draft",
+  "note": "Xưng hô nháp cho 《西遊記》 hồi 2, soạn 2026-10-04. Bối cảnh thần thoại Trung Hoa cổ, nên xưng hô cổ phong (ta – ngươi, đệ tử – sư phụ) là đúng chỗ, khác hai tác phẩm hiện đại và phương Tây trong bộ mẫu.",
+  "narration": [
+    { "chapters": ["02"], "pov": "người kể chuyện (lối chương hồi)", "self": null, "note": "Lời kể ngôi thứ ba kiểu chương hồi ('話表', '你看他'); gọi Ngộ Không bằng tên hoặc 'Hầu Vương'." }
+  ],
+  "pairs": [
+    { "speaker": "Tổ sư", "listener": "Ngộ Không", "self": "ta", "address": "ngươi", "fromChapter": "02" },
+    { "speaker": "Ngộ Không", "listener": "Tổ sư", "self": "đệ tử", "address": "sư phụ", "fromChapter": "02", "note": "Có lúc gọi 老師父, 尊師, 老爺." },
+    { "speaker": "các sư huynh", "listener": "Ngộ Không", "self": "chúng ta", "address": "ngươi", "alternatives": [{ "self": "bọn ta", "address": "đệ" }], "fromChapter": "02", "note": "Lúc trách móc gọi '你這潑猴'.", "decision": true },
+    { "speaker": "Ngộ Không", "listener": "các sư huynh", "self": "đệ", "address": "các huynh", "alternatives": [{ "self": "tôi", "address": "các sư huynh" }], "fromChapter": "02", "decision": true },
+    { "speaker": "Ngộ Không", "listener": "bầy khỉ", "self": "ta", "address": "các con", "fromChapter": "02", "note": "孩兒們, 小的們, 汝等." },
+    { "speaker": "bầy khỉ", "listener": "Ngộ Không", "self": "chúng con", "address": "Đại vương", "fromChapter": "02" },
+    { "speaker": "Ngộ Không", "listener": "Hỗn Thế Ma Vương", "self": "lão Tôn", "address": "ngươi", "alternatives": [{ "self": "lão Tôn", "address": "mày" }], "fromChapter": "02", "note": "這潑魔: khinh, gây sự.", "decision": true },
+    { "speaker": "Hỗn Thế Ma Vương", "listener": "Ngộ Không", "self": "ta", "address": "ngươi", "fromChapter": "02" },
+    { "speaker": "tiểu yêu", "listener": "Hỗn Thế Ma Vương", "self": null, "address": "Đại vương", "fromChapter": "02" },
+    { "speaker": "Ngộ Không", "listener": "tiểu yêu", "self": "ta", "address": "ngươi", "fromChapter": "02" }
+  ]
+}

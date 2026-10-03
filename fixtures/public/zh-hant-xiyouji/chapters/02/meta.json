@@ -1,0 +1,27 @@
+{
+  "id": "02",
+  "order": 2,
+  "lang": "zh-Hant",
+  "title": "第二回　悟徹菩提真妙理　斷魔歸本合元神",
+  "pov": "người kể chương hồi",
+  "paragraphs": 54,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng là trống",
+  "chars": 7044,
+  "tags": [
+    "cultivation-terms",
+    "classical-vernacular",
+    "verse",
+    "dialogue-inline",
+    "wordplay",
+    "long"
+  ],
+  "notes": [
+    "Dày thuật ngữ đạo và tu luyện; tên riêng có âm Hán-Việt quen thuộc với độc giả Việt.",
+    "Văn bạch thoại thời Minh, không phải văn truyện mạng hiện đại."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": []
+    }
+  }
+}
