@@ -75,7 +75,7 @@ flowchart LR
 
 | # | Module | Đầu ra (tóm tắt) | Điều kiện qua | Trạng thái |
 | --- | --- | --- | --- | --- |
-| 1 | **Bộ đo** | Fixture ZH/JA/EN, kiểm tất định, giám khảo LLM so cặp mù, lệnh chạy thí nghiệm, baseline; chốt định nghĩa đoạn | A/A đo được mức nhiễu; baseline có số; định nghĩa đoạn qua V14 | Chưa làm; **chờ fixture** |
+| 1 | **Bộ đo** | Fixture ZH/JA/EN, kiểm tất định, giám khảo LLM so cặp mù, lệnh chạy thí nghiệm, baseline; chốt định nghĩa đoạn | A/A đo được mức nhiễu; baseline có số; định nghĩa đoạn qua V14 | **Đang làm (chạy thử):** có fixture nháp (8 chương, 4 tác phẩm) và baseline T0 của đường MVP (2026-10-03, [kết quả](../research/translation-quality.md#kết-quả-đo-của-mira)) bằng công cụ tạm `scripts/bench/`. Chưa có T1/T3, chưa có change openspec; glossary và xưng hô chờ duyệt |
 | 2 | **Lõi dịch** | Prompt tầng A theo quy ước tiếng Việt, chia lô có trần số đoạn, ID tạm `[n]`, parse khoan dung, `max_tokens` có tính thinking, dịch lại đúng đoạn bị cờ; thay mã dịch MVP | Trên Bộ đo: T0 không xấu đi, T1 không thua baseline; mã MVP trong mặt tiền đã xóa | Chưa làm |
 | 3 | **Thuật ngữ** | Lát 1 của `context-core`: mục thuật ngữ, tầng khớp, chèn tầng C, kiểm tuân thủ; màn Thuật ngữ thật; nhập `Names.txt` | Tuân thủ thuật ngữ tăng rõ so với không glossary; mục chưa duyệt không rời máy | Chưa làm |
 | 4 | **Xưng hô** | Lát 2 của `context-core`: nhân vật, cặp xưng hô có hiệu lực theo chương, tầng B; màn Xưng hô | Số đại từ sai cặp giảm so với không ma trận (V3) | Chưa làm |
@@ -285,9 +285,11 @@ Bảng module 0–9 viết sáng 2026-10-03 (ADR-005) ánh xạ sang thứ tự 
 
 ## Công việc gần nhất
 
-1. **Chủ sản phẩm chọn 4 chương thử** (2 ZH, 1 JA, 1 EN), kèm glossary viết tay 30–50 mục. Quyết định fixture riêng tư để ở đâu (thư mục bị ignore hay repo riêng). Cùng lúc ghi lại các điểm chưa ổn của luồng áp dụng hiện tại, để dùng ở module Đề xuất.
-2. **Viết change openspec cho Bộ đo**, gồm định dạng fixture, T0, T1, lệnh chạy và quy tắc quyết định E6.
-3. **Chạy B0 (A/A) và B1 (baseline)**, ghi số vào trang nghiên cứu.
+*(Cập nhật cuối ngày 2026-10-03.)* Đã xong: fixture nháp ở [`fixtures/`](../../../fixtures/README.md) (5 chương Nhật riêng tư, 3 chương công khai) và lượt B1 baseline chỉ với T0 ([kết quả](../research/translation-quality.md#kết-quả-đo-của-mira)).
+
+1. **Chủ sản phẩm duyệt bảng văn phong của fixture**: 40 chỗ đánh dấu `decision: true` trong glossary và ma trận xưng hô. Khi chưa duyệt, con số "glossary đúng" chưa có nghĩa. Cùng lúc ghi lại các điểm chưa ổn của luồng áp dụng hiện tại, để dùng ở module Đề xuất.
+2. **Thí nghiệm prompt đầu tiên (B2):** đưa quy ước tiếng Việt vào system prompt, chạy lại 5 chương tiếng Nhật, so với B1.
+3. **Viết change openspec cho Bộ đo**: định dạng fixture, T0 thành hàm thuần trong `src/shared/algorithms/`, T1 cần khóa của một hãng khác Gemini, T3, quy tắc quyết định E6. Thay công cụ tạm `scripts/bench/`.
 4. **Viết change cho Lõi dịch.** Khi tới module Thuật ngữ thì tách `context-core` thành hai change Thuật ngữ và Xưng hô.
 
 ## Điều kiện dừng mở rộng

@@ -402,6 +402,67 @@ Dùng chung fixture với các bước kiểm chứng của [ngữ cảnh đợt
 | B7 | Đồng thuận judge–người trên 50–100 cặp; so hai judge với nhau | Ngưỡng tin judge | Bộ đo |
 | B8 | Băng độ dài và ngoại lệ chữ Hán/kana trên bản dịch đã duyệt | Băng thật cho từng cặp ngôn ngữ | Bộ đo, QA |
 
+## Kết quả đo của Mira
+
+Số đo do chính Mira chạy, bằng công cụ tạm [`scripts/bench/`](../../../scripts/bench/) trên [fixture](../../../fixtures/README.md). Bản dịch và báo cáo chi tiết nằm ở `fixtures/private/runs/` (bị ignore vì có văn bản truyện). Mới có **tầng kiểm tất định (T0)**: chưa có giám khảo LLM hay người chấm. Glossary và quy tắc kiểm vẫn là nháp chưa duyệt, nên tỷ lệ "glossary đúng" phản ánh cả lựa chọn văn phong của bảng nháp.
+
+### B1 — baseline đường dịch MVP (2026-10-03)
+
+**Cấu hình:**
+- Gemini 2.5 Flash qua endpoint tương thích OpenAI.
+- Prompt 5 câu của app; không gửi tham số nào, nên model tự bật thinking.
+- Đi đúng đường của app: chuẩn hóa raw, chia câu, `plan` rồi `runBatch` từng lô.
+- 8 chương, 4 tác phẩm, 507 đoạn; mỗi chương dịch 3 lần.
+- Lô lỗi được gửi lại một lần, như khi người dùng bấm "Dịch lại phần lỗi".
+
+**Kết quả** (24 lần dịch):
+
+| Tác phẩm | Đoạn khớp | Câu bị sót | Glossary đúng / chấp nhận được | Kiểu thoại (3 lần) | Đoạn ngoặc lệch |
+| --- | --- | --- | --- | --- | --- |
+| Anh, fantasy (57 đoạn) | 3/3 | 1 | 96% / 97% | Việt, Việt, Việt | 0, 1, 1 |
+| 西遊記 hồi 2 (54 đoạn) | 3/3 | 1 | 81% / 82% | Việt, Việt, Việt | 1, 2, 0 |
+| 孔乙己 (15 đoạn) | 3/3 | 0 | 57% / 60% | Việt, **『』**, Việt | 0, 0, 0 |
+| Nhật, chương 01 (87 đoạn) | 2/3 | 0 | 79% / 87% | Việt, Việt, Việt | 1, 0, 0 |
+| Nhật, chương 02 (69 đoạn) | 2/3 | 0 | 87% / 88% | **「」, 「」, 「」** | 0, 2, 0 |
+| Nhật, chương 03 (99 đoạn) | 1/3 | 0 | 93% / 95% | **«»**, lẫn, Việt | 0, 0, 0 |
+| Nhật, chương 04 (73 đoạn) | 3/3 | 0 | 44% / 47% | **「」, 「」, 「」** | 1, 1, 1 |
+| Nhật, chương 05 (53 đoạn) | 3/3 | 0 | 59% / 74% | Việt, lẫn, **「」** | 0, 0, 0 |
+
+**Quan sát:**
+
+1. **Cấu trúc khá ổn.**
+   - Số đoạn khớp ở 20/24 lần. 4 lần dư một đoạn vì model tự chèn xuống dòng giữa một câu (ví dụ `「Mẹ.` bị tách khỏi phần còn lại của câu thoại). Khi số đoạn lệch, mọi đoạn phía sau không ghép được với nguồn.
+   - Sót 2 câu trên tổng 24 lần, sau khi đã gửi lại một lần.
+   - 2 lần cả lô trả về JSON hỏng (110 câu và 52 câu); gửi lại thì được.
+   - Không có lặp vòng; độ dài bất thường 9/886 đoạn.
+2. **Lỗi lớn nhất là thiếu nhất quán**, giữa các chương và giữa các lần dịch:
+   - **Kiểu thoại:** ít nhất bốn kiểu (`"…"`, `「…」`, `『…』`, `«…»`), đổi theo chương và theo lần chạy. Chương 02 và 04 tiếng Nhật giữ nguyên 「」 ở cả 3 lần. Prompt hiện tại không nói gì về quy ước thoại (G2).
+   - **Tên nhân vật chính bị trôi:** "Irene" ở chương 01–03 thành "Irène" (2 lần) và "Irenne" (1 lần) ở chương 04. Đây là lý do glossary của chương 04 chỉ đạt 44%.
+   - **Cách gọi đổi qua lại:** 母様 khoảng nửa "mẹ", nửa "mẫu thân". 大奥様 lúc thành "phu nhân trưởng", lúc thành "mẹ chồng của phu nhân".
+3. **Xưng hô sai đúng chỗ khó của tiếng Việt.**
+   - おば様 (Loretta gọi Irene, vợ của cậu mình) **chưa lần nào ra "mợ"**: chủ yếu là "cô", có lần "bác" và "dì".
+   - 伯父上 (chồng của chị gái cha) thành "chú".
+
+   Không có ngữ cảnh quan hệ thì model không thể biết đúng các vai vế này.
+4. **Phần lớn chỗ "glossary sai" ở tiếng Trung là lựa chọn văn phong, không phải lỗi.** Model nhất quán viết "Hoa Quả Sơn" và "Thủy Liêm Động" (glossary nháp ghi "núi Hoa Quả", "động Thủy Liêm"), viết "chủ quán" (nháp ghi "ông chủ quán"). Con số chỉ có nghĩa sau khi chủ sản phẩm chốt bảng văn phong.
+5. **Lỗi nghĩa mà kiểm tất định không bắt được** (đọc tay một bản 孔乙己 lần chạy thử):
+   - 坐着用这手慢慢走去了 thành "ngồi dậy dùng đôi tay này từ từ đi mất". Đúng ra Khổng Ất Kỷ cứ ngồi mà chống tay lết đi.
+   - Chơi chữ 窃 và 偷 bị mất ("Trộm sách không thể gọi là trộm").
+   - 多乎哉？不多也 mất chất văn ngôn.
+
+   Đây là việc của tầng giám khảo LLM và người chấm (E3, E5).
+6. **Chi phí:** 208.624 token vào, 567.316 token ra (phần lớn là thinking), 61 phút, trung bình 2,5 phút một chương. Theo giá Gemini 2.5 Flash là khoảng 1,5 USD cho cả lượt.
+
+**Kết luận:** với prompt hiện tại, chỗ hỏng chính là **nhất quán** (tên, cách gọi, xưng hô, kiểu thoại), không phải chất lượng từng câu. Điều này khớp với thứ tự Lõi dịch → Thuật ngữ → Xưng hô của [lộ trình](../delivery/roadmap.md). Hai việc rẻ làm được ngay ở Lõi dịch:
+- đưa quy ước thoại và tên vào prompt (G1–G2);
+- chuẩn hóa xuống dòng trong câu dịch và parse JSON khoan dung hơn (G5).
+
+**Giới hạn của lượt đo:**
+- Một model, mỗi chương 3 lần, chỉ có T0.
+- Hai chương tiếng Trung là văn cổ điển và cận đại, không phải truyện mạng.
+- Ngưỡng băng độ dài là số khởi điểm, chưa hiệu chỉnh.
+- Script không ghi được mã commit vào báo cáo của lượt này. Lượt dịch chạy bằng bản script trước khi tách `score.ts`; các số ở bảng là sau khi chấm lại bằng bộ kiểm đã commit ở `d7954e6`, gồm hai phép kiểm thêm sau lượt chạy (ngoặc lệch, dấu câu nguồn còn sót).
+
 ## Giới hạn
 
 - **Không có bằng chứng nào lấy tiếng Việt làm đích** cho các câu hỏi về prompt, thinking, định dạng hay refine. EN→VI ở WMT25 chỉ có điểm tự động. Không tìm thấy benchmark xưng hô tiếng Việt.

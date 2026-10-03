@@ -167,6 +167,7 @@ Token, font local, component Base UI ([tokens](../../../src/renderer/src/styles/
 - electron-vite; `node:sqlite` và `valibot` là external; bản `--dir` (asar) mở được và tạo dữ liệu.
 - **1103 test** Vitest (đo 2026-10-03, sau change `ai-gateway`; trước đó 867/906) chạy bằng `node scripts/check.mjs` (typecheck hai project, test hai pha, lint, và build với `--build`); một bước không có bằng chứng đã chạy là thất bại. `pnpm test/lint/typecheck` toàn cục có thể in cảnh báo rồi thoát mã 0 mà không chạy gì; xem `AGENTS.md`.
 - `scripts/smoke-sqlite.mjs` kiểm tra `node:sqlite` trong Electron thật.
+- **Đo chất lượng bản dịch (công cụ tạm, 2026-10-03):** [`scripts/bench/`](../../../scripts/bench/) dịch mọi chương ở [`fixtures/`](../../../fixtures/README.md) qua đúng đường dịch MVP của app (`plan`, `runBatch`, gateway thật), rồi chấm bằng kiểm tất định. Chạy bằng config vitest riêng, đọc khóa từ `.env`, nên `check.mjs` không bao giờ gọi nhà cung cấp. Có `rescore.run.ts` để chấm lại bản dịch đã lưu. Có thể thay system prompt bằng một tệp để thử prompt như một biến duy nhất. Kết quả ghi vào `fixtures/private/runs/` (bị ignore). Sẽ được thay bằng module Bộ đo; số đo ở [chất lượng dịch](../research/translation-quality.md#kết-quả-đo-của-mira).
 - Bằng chứng: [electron-builder.yml](../../../electron-builder.yml), [smoke script](../../../scripts/smoke-sqlite.mjs), [check.mjs](../../../scripts/check.mjs).
 - Chưa có: bản NSIS trên máy thử lỗi giải nén `winCodeSign` do thiếu quyền tạo symlink (bật Developer Mode); bản có ký, updater, kiểm thử máy sạch.
 

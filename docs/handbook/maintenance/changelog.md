@@ -1,5 +1,27 @@
 # Nhật ký handbook
 
+## Fixture, công cụ đo tạm và baseline đầu tiên — 2026-10-03
+
+- **Đổi gì:**
+  - Thêm [`fixtures/`](../../../fixtures/README.md). Phần công khai gồm 孔乙己 và 西遊記 hồi 2 (lấy từ Wikisource, phạm vi công cộng) và một đoạn fantasy của WMT24++ có bản tham chiếu tiếng Việt (Apache-2.0). Phần riêng tư ở `fixtures/private/` (bị ignore) gồm 5 chương Nhật do chủ sản phẩm gửi.
+  - Thêm công cụ tạm [`scripts/bench/`](../../../scripts/bench/): dịch fixture qua đúng đường MVP của app rồi chấm bằng kiểm tất định; chấm lại được; thay được system prompt.
+  - Thêm mục "Kết quả đo của Mira" ở [chất lượng dịch](../research/translation-quality.md). Cập nhật lộ trình (module Bộ đo đang làm), hiện trạng và câu hỏi mở về fixture.
+  - Commit `4ff6fd5` (fixture) và `d7954e6` (công cụ).
+- **Kết quả B1:** Gemini 2.5 Flash, prompt 5 câu, 8 chương × 3 lần.
+  - Cấu trúc khá ổn: số đoạn khớp 20/24, sót 2 câu, 2 lô JSON hỏng (gửi lại được).
+  - Lỗi chính là **thiếu nhất quán**: ít nhất 4 kiểu trình bày thoại; tên nhân vật chính trôi từ "Irene" sang "Irène"/"Irenne"; 母様 lúc "mẹ" lúc "mẫu thân"; おば様 chưa lần nào ra "mợ".
+  - 567 nghìn token ra cho 209 nghìn token vào (phần lớn là thinking), khoảng 1,5 USD.
+- **Lỗi thật tìm thấy trong công cụ của chính tôi:**
+  - Script lấy chữ từ Wikisource bỏ mất đoạn đầu của 孔乙己, vì dòng tiêu đề trang nằm chung khối với đoạn đầu.
+  - Quy tắc "1919" quá chặt, không nhận "một ngàn chín trăm mười chín".
+  - Phép kiểm "sót chữ nguồn" bỏ lọt 「」, nên phải thêm phép kiểm dấu câu nguồn.
+
+  Cả ba đã sửa. Hai cái đầu bị bộ kiểm chéo fixture và lần chạy thử bắt được.
+- **Chưa làm / chưa kiểm:**
+  - Chưa có giám khảo LLM và người chấm.
+  - Glossary và xưng hô của fixture chưa được chủ sản phẩm duyệt.
+  - Chưa có truyện mạng tiếng Trung hiện đại trong fixture.
+
 ## Đổi thứ tự lộ trình: chất lượng dịch trước luồng ghi; nghiên cứu chất lượng dịch — 2026-10-03
 
 - **Quyết định (chủ sản phẩm, qua trao đổi):** cải thiện khả năng dịch trước khi làm kỹ luồng áp dụng đề xuất. Đo trước khi cải tiến; thuật ngữ trước xưng hô; bộ đệm prompt là phép đo, không phải tính năng riêng. Ghi ở [quyết định hiện hành](../product/decisions.md), dòng "Cách làm". Cách chia module là đề xuất, chốt từng module khi viết change.
