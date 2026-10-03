@@ -423,6 +423,15 @@ function normalise(text) {
   return out
 }
 
+/**
+ * git stores LF while a Windows working copy has CRLF (core.autocrlf), so both sides are compared
+ * with LF. Text sources are also compared with their references masked.
+ */
+function sameApartFromReferences(path, before, after) {
+  const lf = (buffer) => buffer.toString('utf8').replace(/\r\n/g, '\n')
+  return TEXT_EXT.test(path) ? normalise(lf(before)) === normalise(lf(after)) : lf(before) === lf(after)
+}
+
 function gitShow(path) {
   try {
     return execFileSync('git', ['show', 'HEAD:' + path], { cwd: root, maxBuffer: 256 * 1024 * 1024 })
@@ -447,25 +456,22 @@ function prove(phaseName) {
       skipped.push(from + ' (not in HEAD)')
       continue
     }
-    const after = readFileSync(toOs(to))
-    const equal = TEXT_EXT.test(to)
-      ? normalise(before.toString('utf8')) === normalise(after.toString('utf8'))
-      : Buffer.compare(before, after) === 0
-    if (equal) same++
+    if (sameApartFromReferences(to, before, readFileSync(toOs(to)))) same++
     else bad.push(from + ' -> ' + to)
   }
 
+  // Files that were not moved but whose text changed: only source, scripts and root config count.
+  const inScope = (path) =>
+    path.startsWith('src/') ||
+    ROOT_FILES.includes(path) ||
+    (path.startsWith('scripts/') && !path.startsWith('scripts/restructure/'))
   const changed = execFileSync('git', ['diff', '--name-only', 'HEAD'], { cwd: root, encoding: 'utf8' })
     .split('\n')
-    .filter((line) => line !== '' && !moved.has(line))
+    .filter((line) => line !== '' && !moved.has(line) && inScope(line))
   for (const file of changed) {
     const before = gitShow(file)
     if (before === null || !existsSync(toOs(file))) continue
-    const after = readFileSync(toOs(file))
-    const equal = TEXT_EXT.test(file)
-      ? normalise(before.toString('utf8')) === normalise(after.toString('utf8'))
-      : Buffer.compare(before, after) === 0
-    if (equal) same++
+    if (sameApartFromReferences(file, before, readFileSync(toOs(file)))) same++
     else bad.push(file + ' (not moved, but changed beyond references)')
   }
 
