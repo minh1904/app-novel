@@ -1,5 +1,9 @@
 import { useState, type JSX, type ReactNode } from 'react'
-import { DESCRIPTION_MAX, TITLE_MAX, type SourceLanguage } from '../../../../shared/contracts/library'
+import {
+  DESCRIPTION_MAX,
+  TITLE_MAX,
+  type SourceLanguage
+} from '../../../../shared/contracts/library'
 import type { Result } from '../../../../shared/contracts/result'
 import { Button } from '../../components/Button'
 import { Select } from '../../components/Select'

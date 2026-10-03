@@ -1,4 +1,8 @@
-import { IMAGE_ACCEPTED_MIMES, IMAGE_MAX_BYTES, type ImageMime } from '../../../shared/contracts/images'
+import {
+  IMAGE_ACCEPTED_MIMES,
+  IMAGE_MAX_BYTES,
+  type ImageMime
+} from '../../../shared/contracts/images'
 import { StorageError } from './errors'
 
 export interface StoredImage {
