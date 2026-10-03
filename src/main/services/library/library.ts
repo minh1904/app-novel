@@ -22,7 +22,13 @@ import type { SegmentInput, TextRecord, TextSide } from '../../../shared/text'
 import type { RowSaved } from '../../../shared/rows'
 import { createLink, getProvenance, listLinks, setProvenance } from '../../infra/storage/linkFile'
 import type { LinkInput, LinkRecord, ProvenanceRecord } from '../../infra/storage/linkFile'
-import { autoPair, reviewRow, saveRow, type RowAuthor, type RowRef } from '../../infra/storage/sentenceRows'
+import {
+  autoPair,
+  reviewRow,
+  saveRow,
+  type RowAuthor,
+  type RowRef
+} from '../../infra/storage/sentenceRows'
 import { readText, saveText } from '../../infra/storage/textFile'
 import { exportToFile, verifyWorkFile } from '../../infra/storage/backupFile'
 import { decodeCover, encodeCover } from '../../infra/storage/cover'

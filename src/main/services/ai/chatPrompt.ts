@@ -1,4 +1,9 @@
-import { FENCE, type ChatContextBlock, type ChatMode, type ChatSendInput } from '../../../shared/aiChat'
+import {
+  FENCE,
+  type ChatContextBlock,
+  type ChatMode,
+  type ChatSendInput
+} from '../../../shared/aiChat'
 import type { ChatMessage } from '../../infra/providers/openAiCompatible'
 
 /**

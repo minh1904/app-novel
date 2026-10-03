@@ -4,7 +4,11 @@ import { createTempDirs } from '../../testing/testing'
 import { MOCK_MODEL, MockProvider, mockTranslation } from '../../infra/providers/mockProvider'
 import { provenanceFor } from './provenance'
 import { reconcile } from '../../infra/providers/reconcile'
-import { ProviderError, type TranslateRequest, type TranslateResponse } from '../../infra/providers/types'
+import {
+  ProviderError,
+  type TranslateRequest,
+  type TranslateResponse
+} from '../../infra/providers/types'
 
 const request: TranslateRequest = {
   sourceLang: 'zh-Hans',
