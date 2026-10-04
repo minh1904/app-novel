@@ -1,5 +1,6 @@
 {
-  "status": "draft",
+  "status": "approved",
+  "approved": "2026-10-04: chủ sản phẩm chọn phương án (a) cho mọi mục decision (bảng 43 mục trong hội thoại). Mục không có decision giữ như bản soạn, chưa duyệt từng dòng.",
   "note": "Xưng hô nháp, soạn 2026-10-04. Nhóm bạn đồng nghiệp hiện đại (có xe tải, đi làm) trong thế giới fantasy; bản tham chiếu dùng 'tôi – cậu' giữa họ. Tránh xưng hô cổ phong.",
   "narration": [
     { "chapters": ["01"], "pov": "ngôi thứ ba", "self": null, "thirdPerson": { "Thassalin": "cậu ta", "Kayel": "cậu ta", "Tenuk": "cậu ta", "Nyssi": "cô", "Retvik": "cậu ta" }, "note": "Bản tham chiếu gọi Thassalin lúc 'nó' (đoạn 7) lúc 'cậu ta' (đoạn 35, 51): không nhất quán. Chọn một.", "decision": true }

@@ -1,5 +1,6 @@
 {
-  "status": "draft",
+  "status": "approved",
+  "approved": "2026-10-04: chủ sản phẩm chọn phương án (a) cho mọi mục decision (bảng 43 mục trong hội thoại). Mục không có decision giữ như bản soạn, chưa duyệt từng dòng.",
   "note": "Nháp do Claude soạn ngày 2026-10-04 cho đoạn truyện fantasy 'fight above the trees' (WMT24++). Tên riêng và tên loài tự đặt giữ nguyên chữ. Trường 'decision' là lựa chọn văn phong.",
   "entries": [
     { "src": "Thassalin", "tgt": "Thassalin", "type": "person", "note": "Rồng Thraki khổng lồ màu hồng; nói bằng chữ in hoa." },

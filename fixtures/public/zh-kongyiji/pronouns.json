@@ -1,5 +1,6 @@
 {
-  "status": "draft",
+  "status": "approved",
+  "approved": "2026-10-04: chủ sản phẩm chọn phương án (a) cho mọi mục decision (bảng 43 mục trong hội thoại). Mục không có decision giữ như bản soạn, chưa duyệt từng dòng.",
   "note": "Xưng hô nháp cho 《孔乙己》, soạn 2026-10-04. Bối cảnh: quán rượu ở thị trấn Trung Hoa đầu thế kỷ 20; người kể là cậu bé 12 tuổi làm trong quán, kể lại sau hơn hai mươi năm.",
   "narration": [
     { "chapters": ["01"], "pov": "người làm trong quán (lúc kể đã lớn)", "self": "tôi" }

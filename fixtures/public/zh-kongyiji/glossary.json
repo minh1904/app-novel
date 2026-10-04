@@ -1,14 +1,15 @@
 {
-  "status": "draft",
+  "status": "approved",
+  "approved": "2026-10-04: chủ sản phẩm chọn phương án (a) cho mọi mục decision (bảng 43 mục trong hội thoại). Mục không có decision giữ như bản soạn, chưa duyệt từng dòng.",
   "note": "Nháp do Claude soạn ngày 2026-10-04 cho 《孔乙己》 (Lỗ Tấn, 1919). Tên riêng đọc Hán-Việt. Trường 'decision' là lựa chọn văn phong, cần chủ sản phẩm chốt.",
   "entries": [
     { "src": "孔乙己", "tgt": "Khổng Ất Kỷ", "type": "person" },
     { "src": "上大人孔乙己", "tgt": "Thượng đại nhân Khổng Ất Kỷ", "type": "term", "note": "Câu trên giấy tập tô chữ, nguồn gốc biệt danh. Khớp dài trước 孔乙己." },
-    { "src": "鲁镇", "tgt": "Lỗ trấn", "type": "place" },
+    { "src": "鲁镇", "tgt": "Lỗ trấn", "type": "place", "alternatives": ["trấn Lỗ"], "decision": true },
     { "src": "咸亨酒店", "tgt": "quán rượu Hàm Hanh", "type": "place" },
     { "src": "丁举人", "tgt": "cử nhân Đinh", "type": "person", "alternatives": ["ông cử Đinh"], "decision": true },
     { "src": "何家", "tgt": "nhà họ Hà", "type": "place" },
-    { "src": "掌柜", "tgt": "ông chủ quán", "type": "address", "alternatives": ["chưởng quỹ"], "decision": true },
+    { "src": "掌柜", "tgt": "ông chủ quán", "type": "address", "alternatives": ["chưởng quỹ", "chủ quán"], "decision": true },
     { "src": "伙计", "tgt": "người làm", "type": "term", "alternatives": ["chú hầu bàn", "tiểu nhị"], "decision": true },
     { "src": "长衫", "tgt": "áo dài", "type": "term", "alternatives": ["áo trường sam"], "note": "Áo dài kiểu Trung Hoa, dấu hiệu tầng lớp có học; đối lập với 短衣帮.", "decision": true },
     { "src": "短衣帮", "tgt": "bọn áo ngắn", "type": "term" },

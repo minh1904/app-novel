@@ -3,7 +3,8 @@
 Bộ chương mẫu dùng để đo chất lượng bản dịch: module **Bộ đo** ở [lộ trình](../docs/handbook/delivery/roadmap.md), định dạng theo E1 của [nghiên cứu chất lượng dịch](../docs/handbook/research/translation-quality.md).
 
 **Trạng thái:** nháp, dựng ngày 2026-10-03 và 2026-10-04.
-- Glossary, ma trận xưng hô và quy tắc kiểm do Claude soạn, **chưa được chủ sản phẩm duyệt**.
+- Glossary và ma trận xưng hô do Claude soạn. Ngày 2026-10-04 chủ sản phẩm chọn phương án (a) cho cả 43 lựa chọn văn phong (`decision: true`). Các mục còn lại giữ như bản soạn, chưa duyệt từng dòng.
+- Quy tắc kiểm viết tay (`assertions.json`) vẫn là nháp.
 - Định dạng tệp sẽ chốt trong change openspec của Bộ đo và có thể đổi.
 
 ## Hai thư mục

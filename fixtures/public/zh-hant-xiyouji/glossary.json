@@ -1,5 +1,6 @@
 {
-  "status": "draft",
+  "status": "approved",
+  "approved": "2026-10-04: chủ sản phẩm chọn phương án (a) cho mọi mục decision (bảng 43 mục trong hội thoại). Mục không có decision giữ như bản soạn, chưa duyệt từng dòng.",
   "note": "Nháp do Claude soạn ngày 2026-10-04 cho 《西遊記》 hồi 2 (Ngô Thừa Ân, chữ phồn thể). Tên và thuật ngữ đạo dùng âm Hán-Việt quen với độc giả Việt. Trường 'decision' là lựa chọn văn phong.",
   "entries": [
     { "src": "孫悟空", "tgt": "Tôn Ngộ Không", "type": "person", "aliases": [{ "src": "悟空", "tgt": "Ngộ Không" }] },
@@ -9,8 +10,8 @@
     { "src": "祖師", "tgt": "Tổ sư", "type": "title", "note": "Tu Bồ Đề Tổ sư; trong hồi này chỉ gọi 祖師, một lần 菩提." },
     { "src": "菩提", "tgt": "Bồ Đề", "type": "person" },
     { "src": "三星仙洞", "tgt": "động Tam Tinh", "type": "place", "aliases": [{ "src": "三星洞", "tgt": "động Tam Tinh" }] },
-    { "src": "花果山", "tgt": "núi Hoa Quả", "type": "place" },
-    { "src": "水簾洞", "tgt": "động Thủy Liêm", "type": "place" },
+    { "src": "花果山", "tgt": "núi Hoa Quả", "type": "place", "alternatives": ["Hoa Quả Sơn"], "decision": true },
+    { "src": "水簾洞", "tgt": "động Thủy Liêm", "type": "place", "alternatives": ["Thủy Liêm Động"], "decision": true },
     { "src": "東勝神洲", "tgt": "Đông Thắng Thần Châu", "type": "place", "aliases": [{ "src": "東勝", "tgt": "Đông Thắng" }] },
     { "src": "傲來國", "tgt": "nước Ngạo Lai", "type": "place" },
     { "src": "西牛賀洲", "tgt": "Tây Ngưu Hạ Châu", "type": "place" },
