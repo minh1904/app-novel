@@ -1,11 +1,15 @@
 # Fixture cho Bộ đo
 
-Bộ chương mẫu dùng để đo chất lượng bản dịch: module **Bộ đo** ở [lộ trình](../docs/handbook/delivery/roadmap.md), định dạng theo E1 của [nghiên cứu chất lượng dịch](../docs/handbook/research/translation-quality.md).
+Bộ chương mẫu dùng làm đầu vào và oracle cho module **Bộ đo**. README này chỉ là danh mục dữ liệu;
+contract, cách chạy và cách diễn giải nằm ở:
 
-**Trạng thái:** nháp, dựng ngày 2026-10-03 và 2026-10-04.
-- Glossary và ma trận xưng hô do Claude soạn. Ngày 2026-10-04 chủ sản phẩm chọn phương án (a) cho cả 43 lựa chọn văn phong (`decision: true`). Các mục còn lại giữ như bản soạn, chưa duyệt từng dòng.
-- Quy tắc kiểm viết tay (`assertions.json`) vẫn là nháp.
-- Định dạng tệp sẽ chốt trong change openspec của Bộ đo và có thể đổi.
+- [Fixture và oracle](../docs/modules/measurement/fixtures.md)
+- [Chạy thí nghiệm](../docs/modules/measurement/running-experiments.md)
+- [Metric và judge](../docs/modules/measurement/metrics-and-judging.md)
+
+Schema được kiểm bằng `src/shared/contracts/fixture.ts` và
+`src/shared/algorithms/fixtureCheck.ts`. Trạng thái `draft/reviewed/approved` trong từng tệp là trạng
+thái oracle; việc qua schema không có nghĩa nội dung đã được người dịch xác minh.
 
 ## Hai thư mục
 
