@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** Raise this when tests are removed on purpose; it must never drop by accident. */
-const BASELINE_TESTS = 1453
+const BASELINE_TESTS = 1523
 
 /** Matched by file name, not by path, so the list survives files being moved. */
 const TIMING_SENSITIVE = [
@@ -226,6 +226,7 @@ function main() {
 
   outcomes.push(typecheck('node'))
   outcomes.push(typecheck('web'))
+  outcomes.push(typecheck('scripts'))
 
   // Exact base name, not a suffix: `segmenter.test.ts` must not also catch `resegmenter.test.ts`, or
   // that file would run in both phases and be counted twice.

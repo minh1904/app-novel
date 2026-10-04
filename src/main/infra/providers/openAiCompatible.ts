@@ -21,6 +21,10 @@ import {
   type TranslateResponse,
   type TranslationProvider
 } from './types'
+import type {
+  ModelCompletionResult,
+  TranslationModelCaller
+} from '../../../shared/contracts/translateCore'
 import { addUsage, type Usage } from './usage'
 
 /**
@@ -165,7 +169,7 @@ export function parseItems(content: string): SegmentText[] {
   return items
 }
 
-export class OpenAiCompatibleProvider implements TranslationProvider {
+export class OpenAiCompatibleProvider implements TranslationProvider, TranslationModelCaller {
   readonly id = 'openai-compatible'
   private readonly now: () => number
   private readonly transport: OpenAiChatTransport
@@ -360,30 +364,47 @@ export class OpenAiCompatibleProvider implements TranslationProvider {
     return { ms: this.now() - startedAt, usage: result.usage }
   }
 
-  /** Một lần gọi tới nhà cung cấp, qua gateway. */
-  private async callOnce(
-    segments: SegmentText[],
-    signal?: AbortSignal
-  ): Promise<{ items: SegmentText[]; usage: Usage | null }> {
-    // `ok` được báo ngay khi có phản hồi, trước khi parse, nên một phản hồi hỏng định dạng không bị tính là
-    // lỗi của khóa: `parseItems` chạy ngoài gateway.
+  /**
+   * Gọi mô hình sinh văn bản (không phân tích cú pháp hay đối soát ID).
+   */
+  async complete(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    options?: { signal?: AbortSignal }
+  ): Promise<ModelCompletionResult> {
     const result = await this.gateway.call(
       (lease) =>
         this.transport.complete(
           {
             model: this.options.model,
-            messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
-              {
-                role: 'user',
-                content: JSON.stringify(segments.map((s) => ({ id: s.id, src: s.text })))
-              }
-            ],
+            messages,
             ...this.options.generation
           },
-          { apiKey: lease.secret, signal }
+          { apiKey: lease.secret, signal: options?.signal }
         ),
-      signal
+      options?.signal
+    )
+    return {
+      text: result.text,
+      usage: result.usage,
+      finishReason: result.finishReason,
+      status: result.status
+    }
+  }
+
+  /** Một lần gọi tới nhà cung cấp, qua gateway. */
+  private async callOnce(
+    segments: SegmentText[],
+    signal?: AbortSignal
+  ): Promise<{ items: SegmentText[]; usage: Usage | null }> {
+    const result = await this.complete(
+      [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: JSON.stringify(segments.map((s) => ({ id: s.id, src: s.text })))
+        }
+      ],
+      { signal }
     )
     // Một phản hồi bị cắt vì hết giới hạn đầu ra gần như chắc chắn là JSON dở. Nói đúng nguyên nhân thay
     // vì để `parseItems` báo "không phải JSON hợp lệ", để người dùng biết lô quá lớn chứ không phải model hỏng.

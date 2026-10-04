@@ -35,7 +35,7 @@ Trước khi gửi bất cứ gì, hệ thống SHALL hiển thị model sẽ d�
 
 ### Requirement: Chạy theo đoạn, có tiến độ và hủy
 
-Việc dịch một chương SHALL được chia thành nhiều lô gửi liên tiếp, cắt ở ranh giới đoạn. Trong lúc chạy, hệ thống SHALL hiển thị tiến độ theo số segment đã xong trên tổng số, và SHALL cho hủy ở bất kỳ lúc nào. Khi hủy, mọi segment đã qua kiểm tra trước đó SHALL được giữ, và hệ thống SHALL nói rõ đã lưu bao nhiêu.
+Việc dịch một chương SHALL được chia thành các lô gửi liên tiếp qua lõi dịch, cắt ở ranh giới đoạn hoặc câu an toàn. Trong lúc chạy, hệ thống SHALL hiển thị tiến độ theo số segment đã xong trên tổng số, và SHALL cho hủy ở bất kỳ lúc nào. Khi hủy, mọi segment đã qua kiểm tra trước đó SHALL được giữ, và hệ thống SHALL nói rõ đã lưu bao nhiêu.
 
 #### Scenario: Tiến độ theo segment
 - **WHEN** việc dịch đang chạy
@@ -67,7 +67,7 @@ Bản dịch do AI tạo SHALL được ghi vào bản dịch của chương the
 
 ### Requirement: Một phần lỗi không làm hỏng cả chương
 
-Khi một số lô hoặc một số segment không dịch được sau khi đã thử lại, hệ thống SHALL giữ toàn bộ phần đã thành công, SHALL liệt kê phần lỗi kèm lý do đã phân loại, và SHALL cho chạy lại riêng phần lỗi.
+Khi một số lô hoặc một số segment không dịch được sau khi đã qua xử lý sửa lỗi của lõi dịch, hệ thống SHALL giữ toàn bộ phần đã thành công, SHALL liệt kê phần lỗi kèm lý do đã phân loại từ lõi dịch, và SHALL cho chạy lại riêng phần lỗi.
 
 #### Scenario: Một lô lỗi, phần còn lại xong
 - **WHEN** một lô thất bại sau khi đã thử lại tới trần
