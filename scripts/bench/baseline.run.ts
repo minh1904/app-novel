@@ -63,7 +63,17 @@ const PROMPT =
   PROMPT_FILE === ''
     ? null
     : readFileSync(join(ROOT, PROMPT_FILE), 'utf8').replace(/\r\n?/g, '\n').trim()
-const LABEL = env('MIRA_BENCH_LABEL', PROMPT_FILE === '' ? 'baseline' : 'prompt')
+/**
+ * Thí nghiệm mức suy luận: đặt `thinking` của mục model như người dùng làm ở màn Cài đặt (`off` gửi đi thành
+ * `reasoning_effort: "none"`). Trống là không đặt gì, như mục mặc định.
+ */
+const THINKING = env('MIRA_BENCH_THINKING')
+const LABEL = env(
+  'MIRA_BENCH_LABEL',
+  [PROMPT_FILE === '' ? '' : 'prompt', THINKING === '' ? '' : `thinking-${THINKING}`]
+    .filter(Boolean)
+    .join('-') || 'baseline'
+)
 
 const crypto: SecretCrypto = {
   isEncryptionAvailable: () => true,
@@ -128,6 +138,7 @@ describe.skipIf(KEY === '')(`Bộ đo — baseline đường dịch MVP (${MODEL
           repeats: REPEATS,
           rpm: RPM,
           promptFile: PROMPT_FILE || null,
+          thinking: THINKING || null,
           systemPrompt: PROMPT ?? SYSTEM_PROMPT
         },
         null,
@@ -135,17 +146,22 @@ describe.skipIf(KEY === '')(`Bộ đo — baseline đường dịch MVP (${MODEL
       )
     )
     let replaced = 0
+    // Tham số của yêu cầu dịch đầu tiên (trừ messages): bằng chứng cái gì thật sự đã được gửi đi.
+    let sentParams: Record<string, unknown> | null = null
 
     const dataDir = mkdtempSync(join(tmpdir(), 'mira-bench-'))
     const library = LibraryStore.open({ dataDir })
     const http: number[] = []
     const counting = (async (input: RequestInfo | URL, init?: RequestInit) => {
-      if (PROMPT !== null && typeof init?.body === 'string') {
+      if (typeof init?.body === 'string') {
         const body = JSON.parse(init.body) as {
           messages?: Array<{ role: string; content: unknown }>
         }
         const system = body.messages?.[0]
-        if (system?.role === 'system' && system.content === SYSTEM_PROMPT) {
+        if (sentParams === null && system?.role === 'system') {
+          sentParams = Object.fromEntries(Object.entries(body).filter(([k]) => k !== 'messages'))
+        }
+        if (PROMPT !== null && system?.role === 'system' && system.content === SYSTEM_PROMPT) {
           system.content = PROMPT
           replaced++
           init = { ...init, body: JSON.stringify(body) }
@@ -166,7 +182,9 @@ describe.skipIf(KEY === '')(`Bộ đo — baseline đường dịch MVP (${MODEL
       { model: MODEL, name: 'baseline' }
     ]).models[0]!.id
     // RPM chỉ giãn nhịp gửi, không vào settingsKey và không đổi nội dung yêu cầu.
-    services.connections.updateEntry(entryId, { settings: { rpmLimit: RPM } })
+    services.connections.updateEntry(entryId, {
+      settings: THINKING === '' ? { rpmLimit: RPM } : { rpmLimit: RPM, thinking: THINKING }
+    })
 
     const summary: Array<Record<string, unknown>> = []
     try {
@@ -273,6 +291,7 @@ describe.skipIf(KEY === '')(`Bộ đo — baseline đường dịch MVP (${MODEL
           commit,
           repeats: REPEATS,
           promptReplaced: replaced,
+          sentParams,
           httpStatuses: http,
           summary
         },
