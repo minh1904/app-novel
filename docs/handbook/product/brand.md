@@ -25,6 +25,10 @@ Chủ sản phẩm chọn [ảnh mẫu gốc](../../../assets/mascot/00-approved
 
 ## Ảnh hưởng kỹ thuật
 
+### Video motion tham khảo — 2026-10-04
+
+Sau phản hồi bản motion 60 giây chưa hấp dẫn, chủ sản phẩm yêu cầu video ngắn theo nhịp một video Revid, với hình ảnh, lời và cấu trúc mới. Đã dựng [bản 2 dài 15 giây](../../../assets/motion/v2/README.md), 1080p60: chữ lớn, đa ngôn ngữ hội tụ, dịch, chat AI chỉnh đoạn, ngữ cảnh và giọng văn của người dùng. Có nhạc tổng hợp riêng, dùng chân dung linh vật đã chốt; chưa có voice-over hoặc animation tách lớp. Palette đen/ngà/tím chỉ áp dụng cho video. Đây là giao diện mô phỏng tầm nhìn, chưa nghiệm thu video hoặc xác nhận tính năng đã triển khai.
+
 Đổi package name có thể đổi thư mục `userData` mặc định của Electron; app ID ảnh hưởng định danh bản cài. Repo chưa có kho bản dịch bền vững nên lần đổi này **không triển khai migration dữ liệu hoặc nâng cấp installer cũ**. Nếu có máy đã cài bản thử tên cũ, kiểm tra profile và quy trình nâng cấp trước phát hành; không tự xóa thư mục cũ. Xem [ADR-001](../decisions/0001-mira-brand.md).
 
 Logo/wordmark, tagline, domain và tên store còn mở. Chưa kiểm tra khả dụng thương mại của tên Mira; đây là đầu việc phát hành riêng.
