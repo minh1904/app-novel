@@ -3,6 +3,7 @@ import { SecretStore } from '../infra/storage/secretStore'
 import { ChapterTranslator } from './ai/chapterTranslation'
 import { ChatService } from './ai/chatService'
 import { ConnectionService } from './ai/connectionService'
+import { GlossaryService } from './context/glossaryService'
 import type { LibraryStore } from './library/library'
 
 /** The AI services of the app, built over one library and one way of protecting keys. */
@@ -10,6 +11,7 @@ export interface Services {
   connections: ConnectionService
   translator: ChapterTranslator
   chat: ChatService
+  glossary: GlossaryService
 }
 
 /**
@@ -50,5 +52,6 @@ export function createServices({
     newId: () => library.newAppId(),
     now: () => library.appNow()
   })
-  return { connections, translator, chat }
+  const glossary = new GlossaryService(library, () => library.appNow())
+  return { connections, translator, chat, glossary }
 }

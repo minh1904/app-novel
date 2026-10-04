@@ -3,6 +3,7 @@ import { StorageError } from '../../infra/storage/errors'
 import type { ChapterTranslator } from '../../services/ai/chapterTranslation'
 import type { ChatService } from '../../services/ai/chatService'
 import type { ConnectionService } from '../../services/ai/connectionService'
+import { GlossaryService } from '../../services/context/glossaryService'
 import type { LibraryStore } from '../../services/library/library'
 import type { RawHandler } from '../handler'
 import type { FilePicker } from '../filePicker'
@@ -14,6 +15,7 @@ export interface HandlerDeps {
   connections?: ConnectionService
   translator?: ChapterTranslator
   chat?: ChatService
+  glossary?: GlossaryService
 }
 
 /**
@@ -44,3 +46,8 @@ export function translatorOf(deps: HandlerDeps): ChapterTranslator {
 export function chatOf(deps: HandlerDeps): ChatService {
   return deps.chat ?? unavailable()
 }
+
+export function glossaryOf(deps: HandlerDeps): GlossaryService {
+  return deps.glossary ?? new GlossaryService(deps.library)
+}
+

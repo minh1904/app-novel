@@ -21,7 +21,7 @@ export const contextArea: WorkArea = {
   id: MOCK_FEATURES.contextArea.id,
   label: MOCK_FEATURES.contextArea.label,
   soon: true,
-  render: () => <ContextAreaMock />
+  render: (props) => <ContextAreaMock workId={props.workId} />
 }
 
 export const sourcesArea: WorkArea = {

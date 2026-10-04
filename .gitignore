@@ -13,3 +13,4 @@ coverage/
 .eslintcache
 # Raw truyện có bản quyền dùng cho Bộ đo; không bao giờ vào repo.
 fixtures/private/
+.vscode/

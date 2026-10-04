@@ -21,6 +21,14 @@ import type { RowSaved } from './rows'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from './library'
 import type { Result } from './result'
 import type { SegmentInput, TextRecord, TextSide } from './text'
+import type {
+  ContextEntryItem,
+  ContextKind,
+  ContextOrigin,
+  ContextStatus,
+  GlossaryComplianceReport,
+  ImportNamesResult
+} from './glossary'
 
 export interface AppInfo {
   name: string
@@ -176,6 +184,51 @@ export interface AiApi {
   chat: AiChatApi
 }
 
+export interface GlossaryApi {
+  list(options: {
+    workId: string
+    kind?: ContextKind
+    status?: ContextStatus
+    query?: string
+    chapterId?: string
+  }): Promise<Result<{ entries: ContextEntryItem[] }>>
+  get(options: { workId: string; entryId: string }): Promise<Result<ContextEntryItem>>
+  create(input: {
+    workId: string
+    kind?: ContextKind
+    source: string
+    target: string
+    status?: ContextStatus
+    origin?: ContextOrigin
+    forbidden?: boolean
+    fromChapterId?: string | null
+    toChapterId?: string | null
+    notes?: string | null
+    aliases?: string[]
+  }): Promise<Result<ContextEntryItem>>
+  update(input: {
+    workId: string
+    entryId: string
+    source?: string
+    target?: string
+    status?: ContextStatus
+    origin?: ContextOrigin
+    forbidden?: boolean
+    fromChapterId?: string | null
+    toChapterId?: string | null
+    notes?: string | null
+    aliases?: string[]
+  }): Promise<Result<ContextEntryItem>>
+  delete(options: { workId: string; entryId: string }): Promise<Result<void>>
+  importNames(input: { workId: string; content: string }): Promise<Result<ImportNamesResult>>
+  checkCompliance(input: {
+    workId: string
+    chapterId: string
+    sourceText: string
+    targetText: string
+  }): Promise<Result<GlossaryComplianceReport>>
+}
+
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
   /**
@@ -190,4 +243,6 @@ export interface DesktopApi {
   images: ImagesApi
   backup: BackupApi
   ai: AiApi
+  glossary: GlossaryApi
 }
+

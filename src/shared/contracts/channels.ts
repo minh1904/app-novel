@@ -39,7 +39,14 @@ export const CHANNELS = {
   aiTranslatePlan: 'ai:translate:plan',
   aiTranslateBatch: 'ai:translate:batch',
   aiChatSend: 'ai:chat:send',
-  aiChatCancel: 'ai:chat:cancel'
+  aiChatCancel: 'ai:chat:cancel',
+  glossaryList: 'glossary:list',
+  glossaryGet: 'glossary:get',
+  glossaryCreate: 'glossary:create',
+  glossaryUpdate: 'glossary:update',
+  glossaryDelete: 'glossary:delete',
+  glossaryImportNames: 'glossary:importNames',
+  glossaryCheckCompliance: 'glossary:checkCompliance'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

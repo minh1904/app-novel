@@ -140,6 +140,38 @@ CREATE TABLE image (
 );
 `
 
+/**
+ * Story context entries (glossary terms, characters, dyads, world-building, styles, summaries)
+ * and their aliases. For Module 3 (glossary), `kind = 'term'` is utilized.
+ */
+const version6 = `
+CREATE TABLE context_entry (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('term', 'character', 'dyad', 'world', 'style', 'summary')),
+  source TEXT NOT NULL,
+  target TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'approved' CHECK (status IN ('approved', 'pending', 'rejected')),
+  origin TEXT NOT NULL DEFAULT 'user' CHECK (origin IN ('user', 'ai', 'import')),
+  forbidden INTEGER NOT NULL DEFAULT 0 CHECK (forbidden IN (0, 1)),
+  from_chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  to_chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  notes TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX context_entry_kind ON context_entry (kind);
+CREATE INDEX context_entry_source ON context_entry (source);
+
+CREATE TABLE context_alias (
+  id TEXT PRIMARY KEY,
+  entry_id TEXT NOT NULL REFERENCES context_entry (id) ON DELETE CASCADE,
+  form TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  UNIQUE (form)
+);
+CREATE INDEX context_alias_entry ON context_alias (entry_id);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -173,6 +205,13 @@ export const workSchema: SchemaSpec = {
       up(db) {
         db.exec(version5)
       }
+    },
+    {
+      version: 6,
+      up(db) {
+        db.exec(version6)
+      }
     }
   ]
 }
+

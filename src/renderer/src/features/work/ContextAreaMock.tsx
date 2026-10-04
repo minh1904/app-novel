@@ -6,6 +6,7 @@ import { UsersGroupRoundedIcon } from '@solar-icons/react/linear/users-group-rou
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import { TabsList, TabsPanel, TabsRoot, TabsTab } from '../../components/Tabs'
+import { GlossaryScreen } from '../glossary/GlossaryScreen'
 import { SOON_LABEL } from './mockFeatures'
 
 /** Fixed sample data: what the Context area would hold, not anything read from this work. */
@@ -59,7 +60,7 @@ const TERMS: TermRow[] = [
  * terminology and style voice. No data is read or written; every control is disabled. See
  * delivery/backlog.md, `context-area`.
  */
-export function ContextAreaMock(): JSX.Element {
+export function ContextAreaMock({ workId }: { workId?: string } = {}): JSX.Element {
   return (
     <section
       aria-labelledby="context-heading"
@@ -68,37 +69,40 @@ export function ContextAreaMock(): JSX.Element {
       <div className="flex flex-col gap-1">
         <h2 id="context-heading" className="flex items-center gap-2 text-[15px] font-semibold">
           Ngữ cảnh dịch
-          <span className="rounded-[5px] bg-selected px-1.5 py-px text-[11px] font-normal text-ink-muted">
-            {SOON_LABEL}
-          </span>
         </h2>
         <p className="max-w-[60ch] text-xs leading-[1.6] text-ink-muted">
-          Những quy ước giúp AI dịch nhất quán trong cả tác phẩm: xưng hô giữa các nhân vật, thuật
-          ngữ gốc–dịch, và văn phong học từ bản dịch cũ.
+          Những quy ước giúp AI dịch nhất quán trong cả tác phẩm: thuật ngữ gốc–dịch, xưng hô giữa
+          các nhân vật, và văn phong học từ bản dịch cũ.
         </p>
       </div>
 
-      <TabsRoot defaultValue="xung-ho">
+      <TabsRoot defaultValue="thuat-ngu">
         <TabsList aria-label="Loại ngữ cảnh">
-          <TabsTab value="xung-ho">Xưng hô</TabsTab>
           <TabsTab value="thuat-ngu">Thuật ngữ</TabsTab>
-          <TabsTab value="van-phong">Văn phong</TabsTab>
+          <TabsTab value="xung-ho">
+            Xưng hô
+            <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[10px] text-ink-muted">
+              {SOON_LABEL}
+            </span>
+          </TabsTab>
+          <TabsTab value="van-phong">
+            Văn phong
+            <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[10px] text-ink-muted">
+              {SOON_LABEL}
+            </span>
+          </TabsTab>
         </TabsList>
 
+        <TabsPanel value="thuat-ngu" className="pt-4 outline-none">
+          {workId ? <GlossaryScreen workId={workId} /> : <TermsTable />}
+        </TabsPanel>
         <TabsPanel value="xung-ho" className="pt-4 outline-none">
           <HonorificsTable />
-        </TabsPanel>
-        <TabsPanel value="thuat-ngu" className="pt-4 outline-none">
-          <TermsTable />
         </TabsPanel>
         <TabsPanel value="van-phong" className="pt-4 outline-none">
           <StylePanel />
         </TabsPanel>
       </TabsRoot>
-
-      <p className="text-[12px] text-ink-muted">
-        Bản minh họa: khu vực này chưa hoạt động và không thay đổi tác phẩm của bạn.
-      </p>
     </section>
   )
 }

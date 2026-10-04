@@ -1,0 +1,156 @@
+import type {
+  ContextEntryItem,
+  ContextKind,
+  ContextOrigin,
+  ContextStatus,
+  ImportNamesResult
+} from '../../../shared/contracts/glossary'
+import {
+  createContextEntry,
+  deleteContextEntry,
+  getContextEntry,
+  getEffectiveGlossary,
+  listContextEntries,
+  updateContextEntry,
+  type ListContextOptions,
+  type UpdateContextEntryParams
+} from '../../infra/storage/contextEntries'
+import { parseNamesText } from '../../../shared/algorithms/namesParser'
+import {
+  matchContextEntries,
+  type MatchedContextEntry
+} from '../../../shared/algorithms/contextMatching'
+import {
+  evaluateGlossaryCompliance,
+  type GlossaryComplianceReport
+} from '../../../shared/algorithms/glossaryCompliance'
+import type { LibraryStore } from '../library/library'
+
+export class GlossaryService {
+  constructor(
+    private readonly library: LibraryStore,
+    private readonly now: () => number = Date.now
+  ) {}
+
+  list(workId: string, options: ListContextOptions = {}): ContextEntryItem[] {
+    return this.library.withWork(workId, (db) => listContextEntries(db, options))
+  }
+
+  get(workId: string, entryId: string): ContextEntryItem | null {
+    return this.library.withWork(workId, (db) => getContextEntry(db, entryId))
+  }
+
+  create(
+    workId: string,
+    params: {
+      kind?: ContextKind
+      source: string
+      target: string
+      status?: ContextStatus
+      origin?: ContextOrigin
+      forbidden?: boolean
+      fromChapterId?: string | null
+      toChapterId?: string | null
+      notes?: string | null
+      aliases?: string[]
+    }
+  ): ContextEntryItem {
+    return this.library.withWork(workId, (db) =>
+      createContextEntry(db, {
+        ...params,
+        now: this.now()
+      })
+    )
+  }
+
+  update(workId: string, entryId: string, patch: UpdateContextEntryParams): ContextEntryItem {
+    return this.library.withWork(workId, (db) =>
+      updateContextEntry(db, entryId, {
+        ...patch,
+        now: this.now()
+      })
+    )
+  }
+
+  delete(workId: string, entryId: string): void {
+    this.library.withWork(workId, (db) => deleteContextEntry(db, entryId, this.now()))
+  }
+
+  getEffective(
+    workId: string,
+    chapterId: string,
+    options?: { approvedOnly?: boolean }
+  ): ContextEntryItem[] {
+    return this.library.withWork(workId, (db) => getEffectiveGlossary(db, chapterId, options))
+  }
+
+  importNames(workId: string, content: string): ImportNamesResult {
+    const { entries, skipped } = parseNamesText(content)
+    const skippedReasons: Array<{ line: number; raw: string; reason: string }> = []
+
+    for (const s of skipped) {
+      if (s.reason === 'empty' || s.reason === 'comment') continue
+      let reasonText = 'Dòng không hợp lệ'
+      if (s.reason === 'missing_delimiter') reasonText = 'Thiếu dấu phân cách ='
+      else if (s.reason === 'empty_source') reasonText = 'Từ gốc rỗng'
+      else if (s.reason === 'empty_target') reasonText = 'Từ dịch rỗng'
+      else if (s.reason === 'duplicate_source') reasonText = 'Trùng lặp từ gốc trong tệp'
+
+      skippedReasons.push({
+        line: s.line,
+        raw: s.raw,
+        reason: reasonText
+      })
+    }
+
+    let importedCount = 0
+
+    this.library.withWork(workId, (db) => {
+      db.transaction(() => {
+        for (const entry of entries) {
+          try {
+            createContextEntry(db, {
+              source: entry.source,
+              target: entry.target,
+              kind: 'term',
+              status: 'approved',
+              origin: 'import',
+              forbidden: false,
+              now: this.now()
+            })
+            importedCount++
+          } catch (error) {
+            skippedReasons.push({
+              line: entry.line,
+              raw: entry.raw,
+              reason: error instanceof Error ? error.message : 'Lỗi khi lưu mục thuật ngữ'
+            })
+          }
+        }
+      })
+    })
+
+    return {
+      importedCount,
+      skippedCount: skippedReasons.length,
+      skippedReasons
+    }
+  }
+
+  match(workId: string, chapterId: string, text: string): MatchedContextEntry[] {
+    const work = this.library.get(workId)
+    const entries = this.getEffective(workId, chapterId, { approvedOnly: true })
+    return matchContextEntries(text, entries, work.sourceLang)
+  }
+
+  checkCompliance(
+    workId: string,
+    chapterId: string,
+    sourceText: string,
+    targetText: string
+  ): GlossaryComplianceReport {
+    const work = this.library.get(workId)
+    const entries = this.getEffective(workId, chapterId, { approvedOnly: true })
+    return evaluateGlossaryCompliance(sourceText, targetText, entries, work.sourceLang)
+  }
+}

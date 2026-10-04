@@ -24,6 +24,8 @@ import type { LinkRecord } from '../shared/contracts/links'
 import type { Result } from '../shared/contracts/result'
 import type { RowSaved } from '../shared/contracts/rows'
 import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/text'
+import type { ContextEntryItem, ImportNamesResult } from '../shared/contracts/glossary'
+import type { GlossaryComplianceReport } from '../shared/algorithms/glossaryCompliance'
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,
@@ -201,6 +203,28 @@ const desktopApi: DesktopApi = {
         return () => ipcRenderer.off(EVENT_CHANNELS.aiChatChunk, handler)
       }
     }
+  },
+  glossary: {
+    list: (options) =>
+      ipcRenderer.invoke(CHANNELS.glossaryList, options) as Promise<
+        Result<{ entries: ContextEntryItem[] }>
+      >,
+    get: (options) =>
+      ipcRenderer.invoke(CHANNELS.glossaryGet, options) as Promise<Result<ContextEntryItem>>,
+    create: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryCreate, input) as Promise<Result<ContextEntryItem>>,
+    update: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryUpdate, input) as Promise<Result<ContextEntryItem>>,
+    delete: (options) =>
+      ipcRenderer.invoke(CHANNELS.glossaryDelete, options) as Promise<Result<void>>,
+    importNames: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryImportNames, input) as Promise<
+        Result<ImportNamesResult>
+      >,
+    checkCompliance: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryCheckCompliance, input) as Promise<
+        Result<GlossaryComplianceReport>
+      >
   }
 }
 

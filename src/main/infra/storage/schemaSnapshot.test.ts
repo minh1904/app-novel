@@ -43,12 +43,12 @@ function check(name: string, spec: SchemaSpec, version: number): void {
 }
 
 describe('work file schema', () => {
-  it.each([1, 2, 3, 4, 5])('version %i matches its frozen snapshot', (version) => {
+  it.each([1, 2, 3, 4, 5, 6])('version %i matches its frozen snapshot', (version) => {
     check('work-v' + version + '.schema.sql', workSchema, version)
   })
 
   it('has one fixture per migration and a stable application id', () => {
-    expect(workSchema.migrations.map((m) => m.version)).toEqual([1, 2, 3, 4, 5])
+    expect(workSchema.migrations.map((m) => m.version)).toEqual([1, 2, 3, 4, 5, 6])
     expect(WORK_APPLICATION_ID).toBe(0x4d495241)
   })
 })

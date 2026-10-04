@@ -3,6 +3,7 @@ import { fail, type Result } from '../../shared/contracts/result'
 import type { ChapterTranslator } from '../services/ai/chapterTranslation'
 import type { ChatService } from '../services/ai/chatService'
 import type { ConnectionService } from '../services/ai/connectionService'
+import type { GlossaryService } from '../services/context/glossaryService'
 import type { LibraryStore } from '../services/library/library'
 import { noChunkSink, type ChunkSink, type RawHandler } from './handler'
 import { noFilePicker, type FilePicker } from './filePicker'
@@ -11,6 +12,7 @@ import { backupHandlers } from './handlers/backup'
 import { chaptersHandlers } from './handlers/chapters'
 import { chatHandlers } from './handlers/chat'
 import type { HandlerDeps } from './handlers/deps'
+import { glossaryHandlers } from './handlers/glossary'
 import { imagesHandlers } from './handlers/images'
 import { rowsHandlers } from './handlers/rows'
 import { textHandlers } from './handlers/text'
@@ -27,9 +29,10 @@ export function createLibraryHandlers(
   files: FilePicker = noFilePicker,
   connections?: ConnectionService,
   translator?: ChapterTranslator,
-  chat?: ChatService
+  chat?: ChatService,
+  glossary?: GlossaryService
 ): Record<Channel, RawHandler<unknown>> {
-  const deps: HandlerDeps = { library, files, connections, translator, chat }
+  const deps: HandlerDeps = { library, files, connections, translator, chat, glossary }
   return {
     ...worksHandlers(deps),
     ...chaptersHandlers(deps),
@@ -38,7 +41,8 @@ export function createLibraryHandlers(
     ...imagesHandlers(deps),
     ...backupHandlers(deps),
     ...aiHandlers(deps),
-    ...chatHandlers(deps)
+    ...chatHandlers(deps),
+    ...glossaryHandlers(deps)
   }
 }
 

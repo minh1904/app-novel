@@ -15,7 +15,11 @@ import type { RowAuthor } from '../../infra/storage/sentenceRows'
 import type { ConnectionService } from './connectionService'
 import { estimateCost } from './costEstimate'
 import { CATALOG_READ_AT, lookupModel } from '../../infra/providers/modelCatalog'
-import { splitIntoBatches } from '../../infra/providers/openAiCompatible'
+import { planBatches } from '../../../shared/algorithms/translatePlanner'
+import type { TranslationModelCaller } from '../../../shared/contracts/translateCore'
+import { executeTranslateBatch } from './translate/translationCore'
+import { formatGlossaryLayerC, type PromptContextLayers } from './translate/promptBuilder'
+import { matchContextEntries } from '../../../shared/algorithms/contextMatching'
 import { originFor } from './provenance'
 import { ProviderError, type SegmentText } from '../../infra/providers/types'
 import { toWireUsage } from '../../infra/providers/usage'
@@ -80,14 +84,18 @@ export class ChapterTranslator {
       throw new StorageError('validation', 'Bản gốc của chương này không có câu nào để dịch.')
     }
 
-    // Cỡ lô là giới hạn token đầu vào của mục (0 là mặc định). Provider dùng đúng con số này để chia lại một
-    // lô khi dịch, nên một lô đã chia ở đây đi ra thành một lời gọi.
-    const batches = splitIntoBatches(
+    // Cỡ lô là giới hạn token đầu vào của mục (0 là mặc định).
+    const batches = planBatches(
       sendable.map(toSegmentText),
-      taskLimit(entry.settings.inputTokenLimit)
-    ).map((batch) => ({
-      sourceIds: batch.map((segment) => segment.id),
-      sourceChars: batch.reduce((total, segment) => total + segment.text.length, 0)
+      {
+        maxTokens: taskLimit(entry.settings.inputTokenLimit) || undefined,
+        maxUnits: taskLimit(entry.settings.inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
+        maxUnitChars: Number.MAX_SAFE_INTEGER,
+        sourceLang: work.sourceLang
+      }
+    ).batches.map((batch) => ({
+      sourceIds: batch.units.map((segment) => segment.id),
+      sourceChars: batch.charCount
     }))
 
     return {
@@ -148,19 +156,48 @@ export class ChapterTranslator {
     let items: SegmentText[] = []
     let usage: TranslateUsage | null = null
     let by: RowAuthor | null = null
+    let translationError: TranslateFailure | null = null
+
     try {
-      const response = await translator.provider.translate({
-        sourceLang: work.sourceLang,
-        targetLang: 'vi',
-        segments
-      })
-      items = response.items
-      usage = response.usage === undefined ? null : toWireUsage(response.usage)
-      // Nguồn gốc theo đúng một quy ước: provider giả lập không bao giờ được ghi là `ai`.
+      if (typeof (translator.provider as unknown as TranslationModelCaller).complete === 'function') {
+        let layers: PromptContextLayers | undefined
+        try {
+          const glossaryEntries = library.getEffectiveGlossary(workId, chapterId, {
+            approvedOnly: true
+          })
+          const combinedSource = segments.map((s) => s.text).join('\n')
+          const matched = matchContextEntries(combinedSource, glossaryEntries, work.sourceLang)
+          const layerC = formatGlossaryLayerC(matched)
+          if (layerC) {
+            layers = { layerC }
+          }
+        } catch {
+          // If glossary loading fails, continue translation without layerC
+        }
+
+        const outcome = await executeTranslateBatch({
+          caller: translator.provider as unknown as TranslationModelCaller,
+          units: segments,
+          sourceLang: work.sourceLang,
+          layers,
+          now
+        })
+        items = outcome.items
+        usage = outcome.usage === null ? null : toWireUsage(outcome.usage)
+        translationError = outcome.error
+      } else {
+        const response = await translator.provider.translate({
+          sourceLang: work.sourceLang,
+          targetLang: 'vi',
+          segments
+        })
+        items = response.items
+        usage = response.usage === undefined ? null : toWireUsage(response.usage)
+      }
       by = {
-        origin: originFor(response.provider),
-        provider: response.provider,
-        model: response.model
+        origin: originFor(translator.provider.id),
+        provider: translator.provider.id,
+        model: translator.entry.model
       }
     } catch (error) {
       return {
@@ -174,10 +211,22 @@ export class ChapterTranslator {
       }
     }
 
+    if (translationError && items.length === 0) {
+      return {
+        written: [],
+        held: [],
+        failed: sourceIds,
+        error: translationError,
+        targetRev: target.rev,
+        keyTail: translator.lastKeyTail(),
+        usage
+      }
+    }
+
     const written: string[] = []
     const held: HeldSuggestion[] = []
     let rev = target.rev
-    let error: TranslateFailure | null = null
+    let error: TranslateFailure | null = translationError
 
     try {
       for (const item of items) {

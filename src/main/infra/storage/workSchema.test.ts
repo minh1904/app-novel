@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 5, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 6, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -132,6 +132,85 @@ describe('work schema', () => {
     expect(
       db.prepare('SELECT last_chapter_id AS id FROM work').get<{ id: string | null }>()!.id
     ).toBeNull()
+    db.close()
+  })
+
+  it('migrates an existing v5 database to v6 preserving data and creating context tables', () => {
+    const path = join(tempDir(), 'v5_to_v6.mira')
+    const db = openDatabase(path)
+    // Run up to version 5
+    migrate(db, {
+      applicationId: WORK_APPLICATION_ID,
+      migrations: workSchema.migrations.slice(0, 5)
+    })
+    expect(readPragmas(db).userVersion).toBe(5)
+    db.exec(`
+      INSERT INTO work (id, title, source_lang, created_at, updated_at) VALUES ('w1', 'Tiêu đề', 'zh-Hans', 1, 1);
+      INSERT INTO chapter (id, position, title, created_at, updated_at) VALUES ('c1', 0, 'Chương 1', 1, 1);
+    `)
+
+    // Upgrade to full schema (version 6)
+    migrate(db, workSchema)
+    expect(readPragmas(db).userVersion).toBe(6)
+
+    // Data preserved
+    const row = db.prepare('SELECT title FROM work WHERE id = ?').get<{ title: string }>('w1')
+    expect(row?.title).toBe('Tiêu đề')
+
+    // Context tables functional
+    db.exec(`
+      INSERT INTO context_entry (id, kind, source, target, status, origin, forbidden, from_chapter_id, to_chapter_id, notes, created_at, updated_at)
+      VALUES ('e1', 'term', '筑基', 'Trúc Cơ', 'approved', 'user', 0, 'c1', 'c1', 'Cảnh giới', 1, 1);
+      INSERT INTO context_alias (id, entry_id, form, created_at)
+      VALUES ('a1', 'e1', 'Trúc Cơ Kỳ', 1);
+    `)
+    const entry = db.prepare('SELECT * FROM context_entry WHERE id = ?').get<{ source: string }>('e1')
+    expect(entry?.source).toBe('筑基')
+
+    const alias = db.prepare('SELECT * FROM context_alias WHERE id = ?').get<{ form: string }>('a1')
+    expect(alias?.form).toBe('Trúc Cơ Kỳ')
+    db.close()
+  })
+
+  it('cascades context_entry deletion to aliases and sets chapter references to null', () => {
+    const db = fresh()
+    db.exec(`
+      INSERT INTO context_entry (id, kind, source, target, status, origin, forbidden, from_chapter_id, to_chapter_id, created_at, updated_at)
+      VALUES ('e1', 'term', '韩立', 'Hàn Lập', 'approved', 'user', 0, 'c', 'c', 1, 1);
+      INSERT INTO context_alias (id, entry_id, form, created_at)
+      VALUES ('a1', 'e1', 'Lập Ca', 1);
+    `)
+
+    // Deleting chapter nullifies from_chapter_id and to_chapter_id
+    db.exec("DELETE FROM chapter WHERE id = 'c'")
+    const entryAfterChapDel = db.prepare('SELECT from_chapter_id, to_chapter_id FROM context_entry WHERE id = ?').get<{
+      from_chapter_id: string | null
+      to_chapter_id: string | null
+    }>('e1')
+    expect(entryAfterChapDel?.from_chapter_id).toBeNull()
+    expect(entryAfterChapDel?.to_chapter_id).toBeNull()
+
+    // Deleting context_entry cascades to context_alias
+    db.exec("DELETE FROM context_entry WHERE id = 'e1'")
+    const countAlias = db.prepare('SELECT count(*) as count FROM context_alias WHERE entry_id = ?').get<{ count: number }>('e1')
+    expect(countAlias?.count).toBe(0)
+
+    db.close()
+  })
+
+  it('enforces context_alias unique form constraint', () => {
+    const db = fresh()
+    db.exec(`
+      INSERT INTO context_entry (id, kind, source, target, created_at, updated_at)
+      VALUES ('e1', 'term', 's1', 't1', 1, 1), ('e2', 'term', 's2', 't2', 1, 1);
+      INSERT INTO context_alias (id, entry_id, form, created_at)
+      VALUES ('a1', 'e1', 'alias1', 1);
+    `)
+    expect(
+      thrown(() =>
+        db.exec("INSERT INTO context_alias (id, entry_id, form, created_at) VALUES ('a2', 'e2', 'alias1', 1)")
+      )
+    ).toBe(true)
     db.close()
   })
 })

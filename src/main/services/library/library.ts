@@ -16,6 +16,8 @@ import {
   openChapter,
   renameChapter
 } from '../../infra/storage/chapterFile'
+import { getEffectiveGlossary } from '../../infra/storage/contextEntries'
+import type { ContextEntryItem } from '../../../shared/contracts/glossary'
 import type { SegmentInput, TextRecord, TextSide } from '../../../shared/contracts/text'
 import type { RowSaved } from '../../../shared/contracts/rows'
 import { createLink, getProvenance, listLinks, setProvenance } from '../../infra/storage/linkFile'
@@ -346,6 +348,18 @@ export class LibraryStore {
     const summary = this.files.importWorkFile(id, sourcePath)
     this.files.syncIndex(summary)
     return summary
+  }
+
+  withWork<T>(workId: string, fn: (db: Db) => T): T {
+    return this.files.withWork(workId, fn)
+  }
+
+  getEffectiveGlossary(
+    workId: string,
+    chapterId: string,
+    options?: { approvedOnly?: boolean }
+  ): ContextEntryItem[] {
+    return this.files.withWork(workId, (db) => getEffectiveGlossary(db, chapterId, options))
   }
 
   close(): void {
