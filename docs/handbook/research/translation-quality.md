@@ -172,6 +172,10 @@ Bảng giả định các cặp độc lập. Đoạn trong cùng một chương
 
 ## Quan sát 3 — Quy ước tiếng Việt
 
+Nghiên cứu riêng cho cặp Nhật → Việt (lược chủ thể, xưng hô/kính ngữ, ngôn ngữ vai, tên riêng và
+rubric đề xuất) nằm ở [Dịch truyện Nhật → Việt](ja-vi-translation.md). Phần dưới đây giữ vai trò bảng
+tổng hợp nhiều ngôn ngữ; khi có khác biệt, trang chuyên cặp ngôn ngữ là nơi chịu trách nhiệm.
+
 Agent đọc hướng dẫn biên tập, diễn đàn và prompt của các công cụ dịch truyện Việt trên GitHub. Phần lớn là repo nhỏ (0–3 sao), nên chỉ là **tín hiệu thực hành**, không phải chuẩn. Hako chỉ cấm convert trong mục "AI dịch", **không** có quy định về tên hay kính ngữ.
 
 | Chủ đề | Thực hành tìm thấy | Nguồn (giấy phép nếu là mã) |

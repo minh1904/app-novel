@@ -37,6 +37,9 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và **làm vi
 | Nghiên cứu | [Lõi AI: kiến trúc provider và cách sản phẩm khác dựng](research/ai-core-architecture.md) | Quan sát 2026-10-03: mã Mira + 20 sản phẩm (agent lập trình, app desktop, công cụ dịch, SDK/gateway); đề xuất bốn lớp, chưa chốt; chưa gọi provider thật |
 | Nghiên cứu | [Chia lô dịch truyện và giữ mạch giữa các lô](research/chunking-translation.md) | Quan sát 2026-10-03: mã LinguaGacha (đọc lại phần planner) + hơn 10 công cụ khác + 9 bài báo; đề xuất C1–C8 cho bước chia lô, chưa chốt; chưa chạy thử, chưa có fixture |
 | Nghiên cứu | [Chất lượng dịch: đo, prompt, lượt soát lại, chọn model](research/translation-quality.md) | Quan sát 2026-10-03: cách đo chất lượng →Việt (kiểm tất định, giám khảo LLM so cặp, người chấm), prompt và tham số, quy ước tiếng Việt, refine, giá model; đề xuất E/G/R chưa chốt; chưa chạy model nào |
+| Nghiên cứu | [Dịch truyện Nhật → Việt](research/ja-vi-translation.md) | Quan sát 2026-10-04 từ bản dịch người và nghiên cứu ngôn ngữ; loại bản AI/convert khỏi corpus học; bốn chế độ kính ngữ theo người dịch, mặc định giữ hậu tố Nhật đã chốt nhưng chưa triển khai |
+| Nghiên cứu | [Repo dịch tiếng Việt](research/vietnamese-translation-repos.md) | Khảo sát 2026-10-04: repo nhóm dịch có credit, mẫu Nhật–Việt và giới hạn; bốn repo AI chỉ tham khảo kỹ thuật, không dùng output làm chuẩn |
+| Nghiên cứu | [Kế thừa nghiên cứu dịch thuật ban đầu](research/translation-research-lineage.md) | Khôi phục tám tài liệu từ commit 11/06/2026; đối chiếu quy tắc cũ, bổ sung nguồn nghiên cứu và phép thử Nhật–Việt; chưa triển khai |
 | Nghiên cứu | [Sổ nguồn](research/sources.md) | URL, ngày đọc, giới hạn bằng chứng |
 | Trải nghiệm | [Luồng đầu tiên](experience/first-run.md) | Đề xuất + mockup |
 | Trải nghiệm | [Toàn văn và căn chỉnh](experience/alignment.md) | **Superseded phần lớn bởi ADR-005** (căn chỉnh và liên kết bị hủy); giữ làm hồ sơ |

@@ -1,5 +1,52 @@
 # Nhật ký handbook
 
+## Chốt mặc định kính ngữ Nhật theo lựa chọn người dịch — 2026-10-04
+
+- Chủ sản phẩm chốt bốn chế độ cấp tác phẩm: giữ hậu tố Nhật, Việt hóa, lai theo quy tắc và tùy
+  chỉnh; khi chưa có yêu cầu, mặc định giữ hậu tố. Cập nhật [quyết định hiện hành](../product/decisions.md)
+  và thu hẹp câu hỏi mở.
+- Phân loại tám trường hợp trong [nghiên cứu Nhật → Việt](../research/ja-vi-translation.md), gồm hậu
+  tố gắn tên, chức danh đứng độc lập, thân tộc, kính ngữ trong động từ, chuyển cách gọi, thiếu dữ
+  kiện, người thứ ba và chơi chữ. “Thống nhất” là thống nhất chiến lược, không xóa biến đổi có nghĩa.
+- Ghi nhận thảo luận cộng đồng do chủ sản phẩm cung cấp là quan sát chưa xác minh, không phải khảo
+  sát đại diện hay mẫu dịch người. Chưa triển khai UI, schema, prompt hoặc checker.
+
+## Khôi phục và đối chiếu tài liệu dịch thuật tháng 6 — 2026-10-04
+
+- Fetch và pull `--ff-only`: không có cập nhật mới. Tìm commit thêm tài liệu `9244b07` ngày
+  11/06/2026 và commit xóa khi tổ chức lại `45eb7e9` ngày 23/09/2026. Không reset hoặc đổi nhánh.
+- Khôi phục tám tệp vào [bản lưu lịch sử](../research/archive/2026-06-11/README.md), không ghi đè
+  quyết định hiện hành. Ghi nguồn và không coi các ví dụ cũ là bản dịch người đã xác minh.
+- Thêm [đối chiếu và nghiên cứu mở rộng](../research/translation-research-lineage.md): phân biệt
+  quan hệ nguồn, cách gọi tại cảnh và lựa chọn bản Việt; giới hạn suy người nghe, tri thức theo mốc,
+  provenance corpus và bảy phép thử đề xuất. Bổ sung S41, chưa chạy benchmark hoặc đổi app.
+
+## Thẩm định repo dịch Việt Nam — 2026-10-04
+
+- Thêm [khảo sát repo](../research/vietnamese-translation-repos.md), ghi tệp/commit đã đọc,
+  phân biệt nguồn người dịch và công cụ AI; không lấy output hay “golden samples” chưa rõ tác giả
+  làm chuẩn văn phong. Ghi nhận Prima Doll có cặp JP/VN và credit, CLANNAD có cặp Việt/Anh trong
+  phần script đã đọc, Higurashi có người dịch Nhật và thân chương Việt đọc được.
+- Sửa mức chắc chắn của nghiên cứu trước: chưa đọc thân chương Hako hoặc mẫu toàn văn sách phát
+  hành; nhãn trang không đủ chứng nhận xuất xứ. Chưa xác minh mô tả miền TALPCo.
+- Đề xuất kiểm xưng hô có chiều, lời kể/thoại, ngoại lệ theo cảnh và báo động nhầm. Bổ sung S40.
+  Chỉ thay tài liệu; chưa triển khai, chạy benchmark, chốt preset hay sao chép corpus.
+
+## Nghiên cứu chuyên cặp Nhật → Việt — 2026-10-04
+
+- Thêm [Dịch truyện Nhật → Việt](../research/ja-vi-translation.md), tách quan sát có nguồn khỏi
+  đề xuất rubric/fixture và khỏi quyết định sản phẩm.
+- Theo chỉ đạo của chủ sản phẩm, khóa nguồn học ở **bản dịch người**: bản phát hành có ghi dịch giả/
+  hiệu đính và fan-trans thuộc mục Truyện dịch, ưu tiên bản trực tiếp từ tiếng Nhật. Loại bản AI,
+  máy dịch/convert, output công cụ, nguồn không rõ và bản dịch vòng qua tiếng Anh khỏi corpus học.
+  B1/B2a chỉ dùng làm bằng chứng lỗi cần tránh, không dùng làm mẫu văn phong.
+- Kết luận đợt đầu: xưng hô là dữ liệu quan hệ; lược chủ thể và ngôn ngữ vai là hai rủi ro nghĩa lớn;
+  kính ngữ, dấu thoại và thứ tự tên chưa có một chuẩn cộng đồng duy nhất; tên katakana cần glossary
+  theo tác phẩm thay vì chọn lại ở từng lượt gọi.
+- Đề xuất mở rộng fixture Nhật theo bảy lát cắt và tách lỗi đúng nghĩa khỏi lựa chọn biên tập. Chưa
+  đổi prompt, code, spec hay preset; chưa chọn mặc định giữ/Việt hóa kính ngữ.
+- Bổ sung nguồn S39. Chỉ đọc nguồn công khai; không tải hoặc lưu chương truyện có bản quyền.
+
 ## Thí nghiệm prompt B2a và luật "trượt vị trí" của bộ chấm — 2026-10-03
 
 - **Đổi gì:**
