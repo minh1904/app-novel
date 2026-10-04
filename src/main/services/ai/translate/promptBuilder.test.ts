@@ -7,6 +7,7 @@ import {
   computePromptHash,
   computeContextHash,
   formatGlossaryLayerC,
+  formatAddressingLayerB,
   buildTranslatePayload,
   buildRepairPayload
 } from './promptBuilder'
@@ -172,6 +173,138 @@ describe('promptBuilder — Xây dựng prompt có version/hash và phân tầng
     // Context hash phản ánh nội dung này
     const contextHash = computeContextHash(layerC)
     expect(contextHash).toMatch(/^[0-9a-f]{64}$/)
+  })
+
+  it('định dạng Tầng B cho xưng hô và bảo mật các quan hệ chưa duyệt', () => {
+    const charA = {
+      id: 'c1',
+      source: '韩立',
+      target: 'Hàn Lập',
+      gender: 'male' as const,
+      role: 'Nhân vật chính',
+      status: 'approved' as const,
+      notes: null,
+      aliases: [],
+      createdAt: 1,
+      updatedAt: 1
+    }
+    const charB = {
+      id: 'c2',
+      source: '南宫婉',
+      target: 'Nam Cung Uyển',
+      gender: 'female' as const,
+      role: 'Đạo lữ',
+      status: 'approved' as const,
+      notes: null,
+      aliases: [],
+      createdAt: 1,
+      updatedAt: 1
+    }
+    const charC = {
+      id: 'c3',
+      source: '李飞雨',
+      target: 'Lý Phi Vũ',
+      gender: 'male' as const,
+      role: 'Bạn bè',
+      status: 'pending' as const,
+      notes: null,
+      aliases: [],
+      createdAt: 1,
+      updatedAt: 1
+    }
+
+    const approvedDyad1 = {
+      id: 'd1',
+      sourceCharacterId: charA.id,
+      targetCharacterId: charB.id,
+      speakerPronoun: 'ta',
+      recipientPronoun: 'nàng',
+      formality: 'thân mật',
+      status: 'approved' as const,
+      fromChapterId: null,
+      toChapterId: null,
+      notes: null,
+      createdAt: 1,
+      updatedAt: 1,
+      sourceCharacter: charA,
+      targetCharacter: charB
+    }
+
+    const approvedDyad2 = {
+      id: 'd2',
+      sourceCharacterId: charB.id,
+      targetCharacterId: charA.id,
+      speakerPronoun: 'thiếp',
+      recipientPronoun: 'chàng',
+      formality: null,
+      status: 'approved' as const,
+      fromChapterId: null,
+      toChapterId: null,
+      notes: null,
+      createdAt: 1,
+      updatedAt: 1,
+      sourceCharacter: charB,
+      targetCharacter: charA
+    }
+
+    const pendingDyad = {
+      id: 'd3',
+      sourceCharacterId: charA.id,
+      targetCharacterId: charB.id,
+      speakerPronoun: 'huynh',
+      recipientPronoun: 'muội',
+      formality: null,
+      status: 'pending' as const,
+      fromChapterId: null,
+      toChapterId: null,
+      notes: null,
+      createdAt: 1,
+      updatedAt: 1,
+      sourceCharacter: charA,
+      targetCharacter: charB
+    }
+
+    const dyadWithPendingChar = {
+      id: 'd4',
+      sourceCharacterId: charA.id,
+      targetCharacterId: charC.id,
+      speakerPronoun: 'ta',
+      recipientPronoun: 'huynh đệ',
+      formality: null,
+      status: 'approved' as const,
+      fromChapterId: null,
+      toChapterId: null,
+      notes: null,
+      createdAt: 1,
+      updatedAt: 1,
+      sourceCharacter: charA,
+      targetCharacter: charC
+    }
+
+    const layerB = formatAddressingLayerB([
+      approvedDyad1,
+      approvedDyad2,
+      pendingDyad,
+      dyadWithPendingChar
+    ])
+
+    // Chứa các quy ước approved
+    expect(layerB).toContain('[Quy ước xưng hô & đối thoại trong chương]')
+    expect(layerB).toContain('Hàn Lập -> Nam Cung Uyển: Hàn Lập tự xưng "ta", gọi Nam Cung Uyển là "nàng" (sắc thái: thân mật).')
+    expect(layerB).toContain('Nam Cung Uyển -> Hàn Lập: Nam Cung Uyển tự xưng "thiếp", gọi Hàn Lập là "chàng".')
+
+    // Tuyệt đối không chứa pending dyad hay pending character
+    expect(layerB).not.toContain('huynh')
+    expect(layerB).not.toContain('muội')
+    expect(layerB).not.toContain('Lý Phi Vũ')
+    expect(layerB).not.toContain('huynh đệ')
+
+    // System prompt tiêm Layer B thành công
+    const { prompt } = buildTranslateSystemPrompt({
+      layers: { layerB }
+    })
+    expect(prompt).toContain('[Ngữ cảnh chương - Tầng B]')
+    expect(prompt).toContain(layerB)
   })
 })
 

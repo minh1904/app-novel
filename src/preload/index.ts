@@ -26,6 +26,12 @@ import type { RowSaved } from '../shared/contracts/rows'
 import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/text'
 import type { ContextEntryItem, ImportNamesResult } from '../shared/contracts/glossary'
 import type { GlossaryComplianceReport } from '../shared/algorithms/glossaryCompliance'
+import type {
+  AddressingDyadItem,
+  AddressingDyadResolved,
+  CharacterItem
+} from '../shared/contracts/addressing'
+import type { AddressingComplianceReport } from '../shared/algorithms/addressingCompliance'
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,
@@ -224,6 +230,52 @@ const desktopApi: DesktopApi = {
     checkCompliance: (input) =>
       ipcRenderer.invoke(CHANNELS.glossaryCheckCompliance, input) as Promise<
         Result<GlossaryComplianceReport>
+      >
+  },
+  addressing: {
+    characters: {
+      list: (options) =>
+        ipcRenderer.invoke(CHANNELS.addressingCharactersList, options) as Promise<
+          Result<{ characters: CharacterItem[] }>
+        >,
+      get: (options) =>
+        ipcRenderer.invoke(CHANNELS.addressingCharactersGet, options) as Promise<
+          Result<CharacterItem>
+        >,
+      create: (input) =>
+        ipcRenderer.invoke(CHANNELS.addressingCharactersCreate, input) as Promise<
+          Result<CharacterItem>
+        >,
+      update: (input) =>
+        ipcRenderer.invoke(CHANNELS.addressingCharactersUpdate, input) as Promise<
+          Result<CharacterItem>
+        >,
+      delete: (options) =>
+        ipcRenderer.invoke(CHANNELS.addressingCharactersDelete, options) as Promise<Result<void>>
+    },
+    dyads: {
+      list: (options) =>
+        ipcRenderer.invoke(CHANNELS.addressingDyadsList, options) as Promise<
+          Result<{ dyads: AddressingDyadItem[] }>
+        >,
+      get: (options) =>
+        ipcRenderer.invoke(CHANNELS.addressingDyadsGet, options) as Promise<
+          Result<AddressingDyadItem>
+        >,
+      set: (input) =>
+        ipcRenderer.invoke(CHANNELS.addressingDyadsSet, input) as Promise<
+          Result<AddressingDyadItem>
+        >,
+      delete: (options) =>
+        ipcRenderer.invoke(CHANNELS.addressingDyadsDelete, options) as Promise<Result<void>>,
+      effective: (options) =>
+        ipcRenderer.invoke(CHANNELS.addressingDyadsEffective, options) as Promise<
+          Result<{ dyads: AddressingDyadResolved[] }>
+        >
+    },
+    checkCompliance: (input) =>
+      ipcRenderer.invoke(CHANNELS.addressingCheckCompliance, input) as Promise<
+        Result<AddressingComplianceReport>
       >
   }
 }

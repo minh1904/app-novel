@@ -4,9 +4,11 @@ import type { ChapterTranslator } from '../services/ai/chapterTranslation'
 import type { ChatService } from '../services/ai/chatService'
 import type { ConnectionService } from '../services/ai/connectionService'
 import type { GlossaryService } from '../services/context/glossaryService'
+import type { AddressingService } from '../services/context/addressingService'
 import type { LibraryStore } from '../services/library/library'
 import { noChunkSink, type ChunkSink, type RawHandler } from './handler'
 import { noFilePicker, type FilePicker } from './filePicker'
+import { addressingHandlers } from './handlers/addressing'
 import { aiHandlers } from './handlers/ai'
 import { backupHandlers } from './handlers/backup'
 import { chaptersHandlers } from './handlers/chapters'
@@ -30,9 +32,10 @@ export function createLibraryHandlers(
   connections?: ConnectionService,
   translator?: ChapterTranslator,
   chat?: ChatService,
-  glossary?: GlossaryService
+  glossary?: GlossaryService,
+  addressing?: AddressingService
 ): Record<Channel, RawHandler<unknown>> {
-  const deps: HandlerDeps = { library, files, connections, translator, chat, glossary }
+  const deps: HandlerDeps = { library, files, connections, translator, chat, glossary, addressing }
   return {
     ...worksHandlers(deps),
     ...chaptersHandlers(deps),
@@ -42,7 +45,8 @@ export function createLibraryHandlers(
     ...backupHandlers(deps),
     ...aiHandlers(deps),
     ...chatHandlers(deps),
-    ...glossaryHandlers(deps)
+    ...glossaryHandlers(deps),
+    ...addressingHandlers(deps)
   }
 }
 

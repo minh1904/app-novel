@@ -7,6 +7,7 @@ import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import { TabsList, TabsPanel, TabsRoot, TabsTab } from '../../components/Tabs'
 import { GlossaryScreen } from '../glossary/GlossaryScreen'
+import { AddressingScreen } from '../addressing/AddressingScreen'
 import { SOON_LABEL } from './mockFeatures'
 
 /** Fixed sample data: what the Context area would hold, not anything read from this work. */
@@ -81,9 +82,11 @@ export function ContextAreaMock({ workId }: { workId?: string } = {}): JSX.Eleme
           <TabsTab value="thuat-ngu">Thuật ngữ</TabsTab>
           <TabsTab value="xung-ho">
             Xưng hô
-            <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[10px] text-ink-muted">
-              {SOON_LABEL}
-            </span>
+            {!workId && (
+              <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[10px] text-ink-muted">
+                {SOON_LABEL}
+              </span>
+            )}
           </TabsTab>
           <TabsTab value="van-phong">
             Văn phong
@@ -97,7 +100,7 @@ export function ContextAreaMock({ workId }: { workId?: string } = {}): JSX.Eleme
           {workId ? <GlossaryScreen workId={workId} /> : <TermsTable />}
         </TabsPanel>
         <TabsPanel value="xung-ho" className="pt-4 outline-none">
-          <HonorificsTable />
+          {workId ? <AddressingScreen workId={workId} /> : <HonorificsTable />}
         </TabsPanel>
         <TabsPanel value="van-phong" className="pt-4 outline-none">
           <StylePanel />

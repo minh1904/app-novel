@@ -46,7 +46,18 @@ export const CHANNELS = {
   glossaryUpdate: 'glossary:update',
   glossaryDelete: 'glossary:delete',
   glossaryImportNames: 'glossary:importNames',
-  glossaryCheckCompliance: 'glossary:checkCompliance'
+  glossaryCheckCompliance: 'glossary:checkCompliance',
+  addressingCharactersList: 'addressing:characters:list',
+  addressingCharactersGet: 'addressing:characters:get',
+  addressingCharactersCreate: 'addressing:characters:create',
+  addressingCharactersUpdate: 'addressing:characters:update',
+  addressingCharactersDelete: 'addressing:characters:delete',
+  addressingDyadsList: 'addressing:dyads:list',
+  addressingDyadsGet: 'addressing:dyads:get',
+  addressingDyadsSet: 'addressing:dyads:set',
+  addressingDyadsDelete: 'addressing:dyads:delete',
+  addressingDyadsEffective: 'addressing:dyads:effective',
+  addressingCheckCompliance: 'addressing:checkCompliance'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

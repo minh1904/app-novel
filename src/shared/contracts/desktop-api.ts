@@ -29,6 +29,14 @@ import type {
   GlossaryComplianceReport,
   ImportNamesResult
 } from './glossary'
+import type {
+  AddressingComplianceReport,
+  AddressingDyadItem,
+  AddressingDyadResolved,
+  CharacterGender,
+  CharacterItem,
+  ParagraphAddressingCheckItem
+} from './addressing'
 
 export interface AppInfo {
   name: string
@@ -229,6 +237,70 @@ export interface GlossaryApi {
   }): Promise<Result<GlossaryComplianceReport>>
 }
 
+export interface AddressingApi {
+  characters: {
+    list(options: {
+      workId: string
+      status?: ContextStatus
+      query?: string
+    }): Promise<Result<{ characters: CharacterItem[] }>>
+    get(options: { workId: string; characterId: string }): Promise<Result<CharacterItem>>
+    create(input: {
+      workId: string
+      source: string
+      target: string
+      gender?: CharacterGender
+      role?: string | null
+      status?: ContextStatus
+      notes?: string | null
+      aliases?: string[]
+    }): Promise<Result<CharacterItem>>
+    update(input: {
+      workId: string
+      characterId: string
+      source?: string
+      target?: string
+      gender?: CharacterGender
+      role?: string | null
+      status?: ContextStatus
+      notes?: string | null
+      aliases?: string[]
+    }): Promise<Result<CharacterItem>>
+    delete(options: { workId: string; characterId: string }): Promise<Result<void>>
+  }
+  dyads: {
+    list(options: {
+      workId: string
+      chapterId?: string
+      status?: ContextStatus
+    }): Promise<Result<{ dyads: AddressingDyadItem[] }>>
+    get(options: { workId: string; dyadId: string }): Promise<Result<AddressingDyadItem>>
+    set(input: {
+      workId: string
+      dyadId?: string
+      sourceCharacterId: string
+      targetCharacterId: string
+      speakerPronoun: string
+      recipientPronoun: string
+      formality?: string | null
+      fromChapterId?: string | null
+      toChapterId?: string | null
+      status?: ContextStatus
+      notes?: string | null
+    }): Promise<Result<AddressingDyadItem>>
+    delete(options: { workId: string; dyadId: string }): Promise<Result<void>>
+    effective(options: {
+      workId: string
+      chapterId: string
+    }): Promise<Result<{ dyads: AddressingDyadResolved[] }>>
+  }
+  checkCompliance(input: {
+    workId: string
+    chapterId: string
+    paragraphs: (string | ParagraphAddressingCheckItem)[]
+  }): Promise<Result<AddressingComplianceReport>>
+}
+
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
   /**
@@ -244,5 +316,6 @@ export interface DesktopApi {
   backup: BackupApi
   ai: AiApi
   glossary: GlossaryApi
+  addressing: AddressingApi
 }
 

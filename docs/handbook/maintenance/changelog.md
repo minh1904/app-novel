@@ -1,5 +1,20 @@
 # Nhật ký handbook
 
+## Triển khai Module 4: Xưng hô (`characters-and-addressing`) — 2026-10-04
+
+- Hoàn thành lát 2 của `context-core` theo lộ trình (Module 4: Xưng hô):
+  - **Mô hình Dữ liệu & Tầng Lưu trữ**: Tận dụng schema tác phẩm v6 (`context_entry`, `context_alias`), lưu trữ các mục nhân vật (`kind = 'character'`: tên gốc, tên dịch, giới tính, vai vế, ghi chú và các bí danh `aliases`) và các quan hệ xưng hô đối thoại có chiều độc lập (`kind = 'dyad'`: `characterA -> characterB`, từ tự xưng `speaker_pronoun`, từ gọi đối phương `recipient_pronoun`, độ trang trọng/sắc thái, phạm vi chương bắt đầu `from_chapter_id` và kết thúc `to_chapter_id`, trạng thái duyệt). Cài đặt `addressingEntries.ts` với đầy đủ CRUD và truy vấn `getEffectiveDyadsForChapter`.
+  - **Tích hợp Lõi dịch & Bảo vệ Quyền riêng tư**:
+    - Cài đặt `formatAddressingLayerB` trong `src/main/services/ai/translate/promptBuilder.ts`, tiêm ma trận xưng hô của chương vào Tầng B của system prompt (`[Quy ước xưng hô & đối thoại trong chương]`).
+    - Nối `getEffectiveAddressing` từ `LibraryStore` vào luồng dịch chương `ChapterTranslator` (`chapterTranslation.ts`).
+    - Cam kết quyền riêng tư nghiêm ngặt: Các nhân vật và cặp xưng hô chưa duyệt (`pending`, `rejected`) tuyệt đối không bao giờ được đưa vào prompt gửi ra ngoài.
+  - **Thuật toán Kiểm tra Tuân thủ Thuần**: Cài đặt `addressingCompliance.ts` trích xuất các câu thoại đối thoại (ngoặc kép, gạch đầu dòng) và phát hiện các đại từ ngoài ma trận hoặc sự không nhất quán giữa các đại từ tự xưng/gọi đối phương theo các quy ước xưng hô đang hoạt động.
+  - **Dịch vụ & Kênh IPC**: Cài đặt `AddressingService` tại `src/main/services/context/addressingService.ts`, các kênh IPC `addressing:characters:*`, `addressing:dyads:*`, `addressing:checkCompliance` và preload bridge `window.mira.addressing`.
+  - **Giao diện Người dùng (Addressing Screen)**:
+    - `AddressingScreen.tsx`, `AddressingDialogs.tsx`, `useAddressing.ts`: Quản lý danh sách nhân vật, lưới quan hệ xưng hô hai chiều, bộ lọc theo chương, bộ lọc trạng thái (`all`, `approved`, `pending`, `rejected`), duyệt nhanh tại chỗ, tạo/sửa/xóa nhân vật và cặp quan hệ.
+    - Thay thế khu vực minh họa mockup tab "Xưng hô" trong `ContextAreaMock.tsx` bằng `AddressingScreen` thật kết nối SQLite qua IPC.
+- Kết quả kiểm tra toàn diện: 1620 test Vitest đạt (116 test files, tăng 24 test), `tsc` (node, web, scripts) đạt, `eslint` 0 lỗi, electron-vite build 3 bundle thành công.
+
 ## Triển khai Module 3: Thuật ngữ (`glossary`) — 2026-10-04
 
 - Hoàn thành lát 1 của `context-core` theo lộ trình (Module 3: Thuật ngữ):

@@ -27,7 +27,8 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 | Lưu và phục hồi (SQLite) | Chạy; `.mira` v6 (thêm `context_entry`, `context_alias`), `library.db` v4/v5 | Giữ |
 | Minh họa “Sắp có” | Có | Giữ tới khi có màn thật; mock của Từng câu gỡ cùng mode (Gỡ Từng câu) |
 | Thuật ngữ (glossary) | Chạy trên kho thật: CRUD, alias, import Names.txt, so khớp CJK/Latin, tiêm Tầng C prompt, UI GlossaryScreen | **Đã hoàn thành Module 3 (2026-10-04)** |
-| Build và kiểm tra | 1596 test | Giữ |
+| Xưng hô (addressing) | Chạy trên kho thật: CRUD nhân vật, dyad có chiều, hiệu lực chương, tiêm Tầng B prompt, kiểm tra đại từ, UI AddressingScreen | **Đã hoàn thành Module 4 (2026-10-04)** |
+| Build và kiểm tra | 1620 test | Giữ |
 | Cấu trúc mã nguồn | Bốn tầng, lint ép | Giữ |
 
 ## Chi tiết theo phần
@@ -182,7 +183,7 @@ Token, font local, component Base UI ([tokens](../../../src/renderer/src/styles/
 ### Build và kiểm tra
 
 - electron-vite; `node:sqlite` và `valibot` là external; bản `--dir` (asar) mở được và tạo dữ liệu.
-- **1596 test** Vitest (đo 2026-10-04, sau Module 3 Thuật ngữ) chạy bằng `node scripts/check.mjs` (typecheck hai project, test hai pha, lint, và build với `--build`); một bước không có bằng chứng đã chạy là thất bại. `pnpm test/lint/typecheck` toàn cục có thể in cảnh báo rồi thoát mã 0 mà không chạy gì; xem `AGENTS.md`.
+- **1620 test** Vitest (đo 2026-10-04, sau Module 4 Xưng hô) chạy bằng `node scripts/check.mjs` (typecheck hai project, test hai pha, lint, và build với `--build`); một bước không có bằng chứng đã chạy là thất bại. `pnpm test/lint/typecheck` toàn cục có thể in cảnh báo rồi thoát mã 0 mà không chạy gì; xem `AGENTS.md`.
 - `scripts/smoke-sqlite.mjs` kiểm tra `node:sqlite` trong Electron thật.
 - **Bộ đo chất lượng dịch:** analyzer thuần ở `src/shared/algorithms/`; runner thử nghiệm ở
   `scripts/bench/`. Compare mặc định chỉ báo metric; `legacy-e6` là policy lịch sử tùy chọn. Cách

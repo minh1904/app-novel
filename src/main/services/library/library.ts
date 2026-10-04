@@ -17,7 +17,9 @@ import {
   renameChapter
 } from '../../infra/storage/chapterFile'
 import { getEffectiveGlossary } from '../../infra/storage/contextEntries'
+import { getEffectiveDyadsForChapter } from '../../infra/storage/addressingEntries'
 import type { ContextEntryItem } from '../../../shared/contracts/glossary'
+import type { AddressingDyadResolved } from '../../../shared/contracts/addressing'
 import type { SegmentInput, TextRecord, TextSide } from '../../../shared/contracts/text'
 import type { RowSaved } from '../../../shared/contracts/rows'
 import { createLink, getProvenance, listLinks, setProvenance } from '../../infra/storage/linkFile'
@@ -360,6 +362,13 @@ export class LibraryStore {
     options?: { approvedOnly?: boolean }
   ): ContextEntryItem[] {
     return this.files.withWork(workId, (db) => getEffectiveGlossary(db, chapterId, options))
+  }
+
+  getEffectiveAddressing(
+    workId: string,
+    chapterId: string
+  ): AddressingDyadResolved[] {
+    return this.files.withWork(workId, (db) => getEffectiveDyadsForChapter(db, chapterId))
   }
 
   close(): void {

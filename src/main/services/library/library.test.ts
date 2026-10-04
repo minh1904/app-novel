@@ -381,4 +381,36 @@ describe('LibraryStore upgrade from schema v1', () => {
     }
     expect(LIBRARY_APPLICATION_ID).toBe(0x4d49524c)
   })
+
+  it('lấy danh sách xưng hô có hiệu lực theo chương (getEffectiveAddressing)', () => {
+    const store = open(tempDir())
+    const work = store.create({ title: 'Truyện tu tiên', sourceLang: 'zh-Hans' })
+    const c1 = store.createChapter(work.id, 'Chương 1')
+    const c2 = store.createChapter(work.id, 'Chương 2')
+
+    // Thêm nhân vật & dyad qua withWork
+    store.withWork(work.id, (db) => {
+      db.prepare(`
+        INSERT INTO context_entry (id, kind, source, target, status, origin, forbidden, created_at, updated_at)
+        VALUES ('char-a', 'character', '韩立', 'Hàn Lập', 'approved', 'user', 0, 100, 100),
+               ('char-b', 'character', '南宫婉', 'Nam Cung Uyển', 'approved', 'user', 0, 100, 100)
+      `).run()
+      db.prepare(`
+        INSERT INTO context_entry (id, kind, source, target, status, origin, forbidden, from_chapter_id, notes, created_at, updated_at)
+        VALUES ('d1', 'dyad', 'char-a', 'char-b', 'approved', 'user', 0, ?, '{"speakerPronoun":"ta","recipientPronoun":"nàng"}', 100, 100)
+      `).run(c2.chapter.id)
+    })
+
+    // Ở c1: chưa có hiệu lực
+    const dyadsC1 = store.getEffectiveAddressing(work.id, c1.chapter.id)
+    expect(dyadsC1).toHaveLength(0)
+
+    // Ở c2: có hiệu lực
+    const dyadsC2 = store.getEffectiveAddressing(work.id, c2.chapter.id)
+    expect(dyadsC2).toHaveLength(1)
+    expect(dyadsC2[0].sourceCharacter.target).toBe('Hàn Lập')
+    expect(dyadsC2[0].targetCharacter.target).toBe('Nam Cung Uyển')
+    expect(dyadsC2[0].speakerPronoun).toBe('ta')
+    expect(dyadsC2[0].recipientPronoun).toBe('nàng')
+  })
 })

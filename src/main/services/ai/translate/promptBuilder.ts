@@ -3,6 +3,7 @@ import type { SourceLanguage } from '../../../../shared/contracts/library'
 import type { TempMappedUnit } from '../../../../shared/contracts/translateCore'
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
 import type { MatchedContextEntry } from '../../../../shared/algorithms/contextMatching'
+import type { AddressingDyadResolved } from '../../../../shared/contracts/addressing'
 
 export const PROMPT_VERSION_V1 = 'translate-v1'
 
@@ -127,6 +128,28 @@ export function formatGlossaryLayerC(
   }
 
   return parts.join('\n\n')
+}
+
+export function formatAddressingLayerB(dyads: AddressingDyadResolved[]): string {
+  const approved = dyads.filter(
+    (d) =>
+      d.status === 'approved' &&
+      d.sourceCharacter.status === 'approved' &&
+      d.targetCharacter.status === 'approved'
+  )
+  if (approved.length === 0) return ''
+
+  const lines = ['[Quy ước xưng hô & đối thoại trong chương]']
+  for (const dyad of approved) {
+    const srcName = dyad.sourceCharacter.target || dyad.sourceCharacter.source
+    const tgtName = dyad.targetCharacter.target || dyad.targetCharacter.source
+    const formalityPart = dyad.formality ? ` (sắc thái: ${dyad.formality})` : ''
+    lines.push(
+      `- ${srcName} -> ${tgtName}: ${srcName} tự xưng "${dyad.speakerPronoun}", gọi ${tgtName} là "${dyad.recipientPronoun}"${formalityPart}.`
+    )
+  }
+
+  return lines.join('\n')
 }
 
 export function buildTranslatePayload(units: TempMappedUnit[]): string {

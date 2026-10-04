@@ -4,6 +4,7 @@ import type { ChapterTranslator } from '../../services/ai/chapterTranslation'
 import type { ChatService } from '../../services/ai/chatService'
 import type { ConnectionService } from '../../services/ai/connectionService'
 import { GlossaryService } from '../../services/context/glossaryService'
+import { AddressingService } from '../../services/context/addressingService'
 import type { LibraryStore } from '../../services/library/library'
 import type { RawHandler } from '../handler'
 import type { FilePicker } from '../filePicker'
@@ -16,6 +17,7 @@ export interface HandlerDeps {
   translator?: ChapterTranslator
   chat?: ChatService
   glossary?: GlossaryService
+  addressing?: AddressingService
 }
 
 /**
@@ -49,5 +51,9 @@ export function chatOf(deps: HandlerDeps): ChatService {
 
 export function glossaryOf(deps: HandlerDeps): GlossaryService {
   return deps.glossary ?? new GlossaryService(deps.library)
+}
+
+export function addressingOf(deps: HandlerDeps): AddressingService {
+  return deps.addressing ?? new AddressingService(deps.library)
 }
 

@@ -18,7 +18,11 @@ import { CATALOG_READ_AT, lookupModel } from '../../infra/providers/modelCatalog
 import { planBatches } from '../../../shared/algorithms/translatePlanner'
 import type { TranslationModelCaller } from '../../../shared/contracts/translateCore'
 import { executeTranslateBatch } from './translate/translationCore'
-import { formatGlossaryLayerC, type PromptContextLayers } from './translate/promptBuilder'
+import {
+  formatAddressingLayerB,
+  formatGlossaryLayerC,
+  type PromptContextLayers
+} from './translate/promptBuilder'
 import { matchContextEntries } from '../../../shared/algorithms/contextMatching'
 import { originFor } from './provenance'
 import { ProviderError, type SegmentText } from '../../infra/providers/types'
@@ -168,11 +172,18 @@ export class ChapterTranslator {
           const combinedSource = segments.map((s) => s.text).join('\n')
           const matched = matchContextEntries(combinedSource, glossaryEntries, work.sourceLang)
           const layerC = formatGlossaryLayerC(matched)
-          if (layerC) {
-            layers = { layerC }
+
+          const addressingDyads = library.getEffectiveAddressing(workId, chapterId)
+          const layerB = formatAddressingLayerB(addressingDyads)
+
+          if (layerB || layerC) {
+            layers = {
+              layerB: layerB || undefined,
+              layerC: layerC || undefined
+            }
           }
         } catch {
-          // If glossary loading fails, continue translation without layerC
+          // If context loading fails, continue translation without layers
         }
 
         const outcome = await executeTranslateBatch({
