@@ -44,7 +44,7 @@ Mỗi fixture ghi nguồn/quyền sử dụng, ngôn ngữ, độ dài, phiên b
 | V11 / MIR-02 | AI ghi vào chương đã có chữ: dịch lại chương có bản dịch (tác vụ dịch), chat “Sửa”; thử cả với pane bản dịch trống | Không có chữ nào đổi trước khi người dùng nhìn thấy phần khác biệt; bỏ hết đề xuất thì chữ như cũ từng byte; chỉ pane trống được ghi thẳng, và có dấu AI |
 | V12 / MIR-08 | Tạo đề xuất rồi sửa tay đoạn đó trước khi mở nó: chữ gốc còn nguyên chỗ cũ, chữ gốc dời chỗ, chữ gốc bị sửa hoặc xóa | `rev` chưa đổi thì áp thẳng; `rev` đã đổi thì tìm lại chữ gốc theo nội dung; không tìm được thì đánh dấu *cũ* và cho chạy lại, **không bao giờ đoán vị trí** |
 | V13 / tác vụ dịch | Chạy tác vụ dịch nhiều chương, giết app giữa chừng một lô, mở lại | Tiếp tục đúng chương và đúng lô; không dịch lại đoạn đã ghi; không chương nào ghi dở; mọi khóa đang hạ nhiệt thì tác vụ tạm dừng có hẹn giờ, không báo lỗi |
-| V14 / Q3 | Fixture ZH, JA, EN: định nghĩa đoạn là mỗi dòng không trống; cho AI dịch rồi đếm đoạn hai bên | Số đoạn hai bên khớp ở cả ba nhóm; ca không khớp được ghi lại để quyết định giữ hay đổi định nghĩa đoạn (ADR-005, quyết định 3) |
+| V14 / Q3 | Fixture ZH, JA, EN: định nghĩa đoạn là mỗi dòng không trống; cho AI dịch rồi đếm đoạn hai bên | **Đạt:** 20/24 lần lặp khớp tuyệt đối; bốn lần lệch do model gộp/tách dòng. Xem [kết quả Bộ đo](../../modules/measurement/results.md#v14--định-nghĩa-đoạn) |
 | V15 / storage | Mở tệp `.mira` v5 (có segment, liên kết, hàng “Đã soát”) bằng bản v6, dùng snapshot schema đóng băng v5 | Mở được; chữ và ảnh giữ nguyên từng byte; thông tin “Đã soát” theo câu mất là hệ quả đã chấp nhận trong ADR-005, còn chữ không mất |
 | V16 / Bộ đo | Chạy cùng một điều kiện dịch hai lần trên fixture rồi cho giám khảo LLM so hai bản (A/A) | Tỷ lệ thắng nằm quanh 50%; độ rộng khoảng nhiễu được ghi lại và dùng làm nền cho mọi thí nghiệm sau |
 | V17 / Bộ đo | Người chấm mù và giám khảo LLM cùng chấm 50–100 cặp đoạn | Đồng thuận judge–người được đo và ghi lại; ngưỡng tin judge chỉ đặt sau bước này |
@@ -74,13 +74,18 @@ Mỗi lần chạy ghi build/commit, OS/phần cứng, fixture, điều kiện m
 
 Các số đo dưới đây là của **bản MVP** (editor và kho còn theo segment). Module nào được làm lại theo [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) phải đo lại bằng cùng cách đo; số cũ chỉ là mức tham chiếu, không phải ngưỡng đã đạt cho bản mới.
 
+### Kiểm chứng định nghĩa đoạn (V14) — 2026-10-04
+
+Kết quả được chốt: giữ định nghĩa ADR-005 “mỗi dòng không trống”. Bảng số liệu, nguyên nhân bốn
+lần lệch và giới hạn diễn giải được chuyển sang [kết quả của module Bộ đo](../../modules/measurement/results.md#v14--định-nghĩa-đoạn) để tránh hai bản tài liệu cùng làm nguồn chuẩn.
+
 ### Editor chương (V09, change `source-editor`) — 2026-10-01
 
-Build `out/` của Electron 44.4.5 trên Windows 11, dữ liệu tạm. Số đo và cách đo ở [design của change](../../../openspec/changes/source-editor/design.md) (mục “Số đo trong Electron thật”). Chương 5.000 segment, 205.999 ký tự: mở 95–117 ms; xử lý mỗi phím p95 1,7 ms; cuộn khung hình tệ nhất 14 ms; lưu 179 ms, giao diện không đứng. Bảng ca IME (Telex, VNI, Pinyin) ở `src/renderer/src/features/editor/imeCases.md`: lần 1 trên bản editor tối thiểu đạt (chủ sản phẩm báo); lần 2 trên bản hoàn chỉnh ghi ở đó.
+Build `out/` của Electron 44.4.5 trên Windows 11, dữ liệu tạm. Chương 5.000 segment, 205.999 ký tự: mở 95–117 ms; xử lý mỗi phím p95 1,7 ms; cuộn khung hình tệ nhất 14 ms; lưu 179 ms, giao diện không đứng. Bảng ca IME (Telex, VNI, Pinyin) ở `src/renderer/src/features/editor/imeCases.md`: lần 1 trên bản editor tối thiểu đạt (chủ sản phẩm báo); lần 2 trên bản hoàn chỉnh ghi ở đó.
 
 ### Màn editor hai pane (V09, change `translation-editor`) — 2026-10-01
 
-Cùng build và cách đo như mục trên. Chương mà mỗi bên 5.000 segment (bản gốc 206.000 ký tự, bản dịch 421.000 ký tự): mở cả hai editor 123–141 ms; xử lý mỗi phím p95 3,7 ms ở cả hai bên; lưu cả hai bên 214 ms, không có tác vụ dài. Số đo đầy đủ và danh sách kiểm tra chức năng ở [design của change](../../../openspec/changes/translation-editor/design.md). Bảng ca IME cho pane dịch (Telex, VNI, ca bản dịch trống đang hiện gợi ý, ca chuyển giữa hai pane): chờ người dùng thử tay, ghi ở `src/renderer/src/features/editor/imeCases.md`.
+Cùng build và cách đo như mục trên. Chương mà mỗi bên 5.000 segment (bản gốc 206.000 ký tự, bản dịch 421.000 ký tự): mở cả hai editor 123–141 ms; xử lý mỗi phím p95 3,7 ms ở cả hai bên; lưu cả hai bên 214 ms, không có tác vụ dài. Bảng ca IME cho pane dịch (Telex, VNI, ca bản dịch trống đang hiện gợi ý, ca chuyển giữa hai pane): chờ người dùng thử tay, ghi ở `src/renderer/src/features/editor/imeCases.md`.
 
 ### Mode Từng câu — kết quả MVP của một mode đã bỏ (V09, change `sentence-mode`) — 2026-10-01
 

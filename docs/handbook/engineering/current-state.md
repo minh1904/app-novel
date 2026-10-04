@@ -1,6 +1,6 @@
 # Hiện trạng triển khai
 
-Cập nhật: **2026-10-03** · Trạng thái: quan sát repository, không phải cam kết tính năng. Cập nhật trang này khi code thay đổi, không dùng roadmap làm bằng chứng đã hoàn thành.
+Cập nhật: **2026-10-04** · Trạng thái: quan sát repository, không phải cam kết tính năng. Cập nhật trang này khi code thay đổi, không dùng roadmap làm bằng chứng đã hoàn thành.
 
 **Repo hiện tại là bản MVP để thử nghiệm.** Mọi thứ dưới đây chạy được nhưng chưa phải bản hoàn chỉnh; từ [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) từng module được làm lại hoàn chỉnh theo [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Cột **Số phận** cho biết phần đó được *giữ*, *viết lại* hay *gỡ* khi làm lại; tên trong ngoặc là module ở [lộ trình](../delivery/roadmap.md). (Trước lần đổi thứ tự ngày 2026-10-03, trang này ghi module bằng số; bảng đối chiếu số cũ nằm cuối lộ trình.)
 
@@ -15,17 +15,19 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 | Thư viện, tác phẩm, chi tiết tác phẩm | Chạy trên kho thật | Giữ |
 | Danh sách chương | Chạy, đo tới 5.000 chương | Giữ |
 | Nội dung chương: văn bản, revision, segment, liên kết | Chạy | **Viết lại (Gỡ Từng câu)**: bỏ segment, liên kết, nguồn gốc theo câu; thêm dấu AI. Đề xuất và snapshot thêm ở (Đề xuất) |
-| Nhập bản gốc | Chạy | **Viết lại phần chia segment (Gỡ Từng câu)**; giải mã và chuẩn hóa giữ; định nghĩa đoạn kiểm ở (Bộ đo) |
+| Nhập bản gốc | Chạy | **Viết lại phần chia segment (Gỡ Từng câu)**; giải mã và chuẩn hóa giữ; định nghĩa đoạn đã kiểm chứng (V14 đạt ở Bộ đo) |
 | Mode Từng câu | Đã dựng, **đã ẩn** khỏi giao diện | **Gỡ (Gỡ Từng câu)**, bị hủy ở ADR-005 |
 | Editor Toàn văn hai pane | Chạy | Giữ; bỏ ánh xạ segment khi gỡ (Gỡ Từng câu) |
 | Soạn thảo và ánh xạ segment | Chạy | **Viết lại (Gỡ Từng câu)** thành dấu AI |
 | Hỏi AI (chat) | Chạy; có một bằng chứng gọi Gemini thật trong Electron (xem mục Provider), task kiểm chứng chưa đóng | Giữ; kiểm chứng song song (lộ trình), gỡ `targetIds` ở (Gỡ Từng câu) |
-| Dịch chương bằng AI | Chạy, vòng lặp lô ở renderer | **Viết lại (Lõi dịch, Đề xuất, Tác vụ)**: prompt và chia lô, đường đề xuất, tác vụ bền trong main |
-| Provider và kết nối AI | Chạy: transport + gateway (change `ai-gateway`, đã lưu trữ; gọi Gemini thật một lần), một adapter, nhiều khóa; model là **mục** có cài đặt riêng (change `ai-model-settings`, đã lưu trữ; đã đo tham số trên Gemini 3.x, đường đầy đủ chưa chạy thật) | Giữ phần kết nối; mã dịch MVP ở mặt tiền viết lại ở (Lõi dịch); đơn vị đổi từ segment sang đoạn ở (Đề xuất) |
+| Dịch chương bằng AI | Chạy, vòng lặp lô ở renderer; đã nối Lõi dịch | **Đã hoàn thành Lõi dịch (2026-10-04)**; còn lại Đề xuất và Tác vụ bền trong main |
+| Provider và kết nối AI | Chạy: transport + gateway, một adapter `openai-compatible` cung cấp `complete()`, nhiều khóa; model là **mục** có cài đặt riêng | Giữ phần kết nối; lõi dịch đã tách sang `services/ai/translate/`; đơn vị đổi từ segment sang đoạn ở (Đề xuất) |
+| Bộ đo chất lượng dịch | Hạ tầng offline đã có; T1/T3 là lớp tùy chọn, T1 chưa hiệu chuẩn live | **Giữ** analyzer thuần; module QA tự sở hữu severity/UX. Xem [module Bộ đo](../../modules/measurement/README.md) |
 | Sao lưu và khôi phục | Chạy | Giữ; migration theo các bảng mới |
-| Lưu và phục hồi (SQLite) | Chạy; `.mira` v5, `library.db` v5 | Giữ; bảng mới thêm dần từ (Thuật ngữ), số version chốt lúc làm |
+| Lưu và phục hồi (SQLite) | Chạy; `.mira` v6 (thêm `context_entry`, `context_alias`), `library.db` v4/v5 | Giữ |
 | Minh họa “Sắp có” | Có | Giữ tới khi có màn thật; mock của Từng câu gỡ cùng mode (Gỡ Từng câu) |
-| Build và kiểm tra | 1453 test | Giữ |
+| Thuật ngữ (glossary) | Chạy trên kho thật: CRUD, alias, import Names.txt, so khớp CJK/Latin, tiêm Tầng C prompt, UI GlossaryScreen | **Đã hoàn thành Module 3 (2026-10-04)** |
+| Build và kiểm tra | 1596 test | Giữ |
 | Cấu trúc mã nguồn | Bốn tầng, lint ép | Giữ |
 
 ## Chi tiết theo phần
@@ -115,7 +117,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - **Cấu hình không trộn giữa các lô:** kế hoạch mang `settingsKey` (SHA-256 của tên model thật và các tham số ảnh hưởng nội dung hay cách chia lô); mỗi lô gửi lại nó, và nếu mục bị sửa giữa chừng thì lô đó **không được gửi** (`conflict`), hộp thoại lập kế hoạch lại và "Dịch lại phần lỗi" chạy tiếp với khóa mới. Sửa riêng đồng thời hay RPM không gây xung đột. Cỡ lô lấy từ giới hạn token đầu vào của mục.
 - **Vòng lặp lô ở renderer** (`useAiTranslate`), mỗi lô là một lời gọi `ai:translate:batch` và được ghi ngay; Hủy chỉ là “không gửi lô tiếp”; đóng hộp thoại cũng dừng. Kết quả ghi theo segment ID qua `saveRow` với nguồn `ai` (hàng hiện là “AI đã dịch”). **Không ghi đè hàng người dùng đã viết hay đã soát**; những câu đó quay về hộp thoại dạng hai bản cạnh nhau (“Dùng bản AI” / “Giữ bản của tôi”). Lô lỗi được liệt kê kèm lý do và có “Dịch lại phần lỗi”.
 - Bằng chứng: [AiTranslateDialog](../../../src/renderer/src/features/chapter/AiTranslateDialog.tsx), [useAiTranslate](../../../src/renderer/src/features/chapter/useAiTranslate.ts), [chapterTranslation](../../../src/main/services/ai/chapterTranslation.ts), [aiTranslate](../../../src/shared/contracts/aiTranslate.ts), [test](../../../src/main/ipc/aiTranslateHandlers.test.ts).
-- **Chưa gọi nhà cung cấp thật lần nào**, chưa xem bằng mắt trong Electron thật (task 5.1–5.4 của `ai-connection`). `usage` thật chưa lưu lại; chưa có tác vụ nhiều chương; ngữ cảnh (thuật ngữ, xưng hô) chưa đi vào prompt.
+- **Chưa gọi nhà cung cấp thật lần nào**, chưa xem bằng mắt trong Electron thật (task 5.1–5.4 của `ai-connection`). `usage` thật chưa lưu lại; chưa có tác vụ nhiều chương; ngữ cảnh thuật ngữ đã được nối vào prompt (Tầng C) từ Module 3.
 - **Số phận:** prompt, chia lô và ánh xạ ID viết lại ở (Lõi dịch); đường ghi thay bằng đề xuất (Đề xuất) và `JobRunner` trong main (Tác vụ). `reconcile`, chia lô, thử lại, `classifyError`, `keyPool` giữ lại; luật “không ghi đè hàng người đã viết” (`isProtectedRow`) được thay bằng luật đề xuất.
 
 ### Provider và kết nối AI
@@ -145,16 +147,31 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 - Bằng chứng: [backupFile](../../../src/main/infra/storage/backupFile.ts), [library](../../../src/main/services/library/library.ts), [libraryHandlers](../../../src/main/ipc/libraryHandlers.ts).
 - Chưa có: sao lưu cả thư viện, sao lưu định kỳ, tiến trình cho tệp rất lớn.
 
+### Thuật ngữ (glossary) — Đã hoàn thành (Module 3)
+
+- Đã hoàn thành lát 1 của `context-core` (Module 3 theo lộ trình ngày 2026-10-04).
+- **Lưu trữ SQLite (schema v6):** Bảng `context_entry` (id, work_id, kind='term', source, target, forbidden, status, from_chapter_id, to_chapter_id, notes) và bảng `context_alias` (dạng viết khác của thuật ngữ). Hỗ trợ CRUD, lọc theo trạng thái duyệt và truy vấn hiệu lực theo khoảng chương (`getEffectiveEntriesForChapterRange`). Đã đóng băng snapshot fixture v6.
+- **Thuật toán thuần:**
+  - `namesParser.ts`: Đọc và phân tích định dạng `Names.txt` (`Từ_gốc=Từ_dịch`), bỏ qua comment `#`, `//`, báo cáo chi tiết các dòng bị bỏ qua.
+  - `contextMatching.ts`: So khớp thuật ngữ trong văn bản nguồn (longest-match cho CJK, ranh giới từ `\b` cho Latin/EN, chặn từ quá ngắn, khớp qua alias).
+  - `glossaryCompliance.ts`: Kiểm tra tuân thủ thuật ngữ trên bản dịch, cảnh báo thiếu bản dịch đích hoặc xuất hiện thuật ngữ bị cấm (`forbidden`).
+- **Tích hợp Lõi dịch & Quyền riêng tư:**
+  - Chỉ các thuật ngữ đã duyệt (`status = 'approved'`) và có hiệu lực với chương mới được đưa vào Tầng C (`formatGlossaryLayerC`) của prompt builder.
+  - Mỗi bản dịch tính toán `contextHash` (SHA-256) của payload ngữ cảnh thực gửi.
+  - Cam kết tuyệt đối: các mục chưa duyệt (`pending`, `rejected`) không bao giờ được gửi ra ngoài thiết bị tới nhà cung cấp AI.
+- **Giao diện & IPC:** Màn hình `GlossaryScreen` thật thay thế cho khu vực minh họa trong tab Ngữ cảnh (`ContextAreaMock`), kèm hộp thoại thêm/sửa, xác nhận xóa, và modal nhập tệp `Names.txt`. Kênh IPC `glossary:*` được expose an toàn qua `window.mira.glossary`.
+- Bằng chứng: [workSchema](../../../src/main/infra/storage/workSchema.ts), [contextEntries](../../../src/main/infra/storage/contextEntries.ts), [namesParser](../../../src/shared/algorithms/namesParser.ts), [contextMatching](../../../src/shared/algorithms/contextMatching.ts), [glossaryCompliance](../../../src/shared/algorithms/glossaryCompliance.ts), [glossaryService](../../../src/main/services/context/glossaryService.ts), [glossaryHandlers](../../../src/main/ipc/handlers/glossary.ts), [GlossaryScreen](../../../src/renderer/src/features/glossary/GlossaryScreen.tsx).
+
 ### Lưu và phục hồi
 
-- `node:sqlite` trong main: `library.db` (chỉ mục dựng lại được; **version 4**, có ba bảng `ai_connection`/`ai_key`/`ai_model`) và một tệp `.mira` mỗi tác phẩm (**schema v5**: v4 thêm `chapter_text.size` và index phủ để danh sách chương biết chương nào có nội dung mà không đọc văn bản; v5 thêm bảng `image`). WAL, `synchronous=FULL`, migration theo `user_version`; nâng cấp tại chỗ đã kiểm chứng trong Electron thật. Snapshot đóng băng schema ở [`__fixtures__`](../../../src/main/infra/storage/__fixtures__) (`library` v1–v4, `work` v1–v5).
+- `node:sqlite` trong main: `library.db` (chỉ mục dựng lại được; **version 4**, có ba bảng `ai_connection`/`ai_key`/`ai_model`) và một tệp `.mira` mỗi tác phẩm (**schema v6**: v4 thêm `chapter_text.size` và index phủ để danh sách chương biết chương nào có nội dung mà không đọc văn bản; v5 thêm bảng `image`; v6 thêm bảng `context_entry` và `context_alias`). WAL, `synchronous=FULL`, migration theo `user_version`; nâng cấp tại chỗ đã kiểm chứng trong Electron thật. Snapshot đóng băng schema ở [`__fixtures__`](../../../src/main/infra/storage/__fixtures__) (`library` v1–v4, `work` v1–v6).
 - Test kill tiến trình đang ghi: không mất thay đổi đã xác nhận, không tệp dở. Chưa thử mất điện đột ngột.
 - Bằng chứng: [storage](../../../src/main/infra/storage), [LibraryStore](../../../src/main/services/library/library.ts), [crash test](../../../src/main/services/library/crash.test.ts), [ADR-003](../decisions/0003-technology-stack.md).
-- Chưa có: autosave, lịch sử có giao diện. Bảng mới thêm dần từ module Thuật ngữ ([lộ trình](../delivery/roadmap.md)).
+- Chưa có: autosave, lịch sử có giao diện. Bảng xưng hô thêm tiếp ở module Xưng hô ([lộ trình](../delivery/roadmap.md)).
 
 ### Minh họa “Sắp có”
 
-- “Nhập từ .txt” và ba khu vực Ngữ cảnh/Nguồn/Tác vụ là minh họa: không đọc tệp, không gọi IPC, không ghi dữ liệu. Test bảo đảm mỗi mục có một hàng trong [backlog](../delivery/backlog.md) (`mockFeatures.test.ts`, `workAreas.test.ts`).
+- “Nhập từ .txt” và hai khu vực Nguồn/Tác vụ là minh họa: không đọc tệp, không gọi IPC, không ghi dữ liệu (khu vực Ngữ cảnh: tab Thuật ngữ đã là màn thật từ Module 3, các tab khác còn là minh họa). Test bảo đảm mỗi mục có một hàng trong [backlog](../delivery/backlog.md) (`mockFeatures.test.ts`, `workAreas.test.ts`).
 - Mock của mode Từng câu (`SentenceModeMocks`: thanh lọc, panel gợi ý) vẫn nằm trong danh sách này tới khi mode bị gỡ ở (Gỡ Từng câu).
 - Bằng chứng: [mockFeatures](../../../src/renderer/src/features/work/mockFeatures.ts), [ImportTxtMockDialog](../../../src/renderer/src/features/work/ImportTxtMockDialog.tsx).
 
@@ -165,10 +182,13 @@ Token, font local, component Base UI ([tokens](../../../src/renderer/src/styles/
 ### Build và kiểm tra
 
 - electron-vite; `node:sqlite` và `valibot` là external; bản `--dir` (asar) mở được và tạo dữ liệu.
-- **1103 test** Vitest (đo 2026-10-03, sau change `ai-gateway`; trước đó 867/906) chạy bằng `node scripts/check.mjs` (typecheck hai project, test hai pha, lint, và build với `--build`); một bước không có bằng chứng đã chạy là thất bại. `pnpm test/lint/typecheck` toàn cục có thể in cảnh báo rồi thoát mã 0 mà không chạy gì; xem `AGENTS.md`.
+- **1596 test** Vitest (đo 2026-10-04, sau Module 3 Thuật ngữ) chạy bằng `node scripts/check.mjs` (typecheck hai project, test hai pha, lint, và build với `--build`); một bước không có bằng chứng đã chạy là thất bại. `pnpm test/lint/typecheck` toàn cục có thể in cảnh báo rồi thoát mã 0 mà không chạy gì; xem `AGENTS.md`.
 - `scripts/smoke-sqlite.mjs` kiểm tra `node:sqlite` trong Electron thật.
-- **Đo chất lượng bản dịch (công cụ tạm, 2026-10-03):** [`scripts/bench/`](../../../scripts/bench/) dịch mọi chương ở [`fixtures/`](../../../fixtures/README.md) qua đúng đường dịch MVP của app (`plan`, `runBatch`, gateway thật), rồi chấm bằng kiểm tất định. Chạy bằng config vitest riêng, đọc khóa từ `.env`, nên `check.mjs` không bao giờ gọi nhà cung cấp. Có `rescore.run.ts` để chấm lại bản dịch đã lưu. Có thể thay system prompt bằng một tệp để thử prompt như một biến duy nhất. Kết quả ghi vào `fixtures/private/runs/` (bị ignore). Sẽ được thay bằng module Bộ đo; số đo ở [chất lượng dịch](../research/translation-quality.md#kết-quả-đo-của-mira).
-- Bằng chứng: [electron-builder.yml](../../../electron-builder.yml), [smoke script](../../../scripts/smoke-sqlite.mjs), [check.mjs](../../../scripts/check.mjs).
+- **Bộ đo chất lượng dịch:** analyzer thuần ở `src/shared/algorithms/`; runner thử nghiệm ở
+  `scripts/bench/`. Compare mặc định chỉ báo metric; `legacy-e6` là policy lịch sử tùy chọn. Cách
+  dùng, contract và giới hạn nằm ở [module Bộ đo](../../modules/measurement/README.md).
+- Bằng chứng build: [electron-builder.yml](../../../electron-builder.yml),
+  [smoke script](../../../scripts/smoke-sqlite.mjs), [check.mjs](../../../scripts/check.mjs).
 - Chưa có: bản NSIS trên máy thử lỗi giải nén `winCodeSign` do thiếu quyền tạo symlink (bật Developer Mode); bản có ký, updater, kiểm thử máy sạch.
 
 ### Cấu trúc mã nguồn

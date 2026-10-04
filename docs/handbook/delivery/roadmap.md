@@ -1,6 +1,6 @@
 # Lộ trình theo module
 
-Cập nhật: **2026-10-03**, lần 2 trong ngày: ưu tiên chất lượng dịch trước luồng ghi. Bản sáng cùng ngày theo [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md); trước đó (2026-09-29) theo mốc M0–M4 sau [ADR-002](../decisions/0002-ai-first-translation.md).
+Cập nhật: **2026-10-04**: chi tiết hóa module Lõi dịch sau khi Bộ đo hoàn tất phần hạ tầng offline. Thứ tự ưu tiên được chốt ngày 2026-10-03 theo [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md).
 
 **Trạng thái:**
 - **Hướng ưu tiên đã chốt** (chủ sản phẩm, 2026-10-03): cải thiện khả năng dịch trước khi làm kỹ luồng áp dụng đề xuất; đo trước khi cải tiến; thuật ngữ trước xưng hô; cache là phép đo, không phải tính năng riêng.
@@ -13,8 +13,10 @@ Cập nhật: **2026-10-03**, lần 2 trong ngày: ưu tiên chất lượng d�
 
 ## Vì sao đổi thứ tự
 
-- **Bản dịch là chỗ hở lớn nhất.** MVP đã dịch được một chương, nhưng không gửi chút ngữ cảnh nào (`chapterTranslation.ts:134-138`). System prompt chỉ có năm câu chung chung, và không gửi tham số nào ([chất lượng dịch](../research/translation-quality.md) Quan sát 0).
-- **Chưa có cách đo.** Không có fixture, không có baseline, không có chỉ số. Thêm glossary hay bật thinking lúc này chỉ là đoán.
+- **Bản dịch là chỗ hở lớn nhất.** Luồng hiện chạy một chương nhưng `ChapterTranslator` chưa gửi
+  ngữ cảnh truyện vào request; prompt dịch vẫn mỏng. Mục model chưa đặt gì không gửi tham số sinh
+  riêng ([hiện trạng](../engineering/current-state.md), [chất lượng dịch](../research/translation-quality.md)).
+- **Bộ đo đã có phần hạ tầng offline.** B1/B2a/B3 là bằng chứng khởi điểm; T1 chưa hiệu chuẩn, nên quyết định chất lượng của Lõi dịch cần T0 và người chấm mù trên dữ liệu được khai báo trước.
 - **Luồng áp dụng đề xuất chỉ đáng làm kỹ khi thứ được áp dụng đã tốt.** Làm đường ghi trước không làm bản dịch tốt hơn.
 - **Đổi thứ tự không phá ràng buộc nào của ADR-005.** Đề xuất vẫn đi trước Gỡ Từng câu, vì đường dịch MVP ghi theo hàng. Lõi của `context-core` (khớp, lắp, kiểm) nghiệm thu được bằng mock trước khi có đề xuất hay tác vụ; chỉ việc lưu băm phải chờ.
 
@@ -47,9 +49,12 @@ Cập nhật: **2026-10-03**, lần 2 trong ngày: ưu tiên chất lượng d�
 - Một ảnh chụp chat chạy trong Electron, có `usage` thật.
 
 **Chưa kiểm chứng:**
-- Hộp thoại dịch chương chưa chạy với nhà cung cấp thật.
-- Chưa có fixture văn bản thật.
-- Chưa có phép đo chất lượng bản dịch nào.
+- Hộp thoại dịch chương chưa chạy trọn đường với nhà cung cấp thật trong Electron.
+- Chưa có phép A/A live bằng judge ngoài họ model dịch hoặc bộ chấm người đủ để đặt ngưỡng T1.
+
+**Đã có cho bước kế:** fixture ZH/JA/EN, output B1/B2a/B3 có thể chấm lại, công cụ T0/T3 và V14;
+xem [kết quả Bộ đo](../../modules/measurement/results.md). Runner `translate.run.ts` cần cập nhật
+theo API thư viện/translator hiện hành rồi chạy kiểm bằng mock trước khi tạo baseline mới.
 
 ## Trình tự
 
@@ -75,9 +80,9 @@ flowchart LR
 
 | # | Module | Đầu ra (tóm tắt) | Điều kiện qua | Trạng thái |
 | --- | --- | --- | --- | --- |
-| 1 | **Bộ đo** | Fixture ZH/JA/EN, kiểm tất định, giám khảo LLM so cặp mù, lệnh chạy thí nghiệm, baseline; chốt định nghĩa đoạn | A/A đo được mức nhiễu; baseline có số; định nghĩa đoạn qua V14 | **Đang làm (chạy thử):** có fixture nháp (8 chương, 4 tác phẩm) và baseline T0 của đường MVP (2026-10-03, [kết quả](../research/translation-quality.md#kết-quả-đo-của-mira)) bằng công cụ tạm `scripts/bench/`. Chưa có T1/T3, chưa có change openspec; glossary và xưng hô chờ duyệt |
-| 2 | **Lõi dịch** | Prompt tầng A theo quy ước tiếng Việt, chia lô có trần số đoạn, ID tạm `[n]`, parse khoan dung, `max_tokens` có tính thinking, dịch lại đúng đoạn bị cờ; thay mã dịch MVP | Trên Bộ đo: T0 không xấu đi, T1 không thua baseline; mã MVP trong mặt tiền đã xóa | Chưa làm |
-| 3 | **Thuật ngữ** | Lát 1 của `context-core`: mục thuật ngữ, tầng khớp, chèn tầng C, kiểm tuân thủ; màn Thuật ngữ thật; nhập `Names.txt` | Tuân thủ thuật ngữ tăng rõ so với không glossary; mục chưa duyệt không rời máy | Chưa làm |
+| 1 | **Bộ đo** | Fixture ZH/JA/EN, analyzer T0, runner tái hiện, T1/T3 tùy chọn và báo cáo so sánh | Phần offline tái hiện được; V14 có bằng chứng; T1 luôn ghi trạng thái hiệu chuẩn | **Hoàn thành phần hạ tầng offline (2026-10-04):** xem [module Bộ đo](../../modules/measurement/README.md). T1 chưa được hiệu chuẩn A/A live và chưa là cổng quyết định sản phẩm |
+| 2 | **Lõi dịch** | Một đường dịch trong service: lập lô, ID tạm, prompt, parse, đối soát và xử lý lỗi; adapter cho dữ liệu hiện tại | Chạy thật một chương; không mất/sai ID hoặc ghi đè chữ người; bằng chứng T0 và chấm mù theo [roadmap chi tiết](#2-lõi-dịch) | **Hoàn thành triển khai L0–L6 (2026-10-04):** lõi dịch độc lập trong `services/ai/translate/`, adapter `ChapterTranslator`, đối soát ID tạm `[n]`, parser khoan dung, chia lô theo token/đơn vị, vòng hỏi lại (repair) và phân tầng prompt |
+| 3 | **Thuật ngữ** | Lát 1 của `context-core`: mục thuật ngữ, tầng khớp, chèn tầng C, kiểm tuân thủ; màn Thuật ngữ thật; nhập `Names.txt` | Tuân thủ thuật ngữ tăng rõ so với không glossary; mục chưa duyệt không rời máy | **Hoàn thành (2026-10-04):** Schema v6 (`context_entry`, `context_alias`), CRUD theo chương, `namesParser` (`Names.txt`), `contextMatching` (longest-match CJK, word-boundary Latin), `glossaryCompliance`, tiêm Layer C vào Prompt Builder, privacy guard cho mục unapproved, UI `GlossaryScreen` thật nối IPC |
 | 4 | **Xưng hô** | Lát 2 của `context-core`: nhân vật, cặp xưng hô có hiệu lực theo chương, tầng B; màn Xưng hô | Số đại từ sai cặp giảm so với không ma trận (V3) | Chưa làm |
 | 5 | **Đề xuất** | `proposal` + `text_snapshot`; đơn vị đổi sang đoạn; pane trống ghi thẳng, đã có chữ thì thành đề xuất duyệt tại chỗ; lưu `contextHash` và danh sách mục đã gửi | V11, V12 | Chưa làm |
 | 6 | **Xuất** | `.md`/`.txt` từ hàm chiếu Markdown | Xuất rồi nhập lại giữ nguyên chữ | Chưa làm |
@@ -90,53 +95,65 @@ flowchart LR
 
 ## Giai đoạn 1 — Chất lượng dịch
 
-Cả bốn module làm trên **một chương mỗi lần**, dùng đường dịch hiện có trong app và Bộ đo ngoài app. Hai thứ chưa đổi trong giai đoạn này: đường ghi (vẫn theo hàng, tới module Đề xuất) và đơn vị gửi của app (vẫn là segment).
+Cả bốn module làm trên **một chương mỗi lần**. Trước module Đề xuất, đường app còn lưu/ghi theo
+segment; phép đo của Lõi dịch phải có nhánh gửi đoạn thật theo ADR-005. Điều này được ghi rõ ở
+[ranh giới chuyển tiếp](#2-lõi-dịch).
 
 ### 1. Bộ đo
 
-Thay module "Đoạn" cũ và thêm phần đo. Căn cứ: [chất lượng dịch](../research/translation-quality.md) E1–E7.
-
-- **Fixture:**
-  - **Riêng tư:** bắt đầu 4 chương (2 ZH: một thoại dày, một dày thuật ngữ; 1 JA; 1 EN), mỗi chương kèm glossary viết tay 30–50 mục và cặp xưng hô viết tay. Nâng lên khoảng 12 chương trước khi dùng kết quả để quyết định. Raw có bản quyền để **ngoài repo**.
-  - **Công khai:** khoảng 50 đoạn literary của WMT24++ `en-vi_VN` (Apache-2.0) được vào repo.
-  - **Định dạng:** theo E1.
-- **Hàm chia đoạn dùng chung** theo ADR-005 (mỗi dòng không trống), đặt ở `src/shared/algorithms/`. Nơi khác chuyển sang dùng nó khi module của chúng được làm lại.
-- **T0 kiểm tất định**, hàm thuần dùng lại ở QA: số đoạn, đoạn rỗng hoặc trùng nguồn, chữ Hán/kana còn sót, tỷ lệ độ dài theo băng, vòng lặp, tuân thủ thuật ngữ và term cấm, xưng hô (chỉ cảnh báo).
-- **T1 giám khảo LLM so cặp mù:** cả chương vào, phán theo đoạn, chạy hai chiều, judge khác họ model dịch, cố định model và prompt, có kiểm A/A.
-- **T3 người chấm mù:** chủ sản phẩm chấm 60–80 cặp mỗi thí nghiệm. T2 (MetricX) là tùy chọn, chỉ để chẩn đoán.
-- **Lệnh chạy thí nghiệm:**
-  - Lưới điều kiện × chương × 3 lần lặp.
-  - Ghi `usage` thật và kết quả dạng máy đọc được.
-  - Theo khuôn `liveGemini.test.ts`: chỉ chạy khi có biến môi trường và khóa.
-- **Đếm tỷ lệ đoạn trùng** trong fixture, để biết có cần cache kết quả theo đoạn không.
-- **Baseline:** prompt MVP trên ma trận model R6 (B0, B1, B7 của nghiên cứu).
-- **Điều kiện qua:**
-  - Đo được mức nhiễu nền bằng A/A.
-  - Đo được đồng thuận judge–người trên ít nhất 50 cặp.
-  - Báo cáo baseline có số và tái hiện được bằng một lệnh.
-  - V14 (số đoạn hai bên khớp) qua trên fixture; nếu không qua thì sửa Q3 của ADR-005.
-- **Không làm:** BLEU hay COMET làm thước đo quyết định; judge cùng họ với model dịch; dùng CometKiwi/XCOMET khi chưa rà giấy phép NC.
+Hạ tầng offline đã có fixture, T0, runner/rescore/compare và công cụ T3. V14 giữ định nghĩa đoạn
+ADR-005. T1 cần A/A ngoài họ model dịch và đối chiếu người trước khi đặt ngưỡng tin. Contract,
+giới hạn và kết quả hiện nằm tại [module Bộ đo](../../modules/measurement/README.md). Riêng đường
+dịch live của runner phải được cập nhật theo API app ở mốc L0 bên dưới; `check.mjs` hiện không biên
+dịch tệp `scripts/bench/*.run.ts`.
 
 ### 2. Lõi dịch
 
-Tách từ module "Đề xuất" cũ phần prompt, chia lô và ánh xạ ID. Căn cứ: [chất lượng dịch](../research/translation-quality.md) G1–G6 và R2; [chia lô](../research/chunking-translation.md) C1–C6; [lõi AI](../research/ai-core-architecture.md) D1, D3.
+**Mục tiêu:** mỗi đoạn nguồn được gửi và nhận về dưới một ID tạm, có thể giải thích đoạn nào thành
+công, đoạn nào cần thử lại và tiền đã dùng. Thay phần prompt/chia lô/parse/đối soát đang nằm trong
+`openAiCompatible.ts`; giữ gateway và transport hiện có. Căn cứ:
+[chất lượng dịch](../research/translation-quality.md#prompt-và-tham-số-module-lõi-dịch) G1–G6,
+[chia lô](../research/chunking-translation.md#suy-luận-cho-mira) C1–C6 và
+[lõi AI](../research/ai-core-architecture.md#các-thay-đổi-cụ-thể) D1/D3/D5.
 
-- **Thay mã dịch MVP** trong mặt tiền (`openAiCompatible.ts`) bằng `services/ai/translate/`, trong cùng change. Không giữ hai đường dịch.
-- **Lõi nhận đơn vị bất kỳ có ID** và tự đổi sang ID tạm `[n]` khi gửi model. Hôm nay app vẫn gửi segment; module Đề xuất đổi sang đoạn.
-- **Chia lô:** `planBatches` là hàm thuần, có trần số đoạn cộng ngân sách token nguồn; ranh giới lô tính từ nguồn. Cỡ lô chọn bằng số đo (bước 1 của chia lô). Điểm cắt ưu tiên (C4) chỉ thêm nếu đo thấy lợi.
-- **Prompt tầng A** theo G1–G3: brief, hợp đồng `[n]`, quy ước tiếng Việt, phụ lục theo ngôn ngữ nguồn. Chỗ còn tranh cãi (dùng "y", kiểu thoại, kính ngữ) là cài đặt. Tuần tự hóa xác định.
-- **Khung `buildContext` ba tầng** (hàm thuần, có `contextHash`). Tầng B, C lúc này chỉ có đoạn liền trước, gửi dạng cặp nguồn + bản dịch (C5).
-- **Tham số:** mức suy luận và temperature mặc định cho tác vụ dịch chọn bằng B3, hiện trong hộp thoại. Luôn gửi `max_tokens`, có cộng ngân sách thinking. Gặp `length` hoặc đầu ra rỗng thì chia nhỏ lô.
-- **Parse khoan dung** theo G5. Định dạng đầu ra chọn bằng B4.
-- **Thang lỗi nội dung tách khỏi lỗi hạ tầng** (C6). Đoạn trượt T0 được hỏi lại một lần, kèm lỗi cụ thể (R2).
-- **Đo cache lần 1** (V1 của [đợt 2](../research/context-system.md)) với tầng A. Đo trên OpenAI/DeepSeek và Gemini 2.5. Trên Gemini 3.x thì tầng A một mình dưới ngưỡng 4.096 token, nên chờ lần đo thứ hai ở module Xưng hô. Kèm B5: endpoint Gemini nhận tham số nào, `usage` có tách thinking không.
-- **Điều kiện qua:**
-  - Trên Bộ đo, T0 không xấu đi so với baseline (không lệch đoạn, không còn chữ nguồn nhiều hơn).
-  - Cận dưới khoảng tin cậy của tỷ lệ thắng T1 không dưới 50%.
-  - Tỷ lệ phản hồi hỏng ID hoặc sót đoạn không tăng.
-  - Mã dịch MVP trong mặt tiền đã xóa; mọi test qua.
+**Ranh giới chuyển tiếp:** dữ liệu tác phẩm và `ChapterTranslator` hiện còn dùng segment/row;
+[ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) đã chốt đoạn là mỗi dòng không
+trống. Lõi mới nhận các đơn vị `{id, text}` và giữ ánh xạ ID nội bộ; adapter của luồng đang chạy có
+thể cấp segment ID để giữ an toàn dữ liệu. Thí nghiệm chất lượng phải gửi **đoạn thật** từ fixture.
+Module Đề xuất mới chuyển đường ghi của app sang đoạn. Vì thế không dùng kết quả adapter segment để
+tuyên bố đã giải quyết lỗi gộp câu theo đoạn.
 
-### 3. Thuật ngữ
+| Mốc | Việc làm và đầu ra | Bằng chứng để đi tiếp |
+| --- | --- | --- |
+| **L0 · Làm sạch đường đo và khóa hợp đồng** | Chấm lại output B1 như mốc lịch sử; cập nhật `scripts/bench/translate.run.ts` theo API hiện hành (`LibraryStore.create`, `ChapterTranslator.plan/runBatch` nhận object) và thêm kiểm chạy bằng mock vào gate. Sau đó tạo baseline mới với revision fixture, tập chỉnh/tập đánh giá, cấu hình và chỉ số chính đã khai báo. Đặc tả input `{id, text}`, ánh xạ `[n]`, output theo ID, usage và lỗi; ghi trạng thái `draft` của oracle. | Runner bench chạy được bằng mock và typecheck riêng; baseline mới có hồ sơ tái hiện. Có ca 1–1, sót, trùng, đảo thứ tự, ID lạ, đoạn dài và hủy; report chỉ ghi metric. |
+| **L1 · Tách một đường dịch** | Chuyển prompt, planner, parser, đối soát và vòng sửa lỗi sang `services/ai/translate/`. `openAiCompatible.ts` còn gọi transport/gateway và chat; `ChapterTranslator` dùng lõi qua adapter hiện tại. Xóa đường dịch MVP trùng sau khi thay xong. | Mock provider và test hồi quy cho plan → một lô → lưu/giữ đề xuất qua; hủy và xung đột revision không ghi đè chữ người; chat không đổi hành vi. |
+| **L2 · Bảo toàn đoạn và lô** | Planner thuần cắt theo nguồn bằng cả trần token và trần số đoạn, có xử lý một đoạn quá dài bằng mảnh tạm rồi ráp về đúng ID gốc. Gửi ID tạm `[n]` theo từng request; parser khoan dung trong các sửa lỗi cú pháp xác định được, đối soát đúng tập ID. | Chạy spike cỡ lô C1 trên ZH/JA/EN; không có gán nhầm ID, mất nội dung im lặng hoặc lô vượt trần đã khai. Ghi tỉ lệ thiếu/trùng ID, đầu ra bị cắt, số lượt gọi và usage. |
+| **L3 · Prompt và ngữ cảnh tối thiểu** | Dựng prompt có version/hash: brief, yêu cầu dịch đủ, hợp đồng đoạn, quy ước tiếng Việt chung và phụ lục theo nguồn. Tách chỗ nhận A ổn định, B theo chương, C theo lô; tính `contextHash` từ payload thực gửi, để Context nối adapter về sau. Đầu vào riêng cho quy ước người dịch; Nhật không có lựa chọn thì giữ hậu tố gắn tên theo [quyết định hiện hành](../product/decisions.md). Chỉ gửi ngữ cảnh liền trước nếu thí nghiệm C5 cho thấy ích lợi. | B2 so từng biến với baseline trên cùng fixture và repeat; T0 không xuất hiện sót/trùng nghiêm trọng, người chấm mù đánh giá nghĩa và tự nhiên. Giữ riêng kết quả không chắc/âm. |
+| **L4 · Tham số và định dạng** | B3 đo thinking, temperature, trần output có dự phòng thinking theo từng model/endpoint; B4 so định dạng đầu ra sau khi parser ổn. Tham số người dùng đặt vẫn có hiệu lực; giá trị mặc định theo tác vụ chỉ được gửi khi đã chọn và hiển thị trong plan. B5 kiểm endpoint bằng lời gọi thật có cấu hình tường minh. | Report có tham số thực gửi, `finishReason`, usage, thời gian, lỗi rỗng/`length` và chi phí. Không suy mặc định của mọi model từ B3 trên Gemini 2.5 Flash. |
+| **L5 · Sửa đúng phần lỗi** | Tách lỗi hạ tầng (gateway chịu retry/cooldown) khỏi lỗi nội dung. Lõi chấp nhận mục hợp lệ, hỏi lại đúng ID thiếu/hỏng có lý do một lần; khi lô bị cắt thì chia nhỏ phần chưa xong. T0 chỉ gắn cờ nghi vấn; lần dịch lại có nguồn và kết quả được đối soát trước khi chọn. | Fixture lỗi có 429/timeout, JSON hỏng, `length`, một đoạn “độc” và hủy giữa lô; không chia nhỏ chỉ vì 429, không lặp vô hạn, cộng usage của mọi lượt đã gọi. Mục lẻ hỏng được báo rõ để người xem. |
+| **L6 · Nối app và nghiệm thu** | Chạy một chương trọn đường với mock rồi provider thật trong Electron; hộp thoại cho thấy cấu hình thực gửi, tiến độ, mục thất bại và chi phí/usage biết được. Xóa import mã dịch cũ, cập nhật tài liệu và baseline mới. | `node scripts/check.mjs --build` đạt; thử hủy, sửa tay giữa lúc chạy và dịch lại chương có chữ; báo cáo T0/T3 trên tập đánh giá độc lập, không lộ truyện riêng tư. |
+
+**Cổng chất lượng:** đăng ký trước phép so sánh và dùng cùng chương/cấu hình/repeat. Chỉ dùng baseline
+mới qua L0 cho so sánh trực tiếp; B1/B2a/B3 là bằng chứng lịch sử. T0 là cổng an
+toàn cho thiếu, trùng, sai ID; chữ nguồn còn sót, cờ độ dài, glossary nháp và khác kiểu thoại cần
+người xem lại. T3 chấm mù có phân tầng theo chương/ca khó, báo cả hòa và khoảng tin cậy. Bản dịch
+AI cũ không được coi là bản tham chiếu của người dịch. Nếu dữ
+liệu chưa đủ tách thắng/thua, ghi **chưa đủ bằng chứng** và bổ sung mẫu thay vì tự đổi ngưỡng. T1
+chỉ là tín hiệu phụ cho tới khi A/A ngoài họ model dịch và đối chiếu người hoàn tất ở
+[Bộ đo](../../modules/measurement/metrics-and-judging.md#t1--judge-llm-tùy-chọn). So nghĩa, độ tự nhiên,
+lỗi cấu trúc, chi phí và độ trễ cùng nhau; không dùng một điểm tổng duy nhất.
+
+**Không thuộc change Lõi dịch:** schema/màn Glossary và Xưng hô, người duyệt đề xuất theo đoạn,
+job nhiều chương bền vững, QA UI, tự trích ngữ cảnh, refine cả chương. Các module sau gọi cùng lõi
+dịch qua interface đã ổn định. Cache chỉ đo trên payload thật; tối ưu cache khi tầng ngữ cảnh đủ
+dữ liệu, không kéo dài prompt để đạt ngưỡng.
+
+**Chỗ cần chốt trong OpenSpec trước khi code:** kích thước lô sau spike L2; cách ráp một đoạn quá
+dài; những biến thể JSON parser được sửa an toàn; policy ưu tiên tham số tác vụ so với mục model;
+quy ước nào có UI/cấu hình ngay ở L3. Những câu này là lựa chọn triển khai, chưa tự thành quyết
+định sản phẩm chỉ vì có trong roadmap.
+
+### 3. Thuật ngữ (Đã hoàn thành 2026-10-04)
 
 Lát 1 của change `context-core`; change đó được tách khi bắt đầu module này. Căn cứ: [ngữ cảnh đợt 1](../research/story-context.md) đề xuất 1, 10, 11; [đợt 2](../research/context-system.md) K4, K7; scope S2.3.
 
@@ -285,22 +302,20 @@ Bảng module 0–9 viết sáng 2026-10-03 (ADR-005) ánh xạ sang thứ tự 
 
 ## Công việc gần nhất
 
-*(Cập nhật cuối ngày 2026-10-03.)* Đã xong: fixture nháp ở [`fixtures/`](../../../fixtures/README.md) (5 chương Nhật riêng tư, 3 chương công khai) và lượt B1 baseline chỉ với T0 ([kết quả](../research/translation-quality.md#kết-quả-đo-của-mira)).
-
-1. **Chủ sản phẩm duyệt bảng văn phong của fixture**: 40 chỗ đánh dấu `decision: true` trong glossary và ma trận xưng hô. Khi chưa duyệt, con số "glossary đúng" chưa có nghĩa. Cùng lúc ghi lại các điểm chưa ổn của luồng áp dụng hiện tại, để dùng ở module Đề xuất.
-2. ~~**Thí nghiệm prompt đầu tiên (B2a)**~~: đã chạy 2026-10-03 ([kết quả](../research/translation-quality.md#b2a--quy-ước-tiếng-việt-trong-system-prompt-2026-10-03)).
-   - Quy ước trong prompt sửa được kiểu thoại và cách gọi.
-   - Nhưng với đơn vị câu của MVP, model gộp câu nên sót câu và trượt đoạn; tên vẫn trôi.
-   - Hệ quả cho module Lõi dịch: đổi đơn vị gửi sang **đoạn** trước khi thêm chỉ dẫn văn phong, và đo mức thinking (B3) trước khi kéo dài prompt.
-3. **Viết change openspec cho Bộ đo**: định dạng fixture, T0 thành hàm thuần trong `src/shared/algorithms/`, T1 cần khóa của một hãng khác Gemini, T3, quy tắc quyết định E6. Thay công cụ tạm `scripts/bench/`.
-4. **Viết change cho Lõi dịch.** Khi tới module Thuật ngữ thì tách `context-core` thành hai change Thuật ngữ và Xưng hô.
+*(Cập nhật 2026-10-04.)* Bộ đo đã có hạ tầng offline và kết quả B1/B2a/B3; T1 còn chờ hiệu chuẩn.
+Tiếp theo là viết change OpenSpec cho **Lõi dịch** theo L0–L6 ở trên, khóa hợp đồng và các phép
+đo trước khi sửa đường dịch. Việc thẩm định oracle do người dịch làm song song; mục chưa duyệt
+được gắn trạng thái nháp trong report. Khi tới Thuật ngữ, tách và rà lại change `context-core`
+theo [roadmap module Ngữ cảnh](../../modules/context/roadmap.md).
 
 ## Điều kiện dừng mở rộng
 
 - **Lõi phải sửa trước:** văn bản bị mất hoặc nhân đôi khi nhận/bỏ đề xuất; bản dịch AI gắn sai đoạn âm thầm; restore không đáng tin.
 - **Hàng đợi phải sửa trước khi thêm provider:** tác vụ AI không tiếp tục được sau lỗi mạng hay giới hạn tốc độ.
 - **Mở lại Q2 của ADR-005 trước khi thêm tính năng mới:** phiên quan sát cho thấy dịch giả cần soát và đánh dấu theo từng câu.
-- **Không dựng tiếp phần cải tiến:** Bộ đo cho thấy cải tiến đó không hơn baseline (T0 xấu đi, hoặc cận dưới khoảng tin cậy của tỷ lệ thắng không quá 50%). Ghi kết quả âm và chuyển sang mục kế.
+- **Không dựng tiếp phần cải tiến chất lượng:** lỗi mất/sai ID hoặc ghi đè chữ người xuất hiện; hoặc
+  phép so đã đăng ký trước cho thấy hại rõ về nghĩa/cấu trúc mà lợi ích không bù được. Kết quả
+  chưa đủ mẫu được ghi là chưa đủ bằng chứng, rồi đo thêm hoặc thu hẹp thay đổi.
 
 ---
 

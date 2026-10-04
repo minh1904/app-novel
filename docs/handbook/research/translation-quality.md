@@ -503,7 +503,14 @@ Số đo do chính Mira chạy, bằng công cụ tạm [`scripts/bench/`](../..
 - (c) tên và quan hệ đi qua glossary và ma trận xưng hô;
 - (d) đo mức thinking (B3) trước khi thêm chữ vào prompt, vì chi phí tăng theo độ dài prompt.
 
-**Bài học cho Bộ đo:** "số đoạn bằng nhau" không có nghĩa là ghép đúng. Bộ chấm nay coi một lần là trượt vị trí khi hơn 15% đoạn lệch độ dài, và khi đó không so từng đoạn nữa. Cả B1 và B2a ở trên đã được chấm lại theo luật này. Module Bộ đo cần một cách ghép đoạn theo nội dung, hoặc nhờ ID đoạn của Lõi dịch.
+### B3 — Thí nghiệm tắt thinking (`MIRA_BENCH_THINKING=off`)
+
+Trên cấu hình Gemini 2.5 Flash đã thử, B3 làm số cờ cấu trúc tăng từ 6 lên 1.010 và strict glossary
+giảm từ 69,3% xuống 26,4%. Policy lịch sử `legacy-e6` cho khuyến nghị `no-keep`. Kết luận đúng phạm
+vi là không tắt thinking cho cấu hình này; không suy rộng thành luật cho mọi model.
+
+Bảng số và V14 đã chuyển sang [kết quả của module Bộ đo](../../modules/measurement/results.md) để
+trang nghiên cứu này chỉ giữ bối cảnh và lịch sử lập luận.
 
 **Giới hạn của lượt đo:**
 - Một model, mỗi chương 3 lần, chỉ có T0.

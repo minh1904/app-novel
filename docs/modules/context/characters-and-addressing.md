@@ -1,0 +1,53 @@
+# Nhân vật, quan hệ và xưng hô Nhật → Việt
+
+Cập nhật: 2026-10-04 · Trạng thái: mặc định hậu tố đã chốt; mô hình và cách kiểm là đề xuất.
+Chủ trì: người dịch/sản phẩm. Câu hỏi: làm sao hỗ trợ lựa chọn của người dịch mà không đoán sai quan hệ?
+
+## Tách ba lớp
+
+| Lớp | Ghi nhận | Không suy diễn thành |
+| --- | --- | --- |
+| Sự kiện nguyên tác | danh tính, quan hệ, vai vế, ai biết gì | lựa chọn “anh–em” bắt buộc |
+| Lời nói trong cảnh | người nói, người nghe, người được nhắc, cách gọi, bằng chứng | mọi câu A nói đều hướng tới B |
+| Quyết định bản Việt | tự xưng, gọi đối phương, hậu tố, giọng và ngoại lệ | sự kiện huyết thống hoặc tuổi tác trong nguồn |
+
+Lời đùa dùng từ thân tộc không đủ xác lập quan hệ gia đình. Kính ngữ nói về người thứ ba không đồng nhất với kính trọng người nghe. Đại từ của lời kể không bắt buộc giống đại từ cùng nhân vật trong hội thoại.
+
+## Các trường hợp theo mong muốn người dịch
+
+**Đã chốt:** cho người dịch chọn, và nếu không có yêu cầu thì **giữ hậu tố Nhật gắn tên**. Bốn nhóm dưới đây là cách tổ chức lựa chọn; chưa khẳng định đã có bốn preset trong UI.
+
+| Lựa chọn | Hướng xử lý | Điều vẫn phải xét |
+| --- | --- | --- |
+| Giữ hậu tố — mặc định | Giữ `-san`, `-chan`, `-kun`, `-sama` khi chúng gắn tên theo quy ước tác phẩm | vẫn dịch đại từ, chức danh và mức lịch sự theo ngữ cảnh; không tự thêm hậu tố không có trong nguồn |
+| Việt hóa | Chuyển chức năng quan hệ sang cách gọi tiếng Việt phù hợp, có thể chỉ dùng tên | `-san` không tự tương đương “chị”; thiếu giới/tuổi/vai không được tự đoán |
+| Kết hợp có quy tắc | Nêu rõ nhóm nào giữ, nhóm nào Việt hóa, phạm vi và ngoại lệ | không đổi tùy hứng giữa các lần xuất hiện cùng điều kiện |
+| Tùy chỉnh theo tác phẩm | Người dịch khai quy ước riêng cho nhân vật, quan hệ hoặc tình huống | phải nhìn thấy quy tắc nào thắng khi chồng phạm vi |
+
+Giữ hậu tố không đồng nghĩa giữ nguyên mọi kính ngữ trong câu. Chức danh đứng độc lập như cách gọi thầy/cô cần xử lý riêng theo vai và lựa chọn người dịch. Không mặc định ghép cả “chị” và hậu tố trong “chị A-san”; nếu người dịch chủ ý dùng, ghi thành ngoại lệ cụ thể, không biến thành quy tắc chung.
+
+Nguồn đổi từ tên họ + hậu tố sang tên riêng hoặc bỏ hậu tố có thể là diễn biến tình cảm. Không “chuẩn hóa” cho giống chương đầu. Nhất quán là giữ cách biểu đạt chuyển biến đó theo cùng chiến lược dịch.
+
+## Ma trận có chiều và có phạm vi
+
+Mỗi quy ước A→B mô tả A tự xưng gì và gọi B thế nào. B→A là một quy ước riêng; không tự đảo hai từ để tạo chiều ngược. Thêm phạm vi chương/cảnh, hình thức giao tiếp, biến thể được phép và người duyệt.
+
+Đề xuất thứ tự ưu tiên: ngoại lệ cảnh đã duyệt → quy ước cặp tại mốc → hướng dẫn nhân vật/tác phẩm. Hai quy tắc cùng độ ưu tiên mâu thuẫn phải hiện ra, không lấy cái được ghi sau làm đúng. Chưa chốt cấu trúc lưu cảnh.
+
+Không suy tuổi/giới từ tên, không gán cặp từ một điểm “thân mật” hoặc archetype. Các bảng tuổi, giới, thể loại trong tài liệu cũ là gợi ý chưa được kiểm chứng, không phải luật.
+
+## Chưa biết người nói hoặc người nghe
+
+Quét tên trong chương chỉ tìm dàn nhân vật có khả năng liên quan. Chương có A và B không đủ chứng minh có hội thoại A↔B; cảnh ba người càng không được tạo mọi cặp rồi coi là bắt buộc.
+
+Nếu chưa rõ vai, lưu “chưa biết” kèm đoạn nguồn, không dùng confidence model tự cho để biến thành sự thật. Có thể lược đại từ nếu tiếng Việt vẫn tự nhiên; không coi “tôi/bạn/anh/chị” là mặc định hoàn toàn trung tính. Khi bản dịch buộc chọn mà thiếu căn cứ, cần người dịch xem lại.
+
+## Những gì công cụ kiểm được và chưa kiểm được
+
+Đếm đại từ hoặc regex dấu ngoặc chỉ giúp sàng lọc. Ví dụ tự soạn để kiểm bộ phát hiện: “Em chờ anh” có thể là người nói tự xưng em hoặc ra lệnh cho người nghe em; chuỗi từ không đủ xác định chiều quan hệ. Cần phân vai, cảnh và nguồn trước khi kết luận vi phạm.
+
+Ca khó phải có trong đánh giá: đổi người nghe giữa cảnh, nhóm người nghe, độc thoại, lời dẫn, lời trích bên trong thoại, kính ngữ người thứ ba, mỉa mai, giả danh, đổi thân mật có chủ ý, và quan hệ chỉ được tiết lộ sau.
+
+Phản hồi cộng đồng do người dùng cung cấp ủng hộ nhiều lựa chọn và tính nhất quán, nhưng chưa có URL/khung lấy mẫu; đây là quan sát định tính, không đại diện toàn cộng đồng. Mẫu người dịch đã khảo sát và giới hạn nằm ở [bằng chứng](evidence.md).
+
+[Về mục lục](README.md)

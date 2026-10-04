@@ -1,5 +1,51 @@
 # Nhật ký handbook
 
+## Triển khai Module 3: Thuật ngữ (`glossary`) — 2026-10-04
+
+- Hoàn thành lát 1 của `context-core` theo lộ trình (Module 3: Thuật ngữ):
+  - **Schema SQLite v6 và Tầng Lưu trữ**: Nâng cấp schema tác phẩm (`workSchema.ts`) lên v6, bổ sung bảng `context_entry` (thuật ngữ, dạng ghi, cấm dùng, hiệu lực từ/đến chương, trạng thái duyệt) và `context_alias` (các dạng viết khác). Cài đặt `contextEntries.ts` với đầy đủ CRUD, truy vấn hiệu lực theo khoảng chương và cập nhật snapshot fixture v6.
+  - **Thuật toán Phân tích & So khớp**:
+    - `namesParser.ts`: Đọc và phân tích định dạng `Names.txt` (`Từ_gốc=Từ_dịch`), bỏ qua comment `#`, `//`, báo cáo chi tiết các dòng bỏ qua.
+    - `contextMatching.ts`: So khớp thuật ngữ trong văn bản nguồn với chiến lược longest-match cho CJK, ranh giới từ `\b` cho Latin/EN, chặn từ quá ngắn, khớp qua alias.
+    - `glossaryCompliance.ts`: Kiểm tra tuân thủ thuật ngữ trên bản dịch, cảnh báo thiếu bản dịch đích hoặc xuất hiện thuật ngữ bị cấm (`forbidden`).
+  - **Tích hợp Lõi dịch & Bảo vệ Quyền riêng tư**:
+    - Tiêm các thuật ngữ đã duyệt (`approved`) vào Tầng C (`formatGlossaryLayerC`) trong `promptBuilder.ts`.
+    - Tính toán `contextHash` (SHA-256) ghi nhận chính xác ngữ cảnh đưa vào prompt.
+    - Cam kết quyền riêng tư: Các thuật ngữ chưa duyệt (`pending`, `rejected`) tuyệt đối không bao giờ được gửi tới nhà cung cấp AI.
+  - **Dịch vụ & Kênh IPC**: `GlossaryService` tại `src/main/services/context/glossaryService.ts`, các kênh IPC `glossary:*` (`list`, `get`, `create`, `update`, `delete`, `importNames`, `checkCompliance`) và preload bridge `window.mira.glossary`.
+  - **Giao diện Người dùng (Glossary Screen)**:
+    - `GlossaryScreen.tsx`, `GlossaryDialogs.tsx`, `useGlossary.ts`: Tìm kiếm, bộ lọc trạng thái (`all`, `approved`, `pending`, `rejected`), duyệt nhanh, tạo mới, chỉnh sửa, xóa và modal nhập tệp `Names.txt`.
+    - Thay thế khu vực minh họa trong `ContextAreaMock.tsx` bằng `GlossaryScreen` thật nối kho SQLite qua IPC.
+- Kết quả kiểm tra toàn diện: 1596 test Vitest đạt (114 test files, tăng 73 test), `tsc` (node, web, scripts) đạt, `eslint` 0 lỗi, electron-vite build 3 bundle thành công.
+
+## Triển khai Module 2: Lõi dịch (`translation-core`) — 2026-10-04
+
+- Triển khai toàn bộ các mốc L0–L6 của Lõi dịch theo đúng OpenSpec và roadmap:
+  - **Mốc L0 · Làm sạch đường đo và runner dịch**: Cập nhật `scripts/bench/translate.run.ts` khớp API hiện hành (`LibraryStore.create`, `ChapterTranslator.plan/runBatch` nhận object); bổ sung typecheck độc lập cho scripts trong `scripts/check.mjs` (`tsconfig.scripts.json`); bổ sung test offline mock runner `translateRunnerMock.test.ts` xác thực qua bộ kiểm tra T0 (`alignParagraphs`, `checkStructure`, `checkResidualSourceChars`).
+  - **Mốc L1 · Tách một đường dịch**: Xây dựng module lõi `src/main/services/ai/translate/` với `types.ts`, `promptBuilder.ts`, `translationCore.ts`; triển khai bộ parser khoan dung `src/shared/algorithms/lenientParser.ts` (xử lý markdown fence, trailing comma, alias thuộc tính, key dạng id); triển khai đối soát ánh xạ ID tạm `[n]` về ID gốc `src/shared/algorithms/translateReconcile.ts`; nối `ChapterTranslator` với lõi dịch qua adapter và bảo toàn các dòng đã bảo vệ/đã soát của người dùng.
+  - **Mốc L2 · Bảo toàn đoạn và lô**: Xây dựng `src/shared/algorithms/translatePlanner.ts` chia lô theo trần token và trần đơn vị, hỗ trợ cắt đoạn dài thành các mảnh tạm và ráp nối lại đúng ID gốc; triển khai vòng sửa lỗi (repair loop) đúng 1 lần cho các ID bị thiếu hoặc phản hồi lỗi trong `translationCore.ts`; phân định rõ ranh giới lỗi hạ tầng (gateway retry/cooldown) và lỗi nội dung (lõi dịch sửa lỗi).
+  - **Mốc L3–L6 · Prompt, tham số và nghiệm thu**: Prompt builder có version `translate-v1` và hash SHA-256; hỗ trợ các tầng ngữ cảnh (A tác phẩm, B chương, C theo lô) và chỉ dẫn ngôn ngữ riêng (JA giữ hậu tố kính ngữ -san/-kun/-chan..., ZH dịch chuẩn Hán Việt, EN tự nhiên); ghi nhận tham số thực gửi và bảo vệ bí mật API key trong runner.
+- Kết quả kiểm tra toàn diện: 1551 test Vitest đạt (105 test files), `tsc` (node, web, scripts) đạt, `eslint` 0 lỗi.
+
+## Chi tiết hóa roadmap Lõi dịch — 2026-10-04
+
+- Cập nhật [lộ trình](../delivery/roadmap.md#2-lõi-dịch) thành bảy mốc L0–L6: hợp đồng và
+  baseline, tách đường dịch, bảo toàn đoạn/lô, prompt, tham số, sửa mục lỗi, nối app.
+- Cổng chất lượng dùng T0 và người chấm mù; T1 chỉ là tín hiệu phụ trong khi chưa hiệu chuẩn.
+  Ghi rõ adapter segment hiện tại và phép đo theo đoạn trước khi module Đề xuất đổi đường ghi.
+- Mốc L0 yêu cầu sửa runner dịch của Bộ đo theo API hiện hành và kiểm bằng mock trước khi lấy
+  baseline mới; output B1/B2a/B3 giữ vai trò bằng chứng lịch sử.
+- Đây là kế hoạch đề xuất; chưa tạo change Lõi dịch hoặc thay mã ứng dụng.
+
+## Hoàn tất hạ tầng offline của Bộ đo — 2026-10-04
+
+- Chuẩn hóa fixture, analyzer T0, runner/replay/compare và trang T3; 1523 test Vitest đạt.
+- Compare mặc định chỉ báo metric; policy `legacy-e6` chỉ dùng tái hiện kết quả cũ.
+- V14 giữ định nghĩa đoạn ADR-005. T1 vẫn ghi “chưa hiệu chuẩn” cho tới khi có A/A live ngoài họ
+  model dịch và đối chiếu người.
+- Tài liệu chuẩn: [module Bộ đo](../../modules/measurement/README.md) và
+  [kết quả lịch sử](../../modules/measurement/results.md).
+
 ## Chốt mặc định kính ngữ Nhật theo lựa chọn người dịch — 2026-10-04
 
 - Chủ sản phẩm chốt bốn chế độ cấp tác phẩm: giữ hậu tố Nhật, Việt hóa, lai theo quy tắc và tùy
@@ -62,7 +108,7 @@
 
 ## Dựng lại motion reel Mira — 2026-10-04
 
-- Theo yêu cầu làm lại sau phản hồi video 60 giây chưa hấp dẫn: tạo [reel 15 giây bản 2](../../../assets/motion/v2/README.md), 1080p60, chữ và chuyển động đồ họa, nhạc mới; tham khảo nhịp video Revid người dùng gửi.
+- Theo yêu cầu làm lại sau phản hồi video 60 giây chưa hấp dẫn: tạo reel 15 giây bản 2, 1080p60, chữ và chuyển động đồ họa, nhạc mới; tham khảo nhịp video Revid người dùng gửi. Tài sản reel cũ không còn nằm trong repo.
 - Không dùng footage/âm thanh nguồn. Đã kiểm khung hình và giải mã đủ 900 khung; bản mới chưa được chủ sản phẩm nghiệm thu. Không thay mã ứng dụng.
 
 ## Fixture, công cụ đo tạm và baseline đầu tiên — 2026-10-03
