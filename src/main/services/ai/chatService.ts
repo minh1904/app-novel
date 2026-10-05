@@ -1,5 +1,8 @@
-import type { ChatChunk, ChatFinishReason, ChatSendInput, ChatUsage } from '../../../shared/contracts/aiChat'
+import type {
+  ChatChunk, ChatContextBlock, ChatFinishReason, ChatSendInput, ChatStartResult, ChatUsage
+} from '../../../shared/contracts/aiChat'
 import type { ChatProposalResult } from '../../../shared/contracts/aiProposals'
+import type { PromptVersion } from './promptVersion'
 import { buildChatMessages } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,
@@ -41,6 +44,10 @@ export interface ChatConnections {
 
 export interface ChatServiceOptions {
   connections: ChatConnections
+  /** Thế hệ prompt chat; mặc định `v1`. */
+  promptVersion?: PromptVersion
+  /** Khối main tự đọc từ kho (thuật ngữ, xưng hô), nối sau khối renderer gửi lên. */
+  storeContext?: (input: ChatSendInput) => ChatContextBlock[]
   records?: {
     start(requestId: string, input: ChatSendInput, provider: string | null, model: string): string
     update(requestId: string, workId: string, patch: {
@@ -119,7 +126,7 @@ export class ChatService {
     return this.startWithSession(input, emit).requestId
   }
 
-  startWithSession(input: ChatSendInput, emit: ChatEmit): { requestId: string; sessionId?: string } {
+  startWithSession(input: ChatSendInput, emit: ChatEmit): ChatStartResult {
     const { connections, newId } = this.options
     // Cùng một đường với lối dịch: nó dựng provider trên kho khóa của kết nối và từ chối kết nối
     // đang tắt với đúng câu hộp thoại dịch đang dùng. Tên method nói "translator" vì nó có trước;
@@ -127,6 +134,12 @@ export class ChatService {
     // Cài đặt của mục được đọc ở đây, **một lần**, và nằm trong `session`: mọi vòng đọc công cụ của lượt dùng
     // nguyên bộ đó, nên sửa cài đặt giữa chừng chỉ có hiệu lực từ lượt kế tiếp.
     const session = connections.translator(input.connectionId, input.entryId)
+
+    // Khối từ kho đi vào **cùng** mảng ngữ cảnh với khối của renderer trước khi ghi lượt: lịch sử,
+    // hash của đề xuất và prompt cùng thấy một danh sách, và renderer nhận lại phần thêm để panel
+    // liệt kê đúng những gì đã gửi.
+    const addedContext = this.options.storeContext?.(input) ?? []
+    if (addedContext.length > 0) input = { ...input, context: [...input.context, ...addedContext] }
 
     const requestId = newId()
     const sessionId = this.options.records?.start(
@@ -138,7 +151,11 @@ export class ChatService {
     // Cố ý không `await`: `start` phải trả `requestId` trước khi chunk đầu tiên đi ra. `void` cộng
     // `catch` ở trong `run` để không bao giờ có promise bị bỏ rơi.
     void this.run(requestId, input, session, controller, emit)
-    return { requestId, ...(sessionId === undefined ? {} : { sessionId }) }
+    return {
+      requestId,
+      ...(sessionId === undefined ? {} : { sessionId }),
+      ...(addedContext.length > 0 ? { addedContext } : {})
+    }
   }
 
   cancel(requestId: string): void {
@@ -173,7 +190,7 @@ export class ChatService {
     try {
       const { library } = this.options
       const tools = library ? createChatTools(library, input.workId) : null
-      const messages = buildChatMessages(input)
+      const messages = buildChatMessages(input, this.options.promptVersion)
 
       for (let round = 0; ; round++) {
         // Vòng cuối **không** mời công cụ nữa, nên model buộc phải trả lời bằng những gì đã đọc. Đó

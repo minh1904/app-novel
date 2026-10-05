@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { TEACHER_ADDRESSING_RULES } from '../../../../shared/contracts/addressingPresets'
 import type { SourceLanguage } from '../../../../shared/contracts/library'
 import type { TempMappedUnit } from '../../../../shared/contracts/translateCore'
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
@@ -52,7 +53,20 @@ export function buildTranslateSystemPrompt(options?: PromptBuilderOptions): {
   version: string
   hash: string
 } {
-  const parts: string[] = [TRANSLATE_SYSTEM_PROMPT_V1]
+  const prompt = composeSystemPromptV1(TRANSLATE_SYSTEM_PROMPT_V1, options)
+  return {
+    prompt,
+    version: PROMPT_VERSION_V1,
+    hash: computePromptHash(prompt)
+  }
+}
+
+/**
+ * Ghép các tầng của `v1` sau một phần mở đầu. Lượt chính và lượt hỏi lại chỉ khác phần mở đầu: lượt
+ * hỏi lại từng gửi mỗi phần mở đầu, nên các đoạn dịch lại không theo glossary hay xưng hô.
+ */
+export function composeSystemPromptV1(base: string, options?: PromptBuilderOptions): string {
+  const parts: string[] = [base, '\n[Quy ước thầy trò]\n' + TEACHER_ADDRESSING_RULES.join('\n')]
 
   const langInstruction = getLanguageInstructions(options?.sourceLang)
   if (langInstruction) {
@@ -75,12 +89,7 @@ export function buildTranslateSystemPrompt(options?: PromptBuilderOptions): {
     parts.push(`\n[Ngữ cảnh theo lô - Tầng C]\n${options.layers.layerC}`)
   }
 
-  const prompt = parts.join('\n')
-  return {
-    prompt,
-    version: PROMPT_VERSION_V1,
-    hash: computePromptHash(prompt)
-  }
+  return parts.join('\n')
 }
 
 export function computePromptHash(prompt: string): string {
@@ -91,9 +100,7 @@ export function computeContextHash(contextPayload: string): string {
   return createHash('sha256').update(contextPayload).digest('hex')
 }
 
-export function formatGlossaryLayerC(
-  entries: (ContextEntryItem | MatchedContextEntry)[]
-): string {
+export function formatGlossaryLayerC(entries: (ContextEntryItem | MatchedContextEntry)[]): string {
   const approvedItems: { entry: ContextEntryItem }[] = []
   for (const item of entries) {
     const entry = 'entry' in item ? item.entry : item
@@ -144,8 +151,9 @@ export function formatAddressingLayerB(dyads: AddressingDyadResolved[]): string 
     const srcName = dyad.sourceCharacter.target || dyad.sourceCharacter.source
     const tgtName = dyad.targetCharacter.target || dyad.targetCharacter.source
     const formalityPart = dyad.formality ? ` (sắc thái: ${dyad.formality})` : ''
+    const notesPart = dyad.notes ? ` Ghi chú: ${dyad.notes}` : ''
     lines.push(
-      `- ${srcName} -> ${tgtName}: ${srcName} tự xưng "${dyad.speakerPronoun}", gọi ${tgtName} là "${dyad.recipientPronoun}"${formalityPart}.`
+      `- ${srcName} -> ${tgtName}: ${srcName} tự xưng "${dyad.speakerPronoun}", gọi ${tgtName} là "${dyad.recipientPronoun}"${formalityPart}.${notesPart}`
     )
   }
 
@@ -159,4 +167,3 @@ export function buildTranslatePayload(units: TempMappedUnit[]): string {
 export function buildRepairPayload(missingUnits: TempMappedUnit[]): string {
   return JSON.stringify(missingUnits.map((u) => ({ id: u.tempId, src: u.text })))
 }
-

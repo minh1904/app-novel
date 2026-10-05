@@ -49,7 +49,12 @@ export interface AiChatState {
   receiveChunk(chunk: ChatChunk): void
   beginTurn(input: BeginTurnInput): TurnView
   attachRequestId(localId: string, requestId: string): void
-  attachRequestIdForWork(workId: string, localId: string, requestId: string): void
+  attachRequestIdForWork(
+    workId: string,
+    localId: string,
+    requestId: string,
+    addedContext?: ChatContextBlock[]
+  ): void
   failTurn(localId: string, error: ChatError): void
   failTurnForWork(workId: string, localId: string, error: ChatError): void
   markTurnProposal(localId: string, patch: ProposalPatch): void
@@ -58,6 +63,24 @@ export interface AiChatState {
   restoreSession(views: AiTurnView[]): void
   clearSession(): void
   reset(): void
+}
+
+/**
+ * Nối các khối main tự đọc từ kho (thuật ngữ, xưng hô) vào lượt vừa gửi, để danh sách "đã gửi" của
+ * panel khớp đúng prompt — trước khi main trả lời, renderer chỉ biết các khối nó tự dựng.
+ */
+function withAddedContext(
+  session: Session,
+  localId: string,
+  addedContext: ChatContextBlock[]
+): Session {
+  if (addedContext.length === 0) return session
+  return {
+    ...session,
+    turns: session.turns.map((turn) =>
+      turn.localId === localId ? { ...turn, context: [...turn.context, ...addedContext] } : turn
+    )
+  }
 }
 
 let unsubscribeChunk: (() => void) | null = null
@@ -169,10 +192,14 @@ export const useAiChatStore = create<AiChatState>((set, get) => {
         replay(requestId)
       }
     },
-    attachRequestIdForWork: (workId, localId, requestId) => {
+    attachRequestIdForWork: (workId, localId, requestId, addedContext = []) => {
       updateWork(workId, (current) => ({
         ...current,
-        session: attachRequestId(current.session, localId, requestId)
+        session: withAddedContext(
+          attachRequestId(current.session, localId, requestId),
+          localId,
+          addedContext
+        )
       }))
       replay(requestId)
     },

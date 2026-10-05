@@ -1,3 +1,5 @@
+import type { PromptVersion } from './ai/promptVersion'
+import { chatStoreContext } from './ai/chatStoreContext'
 import type { SecretCrypto } from '../infra/storage/secretStore'
 import { SecretStore } from '../infra/storage/secretStore'
 import { ChapterTranslator } from './ai/chapterTranslation'
@@ -27,7 +29,8 @@ export interface Services {
 export function createServices({
   library,
   crypto,
-  fetch: fetchImpl
+  fetch: fetchImpl,
+  promptVersion
 }: {
   library: LibraryStore
   crypto: SecretCrypto
@@ -36,6 +39,8 @@ export function createServices({
    * left out, the global `fetch` is used, which is what tests and any non-Electron caller want.
    */
   fetch?: typeof fetch
+  /** Thế hệ prompt cho dịch và chat; bỏ trống là mặc định (`v1`). */
+  promptVersion?: PromptVersion
 }): Services {
   const connections = new ConnectionService({
     db: library.appDb,
@@ -47,16 +52,19 @@ export function createServices({
   const translator = new ChapterTranslator({
     library,
     connections,
-    now: () => library.appNow()
+    now: () => library.appNow(),
+    promptVersion
   })
   const paragraphTranslator = new ParagraphTranslator({
-    library, connections, now: () => library.appNow()
+    library, connections, now: () => library.appNow(), promptVersion
   })
   for (const work of library.list().works) {
     library.withWork(work.id, (db) => db.transaction(() => interruptAiTurns(db, library.appNow())))
   }
   const chat = new ChatService({
     connections,
+    promptVersion,
+    storeContext: (input) => chatStoreContext(library, input),
     records: {
       start: (requestId, input, provider, model) => library.withWork(input.workId, (db) =>
         db.transaction(() => {

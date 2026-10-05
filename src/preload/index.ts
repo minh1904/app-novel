@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import type { ChatChunk, ChatSendInput } from '../shared/contracts/aiChat'
+import type { ChatChunk, ChatSendInput, ChatStartResult } from '../shared/contracts/aiChat'
 import type {
   AcceptProposalInput,
   AcceptProposalResult,
@@ -262,7 +262,7 @@ const desktopApi: DesktopApi = {
     chat: {
       send: (input: ChatSendInput) =>
         ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<
-          Result<{ requestId: string; sessionId?: string }>
+          Result<ChatStartResult>
         >,
       cancel: (requestId: string) =>
         ipcRenderer.invoke(CHANNELS.aiChatCancel, { requestId }) as Promise<Result<void>>,

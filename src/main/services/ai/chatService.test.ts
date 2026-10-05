@@ -702,3 +702,56 @@ describe('đọc bằng công cụ', () => {
     expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
   })
 })
+
+describe('khối ngữ cảnh main đọc từ kho', () => {
+  const term = {
+    kind: 'term' as const,
+    label: 'Thuật ngữ đã duyệt',
+    detail: '1 mục khớp chương',
+    text: '- Winter → Đông'
+  }
+
+  it('gửi kèm, ghi vào lượt và trả lại cho renderer', async () => {
+    let sent: Array<{ role: string; content: string }> = []
+    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+      sent = (JSON.parse(String(init?.body)) as { messages: typeof sent }).messages
+      return sseResponse([delta('Đông'), DONE])
+    }) as typeof fetch
+    const recorded: ChatSendInput[] = []
+    const service = new ChatService({
+      connections: connections(fetchImpl),
+      newId: () => 'r1',
+      now: () => NOW,
+      storeContext: () => [term],
+      records: {
+        start: (_id, started) => {
+          recorded.push(started)
+          return 's1'
+        },
+        update: () => undefined
+      }
+    })
+    const own = { kind: 'chapter-source' as const, label: 'Bản gốc của chương', detail: '1', text: 'Winter' }
+    const done = new Promise<void>((resolve) => {
+      const started = service.startWithSession(input({ context: [own] }), (chunk) => {
+        if (chunk.kind === 'done' || chunk.kind === 'error') resolve()
+      })
+      expect(started).toEqual({ requestId: 'r1', sessionId: 's1', addedContext: [term] })
+    })
+    await done
+    expect(recorded[0].context).toEqual([own, term])
+    expect(sent.map((message) => message.content).join('\n')).toContain('- Winter → Đông')
+  })
+
+  it('không thêm gì khi kho không có mục khớp', () => {
+    const service = new ChatService({
+      connections: connections((async () => sseResponse([DONE])) as typeof fetch),
+      newId: () => 'r2',
+      now: () => NOW,
+      storeContext: () => []
+    })
+    const started = service.startWithSession(input(), () => undefined)
+    expect(started).toEqual({ requestId: 'r2' })
+    service.cancelAll()
+  })
+})

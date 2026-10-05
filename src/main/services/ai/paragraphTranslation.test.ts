@@ -8,6 +8,7 @@ import { GlossaryService } from '../context/glossaryService'
 import { acceptProposalParts, textHash } from '../proposals/proposalService'
 import { ConnectionService } from './connectionService'
 import { ParagraphTranslator, paragraphUnits } from './paragraphTranslation'
+import type { PromptVersion } from './promptVersion'
 
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -20,7 +21,7 @@ const crypto: SecretCrypto = {
 }
 
 function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText = '',
-  beforeReply?: () => void): {
+  beforeReply?: () => void, promptVersion?: PromptVersion): {
   library: LibraryStore
   translator: ParagraphTranslator
   workId: string
@@ -37,7 +38,9 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
   const fetchImpl = (async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> }
     messages.push(body.messages)
-    const units = JSON.parse(body.messages[1].content) as Array<{ id: string; src: string }>
+    const user = body.messages[1].content
+    const units = JSON.parse(/<nguon>\n([\s\S]*?)\n<\/nguon>/.exec(user)?.[1] ?? user) as
+      Array<{ id: string; src: string }>
     calls.push(units.map((unit) => unit.src))
     beforeReply?.()
     return new Response(JSON.stringify({
@@ -51,7 +54,7 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
     db: library.appDb, secrets: new SecretStore(crypto),
     now: () => 1000, newId: () => library.newAppId(), fetchImpl
   })
-  const translator = new ParagraphTranslator({ library, connections, now: () => 1000 })
+  const translator = new ParagraphTranslator({ library, connections, now: () => 1000, promptVersion })
   const work = library.create({ title: 'A', sourceLang: 'en' })
   const chapter = library.createChapter(work.id, 'Một').chapter
   library.saveText(work.id, chapter.id, 'source', sourceText, 0, segment(sourceText, 'en'))
@@ -225,6 +228,26 @@ describe('paragraph translation proposals', () => {
     expect(trace.contextHash).toBe(textHash(JSON.stringify([payload[0].content, payload[1].content])))
     expect(proposal.contextHash).toBe(textHash(JSON.stringify([trace.contextHash])))
     expect(proposal.usage).toMatchObject({ inputTokens: 10, outputTokens: 5 })
+  })
+
+  it('v2 sends the paragraphs before the batch and records the prompt version it used', async () => {
+    const h = setup('One.\nTwo.\nThree.\nFour.\nFive.', '', undefined, 'v2')
+    const plan = h.translator.plan(h)
+    const ids = plan.batches.flatMap((item) => item.sourceIds)
+    const batch = await h.translator.runBatch({
+      workId: h.workId, chapterId: h.chapterId, runId: plan.runId,
+      connectionId: h.connectionId, entryId: h.entryId, settingsKey: plan.settingsKey,
+      sourceRev: plan.sourceRev, targetRev: plan.targetRev,
+      targetBaseContent: plan.targetBaseContent, policy: 'review', sourceIds: ids.slice(4)
+    })
+    const [system, user] = h.messages[0]
+    expect(system.content).toContain('<dau_ra>')
+    expect(user.content).toContain('<doan_truoc>\nTwo.\nThree.\nFour.\n</doan_truoc>')
+    expect(h.calls[0]).toEqual(['Five.'])
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
+    const trace = proposal.context[0] as { contextHash: string; promptVersion: string }
+    expect(trace.promptVersion).toBe('translate-v2')
+    expect(trace.contextHash).toBe(textHash(JSON.stringify([system.content, user.content])))
   })
 
   it('accumulates metadata for each completed batch in the same proposal', async () => {

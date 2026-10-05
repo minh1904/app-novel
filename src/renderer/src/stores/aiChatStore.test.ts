@@ -56,6 +56,20 @@ describe('aiChatStore', () => {
     expect(useAiChatStore.getState().session.turns).toHaveLength(1)
   })
 
+  it('adds the blocks main read from the store to the turn they were sent with', () => {
+    const store = useAiChatStore.getState()
+    store.selectWork('work-a')
+    const own = { kind: 'range' as const, label: 'Đoạn đang sửa', detail: '5 ký tự', text: 'Đông' }
+    const term = { kind: 'term' as const, label: 'Thuật ngữ đã duyệt', detail: '1', text: '- A → B' }
+    const first = store.beginTurn({ question: 'A', mode: 'sua', context: [own], range: null })
+    const second = store.beginTurn({ question: 'B', mode: 'hoi', context: [], range: null })
+    store.attachRequestIdForWork('work-a', first.localId, 'request-a', [term])
+    store.attachRequestIdForWork('work-a', second.localId, 'request-b')
+    const turns = useAiChatStore.getState().session.turns
+    expect(turns[0].context).toEqual([own, term])
+    expect(turns[1].context).toEqual([])
+  })
+
   it('routes a late stream and send result back to their original work', () => {
     const store = useAiChatStore.getState()
     store.selectWork('work-a')

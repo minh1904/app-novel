@@ -17,8 +17,11 @@ import type { LibraryStore } from '../library/library'
 import type { ConnectionService } from './connectionService'
 import { estimateCost } from './costEstimate'
 import { executeTranslateBatch } from './translate/translationCore'
-import { buildTranslatePayload, buildTranslateSystemPrompt, formatAddressingLayerB,
-  formatGlossaryLayerC, type PromptContextLayers } from './translate/promptBuilder'
+import { listCharacters } from '../../infra/storage/addressingEntries'
+import { buildTranslateRequest, charactersMentionedIn, dyadsMentionedIn, PREVIOUS_PARAGRAPHS,
+  type TranslatePromptContext } from './translate/translatePrompt'
+import { DEFAULT_PROMPT_VERSION, type PromptVersion } from './promptVersion'
+import { suggestRegister } from './translate/languageProfiles'
 import { acceptProposalParts, textHash } from '../proposals/proposalService'
 
 interface ParagraphUnit extends SegmentText { order: number }
@@ -47,6 +50,8 @@ export class ParagraphTranslator {
     library: LibraryStore
     connections: ConnectionService
     now: () => number
+    /** Thế hệ prompt; mặc định `v1` cho tới khi Bộ đo cho thấy `v2` không tệ hơn. */
+    promptVersion?: PromptVersion
   }) {}
 
   plan({ workId, chapterId, connectionId, entryId }: ParagraphPlanInput): ParagraphTranslationPlan {
@@ -117,24 +122,36 @@ export class ParagraphTranslator {
 
     const glossary = library.getEffectiveGlossary(input.workId, input.chapterId, { approvedOnly: true })
     const matched = matchContextEntries(units.map((unit) => unit.text).join('\n'), glossary, work.sourceLang)
-    const dyads = library.getEffectiveAddressing(input.workId, input.chapterId)
-    const layerB = formatAddressingLayerB(dyads)
-    const layerC = formatGlossaryLayerC(matched)
-    const layers: PromptContextLayers = { layerB: layerB || undefined, layerC: layerC || undefined }
+    const version = this.options.promptVersion ?? DEFAULT_PROMPT_VERSION
+    const allDyads = library.getEffectiveAddressing(input.workId, input.chapterId)
+    // v2 gửi đúng các cặp có mặt trong chương và vài đoạn gốc liền trước lô; v1 giữ nguyên hành vi.
+    const dyads = version === 'v2' ? dyadsMentionedIn(allDyads, source.content) : allDyads
+    const first = Math.min(...units.map((unit) => unit.order))
+    const prompt: TranslatePromptContext = {
+      version, sourceLang: work.sourceLang, genre: work.genre, glossary: matched, dyads,
+      register: version === 'v2' ? suggestRegister(work.sourceLang, work.genre) : undefined,
+      characters: version === 'v2'
+        ? charactersMentionedIn(library.withWork(input.workId, (db) =>
+          listCharacters(db, { status: 'approved' })), source.content)
+        : undefined,
+      previous: version === 'v2'
+        ? all.slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), first).map((unit) => unit.text)
+        : undefined
+    }
     const context = [...matched, ...dyads]
-    const prompt = buildTranslateSystemPrompt({ sourceLang: work.sourceLang, layers }).prompt
-    const contextHash = textHash(JSON.stringify([prompt, buildTranslatePayload(
-      units.map((unit, index) => ({ tempId: `[${index + 1}]`, originalId: unit.id, text: unit.text }))
-    )]))
+    // Hash của request lượt chính, tính bằng cùng bộ dựng lõi dịch dùng để gửi: không thể lệch nhau.
+    const planned = buildTranslateRequest(prompt,
+      units.map((unit, index) => ({ tempId: `[${index + 1}]`, originalId: unit.id, text: unit.text })))
+    let contextHash = planned.requestHash
     let items: SegmentText[] = []
     let usage: TranslateUsage | null = null
     let error: TranslateFailure | null = null
     try {
       if (typeof (translator.provider as TranslationModelCaller).complete === 'function') {
         const result = await executeTranslateBatch({
-          caller: translator.provider as TranslationModelCaller, units,
-          sourceLang: work.sourceLang, layers, now
+          caller: translator.provider as TranslationModelCaller, units, prompt, now
         })
+        contextHash = result.request?.requestHash ?? contextHash
         items = result.items
         usage = result.usage ? toWireUsage(result.usage) : null
         error = result.error
@@ -155,7 +172,10 @@ export class ParagraphTranslator {
     const failed = units.filter((unit) => !returned.get(unit.id)).map((unit) => unit.id)
     let proposalId = prior?.id ?? null
     if (good.length > 0) {
-      const trace = { sourceIds: units.map((unit) => unit.id), context, contextHash, usage }
+      const trace = {
+        sourceIds: units.map((unit) => unit.id), context, contextHash,
+        promptVersion: planned.version, systemHash: planned.systemHash, usage
+      }
       const parts = good.map((unit) => ({
         id: library.newAppId(), baseFrom: target.content === '' ? 0 : null,
         baseTo: target.content === '' ? 0 : null, beforeText: '',

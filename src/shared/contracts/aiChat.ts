@@ -97,6 +97,13 @@ export interface ChatSendInput {
   context: ChatContextBlock[]
 }
 
+/** Main trả lời lệnh gửi. `addedContext` là khối main tự đọc từ kho và đã gửi kèm. */
+export interface ChatStartResult {
+  requestId: string
+  sessionId?: string
+  addedContext?: ChatContextBlock[]
+}
+
 export type ChatErrorKind =
   | 'rate_limited'
   | 'network'

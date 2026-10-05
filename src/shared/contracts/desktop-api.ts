@@ -7,7 +7,7 @@ import type {
   UpdateConnectionInput,
   UpdateModelEntryInput
 } from './aiConnections'
-import type { ChatChunk, ChatSendInput } from './aiChat'
+import type { ChatChunk, ChatSendInput, ChatStartResult } from './aiChat'
 import type {
   AcceptProposalInput,
   AcceptProposalResult,
@@ -154,7 +154,7 @@ export interface AiTranslateApi {
  */
 export interface AiChatApi {
   /** Bắt đầu một lượt. Trả `requestId` **ngay**; nội dung không bao giờ đi qua đường trả về này. */
-  send(input: ChatSendInput): Promise<Result<{ requestId: string; sessionId?: string }>>
+  send(input: ChatSendInput): Promise<Result<ChatStartResult>>
   cancel(requestId: string): Promise<Result<void>>
   /**
    * Nghe từng phần của mọi lượt đang chạy. Trả về hàm bỏ đăng ký, nên chỗ gọi dọn được mà không

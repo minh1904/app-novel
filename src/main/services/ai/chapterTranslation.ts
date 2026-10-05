@@ -18,11 +18,15 @@ import { CATALOG_READ_AT, lookupModel } from '../../infra/providers/modelCatalog
 import { planBatches } from '../../../shared/algorithms/translatePlanner'
 import type { TranslationModelCaller } from '../../../shared/contracts/translateCore'
 import { executeTranslateBatch } from './translate/translationCore'
+import { listCharacters } from '../../infra/storage/addressingEntries'
 import {
-  formatAddressingLayerB,
-  formatGlossaryLayerC,
-  type PromptContextLayers
-} from './translate/promptBuilder'
+  charactersMentionedIn,
+  dyadsMentionedIn,
+  PREVIOUS_PARAGRAPHS,
+  type TranslatePromptContext
+} from './translate/translatePrompt'
+import { DEFAULT_PROMPT_VERSION, type PromptVersion } from './promptVersion'
+import { suggestRegister } from './translate/languageProfiles'
 import { matchContextEntries } from '../../../shared/algorithms/contextMatching'
 import { originFor } from './provenance'
 import { ProviderError, type SegmentText } from '../../infra/providers/types'
@@ -43,6 +47,8 @@ export interface ChapterTranslatorOptions {
   library: LibraryStore
   connections: ConnectionService
   now: () => number
+  /** Thế hệ prompt; Bộ đo chọn `v2` để so với mặc định. */
+  promptVersion?: PromptVersion
 }
 
 /**
@@ -164,23 +170,32 @@ export class ChapterTranslator {
 
     try {
       if (typeof (translator.provider as unknown as TranslationModelCaller).complete === 'function') {
-        let layers: PromptContextLayers | undefined
+        const version = this.options.promptVersion ?? DEFAULT_PROMPT_VERSION
+        const prompt: TranslatePromptContext = {
+          version, sourceLang: work.sourceLang, genre: work.genre,
+          register: version === 'v2' ? suggestRegister(work.sourceLang, work.genre) : undefined
+        }
         try {
           const glossaryEntries = library.getEffectiveGlossary(workId, chapterId, {
             approvedOnly: true
           })
           const combinedSource = segments.map((s) => s.text).join('\n')
-          const matched = matchContextEntries(combinedSource, glossaryEntries, work.sourceLang)
-          const layerC = formatGlossaryLayerC(matched)
-
-          const addressingDyads = library.getEffectiveAddressing(workId, chapterId)
-          const layerB = formatAddressingLayerB(addressingDyads)
-
-          if (layerB || layerC) {
-            layers = {
-              layerB: layerB || undefined,
-              layerC: layerC || undefined
-            }
+          prompt.glossary = matchContextEntries(combinedSource, glossaryEntries, work.sourceLang)
+          const dyads = library.getEffectiveAddressing(workId, chapterId)
+          if (version === 'v2') {
+            const ordered = [...rows.values()]
+            const chapterSource = ordered.map((row) => row.sourceText).join('\n')
+            prompt.dyads = dyadsMentionedIn(dyads, chapterSource)
+            prompt.characters = charactersMentionedIn(
+              library.withWork(workId, (db) => listCharacters(db, { status: 'approved' })),
+              chapterSource
+            )
+            const first = ordered.findIndex((row) => row.sourceId === sourceIds[0])
+            prompt.previous = ordered
+              .slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), Math.max(0, first))
+              .map((row) => row.sourceText)
+          } else {
+            prompt.dyads = dyads
           }
         } catch {
           // If context loading fails, continue translation without layers
@@ -189,8 +204,7 @@ export class ChapterTranslator {
         const outcome = await executeTranslateBatch({
           caller: translator.provider as unknown as TranslationModelCaller,
           units: segments,
-          sourceLang: work.sourceLang,
-          layers,
+          prompt,
           now
         })
         items = outcome.items

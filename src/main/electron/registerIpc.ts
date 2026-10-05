@@ -1,3 +1,4 @@
+import { parsePromptVersion } from '../services/ai/promptVersion'
 import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { CHANNELS } from '../../shared/contracts/channels'
@@ -48,10 +49,16 @@ export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
 ): void {
+  // Biến môi trường dành cho thử nghiệm; giá trị lạ thì báo và chạy mặc định thay vì không mở được app.
+  const promptVersion = parsePromptVersion(process.env.MIRA_PROMPT_VERSION) ?? undefined
+  if (promptVersion === undefined) {
+    console.warn('MIRA_PROMPT_VERSION không hợp lệ, dùng mặc định:', process.env.MIRA_PROMPT_VERSION)
+  }
   const { connections, translator, paragraphTranslator, chat } = createServices({
     library,
     crypto: electronSafeStorage,
-    fetch: electronFetch
+    fetch: electronFetch,
+    promptVersion
   })
   const exportService = new ExportService(library, electronExportFilePicker(), electronPdfPrinter())
   const handlers = guardHandlers(

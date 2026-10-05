@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { TEACHER_ADDRESSING_RULES } from '../../../../shared/contracts/addressingPresets'
 import {
   PROMPT_VERSION_V1,
   TRANSLATE_SYSTEM_PROMPT_V1,
@@ -16,7 +17,9 @@ describe('promptBuilder — Xây dựng prompt có version/hash và phân tầng
   it('tạo prompt mặc định với version v1 và hash SHA-256 hợp lệ', () => {
     const { prompt, version, hash } = buildTranslateSystemPrompt()
     expect(version).toBe(PROMPT_VERSION_V1)
-    expect(prompt).toBe(TRANSLATE_SYSTEM_PROMPT_V1)
+    expect(prompt).toBe(
+      TRANSLATE_SYSTEM_PROMPT_V1 + '\n\n[Quy ước thầy trò]\n' + TEACHER_ADDRESSING_RULES.join('\n')
+    )
     expect(hash).toMatch(/^[0-9a-f]{64}$/)
     expect(hash).toBe(computePromptHash(prompt))
   })

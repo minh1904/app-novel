@@ -7,14 +7,11 @@ import type {
 } from '../../../../shared/contracts/translateCore'
 import { mapToTempIds, reconcileTempItems } from '../../../../shared/algorithms/translateReconcile'
 import { parseTranslationResponse } from '../../../../shared/algorithms/lenientParser'
-import type { SourceLanguage } from '../../../../shared/contracts/library'
 import {
-  REPAIR_SYSTEM_PROMPT_V1,
-  buildTranslateSystemPrompt,
-  type PromptContextLayers,
-  buildTranslatePayload,
-  buildRepairPayload
-} from './promptBuilder'
+  buildRepairRequest,
+  buildTranslateRequest,
+  type TranslatePromptContext
+} from './translatePrompt'
 import { ProviderError } from '../../../infra/providers/types'
 import { addUsage } from '../../../infra/providers/usage'
 
@@ -23,9 +20,8 @@ export type { ModelCompletionResult, TranslationModelCaller }
 export interface TranslateCoreBatchOptions {
   caller: TranslationModelCaller
   units: TranslateUnit[]
-  sourceLang?: SourceLanguage | string
-  layers?: PromptContextLayers
-  customConventions?: string
+  /** Ngữ cảnh và thế hệ prompt; lượt hỏi lại dùng lại đúng ngữ cảnh này. */
+  prompt?: TranslatePromptContext
   signal?: AbortSignal
   now?: () => number
 }
@@ -35,6 +31,8 @@ export interface TranslateCoreBatchOutcome {
   failedIds: string[]
   usage: TokenUsage | null
   error: TranslateFailure | null
+  /** Request lượt chính đã gửi; `null` khi lô không có gì để gửi. */
+  request: { version: string; systemHash: string; requestHash: string } | null
 }
 
 /**
@@ -48,9 +46,7 @@ export interface TranslateCoreBatchOutcome {
 export async function executeTranslateBatch({
   caller,
   units,
-  sourceLang,
-  layers,
-  customConventions,
+  prompt = {},
   signal,
   now
 }: TranslateCoreBatchOptions): Promise<TranslateCoreBatchOutcome> {
@@ -64,25 +60,22 @@ export async function executeTranslateBatch({
       items: skippedEmpty,
       failedIds: [],
       usage: null,
-      error: null
+      error: null,
+      request: null
     }
   }
 
   // 2. Gửi yêu cầu chính tới mô hình
-  const { prompt: systemPrompt } = buildTranslateSystemPrompt({
-    sourceLang,
-    layers,
-    customConventions
-  })
-
-  const mainMessages = [
-    { role: 'system' as const, content: systemPrompt },
-    { role: 'user' as const, content: buildTranslatePayload(sendable) }
-  ]
+  const main = buildTranslateRequest(prompt, sendable)
+  const request = {
+    version: main.version,
+    systemHash: main.systemHash,
+    requestHash: main.requestHash
+  }
 
   let mainCall: ModelCompletionResult
   try {
-    mainCall = await caller.complete(mainMessages, { signal })
+    mainCall = await caller.complete(main.messages, { signal })
     totalUsage = addUsage(totalUsage, mainCall.usage)
   } catch (error) {
     if (error instanceof ProviderError) {
@@ -93,7 +86,8 @@ export async function executeTranslateBatch({
         items: skippedEmpty,
         failedIds: sendable.map((u) => u.originalId),
         usage: totalUsage,
-        error: { kind: error.kind, message: error.message, recoverAt }
+        error: { kind: error.kind, message: error.message, recoverAt },
+        request
       }
     }
     throw error
@@ -108,7 +102,8 @@ export async function executeTranslateBatch({
         kind: 'invalid_response',
         message: 'Phản hồi bị cắt vì hết giới hạn đầu ra.',
         recoverAt: null
-      }
+      },
+      request
     }
   }
 
@@ -123,13 +118,10 @@ export async function executeTranslateBatch({
   if (missingIds.length > 0 && !signal?.aborted) {
     const missingUnits = sendable.filter((u) => missingIds.includes(u.originalId))
     if (missingUnits.length > 0) {
-      const repairMessages = [
-        { role: 'system' as const, content: REPAIR_SYSTEM_PROMPT_V1 },
-        { role: 'user' as const, content: buildRepairPayload(missingUnits) }
-      ]
+      const repair = buildRepairRequest(prompt, missingUnits)
 
       try {
-        const repairCall = await caller.complete(repairMessages, { signal })
+        const repairCall = await caller.complete(repair.messages, { signal })
         totalUsage = addUsage(totalUsage, repairCall.usage)
 
         if (repairCall.finishReason !== 'length') {
@@ -160,6 +152,7 @@ export async function executeTranslateBatch({
     items: allItems,
     failedIds: missingIds,
     usage: totalUsage,
-    error
+    error,
+    request
   }
 }

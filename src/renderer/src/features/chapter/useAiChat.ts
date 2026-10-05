@@ -374,7 +374,14 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       })
 
       if (result.ok) {
-        useAiChatStore.getState().attachRequestIdForWork(workId, localId, result.value.requestId)
+        useAiChatStore
+          .getState()
+          .attachRequestIdForWork(
+            workId,
+            localId,
+            result.value.requestId,
+            result.value.addedContext
+          )
       } else {
         useAiChatStore.getState().failTurnForWork(workId, localId, {
           kind: 'refused',
