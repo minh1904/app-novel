@@ -25,7 +25,7 @@ import {
   PREVIOUS_PARAGRAPHS,
   type TranslatePromptContext
 } from './translate/translatePrompt'
-import { DEFAULT_PROMPT_VERSION, type PromptVersion } from './promptVersion'
+import { DEFAULT_PROMPT_VERSION, type PromptVersion, usesContextBlocks } from './promptVersion'
 import { suggestRegister } from './translate/languageProfiles'
 import { matchContextEntries } from '../../../shared/algorithms/contextMatching'
 import { originFor } from './provenance'
@@ -173,7 +173,7 @@ export class ChapterTranslator {
         const version = this.options.promptVersion ?? DEFAULT_PROMPT_VERSION
         const prompt: TranslatePromptContext = {
           version, sourceLang: work.sourceLang, genre: work.genre,
-          register: version === 'v2' ? suggestRegister(work.sourceLang, work.genre) : undefined
+          register: usesContextBlocks(version) ? suggestRegister(work.sourceLang, work.genre) : undefined
         }
         try {
           const glossaryEntries = library.getEffectiveGlossary(workId, chapterId, {
@@ -182,7 +182,7 @@ export class ChapterTranslator {
           const combinedSource = segments.map((s) => s.text).join('\n')
           prompt.glossary = matchContextEntries(combinedSource, glossaryEntries, work.sourceLang)
           const dyads = library.getEffectiveAddressing(workId, chapterId)
-          if (version === 'v2') {
+          if (usesContextBlocks(version)) {
             const ordered = [...rows.values()]
             const chapterSource = ordered.map((row) => row.sourceText).join('\n')
             prompt.dyads = dyadsMentionedIn(dyads, chapterSource)

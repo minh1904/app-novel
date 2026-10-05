@@ -20,7 +20,7 @@ import { executeTranslateBatch } from './translate/translationCore'
 import { listCharacters } from '../../infra/storage/addressingEntries'
 import { buildTranslateRequest, charactersMentionedIn, dyadsMentionedIn, PREVIOUS_PARAGRAPHS,
   type TranslatePromptContext } from './translate/translatePrompt'
-import { DEFAULT_PROMPT_VERSION, type PromptVersion } from './promptVersion'
+import { DEFAULT_PROMPT_VERSION, type PromptVersion, usesContextBlocks } from './promptVersion'
 import { suggestRegister } from './translate/languageProfiles'
 import { acceptProposalParts, textHash } from '../proposals/proposalService'
 
@@ -125,16 +125,16 @@ export class ParagraphTranslator {
     const version = this.options.promptVersion ?? DEFAULT_PROMPT_VERSION
     const allDyads = library.getEffectiveAddressing(input.workId, input.chapterId)
     // v2 gửi đúng các cặp có mặt trong chương và vài đoạn gốc liền trước lô; v1 giữ nguyên hành vi.
-    const dyads = version === 'v2' ? dyadsMentionedIn(allDyads, source.content) : allDyads
+    const dyads = usesContextBlocks(version) ? dyadsMentionedIn(allDyads, source.content) : allDyads
     const first = Math.min(...units.map((unit) => unit.order))
     const prompt: TranslatePromptContext = {
       version, sourceLang: work.sourceLang, genre: work.genre, glossary: matched, dyads,
-      register: version === 'v2' ? suggestRegister(work.sourceLang, work.genre) : undefined,
-      characters: version === 'v2'
+      register: usesContextBlocks(version) ? suggestRegister(work.sourceLang, work.genre) : undefined,
+      characters: usesContextBlocks(version)
         ? charactersMentionedIn(library.withWork(input.workId, (db) =>
           listCharacters(db, { status: 'approved' })), source.content)
         : undefined,
-      previous: version === 'v2'
+      previous: usesContextBlocks(version)
         ? all.slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), first).map((unit) => unit.text)
         : undefined
     }

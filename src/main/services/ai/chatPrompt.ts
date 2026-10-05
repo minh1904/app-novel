@@ -5,7 +5,7 @@ import {
   type ChatSendInput
 } from '../../../shared/contracts/aiChat'
 import type { ChatMessage } from '../../infra/providers/openAiCompatible'
-import { DEFAULT_PROMPT_VERSION, type PromptVersion } from './promptVersion'
+import { DEFAULT_PROMPT_VERSION, type PromptVersion, usesContextBlocks } from './promptVersion'
 import { TEACHER_ADDRESSING_RULES } from '../../../shared/contracts/addressingPresets'
 
 /**
@@ -82,7 +82,7 @@ export function systemPrompt(
   version: PromptVersion = DEFAULT_PROMPT_VERSION
 ): string {
   return [
-    version === 'v2' ? COMMON_V2 : COMMON,
+    usesContextBlocks(version) ? COMMON_V2 : COMMON,
     ...TEACHER_ADDRESSING_RULES,
     mode === 'hoi' ? ASK_ONLY : EDIT
   ].join(' ')
@@ -105,7 +105,7 @@ export function buildChatMessages(
   input: ChatSendInput,
   version: PromptVersion = DEFAULT_PROMPT_VERSION
 ): ChatMessage[] {
-  if (version === 'v2') return buildChatMessagesV2(input)
+  if (usesContextBlocks(version)) return buildChatMessagesV2(input)
   const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(input.mode) }]
 
   if (input.context.length > 0) {

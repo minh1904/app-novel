@@ -4,7 +4,7 @@ import type { TempMappedUnit } from '../../../../shared/contracts/translateCore'
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
 import type { MatchedContextEntry } from '../../../../shared/algorithms/contextMatching'
 import type { AddressingDyadResolved, CharacterItem } from '../../../../shared/contracts/addressing'
-import { DEFAULT_PROMPT_VERSION, type PromptVersion } from '../promptVersion'
+import { DEFAULT_PROMPT_VERSION, type PromptVersion, usesContextBlocks } from '../promptVersion'
 import {
   REPAIR_SYSTEM_PROMPT_V1,
   TRANSLATE_SYSTEM_PROMPT_V1,
@@ -151,6 +151,12 @@ export function systemPromptV2(context: TranslatePromptContext): string {
     '- Trả về đúng một mảng JSON các đối tượng {"id","dst"}, không kèm giải thích hay dấu ```.',
     '- Mỗi id nhận được có đúng một đối tượng: giữ nguyên id, không thêm id mới, không gộp hay tách mục, kể cả khi một câu bị ngắt giữa hai mục.',
     '- "dst" không chứa ký tự xuống dòng.',
+    ...(context.version === 'v3'
+      ? [
+          '- Với mục là lời thoại (src mở đầu bằng 「, 『 hoặc “), thêm trường "noi" TRƯỚC "dst": "Người nói→Người nghe" bằng tên dịch trong <nhan_vat> (ví dụ "Milly→Rion"); không rõ thì dùng "?" cho phía đó. Lời kể không có "noi".',
+          '- Ví dụ: [{"id":"[1]","noi":"Milly→Rion","dst":"…"},{"id":"[2]","dst":"…"}]'
+        ]
+      : []),
     '</dau_ra>',
     '',
     '<cach_dich>',
@@ -159,6 +165,11 @@ export function systemPromptV2(context: TranslatePromptContext): string {
     '- Thuật ngữ trong <thuat_ngu> là lựa chọn người dịch đã chốt: dùng đúng bản dịch cho từ gốc và các biến thể, không dùng dạng nằm trong mục "Không dùng".',
     '- Giới tính và vai của nhân vật lấy theo <nhan_vat>, không đoán từ giọng nói: một cô giáo nói năng thô vẫn là "cô".',
     '- Cặp xưng hô trong <xung_ho> có chiều: dùng khi nhận ra người nói và người nghe trong cảnh.',
+    ...(context.version === 'v3'
+      ? [
+          '- Với mỗi câu thoại, xác định người nói và người nghe TRƯỚC, rồi mới chọn đại từ theo đúng cặp đó trong <xung_ho>. Một nhân vật có thể tự xưng khác nhau với từng người nghe; cách xưng với người này không được lan sang người khác trong cùng cảnh.'
+        ]
+      : []),
     '- Khi chưa rõ ai nói với ai, gọi bằng tên hoặc danh xưng, hoặc lược đại từ nếu câu tiếng Việt vẫn tự nhiên; không đoán giới tính từ một đại từ trung tính.',
     '</cach_dich>'
   ]
@@ -201,7 +212,10 @@ export function addressingLines(dyads: AddressingDyadResolved[]): string[] {
     const to = nameOf(dyad.targetCharacter)
     const formality = dyad.formality ? ` (sắc thái: ${dyad.formality})` : ''
     const notes = dyad.notes ? ` Ghi chú: ${dyad.notes}` : ''
-    return `- ${from} → ${to}: ${from} tự xưng "${dyad.speakerPronoun}", gọi ${to} là "${dyad.recipientPronoun}"${formality}.${notes}`
+    const second = dyad.secondPerson
+      ? `; khi cần đại từ ngôi hai (bản gốc lược chủ ngữ hoặc dùng あなた, 貴方, 你) thì dùng "${dyad.secondPerson}"`
+      : ''
+    return `- ${from} → ${to}: ${from} tự xưng "${dyad.speakerPronoun}", gọi ${to} là "${dyad.recipientPronoun}"${second}${formality}.${notes}`
   })
 }
 
@@ -213,7 +227,8 @@ export function characterLines(characters: CharacterItem[]): string[] {
     // Viết như một mục glossary, "tên gốc → tên dịch": dạng "Sumire (桐谷淑蓮, 淑蓮)" bị model đọc như
     // chú thích và tự phiên âm Hán ("Shukuren"), vì không nói rõ đó là bản dịch bắt buộc.
     const forms = [character.source, ...character.aliases].filter(Boolean).join(', ')
-    const facts = [GENDER[character.gender], character.role].filter(Boolean).join(', ')
+    const narrator = character.thirdPerson ? `người kể gọi là "${character.thirdPerson}"` : ''
+    const facts = [GENDER[character.gender], character.role, narrator].filter(Boolean).join(', ')
     const notes = character.notes ? `. ${character.notes}` : ''
     return `- ${forms} → ${nameOf(character)}${facts ? ': ' + facts : ''}${notes}`
   })
@@ -277,7 +292,7 @@ function buildV2(
       ? 'Các mục trong <nguon> bị thiếu hoặc rỗng ở lần trả lời trước. Dịch đủ đúng các id này.'
       : 'Dịch các mục trong <nguon>.'
   )
-  return finish('v2', [
+  return finish(context.version ?? 'v2', [
     { role: 'system', content: systemPromptV2(context) },
     { role: 'user', content: blocks.join('\n\n') }
   ])
@@ -297,7 +312,7 @@ export function buildTranslateRequest(
   units: TempMappedUnit[]
 ): TranslateRequest {
   const version = context.version ?? DEFAULT_PROMPT_VERSION
-  return version === 'v2' ? buildV2(context, units, false) : buildV1(context, units, false)
+  return usesContextBlocks(version) ? buildV2(context, units, false) : buildV1(context, units, false)
 }
 
 /** Request hỏi lại đúng các ID thiếu — cùng ngữ cảnh với lượt chính. */
@@ -306,7 +321,7 @@ export function buildRepairRequest(
   missing: TempMappedUnit[]
 ): TranslateRequest {
   const version = context.version ?? DEFAULT_PROMPT_VERSION
-  return version === 'v2' ? buildV2(context, missing, true) : buildV1(context, missing, true)
+  return usesContextBlocks(version) ? buildV2(context, missing, true) : buildV1(context, missing, true)
 }
 
 function mentions(text: string, character: CharacterItem): boolean {
