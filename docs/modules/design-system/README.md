@@ -22,9 +22,9 @@ nằm ở [phân tích design system Obsidian](obsidian-comparison.md).
 
 ## Quyết định áp vào Mira
 
-**2026-10-05, lần hai:** chủ sản phẩm yêu cầu triển khai đề xuất trong bản phân tích. Năm câu hỏi mở
-của bản đó được áp theo phương án đề xuất (cột "Lựa chọn" bên dưới); đổi lại chỉ cần sửa token tại
-một nơi. Status bar cho editor chương **chưa làm**.
+**2026-10-05, lần hai:** chủ sản phẩm yêu cầu triển khai đề xuất trong bản phân tích, rồi trả lời năm
+câu hỏi mở của bản đó: gộp thanh trên vào màu sidebar, chữ phụ như Obsidian, hạ bán kính control,
+**có** status bar cho editor chương, và gom accent về một biến. Cột "Lựa chọn" bên dưới là kết quả.
 
 **Ba tầng token** trong [`tokens.css`](../../../src/renderer/src/styles/tokens.css): (1) thang
 `--neutral-*` và `--accent`, là màu thô duy nhất; (2) vai trò semantic chỉ trỏ về tầng 1; (3) kích
@@ -44,6 +44,7 @@ trong `@theme inline`, không dùng giá trị thô.
 | Bán kính | `rounded-item` 4, `rounded-control` / `rounded-tab` 6, `rounded-panel` 12 | Hạ control từ 8 xuống 6 px; mục danh sách, menu 4 px. |
 | Kích thước | thanh trên 40 px, control 30 px, mục menu 28 px, tab truyện 34 px | |
 | Nổi | `shadow-popover` cho menu/select; dialog không shadow, viền `line-strong`, nền phủ `bg-backdrop` | |
+| Status bar | Dải 24 px dưới hai pane của màn chương, nền sidebar, chữ 12 px muted, số tabular | Số chữ và ký tự của bản dịch (cập nhật khi gõ, không tính xuống dòng), trạng thái lưu gộp của hai bên, số đề xuất AI chờ duyệt (bấm để mở panel AI). |
 | Chuyển động | `--duration-fast` 140 ms; transition tắt khi `prefers-reduced-motion` | Spinner vẫn quay vì nó báo việc đang chạy. |
 
 UI dùng Segoe UI Variable/Segoe UI trên Windows; editor dùng Google Sans Flex đóng gói kèm fallback.
@@ -64,7 +65,7 @@ nghĩa. Đã chụp bản build ở theme sáng và tối (thư viện, màn ch�
 
 ## Giới hạn và bước kiểm tiếp
 
-- Chưa có: status bar editor, Tooltip dùng chung (vẫn dùng `title=`), màn Cài đặt dạng nav dọc và
+- Chưa có: Tooltip dùng chung (vẫn dùng `title=`), màn Cài đặt dạng nav dọc và
   nhóm thẻ, tùy chọn đổi accent/font, ribbon (không định làm, xem bản phân tích).
 - Còn khoảng 400 kích thước tùy ý (`h-[…]`, `w-[…]`, `min-w-[…]`) và một số mức alpha tint; chưa có
   thang z-index.

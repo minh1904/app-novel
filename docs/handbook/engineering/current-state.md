@@ -22,7 +22,8 @@ bền, batch translation, usage/cost cap hoặc màn Tác vụ thật.
 → semantic → kích thước component) trong `tokens.css`; thanh trên cùng 40 px cùng màu sidebar,
 hover là lớp phủ trong suốt, mục đang mở tô accent 15 %, chữ UI 12/13/15/20/26 px, control 30 px,
 bán kính 4/6/12 px, shadow cho menu, dialog chỉ viền. `tokens.test.ts` chặn cỡ chữ, line-height,
-radius, shadow tùy ý và `var(--…)` không có trong `tokens.css`. Đã chụp bản build sáng/tối (thư
+radius, shadow tùy ý và `var(--…)` không có trong `tokens.css`. Màn chương có status bar
+(`ChapterStatusBar`): số chữ/ký tự bản dịch khi gõ, trạng thái lưu gộp, số đề xuất AI chờ duyệt. Đã chụp bản build sáng/tối (thư
 viện, chương, Cài đặt) trên Windows 11; xem [module Hệ thiết kế](../../modules/design-system/README.md).
 
 **Repo hiện tại là bản MVP để thử nghiệm.** Mọi thứ dưới đây chạy được nhưng chưa phải bản hoàn chỉnh; từ [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) từng module được làm lại hoàn chỉnh theo [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Cột **Số phận** cho biết phần đó được *giữ*, *viết lại* hay *gỡ* khi làm lại; tên trong ngoặc là module ở [lộ trình](../delivery/roadmap.md). (Trước lần đổi thứ tự ngày 2026-10-03, trang này ghi module bằng số; bảng đối chiếu số cũ nằm cuối lộ trình.)

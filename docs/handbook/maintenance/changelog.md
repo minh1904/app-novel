@@ -1,5 +1,10 @@
 # Nhật ký handbook
 
+## 2026-10-05 — Status bar cho editor chương
+
+- Chủ sản phẩm chốt năm câu hỏi của bản phân tích Obsidian; thêm status bar dưới màn chương (số chữ,
+  trạng thái lưu, đề xuất AI chờ). Cập nhật [module Hệ thiết kế](../../modules/design-system/README.md).
+
 ## 2026-10-05 — Làm lại hệ thiết kế theo phân tích Obsidian
 
 - Token ba tầng, khung một màu, hover lớp phủ, thang chữ/radius/shadow có tên; các màn chuyển sang

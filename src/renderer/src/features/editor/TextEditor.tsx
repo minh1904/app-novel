@@ -164,6 +164,8 @@ export interface TextEditorProps {
   onStatusChange?(status: SessionStatus): void
   /** The caret or selection moved: the stretch an AI turn would be about changed with it. */
   onTargetChange?(range: TargetRange): void
+  /** The text changed, saved or not; also called once with the opened text. */
+  onTextChange?(text: string): void
   /** Every chunk of a review has been accepted or rejected, so the review is over. */
   handleRef?: Ref<TextEditorHandle>
 }
@@ -183,6 +185,7 @@ export function TextEditor({
   onSaved,
   onStatusChange,
   onTargetChange,
+  onTextChange,
   handleRef
 }: TextEditorProps): JSX.Element {
   const host = useRef<HTMLDivElement>(null)
@@ -195,9 +198,9 @@ export function TextEditor({
   const [imageError, setImageError] = useState<string | null>(null)
   const hintId = useId()
   const [review] = useState(() => new ProposalReview())
-  const latest = useRef({ onSaved, onStatusChange, onTargetChange, readOnly })
+  const latest = useRef({ onSaved, onStatusChange, onTargetChange, onTextChange, readOnly })
   useEffect(() => {
-    latest.current = { onSaved, onStatusChange, onTargetChange, readOnly }
+    latest.current = { onSaved, onStatusChange, onTargetChange, onTextChange, readOnly }
   })
 
   const status = useSyncExternalStore(
@@ -275,7 +278,10 @@ export function TextEditor({
           review.extension(),
           EditorView.updateListener.of((update) => {
             sessionRef.current?.onUpdate(update)
-            if (update.docChanged) setEmpty(update.state.doc.length === 0)
+            if (update.docChanged) {
+              setEmpty(update.state.doc.length === 0)
+              latest.current.onTextChange?.(update.state.doc.toString())
+            }
             // The AI panel has to follow the caret to be about anything at all, and only the editor
             // knows when it moved. Fired on selection as well as text, because moving the caret
             // changes which paragraph a question is about without changing a character.
@@ -301,6 +307,7 @@ export function TextEditor({
 
     const editor = new EditorView({ parent: host.current, state: makeState(record) })
     view.current = editor
+    latest.current.onTextChange?.(editor.state.doc.toString())
     const created = new EditorSession(editor, store, lang, makeState, record)
     sessionRef.current = created
     setSession(created)

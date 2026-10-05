@@ -187,7 +187,7 @@ thang z-index theo bảng Obsidian, thời lượng 70/140/300 ms và tắt chuy
   nội dung tối đa 700 px, nav dọc 200–250 px có ô tìm cho màn Cài đặt.
 - **Danh sách điều hướng** (thư viện, chương): 13 px, cao 28 px, hover overlay, active accent 15 %.
 - **Tag/Badge**: thêm biến thể pill nền accent 10 % cho nhãn nhân vật/glossary.
-- **Status bar cho editor chương** (tùy chọn): số chữ, trạng thái lưu, số đề xuất AI đang chờ. Đây là
+- **Status bar cho editor chương** (đã làm 2026-10-05): số chữ, trạng thái lưu, số đề xuất AI đang chờ. Đây là
   phần duy nhất của khung Obsidian có giá trị rõ cho người dịch; ribbon thì không.
 - **Icon:** giữ Solar Icons (quyết định cũ còn hiệu lực), thêm `--icon-s/m/l` = 16/18/24 và màu mặc
   định muted.

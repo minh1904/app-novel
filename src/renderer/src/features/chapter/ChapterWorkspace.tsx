@@ -26,6 +26,7 @@ import { SOON_LABEL } from '../work/mockFeatures'
 import { AiPanel } from './AiPanel'
 import type { ChatEditor } from './useAiChat'
 import { AiTranslateDialog } from './AiTranslateDialog'
+import { ChapterStatusBar } from './ChapterStatusBar'
 import { EditorPane } from './EditorPane'
 import { SentenceMode, type SentenceModeHandle } from './SentenceMode'
 
@@ -97,6 +98,7 @@ export function ChapterWorkspace({
   const targetEditor = useRef<TextEditorHandle>(null)
   const [sourceStatus, setSourceStatus] = useState<SessionStatus>(IDLE)
   const [targetStatus, setTargetStatus] = useState<SessionStatus>(IDLE)
+  const [translation, setTranslation] = useState(target.content)
   const [unlocked, setUnlocked] = useState(false)
   const [mode, setMode] = useState<'full' | 'sentence'>('full')
   const sentence = useRef<SentenceModeHandle>(null)
@@ -456,6 +458,7 @@ export function ChapterWorkspace({
               onSaved={onTargetSaved}
               onStatusChange={setTargetStatus}
               onTargetChange={setAiRange}
+              onTextChange={setTranslation}
             />
           </EditorPane>
 
@@ -477,6 +480,18 @@ export function ChapterWorkspace({
             )}
           </div>
         </div>
+      )}
+
+      {mode === 'full' && (
+        <ChapterStatusBar
+          workId={work.id}
+          chapterId={chapter.id}
+          translation={translation}
+          statuses={[sourceStatus, targetStatus]}
+          onOpenProposals={() => {
+            if (!aiOpen) toggleAi()
+          }}
+        />
       )}
 
       <AiTranslateDialog
