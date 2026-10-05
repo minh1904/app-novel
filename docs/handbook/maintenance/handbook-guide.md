@@ -1,6 +1,7 @@
-# Xây và duy trì handbook
+# Xây và duy trì tài liệu Mira
 
-Cập nhật: 2026-09-29 · Trạng thái: quy ước đề xuất, đã áp dụng để tổ chức handbook 0.1. Chủ trì nội dung: chủ sản phẩm; người thực hiện thay đổi cập nhật trang liên quan.
+Cập nhật: 2026-10-04 · Trạng thái: quy ước chuyển dần từ handbook sang tài liệu theo module.
+Chủ trì nội dung: chủ sản phẩm; người thực hiện thay đổi cập nhật trang liên quan.
 
 ## Căn cứ thiết kế bộ tài liệu
 
@@ -14,9 +15,15 @@ Cập nhật: 2026-09-29 · Trạng thái: quy ước đề xuất, đã áp d�
 
 ## Hình thức đóng bộ
 
-**Bản gốc:** Markdown trong `docs/handbook/` (ảnh tham khảo cũ ở `docs/assets/` đã gỡ ngày 2026-09-29; ảnh mới chỉ thêm khi chương cần), mục lục ở [README](../README.md). Đọc ngay trong Git/editor, diff được cùng code và không cần thêm framework web.
+**Bản gốc hiện hành:** với chủ đề đã chuyển, Markdown trong [`docs/modules/`](../../modules/README.md)
+là nơi chịu trách nhiệm; handbook chỉ giữ đường dẫn và hồ sơ quyết định/nghiên cứu cũ. Chủ đề chưa
+chuyển vẫn ở `docs/handbook/`, mục lục [README](../README.md). Không xóa ADR hoặc quan sát có nguồn
+chỉ vì quyết định mới thay một phần của nó; ghi rõ phần bị thay và liên kết tới bản hiện hành. Đọc
+ngay trong Git/editor, diff được cùng code và không cần thêm framework web.
 
-**Đơn vị thay đổi:** một chủ đề có nơi chịu trách nhiệm duy nhất. Scope mô tả ranh giới, spec chuyên đề mô tả hành vi, current-state mô tả code, ADR lưu lý do. Trang khác dẫn tới chúng thay vì chép toàn văn. Tóm tắt ở README phải ngắn và trỏ nguồn chính.
+**Đơn vị thay đổi:** một chủ đề có nơi chịu trách nhiệm duy nhất. Scope mô tả ranh giới, spec chuyên
+đề mô tả hành vi, current-state mô tả code, quyết định lưu lý do. Trang khác dẫn tới chúng thay vì
+chép toàn văn. Tóm tắt ở README phải ngắn và trỏ nguồn chính.
 
 **Bản đóng mốc:** ghi phiên bản handbook, ngày, commit khi đã commit và changelog. Bản 0.1 hiện là snapshot nội dung trong working tree; không bịa tag/commit. Khi cần chia sẻ ngoài repo có thể xuất HTML/PDF từ cùng nguồn, kèm version/date; file xuất là snapshot, không sửa như bản chuẩn. Chưa cài docs framework, tạo website hay xuất PDF trong đợt này.
 
@@ -37,8 +44,11 @@ Mỗi trang mới ghi ngày, trạng thái, chủ trì theo vai trò và câu h�
 
 1. Tìm chương hiện có và đọc quyết định liên quan trước khi tạo file.
 2. Ghi vấn đề/bằng chứng. Nguồn web có URL, ngày đọc, version/gói nếu ảnh hưởng; nguồn code có đường dẫn.
-3. Viết thay đổi tại nơi chịu trách nhiệm. Nếu quyết định lớn, dùng ADR mới; nếu nghiên cứu, tách quan sát khỏi suy luận.
-4. Cập nhật link ở mục lục và các trang phụ thuộc. Với đổi quyết định, cập nhật decisions, open-questions và spec cùng đợt.
+3. Viết thay đổi tại nơi chịu trách nhiệm: `docs/modules/<module>/` với chủ đề đã chuyển, handbook
+   với chủ đề còn lại. Nếu quyết định lớn, ghi bản quyết định có ngày, trạng thái và phần bị thay;
+   nghiên cứu phải tách quan sát khỏi suy luận.
+4. Cập nhật link ở mục lục và các trang phụ thuộc. Với đổi quyết định, cập nhật nơi ghi quyết định,
+   câu hỏi mở và spec cùng đợt; trang handbook cũ chỉ cần ghi chú thay thế và liên kết ngắn.
 5. Kiểm tra local links, tên brand, trạng thái, ví dụ và khả năng tái hiện. Thay code thì chạy kiểm tra phù hợp; sửa chữ không cần dựng test app mới.
 6. Ghi changelog cho thay đổi có ý nghĩa. Khi commit, theo [AGENTS.md](../../../AGENTS.md), một thay đổi logic mỗi commit; không tự coi patch chưa commit là release.
 

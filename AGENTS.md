@@ -1,14 +1,16 @@
 # Mira repository rules
 
-## Product handbook
+## Product documentation
 
-Start with [Mira Handbook](docs/handbook/README.md), then read
+Start with [module documentation](docs/modules/README.md), then read
 [current decisions](docs/handbook/product/decisions.md) and
 [implementation status](docs/handbook/engineering/current-state.md) before product work.
-Distinguish accepted decisions, proposals, research observations, and implemented behavior.
-Update the canonical handbook chapter when its behavior or decision changes; legacy files in
-`docs/` are redirect pages. Follow the [maintenance guide](docs/handbook/maintenance/handbook-guide.md)
-when adding research, specifications, or decision records. Write handbook content in Vietnamese.
+The [Mira Handbook](docs/handbook/README.md) remains the source for topics not yet migrated.
+For a migrated module, update its canonical chapter in `docs/modules/` and leave a short pointer
+in the handbook when an old chapter is still a common entry point. Distinguish accepted decisions,
+proposals, research observations, and implemented behavior. Follow the
+[maintenance guide](docs/handbook/maintenance/handbook-guide.md) when adding research,
+specifications, or decision records. Write product documentation in Vietnamese.
 
 ## Checks
 

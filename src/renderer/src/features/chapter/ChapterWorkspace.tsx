@@ -102,12 +102,6 @@ export function ChapterWorkspace({
   // it the panel would be about nothing in particular.
   const [aiRange, setAiRange] = useState<TargetRange | null>(null)
   /**
-   * Bumped each time a review in the translation pane runs out of chunks to decide. The panel keeps
-   * the number it started a review at, so its notice can tell "still reviewing" from "all done"
-   * without anyone writing state inside an effect.
-   */
-  const [reviewsEnded, setReviewsEnded] = useState(0)
-  /**
    * The two panes as the AI panel sees them: stable objects whose methods reach into the refs when
    * called.
    *
@@ -117,17 +111,20 @@ export function ChapterWorkspace({
    * own: the panel sends the text on screen, which is not always the text in storage.
    */
   const sourceText = useMemo(
-    () => ({ getText: (): string => sourceEditor.current?.getText() ?? '' }),
+    () => ({
+      getText: (): string => sourceEditor.current?.getText() ?? '',
+      isDirty: (): boolean => sourceEditor.current?.isDirty() ?? false
+    }),
     []
   )
   const targetChat = useMemo<ChatEditor>(
     () => ({
       getText: () => targetEditor.current?.getText() ?? '',
+      isDirty: () => targetEditor.current?.isDirty() ?? false,
+      reload: async () => { await targetEditor.current?.discard() },
       targetRange: (scope) => targetEditor.current?.targetRange(scope) ?? null,
-      applyProposal: (range, replacement) =>
-        targetEditor.current?.applyProposal(range, replacement) ?? 'stale',
-      reviewProposal: (range, replacement) =>
-        targetEditor.current?.reviewProposal(range, replacement) ?? 'stale',
+      reviewProposal: (range, replacement, onAccept, onDeny, label) =>
+        targetEditor.current?.reviewProposal(range, replacement, onAccept, onDeny, label) ?? 'stale',
       endReview: () => targetEditor.current?.endReview()
     }),
     []
@@ -436,11 +433,10 @@ export function ChapterWorkspace({
               onSaved={onTargetSaved}
               onStatusChange={setTargetStatus}
               onTargetChange={setAiRange}
-              onReviewDone={() => setReviewsEnded((count) => count + 1)}
             />
           </EditorPane>
 
-          {aiOpen && (
+          <div className={aiOpen ? 'min-h-0' : 'hidden'}>
             <AiPanel
               workId={work.id}
               chapterId={chapter.id}
@@ -449,13 +445,12 @@ export function ChapterWorkspace({
               source={sourceText}
               target={targetChat}
               autoRange={aiRange}
-              reviewsEnded={reviewsEnded}
               width={aiWidth}
               onWidthChange={setAiWidth}
               onClose={() => setAiOpen(false)}
               onOpenSettings={onOpenSettings}
             />
-          )}
+          </div>
         </div>
       )}
 

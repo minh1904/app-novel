@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { ChatChunk, ChatSendInput } from '../shared/contracts/aiChat'
+import type { AcceptProposalInput, AcceptProposalResult, ChatProposalInput, ChatProposalResult, ProposalQueueItem } from '../shared/contracts/aiProposals'
+import type { AiSessionView, AiTurnView } from '../shared/contracts/aiHistory'
 import type {
   AddModelEntriesInput,
   ConnectionTestResult,
@@ -9,12 +11,8 @@ import type {
   UpdateConnectionInput,
   UpdateModelEntryInput
 } from '../shared/contracts/aiConnections'
-import type {
-  TranslateBatchInput,
-  TranslateBatchResult,
-  TranslatePlan,
-  TranslatePlanInput
-} from '../shared/contracts/aiTranslate'
+import type { ParagraphBatchInput, ParagraphBatchResult, ParagraphFinalizeInput,
+  ParagraphFinalizeResult, ParagraphPlanInput, ParagraphTranslationPlan } from '../shared/contracts/aiTranslateProposals'
 import type { BackupExported } from '../shared/contracts/backup'
 import { CHANNELS, EVENT_CHANNELS } from '../shared/contracts/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/contracts/chapters'
@@ -187,16 +185,38 @@ const desktopApi: DesktopApi = {
         >
     },
     translate: {
-      plan: (input: TranslatePlanInput) =>
-        ipcRenderer.invoke(CHANNELS.aiTranslatePlan, input) as Promise<Result<TranslatePlan>>,
-      batch: (input: TranslateBatchInput) =>
-        ipcRenderer.invoke(CHANNELS.aiTranslateBatch, input) as Promise<
-          Result<TranslateBatchResult>
-        >
+      paragraphPlan: (input: ParagraphPlanInput) =>
+        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphPlan, input) as Promise<Result<ParagraphTranslationPlan>>,
+      paragraphBatch: (input: ParagraphBatchInput) =>
+        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphBatch, input) as Promise<Result<ParagraphBatchResult>>,
+      paragraphFinalize: (input: ParagraphFinalizeInput) =>
+        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphFinalize, input) as Promise<Result<ParagraphFinalizeResult>>
+    },
+    proposals: {
+      createFromChat: (input: ChatProposalInput) =>
+        ipcRenderer.invoke(CHANNELS.aiProposalChatCreate, input) as Promise<Result<ChatProposalResult>>,
+      accept: (input: AcceptProposalInput) =>
+        ipcRenderer.invoke(CHANNELS.aiProposalAccept, input) as Promise<Result<AcceptProposalResult>>,
+      deny: (workId: string, chapterId: string, partId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiProposalDeny, { workId, chapterId, partId }) as Promise<Result<void>>,
+      acceptAll: (workId: string, chapterId: string, commandId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiProposalAcceptAll, { workId, chapterId, commandId }) as Promise<Result<AcceptProposalResult>>,
+      undo: (workId: string, chapterId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiProposalUndo, { workId, chapterId }) as Promise<Result<{ content: string; rev: number; commandId: string }>>,
+      listChapter: (workId: string, chapterId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiProposalListChapter, { workId, chapterId }) as Promise<Result<{ proposals: ProposalQueueItem[]; undoAvailable: boolean }>>,
+      pendingCounts: (workId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiProposalPendingCounts, { workId }) as Promise<Result<{ counts: Array<{ chapterId: string; count: number }> }>>
+    },
+    sessions: {
+      list: (workId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiSessionsList, { workId }) as Promise<Result<{ sessions: AiSessionView[] }>>,
+      turns: (workId: string, sessionId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiTurnsList, { workId, sessionId }) as Promise<Result<{ turns: AiTurnView[] }>>
     },
     chat: {
       send: (input: ChatSendInput) =>
-        ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<Result<{ requestId: string }>>,
+        ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<Result<{ requestId: string; sessionId?: string }>>,
       cancel: (requestId: string) =>
         ipcRenderer.invoke(CHANNELS.aiChatCancel, { requestId }) as Promise<Result<void>>,
       /**

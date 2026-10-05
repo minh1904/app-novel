@@ -21,7 +21,7 @@ import type { ChatMessage } from '../../infra/providers/openAiCompatible'
 
 const COMMON = [
   'Bạn là trợ lý của một người dịch truyện sang tiếng Việt.',
-  'Ngữ cảnh kèm theo là nội dung thật của chương người dùng đang mở:',
+  'Ngữ cảnh kèm theo là các nguồn Mira đã chọn, có thể gồm chương đang mở và chương khác:',
   '"Bản gốc của chương" là văn bản nguồn, "Bản dịch hiện có" là bản dịch tới lúc này',
   '(thiếu khối đó nghĩa là chương chưa được dịch).',
   'Khi có khối "Đoạn đang sửa" thì đó là phần người dùng hỏi về; không có thì câu hỏi là về cả chương.',
@@ -56,7 +56,7 @@ const EDIT = [
 ].join(' ')
 
 export function systemPrompt(mode: ChatMode): string {
-  return COMMON + ' ' + (mode === 'sua' ? EDIT : ASK_ONLY)
+  return COMMON + ' ' + (mode === 'hoi' ? ASK_ONLY : EDIT)
 }
 
 /** Một khối ngữ cảnh thành chữ. Nhãn đi kèm để model biết khối nào là khối nào. */
@@ -79,7 +79,7 @@ export function buildChatMessages(input: ChatSendInput): ChatMessage[] {
     messages.push({
       role: 'user',
       content:
-        'Ngữ cảnh của chương đang làm (ngôn ngữ nguồn: ' +
+        'Ngữ cảnh Mira gửi kèm (ngôn ngữ nguồn: ' +
         input.sourceLang +
         ', đích: tiếng Việt):\n\n' +
         input.context.map(renderBlock).join('\n\n')

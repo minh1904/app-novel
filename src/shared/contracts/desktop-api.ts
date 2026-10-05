@@ -8,12 +8,10 @@ import type {
   UpdateModelEntryInput
 } from './aiConnections'
 import type { ChatChunk, ChatSendInput } from './aiChat'
-import type {
-  TranslateBatchInput,
-  TranslateBatchResult,
-  TranslatePlan,
-  TranslatePlanInput
-} from './aiTranslate'
+import type { AcceptProposalInput, AcceptProposalResult, ChatProposalInput, ChatProposalResult, ProposalQueueItem } from './aiProposals'
+import type { AiSessionView, AiTurnView } from './aiHistory'
+import type { ParagraphBatchInput, ParagraphBatchResult, ParagraphFinalizeInput,
+  ParagraphFinalizeResult, ParagraphPlanInput, ParagraphTranslationPlan } from './aiTranslateProposals'
 import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
 import type { LinkRecord } from './links'
@@ -129,15 +127,11 @@ export interface BackupApi {
   restore(): Promise<Result<WorkSummary>>
 }
 
-/**
- * Dịch một chương bằng AI, **từng lô một**: renderer gọi `plan` rồi gọi `batch` lần lượt. Tiến độ,
- * nút Hủy và việc giữ lại phần đã xong đều nằm ở renderer vì mỗi lô là một lời gọi riêng.
- */
+/** Dịch một chương theo đoạn; mỗi lô lưu đề xuất, finalize có thể tự Accept phần an toàn. */
 export interface AiTranslateApi {
-  /** Nói trước sẽ gửi gì, chia thành mấy lô, và ước lượng chi phí. Không gửi gì ra ngoài. */
-  plan(input: TranslatePlanInput): Promise<Result<TranslatePlan>>
-  /** Dịch một lô và ghi ngay phần được phép ghi. Hàng người dùng đã sửa quay về làm đề xuất. */
-  batch(input: TranslateBatchInput): Promise<Result<TranslateBatchResult>>
+  paragraphPlan(input: ParagraphPlanInput): Promise<Result<ParagraphTranslationPlan>>
+  paragraphBatch(input: ParagraphBatchInput): Promise<Result<ParagraphBatchResult>>
+  paragraphFinalize(input: ParagraphFinalizeInput): Promise<Result<ParagraphFinalizeResult>>
 }
 
 /**
@@ -146,13 +140,28 @@ export interface AiTranslateApi {
  */
 export interface AiChatApi {
   /** Bắt đầu một lượt. Trả `requestId` **ngay**; nội dung không bao giờ đi qua đường trả về này. */
-  send(input: ChatSendInput): Promise<Result<{ requestId: string }>>
+  send(input: ChatSendInput): Promise<Result<{ requestId: string; sessionId?: string }>>
   cancel(requestId: string): Promise<Result<void>>
   /**
    * Nghe từng phần của mọi lượt đang chạy. Trả về hàm bỏ đăng ký, nên chỗ gọi dọn được mà không
    * cần biết tên kênh — và `useEffect` dọn được bằng chính giá trị trả về.
    */
   onChunk(listener: (chunk: ChatChunk) => void): () => void
+}
+
+export interface AiProposalsApi {
+  createFromChat(input: ChatProposalInput): Promise<Result<ChatProposalResult>>
+  accept(input: AcceptProposalInput): Promise<Result<AcceptProposalResult>>
+  deny(workId: string, chapterId: string, partId: string): Promise<Result<void>>
+  acceptAll(workId: string, chapterId: string, commandId: string): Promise<Result<AcceptProposalResult>>
+  undo(workId: string, chapterId: string): Promise<Result<{ content: string; rev: number; commandId: string }>>
+  listChapter(workId: string, chapterId: string): Promise<Result<{ proposals: ProposalQueueItem[]; undoAvailable: boolean }>>
+  pendingCounts(workId: string): Promise<Result<{ counts: Array<{ chapterId: string; count: number }> }>>
+}
+
+export interface AiSessionsApi {
+  list(workId: string): Promise<Result<{ sessions: AiSessionView[] }>>
+  turns(workId: string, sessionId: string): Promise<Result<{ turns: AiTurnView[] }>>
 }
 
 /**
@@ -190,6 +199,8 @@ export interface AiApi {
   models: AiModelsApi
   translate: AiTranslateApi
   chat: AiChatApi
+  proposals: AiProposalsApi
+  sessions: AiSessionsApi
 }
 
 export interface GlossaryApi {

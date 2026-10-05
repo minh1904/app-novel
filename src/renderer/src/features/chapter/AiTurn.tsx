@@ -11,6 +11,7 @@ import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import { diffLines, diffSummary } from './lineDiff'
 import { proposalOf, type TurnView } from './chatTurns'
+import { SafeMarkdown } from './SafeMarkdown'
 
 /**
  * One question and its answer, as it actually happened.
@@ -76,23 +77,44 @@ function SentContext({ blocks }: { blocks: ChatContextBlock[] }): JSX.Element | 
 function ProposalSummary({
   before,
   after,
-  onReview
+  onAccept
 }: {
   before: string
   after: string
-  onReview(): void
+  onAccept?: () => void
 }): JSX.Element {
+  const [open, setOpen] = useState(false)
   const lines = useMemo(() => diffLines(before, after), [before, after])
   const { added, removed } = useMemo(() => diffSummary(lines), [lines])
 
   return (
-    <div className="flex items-center gap-2 rounded-panel border border-line-strong px-2 py-1.5">
-      <span className="min-w-0 flex-1 text-[11px] text-ink-muted">
-        Đề xuất thay {removed} dòng, thêm {added} dòng
-      </span>
-      <Button size="sm" onClick={onReview}>
-        Xem trong bản dịch
-      </Button>
+    <div className="rounded-panel border border-line-strong px-2 py-1.5">
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 text-[11px] text-ink-muted">
+          Đề xuất thay {removed} dòng, thêm {added} dòng
+        </span>
+        <Button size="sm" onClick={() => setOpen((value) => !value)}>
+          {open ? 'Thu gọn' : 'Xem thay đổi'}
+        </Button>
+      </div>
+      {open && (
+        <div className="mt-2 space-y-2">
+          <div>
+            <p className="text-[11px] text-ink-muted">Chữ hiện tại lúc hỏi</p>
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-[12px] text-ink">{before}</pre>
+          </div>
+          <div>
+            <p className="text-[11px] text-ink-muted">Bản AI đề xuất</p>
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-[12px] text-ink">{after}</pre>
+          </div>
+          <div className="flex gap-1">
+            {onAccept && <Button size="sm" onClick={onAccept}>Áp dụng</Button>}
+            <Button size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(after)}>
+              Sao chép bản đề xuất
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -106,9 +128,11 @@ export function AiTurn({
   turn: TurnView
   onCancel(requestId: string): void
   onRetry(question: string): void
-  onApply(turn: TurnView, replacement: string): void
+  onApply(turn: TurnView): void
 }): JSX.Element {
   const proposal = proposalOf(turn)
+  const explanation = proposal === null ? turn.answer :
+    turn.answer.slice(0, turn.answer.lastIndexOf('```', turn.answer.lastIndexOf('```') - 1)).trim()
   const running = turn.status === 'sending' || turn.status === 'running'
 
   return (
@@ -132,8 +156,14 @@ export function AiTurn({
         </ul>
       )}
 
-      {turn.answer !== '' && (
-        <div className="text-[13px] leading-[1.7] whitespace-pre-wrap text-ink">{turn.answer}</div>
+      {explanation !== '' && (
+        <div className="space-y-1">
+          <SafeMarkdown text={explanation} />
+          {proposal !== null && <Button size="sm" variant="ghost-muted"
+            onClick={() => void navigator.clipboard.writeText(explanation)}>
+            Sao chép lời giải thích
+          </Button>}
+        </div>
       )}
 
       {running && (
@@ -190,19 +220,41 @@ export function AiTurn({
         </div>
       )}
 
+      {turn.mode === 'ap_dung' && turn.autoApply === 'applied' && (
+        <p className="text-[11px] text-success">Đã áp dụng thẳng vào bản dịch.</p>
+      )}
+
+      {turn.mode === 'sua' && turn.proposalStatus === 'applied' && (
+        <p className="text-[11px] text-success">Đề xuất đã được áp dụng.</p>
+      )}
+
+      {turn.status === 'interrupted' && (
+        <p className="text-[11px] text-ink-muted">
+          Lượt này bị ngắt khi app đóng. Phần câu trả lời đã nhận chỉ để đọc; hãy hỏi lại nếu cần.
+        </p>
+      )}
+
+      {turn.mode === 'ap_dung' && turn.autoApply === 'needs-review' && (
+        <p className="text-[11px] text-ink-muted">
+          Bản gốc hoặc bản dịch đã đổi, hoặc còn chữ chưa lưu. Đề xuất cần được xem lại.
+        </p>
+      )}
+
       {proposal !== null && turn.range !== null && (
         <ProposalSummary
           before={turn.range.text}
           after={proposal}
-          onReview={() => onApply(turn, proposal)}
+          onAccept={turn.proposalId !== undefined &&
+            (turn.proposalStatus === 'pending' || turn.proposalStatus === 'conflict' || turn.proposalStatus === 'stale')
+              ? () => onApply(turn) : undefined}
         />
       )}
 
       {/* The model was asked for a fenced block and did not give one: read it as a plain reply rather
           than guessing which part of the answer was meant to replace the paragraph. */}
-      {turn.mode === 'sua' && turn.status === 'done' && proposal === null && (
+      {turn.mode !== 'hoi' && turn.status === 'done' && proposal === null && (
         <p className="text-[11px] text-ink-muted">
-          Câu trả lời không có khối thay thế rõ ràng nên không có gì để áp dụng. Hỏi lại và nói rõ
+          Câu trả lời chưa có khối thay thế hoàn chỉnh nên không có gì để áp dụng. Hỏi lại và nói rõ
           phạm vi cần sửa.
         </p>
       )}

@@ -46,13 +46,14 @@ export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
 ): void {
-  const { connections, translator, chat } = createServices({
+  const { connections, translator, paragraphTranslator, chat } = createServices({
     library,
     crypto: electronSafeStorage,
     fetch: electronFetch
   })
   const handlers = guardHandlers(
-    createLibraryHandlers(library, electronFilePicker(), connections, translator, chat),
+    createLibraryHandlers(library, electronFilePicker(), connections, translator, chat,
+      undefined, undefined, paragraphTranslator),
     isTrustedSender,
     // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để
     // tầng handler không phải import Electron và test được không cần một cửa sổ thật.

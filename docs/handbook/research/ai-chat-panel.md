@@ -1,5 +1,10 @@
 # Panel Hỏi AI chạy thật: phương thức và quyết định cần chốt
 
+> **Cập nhật 2026-10-04:** quyết định Q4 “hội thoại chỉ sống trong phiên” bên dưới đã bị
+> [Module Đề xuất và phiên AI](../../modules/proposals/decisions.md) thay thế: lịch sử lưu theo tác
+> phẩm, mở lại phiên cũ để tiếp tục. Trang này giữ bằng chứng nghiên cứu và hành vi MVP tại thời
+> điểm đọc; tài liệu module là nguồn hiện hành cho vòng đời phiên và duyệt đề xuất.
+
 Ngày đọc: **2026-10-02** · Trạng thái: Quan sát (code + tài liệu nhà cung cấp) + suy luận; **sáu quyết định Q1–Q6 đã chốt ngày 2026-10-02**, chưa triển khai dòng mã nào · Chủ trì: research/engineering · Liên quan: [ADR-004](../decisions/0004-ai-provider-layer.md), [chế độ AI và nhà cung cấp](ai-provider-integration.md), [hai hướng provider](provider-gemini-gateway.md), [ngữ cảnh truyện](story-context.md), [câu hỏi còn mở](../product/open-questions.md) (UX panel Hỏi AI), backlog `ai-chat-panel`
 
 > **Cập nhật 2026-10-03: đã triển khai (change `ai-chat`).** Trang này là bản ghi nghiên cứu ngày 2026-10-02, **trước khi** panel được làm; giữ nguyên làm hồ sơ quyết định. Đối chiếu với mã ngày 2026-10-03:

@@ -16,11 +16,11 @@ export function chatHandlers(deps: HandlerDeps): AreaHandlers<'ai:chat'> {
       // "cửa sổ này đi" đồng nghĩa với "không còn ai nhận chữ" — nếu sau này có nhiều cửa sổ thì chỗ
       // này phải nhóm lượt theo cửa sổ, và đó là lý do ghi chú nằm ở đây chứ không ở `ChatService`.
       sink.onDestroyed(() => service.cancelAll())
-      const requestId = service.start(input, (chunk) => {
+      const started = service.startWithSession(input, (chunk) => {
         if (sink.isDestroyed()) return
         sink.send(EVENT_CHANNELS.aiChatChunk, chunk)
       })
-      return { requestId }
+      return started
     }),
     [CHANNELS.aiChatCancel]: createHandler(chatCancelSchema, ({ requestId }) => {
       chatOf(deps).cancel(requestId)

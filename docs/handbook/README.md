@@ -1,5 +1,10 @@
 # Mira Handbook
 
+> Tài liệu theo module mới nằm ở [docs/modules](../modules/README.md). Với Module Đề xuất, đọc
+> [quyết định hiện hành](../modules/proposals/decisions.md); các mô tả pane trống tự ghi trong
+> handbook dưới đây là hồ sơ trước quyết định ngày 2026-10-04. Handbook được giữ để truy xuất các
+> chủ đề chưa chuyển và bối cảnh quyết định cũ.
+
 Phiên bản **0.1**, cập nhật **2026-10-03** ([ADR-005](decisions/0005-ai-first-proposals-no-sentence-mode.md)). Tài liệu sống trong Git để xây sản phẩm; chưa phải hướng dẫn sử dụng ứng dụng hoàn thiện.
 
 Mira giúp dịch giả giữ mạch văn khi dịch cả chương và **làm việc cùng AI ngay trong editor**: AI đề xuất, người duyệt từng chỗ tại chỗ. Mục tiêu bản đầu là vòng **nhập raw → AI dịch theo đoạn → duyệt đề xuất và sửa cùng AI → lưu/mở lại → xuất/backup/restore** trên Windows; mọi thứ trừ bước gọi AI chạy offline ([ADR-002](decisions/0002-ai-first-translation.md), [ADR-005](decisions/0005-ai-first-proposals-no-sentence-mode.md)). [Hiện trạng code](engineering/current-state.md) là **bản MVP để thử nghiệm**; từ nay làm lại hoàn chỉnh từng module theo [kiến trúc AI-first](engineering/ai-first-architecture.md) và [lộ trình](delivery/roadmap.md).

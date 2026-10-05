@@ -1,33 +1,32 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatContextBlock, ChatMode } from '../../../../shared/contracts/aiChat'
+import type { AiSessionView } from '../../../../shared/contracts/aiHistory'
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
-import { messageOf } from '../models/modelEntryActions'
 import type { ModelSelection } from '../models/ModelSelectionMenu'
-import { replaceById, thinkingPatch, type ThinkingChoice } from '../models/modelSettingsForm'
+import { thinkingPatch, type ThinkingChoice } from '../models/modelSettingsForm'
+import { useAiChatStore } from '../../stores/aiChatStore'
+import { useConnectionStore } from '../../stores/connectionStore'
 import type { SourceLanguage } from '../../../../shared/contracts/library'
 import type { TargetRange, TargetScope } from '../editor/chatRange'
 import { buildChatContext, type ContextScope } from './chatContext'
 import {
-  applyChunk,
   attachRequestId,
   beginTurn,
   emptySession,
   failTurn,
   historyFor,
+  markTurnProposal,
   openRequestIds,
-  proposalOf,
-  type Session
+  type Session,
+  type TurnView
 } from './chatTurns'
 
 /**
  * The panel's one connection to the rest of the app: a session of turns, a provider call per turn,
  * and the editor the answers can be written back into.
  *
- * Everything decided here is wiring; every rule worth testing lives in `chatTurns.ts` and
- * `chatContext.ts` as pure functions. What this hook owns is the part that cannot be pure — the
- * subscription, and making sure it is torn down. A listener left behind would make a second panel
- * session receive the first one's chunks.
+ * The app owns the stream listener; this hook binds the current work and chapter to it.
  */
 
 /** How many paragraphs either side of the range go along with a question. */
@@ -39,10 +38,19 @@ const CONTEXT_RADIUS = 2
  */
 export interface ChatEditor {
   getText(): string
+  isDirty(): boolean
+  reload(): Promise<void>
   targetRange(scope?: TargetScope): TargetRange | null
-  applyProposal(range: TargetRange, replacement: string): 'applied' | 'stale'
-  reviewProposal(range: TargetRange, replacement: string): 'reviewing' | 'stale'
+  reviewProposal(range: TargetRange, replacement: string,
+    onAccept: () => void, onDeny: () => void, label?: string): 'reviewing' | 'stale'
   endReview(): void
+}
+
+export interface ChatSendSnapshot {
+  sourceText: string
+  targetText: string
+  range: TargetRange | null
+  context: ChatContextBlock[]
 }
 
 export interface AiChatOptions {
@@ -51,21 +59,13 @@ export interface AiChatOptions {
   chapterId: string
   sourceLang: SourceLanguage
   /** The source pane, read live so context matches what the translator is looking at. */
-  source: { getText(): string }
+  source: { getText(): string; isDirty(): boolean }
   /** The translation pane: both the context and the destination of an applied proposal. */
   target: ChatEditor | null
   /** The stretch the next turn is about, following the caret. */
   range: TargetRange | null
   /** Whether the turn is about the chapter or about that stretch. */
   scope: ContextScope
-  /**
-   * Which mode to start in **until the translator picks one**.
-   *
-   * An untranslated chapter has nothing to ask *about* yet; the job is to produce a translation, so
-   * Sửa is the useful default there. A chapter with text defaults to Hỏi, where nothing can be
-   * written by accident. Once the translator chooses, their choice wins and stops following.
-   */
-  defaultMode: ChatMode
 }
 
 export type ApplyState =
@@ -73,11 +73,15 @@ export type ApplyState =
   /** Written straight in, because the pane was empty and nothing could be lost. */
   | { kind: 'applied' }
   /** Now sitting in the pane as marked chunks, waiting to be accepted or rejected there. */
-  | { kind: 'reviewing' }
   | { kind: 'stale' }
+  | { kind: 'error'; message: string }
 
 export interface AiChatController {
   session: Session
+  sessions: AiSessionView[]
+  sessionId: string | null
+  selectSession(id: string): void
+  proposalVersion: number
   /** Connections that can actually be called: enabled, and with a model to call. */
   usable: ConnectionView[]
   connection: ConnectionView | null
@@ -94,19 +98,15 @@ export interface AiChatController {
   /** Why the last attempt to change a model's level failed, if it did. */
   modelNotice: string | null
   dismissModelNotice(): void
-  mode: ChatMode
-  setMode(mode: ChatMode): void
   /** True once a connection and model are chosen and the range is not empty for Sửa. */
-  canSend(question: string): boolean
-  send(question: string): Promise<void>
+  canSend(question: string, action?: ChatMode): boolean
+  send(question: string, action?: ChatMode, snapshot?: ChatSendSnapshot): Promise<void>
   cancel(requestId: string): void
   newConversation(): void
-  /** Writes a proposal into the translation, or reports that the text moved on. */
-  apply(range: TargetRange, replacement: string): void
+  /** Accepts a persisted proposal through the same main-process transaction as direct apply. */
+  apply(turn: TurnView): Promise<void>
   applyState: ApplyState
   dismissApplyState(): void
-  /** Drops whatever is left of a review in the pane, keeping the chunks already accepted. */
-  endReview(): void
   /** Set when connections could not be read at all. */
   loadError: string | null
 }
@@ -120,17 +120,20 @@ function modelsOf(connection: ConnectionView | null): ModelEntryView[] {
 }
 
 export function useAiChat(options: AiChatOptions): AiChatController {
-  const { workId, chapterId, sourceLang, source, target, range, scope, defaultMode } = options
+  const { workId, chapterId, sourceLang, source, target, range, scope } = options
 
-  const [connections, setConnections] = useState<ConnectionView[]>([])
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const connections = useConnectionStore((state) => state.connections)
+  const connectionLoad = useConnectionStore((state) => state.load)
+  const connectionLoadError = useConnectionStore((state) => state.loadError)
   const [modelNotice, setModelNotice] = useState<string | null>(null)
   const [connectionId, setConnectionId] = useState<string | null>(null)
   const [model, setModelState] = useState<string | null>(null)
-  // `null` means "still following the chapter"; any pick freezes it.
-  const [pickedMode, setPickedMode] = useState<ChatMode | null>(null)
-  const mode = pickedMode ?? defaultMode
-  const [session, setSession] = useState<Session>(emptySession)
+  const storedWorkId = useAiChatStore((state) => state.workId)
+  const session = useAiChatStore((state) => state.workId === workId ? state.session : emptySession)
+  const sessionId = useAiChatStore((state) => state.workId === workId ? state.sessionId : null)
+  const [sessions, setSessions] = useState<AiSessionView[]>([])
+  const [proposalVersion, setProposalVersion] = useState(0)
+  const loadSequence = useRef(0)
   const [applyState, setApplyState] = useState<ApplyState>({ kind: 'idle' })
 
   // The session is read inside callbacks that must not be rebuilt on every chunk, so it is mirrored
@@ -141,30 +144,53 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     sessionRef.current = session
   }, [session])
 
+  useEffect(() => {
+    if (storedWorkId !== workId) {
+      for (const requestId of openRequestIds(useAiChatStore.getState().session)) {
+        void window.mira.ai.chat.cancel(requestId)
+      }
+      useAiChatStore.getState().selectWork(workId)
+    }
+  }, [storedWorkId, workId])
+
+  const selectSession = useCallback((id: string) => {
+    if (useAiChatStore.getState().sessionId === id) return
+    for (const requestId of openRequestIds(sessionRef.current)) {
+      void window.mira.ai.chat.cancel(requestId)
+    }
+    const sequence = ++loadSequence.current
+    void window.mira.ai.sessions.turns(workId, id).then((result) => {
+      if (loadSequence.current !== sequence || !result.ok) return
+      useAiChatStore.getState().setSessionId(id)
+      useAiChatStore.getState().restoreSession(result.value.turns)
+    })
+  }, [workId])
+
+  useEffect(() => {
+    const sequence = ++loadSequence.current
+    void window.mira.ai.sessions.list(workId).then((result) => {
+      if (loadSequence.current !== sequence || !result.ok) return
+      setSessions(result.value.sessions)
+      const savedId = useAiChatStore.getState().sessionId
+      const first = result.value.sessions.find((item) => item.id === savedId) ?? result.value.sessions[0]
+      if (first) selectSession(first.id)
+    })
+    return () => { loadSequence.current++ }
+  }, [workId, selectSession])
+
   const latest = useRef({ source, target, range, scope, sourceLang })
   useEffect(() => {
     latest.current = { source, target, range, scope, sourceLang }
   })
 
   useEffect(() => {
-    let cancelled = false
-    void window.mira.ai.list().then((result) => {
-      if (cancelled) return
-      if (!result.ok) {
-        setLoadError(result.error.message)
-        return
-      }
-      setConnections(result.value.connections)
-    })
-    return () => {
-      cancelled = true
+    if (connectionLoad === 'loading') {
+      void useConnectionStore.getState().reload()
     }
-  }, [])
+  }, [connectionLoad])
 
   const refreshConnections = useCallback(() => {
-    void window.mira.ai.list().then((result) => {
-      if (result.ok) setConnections(result.value.connections)
-    })
+    void useConnectionStore.getState().reload()
   }, [])
 
   const selectModel = useCallback((selection: ModelSelection) => {
@@ -175,14 +201,13 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   const setThinking = useCallback(
     async (selection: ModelSelection, choice: ThinkingChoice): Promise<void> => {
       selectModel(selection)
-      const result = await window.mira.ai.models.update(selection.entryId, {
+      const outcome = await useConnectionStore.getState().entries.update(selection.entryId, {
         settings: thinkingPatch(choice)
       })
-      if (result.ok) {
-        setConnections((current) => replaceById(current, result.value))
+      if (outcome.ok) {
         setModelNotice(null)
       } else {
-        setModelNotice(messageOf(result.error))
+        setModelNotice(outcome.message)
       }
     },
     [selectModel]
@@ -202,57 +227,23 @@ export function useAiChat(options: AiChatOptions): AiChatController {
         models[0]?.id ??
         null)
 
-  // One subscription for the life of the panel, torn down with the function `onChunk` returns. Any
-  // other shape here leaks a listener per open/close cycle.
-  useEffect(() => {
-    return window.mira.ai.chat.onChunk((chunk) => {
-      setSession((current) => applyChunk(current, chunk))
-    })
-  }, [])
-
   const cancel = useCallback((requestId: string) => {
     void window.mira.ai.chat.cancel(requestId)
   }, [])
 
-  // Closing the panel must stop what is running: nobody is left to read it, and it still costs money.
+  /** Main commits the turn and proposal together; the visible editor follows an automatic write. */
+  const reloaded = useRef(new Set<string>())
   useEffect(() => {
-    return () => {
-      for (const requestId of openRequestIds(sessionRef.current)) {
-        void window.mira.ai.chat.cancel(requestId)
-      }
-    }
-  }, [])
-
-  /**
-   * A finished Sửa turn goes straight in **when the pane is empty** (D13).
-   *
-   * The dividing line is whether anything can be lost, not a preference: with no text there, a diff
-   * is a ceremony over a blank page, and the first translation of a chapter is the thing this feature
-   * is for. With text there, nothing is written until the translator has seen the change and agreed.
-   * `Ctrl+Z` undoes it either way, and `applied` keeps each turn from being written twice.
-   */
-  const applied = useRef(new Set<string>())
-  useEffect(() => {
-    const editor = latest.current.target
-    if (!editor || editor.getText().trim() !== '') return
-
     for (const turn of session.turns) {
-      if (turn.status !== 'done' || turn.range === null) continue
-      if (applied.current.has(turn.localId)) continue
-      const proposal = proposalOf(turn)
-      if (proposal === null) continue
-
-      applied.current.add(turn.localId)
-      // No state set here, and not merely to satisfy the linter: into an empty pane the apply cannot
-      // come back `stale` (an empty document always takes the insert), and the translation appearing
-      // in the pane *is* the feedback. A notice would be a second announcement of something already
-      // visible, bought at the price of a cascading render.
-      editor.applyProposal(turn.range, proposal)
+      if (turn.proposalStatus !== 'applied' || !turn.partId || reloaded.current.has(turn.partId)) continue
+      reloaded.current.add(turn.partId)
+      const editor = latest.current.target
+      if (turn.chapterId === chapterId && editor && !editor.isDirty()) void editor.reload()
     }
-  }, [session])
+  }, [session, chapterId])
 
   const canSend = useCallback(
-    (question: string): boolean => {
+    (question: string, action: ChatMode = 'hoi'): boolean => {
       if (question.trim() === '' || connection === null || chosenModel === null) return false
       const open = openRequestIds(sessionRef.current).length > 0
       if (open) return false
@@ -260,16 +251,17 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       // sending a question whose answer could not be applied. Chapter scope is exempt: translating an
       // empty chapter has nothing to replace and is still the main thing this is for — the apply path
       // inserts into an empty document rather than refusing.
-      if (mode === 'sua' && scope === 'range' && (range === null || range.text.trim() === '')) {
+      if (action !== 'hoi' && scope === 'range' && (range === null || range.text.trim() === '')) {
         return false
       }
       return true
     },
-    [connection, chosenModel, mode, range, scope]
+    [connection, chosenModel, range, scope]
   )
 
   const send = useCallback(
-    async (question: string): Promise<void> => {
+    async (question: string, action: ChatMode = 'hoi',
+      snapshot?: ChatSendSnapshot): Promise<void> => {
       if (connection === null || chosenModel === null) return
       const asked = question.trim()
       if (asked === '') return
@@ -279,47 +271,73 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       setApplyState({ kind: 'idle' })
 
       const current = latest.current
-      const targetRange = current.range
+      const targetRange = snapshot ? snapshot.range : current.range
+      const sourceText = snapshot?.sourceText ?? current.source.getText()
+      const targetText = snapshot?.targetText ?? current.target?.getText() ?? ''
+      const base = action === 'hoi' ? null : await Promise.all([
+        window.mira.text.get(workId, chapterId, 'source'),
+        window.mira.text.get(workId, chapterId, 'target')
+      ])
+      if (base && (!base[0].ok || !base[1].ok)) {
+        setApplyState({ kind: 'error', message: 'Không đọc được revision của chương để tạo đề xuất.' })
+        return
+      }
+      const proposalBase = base && base[0].ok && base[1].ok ? {
+        sourceRev: base[0].value.rev,
+        sourceContent: sourceText,
+        targetRev: base[1].value.rev,
+        targetContent: targetText,
+        blockAutoApply: current.source.isDirty() || current.target?.isDirty() === true ||
+          sourceText !== base[0].value.content || targetText !== base[1].value.content
+      } : undefined
       // Built even with no range and no caret: the chapter is what the question is about, and a turn
       // that reached the model with nothing attached is how "dịch chương này" got the answer "hãy
       // cung cấp nội dung chương". Only a missing translation pane leaves this empty.
-      const context: ChatContextBlock[] =
-        current.target === null
+      const context: ChatContextBlock[] = snapshot?.context ?? (current.target === null
           ? []
           : buildChatContext({
-              sourceText: current.source.getText(),
-              targetText: current.target.getText(),
+              sourceText,
+              targetText,
               range: targetRange,
               scope: current.scope,
               radius: CONTEXT_RADIUS
-            })
+            }))
 
-      const localId = 'turn-' + String(sessionRef.current.turns.length) + '-' + asked.length
+      const localId = crypto.randomUUID()
       const { history, dropped } = historyFor(sessionRef.current)
-      setSession((previous) => ({
+      useAiChatStore.getState().setSession((previous) => ({
         ...beginTurn(previous, {
           localId,
           question: asked,
-          mode,
+          chapterId,
+          sourceText,
+          targetText,
+          sourceRev: base && base[0].ok ? base[0].value.rev : undefined,
+          targetBaseRev: base && base[1].ok ? base[1].value.rev : undefined,
+          mode: action,
           context,
-          range: mode === 'sua' ? targetRange : null
+          range: action === 'hoi' ? null : targetRange
         }),
         dropped
       }))
 
       const result = await window.mira.ai.chat.send({
+        ...(sessionId === null ? {} : { sessionId }),
+        droppedTurns: dropped,
+        range: action === 'hoi' ? null : targetRange,
         workId,
         chapterId,
         connectionId: connection.id,
         entryId: chosenModel,
-        mode,
+        mode: action,
+        ...(proposalBase ? { proposalBase } : {}),
         sourceLang: current.sourceLang,
         question: asked,
         history,
         context
       })
 
-      setSession((previous) =>
+      useAiChatStore.getState().setSession((previous) =>
         result.ok
           ? attachRequestId(previous, localId, result.value.requestId)
           : failTurn(previous, localId, {
@@ -329,35 +347,53 @@ export function useAiChat(options: AiChatOptions): AiChatController {
               recoverAt: null
             })
       )
+      if (result.ok && result.value.sessionId) useAiChatStore.getState().setSessionId(result.value.sessionId)
+      if (result.ok) {
+        void window.mira.ai.sessions.list(workId).then((listed) => {
+          if (listed.ok) setSessions(listed.value.sessions)
+        })
+      }
     },
-    [connection, chosenModel, mode, workId, chapterId]
+    [connection, chosenModel, workId, chapterId, sessionId]
   )
 
-  /**
-   * Into the pane — as a review when there is text to compare against, outright when there is not.
-   *
-   * The same dividing line as everywhere else in this feature: a diff over a blank page is ceremony,
-   * a diff over someone's work is the whole point.
-   */
-  const apply = useCallback((range: TargetRange, replacement: string) => {
+  const apply = useCallback(async (turn: TurnView): Promise<void> => {
     const editor = latest.current.target
-    if (!editor) {
+    if (!editor || turn.partId === undefined || turn.chapterId !== chapterId) {
       setApplyState({ kind: 'stale' })
       return
     }
-    if (editor.getText().trim() === '') {
-      setApplyState({
-        kind: editor.applyProposal(range, replacement) === 'applied' ? 'applied' : 'stale'
-      })
+    if (editor.isDirty() || latest.current.source.isDirty()) {
+      setApplyState({ kind: 'error', message: 'Hãy đợi chữ đang sửa được lưu trước khi duyệt.' })
       return
     }
-    setApplyState({
-      kind: editor.reviewProposal(range, replacement) === 'reviewing' ? 'reviewing' : 'stale'
+    const result = await window.mira.ai.proposals.accept({
+      workId, chapterId, partId: turn.partId, commandId: crypto.randomUUID()
     })
-  }, [])
+    if (!result.ok) {
+      setApplyState({ kind: 'error', message: result.error.message })
+      return
+    }
+    if (result.value.accepted.includes(turn.partId)) {
+      setApplyState({ kind: 'applied' })
+      setProposalVersion((version) => version + 1)
+      if (turn.proposalId) useAiChatStore.getState().setSession((current) => markTurnProposal(current, turn.localId, {
+        proposalId: turn.proposalId as string,
+        partId: turn.partId as string,
+        status: 'applied'
+      }))
+      if (!editor.isDirty()) await editor.reload()
+    } else {
+      setApplyState({ kind: 'stale' })
+    }
+  }, [workId, chapterId])
 
   return {
     session,
+    sessions,
+    sessionId,
+    selectSession,
+    proposalVersion,
     usable,
     connection,
     model: chosenModel,
@@ -371,22 +407,17 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     refreshConnections,
     modelNotice,
     dismissModelNotice: () => setModelNotice(null),
-    mode,
-    setMode: setPickedMode,
     canSend,
     send,
     cancel,
     newConversation: () => {
+      loadSequence.current++
       for (const requestId of openRequestIds(sessionRef.current)) cancel(requestId)
-      setSession(emptySession)
+      useAiChatStore.getState().clearSession()
     },
     apply,
     applyState,
     dismissApplyState: () => setApplyState({ kind: 'idle' }),
-    endReview: () => {
-      latest.current.target?.endReview()
-      setApplyState({ kind: 'idle' })
-    },
-    loadError
+    loadError: connectionLoadError
   }
 }

@@ -84,7 +84,7 @@ flowchart LR
 | 2 | **Lõi dịch** | Một đường dịch trong service: lập lô, ID tạm, prompt, parse, đối soát và xử lý lỗi; adapter cho dữ liệu hiện tại | Chạy thật một chương; không mất/sai ID hoặc ghi đè chữ người; bằng chứng T0 và chấm mù theo [roadmap chi tiết](#2-lõi-dịch) | **Hoàn thành triển khai L0–L6 (2026-10-04):** lõi dịch độc lập trong `services/ai/translate/`, adapter `ChapterTranslator`, đối soát ID tạm `[n]`, parser khoan dung, chia lô theo token/đơn vị, vòng hỏi lại (repair) và phân tầng prompt |
 | 3 | **Thuật ngữ** | Lát 1 của `context-core`: mục thuật ngữ, tầng khớp, chèn tầng C, kiểm tuân thủ; màn Thuật ngữ thật; nhập `Names.txt` | Tuân thủ thuật ngữ tăng rõ so với không glossary; mục chưa duyệt không rời máy | **Hoàn thành (2026-10-04):** Schema v6 (`context_entry`, `context_alias`), CRUD theo chương, `namesParser` (`Names.txt`), `contextMatching` (longest-match CJK, word-boundary Latin), `glossaryCompliance`, tiêm Layer C vào Prompt Builder, privacy guard cho mục unapproved, UI `GlossaryScreen` thật nối IPC |
 | 4 | **Xưng hô** | Lát 2 của `context-core`: nhân vật, cặp xưng hô có hiệu lực theo chương, tầng B; màn Xưng hô | Số đại từ sai cặp giảm so với không ma trận (V3) | **Hoàn thành (2026-10-04):** Nhân vật và bí danh (`character`), quan hệ có chiều độc lập (`dyad`), hiệu lực theo chương, tiêm Layer B (`formatAddressingLayerB`) vào Prompt Builder, kiểm tra tuân thủ thuần (`addressingCompliance.ts`), privacy guard cho mục unapproved, UI `AddressingScreen` thật nối IPC |
-| 5 | **Đề xuất** | `proposal` + `text_snapshot`; đơn vị đổi sang đoạn; pane trống ghi thẳng, đã có chữ thì thành đề xuất duyệt tại chỗ; lưu `contextHash` và danh sách mục đã gửi | V11, V12 | Chưa làm |
+| 5 | **Đề xuất** | Đường duyệt cho mọi kết quả AI, kể cả pane trống; phiên và hàng chờ theo tác phẩm/chương; xem [module](../../modules/proposals/README.md) | V11, V12 | Chưa làm |
 | 6 | **Xuất** | `.md`/`.txt` từ hàm chiếu Markdown | Xuất rồi nhập lại giữ nguyên chữ | Chưa làm |
 | 7 | **Tác vụ** | `JobRunner` trong main, lưu bền; sổ `usage`; trần chi phí; khu vực Tác vụ thật; lịch gửi giữ cache | V13 | Chưa làm; **chặn bởi Q4** |
 | 8 | **Gỡ Từng câu** | Gỡ `segment`/`link`/`link_member`/`provenance`, thêm `ai_mark`; nhập raw chỉ chuẩn hóa; gỡ mã mode và kênh `links:*`/`rows:*` | Test kho, editor, crash qua; mở được tệp v5; V03, V15 | Chưa làm |
@@ -190,16 +190,11 @@ Lát 2 của `context-core`. Căn cứ: [ngữ cảnh đợt 1](../research/stor
 
 ### 5. Đề xuất
 
-Đây là luồng áp dụng mà chủ sản phẩm thấy cần cải thiện. Căn cứ: [kiến trúc AI-first](../engineering/ai-first-architecture.md) mục 5.1; scope S1.9.
-
-- **Điều kiện vào:**
-  - Ghi lại các điểm chủ sản phẩm thấy chưa ổn ở luồng áp dụng hiện tại.
-  - Chạy lại bảng ca IME cho merge view.
-  - Nên có kết quả phiên quan sát của ADR-005 ("có soát theo câu không?"). Nếu phiên đó cho thấy cần soát theo câu thì mở lại Q2.
-- **Bảng `proposal` và `text_snapshot`.** Đơn vị gửi đổi từ segment sang đoạn.
-- **Dịch một chương:** pane trống thì ghi thẳng; đã có chữ thì gom thành một đề xuất và duyệt từng khối bằng `chatReview.ts`. Cách này thay "Dùng bản AI / Giữ bản của tôi" theo hàng.
-- **Lưu `contextHash` và danh sách id + phiên bản các mục ngữ cảnh đã gửi** (K8 của đợt 2) ở `proposal`.
-- **Điều kiện qua:** V11, V12. Dịch đè lên chương đã có chữ không đổi chữ nào khi người dùng bỏ hết đề xuất.
+Yêu cầu, quyết định, luồng duyệt, dữ liệu và các câu hỏi kỹ thuật nằm tại
+[Module Đề xuất và phiên AI](../../modules/proposals/README.md). Phần việc của mốc này là đường
+đề xuất cho mọi kết quả AI, phiên/lịch sử theo tác phẩm và hàng chờ điều hướng giữa chương. Kiểm
+[V11–V12](validation.md) và [bảng ca IME](../../../src/renderer/src/features/editor/imeCases.md)
+trước nghiệm thu. Chạy và phục hồi tác vụ dịch nhiều chương thuộc mốc 7.
 
 ### 6. Xuất
 

@@ -1,7 +1,6 @@
-import { Fragment, useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+import { Fragment, useEffect, useMemo, type JSX } from 'react'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { AppShell } from './app/AppShell'
-import { useTheme } from './app/useTheme'
 import { Button } from './components/Button'
 import { CreateWorkScreen } from './features/library/CreateWorkScreen'
 import { LibraryNotices } from './features/library/LibraryNotices'
@@ -14,47 +13,45 @@ import { ChapterScreen } from './features/chapter/ChapterScreen'
 import { LeaveGuardContext, useLeaveGuardRegistry } from './features/editor/leaveGuard'
 import { SettingsScreen } from './features/settings/SettingsScreen'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
-
-type View =
-  | { name: 'library'; section: LibrarySection }
-  | { name: 'create' }
-  | { name: 'work'; workId: string }
-  | { name: 'chapter'; workId: string; chapterId: string }
-  | { name: 'settings' }
+import { useUiStore, type View } from './stores/uiStore'
+import { useAiChatStore } from './stores/aiChatStore'
 
 const RECENT_LIMIT = 4
 
 export function App(): JSX.Element {
-  const [theme, toggleTheme] = useTheme()
-  const [view, setView] = useState<View>({ name: 'library', section: 'all' })
   const { registry, dialog: leaveDialog } = useLeaveGuardRegistry()
-  /** Every move to another screen passes here, so unsaved typing is never dropped silently. */
+
+  const view = useUiStore((state) => state.view)
+  const sidebarOpen = useUiStore((state) => state.sidebarOpen)
+  const theme = useUiStore((state) => state.theme)
+  const toggleTheme = useUiStore((state) => state.toggleTheme)
+  const toggleSidebar = useUiStore((state) => state.toggleSidebar)
+  const appVersion = useUiStore((state) => state.appVersion)
+
+  useEffect(() => {
+    useUiStore.getState().setLeaveGuardRegistry(registry)
+  }, [registry])
+
+  // A stream continues while the chapter panel is hidden or another chapter is being viewed.
+  useEffect(() => useAiChatStore.getState().startListening(), [])
+
   const go = (next: View): void => {
-    void registry.confirmLeave().then((proceed) => {
-      if (proceed) setView(next)
-    })
+    void useUiStore.getState().navigate(next)
   }
-  /** Màn đang mở trước khi vào cài đặt, để đóng cài đặt trả người dùng về đúng chỗ. */
-  const [beforeSettings, setBeforeSettings] = useState<View | null>(null)
   const openSettings = (): void => {
-    if (view.name === 'settings') return
-    setBeforeSettings(view)
-    go({ name: 'settings' })
+    void useUiStore.getState().openSettings()
   }
   const closeSettings = (): void => {
-    const back = beforeSettings ?? { name: 'library' as const, section: 'all' as const }
-    setBeforeSettings(null)
-    go(back)
+    void useUiStore.getState().closeSettings()
   }
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [appVersion, setAppVersion] = useState('')
+
   const library = useLibrary()
   const { works } = library
 
   useEffect(() => {
     let active = true
     void window.mira.getAppInfo().then((info) => {
-      if (active) setAppVersion(info.version)
+      if (active) useUiStore.getState().setAppVersion(info.version)
     })
     return () => {
       active = false
@@ -70,7 +67,6 @@ export function App(): JSX.Element {
     [works]
   )
 
-  const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), [])
   const showSection = (section: LibrarySection): void => {
     go({ name: 'library', section })
     // The detail screen already hands changes to the library; this also catches anything missed.

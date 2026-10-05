@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChatChunk, ChatError } from '../../../../shared/contracts/aiChat'
+import type { ChatChunk, ChatError, ChatMode } from '../../../../shared/contracts/aiChat'
 import type { TargetRange } from '../editor/chatRange'
 import {
   applyChunk,
@@ -8,6 +8,7 @@ import {
   emptySession,
   failTurn,
   historyFor,
+  markAutoApply,
   openRequestIds,
   proposalOf,
   type Session
@@ -24,12 +25,13 @@ import {
 const RANGE: TargetRange = { from: 0, to: 9, text: 'Đoạn một.', targetIds: ['s0'] }
 
 const delta = (requestId: string, text: string): ChatChunk => ({ requestId, kind: 'delta', text })
-const done = (requestId: string): ChatChunk => ({
+const done = (requestId: string): Extract<ChatChunk, { kind: 'done' }> => ({
   requestId,
   kind: 'done',
   usage: { inputTokens: 10, outputTokens: 5 },
   usd: 0.001,
-  keyTail: '9f3a'
+  keyTail: '9f3a',
+  finishReason: 'stop'
 })
 const failure = (requestId: string, kind: ChatError['kind'], partial = true): ChatChunk => ({
   requestId,
@@ -41,7 +43,7 @@ const failure = (requestId: string, kind: ChatError['kind'], partial = true): Ch
 /** A session with one started turn already matched to `requestId`. */
 function started(
   requestId = 'r1',
-  options: { mode?: 'hoi' | 'sua'; question?: string; localId?: string } = {},
+  options: { mode?: ChatMode; question?: string; localId?: string } = {},
   from: Session = emptySession
 ): Session {
   const localId = options.localId ?? 'L-' + requestId
@@ -50,7 +52,7 @@ function started(
     question: options.question ?? 'Dịch tự nhiên hơn',
     mode: options.mode ?? 'hoi',
     context: [],
-    range: options.mode === 'sua' ? RANGE : null
+    range: options.mode === 'sua' || options.mode === 'ap_dung' ? RANGE : null
   })
   return attachRequestId(begun, localId, requestId)
 }
@@ -190,6 +192,31 @@ describe('what a turn offers to apply', () => {
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, done('r1'))
     expect(proposalOf(turnOf(session, 'r1'))).toBe('Nhờ ngoại hình, cô được nhiều người để ý.')
+  })
+
+  it('a finished direct-apply turn offers the same anchored replacement', () => {
+    let session = started('r1', { mode: 'ap_dung' })
+    session = applyChunk(session, delta('r1', answer))
+    session = applyChunk(session, done('r1'))
+    expect(proposalOf(turnOf(session, 'r1'))).toBe('Nhờ ngoại hình, cô được nhiều người để ý.')
+    session = markAutoApply(session, 'L-r1', 'applied')
+    expect(turnOf(session, 'r1').autoApply).toBe('applied')
+  })
+
+  it('does not offer a replacement when provider cut off the answer', () => {
+    let session = started('r1', { mode: 'ap_dung' })
+    session = applyChunk(session, delta('r1', answer))
+    session = applyChunk(session, { ...done('r1'), finishReason: 'length' })
+    expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
+  })
+
+  it('does not offer a replacement when completion is unconfirmed', () => {
+    let session = started('r1', { mode: 'sua' })
+    session = applyChunk(session, delta('r1', answer))
+    const unknown = done('r1')
+    delete unknown.finishReason
+    session = applyChunk(session, unknown)
+    expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
   })
 
   it('a Hỏi turn never offers anything, fence or not', () => {

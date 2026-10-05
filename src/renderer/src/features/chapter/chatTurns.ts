@@ -4,11 +4,13 @@ import {
   type ChatChunk,
   type ChatContextBlock,
   type ChatError,
+  type ChatFinishReason,
   type ChatMode,
   type ChatTurn,
   type ChatUsage
 } from '../../../../shared/contracts/aiChat'
 import type { TargetRange } from '../editor/chatRange'
+import type { AiTurnView } from '../../../../shared/contracts/aiHistory'
 
 /**
  * The state of a conversation in the panel, as pure functions.
@@ -22,7 +24,7 @@ import type { TargetRange } from '../editor/chatRange'
  * letting the translator assume it was kept.
  */
 
-export type TurnStatus = 'sending' | 'running' | 'done' | 'cancelled' | 'error'
+export type TurnStatus = 'sending' | 'running' | 'done' | 'cancelled' | 'error' | 'interrupted'
 
 /** One lookup the model made. `detail` describes the scope; it is never the text that was read. */
 export interface ToolStep {
@@ -36,6 +38,15 @@ export interface TurnView {
   /** Set once main answers the send call; chunks are matched on it. */
   requestId: string | null
   question: string
+  /** Captured when sent, so a late answer cannot write into a chapter opened afterward. */
+  chapterId?: string
+  sourceText?: string
+  targetText?: string
+  sourceRev?: number
+  targetBaseRev?: number
+  proposalId?: string
+  partId?: string
+  proposalStatus?: 'pending' | 'applied' | 'rejected' | 'conflict' | 'stale' | 'needs-placement'
   mode: ChatMode
   answer: string
   status: TurnStatus
@@ -43,6 +54,9 @@ export interface TurnView {
   usage: ChatUsage | null
   usd: number | null
   keyTail: string | null
+  finishReason: ChatFinishReason | null
+  /** Outcome of an explicitly requested direct apply. */
+  autoApply: 'applied' | 'needs-review' | null
   /** Exactly what was sent along with the question, for the "đã gửi kèm" list. */
   context: ChatContextBlock[]
   /** What the model went and read for itself, in order. Scope lines only, never content. */
@@ -59,6 +73,35 @@ export interface Session {
 
 export const emptySession: Session = { turns: [], dropped: 0 }
 
+export function restoredSession(turns: AiTurnView[]): Session {
+  return {
+    dropped: turns[turns.length - 1]?.droppedTurns ?? 0,
+    turns: [...turns].reverse().map((turn) => ({
+      localId: turn.id,
+      requestId: turn.id,
+      question: turn.question,
+      chapterId: turn.chapterId ?? undefined,
+      mode: turn.action,
+      answer: turn.answer,
+      status: turn.status,
+      error: null,
+      usage: turn.usage,
+      usd: turn.costUsd,
+      keyTail: null,
+      finishReason: turn.finishReason,
+      autoApply: turn.action === 'ap_dung' && turn.proposalStatus !== null
+        ? turn.proposalStatus === 'applied' ? 'applied' : 'needs-review'
+        : null,
+      context: turn.context,
+      tools: turn.tools,
+      range: turn.range,
+      proposalId: turn.proposalId ?? undefined,
+      partId: turn.partId ?? undefined,
+      proposalStatus: turn.proposalStatus ?? undefined
+    }))
+  }
+}
+
 /** A turn still waiting for its ending. Only these accept chunks. */
 const isOpen = (turn: TurnView): boolean => turn.status === 'sending' || turn.status === 'running'
 
@@ -67,6 +110,11 @@ export function beginTurn(
   turn: {
     localId: string
     question: string
+    chapterId?: string
+    sourceText?: string
+    targetText?: string
+    sourceRev?: number
+    targetBaseRev?: number
     mode: ChatMode
     context: ChatContextBlock[]
     range: TargetRange | null
@@ -85,7 +133,9 @@ export function beginTurn(
         error: null,
         usage: null,
         usd: null,
-        keyTail: null
+        keyTail: null,
+        finishReason: null,
+        autoApply: null
       }
     ]
   }
@@ -141,7 +191,16 @@ export function applyChunk(session: Session, chunk: ChatChunk): Session {
       status: 'done',
       usage: chunk.usage,
       usd: chunk.usd,
-      keyTail: chunk.keyTail
+      keyTail: chunk.keyTail,
+      finishReason: chunk.finishReason ?? null,
+      ...(chunk.proposal ? {
+        proposalId: chunk.proposal.proposalId,
+        partId: chunk.proposal.partId,
+        proposalStatus: chunk.proposal.status,
+        autoApply: turn.mode === 'ap_dung'
+          ? chunk.proposal.status === 'applied' ? 'applied' : 'needs-review'
+          : null
+      } : {})
     }))
   }
   return mapTurn(session, matches, (turn) => ({
@@ -183,8 +242,31 @@ export function openRequestIds(session: Session): string[] {
  * answer as a plain reply instead of guessing which part was the proposal.
  */
 export function proposalOf(turn: TurnView): string | null {
-  if (turn.mode !== 'sua' || turn.status !== 'done' || turn.range === null) return null
+  if (turn.mode === 'hoi' || turn.status !== 'done' || turn.range === null) return null
+  if (turn.finishReason !== 'stop') return null
   return extractFence(turn.answer)
+}
+
+export function markAutoApply(
+  session: Session,
+  localId: string,
+  outcome: 'applied' | 'needs-review'
+): Session {
+  return mapTurn(session, (turn) => turn.localId === localId, (turn) => ({ ...turn, autoApply: outcome }))
+}
+
+export function markTurnProposal(
+  session: Session,
+  localId: string,
+  proposal: { proposalId: string; partId: string; status: TurnView['proposalStatus'] }
+): Session {
+  return mapTurn(session, (turn) => turn.localId === localId, (turn) => ({
+    ...turn, proposalId: proposal.proposalId, partId: proposal.partId,
+    proposalStatus: proposal.status,
+    autoApply: turn.mode === 'ap_dung'
+      ? proposal.status === 'applied' ? 'applied' : 'needs-review'
+      : null
+  }))
 }
 
 /**

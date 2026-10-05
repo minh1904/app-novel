@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 6, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 7, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -149,9 +149,9 @@ describe('work schema', () => {
       INSERT INTO chapter (id, position, title, created_at, updated_at) VALUES ('c1', 0, 'Chương 1', 1, 1);
     `)
 
-    // Upgrade to full schema (version 6)
+    // Upgrade through the current schema.
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(6)
+    expect(readPragmas(db).userVersion).toBe(7)
 
     // Data preserved
     const row = db.prepare('SELECT title FROM work WHERE id = ?').get<{ title: string }>('w1')
@@ -169,6 +169,51 @@ describe('work schema', () => {
 
     const alias = db.prepare('SELECT * FROM context_alias WHERE id = ?').get<{ form: string }>('a1')
     expect(alias?.form).toBe('Trúc Cơ Kỳ')
+    db.close()
+  })
+
+  it('upgrades v6 to v7 without changing text, alignment or provenance', () => {
+    const db = openDatabase(join(tempDir(), 'v6_to_v7.mira'))
+    migrate(db, {
+      applicationId: WORK_APPLICATION_ID,
+      migrations: workSchema.migrations.slice(0, 6)
+    })
+    db.exec(`
+      INSERT INTO work (id, title, source_lang, created_at, updated_at)
+        VALUES ('w', 'Tác phẩm', 'ja', 1, 1);
+      INSERT INTO chapter (id, position, created_at, updated_at) VALUES ('c', 0, 1, 1);
+      INSERT INTO chapter_text (chapter_id, side, content, rev, updated_at, size)
+        VALUES ('c', 'target', 'Bản dịch cũ', 4, 1, 11);
+      INSERT INTO segment (id, chapter_id, side, position, start_offset, end_offset, text_rev)
+        VALUES ('s', 'c', 'target', 0, 0, 11, 4);
+      INSERT INTO link (id, chapter_id, kind, created_at) VALUES ('l', 'c', 'user', 1);
+      INSERT INTO link_member (link_id, segment_id) VALUES ('l', 's');
+      INSERT INTO provenance (segment_id, origin, at) VALUES ('s', 'human', 1);
+    `)
+    migrate(db, workSchema)
+    expect(readPragmas(db).userVersion).toBe(7)
+    expect(db.prepare("SELECT content, rev FROM chapter_text WHERE chapter_id = 'c' AND side = 'target'").get()).toEqual({ content: 'Bản dịch cũ', rev: 4 })
+    expect(db.prepare("SELECT id, status FROM segment WHERE id = 's'").get()).toEqual({ id: 's', status: 'ok' })
+    expect(db.prepare("SELECT link_id, segment_id FROM link_member WHERE link_id = 'l'").get()).toEqual({ link_id: 'l', segment_id: 's' })
+    expect(db.prepare("SELECT origin FROM provenance WHERE segment_id = 's'").get()).toEqual({ origin: 'human' })
+
+    db.exec(`
+      INSERT INTO ai_session (id, title, created_at, updated_at) VALUES ('session', 'Dịch', 2, 2);
+      INSERT INTO ai_turn (id, session_id, chapter_id, action, question, status, created_at, updated_at)
+        VALUES ('turn', 'session', 'c', 'ap_dung', 'Dịch', 'done', 2, 2);
+      INSERT INTO proposal (id, chapter_id, session_id, turn_id, origin, policy, source_rev, source_hash,
+        target_base_rev, target_base_content, created_at, updated_at)
+        VALUES ('p', 'c', 'session', 'turn', 'chat', 'auto', 0, 'hash', 4, 'Bản dịch cũ', 2, 2);
+      INSERT INTO proposal_part (id, proposal_id, ordinal, base_from, base_to, before_text, after_text)
+        VALUES ('part', 'p', 0, 0, 11, 'Bản dịch cũ', 'Bản dịch mới');
+      INSERT INTO text_snapshot (id, command_id, chapter_id, before_rev, after_rev, before_content, decisions_json, actor, created_at)
+        VALUES ('snapshot', 'command', 'c', 4, 5, 'Bản dịch cũ', '[]', 'auto', 3);
+    `)
+    expect(thrown(() => db.exec("INSERT INTO proposal_part (id, proposal_id, ordinal, after_text, status) VALUES ('bad', 'p', 1, 'x', 'unknown')"))).toBe(true)
+    db.exec("DELETE FROM chapter WHERE id = 'c'")
+    expect(db.prepare('SELECT count(*) AS n FROM proposal').get<{ n: number }>()!.n).toBe(0)
+    expect(db.prepare('SELECT count(*) AS n FROM text_snapshot').get<{ n: number }>()!.n).toBe(0)
+    expect(db.prepare("SELECT chapter_id FROM ai_turn WHERE id = 'turn'").get()).toEqual({ chapter_id: null })
     db.close()
   })
 

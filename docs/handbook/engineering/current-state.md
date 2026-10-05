@@ -1,6 +1,15 @@
 # Hiện trạng triển khai
 
-Cập nhật: **2026-10-04** · Trạng thái: quan sát repository, không phải cam kết tính năng. Cập nhật trang này khi code thay đổi, không dùng roadmap làm bằng chứng đã hoàn thành.
+Cập nhật: **2026-10-05** · Trạng thái: quan sát repository và working tree, không phải cam kết tính năng. Cập nhật trang này khi code thay đổi, không dùng roadmap làm bằng chứng đã hoàn thành.
+
+**Module Đề xuất đang triển khai:** Working tree đã thêm schema tác phẩm v7, phiên/lượt chat bền,
+đề xuất và checkpoint, thao tác duyệt qua transaction, cùng đường dịch chương theo từng dòng không
+trống vào hàng chờ. Composer có hành động Gửi, Tạo đề xuất, Áp dụng thẳng theo lượt; hộp dịch mặc
+định Duyệt trước và có lựa chọn Áp dụng thẳng. Đây chưa phải Module 5 hoàn tất: diff trong editor,
+đặt vị trí trên bản dịch có chữ, Markdown chat, picker ngữ cảnh và nghiệm thu Electron còn mở. Danh
+sách task và tiêu chí nằm ở [OpenSpec](../../../openspec/changes/proposals/tasks.md). Các mục bên
+dưới phần lớn mô tả baseline đã commit trước Module 5; không dùng chúng phủ nhận trạng thái working
+tree vừa nêu.
 
 **Repo hiện tại là bản MVP để thử nghiệm.** Mọi thứ dưới đây chạy được nhưng chưa phải bản hoàn chỉnh; từ [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) từng module được làm lại hoàn chỉnh theo [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Cột **Số phận** cho biết phần đó được *giữ*, *viết lại* hay *gỡ* khi làm lại; tên trong ngoặc là module ở [lộ trình](../delivery/roadmap.md). (Trước lần đổi thứ tự ngày 2026-10-03, trang này ghi module bằng số; bảng đối chiếu số cũ nằm cuối lộ trình.)
 
@@ -24,7 +33,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 | Provider và kết nối AI | Chạy: transport + gateway, một adapter `openai-compatible` cung cấp `complete()`, nhiều khóa; model là **mục** có cài đặt riêng | Giữ phần kết nối; lõi dịch đã tách sang `services/ai/translate/`; đơn vị đổi từ segment sang đoạn ở (Đề xuất) |
 | Bộ đo chất lượng dịch | Hạ tầng offline đã có; T1/T3 là lớp tùy chọn, T1 chưa hiệu chuẩn live | **Giữ** analyzer thuần; module QA tự sở hữu severity/UX. Xem [module Bộ đo](../../modules/measurement/README.md) |
 | Sao lưu và khôi phục | Chạy | Giữ; migration theo các bảng mới |
-| Lưu và phục hồi (SQLite) | Chạy; `.mira` v6 (thêm `context_entry`, `context_alias`), `library.db` v4/v5 | Giữ |
+| Lưu và phục hồi (SQLite) | Chạy; working tree đã có `.mira` v7 cho phiên/đề xuất, `library.db` v4/v5 | Giữ |
 | Minh họa “Sắp có” | Có | Giữ tới khi có màn thật; mock của Từng câu gỡ cùng mode (Gỡ Từng câu) |
 | Thuật ngữ (glossary) | Chạy trên kho thật: CRUD, alias, import Names.txt, so khớp CJK/Latin, tiêm Tầng C prompt, UI GlossaryScreen | **Đã hoàn thành Module 3 (2026-10-04)** |
 | Xưng hô (addressing) | Chạy trên kho thật: CRUD nhân vật, dyad có chiều, hiệu lực chương, tiêm Tầng B prompt, kiểm tra đại từ, UI AddressingScreen | **Đã hoàn thành Module 4 (2026-10-04)** |

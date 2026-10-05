@@ -1,7 +1,7 @@
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
 
 /**
- * Các mục model dùng được để dịch, và thứ tự chọn mặc định giữa chúng. Tách khỏi `useAiTranslate` vì đây là
+ * Các mục model dùng được để dịch, và thứ tự chọn mặc định giữa chúng. Tách khỏi hook dịch vì đây là
  * phần quyết định *mục nào được chọn sẵn* — một quyết định có luật, và test được mà không cần React.
  */
 

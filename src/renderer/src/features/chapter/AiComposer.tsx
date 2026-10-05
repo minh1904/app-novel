@@ -1,14 +1,14 @@
-import { useLayoutEffect, useRef, useState, type JSX } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
 import { ArrowUpIcon } from '@solar-icons/react/linear/arrow-up'
-import { CheckIcon } from '@solar-icons/react/linear/check'
 import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { NotebookIcon } from '@solar-icons/react/linear/notebook'
 import { cx } from '../../components/cx'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
-import { CHAT_MODES, type ChatMode } from '../../../../shared/contracts/aiChat'
+import type { ChatMode } from '../../../../shared/contracts/aiChat'
+import type { ChatContextBlock } from '../../../../shared/contracts/aiChat'
 import { ModelSelectionMenu } from '../models/ModelSelectionMenu'
-import type { AiChatController } from './useAiChat'
+import type { AiChatController, ChatSendSnapshot } from './useAiChat'
 
 /**
  * The box the translator types in: what is going along as context, the question, and — on the same
@@ -20,26 +20,16 @@ import type { AiChatController } from './useAiChat'
  * full-chapter rewrite (Q8).
  */
 
-const MODE_HINT: Record<ChatMode, string> = {
-  hoi: 'Chỉ đọc, không sửa bản dịch',
-  sua: 'Trả đề xuất có nút Áp dụng'
-}
-
-/**
- * Both pickers share one shape so the toolbar row reads as a single strip. This is the class string
- * for `MenuTrigger` itself (which already renders a button) rather than a wrapper component: Base
- * UI's `render` prop needs the element to forward every prop and the ref, and a plain wrapper does
- * not, so the menu would never open.
- */
-const pickerClass =
-  'inline-flex h-6 shrink-0 cursor-pointer items-center gap-0.5 rounded-control px-1.5 text-[11px] whitespace-nowrap text-ink-muted outline-none hover:bg-selected hover:text-ink data-popup-open:bg-selected data-popup-open:text-ink disabled:cursor-not-allowed disabled:opacity-50'
-
 export function AiComposer({
   chat,
   rangeLabel,
   wholeChapter,
   wholeChapterForced,
-  onWholeChapterChange
+  onWholeChapterChange,
+  snapshot,
+  automaticCount,
+  onAddContext,
+  onRemoveContext
 }: {
   chat: AiChatController
   /** What the current range covers, in words: the chip the translator reads before sending. */
@@ -48,9 +38,15 @@ export function AiComposer({
   /** The chapter has no translation yet, so there is no narrower stretch to choose. */
   wholeChapterForced: boolean
   onWholeChapterChange(whole: boolean): void
+  snapshot: ChatSendSnapshot
+  automaticCount: number
+  onAddContext(): void
+  onRemoveContext(index: number): void
 }): JSX.Element {
   const [draft, setDraft] = useState('')
+  const [confirmedTruncationKey, setConfirmedTruncationKey] = useState<string | null>(null)
   const field = useRef<HTMLTextAreaElement>(null)
+  const context: ChatContextBlock[] = snapshot.context
 
   // Grows with the text up to max-h-40, then scrolls inside. Layout effect, not passive: measuring
   // after paint makes the box jump a frame behind what was typed.
@@ -61,13 +57,20 @@ export function AiComposer({
     node.style.height = node.scrollHeight + 'px'
   }, [draft])
 
-  const ready = chat.canSend(draft)
+  const truncationKey = useMemo(() => context.slice(0, automaticCount)
+    .filter((block) => block.detail.includes('đã cắt'))
+    .map((block) => block.label + '\0' + block.detail + '\0' + block.text).join('\0'),
+  [context, automaticCount])
+  const truncated = truncationKey !== ''
+  const contextReady = !truncated || confirmedTruncationKey === truncationKey
+  const ready = chat.canSend(draft) && contextReady
 
-  const submit = (): void => {
-    if (!ready) return
+  const submit = (action: ChatMode = 'hoi'): void => {
+    if (!chat.canSend(draft, action) || !contextReady) return
     const question = draft
     setDraft('')
-    void chat.send(question)
+    setConfirmedTruncationKey(null)
+    void chat.send(question, action, snapshot)
   }
 
   return (
@@ -82,7 +85,7 @@ export function AiComposer({
         <div className="flex flex-wrap items-center gap-1 px-1 pb-1">
           <span className="inline-flex h-[20px] shrink-0 items-center gap-1 rounded-[6px] border border-line bg-canvas px-1.5 text-[11px] text-ink-muted">
             <DocumentTextIcon size={12} className="shrink-0" />
-            {rangeLabel}
+            Đích nếu viết: {rangeLabel}
           </span>
           <button
             type="button"
@@ -102,8 +105,33 @@ export function AiComposer({
             )}
           >
             <NotebookIcon size={12} className="shrink-0" />
-            Cả chương
+            Phạm vi cả chương
           </button>
+        </div>
+
+        <div className="px-1 pb-1 text-[11px] text-ink-muted">
+          <details>
+            <summary className="cursor-pointer">Nguồn Mira gửi kèm · {context.length} khối (xem đúng nội dung)</summary>
+            <ul className="mt-1 max-h-52 space-y-2 overflow-y-auto">
+              {context.map((block, index) => <li key={block.label + String(index)} className="rounded-control border border-line bg-canvas p-2">
+                <div className="flex items-center gap-1">
+                  <strong className="text-ink">{block.label}</strong>
+                  {index >= automaticCount && <button type="button" className="ml-auto text-error underline"
+                    onClick={() => onRemoveContext(index - automaticCount)}>Bỏ nguồn</button>}
+                </div>
+                <p>{block.detail}</p>
+                <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap text-ink">{block.text}</pre>
+              </li>)}
+            </ul>
+          </details>
+          <button type="button" className="mt-1 text-primary underline" onClick={onAddContext}>
+            + Thêm nguồn từ chương khác
+          </button>
+          {truncated && <label className="mt-1 flex items-start gap-1 text-warning">
+            <input type="checkbox" checked={contextReady}
+              onChange={(event) => setConfirmedTruncationKey(event.target.checked ? truncationKey : null)} />
+            Tôi đã xem phần ngữ cảnh bị cắt và đồng ý gửi phần hiển thị.
+          </label>}
         </div>
 
         <textarea
@@ -124,25 +152,6 @@ export function AiComposer({
         />
 
         <div className="flex items-center gap-0.5 pt-1">
-          <MenuRoot>
-            <MenuTrigger className={pickerClass} title={'Chế độ — ' + MODE_HINT[chat.mode]}>
-              {CHAT_MODES.includes(chat.mode) ? (chat.mode === 'sua' ? 'Sửa' : 'Hỏi') : 'Hỏi'}
-              <AltArrowDownIcon size={12} className="shrink-0" />
-            </MenuTrigger>
-            <MenuPopup align="start">
-              {CHAT_MODES.map((entry) => (
-                <MenuItem key={entry} onClick={() => chat.setMode(entry)}>
-                  <CheckIcon
-                    size={14}
-                    className={cx('shrink-0', entry === chat.mode ? 'text-ink' : 'opacity-0')}
-                  />
-                  <span className="flex-1">{entry === 'sua' ? 'Sửa' : 'Hỏi'}</span>
-                  <span className="text-[11px] text-ink-muted">{MODE_HINT[entry]}</span>
-                </MenuItem>
-              ))}
-            </MenuPopup>
-          </MenuRoot>
-
           <ModelSelectionMenu
             label="Model để hỏi"
             connections={chat.usable}
@@ -156,12 +165,32 @@ export function AiComposer({
             <button
               type="submit"
               disabled={!ready}
-              aria-label="Gửi"
-              title={ready ? 'Gửi (Enter)' : 'Chưa gửi được'}
-              className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-control bg-primary text-primary-foreground disabled:cursor-not-allowed disabled:opacity-30"
+              aria-label="Gửi để trò chuyện"
+              title={ready ? 'Gửi để trò chuyện (Enter)' : 'Chưa gửi được'}
+              className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control bg-primary px-2 text-[11px] text-primary-foreground disabled:cursor-not-allowed disabled:opacity-30"
             >
-              <ArrowUpIcon size={14} />
+              Gửi <ArrowUpIcon size={14} />
             </button>
+            <MenuRoot>
+              <MenuTrigger
+                className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control border border-line-strong px-2 text-[11px] text-ink-muted hover:bg-selected disabled:opacity-30"
+                aria-label="Gửi thành đề xuất hoặc áp dụng thẳng"
+                title="Viết vào bản dịch"
+                disabled={!chat.canSend(draft, 'sua') || !contextReady}
+              >
+                Viết <AltArrowDownIcon size={14} />
+              </MenuTrigger>
+              <MenuPopup align="end">
+                <MenuItem onClick={() => submit('sua')}>
+                  <span>Tạo đề xuất</span>
+                  <span className="text-[11px] text-ink-muted">Duyệt trước khi ghi</span>
+                </MenuItem>
+                <MenuItem onClick={() => submit('ap_dung')}>
+                  <span>Áp dụng thẳng</span>
+                  <span className="text-[11px] text-ink-muted">Ghi nếu còn an toàn</span>
+                </MenuItem>
+              </MenuPopup>
+            </MenuRoot>
           </span>
         </div>
       </form>

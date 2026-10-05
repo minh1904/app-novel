@@ -11,7 +11,7 @@ Dịch giả truyện dài (Anh/Trung/Nhật → Việt) muốn **AI dịch từ
 Vòng hoàn chỉnh:
 
 ```text
-Tạo tác phẩm → nhập raw chương → AI dịch theo đoạn (ghi thẳng nếu pane trống, đề xuất nếu đã có chữ)
+Tạo tác phẩm → nhập raw chương → AI dịch theo đoạn → đề xuất chờ duyệt
             → duyệt từng khối ngay trong pane, hỏi/sửa cùng AI → kiểm tra nhất quán
             → xuất TXT/MD → đóng/mở lại, backup/restore
 ```
@@ -21,7 +21,7 @@ Tạo tác phẩm → nhập raw chương → AI dịch theo đoạn (ghi thẳn
 1. **Không mất chữ** đứng trên mọi tính năng: dữ liệu bền trước, tính năng sau.
 2. **Một chương xuyên suốt trước nhiều chương**; nhiều chương trước nhiều nguồn/văn phong.
 3. **Giao diện xem được sớm nhưng trên dữ liệu thật**; AI thật đến sau provider giả lập.
-4. **AI chỉ đề xuất, người ghi** (trừ pane trống); đơn vị là chương, bên trong là đoạn (ADR-005).
+4. **AI chỉ đề xuất, người ghi**, kể cả pane trống ([quyết định Module Đề xuất](../../modules/proposals/decisions.md)); đơn vị là chương, bên trong là đoạn (ADR-005).
 5. **Làm hoàn chỉnh từng module**: một module chỉ xong khi qua nghiệm thu, và chỉ sang module kế khi module trước xong.
 
 ## 3. Bảng ưu tiên
@@ -44,14 +44,14 @@ Mức: **S0** nền bắt buộc · **S1** lát cắt một chương · **S2** A
 | --- | --- | --- | --- | --- |
 | S1.1 | Nhập raw | Dán hoặc nhập một tệp TXT/MD cho một chương; preview; chuẩn hóa newline/encoding theo spec | Nhập cả tập, EPUB | 06 |
 | S1.2 | Chuẩn hóa và định nghĩa đoạn | **Đoạn = mỗi dòng không trống**, kiểm trên fixture ZH/JA/EN; nhập raw chỉ chuẩn hóa và lưu. Câu chỉ được cắt tạm để chia lô gửi AI (`Intl.Segmenter`; sentencex cho ZH/JA đã cân nhắc) | Người dùng chỉnh quy tắc tách | 03 |
-| S1.3 | Tác vụ dịch AI | Gửi theo đoạn có ID tạm `[n]`, kiểm tra ID khớp, thử lại phần lỗi, lưu bền theo lô, dừng/tiếp tục, tiến trình; kết quả ghi thẳng vào pane trống hoặc thành đề xuất | Chạy nhiều chương song song | 09 |
+| S1.3 | Tác vụ dịch AI | Gửi theo đoạn có ID tạm `[n]`, kiểm tra ID khớp, thử lại phần lỗi, lưu bền theo lô, dừng/tiếp tục, tiến trình; kết quả thành đề xuất chờ duyệt | Chạy nhiều chương song song | 09 |
 | ~~S1.4~~ | ~~Mode Từng câu~~ | **Đã bỏ (ADR-005)** | — | ~~02, 07~~ |
 | S1.5 | Editor Toàn văn | Hai pane độc lập; bản dịch sửa bằng CodeMirror (Source, Live Preview nhẹ, nhúng ảnh); undo/redo | Live Preview đầy đủ kiểu Obsidian; Reading view (đã bị gỡ khỏi giao diện, chưa có quyết định về việc làm lại) | 02 |
 | ~~S1.6~~ | ~~Chuyển mode an toàn~~ | **Đã bỏ (ADR-005):** không còn hai mode | — | ~~02, 03~~ |
 | S1.7 | Autosave + phục hồi | Lưu bền trước khi báo đã lưu; phục hồi sau đóng cưỡng bức; **snapshot trước khi áp dụng đề xuất AI** | Lịch sử phiên bản có giao diện | 05 |
 | S1.8 | Xuất | TXT/MD bản dịch của chương | Kiểu lời thoại, xuất nhiều chương (S2) | 06 |
-| S1.9 | Duyệt đề xuất tại chỗ | Đề xuất AI hiện trong pane bản dịch dạng diff (`@codemirror/merge`), nhận/bỏ từng khối, `Ctrl+Z` hoàn tác cả lượt; đề xuất đã cũ bị từ chối, không đoán vị trí | Duyệt đề xuất nhiều chương từ khu vực Tác vụ | 09 |
-| S1.10 | Hỏi / Sửa cùng AI | Panel chat theo chương: hỏi (chỉ đọc) và sửa (đề xuất khối thay thế), stream, hủy giữa dòng, ngữ cảnh lắp sẵn bằng luật, hiện token và chi phí | Lưu hội thoại (Q5), tool đọc ngữ cảnh truyện | 09 |
+| S1.9 | Duyệt đề xuất tại chỗ | Đề xuất AI hiện trong pane bản dịch dạng diff, Accept/Deny/Accept all theo chương; có hàng chờ và lịch sử phiên theo tác phẩm. Xem [Module Đề xuất](../../modules/proposals/README.md) | Duyệt toàn lượt dịch là hành động riêng khi có Module 7 | 09 |
+| S1.10 | Hỏi / Sửa cùng AI | Panel chat theo tác phẩm: hỏi (chỉ đọc) và sửa (đề xuất khối thay thế), stream, hủy giữa dòng, lịch sử phiên tiếp tục được; hiện token và chi phí | Tool đọc ngữ cảnh truyện | 09 |
 
 ### S2 — AI thật và nhất quán
 

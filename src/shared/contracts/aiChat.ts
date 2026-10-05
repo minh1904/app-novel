@@ -1,6 +1,8 @@
 import * as v from 'valibot'
 import { idSchema, SOURCE_LANGUAGES } from './library'
 import type { TokenUsage } from './usage'
+import { TEXT_MAX_UNITS } from './text'
+import type { ChatProposalResult } from './aiProposals'
 
 /**
  * Hỏi AI về chỗ đang sửa: những gì đi qua IPC.
@@ -8,8 +10,8 @@ import type { TokenUsage } from './usage'
  * Khác hẳn [dịch chương](aiTranslate.ts) ở ba điểm, và cả ba đều hiện ra trong kiểu dữ liệu dưới
  * đây. **Một**, câu trả lời về theo dòng, nên một lượt là `send` → nhiều `ChatChunk` → đúng một
  * `done` hoặc `error`, chứ không phải một lời gọi trả một kết quả. **Hai**, không có segment ID nào
- * đi theo: phản hồi là chữ tự do, không bị kiểm theo tập ID. **Ba**, lượt chat **không ghi gì**;
- * mọi thay đổi bản dịch do người dùng bấm Áp dụng ở renderer, nên ở đây không có `expectedRev`.
+ * đi theo: phản hồi là chữ tự do, không bị kiểm theo tập ID. **Ba**, lượt chat chỉ ghi bản dịch khi
+ * người dùng chọn Áp dụng thẳng và kết quả qua cùng giao dịch Accept của đề xuất.
  *
  * Ngữ cảnh do **renderer** dựng rồi gửi lên, không phải main đọc kho — vì main chỉ thấy bản đã
  * lưu, còn người dùng vừa gõ sửa mấy câu và đang hỏi về chính mấy câu đó (D6 của change `ai-chat`).
@@ -17,11 +19,11 @@ import type { TokenUsage } from './usage'
  * phòng xa.
  */
 
-/** Ask trả lời; Sửa trả một khối thay thế kèm nút Áp dụng. Không có Agent (ADR-004). */
-export const CHAT_MODES = ['hoi', 'sua'] as const
+/** Gửi chỉ trả lời; hai hành động viết tạo đề xuất có hoặc không tự Accept. Không có Agent (ADR-004). */
+export const CHAT_MODES = ['hoi', 'sua', 'ap_dung'] as const
 export type ChatMode = (typeof CHAT_MODES)[number]
 
-/** Một lượt trong hội thoại. Lịch sử sống ở renderer và đi kèm mỗi lần gửi. */
+/** Một lượt trong hội thoại. Lịch sử bền trong tác phẩm và đi kèm mỗi lần gửi. */
 export interface ChatTurn {
   role: 'user' | 'assistant'
   text: string
@@ -63,6 +65,18 @@ export interface ChatRange {
 }
 
 export interface ChatSendInput {
+  /** Existing work-scoped session; omitted for the first turn of a new conversation. */
+  sessionId?: string
+  droppedTurns?: number
+  range?: ChatRange | null
+  /** Base captured with the visible context before a writing turn is sent. */
+  proposalBase?: {
+    sourceRev: number
+    sourceContent: string
+    targetRev: number
+    targetContent: string
+    blockAutoApply: boolean
+  }
   /**
    * Tác phẩm và chương của lượt hỏi.
    *
@@ -135,6 +149,7 @@ export type ChatChunk =
        * Thiếu trường này nghĩa là không biết, không phải xong êm. Panel chưa dùng nó.
        */
       finishReason?: ChatFinishReason
+      proposal?: Pick<ChatProposalResult, 'proposalId' | 'partId' | 'status'>
     }
   | {
       requestId: string
@@ -230,6 +245,21 @@ function totalTextLength(input: ChatSendInput): number {
 
 export const chatSendSchema = v.pipe(
   v.strictObject({
+    sessionId: v.optional(idSchema),
+    droppedTurns: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(CHAT_HISTORY_TURNS_MAX))),
+    range: v.optional(v.nullable(v.strictObject({
+      from: v.pipe(v.number(), v.integer(), v.minValue(0)),
+      to: v.pipe(v.number(), v.integer(), v.minValue(0)),
+      text: v.pipe(v.string(), v.maxLength(CHAT_BLOCK_TEXT_MAX)),
+      targetIds: v.pipe(v.array(idSchema), v.maxLength(1000))
+    }))),
+    proposalBase: v.optional(v.strictObject({
+      sourceRev: v.pipe(v.number(), v.integer(), v.minValue(0)),
+      sourceContent: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS)),
+      targetRev: v.pipe(v.number(), v.integer(), v.minValue(0)),
+      targetContent: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS)),
+      blockAutoApply: v.boolean()
+    })),
     workId: idSchema,
     chapterId: v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.')),
     connectionId: idSchema,

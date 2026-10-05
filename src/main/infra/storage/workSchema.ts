@@ -172,6 +172,110 @@ CREATE TABLE context_alias (
 CREATE INDEX context_alias_entry ON context_alias (entry_id);
 `
 
+/** Persistent AI sessions, proposals and pre-accept checkpoints. Existing text tables are untouched. */
+const version7 = `
+CREATE TABLE ai_session (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL DEFAULT '',
+  last_chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX ai_session_updated ON ai_session (updated_at DESC, id);
+
+CREATE TABLE ai_turn (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES ai_session (id) ON DELETE CASCADE,
+  chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  action TEXT NOT NULL CHECK (action IN ('hoi', 'sua', 'ap_dung')),
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL CHECK (status IN ('sending', 'running', 'done', 'cancelled', 'error', 'interrupted')),
+  context_json TEXT NOT NULL DEFAULT '[]',
+  target_range_json TEXT,
+  tools_json TEXT NOT NULL DEFAULT '[]',
+  dropped_turns INTEGER NOT NULL DEFAULT 0 CHECK (dropped_turns >= 0),
+  provider TEXT,
+  model TEXT,
+  usage_json TEXT,
+  cost_usd REAL,
+  finish_reason TEXT CHECK (finish_reason IN ('stop', 'length', 'tool_calls', 'filter')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX ai_turn_session_order ON ai_turn (session_id, created_at, id);
+CREATE INDEX ai_turn_chapter ON ai_turn (chapter_id, created_at);
+
+CREATE TABLE proposal (
+  id TEXT PRIMARY KEY,
+  chapter_id TEXT NOT NULL REFERENCES chapter (id) ON DELETE CASCADE,
+  session_id TEXT REFERENCES ai_session (id) ON DELETE SET NULL,
+  turn_id TEXT REFERENCES ai_turn (id) ON DELETE SET NULL,
+  origin TEXT NOT NULL CHECK (origin IN ('chat', 'translate')),
+  policy TEXT NOT NULL CHECK (policy IN ('review', 'auto')),
+  source_rev INTEGER NOT NULL CHECK (source_rev >= 0),
+  source_hash TEXT NOT NULL,
+  target_base_rev INTEGER NOT NULL CHECK (target_base_rev >= 0),
+  target_base_content TEXT NOT NULL,
+  context_json TEXT NOT NULL DEFAULT '[]',
+  context_hash TEXT,
+  provider TEXT,
+  model TEXT,
+  usage_json TEXT,
+  run_key TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (run_key)
+);
+CREATE INDEX proposal_chapter_order ON proposal (chapter_id, created_at, id);
+CREATE INDEX proposal_session_order ON proposal (session_id, created_at, id);
+
+CREATE TABLE proposal_part (
+  id TEXT PRIMARY KEY,
+  proposal_id TEXT NOT NULL REFERENCES proposal (id) ON DELETE CASCADE,
+  ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
+  base_from INTEGER CHECK (base_from >= 0),
+  base_to INTEGER CHECK (base_to >= base_from),
+  before_text TEXT NOT NULL DEFAULT '',
+  after_text TEXT NOT NULL,
+  source_order INTEGER CHECK (source_order >= 0),
+  source_text TEXT,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'applied', 'rejected', 'conflict', 'stale', 'needs-placement')),
+  decision_actor TEXT CHECK (decision_actor IN ('user', 'auto')),
+  decision_at INTEGER,
+  reason TEXT,
+  batch_key TEXT,
+  UNIQUE (proposal_id, ordinal),
+  UNIQUE (batch_key)
+);
+CREATE INDEX proposal_part_status ON proposal_part (status, proposal_id, ordinal);
+
+CREATE TABLE text_snapshot (
+  id TEXT PRIMARY KEY,
+  command_id TEXT NOT NULL UNIQUE,
+  chapter_id TEXT NOT NULL REFERENCES chapter (id) ON DELETE CASCADE,
+  before_rev INTEGER NOT NULL CHECK (before_rev >= 0),
+  after_rev INTEGER NOT NULL CHECK (after_rev > before_rev),
+  before_content TEXT NOT NULL,
+  decisions_json TEXT NOT NULL,
+  actor TEXT NOT NULL CHECK (actor IN ('user', 'auto')),
+  created_at INTEGER NOT NULL,
+  undone_at INTEGER
+);
+CREATE INDEX text_snapshot_chapter_order ON text_snapshot (chapter_id, created_at DESC, id);
+
+CREATE TABLE proposal_accept_command (
+  command_id TEXT PRIMARY KEY,
+  chapter_id TEXT NOT NULL REFERENCES chapter (id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('parts', 'all')),
+  part_ids_json TEXT NOT NULL,
+  actor TEXT NOT NULL CHECK (actor IN ('user', 'auto')),
+  result_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -210,6 +314,12 @@ export const workSchema: SchemaSpec = {
       version: 6,
       up(db) {
         db.exec(version6)
+      }
+    },
+    {
+      version: 7,
+      up(db) {
+        db.exec(version7)
       }
     }
   ]

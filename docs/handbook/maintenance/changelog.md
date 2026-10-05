@@ -1,5 +1,24 @@
 # Nhật ký handbook
 
+## 2026-10-05 — Mode Áp dụng thẳng
+
+- Chủ sản phẩm bổ sung mode Áp dụng thẳng cho chat và lượt dịch. Cập nhật
+  [quyết định Module Đề xuất](../../modules/proposals/decisions.md) và OpenSpec `proposals`:
+  mọi kết quả có hồ sơ đề xuất; mode này tự Accept qua cùng kiểm tra xung đột, phần không an toàn
+  ở lại hàng chờ.
+
+## 2026-10-04 — Module Đề xuất và phiên AI
+
+- Chủ sản phẩm chốt [quyết định mới](../../modules/proposals/decisions.md): mọi kết quả AI thay chữ
+  đều chờ duyệt, kể cả pane trống; Accept all theo chương và hành động riêng cho lượt dịch; lịch sử
+  phiên theo tác phẩm, mở lại để tiếp tục. Quyết định này thay ngoại lệ pane trống và Q5 của ADR-005.
+- Tổng hợp luồng, phiên, dữ liệu, bằng chứng và câu hỏi kỹ thuật tại
+  [docs/modules/proposals](../../modules/proposals/README.md). Roadmap và mục 5.1 của kiến trúc cũ
+  được rút thành liên kết; ADR-005 giữ nguyên như hồ sơ lịch sử có ghi phần bị thay.
+- Đối chiếu mã panel với tài liệu VS Code, Notion và Antigravity trong
+  [nghiên cứu panel AI](../../modules/proposals/chat-panel-research.md); ghi nhận vấn đề hiển thị
+  text thuần và cách chọn ngữ cảnh, cùng đề xuất UX chưa chốt.
+
 ## Triển khai Module 4: Xưng hô (`characters-and-addressing`) — 2026-10-04
 
 - Hoàn thành lát 2 của `context-core` theo lộ trình (Module 4: Xưng hô):

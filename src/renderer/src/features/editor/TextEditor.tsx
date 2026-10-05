@@ -17,7 +17,7 @@ import type { TextRecord } from '../../../../shared/contracts/text'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'
 import { applyProposal, targetRange, type TargetRange, type TargetScope } from './chatRange'
-import { ReviewMode, reviewFinished } from './chatReview'
+import { ProposalReview } from './proposalReview'
 import { createEditorState } from './editorState'
 import {
   EditorSession,
@@ -131,19 +131,14 @@ export interface TextEditorHandle {
   /** The stretch an AI turn would be about: the selection, else the paragraph at the caret. */
   targetRange(scope?: TargetScope): TargetRange | null
   /**
-   * Writes a proposal in as one undoable step, or refuses when the anchored text has changed since
-   * it was asked for. Refusing is the point: this is the one path that can overwrite the user's own
-   * typing, so it never guesses where the text went.
-   */
-  applyProposal(range: TargetRange, replacement: string): 'applied' | 'stale'
-  /**
    * Puts a proposal into the pane as a **reviewable layer**: the changed stretches are marked in
    * place, each with its own accept and reject control, instead of being written outright.
    *
    * Same staleness rules as `applyProposal` — a proposal whose anchor moved on is refused here too,
    * because showing a diff against text the question was never about is its own kind of wrong.
    */
-  reviewProposal(range: TargetRange, replacement: string): 'reviewing' | 'stale'
+  reviewProposal(range: TargetRange, replacement: string,
+    onAccept: () => void, onDeny: () => void, label?: string): 'reviewing' | 'stale'
   /** Drops an unfinished review, leaving whatever the translator has already accepted. */
   endReview(): void
 }
@@ -170,7 +165,6 @@ export interface TextEditorProps {
   /** The caret or selection moved: the stretch an AI turn would be about changed with it. */
   onTargetChange?(range: TargetRange): void
   /** Every chunk of a review has been accepted or rejected, so the review is over. */
-  onReviewDone?(): void
   handleRef?: Ref<TextEditorHandle>
 }
 
@@ -189,7 +183,6 @@ export function TextEditor({
   onSaved,
   onStatusChange,
   onTargetChange,
-  onReviewDone,
   handleRef
 }: TextEditorProps): JSX.Element {
   const host = useRef<HTMLDivElement>(null)
@@ -201,10 +194,10 @@ export function TextEditor({
   const [empty, setEmpty] = useState(record.content === '')
   const [imageError, setImageError] = useState<string | null>(null)
   const hintId = useId()
-  const [review] = useState(() => new ReviewMode())
-  const latest = useRef({ onSaved, onStatusChange, onTargetChange, onReviewDone, readOnly })
+  const [review] = useState(() => new ProposalReview())
+  const latest = useRef({ onSaved, onStatusChange, onTargetChange, readOnly })
   useEffect(() => {
-    latest.current = { onSaved, onStatusChange, onTargetChange, onReviewDone, readOnly }
+    latest.current = { onSaved, onStatusChange, onTargetChange, readOnly }
   })
 
   const status = useSyncExternalStore(
@@ -234,34 +227,27 @@ export function TextEditor({
         const editor = view.current
         return editor ? targetRange(editor.state, scope) : null
       },
-      reviewProposal: (range, replacement) => {
+      reviewProposal: (range, replacement, onAccept, onDeny, label = 'Đề xuất AI') => {
         const editor = view.current
         if (!editor) return 'stale'
         const result = applyProposal(editor.state, range, replacement)
         if (result.kind === 'stale') return 'stale'
-        // The text as it stands now becomes the thing the proposal is shown against, so it has to be
-        // captured before the change lands.
-        const original = editor.state.doc.toString()
-        editor.dispatch(result.spec)
-        editor.dispatch(review.start(original))
-        editor.focus()
+        const current = editor.state.doc.toString()
+        let from = range.from
+        let to = range.to
+        if (range.text !== '' && current.slice(from, to) !== range.text) {
+          from = current.indexOf(range.text)
+          to = from + range.text.length
+        }
+        editor.dispatch(review.start({ from, to, before: range.text,
+          after: replacement, label, onAccept, onDeny }))
+        editor.dispatch({ effects: EditorView.scrollIntoView(to) })
         return 'reviewing'
       },
       endReview: () => {
         const editor = view.current
         if (editor && review.isActive(editor.state)) editor.dispatch(review.stop())
       },
-      applyProposal: (range, replacement) => {
-        const editor = view.current
-        if (!editor) return 'stale'
-        const result = applyProposal(editor.state, range, replacement)
-        if (result.kind === 'stale') return 'stale'
-        editor.dispatch(result.spec)
-        // Focus follows the text: the caret now sits after what was written, and the translator keeps
-        // typing from there instead of having to click back into the pane.
-        editor.focus()
-        return 'applied'
-      }
     }),
     [save]
   )
@@ -295,16 +281,6 @@ export function TextEditor({
             // changes which paragraph a question is about without changing a character.
             if (update.selectionSet || update.docChanged) {
               latest.current.onTargetChange?.(targetRange(update.state))
-            }
-            // A review ends itself once nothing is left to decide, so the translator never has to
-            // dismiss a bar that has no more work in it.
-            if (
-              update.docChanged &&
-              review.isActive(update.state) &&
-              reviewFinished(update.state)
-            ) {
-              update.view.dispatch(review.stop())
-              latest.current.onReviewDone?.()
             }
           }),
           segmentDecorations(),

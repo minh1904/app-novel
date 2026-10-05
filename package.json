@@ -32,7 +32,8 @@
     "@solar-icons/react": "2.3.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "valibot": "1.5.0"
+    "valibot": "1.5.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "3.0.0",

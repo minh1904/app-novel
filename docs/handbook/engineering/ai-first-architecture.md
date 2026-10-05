@@ -2,6 +2,9 @@
 
 Ngày: **2026-10-03** · Trạng thái: **hướng kiến trúc đã chốt ([ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md), 2026-10-03); thiết kế chi tiết của từng module vẫn là đề xuất cho tới khi change của module đó được duyệt.** Phần ghi *Quan sát* có nguồn (code hoặc URL, đọc 2026-10-03); phần ghi *Đề xuất* là thiết kế chờ làm thật và có thể đổi khi làm. · Chủ trì: product + engineering · Liên quan: [ADR-002](../decisions/0002-ai-first-translation.md), [ADR-003](../decisions/0003-technology-stack.md), [ADR-004](../decisions/0004-ai-provider-layer.md), [hiện trạng](current-state.md), [ngữ cảnh truyện](../research/story-context.md), [lộ trình theo module](../delivery/roadmap.md), change `ai-chat`, `context-core`.
 
+> Đường ghi và vòng đời hội thoại của trang này được [Module Đề xuất](../../modules/proposals/decisions.md)
+> cập nhật ngày 2026-10-04. Mục 5.1 nay chỉ còn đường dẫn; mô hình tổng thể khác giữ làm bối cảnh.
+
 **Câu hỏi trang này trả lời:** chủ sản phẩm **bỏ mode Từng câu** và lấy **làm việc cùng AI** làm trọng tâm, với ý định ban đầu là "trình gõ như Obsidian, AI tác động được vào văn bản để đọc và sửa". Vậy luồng sử dụng và kiến trúc của Mira nên là gì?
 
 **Quan hệ với ADR-005.** ADR-005 là bản ghi quyết định (bỏ Từng câu, đơn vị là đoạn, AI chỉ đề xuất, làm lại theo module). Trang này là **thiết kế đứng sau quyết định đó**: luồng, kiến trúc, mô hình dữ liệu, ba động cơ AI, lộ trình. Repo hiện tại là **bản MVP để thử nghiệm**; kiến trúc dưới đây là đích của việc làm lại từng module, không phải mô tả mã đang chạy (mã đang chạy ở [hiện trạng](current-state.md)). Các câu hỏi còn lại ở [mục 11](#11-quyết-định-và-câu-còn-mở).
@@ -88,7 +91,7 @@ Mira **đã** đứng đúng chỗ ở hai điểm: một nguồn sự thật SQ
 | # | Nguyên tắc | Hệ quả |
 | --- | --- | --- |
 | P1 | **Một nguồn sự thật có cấu trúc.** SQLite giữ chữ, đề xuất, lịch sử, tác vụ, ngữ cảnh; Markdown chỉ là cách chiếu ra. | Không đồng bộ hai chiều với tệp; backup một tệp vẫn đủ. |
-| P2 | **AI đề xuất, người ghi.** Mở rộng luật D12 của `ai-chat` ("tool được đọc và được trỏ; chỉ người dùng mới được ghi") thành luật toàn hệ thống. Ngoại lệ duy nhất: chỗ không có gì để mất (pane trống, D13). | Tác vụ dịch, chat và AI ngoài đều đi qua đề xuất; nội dung độc trong raw (prompt injection) cũng không tự ghi được gì. |
+| P2 | **AI đề xuất, người ghi.** Quyết định 2026-10-04 áp dụng cả với pane trống; xem [Module Đề xuất](../../modules/proposals/decisions.md). | Tác vụ dịch, chat và AI ngoài đều đi qua đề xuất; nội dung độc trong raw (prompt injection) cũng không tự ghi được gì. |
 | P3 | **Đơn vị là đoạn; không lưu ranh giới câu.** Câu chỉ được cắt tạm để chia lô gửi AI. | Gỡ `segment`/`link`; ID `[n]` chỉ sống trong một lần gọi. |
 | P4 | **Mỗi lần gọi AI tái hiện được và tính được tiền.** | Lưu `contextHash`, model, `usage` thật cho mỗi lần gọi. |
 | P5 | **Một API miền, nhiều nơi gọi.** | Renderer, tool của AI trong app và MCP/CLI gọi cùng các hàm; không nơi nào mở thẳng SQLite ngoài main. |
@@ -104,11 +107,8 @@ flowchart TD
     A[Tạo tác phẩm + kết nối AI] --> B[Nhập raw theo chương]
     B --> C[Chuẩn bị ngữ cảnh<br/>AI trích thuật ngữ, nhân vật, xưng hô<br/>→ hàng chờ duyệt]
     C --> D[Tác vụ dịch 1..N chương<br/>chạy nền trong main]
-    D --> E{Bản dịch chương<br/>đang trống?}
-    E -->|Trống| F[Ghi thẳng + dấu AI]
-    E -->|Đã có chữ| G[Đề xuất chờ duyệt]
-    F --> H[Biên tập cùng AI<br/>Hỏi / Sửa / duyệt tại chỗ]
-    G --> H
+    D --> G[Đề xuất chờ duyệt<br/>theo chương]
+    G --> H[Biên tập cùng AI<br/>Hỏi / Sửa / duyệt tại chỗ]
     H --> I[QA tự động]
     I --> J[Xuất .md/.txt · Sao lưu .mira]
     D -. sau mỗi chương .-> K[Tóm tắt song ngữ<br/>+ trích mục ngữ cảnh mới]
@@ -168,37 +168,11 @@ Các khối giữ đúng ranh giới đang có. Renderer chỉ gọi `DesktopApi
 
 ### 5.1 Đường ghi duy nhất
 
-```mermaid
-sequenceDiagram
-  participant AI as Tác vụ / Chat / AI ngoài
-  participant API as API miền (main)
-  participant DB as Tệp .mira
-  participant UI as Pane bản dịch
-  participant U as Người dùng
-  AI->>API: kết quả + baseRev
-  alt bản dịch đang trống
-    API->>DB: ghi chữ + dấu AI (một transaction)
-  else đã có chữ
-    API->>DB: lưu đề xuất (pending)
-    U->>UI: mở chương
-    UI->>API: lấy đề xuất
-    UI->>U: hiện từng khối thay đổi (merge view)
-    U->>UI: nhận / bỏ từng khối
-    UI->>API: text:save (expectedRev)
-    API->>DB: snapshot bản cũ + chữ mới + dấu AI + đề xuất = done
-  end
-```
-
-**Luật ghi:**
-
-- **Người gõ ghi thẳng** qua `text:save` với `expectedRev`, như hiện nay. Lệch revision thì báo xung đột và giữ chữ đang gõ.
-- **Nguồn AI không bao giờ ghi lên chữ đã có.** Pane trống thì không có gì để mất, nên ghi thẳng (D13). Còn lại đều thành đề xuất.
-- **Đề xuất mang `baseRev` và mã băm của phần chữ gốc.**
-  - Khi áp dụng: `rev` chưa đổi thì áp thẳng.
-  - `rev` đã đổi thì tìm lại chữ gốc theo nội dung (ba bậc như D8 của `ai-chat`).
-  - Không tìm được thì đánh dấu *cũ*, cho chạy lại. Không bao giờ đoán vị trí.
-- **Áp dụng xảy ra trong editor** bằng một transaction CodeMirror, nên `Ctrl+Z` hoàn tác được, rồi lưu bằng `text:save`. Đề xuất ngoài editor (từ tác vụ hoặc AI ngoài) được lưu trong kho cho tới khi người mở chương.
-- **Trước mỗi lần áp dụng đề xuất AI, main chụp snapshot** bản cũ. S1.7 trong scope đã có "snapshot trước job AI". Undo của CodeMirror chỉ sống trong phiên; snapshot sống qua phiên.
+Thiết kế ghi/duyệt cũ ở đây đã được chuyển sang
+[Module Đề xuất và phiên AI](../../modules/proposals/README.md). Theo
+[quyết định ngày 2026-10-04](../../modules/proposals/decisions.md), mọi kết quả AI có thể thay chữ
+đều chờ duyệt, kể cả pane trống. Luật `expectedRev`, kiểm xung đột, snapshot trước khi áp dụng và
+hoàn tác được tổng hợp ở [dữ liệu và an toàn](../../modules/proposals/data-and-safety.md).
 
 ### 5.2 Đường đọc: một nguồn, nhiều cách chiếu
 
@@ -222,9 +196,7 @@ works/<id>.mira
   work, chapter, chapter_text, cover, image (giữ)
   segment, link, link_member, provenance    (BỎ)
   ai_mark        (MỚI) chapter, side, from, to, origin, provider, model, job?, reviewed_at
-  proposal       (MỚI) chapter, side, base_rev, base_hash, nội dung đề xuất, nguồn (chat|job|external),
-                       model, usage?, context_hash?, status (pending|applied|rejected|stale), created_at, decided_at
-  text_snapshot  (MỚI) chapter, side, rev, content, lý do (trước khi áp dụng AI | trước khi khôi phục), at
+  proposal, text_snapshot (MỚI — xem Module Đề xuất để thiết kế chi tiết)
   job            (MỚI) loại, connection, model, tham số, trạng thái, trần chi phí, ước lượng, created/finished
   job_item       (MỚI) job, chapter, trạng thái, số lần thử, lỗi đã phân loại, proposal?, contextHash
   context_entry, context_alias              (MỚI, theo change context-core)
@@ -232,7 +204,7 @@ works/<id>.mira
 
 **Dấu AI (`ai_mark`) thay cho segment, liên kết và provenance.**
 
-- **Lúc ghi:** khi AI ghi vào pane trống, main tạo dấu phủ đúng vùng vừa ghi.
+- **Lúc Accept:** main tạo dấu phủ đúng vùng chữ AI được người dùng nhận; đề xuất chờ chưa tạo dấu. Xem [quyết định Module Đề xuất](../../modules/proposals/decisions.md).
 - **Lúc gõ:** trong editor, dấu là một `RangeSet` tự dịch theo mỗi lần sửa của CodeMirror. Cơ chế giống segment hôm nay nhưng không cần chia lại câu, không cần ID ổn định, không cần liên kết.
 - **Lúc lưu:** dấu đi kèm `text:save` thay chỗ mảng `segments`. Main kiểm biên và chồng lấn.
 - **Mất dấu:** chỗ nào người dùng gõ vào thì phần đó thôi là "AI viết"; bấm "đã soát" cho đoạn hoặc chương thì gỡ dấu. **Mất dấu không bao giờ làm mất chữ**, nên dấu không cần độ chắc của liên kết.
@@ -250,7 +222,7 @@ Hiện tại vòng lặp lô nằm ở renderer (`useAiTranslate`). Như vậy �
 
 - **Đơn vị:** `job_item` là một chương. Trong chương, chia lô theo **đoạn**, mỗi đoạn có ID tạm `[n]`. `reconcile` giữ nguyên: thiếu đoạn nào thì gửi lại đúng đoạn đó, tối đa 3 lượt.
 - **Đoạn quá dài:** cắt theo câu bằng `Intl.Segmenter` (`segmenter.ts` giữ lại) chỉ để vừa lô, rồi ghép lại. **Không lưu ranh giới câu.**
-- **Đầu ra:** bản dịch chương trống thì ghi thẳng theo từng lô kèm dấu AI, nên tiến độ là số đoạn đã ghi thật. Chương đã có chữ thì gom thành **một đề xuất cho cả chương** và duyệt từng khối, thay cho cơ chế "Dùng bản AI / Giữ bản của tôi" theo hàng hiện nay.
+- **Đầu ra:** mỗi lô tạo kết quả gắn với chương và đề xuất chờ duyệt, kể cả khi pane trống. Tiến độ dịch và tiến độ duyệt là hai số riêng; cách gom đề xuất theo đoạn hay chương chốt ở OpenSpec Module 5.
 - **Bền:** trạng thái ghi sau mỗi lô. Mở lại app thì tác vụ `running` tiếp tục từ `job_item` dở. Mọi khóa đang hạ nhiệt thì tác vụ *tạm dừng có hẹn giờ*, không fail.
 - **Tiền:** ước lượng trước khi chạy (đã có), **trần chi phí mỗi tác vụ** (ADR-004 còn để mở con số), và cộng `usage` thật sau mỗi lô.
 - **Tiến độ:** đi qua một kênh sự kiện main → renderer, theo khuôn `ai:chat:chunk` (tên kênh đóng cứng trong preload, D9).
@@ -262,7 +234,7 @@ Giữ thiết kế `ai-chat`: hai chế độ, stream, hủy giữa dòng, khố
 
 - **Tool đọc thêm:** đọc ngữ cảnh truyện (`context_entry`) và tìm trong tác phẩm. Vẫn không có tool ghi; kênh ghi duy nhất là đề xuất.
 - **Nơi dựng ngữ cảnh:** D6 đặt ở renderer vì phải thấy cả chữ chưa lưu. Khi ngữ cảnh truyện nằm ở main, nên **chuyển `buildContext` thành hàm thuần trong `src/shared/`**. Renderer gửi *ảnh chụp chữ đang mở* (chữ và vùng chọn), main lắp thêm thuật ngữ, xưng hô và tóm tắt. Tác vụ dịch gọi cùng hàm với chữ trong kho. Hai đường, một hàm, một `contextHash`.
-- **Lưu hội thoại:** hiện hội thoại chỉ sống trong phiên (D10). Có lưu theo chương hay không là câu hỏi mở.
+- **Lưu hội thoại:** hiện mã chỉ giữ trong panel đang mở; [Module Đề xuất](../../modules/proposals/decisions.md) đã chốt lịch sử theo tác phẩm, lượt gắn chương và cho mở phiên cũ để tiếp tục.
 
 ### 6.3 Ngữ cảnh truyện (change `context-core`)
 
@@ -359,7 +331,7 @@ Repo hiện tại là MVP để thử nghiệm; từ đây **mỗi bước là m
 
 ## 11. Quyết định và câu còn mở
 
-Chủ sản phẩm chấp nhận ba mặc định Q1–Q3 ngày 2026-10-03 (ghi ở [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)); Q4–Q7 giữ giả định cho tới khi module liên quan được làm.
+Chủ sản phẩm chấp nhận ba mặc định Q1–Q3 ngày 2026-10-03 (ghi ở [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md)). Q5 được [Module Đề xuất](../../modules/proposals/decisions.md) trả lời ngày 2026-10-04; Q4, Q6 và Q7 còn mở.
 
 | # | Câu hỏi | Trạng thái | Nếu trả lời khác |
 | --- | --- | --- | --- |
@@ -367,7 +339,7 @@ Chủ sản phẩm chấp nhận ba mặc định Q1–Q3 ngày 2026-10-03 (ghi 
 | Q2 | Cần biết **câu nào đã soát**, hay "vùng nào AI viết mà chưa ai đụng tới" là đủ? | **Đã chốt: mức vùng là đủ** (2026-10-03) | Cần mức câu thì phải giữ một phần segment; mục 5.3 phải sửa |
 | Q3 | Đơn vị đoạn là **dòng không trống** hay **cụm dòng ngăn bởi dòng trống**? | **Đã chốt: dòng không trống**, điều kiện xong là kiểm trên fixture ZH/JA/EN (module Bộ đo ở [lộ trình](../delivery/roadmap.md)) | Quyết định cách chia lô, ghép gốc ↔ dịch và QA; nếu fixture bác bỏ thì sửa ADR-005 |
 | Q4 | Trần chi phí mặc định mỗi tác vụ là bao nhiêu? | Mở (ADR-004 còn mở); chặn module Tác vụ | — |
-| Q5 | Có lưu hội thoại chat theo chương không? | Giả định không, giữ D10 của `ai-chat` | Lưu thì cần bảng `chat_thread` và giới hạn dung lượng |
+| Q5 | Có lưu hội thoại chat theo chương không? | **Đã chốt:** lưu theo tác phẩm, lượt gắn chương; phiên cũ mở lại và tiếp tục được. Xem [quyết định module](../../modules/proposals/decisions.md) | Schema và giới hạn dung lượng chốt khi làm Module 5 |
 | Q6 | AI ngoài (MCP/CLI) có thuộc bản đầu không? | Giả định không, làm sau; cần ADR riêng | Có thì bước 9 lên trước bước 7 và cần ADR ngay |
 | Q7 | Ảnh khi xuất `.md`: tách thành tệp rời cạnh `.md` hay bỏ? | Giả định tách tệp rời, cú pháp `![[tên.png]]` | — |
 

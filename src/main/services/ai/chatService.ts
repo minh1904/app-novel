@@ -1,4 +1,5 @@
-import type { ChatChunk, ChatFinishReason, ChatSendInput } from '../../../shared/contracts/aiChat'
+import type { ChatChunk, ChatFinishReason, ChatSendInput, ChatUsage } from '../../../shared/contracts/aiChat'
+import type { ChatProposalResult } from '../../../shared/contracts/aiProposals'
 import { buildChatMessages } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,
@@ -40,6 +41,20 @@ export interface ChatConnections {
 
 export interface ChatServiceOptions {
   connections: ChatConnections
+  records?: {
+    start(requestId: string, input: ChatSendInput, provider: string | null, model: string): string
+    update(requestId: string, workId: string, patch: {
+      answer: string
+      status: 'running' | 'done' | 'error' | 'cancelled'
+      tools: Array<{ name: string; detail: string }>
+      usage?: ChatUsage | null
+      costUsd?: number | null
+      finishReason?: ChatFinishReason | null
+    }): void
+    complete?(requestId: string, input: ChatSendInput, answer: string,
+      tools: Array<{ name: string; detail: string }>, usage: ChatUsage | null,
+      costUsd: number | null, finishReason: ChatFinishReason | null): ChatProposalResult | null
+  }
   /**
    * Kho để các công cụ **chỉ đọc** nhìn vào. Thiếu nó thì lượt vẫn chạy, chỉ là model không với được
    * ra ngoài ngữ cảnh đã gửi kèm — đó là hành vi của change này trước khi có tool.
@@ -101,6 +116,10 @@ export class ChatService {
    * lỗi của chính lời gọi thay vì một lượt rỗng rồi lỗi, và không có lời gọi nào ra ngoài.
    */
   start(input: ChatSendInput, emit: ChatEmit): string {
+    return this.startWithSession(input, emit).requestId
+  }
+
+  startWithSession(input: ChatSendInput, emit: ChatEmit): { requestId: string; sessionId?: string } {
     const { connections, newId } = this.options
     // Cùng một đường với lối dịch: nó dựng provider trên kho khóa của kết nối và từ chối kết nối
     // đang tắt với đúng câu hộp thoại dịch đang dùng. Tên method nói "translator" vì nó có trước;
@@ -110,13 +129,16 @@ export class ChatService {
     const session = connections.translator(input.connectionId, input.entryId)
 
     const requestId = newId()
+    const sessionId = this.options.records?.start(
+      requestId, input, session.connection.providerId ?? null, session.entry.model
+    )
     const controller = new AbortController()
     this.running.set(requestId, controller)
 
     // Cố ý không `await`: `start` phải trả `requestId` trước khi chunk đầu tiên đi ra. `void` cộng
     // `catch` ở trong `run` để không bao giờ có promise bị bỏ rơi.
     void this.run(requestId, input, session, controller, emit)
-    return requestId
+    return { requestId, ...(sessionId === undefined ? {} : { sessionId }) }
   }
 
   cancel(requestId: string): void {
@@ -143,6 +165,10 @@ export class ChatService {
     let usage: Usage | null = null
     // Vì sao vòng **cuối** dừng — vòng trả lời thật, không phải vòng đọc công cụ trước đó.
     let finishReason: ChatFinishReason | undefined
+    let answer = ''
+    const toolSteps: Array<{ name: string; detail: string }> = []
+    let persistedLength = 0
+    let persistedAt = now()
 
     try {
       const { library } = this.options
@@ -164,6 +190,14 @@ export class ChatService {
           if (!this.running.has(requestId)) return
           if (event.kind === 'delta') {
             partial = true
+            answer += event.text
+            if (this.options.records && (answer.length - persistedLength >= 1024 || now() - persistedAt >= 1000)) {
+              this.options.records.update(requestId, input.workId, {
+                answer, status: 'running', tools: toolSteps
+              })
+              persistedLength = answer.length
+              persistedAt = now()
+            }
             emit({ requestId, kind: 'delta', text: event.text })
           } else {
             // Mỗi vòng là một lần gọi có hóa đơn riêng, nên cộng dồn thay vì ghi đè.
@@ -193,22 +227,48 @@ export class ChatService {
           })
           if (!this.running.has(requestId)) return
           emit({ requestId, kind: 'tool', name: result.name, detail: result.detail })
+          toolSteps.push({ name: result.name, detail: result.detail })
+          this.options.records?.update(requestId, input.workId, {
+            answer, status: 'running', tools: toolSteps
+          })
           messages.push({ role: 'tool', tool_call_id: result.id, content: result.content })
         }
       }
 
       if (!this.running.has(requestId)) return
+      const wireUsage = usage === null ? null : toWireUsage(usage)
+      const usd = usage === null ? null : costOfUsage(usage, this.modelInfo(session))
+      const proposal = this.options.records?.complete
+        ? this.options.records.complete(requestId, input, answer, toolSteps,
+          wireUsage, usd, finishReason ?? null)
+        : null
+      if (!this.options.records?.complete) {
+        this.options.records?.update(requestId, input.workId, {
+          answer, status: 'done', tools: toolSteps,
+          usage: wireUsage, costUsd: usd, finishReason: finishReason ?? null
+        })
+      }
       emit({
         requestId,
         kind: 'done',
-        usage: usage === null ? null : toWireUsage(usage),
-        usd: usage === null ? null : costOfUsage(usage, this.modelInfo(session)),
+        usage: wireUsage,
+        usd,
         keyTail: session.lastKeyTail(),
+        ...(proposal ? { proposal: {
+          proposalId: proposal.proposalId, partId: proposal.partId, status: proposal.status
+        } } : {}),
         ...(finishReason === undefined ? {} : { finishReason })
       })
     } catch (error) {
       if (!this.running.has(requestId)) return
       const chunk = toChatError(error, now())
+      try {
+        this.options.records?.update(requestId, input.workId, {
+          answer, status: chunk.error.kind === 'cancelled' ? 'cancelled' : 'error', tools: toolSteps
+        })
+      } catch {
+        // The original failure is still reported; a later startup marks any unfinished row interrupted.
+      }
       emit({ ...chunk, requestId, partial })
     } finally {
       this.running.delete(requestId)

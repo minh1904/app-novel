@@ -6,6 +6,9 @@ import { ChatService } from './ai/chatService'
 import { ConnectionService } from './ai/connectionService'
 import { createServices } from './createServices'
 import { LibraryStore } from './library/library'
+import type { ChatChunk, ChatSendInput } from '../../shared/contracts/aiChat'
+import { getProposal } from '../infra/storage/aiProposals'
+import { getAiTurn } from '../infra/storage/aiSessions'
 
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -103,5 +106,48 @@ describe('createServices', () => {
     await expect(connections.addApiKey(created.id, 'AIzaSyFAKEKEY01')).rejects.toThrow()
     const stored = library.appDb.prepare('SELECT secret FROM ai_key').all()
     expect(stored).toEqual([])
+  })
+
+  it('commits a completed chat turn and its proposal before emitting done', async () => {
+    const library = openLibrary()
+    const work = library.create({ title: 'Tác phẩm', sourceLang: 'en' })
+    const chapter = library.createChapter(work.id).chapter
+    library.saveText(work.id, chapter.id, 'source', 'Winter', 0, [])
+    const answer = 'Bản dịch:\n```\nMùa đông\n```'
+    const frames = [
+      { choices: [{ delta: { content: answer } }] },
+      { choices: [{ delta: {}, finish_reason: 'stop' }] }
+    ].map((value) => 'data: ' + JSON.stringify(value) + '\n\n').join('') + 'data: [DONE]\n\n'
+    const fetchLike = (async () => new Response(frames, {
+      status: 200, headers: { 'content-type': 'text/event-stream' }
+    })) as typeof fetch
+    const services = createServices({ library, crypto: countingCrypto(), fetch: fetchLike })
+    const connection = services.connections.create({
+      name: 'Mock', baseUrl: 'http://127.0.0.1:8317/v1', providerId: 'google'
+    })
+    const entryId = services.connections.addModels(connection.id, [{ model: 'gemini-flash-latest' }]).models[0].id
+    const input: ChatSendInput = {
+      workId: work.id, chapterId: chapter.id, connectionId: connection.id, entryId,
+      mode: 'sua', sourceLang: 'en', question: 'Dịch', history: [], context: [],
+      range: { from: 0, to: 0, text: '', targetIds: [] },
+      proposalBase: { sourceRev: 1, sourceContent: 'Winter', targetRev: 0,
+        targetContent: '', blockAutoApply: false }
+    }
+    const completed = new Promise<ChatChunk & { kind: 'done' }>((resolve, reject) => {
+      services.chat.startWithSession(input, (chunk) => {
+        if (chunk.kind === 'error') reject(new Error(chunk.error.message))
+        if (chunk.kind === 'done') resolve(chunk)
+      })
+    })
+    const done = await completed
+    expect(done.proposal?.status).toBe('pending')
+    const stored = library.withWork(work.id, (db) => ({
+      turn: getAiTurn(db, done.requestId),
+      proposal: getProposal(db, done.proposal!.proposalId)
+    }))
+    expect(stored.turn.status).toBe('done')
+    expect(stored.proposal.parts[0].afterText).toBe('Mùa đông')
+    expect(stored.proposal.turnId).toBe(done.requestId)
+    expect(library.readText(work.id, chapter.id, 'target').content).toBe('')
   })
 })

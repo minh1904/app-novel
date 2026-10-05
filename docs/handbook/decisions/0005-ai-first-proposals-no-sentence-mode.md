@@ -1,5 +1,10 @@
 # ADR-005 — Bỏ mode Từng câu; đơn vị là đoạn; AI chỉ đề xuất
 
+> **Bổ sung 2026-10-04:** ngoại lệ “pane trống thì AI ghi thẳng” ở quyết định 5 và giả định Q5
+> “không lưu hội thoại” bên dưới đã bị [quyết định Module Đề xuất](../../modules/proposals/decisions.md)
+> thay thế. Mọi kết quả AI có thể thay chữ nay đều chờ duyệt; lịch sử phiên lưu theo tác phẩm.
+> Trang ADR này giữ nguyên bối cảnh và lý do lịch sử; các phần khác vẫn có hiệu lực.
+
 Ngày: 2026-10-03 · Trạng thái: **Accepted** · Người quyết định: chủ sản phẩm, qua trao đổi ngày 2026-10-03 (chấp nhận ba mặc định Q1–Q3 và chỉ đạo "hướng kiến trúc theo [Luồng làm việc và kiến trúc AI-first](../engineering/ai-first-architecture.md)").
 
 **Thay thế một phần [ADR-002](0002-ai-first-translation.md):** các ý "hai mode", "AI dịch theo segment có ID", "soát ở Từng câu" và "căn chỉnh sinh ra từ job dịch". Phần còn lại của ADR-002 (AI dịch từ raw là luồng chính, nhiều nguồn raw, văn phong, xưng hô, kết nối API key, offline trừ bước gọi AI) **giữ nguyên**. Thay dòng "Hai mode" và các dòng liên quan trong [quyết định hiện hành](../product/decisions.md).

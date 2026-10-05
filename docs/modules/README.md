@@ -10,6 +10,8 @@ quan.
 | --- | --- |
 | [Ngữ cảnh dịch](context/README.md) | Glossary, nhân vật, xưng hô, văn phong, ký ức và cách lắp ngữ cảnh |
 | [Bộ đo chất lượng](measurement/README.md) | Fixture, phép kiểm, chạy thí nghiệm, chấm mù và báo cáo |
+| [Đề xuất và phiên AI](proposals/README.md) | Duyệt thay đổi tại editor, lịch sử phiên và hàng chờ theo chương |
 
 Tài liệu module phải phân biệt hành vi đã chạy, kết quả một thí nghiệm, đề xuất và quyết định sản
-phẩm. OpenSpec mô tả thay đổi; tài liệu module mô tả hệ thống sau khi thay đổi và cách sử dụng nó.
+phẩm. Với phần chưa làm, tài liệu module tập hợp mục tiêu, bằng chứng và câu hỏi cần chốt; OpenSpec
+đặc tả change trước khi triển khai. Khi đã làm xong, tài liệu module mô tả hệ thống và cách dùng.

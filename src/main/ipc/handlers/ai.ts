@@ -10,9 +10,10 @@ import {
   updateModelEntrySchema
 } from '../../../shared/contracts/aiConnections'
 import { translateBatchSchema, translatePlanSchema } from '../../../shared/contracts/aiTranslate'
+import { paragraphBatchSchema, paragraphFinalizeSchema, paragraphPlanSchema } from '../../../shared/contracts/aiTranslateProposals'
 import { CHANNELS } from '../../../shared/contracts/channels'
 import { createAsyncHandler, createHandler } from '../handler'
-import { connectionsOf, translatorOf, type AreaHandlers, type HandlerDeps } from './deps'
+import { connectionsOf, paragraphTranslatorOf, translatorOf, type AreaHandlers, type HandlerDeps } from './deps'
 
 /** Kết nối AI (khóa), mục model của chúng, và dịch chương bằng AI. */
 export function aiHandlers(
@@ -61,6 +62,15 @@ export function aiHandlers(
     ),
     [CHANNELS.aiTranslateBatch]: createAsyncHandler(translateBatchSchema, (input) =>
       translatorOf(deps).runBatch(input)
+    ),
+    [CHANNELS.aiTranslateParagraphPlan]: createHandler(paragraphPlanSchema, (input) =>
+      paragraphTranslatorOf(deps).plan(input)
+    ),
+    [CHANNELS.aiTranslateParagraphBatch]: createAsyncHandler(paragraphBatchSchema, (input) =>
+      paragraphTranslatorOf(deps).runBatch(input)
+    ),
+    [CHANNELS.aiTranslateParagraphFinalize]: createHandler(paragraphFinalizeSchema, (input) =>
+      paragraphTranslatorOf(deps).finalize(input)
     )
   }
 }

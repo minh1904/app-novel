@@ -118,4 +118,16 @@ describe('buildChatMessages', () => {
     const asked = input({ context: [chapterBlock] })
     expect(buildChatMessages(asked)).toEqual(buildChatMessages(asked))
   })
+
+  it('sends a selected chapter block with the exact preview text', () => {
+    const selected = {
+      kind: 'chapter-target' as const,
+      label: 'Bản dịch · Chương 3',
+      detail: '13 ký tự',
+      text: 'Mùa đông đến.'
+    }
+    const messages = buildChatMessages(input({ context: [chapterBlock, selected] }))
+    expect(messages[1].content).toContain('## ' + selected.label + ' (' + selected.detail + ')\n' + selected.text)
+    expect(messages[1].content).not.toContain('Chương 4')
+  })
 })

@@ -1,6 +1,7 @@
 import type { Channel } from '../../../shared/contracts/channels'
 import { StorageError } from '../../infra/storage/errors'
 import type { ChapterTranslator } from '../../services/ai/chapterTranslation'
+import type { ParagraphTranslator } from '../../services/ai/paragraphTranslation'
 import type { ChatService } from '../../services/ai/chatService'
 import type { ConnectionService } from '../../services/ai/connectionService'
 import { GlossaryService } from '../../services/context/glossaryService'
@@ -15,6 +16,7 @@ export interface HandlerDeps {
   files: FilePicker
   connections?: ConnectionService
   translator?: ChapterTranslator
+  paragraphTranslator?: ParagraphTranslator
   chat?: ChatService
   glossary?: GlossaryService
   addressing?: AddressingService
@@ -43,6 +45,10 @@ export function connectionsOf(deps: HandlerDeps): ConnectionService {
 
 export function translatorOf(deps: HandlerDeps): ChapterTranslator {
   return deps.translator ?? unavailable()
+}
+
+export function paragraphTranslatorOf(deps: HandlerDeps): ParagraphTranslator {
+  return deps.paragraphTranslator ?? unavailable()
 }
 
 export function chatOf(deps: HandlerDeps): ChatService {
