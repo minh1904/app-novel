@@ -5,3 +5,5 @@ import { createContext } from 'react'
  * chapter menu). `null` until the shell has mounted it, and for anything rendered outside the shell.
  */
 export const TopBarSlotContext = createContext<HTMLElement | null>(null)
+/** Hidden work tabs keep their editor mounted but must not claim window actions or shortcuts. */
+export const WorkTabActiveContext = createContext(true)

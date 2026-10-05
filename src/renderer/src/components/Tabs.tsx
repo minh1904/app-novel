@@ -10,12 +10,12 @@ export type TabsSize = 'sm' | 'default'
 
 const listSizes: Record<TabsSize, string> = {
   sm: 'gap-[2px] p-[2px]',
-  default: 'gap-[3px] p-[3px]'
+  default: 'gap-1 border-b border-line'
 }
 
 const tabSizes: Record<TabsSize, string> = {
   sm: 'h-[22px] rounded-[7px] px-2.5',
-  default: 'h-[27px] rounded-[8px] px-3'
+  default: 'h-8 border-b-2 border-transparent px-3 data-active:border-focus'
 }
 
 export function TabsList({
@@ -26,7 +26,7 @@ export function TabsList({
   return (
     <BaseTabs.List
       data-slot="tabs-list"
-      className={['inline-flex items-center rounded-tab bg-control', listSizes[size], className]
+      className={['inline-flex items-center', size === 'sm' ? 'rounded-tab bg-control' : '', listSizes[size], className]
         .filter(Boolean)
         .join(' ')}
       {...props}
@@ -43,7 +43,8 @@ export function TabsTab({
     <BaseTabs.Tab
       data-slot="tabs-tab"
       className={[
-        'cursor-pointer border-0 bg-transparent text-[12px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-active:bg-selected data-active:text-ink',
+        'cursor-pointer bg-transparent text-[12px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-active:text-ink',
+        size === 'sm' ? 'border-0 data-active:bg-selected' : '',
         tabSizes[size],
         className
       ]

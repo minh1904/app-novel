@@ -7,6 +7,8 @@ import { electronSafeStorage } from './safeStorage'
 import type { LibraryStore } from '../services/library/library'
 import type { FilePicker } from '../ipc/filePicker'
 import { createLibraryHandlers, guardHandlers } from '../ipc/libraryHandlers'
+import { electronExportFilePicker, electronPdfPrinter } from './exportElectron'
+import { ExportService } from '../services/export/exportService'
 
 const MIRA_FILTER = { name: 'Tác phẩm Mira', extensions: ['mira'] }
 
@@ -51,9 +53,10 @@ export function registerLibraryHandlers(
     crypto: electronSafeStorage,
     fetch: electronFetch
   })
+  const exportService = new ExportService(library, electronExportFilePicker(), electronPdfPrinter())
   const handlers = guardHandlers(
     createLibraryHandlers(library, electronFilePicker(), connections, translator, chat,
-      undefined, undefined, paragraphTranslator),
+      undefined, undefined, paragraphTranslator, exportService),
     isTrustedSender,
     // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để
     // tầng handler không phải import Electron và test được không cần một cửa sổ thật.

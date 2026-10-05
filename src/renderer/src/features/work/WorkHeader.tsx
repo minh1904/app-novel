@@ -26,6 +26,7 @@ export interface WorkHeaderActions {
   onSetArchived(archived: boolean): void
   onSetCover(file: File | null): void
   onBackup(): void
+  onExport(): void
 }
 
 /**
@@ -48,12 +49,12 @@ export function WorkHeader({
 
   return (
     <div className="@container">
-      <header className="flex flex-col gap-5 @min-[520px]:flex-row @min-[520px]:gap-6">
-        <WorkCover work={work} size="xl" className="@max-[519px]:self-start" />
+      <header className="flex flex-col gap-4 @min-[520px]:flex-row @min-[520px]:gap-5">
+        <WorkCover work={work} size="lg" className="@max-[519px]:self-start" />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-col gap-1">
-            <h2 className="text-[24px] leading-[1.2] font-semibold tracking-[-0.045em] break-words">
+            <h2 className="text-[20px] leading-[1.3] font-semibold break-words">
               {work.title}
             </h2>
             {work.originalTitle && (
@@ -131,6 +132,10 @@ export function WorkHeader({
             <Button variant="outline" onClick={actions.onEdit}>
               <PenNewSquareIcon size={14} />
               Sửa thông tin
+            </Button>
+            <Button variant="outline" onClick={actions.onExport}>
+              <UploadMinimalisticIcon size={14} />
+              Xuất tác phẩm…
             </Button>
             <MenuRoot>
               <MenuTrigger

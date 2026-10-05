@@ -6,6 +6,8 @@ export const CHANNELS = {
   worksUpdate: 'works:update',
   worksCoverGet: 'works:cover:get',
   worksCoverSet: 'works:cover:set',
+  workspaceLoad: 'workspace:load',
+  workspaceSave: 'workspace:save',
   chaptersList: 'chapters:list',
   chaptersCreate: 'chapters:create',
   chaptersRename: 'chapters:rename',
@@ -69,7 +71,9 @@ export const CHANNELS = {
   addressingDyadsSet: 'addressing:dyads:set',
   addressingDyadsDelete: 'addressing:dyads:delete',
   addressingDyadsEffective: 'addressing:dyads:effective',
-  addressingCheckCompliance: 'addressing:checkCompliance'
+  addressingCheckCompliance: 'addressing:checkCompliance',
+  exportChapter: 'export:chapter',
+  exportWork: 'export:work'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

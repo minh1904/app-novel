@@ -43,8 +43,8 @@ export function Select<T extends string>({
         data-slot="select"
         aria-label={label}
         className={cx(
-          'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line-strong bg-canvas text-xs text-ink outline-none hover:bg-control focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-control',
-          size === 'sm' ? 'h-7 gap-1.5 pr-2 pl-2.5' : 'h-[34px] pr-2.5 pl-3',
+          'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line bg-control text-xs text-ink outline-none hover:bg-selected focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected',
+          size === 'sm' ? 'h-7 gap-1.5 pr-2 pl-2.5' : 'h-8 pr-2.5 pl-3',
           className
         )}
       >

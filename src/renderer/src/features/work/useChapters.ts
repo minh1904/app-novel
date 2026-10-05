@@ -1,12 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useContext, useEffect, useRef } from 'react'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { WorkSummary } from '../../../../shared/contracts/library'
 import type { Result } from '../../../../shared/contracts/result'
-import {
-  useChapterStore,
-  describeChapterError,
-  type ChaptersLoad
-} from '../../stores/chapterStore'
+import { useChapterStore, describeChapterError, type ChaptersLoad } from '../../stores/chapterStore'
+import { WorkTabActiveContext } from '../../app/topBarSlot'
 
 export type { ChaptersLoad }
 export { describeChapterError }
@@ -29,6 +26,7 @@ export function useChapters(
   workId: string,
   onWork?: (summary: WorkSummary) => void
 ): ChaptersController {
+  const tabActive = useContext(WorkTabActiveContext)
   const store = useChapterStore()
   const onWorkRef = useRef(onWork)
   useEffect(() => {
@@ -36,14 +34,14 @@ export function useChapters(
   })
 
   useEffect(() => {
-    void store.initWork(workId)
-  }, [workId, store])
+    if (tabActive) void useChapterStore.getState().initWork(workId)
+  }, [workId, tabActive])
 
   return {
-    load: store.load,
-    chapters: store.chapters,
-    loadError: store.loadError,
-    notice: store.notice,
+    load: store.workId === workId ? store.load : 'loading',
+    chapters: store.workId === workId ? store.chapters : [],
+    loadError: store.workId === workId ? store.loadError : null,
+    notice: store.workId === workId ? store.notice : null,
     dismissNotice: store.dismissNotice,
     reload: store.reload,
     create: store.create,

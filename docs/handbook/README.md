@@ -51,7 +51,7 @@ Mira giúp dịch giả giữ mạch văn khi dịch cả chương và **làm vi
 | Trải nghiệm | [Redesign workspace dịch](experience/editor-redesign.md) | Đề xuất, đối chiếu quyết định hiện hành, chưa chốt; ảnh mockup đã xóa, nội dung từng ảnh ghi lại trong trang |
 | Trải nghiệm | [Wireframe các màn còn lại](experience/wireframes/README.md) | Ba phương án mỗi màn, chờ chọn |
 | Trải nghiệm | [Màn cài đặt kết nối AI](experience/ai-connection-settings.md) | Audit + brief + quy ước app cùng loại + 7 wireframe; **đã chốt phương án F**, vào bằng nút bánh răng góc trên phải |
-| Trải nghiệm | [Design system](experience/design-system.md) | Baseline đã chốt + scaffold |
+| Trải nghiệm | [Hệ thiết kế hiện hành](../modules/design-system/README.md) | Token và phạm vi đã triển khai theo hướng Obsidian; [hồ sơ Solar Docs cũ](experience/design-system.md) đã bị thay |
 | Kỹ thuật | [Hiện trạng repo](engineering/current-state.md) | Bản MVP thử nghiệm, ghi số phận từng phần theo module; viết lại 2026-10-03 |
 | Kỹ thuật | [Kiến trúc kỹ thuật và luật ranh giới](engineering/architecture.md) | Stack đã chốt (ADR-003); mục "Cấu trúc mã nguồn và luật ranh giới" đã triển khai 2026-10-03 và lint ép |
 | Kỹ thuật | [Luồng làm việc và kiến trúc AI-first](engineering/ai-first-architecture.md) | **Hướng đã chốt (ADR-005, 2026-10-03):** bỏ Từng câu, đơn vị là đoạn, AI chỉ đề xuất, tác vụ dịch chạy trong main; học từ Obsidian, Notion, Logseq. Thiết kế từng module còn là đề xuất; Q4–Q7 còn mở |

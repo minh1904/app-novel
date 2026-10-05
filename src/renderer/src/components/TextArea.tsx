@@ -22,14 +22,14 @@ export function TextArea({
   return (
     <div
       data-slot="text-area"
-      className={['flex flex-col gap-[7px]', className].filter(Boolean).join(' ')}
+      className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}
     >
       <label className="text-[12px] font-semibold" htmlFor={inputId}>
         {label}
       </label>
       <textarea
         className={[
-          'min-h-[76px] w-full resize-y rounded-control border bg-canvas px-[11px] py-2 leading-[1.5] text-ink outline-none placeholder:text-ink-muted focus:ring-2',
+          'min-h-[76px] w-full resize-y rounded-control border bg-control px-3 py-2 leading-[1.5] text-ink outline-none placeholder:text-ink-muted focus:ring-2',
           error
             ? 'border-error focus:border-error focus:ring-error/25'
             : 'border-line-strong focus:border-focus focus:ring-focus/25'

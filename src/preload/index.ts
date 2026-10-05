@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { ChatChunk, ChatSendInput } from '../shared/contracts/aiChat'
-import type { AcceptProposalInput, AcceptProposalResult, ChatProposalInput, ChatProposalResult, ProposalQueueItem } from '../shared/contracts/aiProposals'
+import type {
+  AcceptProposalInput,
+  AcceptProposalResult,
+  ChatProposalInput,
+  ChatProposalResult,
+  ProposalQueueItem
+} from '../shared/contracts/aiProposals'
 import type { AiSessionView, AiTurnView } from '../shared/contracts/aiHistory'
 import type {
   AddModelEntriesInput,
@@ -11,15 +17,23 @@ import type {
   UpdateConnectionInput,
   UpdateModelEntryInput
 } from '../shared/contracts/aiConnections'
-import type { ParagraphBatchInput, ParagraphBatchResult, ParagraphFinalizeInput,
-  ParagraphFinalizeResult, ParagraphPlanInput, ParagraphTranslationPlan } from '../shared/contracts/aiTranslateProposals'
+import type {
+  ParagraphBatchInput,
+  ParagraphBatchResult,
+  ParagraphFinalizeInput,
+  ParagraphFinalizeResult,
+  ParagraphPlanInput,
+  ParagraphTranslationPlan
+} from '../shared/contracts/aiTranslateProposals'
 import type { BackupExported } from '../shared/contracts/backup'
+import type { ExportResult } from '../shared/contracts/export'
 import { CHANNELS, EVENT_CHANNELS } from '../shared/contracts/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/contracts/chapters'
 import type { AppInfo, ChromeTheme, DesktopApi } from '../shared/contracts/desktop-api'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/contracts/library'
 import type { LinkRecord } from '../shared/contracts/links'
 import type { Result } from '../shared/contracts/result'
+import type { WorkspaceLoad, WorkspaceState } from '../shared/contracts/workspace'
 import type { RowSaved } from '../shared/contracts/rows'
 import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/text'
 import type { ContextEntryItem, ImportNamesResult } from '../shared/contracts/glossary'
@@ -35,6 +49,11 @@ const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,
   setChromeTheme: (theme: ChromeTheme) =>
     ipcRenderer.invoke('app:chrome-theme', theme) as Promise<void>,
+  workspace: {
+    load: () => ipcRenderer.invoke(CHANNELS.workspaceLoad) as Promise<Result<WorkspaceLoad>>,
+    save: (state: WorkspaceState) =>
+      ipcRenderer.invoke(CHANNELS.workspaceSave, state) as Promise<Result<void>>
+  },
   works: {
     list: () => ipcRenderer.invoke(CHANNELS.worksList) as Promise<Result<WorkList>>,
     get: (id: string) =>
@@ -186,37 +205,65 @@ const desktopApi: DesktopApi = {
     },
     translate: {
       paragraphPlan: (input: ParagraphPlanInput) =>
-        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphPlan, input) as Promise<Result<ParagraphTranslationPlan>>,
+        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphPlan, input) as Promise<
+          Result<ParagraphTranslationPlan>
+        >,
       paragraphBatch: (input: ParagraphBatchInput) =>
-        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphBatch, input) as Promise<Result<ParagraphBatchResult>>,
+        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphBatch, input) as Promise<
+          Result<ParagraphBatchResult>
+        >,
       paragraphFinalize: (input: ParagraphFinalizeInput) =>
-        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphFinalize, input) as Promise<Result<ParagraphFinalizeResult>>
+        ipcRenderer.invoke(CHANNELS.aiTranslateParagraphFinalize, input) as Promise<
+          Result<ParagraphFinalizeResult>
+        >
     },
     proposals: {
       createFromChat: (input: ChatProposalInput) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalChatCreate, input) as Promise<Result<ChatProposalResult>>,
+        ipcRenderer.invoke(CHANNELS.aiProposalChatCreate, input) as Promise<
+          Result<ChatProposalResult>
+        >,
       accept: (input: AcceptProposalInput) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalAccept, input) as Promise<Result<AcceptProposalResult>>,
+        ipcRenderer.invoke(CHANNELS.aiProposalAccept, input) as Promise<
+          Result<AcceptProposalResult>
+        >,
       deny: (workId: string, chapterId: string, partId: string) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalDeny, { workId, chapterId, partId }) as Promise<Result<void>>,
+        ipcRenderer.invoke(CHANNELS.aiProposalDeny, { workId, chapterId, partId }) as Promise<
+          Result<void>
+        >,
       acceptAll: (workId: string, chapterId: string, commandId: string) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalAcceptAll, { workId, chapterId, commandId }) as Promise<Result<AcceptProposalResult>>,
+        ipcRenderer.invoke(CHANNELS.aiProposalAcceptAll, {
+          workId,
+          chapterId,
+          commandId
+        }) as Promise<Result<AcceptProposalResult>>,
       undo: (workId: string, chapterId: string) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalUndo, { workId, chapterId }) as Promise<Result<{ content: string; rev: number; commandId: string }>>,
+        ipcRenderer.invoke(CHANNELS.aiProposalUndo, { workId, chapterId }) as Promise<
+          Result<{ content: string; rev: number; commandId: string }>
+        >,
       listChapter: (workId: string, chapterId: string) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalListChapter, { workId, chapterId }) as Promise<Result<{ proposals: ProposalQueueItem[]; undoAvailable: boolean }>>,
+        ipcRenderer.invoke(CHANNELS.aiProposalListChapter, { workId, chapterId }) as Promise<
+          Result<{ proposals: ProposalQueueItem[]; undoAvailable: boolean }>
+        >,
       pendingCounts: (workId: string) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalPendingCounts, { workId }) as Promise<Result<{ counts: Array<{ chapterId: string; count: number }> }>>
+        ipcRenderer.invoke(CHANNELS.aiProposalPendingCounts, { workId }) as Promise<
+          Result<{ counts: Array<{ chapterId: string; count: number }> }>
+        >
     },
     sessions: {
       list: (workId: string) =>
-        ipcRenderer.invoke(CHANNELS.aiSessionsList, { workId }) as Promise<Result<{ sessions: AiSessionView[] }>>,
+        ipcRenderer.invoke(CHANNELS.aiSessionsList, { workId }) as Promise<
+          Result<{ sessions: AiSessionView[] }>
+        >,
       turns: (workId: string, sessionId: string) =>
-        ipcRenderer.invoke(CHANNELS.aiTurnsList, { workId, sessionId }) as Promise<Result<{ turns: AiTurnView[] }>>
+        ipcRenderer.invoke(CHANNELS.aiTurnsList, { workId, sessionId }) as Promise<
+          Result<{ turns: AiTurnView[] }>
+        >
     },
     chat: {
       send: (input: ChatSendInput) =>
-        ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<Result<{ requestId: string; sessionId?: string }>>,
+        ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<
+          Result<{ requestId: string; sessionId?: string }>
+        >,
       cancel: (requestId: string) =>
         ipcRenderer.invoke(CHANNELS.aiChatCancel, { requestId }) as Promise<Result<void>>,
       /**
@@ -244,9 +291,7 @@ const desktopApi: DesktopApi = {
     delete: (options) =>
       ipcRenderer.invoke(CHANNELS.glossaryDelete, options) as Promise<Result<void>>,
     importNames: (input) =>
-      ipcRenderer.invoke(CHANNELS.glossaryImportNames, input) as Promise<
-        Result<ImportNamesResult>
-      >,
+      ipcRenderer.invoke(CHANNELS.glossaryImportNames, input) as Promise<Result<ImportNamesResult>>,
     checkCompliance: (input) =>
       ipcRenderer.invoke(CHANNELS.glossaryCheckCompliance, input) as Promise<
         Result<GlossaryComplianceReport>
@@ -297,6 +342,12 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke(CHANNELS.addressingCheckCompliance, input) as Promise<
         Result<AddressingComplianceReport>
       >
+  },
+  export: {
+    exportChapter: (input) =>
+      ipcRenderer.invoke(CHANNELS.exportChapter, input) as Promise<Result<ExportResult>>,
+    exportWork: (input) =>
+      ipcRenderer.invoke(CHANNELS.exportWork, input) as Promise<Result<ExportResult>>
   }
 }
 

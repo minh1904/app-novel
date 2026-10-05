@@ -13,10 +13,10 @@ export type ButtonVariant =
 export type ButtonSize = 'xxs' | 'xs' | 'sm' | 'default' | 'lg' | 'xl' | 'icon' | 'icon-lg'
 
 const base =
-  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 rounded-control border font-medium whitespace-nowrap select-none outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus/40 data-disabled:pointer-events-none data-disabled:opacity-50'
+  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 rounded-control border font-medium whitespace-nowrap select-none outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus/60 data-disabled:pointer-events-none data-disabled:opacity-50'
 
 const variants: Record<ButtonVariant, string> = {
-  default: 'border-transparent bg-primary text-primary-foreground hover:brightness-90',
+  default: 'border-transparent bg-primary text-primary-foreground hover:brightness-110',
   outline: 'border-line-strong bg-transparent text-ink hover:bg-selected',
   secondary: 'border-transparent bg-control text-ink hover:bg-selected',
   ghost: 'border-transparent bg-transparent text-ink hover:bg-selected',

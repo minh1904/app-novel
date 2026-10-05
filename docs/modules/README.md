@@ -8,9 +8,11 @@ quan.
 
 | Module | Mục đích |
 | --- | --- |
+| [Hệ thiết kế giao diện](design-system/README.md) | Token màu, chữ, khoảng cách, bán kính và component dùng chung theo hướng Obsidian |
 | [Ngữ cảnh dịch](context/README.md) | Glossary, nhân vật, xưng hô, văn phong, ký ức và cách lắp ngữ cảnh |
 | [Bộ đo chất lượng](measurement/README.md) | Fixture, phép kiểm, chạy thí nghiệm, chấm mù và báo cáo |
 | [Đề xuất và phiên AI](proposals/README.md) | Duyệt thay đổi tại editor, lịch sử phiên và hàng chờ theo chương |
+| [Phiên làm việc theo tác phẩm](workspace/README.md) | Tab truyện, khôi phục vị trí và bảo vệ bản sửa chưa lưu |
 
 Tài liệu module phải phân biệt hành vi đã chạy, kết quả một thí nghiệm, đề xuất và quyết định sản
 phẩm. Với phần chưa làm, tài liệu module tập hợp mục tiêu, bằng chứng và câu hỏi cần chốt; OpenSpec

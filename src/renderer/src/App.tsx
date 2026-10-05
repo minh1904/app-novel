@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, type JSX } from 'react'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { AppShell } from './app/AppShell'
+import { WorkTabActiveContext } from './app/topBarSlot'
 import { Button } from './components/Button'
 import { CreateWorkScreen } from './features/library/CreateWorkScreen'
 import { LibraryNotices } from './features/library/LibraryNotices'
@@ -10,7 +11,11 @@ import { useLibrary } from './features/library/useLibrary'
 import { byUpdated, type Work } from './features/library/works'
 import { ChapterNavSidebar } from './features/chapter/ChapterNavSidebar'
 import { ChapterScreen } from './features/chapter/ChapterScreen'
-import { LeaveGuardContext, useLeaveGuardRegistry } from './features/editor/leaveGuard'
+import {
+  LeaveGuardContext,
+  LeaveGuardScopeContext,
+  useLeaveGuardRegistry
+} from './features/editor/leaveGuard'
 import { SettingsScreen } from './features/settings/SettingsScreen'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 import { useUiStore, type View } from './stores/uiStore'
@@ -22,6 +27,9 @@ export function App(): JSX.Element {
   const { registry, dialog: leaveDialog } = useLeaveGuardRegistry()
 
   const view = useUiStore((state) => state.view)
+  const tabs = useUiStore((state) => state.tabs)
+  const workspaceReady = useUiStore((state) => state.workspaceReady)
+  const workspaceNotice = useUiStore((state) => state.workspaceNotice)
   const sidebarOpen = useUiStore((state) => state.sidebarOpen)
   const theme = useUiStore((state) => state.theme)
   const toggleTheme = useUiStore((state) => state.toggleTheme)
@@ -30,6 +38,16 @@ export function App(): JSX.Element {
 
   useEffect(() => {
     useUiStore.getState().setLeaveGuardRegistry(registry)
+  }, [registry])
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
+      if (!registry.isDirty()) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [registry])
 
   // A stream continues while the chapter panel is hidden or another chapter is being viewed.
@@ -47,6 +65,39 @@ export function App(): JSX.Element {
 
   const library = useLibrary()
   const { works } = library
+
+  useEffect(() => {
+    if (library.load !== 'ready' || workspaceReady) return
+    let current = true
+    if (!window.mira?.workspace) {
+      useUiStore.getState().restoreWorkspace({ version: 1, tabs: [], activeWorkId: null }, [])
+      return
+    }
+    void window.mira.workspace
+      .load()
+      .then((result) => {
+        if (!current) return
+        if (result.ok)
+          useUiStore.getState().restoreWorkspace(result.value.state, result.value.notices)
+        else
+          useUiStore
+            .getState()
+            .restoreWorkspace({ version: 1, tabs: [], activeWorkId: null }, [
+              'Không khôi phục được phiên tab: ' + result.error.message
+            ])
+      })
+      .catch(() => {
+        if (current)
+          useUiStore
+            .getState()
+            .restoreWorkspace({ version: 1, tabs: [], activeWorkId: null }, [
+              'Không khôi phục được phiên tab.'
+            ])
+      })
+    return () => {
+      current = false
+    }
+  }, [library.load, workspaceReady])
 
   useEffect(() => {
     let active = true
@@ -72,7 +123,12 @@ export function App(): JSX.Element {
     // The detail screen already hands changes to the library; this also catches anything missed.
     void library.reload()
   }
-  const openWork = (work: Work): void => go({ name: 'work', workId: work.id })
+  const openWorkId = (workId: string): void => {
+    const state = useUiStore.getState()
+    if (state.tabs.some((tab) => tab.workId === workId)) state.activateTab(workId)
+    else go({ name: 'work', workId })
+  }
+  const openWork = (work: Work): void => openWorkId(work.id)
   const openChapterView = (workId: string, chapterId: string): void =>
     go({ name: 'chapter', workId, chapterId })
   /** Records the chapter as the one being worked on, then shows it; without one, shows the work. */
@@ -133,8 +189,8 @@ export function App(): JSX.Element {
     </nav>
   )
 
-  let title: JSX.Element
-  let content: JSX.Element
+  let title: JSX.Element = <h1 className="font-semibold">Thư viện</h1>
+  let content: JSX.Element = <div />
   let sidebar: JSX.Element | null = (
     <LibrarySidebar
       activeSection={view.name === 'library' ? view.section : undefined}
@@ -183,7 +239,7 @@ export function App(): JSX.Element {
                 onDismissSuccess={library.dismissSuccess}
                 onOpenWork={(workId) => {
                   library.dismissSuccess()
-                  go({ name: 'work', workId })
+                  openWorkId(workId)
                 }}
               />
             }
@@ -256,6 +312,48 @@ export function App(): JSX.Element {
     }
   }
 
+  const visibleWorkId = view.name === 'work' || view.name === 'chapter' ? view.workId : null
+  const tabPanes = tabs.map((tab) => {
+    const active = tab.workId === visibleWorkId
+    if (!active && tab.location.name === 'chapter' && !registry.isDirty(tab.workId)) return null
+    const backToWork = (): void => go({ name: 'work', workId: tab.workId })
+    return (
+      <div
+        key={tab.workId}
+        hidden={!active}
+        inert={!active}
+        className="h-full min-h-0"
+        aria-hidden={!active}
+      >
+        <WorkTabActiveContext.Provider value={active}>
+          <LeaveGuardScopeContext.Provider value={tab.workId}>
+            {tab.location.name === 'work' ? (
+              <WorkDetailScreen
+                workId={tab.workId}
+                areaId={tab.areaId}
+                onAreaChange={(areaId) => useUiStore.getState().setWorkArea(tab.workId, areaId)}
+                onBackToLibrary={() => showSection('all')}
+                onOpenChapter={openChapterView}
+                onWorkChanged={library.applyWork}
+              />
+            ) : (
+              <ChapterScreen
+                key={tab.location.chapterId}
+                workId={tab.workId}
+                chapterId={tab.location.chapterId}
+                onBackToWork={backToWork}
+                onWorkChanged={library.applyWork}
+                onOpenSettings={openSettings}
+                focused={!sidebarOpen}
+                onToggleFocus={toggleSidebar}
+              />
+            )}
+          </LeaveGuardScopeContext.Provider>
+        </WorkTabActiveContext.Provider>
+      </div>
+    )
+  })
+
   return (
     <LeaveGuardContext.Provider value={registry}>
       <AppShell
@@ -266,10 +364,38 @@ export function App(): JSX.Element {
         onToggleTheme={toggleTheme}
         appVersion={appVersion}
         title={title}
+        workTabs={tabs.map((tab) => ({
+          workId: tab.workId,
+          title: works.find((work) => work.id === tab.workId)?.title ?? 'Tác phẩm'
+        }))}
+        selectedWorkId={visibleWorkId}
+        onSelectWorkTab={(workId) => useUiStore.getState().activateTab(workId)}
+        onCloseWorkTab={(workId) => {
+          void useUiStore.getState().closeTab(workId)
+        }}
+        onOpenLibrary={() => showSection('all')}
         onOpenSettings={openSettings}
         settingsOpen={view.name === 'settings'}
       >
-        {content}
+        {workspaceNotice && (
+          <div
+            role="alert"
+            className="flex items-center justify-between gap-3 border-b border-line px-4 py-2 text-xs text-ink-muted"
+          >
+            <span>{workspaceNotice}</span>
+            <button type="button" onClick={() => useUiStore.getState().setWorkspaceNotice(null)}>
+              Đóng
+            </button>
+          </div>
+        )}
+        {!workspaceReady && library.load === 'ready' ? (
+          <p role="status" className="p-6 text-sm text-ink-muted">
+            Đang khôi phục phiên làm việc…
+          </p>
+        ) : view.name === 'library' || view.name === 'create' || view.name === 'settings' ? (
+          content
+        ) : null}
+        {tabPanes}
       </AppShell>
       {leaveDialog}
     </LeaveGuardContext.Provider>

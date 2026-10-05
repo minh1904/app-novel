@@ -11,6 +11,18 @@ sách task và tiêu chí nằm ở [OpenSpec](../../../openspec/changes/proposa
 dưới phần lớn mô tả baseline đã commit trước Module 5; không dùng chúng phủ nhận trạng thái working
 tree vừa nêu.
 
+**Tab theo tác phẩm đã có trong working tree (2026-10-05):** titlebar mở nhiều truyện, mỗi truyện
+một tab và nhớ chương/khu vực; Main lưu phiên tab trong `library.db`, kiểm tra ID khi khôi phục;
+editor dirty của tab ẩn vẫn sống, guard đóng tab/thoát xét bản sửa tương ứng. Phiên chat tách theo
+truyện và danh sách chương bỏ phản hồi đến muộn. Xem
+[module Phiên làm việc](../../modules/workspace/README.md). Module 7 Tác vụ vẫn chưa có JobRunner
+bền, batch translation, usage/cost cap hoặc màn Tác vụ thật.
+
+**Hệ thiết kế theo Obsidian đã áp trong working tree (2026-10-05):** token sáng/tối dùng thang màu
+trung tính công bố bởi Obsidian, semantic surface do Mira ánh xạ; accent tím, lưới 4 px, bán kính
+4/8/12/16 px, UI Segoe và editor Google Sans Flex 16 px. Component dùng chung, thanh tab truyện,
+màn tác phẩm và editor đã nhận token mới; xem [module Hệ thiết kế](../../modules/design-system/README.md).
+
 **Repo hiện tại là bản MVP để thử nghiệm.** Mọi thứ dưới đây chạy được nhưng chưa phải bản hoàn chỉnh; từ [ADR-005](../decisions/0005-ai-first-proposals-no-sentence-mode.md) từng module được làm lại hoàn chỉnh theo [kiến trúc AI-first](ai-first-architecture.md) và [lộ trình](../delivery/roadmap.md). Cột **Số phận** cho biết phần đó được *giữ*, *viết lại* hay *gỡ* khi làm lại; tên trong ngoặc là module ở [lộ trình](../delivery/roadmap.md). (Trước lần đổi thứ tự ngày 2026-10-03, trang này ghi module bằng số; bảng đối chiếu số cũ nằm cuối lộ trình.)
 
 Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận và gỡ các ghi chú "cập nhật ngày…" chồng lên nhau. Nội dung kỹ thuật lấy từ các lần đối chiếu code 2026-09-29 đến 2026-10-03 và từ bản cũ của trang này; **không kiểm tra lại từng dòng**. Working tree lúc viết có sửa dở ở `markdownSyntax`, `formatCommands`, `livePreviewDecorations` của editor; trang mô tả bản đã commit.
@@ -21,6 +33,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 | --- | --- | --- |
 | Desktop: Electron, IPC có kiểu | Chạy | **Giữ**; mở rộng kênh theo từng module |
 | UI shell | Chạy | Giữ |
+| Tab theo tác phẩm | Chạy trong working tree; lưu/khôi phục vị trí, bảo vệ editor dirty | **Đã triển khai**; xem [module Phiên làm việc](../../modules/workspace/README.md) |
 | Thư viện, tác phẩm, chi tiết tác phẩm | Chạy trên kho thật | Giữ |
 | Danh sách chương | Chạy, đo tới 5.000 chương | Giữ |
 | Nội dung chương: văn bản, revision, segment, liên kết | Chạy | **Viết lại (Gỡ Từng câu)**: bỏ segment, liên kết, nguồn gốc theo câu; thêm dấu AI. Đề xuất và snapshot thêm ở (Đề xuất) |
@@ -37,7 +50,8 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 | Minh họa “Sắp có” | Có | Giữ tới khi có màn thật; mock của Từng câu gỡ cùng mode (Gỡ Từng câu) |
 | Thuật ngữ (glossary) | Chạy trên kho thật: CRUD, alias, import Names.txt, so khớp CJK/Latin, tiêm Tầng C prompt, UI GlossaryScreen | **Đã hoàn thành Module 3 (2026-10-04)** |
 | Xưng hô (addressing) | Chạy trên kho thật: CRUD nhân vật, dyad có chiều, hiệu lực chương, tiêm Tầng B prompt, kiểm tra đại từ, UI AddressingScreen | **Đã hoàn thành Module 4 (2026-10-04)** |
-| Build và kiểm tra | 1620 test | Giữ |
+| Xuất bản dịch (Export) | Chạy trên kho thật: 4 định dạng chuẩn ebook novel (TXT, MD, Word DOCX, PDF native printToPDF), đơn chương và gộp/tách tác phẩm | **Đã hoàn thành Module 6 (2026-10-05)** |
+| Build và kiểm tra | 1620+ test | Giữ |
 | Cấu trúc mã nguồn | Bốn tầng, lint ép | Giữ |
 
 ## Chi tiết theo phần
@@ -51,7 +65,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 
 ### UI shell, thư viện, tác phẩm
 
-- Sidebar, light/dark, ẩn sidebar, điều hướng trong bộ nhớ (chưa có router), nút bánh răng mở Cài đặt (có ở mọi màn). Khi mở một chương, sidebar đổi thành danh sách chương của tác phẩm đó (`ChapterNavSidebar`). Theme lấy theo hệ thống lúc khởi tạo, chưa lưu lựa chọn.
+- Sidebar, light/dark, ẩn sidebar, điều hướng trong bộ nhớ (chưa có router), nút bánh răng mở Cài đặt (có ở mọi màn). Khi mở một chương, sidebar đổi thành danh sách chương của tác phẩm đó (`ChapterNavSidebar`). Theme lấy theo hệ thống lúc khởi tạo, chưa lưu lựa chọn. Truyện đang mở có tab trong titlebar; trạng thái phiên tab lưu ở Main/SQLite. Xem [module Phiên làm việc](../../modules/workspace/README.md).
 - **Thanh trên cùng là thanh tiêu đề của cửa sổ** (Windows và Linux: `titleBarStyle: 'hidden'` kèm window controls overlay): một thanh 42px chạy hết bề ngang, chứa nút thanh bên, tên Mira, breadcrumb, icon của màn đang mở, Cài đặt và sáng/tối; ba nút thu nhỏ/phóng to/đóng do hệ điều hành vẽ chồng ở góc phải, màu đổi theo theme qua kênh `app:chrome-theme` (`setChromeTheme`). Mỗi màn đặt icon của riêng nó lên thanh bằng `TopBarActions` (Hỏi AI, Tập trung, Lưu, menu chương, nút quay lại) thay vì một hàng header thứ hai. Màu ba nút là bản sao tay của hai token CSS; `titleBar.test.ts` fail khi chúng lệch nhau. macOS giữ khung hệ điều hành. **Mới kiểm trên Windows 11 bằng bản build** (chụp màn hình sáng/tối, thư viện, chương, chương chưa có bản gốc, Cài đặt); chưa thử Linux, chưa thử kéo thả và nhấp đúp để phóng to bằng tay. Bằng chứng: [AppShell](../../../src/renderer/src/app/AppShell.tsx), [TopBarActions](../../../src/renderer/src/app/TopBarActions.tsx), [titleBar](../../../src/main/electron/titleBar.ts).
 - Thư viện đọc từ kho thật: tạo (tên, ngôn ngữ nguồn, tên gốc, tác giả, thể loại/bối cảnh, mô tả, ảnh bìa), đổi tên, tạm dừng/tiếp tục, lưu trữ, đổi/gỡ bìa, tìm không dấu, báo tệp không mở được. Chưa có xóa tác phẩm.
 - Chi tiết tác phẩm: đầu trang (bìa, tên, tác giả, mô tả thu gọn, trạng thái, số chương; “Tiếp tục”/“Thêm chương”; sửa thông tin nguyên tử) và khung khu vực `WorkAreaHost`: Chương là thật; Ngữ cảnh, Nguồn, Tác vụ là minh họa “Sắp có”.

@@ -42,7 +42,7 @@ const theme = EditorView.theme({
   // No border or radius of its own: the pane is square and flush against the one next to it.
   '&': {
     height: '100%',
-    fontSize: '14px',
+    fontSize: 'var(--text-editor)',
     color: 'var(--text-primary)',
     backgroundColor: 'transparent'
   },
@@ -52,8 +52,8 @@ const theme = EditorView.theme({
   // Scrolling stays enabled; only the visible track/thumb are suppressed, so the pane keeps its
   // flush edge instead of a bar fighting the border next to it.
   '.cm-scroller': {
-    fontFamily: 'inherit',
-    lineHeight: '1.7',
+    fontFamily: 'var(--font-editor)',
+    lineHeight: '1.5',
     overflow: 'auto',
     scrollbarWidth: 'none',
     msOverflowStyle: 'none'
@@ -384,7 +384,8 @@ export function TextEditor({
         {showHint && (
           <p
             id={hintId}
-            className="pointer-events-none absolute top-3 right-4 left-[52px] text-[14px] leading-[1.7] text-ink-muted"
+            className="pointer-events-none absolute top-3 right-4 left-2 leading-[1.5] text-ink-muted"
+            style={{ fontFamily: 'var(--font-editor)', fontSize: 'var(--text-editor)' }}
           >
             {emptyHint}
           </p>

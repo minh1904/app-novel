@@ -17,6 +17,11 @@ export interface AppShellProps {
   onToggleTheme(): void
   appVersion: string
   title: ReactNode
+  workTabs?: ReadonlyArray<{ workId: string; title: string }>
+  selectedWorkId?: string | null
+  onSelectWorkTab?(workId: string): void
+  onCloseWorkTab?(workId: string): void
+  onOpenLibrary?(): void
   /** Mở màn cài đặt. Nút ở mọi màn, nên đường vào không phụ thuộc đang đứng ở đâu. */
   onOpenSettings(): void
   /** Đang ở màn cài đặt: nút sáng lên và không mở lại chính nó. */
@@ -41,6 +46,11 @@ export function AppShell({
   onToggleTheme,
   appVersion,
   title,
+  workTabs = [],
+  selectedWorkId = null,
+  onSelectWorkTab,
+  onCloseWorkTab,
+  onOpenLibrary,
   onOpenSettings,
   settingsOpen = false,
   children
@@ -66,6 +76,28 @@ export function AppShell({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onToggleSidebar])
 
+  useEffect(() => {
+    function onTabKey(event: KeyboardEvent): void {
+      if (
+        event.defaultPrevented ||
+        !event.ctrlKey ||
+        event.altKey ||
+        event.metaKey ||
+        event.key !== 'Tab' ||
+        workTabs.length === 0 ||
+        !onSelectWorkTab
+      )
+        return
+      event.preventDefault()
+      const index = workTabs.findIndex((tab) => tab.workId === selectedWorkId)
+      const step = event.shiftKey ? -1 : 1
+      const next = (index + step + workTabs.length) % workTabs.length
+      onSelectWorkTab(workTabs[next]!.workId)
+    }
+    window.addEventListener('keydown', onTabKey)
+    return () => window.removeEventListener('keydown', onTabKey)
+  }, [workTabs, selectedWorkId, onSelectWorkTab])
+
   const sidebarLabel = sidebarOpen ? 'Ẩn thanh bên' : 'Hiện thanh bên'
 
   return (
@@ -73,7 +105,7 @@ export function AppShell({
       {/* One bar for the whole window, over the sidebar too: it is the title bar, the app header and
           the place for each screen's own icons, so nothing sits in a second strip underneath. */}
       <header
-        className="window-drag flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome pl-2.5"
+        className="window-drag flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome pl-2"
         style={{ paddingRight: BAR_END_PADDING }}
       >
         <Button
@@ -88,11 +120,66 @@ export function AppShell({
           <SidebarMinimalisticIcon size={16} />
         </Button>
         <span className="flex items-center gap-1.5">
-          <img src={logoUrl} alt="" className="size-5 shrink-0" draggable={false} />
-          <span className="text-[15px] font-semibold tracking-[-0.05em]">Mira</span>
+          <img src={logoUrl} alt="" className="size-4 shrink-0" draggable={false} />
+          <span className="text-[13px] font-semibold">Mira</span>
         </span>
         <span className="h-4 w-px shrink-0 bg-line" aria-hidden="true" />
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">{title}</div>
+        {workTabs.length > 0 && (
+          <nav
+            aria-label="Truyện đang mở"
+            className="work-tab-strip flex min-w-0 max-w-[min(60vw,760px)] flex-1 items-end gap-0.5 self-stretch overflow-x-auto whitespace-nowrap"
+          >
+            {workTabs.map((tab) => (
+              <div
+                key={tab.workId}
+                className={cx(
+                  'group flex h-[35px] max-w-44 shrink-0 items-center rounded-t-tab border text-xs',
+                  selectedWorkId === tab.workId
+                    ? 'border-line border-b-canvas bg-canvas text-ink'
+                    : 'border-transparent text-ink-muted hover:bg-control hover:text-ink'
+                )}
+              >
+                <button
+                  type="button"
+                  aria-current={selectedWorkId === tab.workId ? 'page' : undefined}
+                  title={tab.title}
+                  onClick={() => onSelectWorkTab?.(tab.workId)}
+                  className="min-w-0 flex-1 truncate px-3 py-1.5 text-left focus-visible:outline-2 focus-visible:outline-focus"
+                >
+                  {tab.title}
+                </button>
+                <button
+                  type="button"
+                  aria-label={'Đóng tab ' + tab.title}
+                  title={'Đóng ' + tab.title}
+                  onClick={() => onCloseWorkTab?.(tab.workId)}
+                  className="mr-1 shrink-0 rounded-sm px-1.5 py-1 text-ink-muted hover:bg-selected hover:text-ink focus-visible:outline-2 focus-visible:outline-focus"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </nav>
+        )}
+        {workTabs.length > 0 && (
+          <Button
+            variant="ghost-muted"
+            size="icon"
+            aria-label="Mở Thư viện"
+            title="Mở Thư viện"
+            onClick={onOpenLibrary}
+          >
+            +
+          </Button>
+        )}
+        <div
+          className={cx(
+            'min-w-0 items-center gap-2 text-xs',
+            workTabs.length ? 'hidden xl:flex xl:flex-1' : 'flex flex-1'
+          )}
+        >
+          {title}
+        </div>
         <div className="flex shrink-0 items-center gap-1">
           <div ref={setSlot} className="flex items-center gap-1 empty:hidden" />
           <Button

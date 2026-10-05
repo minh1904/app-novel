@@ -1,5 +1,35 @@
 # Nhật ký handbook
 
+## 2026-10-05 — Hệ thiết kế giao diện theo hướng Obsidian
+
+- Đối chiếu tài liệu token chính thức của Obsidian; tách quan sát nguồn khỏi ánh xạ semantic của
+  Mira tại [module Hệ thiết kế](../../modules/design-system/README.md).
+- Chuyển hai theme sang thang màu trung tính, accent tím và nhịp 4 px; cập nhật component dùng chung,
+  thanh tab, màn tác phẩm và cỡ chữ editor. Hồ sơ palette Solar Docs được đánh dấu superseded.
+
+## 2026-10-05 — Triển khai tab theo tác phẩm (`work-tabs`)
+
+- Mỗi truyện có một tab trong titlebar; lưu và khôi phục phiên tab qua Main/SQLite, xử lý tab hoặc
+  chương đã mất, chuyển tab giữ bản sửa chưa lưu, guard theo tab và phiên AI theo tác phẩm.
+- Bổ sung [module Phiên làm việc](../../modules/workspace/README.md). JobRunner và khu vực Tác vụ
+  thật vẫn thuộc Module 7.
+
+## 2026-10-05 — Chốt hướng tab theo tác phẩm
+
+- Chủ sản phẩm đồng ý mở mỗi truyện trong một tab riêng, giữ vị trí và bản sửa khi chuyển tab; đóng tab không điều khiển tác vụ nền.
+- Tạo change [`work-tabs`](../../../openspec/changes/work-tabs/proposal.md) để đặc tả riêng trước Module 7.
+
+## 2026-10-05 — Triển khai Module 6: Xuất định dạng tiểu thuyết (`export-novel-formats`)
+
+- Hoàn thành Module 6 (Xuất) theo lộ trình phát triển, mở rộng theo yêu cầu người dùng:
+  - **4 định dạng chuẩn Novel Ebook**: TXT (UTF-8 thuần), Markdown (`.md`), Microsoft Word (`.docx`), và PDF (`.pdf`).
+  - **Cấu trúc chuẩn Ebook Novel**: Trang thông tin đầu tác phẩm (Tên truyện, Tác giả, Lời giới thiệu), ngắt trang bắt buộc giữa các chương (với DOCX và PDF), thụt lề đầu dòng đoạn văn (`1.8em` / `0.5 inch`) hoặc cách đoạn thanh lịch.
+  - **Dịch vụ xuất Main Process**: `ExportService` đọc trực tiếp từ `LibraryStore`, điều phối qua 4 formatter chuyên biệt (`txtFormatter`, `markdownFormatter`, `docxFormatter`, `pdfFormatter`).
+  - **PDF Native**: Sử dụng `webContents.printToPDF` của Electron in từ HTML template với CSS Paged Media `@page` (khổ A5/A4, lề chuẩn sách, typography tiếng Việt sắc nét, chân trang đánh số trang tự động). Không phụ thuộc binary ngoài.
+  - **Word DOCX**: Sử dụng thư viện `docx` tạo tệp Office OpenXML chuẩn với Heading styles và ngắt trang.
+  - **Giao diện người dùng**: Hộp thoại `ExportDialog` dùng chung cho cả xuất 1 chương (trong `ChapterWorkspace`) và xuất toàn tác phẩm (gộp 1 tệp hoặc tách thư mục tệp riêng lẻ trong `WorkDetailScreen`).
+  - **Kiểm chứng toàn vẹn (Round-trip Fidelity)**: Kiểm chứng 100% không mất chữ, không mất ký tự hay dấu câu khi xuất TXT/MD rồi nhập lại qua bộ giải mã.
+
 ## 2026-10-05 — Mode Áp dụng thẳng
 
 - Chủ sản phẩm bổ sung mode Áp dụng thẳng cho chat và lượt dịch. Cập nhật

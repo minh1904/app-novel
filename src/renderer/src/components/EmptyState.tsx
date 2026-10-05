@@ -23,7 +23,7 @@ export function EmptyState({
     <div
       data-slot="empty-state"
       className={cx(
-        'flex flex-col items-center gap-3 rounded-panel border border-line bg-sidebar px-6 py-12 text-center',
+        'flex flex-col items-center gap-3 px-6 py-10 text-center',
         className
       )}
     >

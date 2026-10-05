@@ -37,7 +37,7 @@ class PreviewWidget extends WidgetType {
     actions.className = 'mt-2 flex gap-2'
     const accept = document.createElement('button')
     accept.type = 'button'
-    accept.className = 'rounded-control bg-primary px-2 py-1 text-white'
+    accept.className = 'rounded-control bg-primary px-2 py-1 text-primary-foreground'
     accept.textContent = 'Áp dụng'
     accept.addEventListener('click', () => this.preview.onAccept())
     const deny = document.createElement('button')

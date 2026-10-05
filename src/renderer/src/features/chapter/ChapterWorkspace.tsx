@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import { MaximizeSquareIcon } from '@solar-icons/react/linear/maximize-square'
 import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
 import { MinimizeSquareIcon } from '@solar-icons/react/linear/minimize-square'
 import { StarsIcon } from '@solar-icons/react/linear/stars'
+import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { TextRecord } from '../../../../shared/contracts/text'
 import { TopBarActions } from '../../app/TopBarActions'
+import { WorkTabActiveContext } from '../../app/topBarSlot'
 import { Button } from '../../components/Button'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
 import { TabsList, TabsRoot, TabsTab } from '../../components/Tabs'
@@ -17,6 +19,7 @@ import type { ImageStore } from '../editor/imageEmbedDecorations'
 import { useConfirmLeave, useRegisterLeaveGuard } from '../editor/leaveGuard'
 import type { TargetRange } from '../editor/chatRange'
 import { TextEditor, type TextEditorHandle } from '../editor/TextEditor'
+import { ExportDialog } from '../export/ExportDialog'
 import { languages, type Work } from '../library/works'
 import { headingTitle } from '../work/chapterList'
 import { SOON_LABEL } from '../work/mockFeatures'
@@ -89,6 +92,7 @@ export function ChapterWorkspace({
   focused,
   onToggleFocus
 }: ChapterWorkspaceProps): JSX.Element {
+  const tabActive = useContext(WorkTabActiveContext)
   const sourceEditor = useRef<TextEditorHandle>(null)
   const targetEditor = useRef<TextEditorHandle>(null)
   const [sourceStatus, setSourceStatus] = useState<SessionStatus>(IDLE)
@@ -98,6 +102,7 @@ export function ChapterWorkspace({
   const sentence = useRef<SentenceModeHandle>(null)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiWidth, setAiWidth] = useState(420)
+  const [exportOpen, setExportOpen] = useState(false)
   // The stretch the AI panel is about, reported by the translation pane as the caret moves. Without
   // it the panel would be about nothing in particular.
   const [aiRange, setAiRange] = useState<TargetRange | null>(null)
@@ -121,10 +126,13 @@ export function ChapterWorkspace({
     () => ({
       getText: () => targetEditor.current?.getText() ?? '',
       isDirty: () => targetEditor.current?.isDirty() ?? false,
-      reload: async () => { await targetEditor.current?.discard() },
+      reload: async () => {
+        await targetEditor.current?.discard()
+      },
       targetRange: (scope) => targetEditor.current?.targetRange(scope) ?? null,
       reviewProposal: (range, replacement, onAccept, onDeny, label) =>
-        targetEditor.current?.reviewProposal(range, replacement, onAccept, onDeny, label) ?? 'stale',
+        targetEditor.current?.reviewProposal(range, replacement, onAccept, onDeny, label) ??
+        'stale',
       endReview: () => targetEditor.current?.endReview()
     }),
     []
@@ -167,6 +175,7 @@ export function ChapterWorkspace({
   // the check costs nothing and keeps every global shortcut in this file consistent.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
+      if (!tabActive) return
       if (event.defaultPrevented) return
       if (event.key.toLowerCase() !== 's' || event.altKey || event.shiftKey) return
       if (!(event.ctrlKey || event.metaKey)) return
@@ -175,7 +184,7 @@ export function ChapterWorkspace({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [saveCurrent])
+  }, [saveCurrent, tabActive])
 
   /**
    * One way in, used by both the button and Ctrl+K.
@@ -193,6 +202,7 @@ export function ChapterWorkspace({
   // Ctrl+K (Cmd+K) opens "Hỏi AI" in Toàn văn; Esc closes it.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
+      if (!tabActive) return
       if (event.defaultPrevented) return
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && mode === 'full') {
         event.preventDefault()
@@ -203,7 +213,7 @@ export function ChapterWorkspace({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [mode, aiOpen, toggleAi])
+  }, [mode, aiOpen, toggleAi, tabActive])
 
   useRegisterLeaveGuard({
     isDirty: () =>
@@ -308,6 +318,10 @@ export function ChapterWorkspace({
               <StarsIcon size={14} className="text-ink-muted" />
               Dịch bằng AI
             </MenuItem>
+            <MenuItem onClick={() => setExportOpen(true)}>
+              <UploadMinimalisticIcon size={14} className="text-ink-muted" />
+              Xuất chương…
+            </MenuItem>
             <MenuItem onClick={onBackToWork}>
               <AltArrowLeftIcon size={14} className="text-ink-muted" />
               Về tác phẩm
@@ -317,7 +331,7 @@ export function ChapterWorkspace({
       </TopBarActions>
 
       {/* Which chapter, then the mode and the context the translator reads while working. One row, so the panes keep the height. */}
-      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-chrome px-2.5">
+      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-canvas px-2.5">
         <h2 className="min-w-0 flex-1 truncate text-[12.5px] font-semibold">
           {headingTitle(chapter)}{' '}
           <span className="font-normal text-ink-muted">
@@ -419,7 +433,16 @@ export function ChapterWorkspace({
             />
           </EditorPane>
 
-          <EditorPane title="Bản dịch" subtitle="Tiếng Việt" status={targetStatus}>
+          <EditorPane
+            title="Bản dịch"
+            subtitle="Tiếng Việt"
+            status={targetStatus}
+            actions={
+              <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+                Xuất chương
+              </Button>
+            }
+          >
             <TextEditor
               key={targetEpoch}
               handleRef={targetEditor}
@@ -437,19 +460,21 @@ export function ChapterWorkspace({
           </EditorPane>
 
           <div className={aiOpen ? 'min-h-0' : 'hidden'}>
-            <AiPanel
-              workId={work.id}
-              chapterId={chapter.id}
-              chapterLabel={headingTitle(chapter)}
-              sourceLang={work.sourceLanguage}
-              source={sourceText}
-              target={targetChat}
-              autoRange={aiRange}
-              width={aiWidth}
-              onWidthChange={setAiWidth}
-              onClose={() => setAiOpen(false)}
-              onOpenSettings={onOpenSettings}
-            />
+            {tabActive && (
+              <AiPanel
+                workId={work.id}
+                chapterId={chapter.id}
+                chapterLabel={headingTitle(chapter)}
+                sourceLang={work.sourceLanguage}
+                source={sourceText}
+                target={targetChat}
+                autoRange={aiRange}
+                width={aiWidth}
+                onWidthChange={setAiWidth}
+                onClose={() => setAiOpen(false)}
+                onOpenSettings={onOpenSettings}
+              />
+            )}
           </div>
         </div>
       )}
@@ -462,6 +487,16 @@ export function ChapterWorkspace({
         onOpenSettings={onOpenSettings}
         onWritten={onTargetReplaced}
         finalFocus={translateOpener}
+      />
+
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        workId={work.id}
+        workTitle={work.title}
+        chapterId={chapter.id}
+        chapterTitle={chapter.title}
+        chapterNumber={chapter.number}
       />
     </div>
   )

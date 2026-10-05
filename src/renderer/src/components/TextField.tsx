@@ -23,14 +23,14 @@ export function TextField({
   return (
     <div
       data-slot="text-field"
-      className={['flex flex-col gap-[7px]', className].filter(Boolean).join(' ')}
+      className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}
     >
       <label className="text-[12px] font-semibold" htmlFor={inputId}>
         {label}
       </label>
       <input
         className={[
-          'h-[34px] w-full rounded-control border bg-canvas px-[11px] text-ink outline-none placeholder:text-ink-muted focus:ring-2',
+          'h-8 w-full rounded-control border bg-control px-3 text-ink outline-none placeholder:text-ink-muted focus:ring-2',
           error
             ? 'border-error focus:border-error focus:ring-error/25'
             : 'border-line-strong focus:border-focus focus:ring-focus/25'

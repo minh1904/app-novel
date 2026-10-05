@@ -22,6 +22,9 @@ import { proposalHandlers } from './handlers/proposals'
 import { sessionHandlers } from './handlers/sessions'
 import { textHandlers } from './handlers/text'
 import { worksHandlers } from './handlers/works'
+import { exportHandlers } from './handlers/export'
+import { workspaceHandlers } from './handlers/workspace'
+import type { ExportService } from '../services/export/exportService'
 
 /**
  * Channel → validated handler. Free of Electron imports so tests can call it directly.
@@ -37,11 +40,23 @@ export function createLibraryHandlers(
   chat?: ChatService,
   glossary?: GlossaryService,
   addressing?: AddressingService,
-  paragraphTranslator?: ParagraphTranslator
+  paragraphTranslator?: ParagraphTranslator,
+  exportService?: ExportService
 ): Record<Channel, RawHandler<unknown>> {
-  const deps: HandlerDeps = { library, files, connections, translator, chat, glossary, addressing, paragraphTranslator }
+  const deps: HandlerDeps = {
+    library,
+    files,
+    connections,
+    translator,
+    chat,
+    glossary,
+    addressing,
+    paragraphTranslator,
+    exportService
+  }
   return {
     ...worksHandlers(deps),
+    ...workspaceHandlers(deps),
     ...chaptersHandlers(deps),
     ...textHandlers(deps),
     ...rowsHandlers(deps),
@@ -52,7 +67,8 @@ export function createLibraryHandlers(
     ...proposalHandlers(deps),
     ...sessionHandlers(deps),
     ...glossaryHandlers(deps),
-    ...addressingHandlers(deps)
+    ...addressingHandlers(deps),
+    ...exportHandlers(deps)
   }
 }
 

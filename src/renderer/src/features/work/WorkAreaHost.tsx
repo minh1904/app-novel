@@ -1,4 +1,12 @@
-import { Component, useEffect, useRef, type ErrorInfo, type JSX, type ReactNode } from 'react'
+import {
+  Component,
+  useEffect,
+  useRef,
+  useState,
+  type ErrorInfo,
+  type JSX,
+  type ReactNode
+} from 'react'
 import { Button } from '../../components/Button'
 import { TabsList, TabsPanel, TabsRoot, TabsTab } from '../../components/Tabs'
 import { SOON_LABEL } from './mockFeatures'
@@ -51,6 +59,7 @@ export function WorkAreaHost({
   const active = areas.find((area) => area.id === selectedId) ?? areas[0]
   const panel = useRef<HTMLDivElement>(null)
   const previous = useRef(active?.id)
+  const [visited, setVisited] = useState(() => new Set(active ? [active.id] : []))
 
   // After the user switches area, move focus into it so keyboard and screen-reader users land there.
   useEffect(() => {
@@ -69,7 +78,14 @@ export function WorkAreaHost({
   if (areas.length === 1) return body(active)
 
   return (
-    <TabsRoot value={active.id} onValueChange={(value) => onSelect(String(value))}>
+    <TabsRoot
+      value={active.id}
+      onValueChange={(value) => {
+        const id = String(value)
+        setVisited((current) => new Set(current).add(id))
+        onSelect(id)
+      }}
+    >
       <TabsList className="max-w-full overflow-x-auto" aria-label="Khu vực của tác phẩm">
         {areas.map((area) => (
           <TabsTab key={area.id} value={area.id} className="shrink-0">
@@ -83,13 +99,13 @@ export function WorkAreaHost({
         ))}
       </TabsList>
       {areas.map((area) => (
-        <TabsPanel key={area.id} value={area.id} className="pt-5 outline-none">
+        <TabsPanel key={area.id} value={area.id} keepMounted className="pt-4 outline-none">
           <div
             ref={area.id === active.id ? panel : undefined}
             tabIndex={-1}
             className="outline-none"
           >
-            {area.id === active.id && body(area)}
+            {(area.id === active.id || visited.has(area.id)) && body(area)}
           </div>
         </TabsPanel>
       ))}

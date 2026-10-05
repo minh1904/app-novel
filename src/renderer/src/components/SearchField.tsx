@@ -30,8 +30,8 @@ export function SearchField({
     <div
       data-slot="search-field"
       className={cx(
-        'relative flex min-w-0 items-center rounded-control border border-line-strong bg-canvas text-ink focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/25',
-        small ? 'h-7' : 'h-[34px]',
+        'relative flex min-w-0 items-center rounded-control border border-line bg-control text-ink focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/25',
+        small ? 'h-7' : 'h-8',
         className
       )}
     >

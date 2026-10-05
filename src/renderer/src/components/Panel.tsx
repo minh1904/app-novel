@@ -11,7 +11,7 @@ export function Panel({ title, className, children, ...props }: PanelProps): JSX
       data-slot="panel"
       aria-label={title}
       className={[
-        'flex min-w-0 flex-col gap-5 rounded-panel border border-line bg-sidebar p-[18px]',
+        'flex min-w-0 flex-col gap-4 rounded-panel border border-line bg-sidebar p-4',
         className
       ]
         .filter(Boolean)

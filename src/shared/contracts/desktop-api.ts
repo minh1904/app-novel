@@ -8,16 +8,30 @@ import type {
   UpdateModelEntryInput
 } from './aiConnections'
 import type { ChatChunk, ChatSendInput } from './aiChat'
-import type { AcceptProposalInput, AcceptProposalResult, ChatProposalInput, ChatProposalResult, ProposalQueueItem } from './aiProposals'
+import type {
+  AcceptProposalInput,
+  AcceptProposalResult,
+  ChatProposalInput,
+  ChatProposalResult,
+  ProposalQueueItem
+} from './aiProposals'
 import type { AiSessionView, AiTurnView } from './aiHistory'
-import type { ParagraphBatchInput, ParagraphBatchResult, ParagraphFinalizeInput,
-  ParagraphFinalizeResult, ParagraphPlanInput, ParagraphTranslationPlan } from './aiTranslateProposals'
+import type {
+  ParagraphBatchInput,
+  ParagraphBatchResult,
+  ParagraphFinalizeInput,
+  ParagraphFinalizeResult,
+  ParagraphPlanInput,
+  ParagraphTranslationPlan
+} from './aiTranslateProposals'
 import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
+import type { ExportChapterInput, ExportResult, ExportWorkInput } from './export'
 import type { LinkRecord } from './links'
 import type { RowSaved } from './rows'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from './library'
 import type { Result } from './result'
+import type { WorkspaceLoad, WorkspaceState } from './workspace'
 import type { SegmentInput, TextRecord, TextSide } from './text'
 import type {
   ContextEntryItem,
@@ -153,10 +167,22 @@ export interface AiProposalsApi {
   createFromChat(input: ChatProposalInput): Promise<Result<ChatProposalResult>>
   accept(input: AcceptProposalInput): Promise<Result<AcceptProposalResult>>
   deny(workId: string, chapterId: string, partId: string): Promise<Result<void>>
-  acceptAll(workId: string, chapterId: string, commandId: string): Promise<Result<AcceptProposalResult>>
-  undo(workId: string, chapterId: string): Promise<Result<{ content: string; rev: number; commandId: string }>>
-  listChapter(workId: string, chapterId: string): Promise<Result<{ proposals: ProposalQueueItem[]; undoAvailable: boolean }>>
-  pendingCounts(workId: string): Promise<Result<{ counts: Array<{ chapterId: string; count: number }> }>>
+  acceptAll(
+    workId: string,
+    chapterId: string,
+    commandId: string
+  ): Promise<Result<AcceptProposalResult>>
+  undo(
+    workId: string,
+    chapterId: string
+  ): Promise<Result<{ content: string; rev: number; commandId: string }>>
+  listChapter(
+    workId: string,
+    chapterId: string
+  ): Promise<Result<{ proposals: ProposalQueueItem[]; undoAvailable: boolean }>>
+  pendingCounts(
+    workId: string
+  ): Promise<Result<{ counts: Array<{ chapterId: string; count: number }> }>>
 }
 
 export interface AiSessionsApi {
@@ -312,6 +338,11 @@ export interface AddressingApi {
   }): Promise<Result<AddressingComplianceReport>>
 }
 
+export interface ExportApi {
+  exportChapter(input: ExportChapterInput): Promise<Result<ExportResult>>
+  exportWork(input: ExportWorkInput): Promise<Result<ExportResult>>
+}
+
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
   /**
@@ -320,6 +351,10 @@ export interface DesktopApi {
    */
   setChromeTheme(theme: ChromeTheme): Promise<void>
   works: WorksApi
+  workspace: {
+    load(): Promise<Result<WorkspaceLoad>>
+    save(state: WorkspaceState): Promise<Result<void>>
+  }
   chapters: ChaptersApi
   text: TextApi
   rows: RowsApi
@@ -328,5 +363,5 @@ export interface DesktopApi {
   ai: AiApi
   glossary: GlossaryApi
   addressing: AddressingApi
+  export: ExportApi
 }
-

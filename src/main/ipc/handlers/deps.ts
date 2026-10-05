@@ -6,6 +6,7 @@ import type { ChatService } from '../../services/ai/chatService'
 import type { ConnectionService } from '../../services/ai/connectionService'
 import { GlossaryService } from '../../services/context/glossaryService'
 import { AddressingService } from '../../services/context/addressingService'
+import type { ExportService } from '../../services/export/exportService'
 import type { LibraryStore } from '../../services/library/library'
 import type { RawHandler } from '../handler'
 import type { FilePicker } from '../filePicker'
@@ -20,6 +21,7 @@ export interface HandlerDeps {
   chat?: ChatService
   glossary?: GlossaryService
   addressing?: AddressingService
+  exportService?: ExportService
 }
 
 /**
@@ -61,5 +63,9 @@ export function glossaryOf(deps: HandlerDeps): GlossaryService {
 
 export function addressingOf(deps: HandlerDeps): AddressingService {
   return deps.addressing ?? new AddressingService(deps.library)
+}
+
+export function exportServiceOf(deps: HandlerDeps): ExportService {
+  return deps.exportService ?? unavailable()
 }
 

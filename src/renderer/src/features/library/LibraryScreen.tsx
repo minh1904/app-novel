@@ -177,7 +177,7 @@ function PopulatedLibrary({
    */
   return (
     <div className="@container flex h-full min-h-0 flex-col">
-      <div className="flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
+      <div className="flex min-h-[42px] shrink-0 flex-wrap items-center gap-2 border-b border-line bg-canvas px-2.5 py-1">
         <h2 className="shrink-0 text-[12.5px] font-semibold">
           {copy.title}{' '}
           <span className="font-normal text-ink-muted">

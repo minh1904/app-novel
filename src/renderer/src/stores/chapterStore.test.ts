@@ -70,6 +70,21 @@ describe('chapterStore', () => {
     expect(state.chapters).toEqual([mockChapter])
   })
 
+  it('restores each work chapter list on tab return', async () => {
+    window.mira.chapters.list = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, value: { chapters: [mockChapter] } })
+      .mockResolvedValueOnce({ ok: true, value: { chapters: [] } })
+    await useChapterStore.getState().initWork('work-1')
+    await useChapterStore.getState().initWork('work-2')
+    await useChapterStore.getState().initWork('work-1')
+    expect(useChapterStore.getState()).toMatchObject({
+      workId: 'work-1',
+      chapters: [mockChapter]
+    })
+    expect(window.mira.chapters.list).toHaveBeenCalledTimes(2)
+  })
+
   it('creates a new chapter and appends to list', async () => {
     window.mira.chapters.list = vi.fn().mockResolvedValue({
       ok: true,
@@ -120,5 +135,40 @@ describe('chapterStore', () => {
     const res = await useChapterStore.getState().remove('chap-1')
     expect(res.ok).toBe(true)
     expect(useChapterStore.getState().chapters).toEqual([])
+  })
+
+  it('ignores a chapter list from a work that is no longer active', async () => {
+    let resolveFirst!: (value: unknown) => void
+    window.mira.chapters.list = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve
+          })
+      )
+      .mockResolvedValueOnce({ ok: true, value: { chapters: [] } })
+    const first = useChapterStore.getState().initWork('work-1')
+    await useChapterStore.getState().initWork('work-2')
+    resolveFirst({ ok: true, value: { chapters: [mockChapter] } })
+    await first
+    expect(useChapterStore.getState()).toMatchObject({ workId: 'work-2', chapters: [] })
+  })
+
+  it('does not append a chapter from a late create to another work', async () => {
+    window.mira.chapters.list = vi.fn().mockResolvedValue({ ok: true, value: { chapters: [] } })
+    await useChapterStore.getState().initWork('work-1')
+    let resolveCreate!: (value: unknown) => void
+    window.mira.chapters.create = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve
+        })
+    )
+    const creating = useChapterStore.getState().create('Chương 1')
+    await useChapterStore.getState().initWork('work-2')
+    resolveCreate({ ok: true, value: { work: mockWorkSummary, chapter: mockChapter } })
+    await creating
+    expect(useChapterStore.getState()).toMatchObject({ workId: 'work-2', chapters: [] })
   })
 })

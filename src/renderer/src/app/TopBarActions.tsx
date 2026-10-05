@@ -1,6 +1,6 @@
 import { useContext, type JSX, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { TopBarSlotContext } from './topBarSlot'
+import { TopBarSlotContext, WorkTabActiveContext } from './topBarSlot'
 
 /**
  * Draws its children in the top bar instead of where it is written.
@@ -11,5 +11,6 @@ import { TopBarSlotContext } from './topBarSlot'
  */
 export function TopBarActions({ children }: { children: ReactNode }): JSX.Element | null {
   const slot = useContext(TopBarSlotContext)
-  return slot === null ? null : createPortal(children, slot)
+  const active = useContext(WorkTabActiveContext)
+  return slot === null || !active ? null : createPortal(children, slot)
 }

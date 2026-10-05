@@ -16,58 +16,85 @@ export interface LeaveGuard {
 }
 
 export interface LeaveGuardRegistry {
-  register(guard: LeaveGuard | null): void
+  register(guard: LeaveGuard | null, workId?: string): void
+  isDirty(workId?: string): boolean
   /**
    * True when it is fine to go on. With unsaved typing it asks: save and go on, drop the changes,
    * or stay. `reloadOnDiscard` also reloads the screen's text when the answer is "drop", for
    * actions that keep the screen open.
    */
-  confirmLeave(options?: { reloadOnDiscard?: boolean }): Promise<boolean>
+  confirmLeave(options?: { reloadOnDiscard?: boolean; workId?: string }): Promise<boolean>
 }
 
 export const LeaveGuardContext = createContext<LeaveGuardRegistry | null>(null)
+export const LeaveGuardScopeContext = createContext<string | null>(null)
+
+/** One registry for all mounted work editors; prompts can still target a single work. */
+export function createLeaveGuardRegistry(
+  request: (guard: LeaveGuard, reloadOnDiscard: boolean) => Promise<boolean>
+): LeaveGuardRegistry {
+  const guards = new Map<string, LeaveGuard>()
+  return {
+    register: (next, workId = '__legacy__') => {
+      if (next) guards.set(workId, next)
+      else guards.delete(workId)
+    },
+    isDirty: (workId) =>
+      workId === undefined
+        ? [...guards.values()].some((guard) => guard.isDirty())
+        : (guards.get(workId)?.isDirty() ?? false),
+    confirmLeave: (options) => {
+      const current = options?.workId
+        ? guards.get(options.workId)
+        : (guards.get('__legacy__') ?? [...guards.values()][0])
+      return current?.isDirty()
+        ? request(current, options?.reloadOnDiscard ?? false)
+        : Promise.resolve(true)
+    }
+  }
+}
 
 /** For the app shell: the registry and the dialog it asks with. */
 export function useLeaveGuardRegistry(): { registry: LeaveGuardRegistry; dialog: JSX.Element } {
-  const guard = useRef<LeaveGuard | null>(null)
   const [pending, setPending] = useState<{
     resolve(answer: boolean): void
     reloadOnDiscard: boolean
+    guard: LeaveGuard
   } | null>(null)
   const [saving, setSaving] = useState(false)
   // One question at a time; a request while one is open means "no".
-  const asking = useRef(false)
-  const [registry] = useState<LeaveGuardRegistry>(() => ({
-    register: (next) => {
-      guard.current = next
-    },
-    confirmLeave: (options) => {
-      const current = guard.current
-      if (!current || !current.isDirty()) return Promise.resolve(true)
-      if (asking.current) return Promise.resolve(false)
-      asking.current = true
-      return new Promise<boolean>((resolve) => {
-        setPending({ resolve, reloadOnDiscard: options?.reloadOnDiscard ?? false })
-      })
+  const [control] = useState(() => {
+    let asking = false
+    return {
+      registry: createLeaveGuardRegistry((guard, reloadOnDiscard) => {
+        if (asking) return Promise.resolve(false)
+        asking = true
+        return new Promise<boolean>((resolve) => {
+          setPending({ resolve, reloadOnDiscard, guard })
+        })
+      }),
+      reset: () => {
+        asking = false
+      }
     }
-  }))
+  })
+  const registry = control.registry
 
   function answer(value: boolean): void {
     pending?.resolve(value)
-    asking.current = false
+    control.reset()
     setPending(null)
   }
 
   async function saveAndGo(): Promise<void> {
-    const current = guard.current
     setSaving(true)
-    const ok = current ? await current.save() : true
+    const ok = pending ? await pending.guard.save() : true
     setSaving(false)
     answer(ok)
   }
 
   async function drop(): Promise<void> {
-    if (pending?.reloadOnDiscard) await guard.current?.discard()
+    if (pending?.reloadOnDiscard) await pending.guard.discard()
     answer(true)
   }
 
@@ -98,36 +125,36 @@ export function useLeaveGuardRegistry(): { registry: LeaveGuardRegistry; dialog:
 }
 
 /**
- * For a screen with something to lose: registers it with the app, and asks the window to stop the
- * close while it is dirty (main answers with its own two-choice box).
+ * For a screen with something to lose: registers it with the app. The app's one beforeunload
+ * listener checks every registered guard, including hidden work tabs.
  */
 export function useRegisterLeaveGuard(guard: LeaveGuard): void {
   const registry = useContext(LeaveGuardContext)
+  const workId = useContext(LeaveGuardScopeContext) ?? '__legacy__'
   const latest = useRef(guard)
   useEffect(() => {
     latest.current = guard
   })
 
   useEffect(() => {
-    registry?.register({
-      isDirty: () => latest.current.isDirty(),
-      save: () => latest.current.save(),
-      discard: () => latest.current.discard()
-    })
-    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
-      if (!latest.current.isDirty()) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
-    window.addEventListener('beforeunload', onBeforeUnload)
+    registry?.register(
+      {
+        isDirty: () => latest.current.isDirty(),
+        save: () => latest.current.save(),
+        discard: () => latest.current.discard()
+      },
+      workId
+    )
     return () => {
-      registry?.register(null)
-      window.removeEventListener('beforeunload', onBeforeUnload)
+      registry?.register(null, workId)
     }
-  }, [registry])
+  }, [registry, workId])
 }
 
 export function useConfirmLeave(): LeaveGuardRegistry['confirmLeave'] {
   const registry = useContext(LeaveGuardContext)
-  return (options) => registry?.confirmLeave(options) ?? Promise.resolve(true)
+  const workId = useContext(LeaveGuardScopeContext)
+  return (options) =>
+    registry?.confirmLeave({ ...options, workId: options?.workId ?? workId ?? undefined }) ??
+    Promise.resolve(true)
 }

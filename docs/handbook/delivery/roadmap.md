@@ -84,8 +84,8 @@ flowchart LR
 | 2 | **Lõi dịch** | Một đường dịch trong service: lập lô, ID tạm, prompt, parse, đối soát và xử lý lỗi; adapter cho dữ liệu hiện tại | Chạy thật một chương; không mất/sai ID hoặc ghi đè chữ người; bằng chứng T0 và chấm mù theo [roadmap chi tiết](#2-lõi-dịch) | **Hoàn thành triển khai L0–L6 (2026-10-04):** lõi dịch độc lập trong `services/ai/translate/`, adapter `ChapterTranslator`, đối soát ID tạm `[n]`, parser khoan dung, chia lô theo token/đơn vị, vòng hỏi lại (repair) và phân tầng prompt |
 | 3 | **Thuật ngữ** | Lát 1 của `context-core`: mục thuật ngữ, tầng khớp, chèn tầng C, kiểm tuân thủ; màn Thuật ngữ thật; nhập `Names.txt` | Tuân thủ thuật ngữ tăng rõ so với không glossary; mục chưa duyệt không rời máy | **Hoàn thành (2026-10-04):** Schema v6 (`context_entry`, `context_alias`), CRUD theo chương, `namesParser` (`Names.txt`), `contextMatching` (longest-match CJK, word-boundary Latin), `glossaryCompliance`, tiêm Layer C vào Prompt Builder, privacy guard cho mục unapproved, UI `GlossaryScreen` thật nối IPC |
 | 4 | **Xưng hô** | Lát 2 của `context-core`: nhân vật, cặp xưng hô có hiệu lực theo chương, tầng B; màn Xưng hô | Số đại từ sai cặp giảm so với không ma trận (V3) | **Hoàn thành (2026-10-04):** Nhân vật và bí danh (`character`), quan hệ có chiều độc lập (`dyad`), hiệu lực theo chương, tiêm Layer B (`formatAddressingLayerB`) vào Prompt Builder, kiểm tra tuân thủ thuần (`addressingCompliance.ts`), privacy guard cho mục unapproved, UI `AddressingScreen` thật nối IPC |
-| 5 | **Đề xuất** | Đường duyệt cho mọi kết quả AI, kể cả pane trống; phiên và hàng chờ theo tác phẩm/chương; xem [module](../../modules/proposals/README.md) | V11, V12 | Chưa làm |
-| 6 | **Xuất** | `.md`/`.txt` từ hàm chiếu Markdown | Xuất rồi nhập lại giữ nguyên chữ | Chưa làm |
+| 5 | **Đề xuất** | Đường duyệt cho mọi kết quả AI, kể cả pane trống; phiên và hàng chờ theo tác phẩm/chương; xem [module](../../modules/proposals/README.md) | V11, V12 | **Hoàn thành (2026-10-05):** schema v7, proposal lifecycle, session persistence, paragraph translation, review diff, cross-chapter navigation |
+| 6 | **Xuất** | `.md`/`.txt`, `.docx`, `.pdf` chuẩn ebook novel; đơn chương và gộp/tách toàn tác phẩm | Xuất rồi nhập lại giữ nguyên chữ | **Hoàn thành (2026-10-05):** `ExportService` trong main, 4 định dạng (TXT, MD, Word DOCX, PDF native printToPDF), hộp thoại `ExportDialog`, round-trip text fidelity |
 | 7 | **Tác vụ** | `JobRunner` trong main, lưu bền; sổ `usage`; trần chi phí; khu vực Tác vụ thật; lịch gửi giữ cache | V13 | Chưa làm; **chặn bởi Q4** |
 | 8 | **Gỡ Từng câu** | Gỡ `segment`/`link`/`link_member`/`provenance`, thêm `ai_mark`; nhập raw chỉ chuẩn hóa; gỡ mã mode và kênh `links:*`/`rows:*` | Test kho, editor, crash qua; mở được tệp v5; V03, V15 | Chưa làm |
 | 9 | **QA** | Hiện cờ T0 theo đoạn; dịch lại đoạn bị cờ thành đề xuất | Bắt được lỗi cài sẵn trên fixture | Chưa làm |
@@ -203,6 +203,11 @@ trước nghiệm thu. Chạy và phục hồi tác vụ dịch nhiều chương
 - **Điều kiện qua:** xuất rồi nhập lại giữ nguyên chữ.
 
 ### 7. Tác vụ
+
+**Điều hướng hỗ trợ trước Module 7:** chủ sản phẩm đã chốt tab theo tác phẩm ngày 2026-10-05;
+[module Phiên làm việc](../../modules/workspace/README.md) mô tả change điều hướng đã triển khai
+trong working tree: mở nhiều truyện, nhớ vị trí, giữ bản sửa của từng tab. Vòng đời job vẫn do
+Module 7 sở hữu, không phụ thuộc tab đang xem.
 
 - **`JobRunner` trong main, lưu bền:** `job`, `job_item` (lưu `contextHash` và danh sách mục đã gửi).
 - **Sổ `usage`** ở `library.db`.

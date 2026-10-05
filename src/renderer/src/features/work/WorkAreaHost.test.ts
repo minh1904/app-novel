@@ -44,7 +44,7 @@ describe('WorkAreaHost', () => {
     expect(html.match(/role="tab"/g)).toHaveLength(2)
   })
 
-  it('keeps the order for four areas and renders only the selected one', () => {
+  it('mounts only the selected area at first and hides inactive panels', () => {
     const areas = [
       fakeArea('chapters', 'Chương'),
       fakeArea('context', 'Ngữ cảnh'),
@@ -57,6 +57,7 @@ describe('WorkAreaHost', () => {
     expect(html).toContain('sources sees ' + WORK_ID)
     expect(html).not.toContain('chapters sees')
     expect(html).not.toContain('jobs sees')
+    expect(html.match(/inert=""/g)).toHaveLength(3)
   })
 
   it('falls back to the first area when the selected one is not registered', () => {

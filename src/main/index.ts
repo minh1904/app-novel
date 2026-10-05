@@ -82,8 +82,8 @@ function createWindow(): void {
       defaultId: 0,
       cancelId: 0,
       title: 'Có thay đổi chưa lưu',
-      message: 'Bạn đã sửa văn bản của chương nhưng chưa lưu.',
-      detail: 'Nếu đóng ngay, những chỗ sửa chưa lưu sẽ mất.'
+      message: 'Một hoặc nhiều chương đang có thay đổi chưa lưu.',
+      detail: 'Nếu đóng ngay, các chỗ sửa chưa lưu trong mọi tab sẽ mất.'
     })
     if (choice === 1) event.preventDefault()
   })

@@ -11,10 +11,8 @@ import type { SourceLanguage } from '../../../../shared/contracts/library'
 import type { TargetRange, TargetScope } from '../editor/chatRange'
 import { buildChatContext, type ContextScope } from './chatContext'
 import {
-  attachRequestId,
   beginTurn,
   emptySession,
-  failTurn,
   historyFor,
   markTurnProposal,
   openRequestIds,
@@ -41,8 +39,13 @@ export interface ChatEditor {
   isDirty(): boolean
   reload(): Promise<void>
   targetRange(scope?: TargetScope): TargetRange | null
-  reviewProposal(range: TargetRange, replacement: string,
-    onAccept: () => void, onDeny: () => void, label?: string): 'reviewing' | 'stale'
+  reviewProposal(
+    range: TargetRange,
+    replacement: string,
+    onAccept: () => void,
+    onDeny: () => void,
+    label?: string
+  ): 'reviewing' | 'stale'
   endReview(): void
 }
 
@@ -129,8 +132,10 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   const [connectionId, setConnectionId] = useState<string | null>(null)
   const [model, setModelState] = useState<string | null>(null)
   const storedWorkId = useAiChatStore((state) => state.workId)
-  const session = useAiChatStore((state) => state.workId === workId ? state.session : emptySession)
-  const sessionId = useAiChatStore((state) => state.workId === workId ? state.sessionId : null)
+  const session = useAiChatStore((state) =>
+    state.workId === workId ? state.session : emptySession
+  )
+  const sessionId = useAiChatStore((state) => (state.workId === workId ? state.sessionId : null))
   const [sessions, setSessions] = useState<AiSessionView[]>([])
   const [proposalVersion, setProposalVersion] = useState(0)
   const loadSequence = useRef(0)
@@ -146,36 +151,49 @@ export function useAiChat(options: AiChatOptions): AiChatController {
 
   useEffect(() => {
     if (storedWorkId !== workId) {
-      for (const requestId of openRequestIds(useAiChatStore.getState().session)) {
-        void window.mira.ai.chat.cancel(requestId)
-      }
       useAiChatStore.getState().selectWork(workId)
     }
   }, [storedWorkId, workId])
 
-  const selectSession = useCallback((id: string) => {
-    if (useAiChatStore.getState().sessionId === id) return
-    for (const requestId of openRequestIds(sessionRef.current)) {
-      void window.mira.ai.chat.cancel(requestId)
-    }
-    const sequence = ++loadSequence.current
-    void window.mira.ai.sessions.turns(workId, id).then((result) => {
-      if (loadSequence.current !== sequence || !result.ok) return
-      useAiChatStore.getState().setSessionId(id)
-      useAiChatStore.getState().restoreSession(result.value.turns)
-    })
-  }, [workId])
+  const selectSession = useCallback(
+    (id: string) => {
+      if (useAiChatStore.getState().sessionId === id) return
+      for (const requestId of openRequestIds(sessionRef.current)) {
+        void window.mira.ai.chat.cancel(requestId)
+      }
+      const sequence = ++loadSequence.current
+      void window.mira.ai.sessions.turns(workId, id).then((result) => {
+        if (
+          loadSequence.current !== sequence ||
+          !result.ok ||
+          useAiChatStore.getState().workId !== workId
+        )
+          return
+        useAiChatStore.getState().setSessionId(id)
+        useAiChatStore.getState().restoreSession(result.value.turns)
+      })
+    },
+    [workId]
+  )
 
   useEffect(() => {
     const sequence = ++loadSequence.current
     void window.mira.ai.sessions.list(workId).then((result) => {
-      if (loadSequence.current !== sequence || !result.ok) return
+      if (
+        loadSequence.current !== sequence ||
+        !result.ok ||
+        useAiChatStore.getState().workId !== workId
+      )
+        return
       setSessions(result.value.sessions)
       const savedId = useAiChatStore.getState().sessionId
-      const first = result.value.sessions.find((item) => item.id === savedId) ?? result.value.sessions[0]
+      const first =
+        result.value.sessions.find((item) => item.id === savedId) ?? result.value.sessions[0]
       if (first) selectSession(first.id)
     })
-    return () => { loadSequence.current++ }
+    return () => {
+      loadSequence.current++
+    }
   }, [workId, selectSession])
 
   const latest = useRef({ source, target, range, scope, sourceLang })
@@ -235,7 +253,8 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   const reloaded = useRef(new Set<string>())
   useEffect(() => {
     for (const turn of session.turns) {
-      if (turn.proposalStatus !== 'applied' || !turn.partId || reloaded.current.has(turn.partId)) continue
+      if (turn.proposalStatus !== 'applied' || !turn.partId || reloaded.current.has(turn.partId))
+        continue
       reloaded.current.add(turn.partId)
       const editor = latest.current.target
       if (turn.chapterId === chapterId && editor && !editor.isDirty()) void editor.reload()
@@ -260,8 +279,11 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   )
 
   const send = useCallback(
-    async (question: string, action: ChatMode = 'hoi',
-      snapshot?: ChatSendSnapshot): Promise<void> => {
+    async (
+      question: string,
+      action: ChatMode = 'hoi',
+      snapshot?: ChatSendSnapshot
+    ): Promise<void> => {
       if (connection === null || chosenModel === null) return
       const asked = question.trim()
       if (asked === '') return
@@ -274,26 +296,40 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       const targetRange = snapshot ? snapshot.range : current.range
       const sourceText = snapshot?.sourceText ?? current.source.getText()
       const targetText = snapshot?.targetText ?? current.target?.getText() ?? ''
-      const base = action === 'hoi' ? null : await Promise.all([
-        window.mira.text.get(workId, chapterId, 'source'),
-        window.mira.text.get(workId, chapterId, 'target')
-      ])
+      const base =
+        action === 'hoi'
+          ? null
+          : await Promise.all([
+              window.mira.text.get(workId, chapterId, 'source'),
+              window.mira.text.get(workId, chapterId, 'target')
+            ])
       if (base && (!base[0].ok || !base[1].ok)) {
-        setApplyState({ kind: 'error', message: 'Không đọc được revision của chương để tạo đề xuất.' })
+        setApplyState({
+          kind: 'error',
+          message: 'Không đọc được revision của chương để tạo đề xuất.'
+        })
         return
       }
-      const proposalBase = base && base[0].ok && base[1].ok ? {
-        sourceRev: base[0].value.rev,
-        sourceContent: sourceText,
-        targetRev: base[1].value.rev,
-        targetContent: targetText,
-        blockAutoApply: current.source.isDirty() || current.target?.isDirty() === true ||
-          sourceText !== base[0].value.content || targetText !== base[1].value.content
-      } : undefined
+      const proposalBase =
+        base && base[0].ok && base[1].ok
+          ? {
+              sourceRev: base[0].value.rev,
+              sourceContent: sourceText,
+              targetRev: base[1].value.rev,
+              targetContent: targetText,
+              blockAutoApply:
+                current.source.isDirty() ||
+                current.target?.isDirty() === true ||
+                sourceText !== base[0].value.content ||
+                targetText !== base[1].value.content
+            }
+          : undefined
       // Built even with no range and no caret: the chapter is what the question is about, and a turn
       // that reached the model with nothing attached is how "dịch chương này" got the answer "hãy
       // cung cấp nội dung chương". Only a missing translation pane leaves this empty.
-      const context: ChatContextBlock[] = snapshot?.context ?? (current.target === null
+      const context: ChatContextBlock[] =
+        snapshot?.context ??
+        (current.target === null
           ? []
           : buildChatContext({
               sourceText,
@@ -305,7 +341,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
 
       const localId = crypto.randomUUID()
       const { history, dropped } = historyFor(sessionRef.current)
-      useAiChatStore.getState().setSession((previous) => ({
+      useAiChatStore.getState().setSessionForWork(workId, (previous) => ({
         ...beginTurn(previous, {
           localId,
           question: asked,
@@ -337,17 +373,18 @@ export function useAiChat(options: AiChatOptions): AiChatController {
         context
       })
 
-      useAiChatStore.getState().setSession((previous) =>
-        result.ok
-          ? attachRequestId(previous, localId, result.value.requestId)
-          : failTurn(previous, localId, {
-              kind: 'refused',
-              message: result.error.message,
-              retryable: false,
-              recoverAt: null
-            })
-      )
-      if (result.ok && result.value.sessionId) useAiChatStore.getState().setSessionId(result.value.sessionId)
+      if (result.ok) {
+        useAiChatStore.getState().attachRequestIdForWork(workId, localId, result.value.requestId)
+      } else {
+        useAiChatStore.getState().failTurnForWork(workId, localId, {
+          kind: 'refused',
+          message: result.error.message,
+          retryable: false,
+          recoverAt: null
+        })
+      }
+      if (result.ok && result.value.sessionId)
+        useAiChatStore.getState().setSessionIdForWork(workId, result.value.sessionId)
       if (result.ok) {
         void window.mira.ai.sessions.list(workId).then((listed) => {
           if (listed.ok) setSessions(listed.value.sessions)
@@ -357,36 +394,46 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     [connection, chosenModel, workId, chapterId, sessionId]
   )
 
-  const apply = useCallback(async (turn: TurnView): Promise<void> => {
-    const editor = latest.current.target
-    if (!editor || turn.partId === undefined || turn.chapterId !== chapterId) {
-      setApplyState({ kind: 'stale' })
-      return
-    }
-    if (editor.isDirty() || latest.current.source.isDirty()) {
-      setApplyState({ kind: 'error', message: 'Hãy đợi chữ đang sửa được lưu trước khi duyệt.' })
-      return
-    }
-    const result = await window.mira.ai.proposals.accept({
-      workId, chapterId, partId: turn.partId, commandId: crypto.randomUUID()
-    })
-    if (!result.ok) {
-      setApplyState({ kind: 'error', message: result.error.message })
-      return
-    }
-    if (result.value.accepted.includes(turn.partId)) {
-      setApplyState({ kind: 'applied' })
-      setProposalVersion((version) => version + 1)
-      if (turn.proposalId) useAiChatStore.getState().setSession((current) => markTurnProposal(current, turn.localId, {
-        proposalId: turn.proposalId as string,
-        partId: turn.partId as string,
-        status: 'applied'
-      }))
-      if (!editor.isDirty()) await editor.reload()
-    } else {
-      setApplyState({ kind: 'stale' })
-    }
-  }, [workId, chapterId])
+  const apply = useCallback(
+    async (turn: TurnView): Promise<void> => {
+      const editor = latest.current.target
+      if (!editor || turn.partId === undefined || turn.chapterId !== chapterId) {
+        setApplyState({ kind: 'stale' })
+        return
+      }
+      if (editor.isDirty() || latest.current.source.isDirty()) {
+        setApplyState({ kind: 'error', message: 'Hãy đợi chữ đang sửa được lưu trước khi duyệt.' })
+        return
+      }
+      const result = await window.mira.ai.proposals.accept({
+        workId,
+        chapterId,
+        partId: turn.partId,
+        commandId: crypto.randomUUID()
+      })
+      if (!result.ok) {
+        setApplyState({ kind: 'error', message: result.error.message })
+        return
+      }
+      if (useAiChatStore.getState().workId !== workId) return
+      if (result.value.accepted.includes(turn.partId)) {
+        setApplyState({ kind: 'applied' })
+        setProposalVersion((version) => version + 1)
+        if (turn.proposalId)
+          useAiChatStore.getState().setSession((current) =>
+            markTurnProposal(current, turn.localId, {
+              proposalId: turn.proposalId as string,
+              partId: turn.partId as string,
+              status: 'applied'
+            })
+          )
+        if (!editor.isDirty()) await editor.reload()
+      } else {
+        setApplyState({ kind: 'stale' })
+      }
+    },
+    [workId, chapterId]
+  )
 
   return {
     session,

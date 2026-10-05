@@ -48,17 +48,33 @@ const initialValues = {
 }
 
 let latestLoadTicket = 0
+type ChapterSnapshot = Pick<ChapterState, 'load' | 'chapters' | 'loadError' | 'notice'>
+const otherWorkChapters = new Map<string, ChapterSnapshot>()
+
+function snapshot(state: ChapterState): ChapterSnapshot {
+  return {
+    load: state.load,
+    chapters: state.chapters,
+    loadError: state.loadError,
+    notice: state.notice
+  }
+}
 
 export const useChapterStore = create<ChapterState>((set, get) => {
   const runAction = async <T>(
+    workId: string,
     failure: string,
     call: () => Promise<Result<T>>,
     apply: (value: T) => void
   ): Promise<Result<T>> => {
     const result = await call()
     if (result.ok) {
-      apply(result.value)
-    } else {
+      if (get().workId === workId) apply(result.value)
+      else {
+        const cached = otherWorkChapters.get(workId)
+        if (cached) otherWorkChapters.set(workId, { ...cached, load: 'loading' })
+      }
+    } else if (get().workId === workId) {
       set({ notice: failure + ': ' + describeChapterError(result.error) })
     }
     return result
@@ -72,7 +88,20 @@ export const useChapterStore = create<ChapterState>((set, get) => {
       if (current.workId === workId && current.load === 'ready') {
         return
       }
-      set({ workId, load: 'loading', chapters: [], loadError: null, notice: null })
+      if (current.workId && current.workId !== workId)
+        otherWorkChapters.set(current.workId, snapshot(current))
+      const cached = otherWorkChapters.get(workId)
+      otherWorkChapters.delete(workId)
+      set({
+        workId,
+        ...(cached ?? {
+          load: 'loading',
+          chapters: [],
+          loadError: null,
+          notice: null
+        })
+      })
+      if (cached?.load === 'ready') return
       await get().reload()
     },
 
@@ -82,7 +111,7 @@ export const useChapterStore = create<ChapterState>((set, get) => {
 
       const ticket = ++latestLoadTicket
       const result = await window.mira.chapters.list(workId)
-      if (ticket !== latestLoadTicket) return
+      if (ticket !== latestLoadTicket || get().workId !== workId) return
 
       if (result.ok) {
         set({
@@ -109,6 +138,7 @@ export const useChapterStore = create<ChapterState>((set, get) => {
       }
 
       const result = await runAction(
+        workId,
         'Không thêm được chương',
         () => window.mira.chapters.create(workId, title),
         ({ work, chapter }) => {
@@ -127,6 +157,7 @@ export const useChapterStore = create<ChapterState>((set, get) => {
       }
 
       const result = await runAction(
+        workId,
         'Không đổi được tên chương',
         () => window.mira.chapters.rename(workId, chapterId, title),
         ({ work, chapter }) => {
@@ -147,6 +178,7 @@ export const useChapterStore = create<ChapterState>((set, get) => {
       }
 
       const result = await runAction(
+        workId,
         'Không chuyển được chương',
         () => window.mira.chapters.move(workId, chapterId, to),
         ({ work, chapters }) => {
@@ -165,6 +197,7 @@ export const useChapterStore = create<ChapterState>((set, get) => {
       }
 
       const result = await runAction(
+        workId,
         'Không xóa được chương',
         () => window.mira.chapters.delete(workId, chapterId),
         ({ work, chapters }) => {
@@ -183,6 +216,7 @@ export const useChapterStore = create<ChapterState>((set, get) => {
       }
 
       const result = await runAction(
+        workId,
         'Không mở được chương',
         () => window.mira.chapters.open(workId, chapterId),
         ({ work }) => {
@@ -194,6 +228,7 @@ export const useChapterStore = create<ChapterState>((set, get) => {
 
     reset: () => {
       latestLoadTicket = 0
+      otherWorkChapters.clear()
       set({ ...initialValues })
     }
   }

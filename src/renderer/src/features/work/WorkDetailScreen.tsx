@@ -9,9 +9,12 @@ import { useWorkDetail } from './useWorkDetail'
 import { WorkAreaHost } from './WorkAreaHost'
 import { WorkHeader } from './WorkHeader'
 import { workAreas } from './workAreas'
+import { ExportDialog } from '../export/ExportDialog'
 
 export interface WorkDetailScreenProps {
   workId: string
+  areaId?: string
+  onAreaChange?(areaId: string): void
   onBackToLibrary(): void
   onOpenChapter(workId: string, chapterId: string): void
   /** Every change made on this screen, so the library list and sidebar stay in step. */
@@ -24,14 +27,18 @@ export interface WorkDetailScreenProps {
  */
 export function WorkDetailScreen({
   workId,
+  areaId: controlledAreaId,
+  onAreaChange,
   onBackToLibrary,
   onOpenChapter,
   onWorkChanged
 }: WorkDetailScreenProps): JSX.Element {
   const detail = useWorkDetail(workId, onWorkChanged)
   const { work } = detail
-  const [areaId, setAreaId] = useState(workAreas[0].id)
+  const [localAreaId, setLocalAreaId] = useState(workAreas[0].id)
+  const areaId = controlledAreaId ?? localAreaId
   const [editing, setEditing] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const [addChapterSignal, setAddChapterSignal] = useState(0)
   const [saved, setSaved] = useState<string | null>(null)
 
@@ -87,7 +94,7 @@ export function WorkDetailScreen({
   }
 
   return (
-    <div className="mx-auto flex max-w-[960px] flex-col gap-7 px-6 py-8">
+    <div className="mx-auto flex max-w-[960px] flex-col gap-5 px-6 py-6">
       {saved && (
         <Banner tone="success" onDismiss={() => setSaved(null)}>
           {saved}
@@ -114,14 +121,18 @@ export function WorkDetailScreen({
           onSetPaused: (paused) => void detail.setPaused(paused),
           onSetArchived: (archived) => void detail.setArchived(archived),
           onSetCover: (file) => void detail.setCover(file),
-          onBackup: () => void backUp()
+          onBackup: () => void backUp(),
+          onExport: () => setExportOpen(true)
         }}
       />
 
       <WorkAreaHost
         areas={workAreas}
         selectedId={areaId}
-        onSelect={setAreaId}
+        onSelect={(selected) => {
+          setLocalAreaId(selected)
+          onAreaChange?.(selected)
+        }}
         areaProps={{
           workId,
           onWork: detail.applyWork,
@@ -135,6 +146,13 @@ export function WorkDetailScreen({
         open={editing}
         onClose={() => setEditing(false)}
         onSave={(patch) => detail.update(patch)}
+      />
+
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        workId={workId}
+        workTitle={work.title}
       />
     </div>
   )
