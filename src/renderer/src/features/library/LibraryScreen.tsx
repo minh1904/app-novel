@@ -177,8 +177,8 @@ function PopulatedLibrary({
    */
   return (
     <div className="@container flex h-full min-h-0 flex-col">
-      <div className="flex min-h-[42px] shrink-0 flex-wrap items-center gap-2 border-b border-line bg-canvas px-2.5 py-1">
-        <h2 className="shrink-0 text-[12.5px] font-semibold">
+      <div className="flex min-h-(--header-height) shrink-0 flex-wrap items-center gap-2 border-b border-line bg-canvas px-2.5 py-1">
+        <h2 className="shrink-0 text-ui-sm font-semibold">
           {copy.title}{' '}
           <span className="font-normal text-ink-muted">
             · {visible.length.toLocaleString('vi')} tác phẩm
@@ -250,7 +250,7 @@ function PopulatedLibrary({
             <WorkTable works={visible} actions={actions} onRename={setRenaming} />
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-              <p className="text-[13px] text-ink-muted">
+              <p className="text-ui-sm text-ink-muted">
                 {filtered ? 'Không có tác phẩm nào khớp bộ lọc hiện tại.' : copy.empty}
               </p>
               {filtered && (
@@ -305,7 +305,7 @@ function PanelHeading({
 }): JSX.Element {
   return (
     <div className="flex items-center justify-between gap-2">
-      <h3 id={id} className="flex items-center gap-2 text-[13px] font-semibold">
+      <h3 id={id} className="flex items-center gap-2 text-ui-sm font-semibold">
         <span className="text-ink-muted">{icon}</span>
         {children}
       </h3>
@@ -351,18 +351,18 @@ function ContinuePanel({
 
   const details = (
     <div className="flex min-w-0 flex-col gap-1">
-      <p className="line-clamp-2 text-[14px] leading-[1.3] font-semibold tracking-[-0.02em]">
+      <p className="line-clamp-2 text-ui-sm leading-tight font-semibold tracking-heading">
         {work.title}
       </p>
-      <p className="text-xs text-ink-muted">
+      <p className="text-ui-xs text-ink-muted">
         Chương {chapter.number} · {chapter.title}
       </p>
       {chapter.excerpt && (
-        <p className="mt-1 line-clamp-2 border-l-2 border-line-strong pl-2.5 text-xs leading-[1.5]">
+        <p className="mt-1 line-clamp-2 border-l-2 border-line-strong pl-2.5 text-ui-xs leading-normal">
           {chapter.excerpt}
         </p>
       )}
-      <p className="mt-1 text-[12px] text-ink-muted">
+      <p className="mt-1 text-ui-xs text-ink-muted">
         Sửa{' '}
         <time dateTime={work.updatedAt.toISOString()} title={formatFullDate(work.updatedAt)}>
           {formatUpdated(work.updatedAt).toLocaleLowerCase('vi')}
@@ -428,7 +428,7 @@ function WorkTable({
       <div
         className={cx(
           columns,
-          'sticky top-0 z-10 h-7 border-b border-line bg-canvas px-2.5 text-[11px] text-ink-muted'
+          'sticky top-0 z-10 h-7 border-b border-line bg-canvas px-2.5 text-ui-xs text-ink-muted'
         )}
         aria-hidden="true"
       >
@@ -479,10 +479,10 @@ function WorkRow({
       <div className="flex min-w-0 items-center gap-2.5">
         <WorkCover work={work} size="xs" />
         <div className="flex min-w-0 flex-col">
-          <span id={titleId} className="truncate text-[12.5px] font-semibold">
+          <span id={titleId} className="truncate text-ui-sm font-semibold">
             {work.title}
           </span>
-          <span className="truncate text-[11px] text-ink-muted">
+          <span className="truncate text-ui-xs text-ink-muted">
             <span title={languages[work.sourceLanguage].name + ' → Tiếng Việt'}>
               {languages[work.sourceLanguage].short} → Việt
             </span>
@@ -496,13 +496,13 @@ function WorkRow({
           </span>
         </div>
       </div>
-      <span className={cx('text-right text-[11px] whitespace-nowrap text-ink-muted', hideBelow700)}>
+      <span className={cx('text-right text-ui-xs whitespace-nowrap text-ink-muted', hideBelow700)}>
         {work.chapterCount} chương
       </span>
       <div className="flex items-center gap-1.5">
         <span
           className={cx(
-            'inline-flex h-[22px] items-center rounded-full px-2 text-[11px] font-semibold whitespace-nowrap',
+            'inline-flex h-[22px] items-center rounded-full px-2 text-ui-xs font-semibold whitespace-nowrap',
             statusTone[work.status]
           )}
           title={work.lastChapter ? 'Chương ' + work.lastChapter.number : undefined}
@@ -511,7 +511,7 @@ function WorkRow({
         </span>
       </div>
       <time
-        className={cx('flex flex-col text-[11px] text-ink-muted', hideBelow560)}
+        className={cx('flex flex-col text-ui-xs text-ink-muted', hideBelow560)}
         dateTime={work.updatedAt.toISOString()}
         title={formatFullDate(work.updatedAt)}
       >
@@ -560,7 +560,7 @@ function WorkMenu({
     <MenuRoot>
       <MenuTrigger
         aria-label={'Thao tác khác cho ' + work.title}
-        className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
+        className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
       >
         <MenuDotsIcon size={16} />
       </MenuTrigger>
@@ -714,15 +714,15 @@ function EmptyLibrary({
             <ArrowRightIcon size={20} className="mx-2 text-ink-muted" />
             <span
               lang="vi"
-              className="inline-flex size-16 items-center justify-center rounded-panel bg-primary text-[26px] font-medium tracking-[-0.03em] text-primary-foreground"
+              className="inline-flex size-16 items-center justify-center rounded-panel bg-primary text-ui-title font-medium tracking-heading text-primary-foreground"
             >
               Vi
             </span>
           </div>
-          <h2 className="mb-3 text-[28px] leading-[1.15] font-semibold tracking-[-0.045em]">
+          <h2 className="mb-3 text-ui-title leading-tight font-semibold tracking-heading">
             Bắt đầu tác phẩm đầu tiên
           </h2>
-          <p className="mb-7 max-w-[48ch] text-sm leading-[1.6] text-ink-muted">
+          <p className="mb-7 max-w-[48ch] text-ui-sm leading-normal text-ink-muted">
             Tạo chỗ để giữ các chương, bản gốc và bản dịch của một tác phẩm trên máy này.
           </p>
           <Button size="xl" onClick={onCreateWork}>
@@ -740,10 +740,10 @@ function EmptyLibrary({
           className="flex flex-col gap-4 rounded-panel border border-line bg-sidebar p-4"
         >
           <div className="flex flex-col gap-1">
-            <h3 id="getting-started-heading" className="text-[13px] font-semibold">
+            <h3 id="getting-started-heading" className="text-ui-sm font-semibold">
               Bắt đầu trong 3 bước
             </h3>
-            <p className="text-xs leading-[1.55] text-ink-muted">
+            <p className="text-ui-xs leading-normal text-ink-muted">
               Chỉ cần tên và ngôn ngữ gốc để tạo tác phẩm; chương có thể thêm sau.
             </p>
           </div>
@@ -753,13 +753,13 @@ function EmptyLibrary({
                 key={step.title}
                 className="flex gap-3 rounded-control border border-line bg-canvas p-3"
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-control text-[12px] font-semibold">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-control text-ui-xs font-semibold">
                   {index + 1}
                 </span>
                 <span className="mt-0.5 text-ink-muted">{step.icon}</span>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[13px] font-semibold">{step.title}</span>
-                  <span className="text-xs leading-[1.5] text-ink-muted">{step.detail}</span>
+                  <span className="text-ui-sm font-semibold">{step.title}</span>
+                  <span className="text-ui-xs leading-normal text-ink-muted">{step.detail}</span>
                 </div>
               </li>
             ))}

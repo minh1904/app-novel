@@ -41,11 +41,11 @@ export function EditorPane({
     <section aria-label={title} className="flex min-h-0 min-w-0 flex-col gap-2 bg-canvas p-3">
       <div className="flex min-h-6 min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-baseline gap-2">
-          <h3 className="shrink-0 text-[13px] font-semibold">{title}</h3>
-          <p className="truncate text-xs text-ink-muted">{subtitle}</p>
+          <h3 className="shrink-0 text-ui-sm font-semibold">{title}</h3>
+          <p className="truncate text-ui-xs text-ink-muted">{subtitle}</p>
           <p
             role="status"
-            className="flex shrink-0 items-center gap-1 text-[11px] whitespace-nowrap text-ink-muted"
+            className="flex shrink-0 items-center gap-1 text-ui-xs whitespace-nowrap text-ink-muted"
           >
             <span
               aria-hidden="true"

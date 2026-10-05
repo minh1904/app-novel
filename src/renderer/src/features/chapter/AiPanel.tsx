@@ -286,15 +286,15 @@ export function AiPanel({
 
       <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-3">
         <StarsIcon size={16} className="shrink-0 text-info" />
-        <h3 className="text-[12px] font-semibold">Hỏi AI</h3>
-        <span className="min-w-0 truncate text-[11px] text-ink-muted">
+        <h3 className="text-ui-xs font-semibold">Hỏi AI</h3>
+        <span className="min-w-0 truncate text-ui-xs text-ink-muted">
           {chapterLabel} · {rangeLabel(range, targetText, scope)}
         </span>
         <span className="ml-auto flex shrink-0 items-center gap-0.5">
           {chat.sessions.length > 0 && (
             <MenuRoot>
               <MenuTrigger
-                className="inline-flex h-7 items-center gap-1 rounded-control px-1.5 text-[11px] text-ink-muted hover:bg-selected"
+                className="inline-flex h-7 items-center gap-1 rounded-control px-1.5 text-ui-xs text-ink-muted hover:bg-hover"
                 aria-label="Mở lịch sử hội thoại"
               >
                 Lịch sử <AltArrowDownIcon size={12} />
@@ -335,12 +335,12 @@ export function AiPanel({
         {pendingCount > 0 && (
           <div className="rounded-panel border border-line-strong bg-canvas p-2">
             <div className="flex items-center justify-between">
-              <button type="button" className="text-[12px] font-medium text-ink" aria-expanded={queueOpen}
+              <button type="button" className="text-ui-xs font-medium text-ink" aria-expanded={queueOpen}
                 onClick={() => setQueueOpen((value) => !value)}>
                 Đề xuất chờ · {chapterLabel} ({pendingCount}) {queueOpen ? '▴' : '▾'}
               </button>
               {queueOpen && (
-                <div className="flex items-center gap-1 text-[11px]">
+                <div className="flex items-center gap-1 text-ui-xs">
                   <button
                     type="button"
                     className={cx('rounded-control px-1.5 py-0.5', queueFilter === 'all' ? 'bg-control font-semibold text-ink' : 'text-ink-muted hover:text-ink')}
@@ -371,10 +371,10 @@ export function AiPanel({
                     ['pending', 'conflict', 'stale', 'needs-placement'].includes(part.status)
                   ).map((part) => ({ proposal, part })))
                   if (parts.length === 0) {
-                    return <p className="text-[11px] text-ink-muted">Không có đề xuất nào thuộc phiên này.</p>
+                    return <p className="text-ui-xs text-ink-muted">Không có đề xuất nào thuộc phiên này.</p>
                   }
                   return parts.map(({ proposal, part }) => (
-                    <details key={part.id} className="rounded-control border border-line p-2 text-[11px]">
+                    <details key={part.id} className="rounded-control border border-line p-2 text-ui-xs">
                       <summary className="cursor-pointer text-ink">
                         {proposal.origin === 'chat' ? 'Chat' : 'Dịch chương'} · {partStatusLabel[part.status]}
                       </summary>
@@ -397,14 +397,14 @@ export function AiPanel({
             )}
           </div>
         )}
-        {queueNotice && <p role="status" className="text-[11px] text-ink-muted">{queueNotice}</p>}
+        {queueNotice && <p role="status" className="text-ui-xs text-ink-muted">{queueNotice}</p>}
         {undoAvailable && (
           <Button variant="ghost-muted" size="sm" className="self-start" onClick={() => void undo()}>
             Hoàn tác lượt duyệt gần nhất
           </Button>
         )}
         {chat.loadError !== null && (
-          <p className="rounded-control border border-error/40 bg-error/5 px-2 py-1.5 text-[12px] leading-[1.5]">
+          <p className="rounded-control border border-error/40 bg-error/5 px-2 py-1.5 text-ui-xs leading-normal">
             Không đọc được danh sách kết nối: {chat.loadError}
           </p>
         )}
@@ -412,7 +412,7 @@ export function AiPanel({
         {chat.modelNotice !== null && (
           <p
             role="alert"
-            className="flex items-start justify-between gap-2 rounded-control border border-error/40 bg-error/5 px-2 py-1.5 text-[12px] leading-[1.5]"
+            className="flex items-start justify-between gap-2 rounded-control border border-error/40 bg-error/5 px-2 py-1.5 text-ui-xs leading-normal"
           >
             <span className="min-w-0 break-words">
               Không đổi được mức suy luận: {chat.modelNotice}
@@ -429,7 +429,7 @@ export function AiPanel({
 
         {chat.loadError === null && chat.usable.length === 0 && (
           <div className="flex flex-col items-start gap-2 rounded-panel border border-line bg-canvas p-3">
-            <p className="text-[12px] leading-[1.6] text-ink-muted">
+            <p className="text-ui-xs leading-normal text-ink-muted">
               Chưa có kết nối AI nào đang bật, nên chưa gửi được câu hỏi nào. Khai một kết nối và
               dán khóa trong Cài đặt, rồi quay lại đây.
             </p>
@@ -441,7 +441,7 @@ export function AiPanel({
         )}
 
         {chat.session.dropped > 0 && (
-          <p className="text-[11px] leading-[1.5] text-ink-muted">
+          <p className="text-ui-xs leading-normal text-ink-muted">
             Hội thoại đã dài: {chat.session.dropped} lượt cũ nhất không được gửi kèm lượt vừa rồi.
           </p>
         )}
@@ -468,7 +468,7 @@ export function AiPanel({
 
         {chat.applyState.kind === 'stale' && (
           <div className="flex flex-col items-start gap-1.5 rounded-panel border border-error/40 bg-error/5 p-2">
-            <p className="text-[12px] leading-[1.5] text-ink">
+            <p className="text-ui-xs leading-normal text-ink">
               Chưa áp dụng: đoạn đó đã đổi kể từ lúc hỏi. Xem lại bản dịch rồi hỏi lại cho đúng đoạn
               hiện tại.
             </p>
@@ -479,20 +479,20 @@ export function AiPanel({
         )}
 
         {chat.applyState.kind === 'error' && (
-          <p role="alert" className="rounded-panel border border-error/40 bg-error/5 p-2 text-[12px] text-ink">
+          <p role="alert" className="rounded-panel border border-error/40 bg-error/5 p-2 text-ui-xs text-ink">
             {chat.applyState.message}
           </p>
         )}
 
         {chat.applyState.kind === 'applied' && (
-          <p className="text-[11px] leading-[1.5] text-ink-muted">
+          <p className="text-ui-xs leading-normal text-ink-muted">
             Đã áp dụng vào bản dịch. Ctrl+Z trong pane bản dịch để hoàn tác.
           </p>
         )}
 
       </div>
 
-      <p className="shrink-0 px-3 text-[11px] leading-[1.5] text-ink-muted">
+      <p className="shrink-0 px-3 text-ui-xs leading-normal text-ink-muted">
         Hội thoại được lưu trong tác phẩm; đóng panel vẫn có thể mở lại từ Lịch sử.
       </p>
 
@@ -515,9 +515,9 @@ export function AiPanel({
           <input type="search" value={contextQuery} aria-label="Tìm chương"
             onChange={(event) => setContextQuery(event.target.value)}
             placeholder="Tìm theo tên hoặc số chương"
-            className="rounded-control border border-line bg-canvas px-3 py-2 text-[12px]" />
-          {contextNotice && <p role="alert" className="text-[12px] text-error">{contextNotice}</p>}
-          {pendingContext && <div className="rounded-control border border-warning/40 bg-warning/10 p-3 text-[12px]">
+            className="rounded-control border border-line bg-canvas px-3 py-2 text-ui-xs" />
+          {contextNotice && <p role="alert" className="text-ui-xs text-error">{contextNotice}</p>}
+          {pendingContext && <div className="rounded-control border border-warning/40 bg-warning/10 p-3 text-ui-xs">
             <p>Nguồn có {pendingContext.length.toLocaleString('vi')} ký tự. Giới hạn gửi kèm là{' '}
               {CHAT_BLOCK_TEXT_MAX.toLocaleString('vi')} ký tự đầu; phần còn lại sẽ không được gửi.</p>
             <div className="mt-2 flex gap-2">
@@ -530,8 +530,8 @@ export function AiPanel({
             </div>
           </div>}
           {!pendingContext && <div className="max-h-72 space-y-1 overflow-y-auto">
-            {contextChapters.length === 0 && <p className="text-[12px] text-ink-muted">Không tìm thấy chương khác.</p>}
-            {contextChapters.map((item) => <div key={item.id} className="flex items-center gap-2 rounded-control border border-line p-2 text-[12px]">
+            {contextChapters.length === 0 && <p className="text-ui-xs text-ink-muted">Không tìm thấy chương khác.</p>}
+            {contextChapters.map((item) => <div key={item.id} className="flex items-center gap-2 rounded-control border border-line p-2 text-ui-xs">
               <span className="min-w-0 flex-1 truncate">{item.title.trim() || 'Chương ' + item.number}</span>
               <Button size="sm" variant="outline" disabled={!item.hasSource}
                 onClick={() => void addChapterContext(item, 'source')}>Bản gốc</Button>

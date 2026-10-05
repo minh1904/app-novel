@@ -69,7 +69,7 @@ function MoveForm({
         onClose()
       }}
     >
-      <p className="text-xs text-ink-muted">
+      <p className="text-ui-xs text-ink-muted">
         Đang chuyển <strong className="font-semibold text-ink">{displayTitle(chapter)}</strong>{' '}
         (hiện ở vị trí {chapter.number}).
       </p>
@@ -157,20 +157,20 @@ function DeleteBody({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-xs leading-[1.55]">
+      <p className="text-ui-xs leading-normal">
         <strong className="font-semibold">{describeChapter(chapter)}</strong> sẽ bị xóa khỏi tác
         phẩm, các chương sau nó đổi số thứ tự. Việc này không hoàn tác được.
       </p>
       {note && (
         <p
           role="note"
-          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-xs leading-[1.5]"
+          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-ui-xs leading-normal"
         >
           <strong className="font-semibold">{note}</strong> Nên sao lưu tác phẩm trước khi xóa.
         </p>
       )}
       {backupMessage && (
-        <p role="status" className="text-xs leading-[1.5] break-words text-ink-muted">
+        <p role="status" className="text-ui-xs leading-normal break-words text-ink-muted">
           {backupMessage}
         </p>
       )}

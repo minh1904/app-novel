@@ -36,7 +36,7 @@ function SentContext({ blocks }: { blocks: ChatContextBlock[] }): JSX.Element | 
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((value) => !value)}
-        className="flex h-6 w-fit cursor-pointer items-center gap-1.5 text-[11px] text-ink-muted outline-none hover:text-ink focus-visible:text-ink"
+        className="flex h-6 w-fit cursor-pointer items-center gap-1.5 text-ui-xs text-ink-muted outline-none hover:text-ink focus-visible:text-ink"
       >
         <AltArrowRightIcon
           size={14}
@@ -56,8 +56,8 @@ function SentContext({ blocks }: { blocks: ChatContextBlock[] }): JSX.Element | 
           <ul className="mt-2 ml-[7px] space-y-2 border-l border-line-strong pl-4">
             {blocks.map((block, index) => (
               <li key={block.label + String(index)}>
-                <p className="text-[12px] text-ink">{block.label}</p>
-                <p className="text-[11px] leading-[1.5] text-ink-muted">{block.detail}</p>
+                <p className="text-ui-xs text-ink">{block.label}</p>
+                <p className="text-ui-xs leading-normal text-ink-muted">{block.detail}</p>
               </li>
             ))}
           </ul>
@@ -90,7 +90,7 @@ function ProposalSummary({
   return (
     <div className="rounded-panel border border-line-strong px-2 py-1.5">
       <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 text-[11px] text-ink-muted">
+        <span className="min-w-0 flex-1 text-ui-xs text-ink-muted">
           Đề xuất thay {removed} dòng, thêm {added} dòng
         </span>
         <Button size="sm" onClick={() => setOpen((value) => !value)}>
@@ -100,12 +100,12 @@ function ProposalSummary({
       {open && (
         <div className="mt-2 space-y-2">
           <div>
-            <p className="text-[11px] text-ink-muted">Chữ hiện tại lúc hỏi</p>
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-[12px] text-ink">{before}</pre>
+            <p className="text-ui-xs text-ink-muted">Chữ hiện tại lúc hỏi</p>
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">{before}</pre>
           </div>
           <div>
-            <p className="text-[11px] text-ink-muted">Bản AI đề xuất</p>
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-[12px] text-ink">{after}</pre>
+            <p className="text-ui-xs text-ink-muted">Bản AI đề xuất</p>
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">{after}</pre>
           </div>
           <div className="flex gap-1">
             {onAccept && <Button size="sm" onClick={onAccept}>Áp dụng</Button>}
@@ -145,7 +145,7 @@ export function AiTurn({
 
   return (
     <article className="flex flex-col gap-2">
-      <p className="w-fit self-end rounded-panel bg-control px-2.5 py-1.5 text-[13px] leading-[1.6] text-ink">
+      <p className="w-fit self-end rounded-panel bg-control px-2.5 py-1.5 text-ui-sm leading-normal text-ink">
         {turn.question}
       </p>
 
@@ -158,7 +158,7 @@ export function AiTurn({
           {turn.tools.map((step, index) => (
             <li key={step.name + String(index)} className="flex items-center gap-1.5">
               <BookIcon size={13} className="shrink-0 text-ink-muted" />
-              <span className="text-[11px] text-ink-muted">Đã đọc: {step.detail}</span>
+              <span className="text-ui-xs text-ink-muted">Đã đọc: {step.detail}</span>
             </li>
           ))}
         </ul>
@@ -175,7 +175,7 @@ export function AiTurn({
       )}
 
       {running && (
-        <div className="flex items-center gap-2 text-[11px] text-ink-muted">
+        <div className="flex items-center gap-2 text-ui-xs text-ink-muted">
           <span className="animate-pulse">
             {turn.status === 'sending' ? 'Đang gửi…' : 'Đang trả lời…'}
           </span>
@@ -193,19 +193,19 @@ export function AiTurn({
       )}
 
       {turn.status === 'cancelled' && (
-        <p className="text-[11px] text-ink-muted">
+        <p className="text-ui-xs text-ink-muted">
           Đã hủy. Câu trả lời chưa trọn nên không áp dụng được; hỏi lại nếu cần.
         </p>
       )}
 
       {turn.status === 'error' && turn.error !== null && (
         <div className="flex flex-col gap-1.5 rounded-panel border border-error/40 bg-error/5 p-2">
-          <p className="flex gap-1.5 text-[12px] leading-[1.5] text-ink">
+          <p className="flex gap-1.5 text-ui-xs leading-normal text-ink">
             <DangerCircleIcon size={14} className="mt-px shrink-0 text-error" />
             {turn.error.message}
           </p>
           {turn.error.recoverAt !== null && (
-            <p className="text-[11px] text-ink-muted">
+            <p className="text-ui-xs text-ink-muted">
               Hạn mức hồi phục khoảng{' '}
               {new Date(turn.error.recoverAt).toLocaleTimeString('vi-VN', {
                 hour: '2-digit',
@@ -229,21 +229,21 @@ export function AiTurn({
       )}
 
       {turn.mode === 'ap_dung' && turn.autoApply === 'applied' && (
-        <p className="text-[11px] text-success">Đã áp dụng thẳng vào bản dịch.</p>
+        <p className="text-ui-xs text-success">Đã áp dụng thẳng vào bản dịch.</p>
       )}
 
       {turn.mode === 'sua' && turn.proposalStatus === 'applied' && (
-        <p className="text-[11px] text-success">Đề xuất đã được áp dụng.</p>
+        <p className="text-ui-xs text-success">Đề xuất đã được áp dụng.</p>
       )}
 
       {turn.status === 'interrupted' && (
-        <p className="text-[11px] text-ink-muted">
+        <p className="text-ui-xs text-ink-muted">
           Lượt này bị ngắt khi app đóng. Phần câu trả lời đã nhận chỉ để đọc; hãy hỏi lại nếu cần.
         </p>
       )}
 
       {turn.mode === 'ap_dung' && turn.autoApply === 'needs-review' && (
-        <p className="text-[11px] text-ink-muted">
+        <p className="text-ui-xs text-ink-muted">
           Bản gốc hoặc bản dịch đã đổi, hoặc còn chữ chưa lưu. Đề xuất cần được xem lại.
         </p>
       )}
@@ -251,7 +251,7 @@ export function AiTurn({
       {proposal !== null && turn.range !== null && (
         <>
           {turn.chapterId && currentChapterId && turn.chapterId !== currentChapterId ? (
-            <div className="flex flex-col gap-1.5 rounded-panel border border-line bg-canvas p-2 text-[11px]">
+            <div className="flex flex-col gap-1.5 rounded-panel border border-line bg-canvas p-2 text-ui-xs">
               {targetChapterExists ? (
                 <>
                   <p className="text-ink-muted">
@@ -289,7 +289,7 @@ export function AiTurn({
       {/* The model was asked for a fenced block and did not give one: read it as a plain reply rather
           than guessing which part of the answer was meant to replace the paragraph. */}
       {turn.mode !== 'hoi' && turn.status === 'done' && proposal === null && (
-        <p className="text-[11px] text-ink-muted">
+        <p className="text-ui-xs text-ink-muted">
           Câu trả lời chưa có khối thay thế hoàn chỉnh nên không có gì để áp dụng. Hỏi lại và nói rõ
           phạm vi cần sửa.
         </p>
@@ -302,7 +302,7 @@ export function AiTurn({
             aria-label="Sao chép"
             title="Sao chép"
             onClick={() => void navigator.clipboard.writeText(turn.answer)}
-            className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-muted hover:bg-selected hover:text-ink"
+            className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-muted hover:bg-hover hover:text-ink"
           >
             <CopyIcon size={14} />
           </button>
@@ -311,11 +311,11 @@ export function AiTurn({
             aria-label="Hỏi lại"
             title="Hỏi lại"
             onClick={() => onRetry(turn.question)}
-            className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-muted hover:bg-selected hover:text-ink"
+            className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-muted hover:bg-hover hover:text-ink"
           >
             <RefreshIcon size={14} />
           </button>
-          <span className="ml-1 text-[11px] text-ink-muted">
+          <span className="ml-1 text-ui-xs text-ink-muted">
             {turn.usage === null
               ? 'Nhà cung cấp không báo lượng dùng'
               : turn.usage.inputTokens +

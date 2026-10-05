@@ -18,7 +18,7 @@ import {
   thinkingPatch,
   type ThinkingChoice
 } from './modelSettingsForm'
-import { SettingRow } from './SettingRow'
+import { SettingRow } from '../../components/Setting'
 
 /**
  * Hộp thoại **Cơ bản** của một mục model: tên hiển thị, tên model thật (với ba nút Nhập / Lấy / Kiểm tra)
@@ -37,7 +37,7 @@ function Result({
     return (
       <p
         role="status"
-        className="m-0 flex flex-wrap items-center gap-1.5 text-[12px] leading-[1.55] text-success"
+        className="m-0 flex flex-wrap items-center gap-1.5 text-ui-xs leading-normal text-success"
       >
         <CheckCircleIcon size={14} className="shrink-0" />
         <span>
@@ -49,7 +49,7 @@ function Result({
   return (
     <p
       role="alert"
-      className="m-0 flex items-start gap-1.5 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-[12px] leading-[1.55]"
+      className="m-0 flex items-start gap-1.5 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal"
     >
       <CloseCircleIcon size={14} className="mt-[2px] shrink-0 text-error" />
       <span className="min-w-0 break-words">
@@ -240,11 +240,11 @@ function BasicForm({
         hint="Tên model thật gửi cho nhà cung cấp."
         below={
           <>
-            <p className="m-0 font-mono text-[12.5px] break-all" aria-label="Tên model hiện tại">
+            <p className="m-0 font-mono text-ui-sm break-all" aria-label="Tên model hiện tại">
               {entry.model}
             </p>
             {shown !== null && <Result result={shown} />}
-            <p className="m-0 text-[12px] leading-[1.55] text-ink-muted">
+            <p className="m-0 text-ui-xs leading-normal text-ink-muted">
               “Kiểm tra” gửi một yêu cầu rất nhỏ bằng cài đặt đã lưu của mục này, nên tốn một ít
               token.
             </p>
@@ -274,7 +274,7 @@ function BasicForm({
         }
         below={
           thinkingError === undefined ? undefined : (
-            <span role="alert" className="text-[12px] text-error">
+            <span role="alert" className="text-ui-xs text-error">
               {thinkingError}
             </span>
           )

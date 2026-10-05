@@ -47,7 +47,7 @@ export function SettingsScreen({ onBack }: { onBack(): void }): JSX.Element {
           <AltArrowLeftIcon size={15} />
           Quay lại
         </Button>
-        <h1 className="m-0 text-[15px] font-semibold">Kết nối AI</h1>
+        <h1 className="m-0 text-ui-md font-semibold">Kết nối AI</h1>
         <MenuRoot>
           <MenuTrigger
             render={
@@ -66,7 +66,7 @@ export function SettingsScreen({ onBack }: { onBack(): void }): JSX.Element {
         </MenuRoot>
       </header>
 
-      <p className="m-0 max-w-[640px] text-[12px] leading-[1.6] text-ink-muted">
+      <p className="m-0 max-w-[640px] text-ui-xs leading-normal text-ink-muted">
         Mira gọi mọi nhà cung cấp qua một endpoint tương thích OpenAI. Khai địa chỉ của gateway bạn
         tự dựng, hoặc dán API key của Google.
       </p>
@@ -79,7 +79,7 @@ export function SettingsScreen({ onBack }: { onBack(): void }): JSX.Element {
 
       {connections.load === 'loading' && (
         <Panel aria-label="Đang tải">
-          <span className="text-[12px] text-ink-muted">Đang tải cài đặt…</span>
+          <span className="text-ui-xs text-ink-muted">Đang tải cài đặt…</span>
         </Panel>
       )}
 

@@ -60,9 +60,9 @@ export interface ModelSelectionMenuProps {
 
 const TRIGGER: Record<NonNullable<ModelSelectionMenuProps['variant']>, string> = {
   compact:
-    'inline-flex h-6 max-w-[260px] shrink-0 cursor-pointer items-center gap-0.5 rounded-control px-1.5 text-[11px] whitespace-nowrap text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink disabled:cursor-not-allowed disabled:opacity-50',
+    'inline-flex h-6 max-w-[260px] shrink-0 cursor-pointer items-center gap-0.5 rounded-control px-1.5 text-ui-xs whitespace-nowrap text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink disabled:cursor-not-allowed disabled:opacity-50',
   field:
-    'inline-flex h-[34px] w-full cursor-pointer items-center gap-2 rounded-control border border-line-strong bg-canvas pr-2.5 pl-3 text-xs text-ink outline-none hover:bg-control focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-control disabled:cursor-not-allowed disabled:opacity-50'
+    'inline-flex h-[34px] w-full cursor-pointer items-center gap-2 rounded-control border border-line-strong bg-canvas pr-2.5 pl-3 text-ui-xs text-ink outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-control disabled:cursor-not-allowed disabled:opacity-50'
 }
 
 export function ModelSelectionMenu({
@@ -116,7 +116,7 @@ export function ModelSelectionMenu({
         <div className="w-[276px]">
           {withEntries.map((connection) => (
             <div key={connection.id} role="group" aria-label={connection.name}>
-              <p className="m-0 px-1.5 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
+              <p className="m-0 px-1.5 pt-1.5 pb-0.5 text-ui-xs font-semibold text-ink-muted">
                 {connection.name}
               </p>
               {connection.models.map((entry) => {
@@ -135,8 +135,8 @@ export function ModelSelectionMenu({
                         size={14}
                         className={cx('shrink-0', isSelected ? 'text-ink' : 'opacity-0')}
                       />
-                      <span className="min-w-0 flex-1 truncate text-[12.5px]">{entry.name}</span>
-                      <span className="shrink-0 text-[11px] text-ink-muted">
+                      <span className="min-w-0 flex-1 truncate text-ui-sm">{entry.name}</span>
+                      <span className="shrink-0 text-ui-xs text-ink-muted">
                         {thinkingLabelOf(entry.settings.thinking)}
                       </span>
                       <AltArrowRightIcon size={12} className="shrink-0 text-ink-muted" />

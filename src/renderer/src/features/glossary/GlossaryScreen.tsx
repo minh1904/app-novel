@@ -82,7 +82,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
             className="w-64"
           />
 
-          <div className="flex items-center rounded-control border border-line bg-canvas p-0.5 text-xs">
+          <div className="flex items-center rounded-control border border-line bg-canvas p-0.5 text-ui-xs">
             {(
               [
                 { value: 'all', label: 'Tất cả' },
@@ -96,7 +96,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                 type="button"
                 onClick={() => setStatusFilter(tab.value)}
                 className={cx(
-                  'rounded-[5px] px-2.5 py-1 font-medium transition-colors cursor-pointer',
+                  'rounded-item px-2.5 py-1 font-medium transition-colors cursor-pointer',
                   statusFilter === tab.value
                     ? 'bg-selected text-ink'
                     : 'text-ink-muted hover:text-ink'
@@ -121,14 +121,14 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
       </div>
 
       {error && (
-        <div className="rounded-control bg-danger/10 p-3 text-xs text-danger">
+        <div className="rounded-control bg-error/10 p-3 text-ui-xs text-error">
           {error}
         </div>
       )}
 
       {/* Main List */}
       <div className="overflow-hidden rounded-panel border border-line bg-canvas">
-        <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center border-b border-line bg-sidebar px-3 py-2 text-[12px] font-medium text-ink-muted">
+        <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center border-b border-line bg-sidebar px-3 py-2 text-ui-xs font-medium text-ink-muted">
           <span>Từ gốc / Biến thể</span>
           <span>Bản dịch đích</span>
           <span>Trạng thái</span>
@@ -138,7 +138,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-xs text-ink-muted">
+          <div className="py-12 text-center text-ui-xs text-ink-muted">
             Đang tải danh sách thuật ngữ...
           </div>
         ) : entries.length === 0 ? (
@@ -163,7 +163,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
               <li
                 key={entry.id}
                 className={cx(
-                  'grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center px-3 py-2.5 text-xs transition-colors hover:bg-control/30',
+                  'grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center px-3 py-2.5 text-ui-xs transition-colors hover:bg-hover',
                   entry.status === 'pending' && 'bg-warning/5',
                   entry.status === 'rejected' && 'opacity-60'
                 )}
@@ -176,7 +176,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                       {entry.aliases.map((alias) => (
                         <span
                           key={alias}
-                          className="rounded-[4px] bg-sidebar px-1 py-px text-[10px] text-ink-muted border border-line"
+                          className="rounded-item bg-sidebar px-1 py-px text-ui-xs text-ink-muted border border-line"
                         >
                           {alias}
                         </span>
@@ -187,11 +187,11 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
 
                 {/* Target & Forbidden */}
                 <div className="flex flex-col items-start gap-1 pr-2">
-                  <span className={cx('font-medium', entry.forbidden ? 'text-danger line-through' : 'text-ink')}>
+                  <span className={cx('font-medium', entry.forbidden ? 'text-error line-through' : 'text-ink')}>
                     {entry.target}
                   </span>
                   {entry.forbidden && (
-                    <span className="rounded-[4px] bg-danger/10 px-1 py-px text-[10px] font-semibold text-danger">
+                    <span className="rounded-item bg-error/10 px-1 py-px text-ui-xs font-semibold text-error">
                       Cấm dùng
                     </span>
                   )}
@@ -211,12 +211,12 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                 </div>
 
                 {/* Scope */}
-                <span className="text-[11px] text-ink-muted">
+                <span className="text-ui-xs text-ink-muted">
                   {formatChapterScope(entry)}
                 </span>
 
                 {/* Notes */}
-                <span className="truncate pr-2 text-[11px] text-ink-muted" title={entry.notes ?? ''}>
+                <span className="truncate pr-2 text-ui-xs text-ink-muted" title={entry.notes ?? ''}>
                   {entry.notes || '—'}
                 </span>
 
@@ -235,7 +235,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                       <button
                         type="button"
                         onClick={() => handleQuickStatus(entry, 'rejected')}
-                        className="rounded p-1 text-danger hover:bg-danger/15 cursor-pointer"
+                        className="rounded p-1 text-error hover:bg-error/15 cursor-pointer"
                         title="Từ chối mục này"
                       >
                         <CloseCircleIcon size={14} />
@@ -246,7 +246,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                     <button
                       type="button"
                       onClick={() => handleQuickStatus(entry, 'approved')}
-                      className="rounded p-1 text-ink-muted hover:bg-control hover:text-ink cursor-pointer"
+                      className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink cursor-pointer"
                       title="Phục hồi (Duyệt lại)"
                     >
                       <CheckIcon size={14} />
@@ -255,7 +255,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                   <button
                     type="button"
                     onClick={() => setEditingEntry(entry)}
-                    className="rounded p-1 text-ink-muted hover:bg-control hover:text-ink cursor-pointer"
+                    className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink cursor-pointer"
                     title="Chỉnh sửa"
                   >
                     <PenNewSquareIcon size={14} />
@@ -263,7 +263,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                   <button
                     type="button"
                     onClick={() => setDeletingEntry(entry)}
-                    className="rounded p-1 text-ink-muted hover:bg-danger/15 hover:text-danger cursor-pointer"
+                    className="rounded p-1 text-ink-muted hover:bg-error/15 hover:text-error cursor-pointer"
                     title="Xóa thuật ngữ"
                   >
                     <TrashBinMinimalisticIcon size={14} />

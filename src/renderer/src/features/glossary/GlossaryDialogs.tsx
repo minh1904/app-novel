@@ -140,7 +140,7 @@ function EditGlossaryForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-xs">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-ui-xs">
       {error && (
         <Banner tone="error" onDismiss={() => setError(null)}>
           {error}
@@ -298,7 +298,7 @@ export function ImportNamesDialog({
       title="Nhập thuật ngữ từ tệp Names.txt"
       description="Định dạng chuẩn: Từ_gốc=Từ_dịch (mỗi dòng một cặp). Bỏ qua các dòng chú thích bắt đầu bằng # hoặc //."
     >
-      <div className="flex flex-col gap-4 text-xs">
+      <div className="flex flex-col gap-4 text-ui-xs">
         {error && (
           <Banner tone="error" onDismiss={() => setError(null)}>
             {error}
@@ -316,7 +316,7 @@ export function ImportNamesDialog({
                 {result.skippedCount > 0 && ` Bỏ qua ${result.skippedCount} dòng.`}
               </p>
               {result.skippedReasons.length > 0 && (
-                <div className="max-h-36 overflow-y-auto pt-1 text-[11px] text-ink-muted">
+                <div className="max-h-36 overflow-y-auto pt-1 text-ui-xs text-ink-muted">
                   <ul className="list-disc pl-4 space-y-0.5">
                     {result.skippedReasons.slice(0, 50).map((s, idx) => (
                       <li key={idx}>
@@ -334,7 +334,7 @@ export function ImportNamesDialog({
         )}
 
         <div className="flex items-center gap-3">
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-control border border-line-strong bg-canvas px-3 py-1.5 text-xs font-medium text-ink hover:bg-control">
+          <label className="inline-flex cursor-pointer items-center justify-center rounded-control border border-line-strong bg-canvas px-3 py-1.5 text-ui-xs font-medium text-ink hover:bg-hover">
             <span>Chọn tệp .txt từ máy</span>
             <input
               type="file"
@@ -343,7 +343,7 @@ export function ImportNamesDialog({
               onChange={handleFileChange}
             />
           </label>
-          <span className="text-[11px] text-ink-muted">Hoặc dán trực tiếp vào khung dưới:</span>
+          <span className="text-ui-xs text-ink-muted">Hoặc dán trực tiếp vào khung dưới:</span>
         </div>
 
         <TextArea
@@ -409,7 +409,7 @@ export function DeleteGlossaryDialog({
       title="Xác nhận xóa thuật ngữ"
       description="Mục này sẽ bị xóa hoàn toàn khỏi cơ sở dữ liệu tác phẩm và không thể khôi phục."
     >
-      <div className="flex flex-col gap-4 text-xs">
+      <div className="flex flex-col gap-4 text-ui-xs">
         {error && (
           <Banner tone="error" onDismiss={() => setError(null)}>
             {error}
@@ -418,7 +418,7 @@ export function DeleteGlossaryDialog({
 
         <p className="text-ink">
           Bạn có chắc chắn muốn xóa thuật ngữ{' '}
-          <strong className="font-semibold text-danger">{entry?.source}</strong> ({entry?.target})?
+          <strong className="font-semibold text-error">{entry?.source}</strong> ({entry?.target})?
         </p>
 
         <div className="flex justify-end gap-2 pt-2">

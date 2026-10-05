@@ -77,13 +77,13 @@ export function JobsAreaMock(): JSX.Element {
       className="@container flex flex-col gap-4 rounded-panel border border-line p-5"
     >
       <div className="flex flex-col gap-1">
-        <h2 id="jobs-heading" className="flex items-center gap-2 text-[15px] font-semibold">
+        <h2 id="jobs-heading" className="flex items-center gap-2 text-ui-md font-semibold">
           Tác vụ dịch
-          <span className="rounded-[5px] bg-selected px-1.5 py-px text-[11px] font-normal text-ink-muted">
+          <span className="rounded-item bg-selected px-1.5 py-px text-ui-xs font-normal text-ink-muted">
             {SOON_LABEL}
           </span>
         </h2>
-        <p className="max-w-[60ch] text-xs leading-[1.6] text-ink-muted">
+        <p className="max-w-[60ch] text-ui-xs leading-normal text-ink-muted">
           Theo dõi các lượt AI dịch của tác phẩm: đang chạy, lỗi cần chạy lại, và lịch sử chi phí.
         </p>
       </div>
@@ -92,7 +92,7 @@ export function JobsAreaMock(): JSX.Element {
         <div
           className={cx(
             jobGrid,
-            'border-b border-line bg-sidebar px-3 py-2 text-[12px] font-medium text-ink-muted'
+            'border-b border-line bg-sidebar px-3 py-2 text-ui-xs font-medium text-ink-muted'
           )}
         >
           <span>Chương</span>
@@ -108,14 +108,14 @@ export function JobsAreaMock(): JSX.Element {
                 key={index}
                 className={cx(
                   jobGrid,
-                  'border-b border-line px-3 py-2.5 text-[13px] last:border-b-0'
+                  'border-b border-line px-3 py-2.5 text-ui-sm last:border-b-0'
                 )}
               >
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={cx(
-                        'flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap',
+                        'flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-ui-xs font-semibold whitespace-nowrap',
                         meta.tone
                       )}
                     >
@@ -124,7 +124,7 @@ export function JobsAreaMock(): JSX.Element {
                     </span>
                     <span className="truncate font-medium">{job.chapter}</span>
                   </div>
-                  <span className="truncate text-[12px] text-ink-muted">{job.provider}</span>
+                  <span className="truncate text-ui-xs text-ink-muted">{job.provider}</span>
                   {job.status === 'running' && job.progress !== undefined && (
                     <div className="h-1 w-full max-w-[220px] overflow-hidden rounded-full bg-control">
                       <div
@@ -154,7 +154,7 @@ export function JobsAreaMock(): JSX.Element {
         Xem toàn bộ lịch sử
       </Button>
 
-      <p className="text-[12px] text-ink-muted">
+      <p className="text-ui-xs text-ink-muted">
         Bản minh họa: khu vực này chưa hoạt động và không thay đổi tác phẩm của bạn.
       </p>
     </section>

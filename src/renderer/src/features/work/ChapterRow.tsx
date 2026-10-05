@@ -51,10 +51,10 @@ export const ChapterRow = memo(function ChapterRow({
       className={cx(
         CHAPTER_GRID,
         'items-center gap-x-2 border-b border-line px-1 py-1 transition-colors last:border-b-0',
-        highlighted ? 'bg-selected' : 'hover:bg-control/60'
+        highlighted ? 'bg-active' : 'hover:bg-hover'
       )}
     >
-      <span className="pl-2 text-xs text-ink-muted">{chapter.number}</span>
+      <span className="pl-2 text-ui-xs text-ink-muted">{chapter.number}</span>
 
       {editing ? (
         <RenameInput chapter={chapter} actions={actions} />
@@ -64,7 +64,7 @@ export const ChapterRow = memo(function ChapterRow({
           data-title-button
           title={label}
           className={cx(
-            'min-w-0 cursor-pointer truncate rounded-[7px] px-2 py-1.5 text-left text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
+            'min-w-0 cursor-pointer truncate rounded-control px-2 py-1.5 text-left text-ui-sm outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
             chapter.title === '' && 'text-ink-muted'
           )}
           onClick={() => actions.open(chapter)}
@@ -80,7 +80,7 @@ export const ChapterRow = memo(function ChapterRow({
       )}
 
       <time
-        className="hidden text-xs text-ink-muted @min-[560px]:block"
+        className="hidden text-ui-xs text-ink-muted @min-[560px]:block"
         dateTime={updatedAt.toISOString()}
         title={formatFullDate(updatedAt)}
       >
@@ -90,7 +90,7 @@ export const ChapterRow = memo(function ChapterRow({
       <MenuRoot>
         <MenuTrigger
           aria-label={'Thao tác với ' + label}
-          className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
+          className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
         >
           <MenuDotsIcon size={16} />
         </MenuTrigger>
@@ -162,7 +162,7 @@ function RenameInput({
       defaultValue={chapter.title}
       placeholder={'Chương ' + chapter.number}
       maxLength={200}
-      className="h-[30px] min-w-0 rounded-control border border-focus bg-canvas px-2 text-[13px] outline-none ring-2 ring-focus/25 placeholder:text-ink-muted"
+      className="h-[30px] min-w-0 rounded-control border border-focus bg-canvas px-2 text-ui-sm outline-none ring-2 ring-focus/25 placeholder:text-ink-muted"
       onFocus={(event) => event.target.select()}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {

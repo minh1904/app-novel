@@ -68,10 +68,10 @@ export function ContextAreaMock({ workId }: { workId?: string } = {}): JSX.Eleme
       className="@container flex flex-col gap-4 rounded-panel border border-line p-5"
     >
       <div className="flex flex-col gap-1">
-        <h2 id="context-heading" className="flex items-center gap-2 text-[15px] font-semibold">
+        <h2 id="context-heading" className="flex items-center gap-2 text-ui-md font-semibold">
           Ngữ cảnh dịch
         </h2>
-        <p className="max-w-[60ch] text-xs leading-[1.6] text-ink-muted">
+        <p className="max-w-[60ch] text-ui-xs leading-normal text-ink-muted">
           Những quy ước giúp AI dịch nhất quán trong cả tác phẩm: thuật ngữ gốc–dịch, xưng hô giữa
           các nhân vật, và văn phong học từ bản dịch cũ.
         </p>
@@ -83,14 +83,14 @@ export function ContextAreaMock({ workId }: { workId?: string } = {}): JSX.Eleme
           <TabsTab value="xung-ho">
             Xưng hô
             {!workId && (
-              <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[10px] text-ink-muted">
+              <span className="ml-1.5 rounded-item bg-selected px-1 py-px text-ui-xs text-ink-muted">
                 {SOON_LABEL}
               </span>
             )}
           </TabsTab>
           <TabsTab value="van-phong">
             Văn phong
-            <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[10px] text-ink-muted">
+            <span className="ml-1.5 rounded-item bg-selected px-1 py-px text-ui-xs text-ink-muted">
               {SOON_LABEL}
             </span>
           </TabsTab>
@@ -118,7 +118,9 @@ function HonorificsTable(): JSX.Element {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-ink-muted">Ai gọi ai là gì, và từ chương nào đổi cách xưng.</p>
+        <p className="text-ui-xs text-ink-muted">
+          Ai gọi ai là gì, và từ chương nào đổi cách xưng.
+        </p>
         <Button variant="outline" size="sm" disabled>
           <AddIcon size={13} />
           Thêm cách xưng hô
@@ -128,7 +130,7 @@ function HonorificsTable(): JSX.Element {
         <div
           className={cx(
             honorificGrid,
-            'border-b border-line bg-sidebar px-3 py-2 text-[12px] font-medium text-ink-muted'
+            'border-b border-line bg-sidebar px-3 py-2 text-ui-xs font-medium text-ink-muted'
           )}
         >
           <span>Người nói → người nghe</span>
@@ -142,7 +144,7 @@ function HonorificsTable(): JSX.Element {
               key={index}
               className={cx(
                 honorificGrid,
-                'border-b border-line px-3 py-2.5 text-[13px] last:border-b-0',
+                'border-b border-line px-3 py-2.5 text-ui-sm last:border-b-0',
                 row.pending && 'bg-warning/6'
               )}
             >
@@ -154,7 +156,7 @@ function HonorificsTable(): JSX.Element {
                 {row.form}
                 {row.pending && (
                   <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="w-fit rounded-full bg-warning/14 px-1.5 py-px text-[11px] font-semibold whitespace-nowrap text-warning">
+                    <span className="w-fit rounded-full bg-warning/14 px-1.5 py-px text-ui-xs font-semibold whitespace-nowrap text-warning">
                       Chờ duyệt · từ chương {row.changedAtChapter}
                     </span>
                     <Button size="xxs" disabled>
@@ -169,7 +171,7 @@ function HonorificsTable(): JSX.Element {
               <span className={cx('text-ink-muted', hideBelow720)}>
                 {row.changedAtChapter ? 'Ch. ' + row.changedAtChapter : '—'}
               </span>
-              <span className={cx('leading-[1.5] text-ink-muted', hideBelow720)}>{row.note}</span>
+              <span className={cx('leading-normal text-ink-muted', hideBelow720)}>{row.note}</span>
             </li>
           ))}
         </ul>
@@ -186,7 +188,7 @@ function TermsTable(): JSX.Element {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-ink-muted">
+        <p className="text-ui-xs text-ink-muted">
           Tên người, địa danh, chiêu thức: bản gốc và cách dịch đã chốt.
         </p>
         <Button variant="outline" size="sm" disabled>
@@ -198,7 +200,7 @@ function TermsTable(): JSX.Element {
         <div
           className={cx(
             termGrid,
-            'border-b border-line bg-sidebar px-3 py-2 text-[12px] font-medium text-ink-muted'
+            'border-b border-line bg-sidebar px-3 py-2 text-ui-xs font-medium text-ink-muted'
           )}
         >
           <span className="flex items-center gap-1.5">
@@ -214,14 +216,14 @@ function TermsTable(): JSX.Element {
               key={term.source}
               className={cx(
                 termGrid,
-                'border-b border-line px-3 py-2.5 text-[13px] last:border-b-0'
+                'border-b border-line px-3 py-2.5 text-ui-sm last:border-b-0'
               )}
             >
               <span className="font-medium" lang="zh-Hant">
                 {term.source}
               </span>
               <span>{term.target}</span>
-              <span className={cx('leading-[1.5] text-ink-muted', hideBelow640)}>
+              <span className={cx('leading-normal text-ink-muted', hideBelow640)}>
                 {term.note || '—'}
               </span>
             </li>
@@ -235,29 +237,27 @@ function TermsTable(): JSX.Element {
 function StylePanel(): JSX.Element {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs leading-[1.6] text-ink-muted">
+      <p className="text-ui-xs leading-normal text-ink-muted">
         Học giọng văn từ bản dịch cũ của bạn, áp dụng khi AI dịch đoạn mới hoặc viết lại theo yêu
         cầu.
       </p>
       <div className="flex flex-col gap-1.5 rounded-control border border-line bg-control/50 p-3.5">
-        <p className="text-[12.5px] font-medium">Giọng văn hiện tại</p>
-        <p className="text-[12.5px] leading-[1.6] text-ink-muted">
+        <p className="text-ui-sm font-medium">Giọng văn hiện tại</p>
+        <p className="text-ui-sm leading-normal text-ink-muted">
           Câu ngắn, thoại tự nhiên, ít từ Hán Việt trừ thuật ngữ tu luyện. Người kể xưng “tôi” ở các
           đoạn hồi tưởng.
         </p>
       </div>
       <div className="grid gap-3 @min-[560px]:grid-cols-2">
         <div className="flex flex-col gap-1.5 rounded-control border border-line p-3">
-          <p className="text-[11px] font-medium text-ink-muted">
-            Bản dịch cũ (nguồn học văn phong)
-          </p>
-          <p className="text-[12.5px] leading-[1.6] text-ink-muted italic">
+          <p className="text-ui-xs font-medium text-ink-muted">Bản dịch cũ (nguồn học văn phong)</p>
+          <p className="text-ui-sm leading-normal text-ink-muted italic">
             “Nàng chỉ lặng im, ánh mắt dõi theo bóng hắn khuất dần sau rặng trúc.”
           </p>
         </div>
         <div className="flex flex-col gap-1.5 rounded-control border border-line p-3">
-          <p className="text-[11px] font-medium text-ink-muted">Áp dụng cho câu mới</p>
-          <p className="text-[12.5px] leading-[1.6] italic">
+          <p className="text-ui-xs font-medium text-ink-muted">Áp dụng cho câu mới</p>
+          <p className="text-ui-sm leading-normal italic">
             “Cô chẳng nói gì, chỉ nhìn theo bóng cậu khuất dần sau hàng trúc.”
           </p>
         </div>

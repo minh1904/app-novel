@@ -39,7 +39,7 @@ export function CoverPicker({
 
   return (
     <div className="flex w-[168px] flex-col gap-2.5">
-      <span className="text-[12px] font-semibold">Ảnh bìa (tùy chọn)</span>
+      <span className="text-ui-xs font-semibold">Ảnh bìa (tùy chọn)</span>
       <button
         type="button"
         disabled={disabled || busy}
@@ -59,7 +59,7 @@ export function CoverPicker({
           'relative flex aspect-[2/3] w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-control border text-center outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:cursor-default disabled:opacity-60',
           value
             ? 'border-line-strong'
-            : 'border-dashed border-line-strong bg-control/40 hover:bg-control',
+            : 'border-dashed border-line-strong bg-control/40 hover:bg-hover',
           dragging && 'border-focus bg-control'
         )}
       >
@@ -68,7 +68,7 @@ export function CoverPicker({
         ) : (
           <>
             <GalleryAddIcon size={26} className="text-ink-muted" />
-            <span className="px-3 text-[12px] leading-[1.4] text-ink-muted">
+            <span className="px-3 text-ui-xs leading-tight text-ink-muted">
               {busy ? 'Đang xử lý…' : 'Bấm để chọn hoặc kéo ảnh vào đây'}
             </span>
           </>
@@ -102,11 +102,11 @@ export function CoverPicker({
       )}
 
       {error ? (
-        <p role="alert" className="text-[12px] leading-[1.4] text-error">
+        <p role="alert" className="text-ui-xs leading-tight text-error">
           {error}
         </p>
       ) : (
-        <p className="text-[12px] leading-[1.4] text-ink-muted">
+        <p className="text-ui-xs leading-tight text-ink-muted">
           JPEG, PNG hoặc WebP. Ảnh được thu nhỏ khi lưu.
         </p>
       )}

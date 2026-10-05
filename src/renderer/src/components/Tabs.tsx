@@ -14,7 +14,7 @@ const listSizes: Record<TabsSize, string> = {
 }
 
 const tabSizes: Record<TabsSize, string> = {
-  sm: 'h-[22px] rounded-[7px] px-2.5',
+  sm: 'h-[22px] rounded-item px-2.5',
   default: 'h-8 border-b-2 border-transparent px-3 data-active:border-focus'
 }
 
@@ -43,7 +43,7 @@ export function TabsTab({
     <BaseTabs.Tab
       data-slot="tabs-tab"
       className={[
-        'cursor-pointer bg-transparent text-[12px] text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-active:text-ink',
+        'cursor-pointer bg-transparent text-ui-sm text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-active:text-ink',
         size === 'sm' ? 'border-0 data-active:bg-selected' : '',
         tabSizes[size],
         className

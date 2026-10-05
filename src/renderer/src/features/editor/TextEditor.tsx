@@ -62,7 +62,7 @@ const theme = EditorView.theme({
   '.cm-content': { padding: '12px 0', caretColor: 'var(--text-primary)' },
   '.cm-line': { padding: '0 8px' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'var(--surface-selected)'
+    backgroundColor: 'var(--text-selection)'
   }
 })
 
@@ -339,7 +339,7 @@ export function TextEditor({
       {status.state === 'conflict' && (
         <div
           role="alert"
-          className="flex flex-col gap-2 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs leading-[1.55]"
+          className="flex flex-col gap-2 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 text-ui-xs leading-normal"
         >
           <strong className="font-semibold">Văn bản đã đổi ở nơi khác.</strong>
           <span>{status.message}</span>
@@ -356,7 +356,7 @@ export function TextEditor({
       {status.state === 'error' && (
         <div
           role="alert"
-          className="flex flex-col gap-2 rounded-control border border-error/40 bg-error/10 px-3 py-2.5 text-xs leading-[1.55]"
+          className="flex flex-col gap-2 rounded-control border border-error/40 bg-error/10 px-3 py-2.5 text-ui-xs leading-normal"
         >
           <span>{status.message}</span>
           <div>
@@ -370,7 +370,7 @@ export function TextEditor({
       {imageError && (
         <div
           role="alert"
-          className="flex items-center justify-between gap-2 rounded-control border border-error/40 bg-error/10 px-3 py-2 text-xs leading-[1.55]"
+          className="flex items-center justify-between gap-2 rounded-control border border-error/40 bg-error/10 px-3 py-2 text-ui-xs leading-normal"
         >
           <span>{imageError}</span>
           <Button variant="outline" onClick={() => setImageError(null)}>
@@ -384,7 +384,7 @@ export function TextEditor({
         {showHint && (
           <p
             id={hintId}
-            className="pointer-events-none absolute top-3 right-4 left-2 leading-[1.5] text-ink-muted"
+            className="pointer-events-none absolute top-3 right-4 left-2 leading-normal text-ink-muted"
             style={{ fontFamily: 'var(--font-editor)', fontSize: 'var(--text-editor)' }}
           >
             {emptyHint}

@@ -83,7 +83,7 @@ export function AiComposer({
         }}
       >
         <div className="flex flex-wrap items-center gap-1 px-1 pb-1">
-          <span className="inline-flex h-[20px] shrink-0 items-center gap-1 rounded-[6px] border border-line bg-canvas px-1.5 text-[11px] text-ink-muted">
+          <span className="inline-flex h-[20px] shrink-0 items-center gap-1 rounded-control border border-line bg-canvas px-1.5 text-ui-xs text-ink-muted">
             <DocumentTextIcon size={12} className="shrink-0" />
             Đích nếu viết: {rangeLabel}
           </span>
@@ -98,10 +98,10 @@ export function AiComposer({
             }
             onClick={() => onWholeChapterChange(!wholeChapter)}
             className={cx(
-              'inline-flex h-[20px] shrink-0 cursor-pointer items-center gap-1 rounded-[6px] border px-1.5 text-[11px]',
+              'inline-flex h-[20px] shrink-0 cursor-pointer items-center gap-1 rounded-control border px-1.5 text-ui-xs',
               wholeChapter
                 ? 'border-focus bg-selected text-ink'
-                : 'border-dashed border-line-strong text-ink-muted hover:bg-selected hover:text-ink'
+                : 'border-dashed border-line-strong text-ink-muted hover:bg-hover hover:text-ink'
             )}
           >
             <NotebookIcon size={12} className="shrink-0" />
@@ -109,7 +109,7 @@ export function AiComposer({
           </button>
         </div>
 
-        <div className="px-1 pb-1 text-[11px] text-ink-muted">
+        <div className="px-1 pb-1 text-ui-xs text-ink-muted">
           <details>
             <summary className="cursor-pointer">Nguồn Mira gửi kèm · {context.length} khối (xem đúng nội dung)</summary>
             <ul className="mt-1 max-h-52 space-y-2 overflow-y-auto">
@@ -147,7 +147,7 @@ export function AiComposer({
             event.preventDefault()
             submit()
           }}
-          className="max-h-40 min-h-6 w-full resize-none bg-transparent px-1.5 text-[13px] leading-[1.6] text-ink outline-none placeholder:text-ink-muted"
+          className="max-h-40 min-h-6 w-full resize-none bg-transparent px-1.5 text-ui-sm leading-normal text-ink outline-none placeholder:text-ink-muted"
           placeholder="Hỏi về đoạn đang sửa, hoặc cả chương…"
         />
 
@@ -167,13 +167,13 @@ export function AiComposer({
               disabled={!ready}
               aria-label="Gửi để trò chuyện"
               title={ready ? 'Gửi để trò chuyện (Enter)' : 'Chưa gửi được'}
-              className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control bg-primary px-2 text-[11px] text-primary-foreground disabled:cursor-not-allowed disabled:opacity-30"
+              className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control bg-primary px-2 text-ui-xs text-primary-foreground disabled:cursor-not-allowed disabled:opacity-30"
             >
               Gửi <ArrowUpIcon size={14} />
             </button>
             <MenuRoot>
               <MenuTrigger
-                className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control border border-line-strong px-2 text-[11px] text-ink-muted hover:bg-selected disabled:opacity-30"
+                className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control border border-line-strong px-2 text-ui-xs text-ink-muted hover:bg-hover disabled:opacity-30"
                 aria-label="Gửi thành đề xuất hoặc áp dụng thẳng"
                 title="Viết vào bản dịch"
                 disabled={!chat.canSend(draft, 'sua') || !contextReady}
@@ -183,11 +183,11 @@ export function AiComposer({
               <MenuPopup align="end">
                 <MenuItem onClick={() => submit('sua')}>
                   <span>Tạo đề xuất</span>
-                  <span className="text-[11px] text-ink-muted">Duyệt trước khi ghi</span>
+                  <span className="text-ui-xs text-ink-muted">Duyệt trước khi ghi</span>
                 </MenuItem>
                 <MenuItem onClick={() => submit('ap_dung')}>
                   <span>Áp dụng thẳng</span>
-                  <span className="text-[11px] text-ink-muted">Ghi nếu còn an toàn</span>
+                  <span className="text-ui-xs text-ink-muted">Ghi nếu còn an toàn</span>
                 </MenuItem>
               </MenuPopup>
             </MenuRoot>

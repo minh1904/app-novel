@@ -290,7 +290,7 @@ export function ChapterWorkspace({
         <MenuRoot>
           <MenuTrigger
             aria-label="Thêm thao tác chương"
-            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
+            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
           >
             <MenuDotsIcon size={16} />
           </MenuTrigger>
@@ -332,7 +332,7 @@ export function ChapterWorkspace({
 
       {/* Which chapter, then the mode and the context the translator reads while working. One row, so the panes keep the height. */}
       <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-canvas px-2.5">
-        <h2 className="min-w-0 flex-1 truncate text-[12.5px] font-semibold">
+        <h2 className="min-w-0 flex-1 truncate text-ui-sm font-semibold">
           {headingTitle(chapter)}{' '}
           <span className="font-normal text-ink-muted">
             · {work.title} · {sourceLanguage.short} → Việt · gốc {figures(source)}
@@ -362,14 +362,14 @@ export function ChapterWorkspace({
         <div
           role="group"
           aria-label={'Ngữ cảnh dịch (' + SOON_LABEL + ')'}
-          className="flex min-w-0 items-center gap-2.5 overflow-hidden text-[12px] text-ink-muted"
+          className="flex min-w-0 items-center gap-2.5 overflow-hidden text-ui-xs text-ink-muted"
         >
           {['Thuật ngữ', 'Xưng hô', 'Văn phong'].map((label) => (
             <span key={label} aria-disabled="true" className="whitespace-nowrap">
               {label}
             </span>
           ))}
-          <span className="shrink-0 rounded-[5px] bg-selected px-1.5 py-px text-[11px] text-ink">
+          <span className="shrink-0 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
             {SOON_LABEL}
           </span>
         </div>
@@ -412,7 +412,7 @@ export function ChapterWorkspace({
               unlocked ? (
                 <p
                   role="note"
-                  className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-xs leading-[1.55]"
+                  className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-ui-xs leading-normal"
                 >
                   Bạn đang sửa bản gốc. Chỉ nên sửa lỗi chính tả hoặc sót chữ; bản dịch đã có không
                   tự đổi theo.

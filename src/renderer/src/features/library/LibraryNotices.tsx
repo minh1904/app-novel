@@ -45,7 +45,7 @@ export function LibraryNotices({
       {notice && (
         <div
           role="alert"
-          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-xs"
+          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-ui-xs"
         >
           <span>{notice}</span>
           <Button variant="ghost-muted" size="sm" onClick={onDismissNotice}>
@@ -56,7 +56,7 @@ export function LibraryNotices({
       {problems.length > 0 && (
         <section
           aria-label="Tác phẩm không mở được"
-          className="flex flex-col gap-1.5 rounded-control border border-warning/40 bg-warning/10 px-3.5 py-2.5 text-xs"
+          className="flex flex-col gap-1.5 rounded-control border border-warning/40 bg-warning/10 px-3.5 py-2.5 text-ui-xs"
         >
           <p className="font-semibold">
             {problems.length === 1
@@ -66,7 +66,7 @@ export function LibraryNotices({
           <ul className="flex flex-col gap-1 text-ink-muted">
             {problems.map((problem) => (
               <li key={problem.fileName}>
-                <span className="font-mono text-[12px] text-ink">{problem.fileName}</span>
+                <span className="font-mono text-ui-xs text-ink">{problem.fileName}</span>
                 {' — '}
                 {reasons[problem.code] ?? problem.message}
               </li>

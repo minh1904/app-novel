@@ -63,9 +63,9 @@ function SliderSetting({
           aria-label={'Gửi ' + copy.title}
           onCheckedChange={(checked) => void save(checked, value)}
         />
-        <span className="text-[12px] font-semibold">{copy.title}</span>
+        <span className="text-ui-xs font-semibold">{copy.title}</span>
       </div>
-      <p className="m-0 text-[12px] leading-[1.55] text-ink-muted">
+      <p className="m-0 text-ui-xs leading-normal text-ink-muted">
         {locked ? disabledReason : copy.hint}
       </p>
       <div className={saved.enabled && !locked ? undefined : 'opacity-60'}>
@@ -83,7 +83,7 @@ function SliderSetting({
         />
       </div>
       {error !== undefined && (
-        <span role="alert" className="text-[12px] text-error">
+        <span role="alert" className="text-ui-xs text-error">
           {error}
         </span>
       )}
@@ -127,7 +127,7 @@ function JsonSetting({
           aria-label={'Gửi ' + copy.title}
           onCheckedChange={(checked) => void save(checked)}
         />
-        <span className="text-[12px] font-semibold">{copy.title}</span>
+        <span className="text-ui-xs font-semibold">{copy.title}</span>
       </div>
       <TextArea
         label={copy.title}
@@ -137,7 +137,7 @@ function JsonSetting({
         spellCheck={false}
         placeholder="{}"
         rows={4}
-        className="[&>label]:sr-only [&_textarea]:font-mono [&_textarea]:text-[12px]"
+        className="[&>label]:sr-only [&_textarea]:font-mono [&_textarea]:text-ui-xs"
         onChange={(event) => {
           setText(event.target.value)
           setError(undefined)

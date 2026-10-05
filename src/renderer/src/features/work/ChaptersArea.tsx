@@ -166,7 +166,7 @@ export function ChaptersArea({
     <Button variant="secondary" onClick={() => setImportOpen(true)}>
       <ImportIcon size={14} />
       {MOCK_FEATURES.importTxt.label}
-      <span className="ml-0.5 rounded-[5px] bg-selected px-1.5 py-px text-[11px] text-ink">
+      <span className="ml-0.5 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
         {SOON_LABEL}
       </span>
     </Button>
@@ -179,7 +179,7 @@ export function ChaptersArea({
   return (
     <section aria-labelledby="chapters-heading" className="@container flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 id="chapters-heading" className="mr-auto text-[15px] font-semibold tracking-[-0.02em]">
+        <h2 id="chapters-heading" className="mr-auto text-ui-md font-semibold tracking-heading">
           Chương <span className="font-normal text-ink-muted">({all.length})</span>
         </h2>
         {all.length > 0 && (
@@ -197,7 +197,7 @@ export function ChaptersArea({
               aria-describedby={searchError ? 'chapter-search-error' : undefined}
             />
             {searchError && (
-              <p id="chapter-search-error" role="alert" className="text-[12px] text-error">
+              <p id="chapter-search-error" role="alert" className="text-ui-xs text-error">
                 {searchError}
               </p>
             )}
@@ -227,7 +227,7 @@ export function ChaptersArea({
       {chapters.notice && (
         <div
           role="alert"
-          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-xs"
+          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-ui-xs"
         >
           <span>{chapters.notice}</span>
           <Button variant="ghost-muted" size="sm" onClick={chapters.dismissNotice}>
@@ -237,14 +237,14 @@ export function ChaptersArea({
       )}
 
       {chapters.load === 'loading' && (
-        <p role="status" className="py-6 text-[13px] text-ink-muted">
+        <p role="status" className="py-6 text-ui-sm text-ink-muted">
           Đang tải danh sách chương…
         </p>
       )}
 
       {chapters.load === 'failed' && (
         <div className="flex flex-col items-start gap-3 py-6">
-          <p role="alert" className="text-[13px]">
+          <p role="alert" className="text-ui-sm">
             Không tải được danh sách chương. {chapters.loadError}
           </p>
           <Button variant="secondary" onClick={() => void chapters.reload()}>
@@ -259,8 +259,8 @@ export function ChaptersArea({
           {!adding && (
             <div className="flex flex-col items-center gap-3 rounded-panel border border-dashed border-line-strong px-6 py-12 text-center">
               <DocumentTextIcon size={28} className="text-ink-muted" />
-              <p className="text-[13px] font-semibold">Chưa có chương nào</p>
-              <p className="max-w-[420px] text-xs leading-[1.6] text-ink-muted">
+              <p className="text-ui-sm font-semibold">Chưa có chương nào</p>
+              <p className="max-w-[420px] text-ui-xs leading-normal text-ink-muted">
                 Thêm chương đầu tiên để bắt đầu. Văn bản gốc và bản dịch của mỗi chương sẽ nằm ở
                 đây.
               </p>
@@ -287,7 +287,7 @@ export function ChaptersArea({
             <div
               className={cx(
                 CHAPTER_GRID,
-                'gap-x-2 border-b border-line bg-sidebar px-1 py-2 text-[12px] font-medium text-ink-muted'
+                'gap-x-2 border-b border-line bg-sidebar px-1 py-2 text-ui-xs font-medium text-ink-muted'
               )}
               aria-hidden="true"
             >
@@ -299,7 +299,7 @@ export function ChaptersArea({
             {addRow}
             {visible.length === 0 ? (
               <div className="flex flex-col items-start gap-3 px-4 py-8">
-                <p role="status" className="text-[13px]">
+                <p role="status" className="text-ui-sm">
                   Không có chương nào khớp “{filterText}”.
                 </p>
                 <Button
@@ -399,7 +399,7 @@ function AddChapterRow({
         placeholder="Tên chương mới — Enter để thêm, Esc để đóng"
         value={title}
         maxLength={200}
-        className="h-[34px] min-w-0 flex-1 rounded-control border border-line-strong bg-canvas px-3 text-[13px] outline-none placeholder:text-ink-muted focus:border-focus focus:ring-2 focus:ring-focus/25"
+        className="h-[34px] min-w-0 flex-1 rounded-control border border-line-strong bg-canvas px-3 text-ui-sm outline-none placeholder:text-ink-muted focus:border-focus focus:ring-2 focus:ring-focus/25"
         onChange={(event) => setTitle(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {

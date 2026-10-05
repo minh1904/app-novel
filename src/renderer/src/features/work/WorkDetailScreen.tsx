@@ -44,7 +44,7 @@ export function WorkDetailScreen({
 
   if (detail.load === 'loading') {
     return (
-      <p role="status" className="px-6 pt-8 text-[13px] text-ink-muted">
+      <p role="status" className="px-6 pt-8 text-ui-sm text-ink-muted">
         Đang mở tác phẩm…
       </p>
     )
@@ -53,8 +53,8 @@ export function WorkDetailScreen({
   if (detail.load === 'failed' || !work) {
     return (
       <div className="mx-auto flex max-w-[560px] flex-col gap-3 px-6 pt-12">
-        <h2 className="text-[20px] font-semibold tracking-[-0.04em]">Không mở được tác phẩm</h2>
-        <p role="alert" className="text-[13px] leading-[1.6] text-ink-muted">
+        <h2 className="text-ui-lg font-semibold tracking-heading">Không mở được tác phẩm</h2>
+        <p role="alert" className="text-ui-sm leading-normal text-ink-muted">
           {detail.loadError}
         </p>
         <div className="flex gap-2">
@@ -103,7 +103,7 @@ export function WorkDetailScreen({
       {detail.notice && (
         <div
           role="alert"
-          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-xs"
+          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-ui-xs"
         >
           <span>{detail.notice}</span>
           <Button variant="ghost-muted" size="sm" onClick={detail.dismissNotice}>

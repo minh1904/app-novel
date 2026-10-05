@@ -54,28 +54,28 @@ export function WorkHeader({
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-col gap-1">
-            <h2 className="text-[20px] leading-[1.3] font-semibold break-words">
+            <h2 className="text-ui-lg leading-tight font-semibold break-words">
               {work.title}
             </h2>
             {work.originalTitle && (
-              <p lang={work.sourceLanguage} className="text-[14px] text-ink-muted break-words">
+              <p lang={work.sourceLanguage} className="text-ui-sm text-ink-muted break-words">
                 {work.originalTitle}
               </p>
             )}
-            {byline && <p className="text-[13px] break-words">{byline}</p>}
+            {byline && <p className="text-ui-sm break-words">{byline}</p>}
           </div>
 
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-ui-xs text-ink-muted">
             <span
               className={cx(
-                'rounded-[6px] px-2 py-0.5 font-medium',
+                'rounded-control px-2 py-0.5 font-medium',
                 work.status === 'in-progress' ? 'bg-selected text-ink' : 'bg-control text-ink'
               )}
             >
               {statusLabels[work.status]}
             </span>
             {work.archived && (
-              <span className="rounded-[6px] bg-control px-2 py-0.5 font-medium text-ink">
+              <span className="rounded-control bg-control px-2 py-0.5 font-medium text-ink">
                 Đã lưu trữ
               </span>
             )}
@@ -93,7 +93,7 @@ export function WorkHeader({
               <p
                 id="work-description"
                 className={cx(
-                  'text-[13px] leading-[1.6] whitespace-pre-line',
+                  'text-ui-sm leading-normal whitespace-pre-line',
                   long && !expanded && 'line-clamp-3'
                 )}
               >
@@ -140,7 +140,7 @@ export function WorkHeader({
             <MenuRoot>
               <MenuTrigger
                 aria-label="Thao tác khác với tác phẩm"
-                className="inline-flex size-[34px] cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
+                className="inline-flex size-[34px] cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
               >
                 <MenuDotsIcon size={16} />
               </MenuTrigger>

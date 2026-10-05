@@ -18,11 +18,7 @@ export function Panel({ title, className, children, ...props }: PanelProps): JSX
         .join(' ')}
       {...props}
     >
-      {title && (
-        <h2 className="m-0 text-[11px] font-semibold tracking-[0.07em] text-ink-muted uppercase">
-          {title}
-        </h2>
-      )}
+      {title && <h2 className="m-0 text-ui-xs font-semibold text-ink-muted">{title}</h2>}
       {children}
     </section>
   )

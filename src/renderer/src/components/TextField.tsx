@@ -25,12 +25,12 @@ export function TextField({
       data-slot="text-field"
       className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}
     >
-      <label className="text-[12px] font-semibold" htmlFor={inputId}>
+      <label className="text-ui-xs font-semibold" htmlFor={inputId}>
         {label}
       </label>
       <input
         className={[
-          'h-8 w-full rounded-control border bg-control px-3 text-ink outline-none placeholder:text-ink-muted focus:ring-2',
+          'h-(--control-height) w-full rounded-control border bg-control px-3 text-ink outline-none placeholder:text-ink-muted focus:ring-2',
           error
             ? 'border-error focus:border-error focus:ring-error/25'
             : 'border-line-strong focus:border-focus focus:ring-focus/25'
@@ -41,12 +41,12 @@ export function TextField({
         {...props}
       />
       {error && (
-        <span id={errorId} role="alert" className="text-[12px] text-error">
+        <span id={errorId} role="alert" className="text-ui-xs text-error">
           {error}
         </span>
       )}
       {hint && (
-        <span id={hintId} className="text-[12px] text-ink-muted">
+        <span id={hintId} className="text-ui-xs text-ink-muted">
           {hint}
         </span>
       )}

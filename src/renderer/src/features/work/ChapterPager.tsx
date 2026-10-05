@@ -32,7 +32,7 @@ export function ChapterPager({
       aria-label={'Phân trang ' + unit}
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-3"
     >
-      <p role="status" className="text-xs text-ink-muted">
+      <p role="status" className="text-ui-xs text-ink-muted">
         {total === 0 ? 'Không có ' + unit : `${from}–${to} trong ${total} ${unit}`}
       </p>
 

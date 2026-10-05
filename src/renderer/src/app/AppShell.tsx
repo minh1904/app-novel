@@ -1,4 +1,5 @@
 import { useEffect, useState, type JSX, type ReactNode } from 'react'
+import { CloseIcon } from '@solar-icons/react/linear/close'
 import { MoonIcon } from '@solar-icons/react/linear/moon'
 import { SettingsIcon } from '@solar-icons/react/linear/settings'
 import { SidebarMinimalisticIcon } from '@solar-icons/react/linear/sidebar-minimalistic'
@@ -105,7 +106,7 @@ export function AppShell({
       {/* One bar for the whole window, over the sidebar too: it is the title bar, the app header and
           the place for each screen's own icons, so nothing sits in a second strip underneath. */}
       <header
-        className="window-drag flex h-[42px] shrink-0 items-center gap-2 border-b border-line bg-chrome pl-2"
+        className="window-drag flex h-(--header-height) shrink-0 items-center gap-2 border-b border-line bg-chrome pl-2"
         style={{ paddingRight: BAR_END_PADDING }}
       >
         <Button
@@ -121,7 +122,7 @@ export function AppShell({
         </Button>
         <span className="flex items-center gap-1.5">
           <img src={logoUrl} alt="" className="size-4 shrink-0" draggable={false} />
-          <span className="text-[13px] font-semibold">Mira</span>
+          <span className="text-ui-sm font-semibold">Mira</span>
         </span>
         <span className="h-4 w-px shrink-0 bg-line" aria-hidden="true" />
         {workTabs.length > 0 && (
@@ -133,10 +134,10 @@ export function AppShell({
               <div
                 key={tab.workId}
                 className={cx(
-                  'group flex h-[35px] max-w-44 shrink-0 items-center rounded-t-tab border text-xs',
+                  'group flex h-8.5 max-w-50 shrink-0 items-center rounded-t-tab border text-ui-sm',
                   selectedWorkId === tab.workId
                     ? 'border-line border-b-canvas bg-canvas text-ink'
-                    : 'border-transparent text-ink-muted hover:bg-control hover:text-ink'
+                    : 'border-transparent text-ink-muted hover:bg-hover hover:text-ink'
                 )}
               >
                 <button
@@ -153,9 +154,9 @@ export function AppShell({
                   aria-label={'Đóng tab ' + tab.title}
                   title={'Đóng ' + tab.title}
                   onClick={() => onCloseWorkTab?.(tab.workId)}
-                  className="mr-1 shrink-0 rounded-sm px-1.5 py-1 text-ink-muted hover:bg-selected hover:text-ink focus-visible:outline-2 focus-visible:outline-focus"
+                  className="mr-1 flex size-5 shrink-0 items-center justify-center rounded-item text-ink-muted hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-focus"
                 >
-                  ×
+                  <CloseIcon size={14} />
                 </button>
               </div>
             ))}
@@ -174,7 +175,7 @@ export function AppShell({
         )}
         <div
           className={cx(
-            'min-w-0 items-center gap-2 text-xs',
+            'min-w-0 items-center gap-2 text-ui-xs',
             workTabs.length ? 'hidden xl:flex xl:flex-1' : 'flex flex-1'
           )}
         >
@@ -218,7 +219,7 @@ export function AppShell({
           >
             <div className="flex min-h-0 flex-1 flex-col">{sidebar}</div>
             <div className="flex flex-col gap-2 px-3 pt-3 pb-3">
-              <span className="border-t border-line px-2.5 pt-3 text-[12px] text-ink-muted">
+              <span className="border-t border-line px-2.5 pt-3 text-ui-xs text-ink-muted">
                 {appVersion ? 'Mira ' + appVersion : 'Mira'}
               </span>
             </div>

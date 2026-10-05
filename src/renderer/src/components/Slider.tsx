@@ -48,7 +48,7 @@ export function Slider({
     >
       <div
         className={cx(
-          'flex text-[12px] text-ink-muted',
+          'flex text-ui-xs text-ink-muted',
           hideLabel ? 'justify-end' : 'justify-between'
         )}
       >

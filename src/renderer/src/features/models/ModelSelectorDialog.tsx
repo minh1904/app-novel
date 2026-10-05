@@ -119,25 +119,25 @@ function Body({
       </div>
 
       {error !== null && (
-        <p role="alert" className="m-0 text-[12px] leading-[1.55] text-error">
+        <p role="alert" className="m-0 text-ui-xs leading-normal text-error">
           {error}
         </p>
       )}
 
       {empty !== null ? (
-        <p role="status" className="m-0 py-6 text-center text-[12px] leading-[1.6] text-ink-muted">
+        <p role="status" className="m-0 py-6 text-center text-ui-xs leading-normal text-ink-muted">
           {empty}
         </p>
       ) : (
         models.length > 0 && (
           <>
-            <p className="m-0 text-[12px] text-ink-muted" aria-live="polite">
+            <p className="m-0 text-ui-xs text-ink-muted" aria-live="polite">
               {query.trim() === ''
                 ? models.length + ' model'
                 : shown.length + ' / ' + models.length + ' model'}
             </p>
             {shown.length === 0 ? (
-              <p role="status" className="m-0 py-6 text-center text-[12px] text-ink-muted">
+              <p role="status" className="m-0 py-6 text-center text-ui-xs text-ink-muted">
                 Không có model nào khớp “{query.trim()}”.
               </p>
             ) : (
@@ -150,7 +150,7 @@ function Body({
                   const context = contextOf(model)
                   return (
                     <li key={model.id} className="border-b border-line last:border-b-0">
-                      <label className="flex cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 px-2.5 py-2 hover:bg-selected">
+                      <label className="flex cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 px-2.5 py-2 hover:bg-hover">
                         <input
                           type={mode === 'one' ? 'radio' : 'checkbox'}
                           name="model-to-pick"
@@ -158,7 +158,7 @@ function Body({
                           checked={chosen.includes(model.id)}
                           onChange={(event) => toggle(model.id, event.target.checked)}
                         />
-                        <span className="font-mono text-[12px] break-all">{model.id}</span>
+                        <span className="font-mono text-ui-xs break-all">{model.id}</span>
                         {have > 0 && (
                           <Badge tone="muted">
                             {have === 1 ? 'Đã có' : 'Đã có ' + have + ' mục'}
@@ -167,7 +167,7 @@ function Body({
                         {model.status === 'deprecated' && (
                           <Badge tone="warning">Nhà cung cấp đã khai tử</Badge>
                         )}
-                        <span className="ml-auto flex shrink-0 items-center gap-3 text-[12px] text-ink-muted">
+                        <span className="ml-auto flex shrink-0 items-center gap-3 text-ui-xs text-ink-muted">
                           {context !== null && <span>{context}</span>}
                           <span>{priceOf(model)}</span>
                         </span>
@@ -178,7 +178,7 @@ function Body({
               </ul>
             )}
             {catalogReadAt !== null && (
-              <p className="m-0 text-[12px] text-ink-muted">
+              <p className="m-0 text-ui-xs text-ink-muted">
                 Giá tham khảo, bảng dữ liệu cập nhật {catalogReadAt}.
               </p>
             )}
@@ -187,7 +187,7 @@ function Body({
       )}
 
       {problem !== null && (
-        <p role="alert" className="m-0 text-[12px] text-error">
+        <p role="alert" className="m-0 text-ui-xs text-error">
           {problem}
         </p>
       )}

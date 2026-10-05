@@ -146,7 +146,7 @@ export function SentenceMode({
 
   if (rows.loading) {
     return (
-      <p role="status" className="px-1 pt-2 text-[13px] text-ink-muted">
+      <p role="status" className="px-1 pt-2 text-ui-sm text-ink-muted">
         Đang đọc các hàng…
       </p>
     )
@@ -154,7 +154,7 @@ export function SentenceMode({
   if (rows.loadError) {
     return (
       <div className="flex flex-col gap-2 pt-2">
-        <p role="alert" className="text-[13px] text-ink-muted">
+        <p role="alert" className="text-ui-sm text-ink-muted">
           {rows.loadError}
         </p>
         <div>
@@ -172,7 +172,7 @@ export function SentenceMode({
         <p
           role="status"
           aria-label="Số hàng theo trạng thái"
-          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-ui-xs text-ink-muted"
         >
           {(['untranslated', 'ai', 'check', 'reviewed'] as RowState[]).map((state) => (
             <span key={state} className="flex items-center gap-1.5">
@@ -189,7 +189,7 @@ export function SentenceMode({
       <SentenceFilterToolbarMock />
 
       {canPair && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line bg-control px-3 py-2 text-xs leading-[1.55]">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line bg-control px-3 py-2 text-ui-xs leading-normal">
           <span>
             Có {unlinkedTargets.length.toLocaleString('vi')} câu dịch chưa ghép với hàng nào (viết ở
             mode Toàn văn). Ghép theo thứ tự chỉ là ước đoán, các hàng đó sẽ cần kiểm tra.
@@ -200,14 +200,14 @@ export function SentenceMode({
         </div>
       )}
       {(message ?? rows.notice) && (
-        <p role="status" className="text-xs text-ink-muted">
+        <p role="status" className="text-ui-xs text-ink-muted">
           {message ?? rows.notice}
         </p>
       )}
       {conflict && (
         <div
           role="alert"
-          className="flex flex-col gap-2 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs leading-[1.55]"
+          className="flex flex-col gap-2 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 text-ui-xs leading-normal"
         >
           <strong className="font-semibold">Chưa ghi được hàng này.</strong>
           <span>{conflict.message}</span>
@@ -336,8 +336,8 @@ const SentenceRow = memo(function SentenceRow({
   const statusId = 'row-state-' + row.sourceId
   return (
     <li className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-x-4 border-b border-line px-3 py-3 last:border-b-0">
-      <span className="pt-0.5 text-right text-xs text-ink-muted">{number}</span>
-      <p lang={sourceLang} className="text-[14px] leading-[1.7] break-words whitespace-pre-wrap">
+      <span className="pt-0.5 text-right text-ui-xs text-ink-muted">{number}</span>
+      <p lang={sourceLang} className="text-ui-sm leading-normal break-words whitespace-pre-wrap">
         {row.sourceText}
       </p>
       <div className="flex min-w-0 flex-col gap-1.5">
@@ -349,19 +349,23 @@ const SentenceRow = memo(function SentenceRow({
           aria-label={'Bản dịch hàng ' + number}
           aria-describedby={statusId}
           spellCheck={false}
-          className="w-full resize-none overflow-hidden rounded-control border border-line-strong bg-transparent px-2.5 py-1.5 text-[14px] leading-[1.7] outline-none focus:ring-2 focus:ring-focus/40"
+          className="w-full resize-none overflow-hidden rounded-control border border-line-strong bg-transparent px-2.5 py-1.5 text-ui-sm leading-normal outline-none focus:ring-2 focus:ring-focus/40"
           onFocus={() => onActive(row.index)}
           onChange={(event) => onDraft(row.sourceId, event.target.value)}
           onBlur={() => void onCommit(row.sourceId)}
           onKeyDown={onKeyDown}
         />
-        <p id={statusId} role="status" className="flex items-center gap-1.5 text-xs text-ink-muted">
+        <p
+          id={statusId}
+          role="status"
+          className="flex items-center gap-1.5 text-ui-xs text-ink-muted"
+        >
           <span aria-hidden="true" className={'size-1.5 rounded-full ' + STATE_DOT[row.state]} />
           {saving ? 'Đang ghi…' : STATE_LABEL[row.state]}
           {draft !== undefined && !saving && ' · chưa ghi'}
         </p>
         {problem && problem.kind === 'error' && (
-          <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-error">
+          <div role="alert" className="flex flex-wrap items-center gap-2 text-ui-xs text-error">
             <span>{problem.message}</span>
             <Button variant="outline" onClick={() => void onCommit(row.sourceId)}>
               Thử lại

@@ -226,7 +226,7 @@ function ImportBody({
         />
         <div
           className={
-            'flex flex-wrap items-center gap-3 rounded-control border border-dashed px-3 py-3 text-xs ' +
+            'flex flex-wrap items-center gap-3 rounded-control border border-dashed px-3 py-3 text-ui-xs ' +
             (dragging ? 'border-focus bg-control' : 'border-line-strong')
           }
         >
@@ -236,7 +236,7 @@ function ImportBody({
           </Button>
         </div>
         {inputError && (
-          <p role="alert" className="text-xs text-error">
+          <p role="alert" className="text-ui-xs text-error">
             {inputError}
           </p>
         )}
@@ -256,7 +256,7 @@ function ImportBody({
     return (
       <div className="flex flex-col gap-4">
         {hidden}
-        <p role="alert" className="text-xs text-error">
+        <p role="alert" className="text-ui-xs text-error">
           {prepared.message}
         </p>
         <div className="flex justify-end gap-2 border-t border-line pt-4">
@@ -272,7 +272,7 @@ function ImportBody({
   const sampleItems = sampleOf(plan.segments.length)
 
   return (
-    <div className="flex flex-col gap-4 text-xs">
+    <div className="flex flex-col gap-4 text-ui-xs">
       {hidden}
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
         {plan.fileName && (
@@ -320,17 +320,17 @@ function ImportBody({
         <p
           key={warning}
           role="note"
-          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 leading-[1.5]"
+          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 leading-normal"
         >
           {warning}
         </p>
       ))}
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-[12px] font-semibold">Xem trước các segment</span>
+        <span className="text-ui-xs font-semibold">Xem trước các segment</span>
         <ol
           lang={sourceLang}
-          className="flex flex-col divide-y divide-line rounded-control border border-line text-[13px]"
+          className="flex flex-col divide-y divide-line rounded-control border border-line text-ui-sm"
         >
           {sampleItems.map((item) =>
             item.kind === 'gap' ? (
@@ -350,7 +350,7 @@ function ImportBody({
                 <span className="break-words whitespace-pre-wrap">
                   {plan.text.slice(plan.segments[item.index].start, plan.segments[item.index].end)}
                   {plan.longSegments.includes(item.index) && (
-                    <span className="ml-2 rounded-[5px] bg-warning/20 px-1.5 text-[11px]">
+                    <span className="ml-2 rounded-item bg-warning/20 px-1.5 text-ui-xs">
                       dài bất thường
                     </span>
                   )}
@@ -364,7 +364,7 @@ function ImportBody({
       {replacing && (
         <div
           role="note"
-          className="flex flex-col gap-1.5 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 leading-[1.55]"
+          className="flex flex-col gap-1.5 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 leading-normal"
         >
           <strong className="font-semibold">Bản gốc hiện có sẽ bị thay.</strong>
           <span>

@@ -32,8 +32,8 @@ export function EmptyState({
           {icon}
         </span>
       )}
-      <p className="m-0 text-[13px] font-semibold">{title}</p>
-      <p className="m-0 max-w-[460px] text-[12px] leading-[1.6] text-ink-muted">{children}</p>
+      <p className="m-0 text-ui-sm font-semibold">{title}</p>
+      <p className="m-0 max-w-[460px] text-ui-xs leading-normal text-ink-muted">{children}</p>
       {actions && (
         <span className="flex flex-wrap items-center justify-center gap-2">{actions}</span>
       )}

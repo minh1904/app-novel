@@ -117,20 +117,20 @@ export function ModelEntries({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-2">
-        <p className="m-0 text-[12px] font-semibold">Model dùng trong Mira</p>
+        <p className="m-0 text-ui-xs font-semibold">Model dùng trong Mira</p>
         {entries.length > 0 && (
-          <span className="text-[12px] text-ink-muted">{entries.length} mục</span>
+          <span className="text-ui-xs text-ink-muted">{entries.length} mục</span>
         )}
       </div>
 
       {problem !== null && (
-        <p role="alert" className="m-0 text-[12px] text-error">
+        <p role="alert" className="m-0 text-ui-xs text-error">
           {problem}
         </p>
       )}
 
       {entries.length === 0 ? (
-        <p className="m-0 text-[12px] leading-[1.6] text-ink-muted">
+        <p className="m-0 text-ui-xs leading-normal text-ink-muted">
           Chưa có mục model nào. Thêm một model để dịch và chat bằng kết nối này.
         </p>
       ) : (
@@ -146,13 +146,13 @@ export function ModelEntries({
               >
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[13px] font-semibold break-all">{entry.name}</span>
+                    <span className="text-ui-sm font-semibold break-all">{entry.name}</span>
                     <EntryBadges entry={entry} isDefault={isDefault} />
                     {info?.status === 'deprecated' && (
                       <Badge tone="warning">Nhà cung cấp đã khai tử</Badge>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-ink-muted">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-ui-xs text-ink-muted">
                     {/* The model is shown once: as the name when the entry still carries it, and here only when
                         the person gave the entry a name of their own. */}
                     {entry.name !== entry.model && (

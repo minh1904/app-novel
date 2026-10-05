@@ -13,8 +13,8 @@ const money = (usd?: number): string => usd === undefined ? 'chưa biết giá' 
 
 function Figure({ label, value }: { label: string; value: string }): JSX.Element {
   return <div className="flex items-baseline justify-between gap-3 border-b border-line py-1.5 last:border-b-0">
-    <span className="text-[12px] text-ink-muted">{label}</span>
-    <span className="text-[12px] font-medium tabular-nums">{value}</span>
+    <span className="text-ui-xs text-ink-muted">{label}</span>
+    <span className="text-ui-xs font-medium tabular-nums">{value}</span>
   </div>
 }
 
@@ -31,12 +31,12 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
   const [confirmedRedo, setConfirmedRedo] = useState(false)
   const notice = run.notice && <Banner tone="error" onDismiss={run.dismissNotice}>{run.notice}</Banner>
 
-  if (run.loadingTargets) return <p role="status" className="m-0 text-[12px] text-ink-muted">
+  if (run.loadingTargets) return <p role="status" className="m-0 text-ui-xs text-ink-muted">
     Đang đọc cài đặt kết nối…
   </p>
   if (run.targets.length === 0) return <div className="flex flex-col gap-3">
     {notice}
-    <p className="m-0 text-[12px] leading-[1.6] text-ink-muted">
+    <p className="m-0 text-ui-xs leading-normal text-ink-muted">
       Chưa có kết nối AI đang bật hoặc kết nối chưa chọn model.
     </p>
     <div className="flex justify-end gap-2">
@@ -47,26 +47,26 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
 
   if (run.stage === 'finished') return <div className="flex flex-col gap-3">
     {notice}
-    <p className="m-0 text-[12.5px]">
+    <p className="m-0 text-ui-sm">
       {run.cancelled ? 'Đã dừng. ' : ''}
       Đã xử lý <strong>{count(run.progress.processed)}</strong> đoạn,
       {' '}tạo <strong>{count(run.result?.proposed ?? run.progress.proposed)}</strong> đề xuất.
       {' '}Đã áp dụng <strong>{count(run.result?.applied ?? 0)}</strong>;
       {' '}cần duyệt <strong>{count(run.result?.needsReview ?? run.progress.proposed)}</strong>.
     </p>
-    {(run.result?.needsReview ?? 0) > 0 && <p className="m-0 text-[12px] text-ink-muted">
+    {(run.result?.needsReview ?? 0) > 0 && <p className="m-0 text-ui-xs text-ink-muted">
       Mở hàng chờ của chương để xem và duyệt từng phần.
     </p>}
-    {run.usage && <p className="m-0 text-[12px] text-ink-muted">
+    {run.usage && <p className="m-0 text-ui-xs text-ink-muted">
       Nhà cung cấp báo đã dùng {count(run.usage.inputTokens)} token vào và{' '}
       {count(run.usage.outputTokens)} token ra.
     </p>}
-    {run.keyNotice && <p role="status" className="m-0 text-[12px] text-ink-muted">{run.keyNotice}</p>}
-    {run.failure && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-[12px] leading-[1.55]">
+    {run.keyNotice && <p role="status" className="m-0 text-ui-xs text-ink-muted">{run.keyNotice}</p>}
+    {run.failure && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal">
       {run.failure.message}
     </p>}
     {run.failed.length > 0 && <div className="flex items-center gap-2 rounded-control border border-line bg-canvas px-3 py-2">
-      <span className="text-[12px]">{count(run.failed.length)} đoạn chưa dịch được. Đề xuất đã xong vẫn được giữ.</span>
+      <span className="text-ui-xs">{count(run.failed.length)} đoạn chưa dịch được. Đề xuất đã xong vẫn được giữ.</span>
       <Button variant="outline" size="sm" className="ml-auto" onClick={() => void run.retryFailed()}>
         Dịch lại phần lỗi
       </Button>
@@ -82,7 +82,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
         aria-valuenow={processed} className="h-1.5 overflow-hidden rounded-full bg-control">
         <div className="h-full rounded-full bg-primary" style={{ width: (total ? Math.round(processed / total * 100) : 0) + '%' }} />
       </div>
-      <p role="status" className="m-0 text-[12px] text-ink-muted">
+      <p role="status" className="m-0 text-ui-xs text-ink-muted">
         Đã xử lý {count(processed)} / {count(total)} đoạn · {count(proposed)} đề xuất đã lưu
       </p>
       <div className="flex justify-end">
@@ -97,7 +97,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
   return <div className="flex flex-col gap-3">
     {notice}
     <div className="flex flex-col gap-1.5">
-      <span className="text-[12px] font-semibold">Model dùng để dịch</span>
+      <span className="text-ui-xs font-semibold">Model dùng để dịch</span>
       <ModelSelectionMenu variant="field" label="Model dùng để dịch" connections={run.connections}
         selected={run.selection}
         onSelect={(selection) => { setConfirmedRedo(false); void run.pick(selection) }}
@@ -105,7 +105,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
           setConfirmedRedo(false); void run.pick(selection, choice)
         }} />
     </div>
-    {run.stage === 'planning' && <p role="status" className="m-0 text-[12px] text-ink-muted">
+    {run.stage === 'planning' && <p role="status" className="m-0 text-ui-xs text-ink-muted">
       Đang tính số đoạn và ước lượng chi phí…
     </p>}
     {plan && <>
@@ -115,19 +115,19 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
         <Figure label="Token (ước lượng)" value={`${count(plan.estimate.inputTokens)} vào · ${count(plan.estimate.outputTokens)} ra`} />
         <Figure label="Chi phí (ước lượng)" value={money(plan.estimate.usd)} />
       </div>
-      <p className="m-0 text-[12px] leading-[1.55] text-ink-muted">
+      <p className="m-0 text-ui-xs leading-normal text-ink-muted">
         Giá tham khảo cập nhật {plan.catalogReadAt}. Lượng dùng thật hiện sau khi dịch.
       </p>
-      {plan.hasTranslation && <p role="note" className="m-0 rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-[12px] leading-[1.55]">
+      {plan.hasTranslation && <p role="note" className="m-0 rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-ui-xs leading-normal">
         Chương đã có bản dịch. Kết quả vào hàng chờ để đặt vị trí; Mira không tự ghép theo thứ tự đoạn.
       </p>}
       <fieldset className="flex flex-col gap-1.5 rounded-control border border-line px-3 py-2">
-        <legend className="px-1 text-[12px] font-semibold">Sau khi dịch</legend>
-        <label className="flex items-center gap-2 text-[12px]">
+        <legend className="px-1 text-ui-xs font-semibold">Sau khi dịch</legend>
+        <label className="flex items-center gap-2 text-ui-xs">
           <input type="radio" name="translation-policy" checked={run.policy === 'review'}
             onChange={() => run.setPolicy('review')} /> Duyệt trước
         </label>
-        <label className="flex items-center gap-2 text-[12px]">
+        <label className="flex items-center gap-2 text-ui-xs">
           <input type="radio" name="translation-policy" checked={run.policy === 'auto'}
             onChange={() => run.setPolicy('auto')} /> Áp dụng thẳng khi bản dịch còn trống và không đổi
         </label>

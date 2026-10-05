@@ -27,7 +27,7 @@ class AreaBoundary extends Component<{ label: string; children: ReactNode }, { f
   render(): ReactNode {
     if (!this.state.failed) return this.props.children
     return (
-      <div role="alert" className="flex flex-col items-start gap-3 py-8 text-[13px]">
+      <div role="alert" className="flex flex-col items-start gap-3 py-8 text-ui-sm">
         <p>
           Không hiển thị được khu vực “{this.props.label}”. Tác phẩm và dữ liệu không bị ảnh hưởng.
         </p>
@@ -91,7 +91,7 @@ export function WorkAreaHost({
           <TabsTab key={area.id} value={area.id} className="shrink-0">
             {area.label}
             {area.soon && (
-              <span className="ml-1.5 rounded-[5px] bg-selected px-1 py-px text-[11px] text-ink">
+              <span className="ml-1.5 rounded-item bg-selected px-1 py-px text-ui-xs text-ink">
                 {SOON_LABEL}
               </span>
             )}

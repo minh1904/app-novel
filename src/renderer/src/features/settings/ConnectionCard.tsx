@@ -112,7 +112,7 @@ export function ConnectionCard({
           onCheckedChange={(checked) => onPatch({ enabled: checked })}
           aria-label={connection.enabled ? 'Tắt kết nối' : 'Bật kết nối'}
         />
-        <h3 className="m-0 min-w-0 flex-1 text-[13px] font-semibold">{connection.name}</h3>
+        <h3 className="m-0 min-w-0 flex-1 text-ui-sm font-semibold">{connection.name}</h3>
         <Badge tone={status.tone}>{status.label}</Badge>
         <Button variant="ghost-muted" size="icon" aria-label="Xóa kết nối" onClick={onDelete}>
           <TrashBinTrashIcon size={15} />
@@ -120,7 +120,7 @@ export function ConnectionCard({
       </div>
 
       {formError && (
-        <p role="alert" className="m-0 text-[12px] text-error">
+        <p role="alert" className="m-0 text-ui-xs text-error">
           {formError}
         </p>
       )}
@@ -146,12 +146,12 @@ export function ConnectionCard({
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="m-0 text-[12px] font-semibold">
+        <p className="m-0 text-ui-xs font-semibold">
           Khóa API{' '}
           <span className="font-normal text-ink-muted">— để trống nếu endpoint không cần</span>
         </p>
         {connection.keys.length === 0 && (
-          <p className="m-0 text-[12px] text-ink-muted">
+          <p className="m-0 text-ui-xs text-ink-muted">
             {local
               ? 'Chưa có khóa nào. Endpoint chạy trên máy bạn thường không cần khóa.'
               : 'Chưa có khóa nào.'}
@@ -166,7 +166,7 @@ export function ConnectionCard({
                   key={key.id}
                   className="flex flex-wrap items-center gap-2 rounded-control border border-line bg-canvas px-2.5 py-1.5"
                 >
-                  <span className="font-mono text-[12px]">…{key.tail}</span>
+                  <span className="font-mono text-ui-xs">…{key.tail}</span>
                   <Badge tone={badge.tone}>{badge.label}</Badge>
                   <Button
                     variant="ghost-muted"
@@ -209,13 +209,13 @@ export function ConnectionCard({
           </Button>
         </div>
         {connection.keys.length >= 1 && sharedQuota && (
-          <p className="m-0 text-[12px] text-ink-muted">
+          <p className="m-0 text-ui-xs text-ink-muted">
             Khóa cùng một project Google có thể dùng chung hạn mức, nên khóa thứ hai nên lấy từ
             project khác.
           </p>
         )}
         {connection.keys.length > 1 && (
-          <p className="m-0 text-[12px] text-ink-muted">
+          <p className="m-0 text-ui-xs text-ink-muted">
             Dùng cạn khóa trên rồi mới sang khóa dưới.
           </p>
         )}
@@ -224,7 +224,7 @@ export function ConnectionCard({
       <ModelEntries connection={connection} test={test} actions={entries} onFetchModels={onTest} />
 
       <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
-        <span className="w-full basis-full text-[12px] text-ink-muted">
+        <span className="w-full basis-full text-ui-xs text-ink-muted">
           {connection.checkedAt === null
             ? 'Chưa kiểm tra lần nào'
             : 'Kiểm tra gần nhất: ' + new Date(connection.checkedAt).toLocaleString('vi-VN')}

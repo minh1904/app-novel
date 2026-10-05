@@ -1,5 +1,5 @@
-/* Token gốc của Mira, dán từ src/renderer/src/styles/tokens.css.
-   Sửa ở đó thì sửa cả ở đây, nếu không wireframe và app lệch màu. */
+/* Bản chụp palette cũ (Solar Docs) dùng cho wireframe tới 2026-10-04. Token hiện hành ở
+   src/renderer/src/styles/tokens.css; xem docs/modules/design-system. Không đồng bộ tự động. */
 :root,
 html[data-theme='dark'] {
   color-scheme: dark;

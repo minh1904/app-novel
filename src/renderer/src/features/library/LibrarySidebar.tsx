@@ -39,7 +39,7 @@ export function LibrarySidebar({
   return (
     <>
       <div className="flex items-center justify-between px-5 pt-1 pb-2">
-        <h2 className="text-[13px] font-semibold">Thư viện</h2>
+        <h2 className="text-ui-sm font-semibold">Thư viện</h2>
         <Button variant="outline" size="sm" onClick={onCreateWork}>
           <AddIcon size={13} />
           Tạo tác phẩm
@@ -57,7 +57,7 @@ export function LibrarySidebar({
               className={cx(
                 itemClass,
                 'h-7 font-medium',
-                active ? 'bg-selected text-ink' : 'text-ink-muted hover:bg-control hover:text-ink'
+                active ? 'bg-active text-ink' : 'text-ink-muted hover:bg-hover hover:text-ink'
               )}
               onClick={() => onSelectSection(section.id)}
             >
@@ -74,7 +74,7 @@ export function LibrarySidebar({
       >
         <h2
           id="recent-works-heading"
-          className="mb-1.5 px-2.5 text-[12px] font-medium text-ink-muted"
+          className="mb-1.5 px-2.5 text-ui-xs font-medium text-ink-muted"
         >
           Tác phẩm gần đây
         </h2>
@@ -84,13 +84,13 @@ export function LibrarySidebar({
               <li key={work.id}>
                 <button
                   type="button"
-                  className={cx(itemClass, 'py-1.5 pl-2 hover:bg-control')}
+                  className={cx(itemClass, 'py-1.5 pl-2 hover:bg-hover')}
                   onClick={() => onOpenWork(work)}
                 >
                   <WorkCover work={work} size="xs" />
                   <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-xs font-medium text-ink">{work.title}</span>
-                    <span className="truncate text-[12px] text-ink-muted">
+                    <span className="truncate text-ui-xs font-medium text-ink">{work.title}</span>
+                    <span className="truncate text-ui-xs text-ink-muted">
                       {workProgressLabel(work)}
                     </span>
                   </span>
@@ -101,8 +101,8 @@ export function LibrarySidebar({
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 pb-10 text-center">
             <FolderIcon size={28} className="text-ink-muted" />
-            <p className="text-xs font-semibold text-ink-muted">Chưa có tác phẩm nào</p>
-            <p className="text-[12px] leading-[1.5] text-ink-muted">
+            <p className="text-ui-xs font-semibold text-ink-muted">Chưa có tác phẩm nào</p>
+            <p className="text-ui-xs leading-normal text-ink-muted">
               Tác phẩm bạn tạo sẽ hiện ở đây để mở lại nhanh.
             </p>
           </div>

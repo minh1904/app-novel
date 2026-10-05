@@ -21,7 +21,7 @@ export function MenuPopup({
   return (
     <BaseMenu.Portal>
       <BaseMenu.Positioner sideOffset={6} align={align}>
-        <BaseMenu.Popup className="min-w-[184px] rounded-control border border-line bg-popover p-1 text-xs text-ink shadow-[0_8px_28px_rgb(0_0_0/0.14)] outline-none">
+        <BaseMenu.Popup className="min-w-[184px] rounded-control border border-line-strong bg-popover p-1 text-ui-sm text-ink shadow-popover outline-none">
           {children}
         </BaseMenu.Popup>
       </BaseMenu.Positioner>
@@ -40,7 +40,7 @@ export function MenuItem({
   return (
     <BaseMenu.Item
       className={cx(
-        'flex h-[30px] cursor-default items-center gap-2 rounded-[7px] px-2 outline-none select-none data-disabled:opacity-50 data-highlighted:bg-selected',
+        'flex h-7 cursor-default items-center gap-2 rounded-item px-2 outline-none select-none data-disabled:opacity-50 data-highlighted:bg-hover',
         tone === 'destructive' && 'text-error',
         className
       )}
@@ -54,7 +54,7 @@ export function MenuSeparator(): JSX.Element {
 }
 
 const itemClass =
-  'flex h-[30px] cursor-default items-center gap-2 rounded-[7px] px-2 outline-none select-none data-disabled:opacity-50 data-highlighted:bg-selected'
+  'flex h-7 cursor-default items-center gap-2 rounded-item px-2 outline-none select-none data-disabled:opacity-50 data-highlighted:bg-hover'
 
 /** A menu inside a menu: `MenuSubmenuTrigger` is the row that opens it, `MenuSubmenuPopup` is what opens. */
 export function MenuSubmenu(props: BaseMenu.SubmenuRoot.Props): JSX.Element {
@@ -72,7 +72,7 @@ export function MenuSubmenuPopup({ children }: { children: ReactNode }): JSX.Ele
   return (
     <BaseMenu.Portal>
       <BaseMenu.Positioner sideOffset={4} alignOffset={-5} align="start">
-        <BaseMenu.Popup className="min-w-[164px] rounded-control border border-line bg-popover p-1 text-xs text-ink shadow-[0_8px_28px_rgb(0_0_0/0.14)] outline-none">
+        <BaseMenu.Popup className="min-w-[164px] rounded-control border border-line-strong bg-popover p-1 text-ui-sm text-ink shadow-popover outline-none">
           {children}
         </BaseMenu.Popup>
       </BaseMenu.Positioner>

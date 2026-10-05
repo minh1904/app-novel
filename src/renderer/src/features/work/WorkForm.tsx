@@ -133,7 +133,7 @@ export function WorkForm({
   const languageField =
     mode === 'create' ? (
       <div className="flex flex-col gap-[7px]">
-        <span className="text-[12px] font-semibold">Ngôn ngữ gốc</span>
+        <span className="text-ui-xs font-semibold">Ngôn ngữ gốc</span>
         <Select<SourceLanguage>
           label="Ngôn ngữ gốc"
           value={values.sourceLang}
@@ -141,7 +141,7 @@ export function WorkForm({
           onChange={(lang) => set('sourceLang', lang)}
           className="w-full"
         />
-        <span className="text-[11px] text-ink-muted">Ngôn ngữ đích luôn là tiếng Việt.</span>
+        <span className="text-ui-xs text-ink-muted">Ngôn ngữ đích luôn là tiếng Việt.</span>
       </div>
     ) : (
       <TextField
@@ -191,7 +191,7 @@ export function WorkForm({
   )
 
   const errorLine = (formError || fieldErrors.cover) && (
-    <p role="alert" className="text-[12px] text-error">
+    <p role="alert" className="text-ui-xs text-error">
       {formError ?? fieldErrors.cover}
     </p>
   )
@@ -213,7 +213,7 @@ export function WorkForm({
       <form className="flex h-full min-h-0 flex-col" noValidate onSubmit={onSteppedSubmit}>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex max-w-[560px] flex-col gap-4 px-5 py-6">
-            <ol className="flex items-center gap-2 text-[12px]" aria-label="Các bước tạo tác phẩm">
+            <ol className="flex items-center gap-2 text-ui-xs" aria-label="Các bước tạo tác phẩm">
               {(
                 [
                   [1, 'Bắt buộc'],
@@ -232,7 +232,7 @@ export function WorkForm({
                     <span
                       aria-hidden="true"
                       className={
-                        'grid size-5 place-items-center rounded-full text-[11px] ' +
+                        'grid size-5 place-items-center rounded-full text-ui-xs ' +
                         (step === number
                           ? 'bg-primary text-primary-foreground'
                           : 'border border-line-strong')
@@ -247,10 +247,10 @@ export function WorkForm({
             </ol>
 
             <div className="flex flex-col gap-1">
-              <h2 className="text-[15px] font-semibold">
+              <h2 className="text-ui-md font-semibold">
                 {onStepOne ? 'Tác phẩm này tên gì?' : 'Thêm thông tin cho tác phẩm'}
               </h2>
-              <p className="text-xs leading-[1.6] text-ink-muted">
+              <p className="text-ui-xs leading-normal text-ink-muted">
                 {onStepOne
                   ? 'Hai thứ này không đổi được dễ dàng về sau; phần còn lại thêm lúc nào cũng được.'
                   : 'Mọi thứ ở bước này đều bỏ trống được, và sửa lại sau lúc nào cũng được.'}
@@ -261,7 +261,7 @@ export function WorkForm({
               <>
                 {titleField}
                 {languageField}
-                <p className="text-[12px] text-ink-muted">
+                <p className="text-ui-xs text-ink-muted">
                   Bước sau: ảnh bìa, tên gốc, tác giả, thể loại, mô tả — bỏ qua được.
                 </p>
               </>
@@ -279,7 +279,7 @@ export function WorkForm({
 
         <div className="flex h-[48px] shrink-0 items-center justify-end gap-2 border-t border-line bg-chrome px-3">
           {submitting && (
-            <p role="status" className="mr-auto text-xs text-ink-muted">
+            <p role="status" className="mr-auto text-ui-xs text-ink-muted">
               {busyLabel}
             </p>
           )}

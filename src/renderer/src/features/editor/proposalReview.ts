@@ -16,7 +16,7 @@ class PreviewWidget extends WidgetType {
 
   override toDOM(): HTMLElement {
     const box = document.createElement('div')
-    box.className = 'm-2 rounded-control border border-line-strong bg-canvas p-2 text-[12px]'
+    box.className = 'm-2 rounded-control border border-line-strong bg-canvas p-2 text-ui-xs'
     box.setAttribute('role', 'group')
     box.setAttribute('aria-label', this.preview.label)
     const title = document.createElement('p')

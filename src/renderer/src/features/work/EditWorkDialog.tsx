@@ -83,14 +83,14 @@ function EditBody({
 
   if (loadError) {
     return (
-      <p role="alert" className="text-xs text-error">
+      <p role="alert" className="text-ui-xs text-error">
         Không đọc được ảnh bìa hiện tại: {loadError}
       </p>
     )
   }
   if (!initial) {
     return (
-      <p role="status" className="py-8 text-center text-xs text-ink-muted">
+      <p role="status" className="py-8 text-center text-ui-xs text-ink-muted">
         Đang mở thông tin…
       </p>
     )

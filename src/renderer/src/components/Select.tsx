@@ -43,8 +43,8 @@ export function Select<T extends string>({
         data-slot="select"
         aria-label={label}
         className={cx(
-          'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line bg-control text-xs text-ink outline-none hover:bg-selected focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected',
-          size === 'sm' ? 'h-7 gap-1.5 pr-2 pl-2.5' : 'h-8 pr-2.5 pl-3',
+          'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line bg-control text-ui-sm text-ink outline-none hover:bg-control-hover focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-control-hover',
+          size === 'sm' ? 'h-7 gap-1.5 pr-2 pl-2.5' : 'h-(--control-height) pr-2.5 pl-3',
           className
         )}
       >
@@ -56,12 +56,12 @@ export function Select<T extends string>({
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
         <BaseSelect.Positioner sideOffset={6} align="end" alignItemWithTrigger={false}>
-          <BaseSelect.Popup className="min-w-(--anchor-width) rounded-control border border-line bg-popover p-1 text-xs text-ink shadow-[0_8px_28px_rgb(0_0_0/0.14)] outline-none">
+          <BaseSelect.Popup className="min-w-(--anchor-width) rounded-control border border-line-strong bg-popover p-1 text-ui-sm text-ink shadow-popover outline-none">
             {options.map((option) => (
               <BaseSelect.Item
                 key={option.value}
                 value={option.value}
-                className="flex h-[30px] cursor-default items-center gap-2 rounded-[7px] pr-3 pl-2 outline-none select-none data-highlighted:bg-selected"
+                className="flex h-7 cursor-default items-center gap-2 rounded-item pr-3 pl-2 outline-none select-none data-highlighted:bg-hover"
               >
                 <span className="flex size-3.5 items-center justify-center">
                   <BaseSelect.ItemIndicator>

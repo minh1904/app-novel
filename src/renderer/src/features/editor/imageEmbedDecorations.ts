@@ -212,17 +212,17 @@ const imageTheme = EditorView.baseTheme({
   '.cm-image-embed img': {
     display: 'block',
     maxWidth: '100%',
-    borderRadius: 'var(--radius-control, 4px)'
+    borderRadius: 'var(--radius-s)'
   },
   '.cm-image-embed-placeholder': {
     display: 'inline-block',
     padding: '2px 8px',
-    borderRadius: 'var(--radius-control, 4px)',
+    borderRadius: 'var(--radius-s)',
     border: '1px dashed var(--text-muted)',
     color: 'var(--text-muted)',
     fontSize: '12px'
   },
-  '.cm-image-embed-error': { borderColor: 'var(--status-danger, #c0392b)' },
+  '.cm-image-embed-error': { borderColor: 'var(--status-error)' },
   '.cm-image-embed-handle': {
     position: 'absolute',
     right: '-3px',
@@ -230,7 +230,7 @@ const imageTheme = EditorView.baseTheme({
     width: '10px',
     height: '10px',
     borderRadius: '2px',
-    background: 'var(--focus-ring, #3b82f6)',
+    background: 'var(--focus-ring)',
     cursor: 'nwse-resize',
     opacity: '0',
     transition: 'opacity 120ms'

@@ -9,6 +9,16 @@
   font-display: swap;
 }
 
+/*
+ * Three layers, the way Obsidian builds its theme (docs/modules/design-system/obsidian-comparison.md):
+ *   1. the neutral scale and the accent, the only raw colours;
+ *   2. semantic roles (surfaces, text, borders, actions), which only point at layer 1;
+ *   3. component sizes, which point at the spacing, type and radius scales.
+ * A screen uses layers 2 and 3 through the Tailwind names in `@theme inline`, never a raw value.
+ *
+ * Two semantic colours stay literal hex: `--surface-chrome` and `--text-muted`. The OS paints the
+ * window buttons with copies of them (main/electron/titleBar.ts), and titleBar.test.ts reads them here.
+ */
 :root,
 html[data-theme='dark'] {
   color-scheme: dark;
@@ -16,7 +26,7 @@ html[data-theme='dark'] {
   --font-editor: 'Google Sans Flex', 'Segoe UI', sans-serif;
   --font-code: 'Cascadia Code', Consolas, monospace;
 
-  /* Obsidian's documented neutral scale; semantic surface assignments are Mira's. */
+  /* Obsidian's documented neutral scale. */
   --neutral-00: #1c1c1c;
   --neutral-05: #212121;
   --neutral-10: #232323;
@@ -29,26 +39,47 @@ html[data-theme='dark'] {
   --neutral-60: #999999;
   --neutral-70: #b3b3b3;
   --neutral-100: #dadada;
+  /* The colour an overlay mixes in: lighter on dark, darker on light. */
+  --mono-100: #ffffff;
 
-  --surface-canvas: #1c1c1c;
-  --surface-sidebar: #282828;
-  --surface-chrome: #333333;
-  --surface-control: #2e2e2e;
-  --surface-selected: #3f3f3f;
-  --surface-popover: #2e2e2e;
+  /* Mira's own accent, not Obsidian's hsl(258 88% 66%): white text on that reaches only ~4.3:1. */
+  --accent: #9973eb;
 
-  --text-primary: #dadada;
-  --text-muted: #999999;
+  --surface-canvas: var(--neutral-00);
+  --surface-raised: var(--neutral-10);
+  --surface-sidebar: var(--neutral-20);
+  /* The bar and the sidebar are one frame around the canvas, as in Obsidian. */
+  --surface-chrome: #282828;
+  --surface-control: var(--neutral-25);
+  --surface-control-hover: var(--neutral-35);
+  --surface-selected: var(--neutral-35);
+  --surface-popover: var(--neutral-20);
+  --surface-backdrop: rgb(10 10 10 / 0.5);
+
+  --text-primary: var(--neutral-100);
+  --text-muted: #b3b3b3;
+  /* Decoration only (shortcut hints, secondary counts): ~3:1 on the canvas. */
+  --text-faint: var(--neutral-50);
+  --text-selection: color-mix(in oklch, var(--accent) 33%, transparent);
+
   --border-subtle: #ffffff1a;
   --border-strong: #ffffff33;
-  --action-primary: #9973eb;
-  --action-on-primary: #1c1c1c;
-  --focus-ring: #9973eb;
+
+  --action-primary: var(--accent);
+  --action-primary-hover: color-mix(in oklch, var(--accent), white 14%);
+  --action-on-primary: var(--neutral-00);
+  --focus-ring: var(--accent);
 
   --status-info: #3080ff;
   --status-warning: #f99c00;
   --status-error: #fb2c36;
   --status-success: #00c758;
+
+  --elevation-s:
+    0 1px 2px rgb(0 0 0 / 0.121), 0 3.4px 6.7px rgb(0 0 0 / 0.179), 0 15px 30px rgb(0 0 0 / 0.3);
+  --elevation-l:
+    0 1.8px 7.3px rgb(0 0 0 / 0.141), 0 6.3px 24.7px rgb(0 0 0 / 0.202),
+    0 30px 90px rgb(0 0 0 / 0.2);
 }
 
 html[data-theme='light'] {
@@ -65,45 +96,79 @@ html[data-theme='light'] {
   --neutral-60: #707070;
   --neutral-70: #5c5c5c;
   --neutral-100: #222222;
+  --mono-100: #000000;
 
-  --surface-canvas: #ffffff;
-  --surface-sidebar: #f6f6f6;
+  --accent: #7041b9;
+
+  --surface-canvas: var(--neutral-00);
+  --surface-raised: var(--neutral-10);
+  --surface-sidebar: var(--neutral-20);
   --surface-chrome: #f6f6f6;
-  --surface-control: #efefef;
-  --surface-selected: #e4e4e4;
-  --surface-popover: #fcfcfc;
+  --surface-control: var(--neutral-25);
+  --surface-control-hover: var(--neutral-30);
+  --surface-selected: var(--neutral-30);
+  --surface-popover: var(--neutral-05);
+  --surface-backdrop: rgb(220 220 220 / 0.5);
 
-  --text-primary: #222222;
+  --text-primary: var(--neutral-100);
   --text-muted: #5c5c5c;
+  /* One step darker than Obsidian's base-50, which is 2.3:1 on white. */
+  --text-faint: var(--neutral-60);
+  --text-selection: color-mix(in oklch, var(--accent) 20%, transparent);
+
   --border-subtle: #0000001a;
   --border-strong: #00000033;
-  --action-primary: #7041b9;
+
+  --action-primary: var(--accent);
+  --action-primary-hover: color-mix(in oklch, var(--accent), black 12%);
   --action-on-primary: #ffffff;
-  --focus-ring: #7041b9;
+  --focus-ring: var(--accent);
 
   /* Darker than the dark-theme status colours so small text on a pale tint reaches 4.5:1. */
   --status-info: #1d5fd6;
   --status-warning: #9a5b00;
   --status-error: #d1141f;
   --status-success: #00793a;
+
+  --elevation-s:
+    0 1px 2px rgb(0 0 0 / 0.028), 0 3.4px 6.7px rgb(0 0 0 / 0.042), 0 15px 30px rgb(0 0 0 / 0.07);
+  --elevation-l:
+    0 1.8px 7.3px rgb(0 0 0 / 0.071), 0 6.3px 24.7px rgb(0 0 0 / 0.112),
+    0 15px 30px rgb(0 0 0 / 0.1);
 }
 
 :root {
+  /* Translucent, so one hover works on every surface; an accent tint marks the current item. */
+  --surface-hover: color-mix(in oklch, var(--mono-100) 6.7%, transparent);
+  --surface-active: color-mix(in oklch, var(--accent) 15%, transparent);
+
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+
   --text-ui-smaller: 12px;
   --text-ui-small: 13px;
   --text-ui-medium: 15px;
   --text-ui-large: 20px;
+  /* A page title: Obsidian's h1, 1.618 × the 16px content size. */
+  --text-ui-display: 26px;
   --text-editor: 16px;
+  --line-height-normal: 1.5;
+  --line-height-tight: 1.3;
+
   --radius-s: 4px;
-  --radius-m: 8px;
+  --radius-m: 6px;
   --radius-l: 12px;
   --radius-xl: 16px;
+
+  --header-height: 40px;
+  --control-height: 30px;
+
+  --duration-fast: 140ms;
+  --duration-moderate: 300ms;
 }
 
 @theme inline {
@@ -111,16 +176,23 @@ html[data-theme='light'] {
   --font-mono: var(--font-code);
 
   --color-canvas: var(--surface-canvas);
+  --color-raised: var(--surface-raised);
   --color-sidebar: var(--surface-sidebar);
   --color-chrome: var(--surface-chrome);
   --color-control: var(--surface-control);
+  --color-control-hover: var(--surface-control-hover);
   --color-selected: var(--surface-selected);
+  --color-hover: var(--surface-hover);
+  --color-active: var(--surface-active);
   --color-popover: var(--surface-popover);
+  --color-backdrop: var(--surface-backdrop);
   --color-ink: var(--text-primary);
   --color-ink-muted: var(--text-muted);
+  --color-ink-faint: var(--text-faint);
   --color-line: var(--border-subtle);
   --color-line-strong: var(--border-strong);
   --color-primary: var(--action-primary);
+  --color-primary-hover: var(--action-primary-hover);
   --color-primary-foreground: var(--action-on-primary);
   --color-focus: var(--focus-ring);
   --color-info: var(--status-info);
@@ -128,18 +200,31 @@ html[data-theme='light'] {
   --color-error: var(--status-error);
   --color-success: var(--status-success);
 
+  --text-ui-xs: var(--text-ui-smaller);
+  --text-ui-sm: var(--text-ui-small);
+  --text-ui-md: var(--text-ui-medium);
+  --text-ui-lg: var(--text-ui-large);
+  --text-ui-title: var(--text-ui-display);
+  --leading-normal: var(--line-height-normal);
+  --leading-tight: var(--line-height-tight);
+  --tracking-heading: -0.015em;
+
+  --radius-item: var(--radius-s);
   --radius-control: var(--radius-m);
   --radius-tab: var(--radius-m);
   --radius-panel: var(--radius-l);
+
+  --shadow-popover: var(--elevation-s);
+  --shadow-overlay: var(--elevation-l);
 }
 
 @layer base {
   body {
-    @apply bg-canvas font-sans text-[13px] leading-normal text-ink antialiased;
+    @apply bg-canvas font-sans text-ui-sm leading-normal text-ink antialiased;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--focus-ring) 30%, transparent);
+    background: var(--text-selection);
   }
 
   button,
@@ -149,6 +234,15 @@ html[data-theme='light'] {
 
   button {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Spinners and pulses keep running: they say something is still working. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      transition-duration: 0s !important;
+    }
   }
 }
 

@@ -60,7 +60,7 @@ export function ChapterScreen({
 
   if (screen.load === 'loading') {
     return (
-      <p role="status" className="px-6 pt-8 text-[13px] text-ink-muted">
+      <p role="status" className="px-6 pt-8 text-ui-sm text-ink-muted">
         Đang mở chương…
       </p>
     )
@@ -75,8 +75,8 @@ export function ChapterScreen({
   ) {
     return (
       <div className="mx-auto flex max-w-[560px] flex-col gap-3 px-6 pt-12">
-        <h2 className="text-[20px] font-semibold tracking-[-0.04em]">Không mở được chương</h2>
-        <p role="alert" className="text-[13px] leading-[1.6] text-ink-muted">
+        <h2 className="text-ui-lg font-semibold tracking-heading">Không mở được chương</h2>
+        <p role="alert" className="text-ui-sm leading-normal text-ink-muted">
           {screen.error}
         </p>
         <div className="flex gap-2">
@@ -174,7 +174,7 @@ export function ChapterScreen({
         </Button>
       </TopBarActions>
       <header className="flex h-[36px] shrink-0 items-center gap-2 border-b border-line bg-chrome px-2.5">
-        <h2 className="min-w-0 truncate text-[12.5px] font-semibold">
+        <h2 className="min-w-0 truncate text-ui-sm font-semibold">
           {headingTitle(chapter)}{' '}
           <span className="font-normal text-ink-muted">
             · {work.title} · {languages[work.sourceLanguage].short} → Việt
@@ -187,16 +187,16 @@ export function ChapterScreen({
       {/* Two ways in, side by side: each says what it is for, so the first time is not a guess. */}
       <div className="@container flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6">
         <div className="text-center">
-          <p className="text-[14px] font-semibold">Chương này chưa có bản gốc</p>
-          <p className="mt-1 max-w-[520px] text-xs leading-[1.6] text-ink-muted">
+          <p className="text-ui-sm font-semibold">Chương này chưa có bản gốc</p>
+          <p className="mt-1 max-w-[520px] text-ui-xs leading-normal text-ink-muted">
             Đưa văn bản gốc vào để Mira chia thành các segment. Bạn xem lại kết quả trước khi lưu.
           </p>
         </div>
         <div className="grid w-full max-w-[640px] gap-3 @min-[560px]:grid-cols-2">
           <section className="flex flex-col items-start gap-2 rounded-panel border border-line bg-sidebar p-3.5">
             <ClipboardTextIcon size={20} className="text-ink-muted" />
-            <h3 className="text-[13px] font-semibold">Dán văn bản</h3>
-            <p className="text-xs leading-[1.55] text-ink-muted">
+            <h3 className="text-ui-sm font-semibold">Dán văn bản</h3>
+            <p className="text-ui-xs leading-normal text-ink-muted">
               Chép từ web hoặc tài liệu rồi dán thẳng vào. Hợp khi bạn lấy raw từng chương một.
             </p>
             <Button className="mt-1" onClick={() => openDialog(null)}>
@@ -221,8 +221,8 @@ export function ChapterScreen({
             }}
           >
             <DocumentAddIcon size={20} className="text-ink-muted" />
-            <h3 className="text-[13px] font-semibold">Chọn hoặc kéo tệp vào</h3>
-            <p className="text-xs leading-[1.55] text-ink-muted">
+            <h3 className="text-ui-sm font-semibold">Chọn hoặc kéo tệp vào</h3>
+            <p className="text-ui-xs leading-normal text-ink-muted">
               .txt hoặc .md, tối đa 8 MB. Mira tự nhận bảng mã (UTF-8, GB18030, Big5, Shift_JIS…).
             </p>
             <Button variant="outline" className="mt-1" onClick={() => picker.current?.click()}>

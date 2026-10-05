@@ -24,12 +24,12 @@ export function TextArea({
       data-slot="text-area"
       className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}
     >
-      <label className="text-[12px] font-semibold" htmlFor={inputId}>
+      <label className="text-ui-xs font-semibold" htmlFor={inputId}>
         {label}
       </label>
       <textarea
         className={[
-          'min-h-[76px] w-full resize-y rounded-control border bg-control px-3 py-2 leading-[1.5] text-ink outline-none placeholder:text-ink-muted focus:ring-2',
+          'min-h-[76px] w-full resize-y rounded-control border bg-control px-3 py-2 leading-normal text-ink outline-none placeholder:text-ink-muted focus:ring-2',
           error
             ? 'border-error focus:border-error focus:ring-error/25'
             : 'border-line-strong focus:border-focus focus:ring-focus/25'
@@ -40,12 +40,12 @@ export function TextArea({
         {...props}
       />
       {error && (
-        <span id={errorId} role="alert" className="text-[12px] text-error">
+        <span id={errorId} role="alert" className="text-ui-xs text-error">
           {error}
         </span>
       )}
       {hint && (
-        <span id={hintId} className="text-[12px] text-ink-muted">
+        <span id={hintId} className="text-ui-xs text-ink-muted">
           {hint}
         </span>
       )}

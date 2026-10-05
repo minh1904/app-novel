@@ -195,12 +195,12 @@ export function ExportDialog({
 
         <div className="mt-2 flex flex-col gap-3 rounded-lg border border-border-subtle p-3">
           <div className="flex items-center justify-between">
-            <span className="text-[13px] text-ink">Bao gồm tên sách và tác giả</span>
+            <span className="text-ui-sm text-ink">Bao gồm tên sách và tác giả</span>
             <Switch checked={includeTitle} onCheckedChange={setIncludeTitle} />
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[13px] text-ink">Bao gồm lời giới thiệu tác phẩm</span>
+            <span className="text-ui-sm text-ink">Bao gồm lời giới thiệu tác phẩm</span>
             <Switch
               checked={includeDescription}
               onCheckedChange={setIncludeDescription}

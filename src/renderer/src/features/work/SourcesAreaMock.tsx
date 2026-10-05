@@ -55,13 +55,13 @@ export function SourcesAreaMock(): JSX.Element {
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 id="sources-heading" className="flex items-center gap-2 text-[15px] font-semibold">
+          <h2 id="sources-heading" className="flex items-center gap-2 text-ui-md font-semibold">
             Nguồn raw
-            <span className="rounded-[5px] bg-selected px-1.5 py-px text-[11px] font-normal text-ink-muted">
+            <span className="rounded-item bg-selected px-1.5 py-px text-ui-xs font-normal text-ink-muted">
               {SOON_LABEL}
             </span>
           </h2>
-          <p className="max-w-[60ch] text-xs leading-[1.6] text-ink-muted">
+          <p className="max-w-[60ch] text-ui-xs leading-normal text-ink-muted">
             Quản lý các bản raw của tác phẩm và chọn nguồn chính để dịch; các bản còn lại dùng để
             đối chiếu.
           </p>
@@ -84,11 +84,11 @@ export function SourcesAreaMock(): JSX.Element {
             <div className="flex items-center gap-2.5">
               <LanguageMark language={source.language} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium">{source.label}</p>
-                <p className="text-[12px] text-ink-muted">{source.updated}</p>
+                <p className="truncate text-ui-sm font-medium">{source.label}</p>
+                <p className="text-ui-xs text-ink-muted">{source.updated}</p>
               </div>
               {source.primary && (
-                <span className="flex shrink-0 items-center gap-1 rounded-full bg-selected px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-ink">
+                <span className="flex shrink-0 items-center gap-1 rounded-full bg-selected px-2 py-0.5 text-ui-xs font-semibold whitespace-nowrap text-ink">
                   <StarIcon size={11} />
                   Nguồn chính
                 </span>
@@ -106,7 +106,7 @@ export function SourcesAreaMock(): JSX.Element {
                   }}
                 />
               </div>
-              <span className="shrink-0 text-[11px] whitespace-nowrap text-ink-muted">
+              <span className="shrink-0 text-ui-xs whitespace-nowrap text-ink-muted">
                 {source.matched}/{source.total} chương khớp
               </span>
             </div>
@@ -119,7 +119,7 @@ export function SourcesAreaMock(): JSX.Element {
         ))}
       </ul>
 
-      <p className="text-[12px] text-ink-muted">
+      <p className="text-ui-xs text-ink-muted">
         Bản minh họa: khu vực này chưa hoạt động và không thay đổi tác phẩm của bạn.
       </p>
     </section>

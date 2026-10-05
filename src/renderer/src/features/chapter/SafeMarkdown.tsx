@@ -97,13 +97,13 @@ function inline(text: string): ReactNode[] {
 }
 
 export function SafeMarkdown({ text }: { text: string }): JSX.Element {
-  return <div className="space-y-2 text-[13px] leading-[1.7] text-ink">
+  return <div className="space-y-2 text-ui-sm leading-normal text-ink">
     {parseSafeMarkdown(text).map((block, index) => {
-      if (block.kind === 'code') return <pre key={index} className="overflow-x-auto rounded-control bg-canvas p-2 text-[12px] whitespace-pre-wrap"><code>{block.text}</code></pre>
+      if (block.kind === 'code') return <pre key={index} className="overflow-x-auto rounded-control bg-canvas p-2 text-ui-xs whitespace-pre-wrap"><code>{block.text}</code></pre>
       if (block.kind === 'heading') {
         const content = inline(block.text)
-        if (block.level === 1) return <h4 key={index} className="text-[15px] font-semibold">{content}</h4>
-        return <h5 key={index} className="text-[13px] font-semibold">{content}</h5>
+        if (block.level === 1) return <h4 key={index} className="text-ui-md font-semibold">{content}</h4>
+        return <h5 key={index} className="text-ui-sm font-semibold">{content}</h5>
       }
       if (block.kind === 'list') {
         const Tag = block.ordered ? 'ol' : 'ul'

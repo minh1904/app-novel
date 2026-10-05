@@ -129,7 +129,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
             />
           </div>
 
-          <div className="flex items-center rounded-control border border-line bg-canvas p-0.5 text-xs">
+          <div className="flex items-center rounded-control border border-line bg-canvas p-0.5 text-ui-xs">
             {(
               [
                 { value: 'all', label: 'Tất cả' },
@@ -143,7 +143,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                 type="button"
                 onClick={() => setStatusFilter(tab.value)}
                 className={cx(
-                  'rounded-[5px] px-2.5 py-1 font-medium transition-colors cursor-pointer',
+                  'rounded-item px-2.5 py-1 font-medium transition-colors cursor-pointer',
                   statusFilter === tab.value
                     ? 'bg-selected text-ink'
                     : 'text-ink-muted hover:text-ink'
@@ -178,7 +178,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
       </div>
 
       {/* Subtab selection */}
-      <div className="flex items-center border-b border-line gap-6 text-[13px]">
+      <div className="flex items-center border-b border-line gap-6 text-ui-sm">
         <button
           type="button"
           onClick={() => setActiveTab('dyads')}
@@ -208,7 +208,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
       </div>
 
       {error && (
-        <div className="rounded-control border border-error/30 bg-error/10 p-3 text-xs text-error">
+        <div className="rounded-control border border-error/30 bg-error/10 p-3 text-ui-xs text-error">
           {error}
         </div>
       )}
@@ -216,7 +216,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
       {/* Dyads Tab Content */}
       {activeTab === 'dyads' && (
         <div className="overflow-hidden rounded-panel border border-line bg-canvas">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_110px_90px] items-center border-b border-line bg-sidebar px-3.5 py-2.5 text-[12px] font-medium text-ink-muted">
+          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_110px_90px] items-center border-b border-line bg-sidebar px-3.5 py-2.5 text-ui-xs font-medium text-ink-muted">
             <span>Người nói → Người nghe</span>
             <span>Từ xưng hô (Tự xưng – Gọi đối phương)</span>
             <span>Phạm vi hiệu lực</span>
@@ -225,7 +225,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
           </div>
 
           {loading ? (
-            <div className="py-12 text-center text-xs text-ink-muted">Đang tải ma trận xưng hô...</div>
+            <div className="py-12 text-center text-ui-xs text-ink-muted">Đang tải ma trận xưng hô...</div>
           ) : dyads.length === 0 ? (
             <div className="p-4">
               <EmptyState
@@ -260,7 +260,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                   <li
                     key={dyad.id}
                     className={cx(
-                      'grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_110px_90px] items-center border-b border-line px-3.5 py-3 text-[13px] last:border-b-0 hover:bg-canvas/50 transition-colors',
+                      'grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_110px_90px] items-center border-b border-line px-3.5 py-3 text-ui-sm last:border-b-0 hover:bg-canvas/50 transition-colors',
                       dyad.status === 'pending' && 'bg-warning/5',
                       dyad.status === 'rejected' && 'opacity-60 bg-line/10'
                     )}
@@ -269,10 +269,10 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                     <div className="flex flex-col gap-0.5">
                       <span className="font-semibold text-ink flex items-center gap-1.5">
                         <span>{srcChar?.target ?? '?'}</span>
-                        <span className="text-ink-muted text-xs">→</span>
+                        <span className="text-ink-muted text-ui-xs">→</span>
                         <span>{tgtChar?.target ?? '?'}</span>
                       </span>
-                      <span className="text-[11px] text-ink-muted truncate">
+                      <span className="text-ui-xs text-ink-muted truncate">
                         {srcChar?.source ?? '?'} → {tgtChar?.source ?? '?'}
                       </span>
                     </div>
@@ -283,19 +283,19 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                         &ldquo;{dyad.speakerPronoun}&rdquo; &ndash; &ldquo;{dyad.recipientPronoun}&rdquo;
                       </span>
                       {dyad.formality && (
-                        <span className="text-[11px] text-ink-muted">
+                        <span className="text-ui-xs text-ink-muted">
                           Sắc thái: {dyad.formality}
                         </span>
                       )}
                       {dyad.notes && (
-                        <span className="text-[11px] text-ink-muted truncate italic">
+                        <span className="text-ui-xs text-ink-muted truncate italic">
                           {dyad.notes}
                         </span>
                       )}
                     </div>
 
                     {/* Scope */}
-                    <span className="text-xs text-ink-muted">
+                    <span className="text-ui-xs text-ink-muted">
                       {formatChapterScope(dyad)}
                     </span>
 
@@ -314,7 +314,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                             type="button"
                             onClick={() => void handleQuickDyadStatus(dyad, 'approved')}
                             title="Duyệt quy ước"
-                            className="rounded p-1 text-ink-muted hover:bg-control hover:text-success transition-colors cursor-pointer"
+                            className="rounded p-1 text-ink-muted hover:bg-hover hover:text-success transition-colors cursor-pointer"
                           >
                             <CheckIcon size={15} />
                           </button>
@@ -322,7 +322,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                             type="button"
                             onClick={() => void handleQuickDyadStatus(dyad, 'rejected')}
                             title="Từ chối quy ước"
-                            className="rounded p-1 text-ink-muted hover:bg-control hover:text-error transition-colors cursor-pointer"
+                            className="rounded p-1 text-ink-muted hover:bg-hover hover:text-error transition-colors cursor-pointer"
                           >
                             <CloseCircleIcon size={15} />
                           </button>
@@ -332,7 +332,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                         type="button"
                         onClick={() => setEditingDyad(dyad)}
                         title="Chỉnh sửa quy ước"
-                        className="rounded p-1 text-ink-muted hover:bg-control hover:text-ink transition-colors cursor-pointer"
+                        className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink transition-colors cursor-pointer"
                       >
                         <PenNewSquareIcon size={15} />
                       </button>
@@ -340,7 +340,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                         type="button"
                         onClick={() => setDeletingDyad(dyad)}
                         title="Xóa quy ước"
-                        className="rounded p-1 text-ink-muted hover:bg-control hover:text-error transition-colors cursor-pointer"
+                        className="rounded p-1 text-ink-muted hover:bg-hover hover:text-error transition-colors cursor-pointer"
                       >
                         <TrashBinMinimalisticIcon size={15} />
                       </button>
@@ -356,7 +356,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
       {/* Characters Tab Content */}
       {activeTab === 'characters' && (
         <div className="overflow-hidden rounded-panel border border-line bg-canvas">
-          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_90px_minmax(0,1.2fr)_110px_90px] items-center border-b border-line bg-sidebar px-3.5 py-2.5 text-[12px] font-medium text-ink-muted">
+          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_90px_minmax(0,1.2fr)_110px_90px] items-center border-b border-line bg-sidebar px-3.5 py-2.5 text-ui-xs font-medium text-ink-muted">
             <span>Tên tiếng Việt</span>
             <span>Tên gốc / Bí danh</span>
             <span>Giới tính</span>
@@ -366,7 +366,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
           </div>
 
           {loading ? (
-            <div className="py-12 text-center text-xs text-ink-muted">Đang tải danh sách nhân vật...</div>
+            <div className="py-12 text-center text-ui-xs text-ink-muted">Đang tải danh sách nhân vật...</div>
           ) : characters.length === 0 ? (
             <div className="p-4">
               <EmptyState
@@ -387,20 +387,20 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
               {characters.map((char) => (
                 <li
                   key={char.id}
-                  className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_90px_minmax(0,1.2fr)_110px_90px] items-center border-b border-line px-3.5 py-3 text-[13px] last:border-b-0 hover:bg-canvas/50 transition-colors"
+                  className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_90px_minmax(0,1.2fr)_110px_90px] items-center border-b border-line px-3.5 py-3 text-ui-sm last:border-b-0 hover:bg-canvas/50 transition-colors"
                 >
                   <span className="font-semibold text-ink">{char.target}</span>
 
                   <div className="flex flex-col gap-0.5">
                     <span className="text-ink">{char.source}</span>
                     {char.aliases.length > 0 && (
-                      <span className="text-[11px] text-ink-muted truncate">
+                      <span className="text-ui-xs text-ink-muted truncate">
                         Bí danh: {char.aliases.join(', ')}
                       </span>
                     )}
                   </div>
 
-                  <span className="text-xs text-ink-muted">
+                  <span className="text-ui-xs text-ink-muted">
                     {char.gender === 'male'
                       ? 'Nam'
                       : char.gender === 'female'
@@ -411,9 +411,9 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                   </span>
 
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-xs text-ink">{char.role || '—'}</span>
+                    <span className="text-ui-xs text-ink">{char.role || '—'}</span>
                     {char.notes && (
-                      <span className="text-[11px] text-ink-muted truncate italic">
+                      <span className="text-ui-xs text-ink-muted truncate italic">
                         {char.notes}
                       </span>
                     )}
@@ -430,7 +430,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                       type="button"
                       onClick={() => setEditingCharacter(char)}
                       title="Chỉnh sửa nhân vật"
-                      className="rounded p-1 text-ink-muted hover:bg-control hover:text-ink transition-colors cursor-pointer"
+                      className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink transition-colors cursor-pointer"
                     >
                       <PenNewSquareIcon size={15} />
                     </button>
@@ -438,7 +438,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                       type="button"
                       onClick={() => setDeletingCharacter(char)}
                       title="Xóa nhân vật"
-                      className="rounded p-1 text-ink-muted hover:bg-control hover:text-error transition-colors cursor-pointer"
+                      className="rounded p-1 text-ink-muted hover:bg-hover hover:text-error transition-colors cursor-pointer"
                     >
                       <TrashBinMinimalisticIcon size={15} />
                     </button>

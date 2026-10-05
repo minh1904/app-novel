@@ -31,10 +31,10 @@ export function ImportTxtMockDialog({
       title="Nhập chương từ tệp .txt"
       description="Bản minh họa: luồng này chưa hoạt động và không thay đổi tác phẩm của bạn."
     >
-      <div className="flex flex-col gap-4 text-xs">
+      <div className="flex flex-col gap-4 text-ui-xs">
         <p
           role="note"
-          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 leading-[1.5]"
+          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 leading-normal"
         >
           <strong className="font-semibold">{SOON_LABEL}.</strong> Dữ liệu dưới đây là mẫu cố định,
           không phải của tác phẩm này.
@@ -42,7 +42,7 @@ export function ImportTxtMockDialog({
 
         <ol className="flex flex-col gap-4">
           <li className="flex flex-col gap-1.5">
-            <span className="text-[12px] font-semibold">1. Chọn tệp</span>
+            <span className="text-ui-xs font-semibold">1. Chọn tệp</span>
             <div className="flex items-center gap-2">
               <span className="min-w-0 flex-1 truncate rounded-control border border-line-strong px-3 py-2 text-ink-muted">
                 truyen-mau.txt (mẫu)
@@ -54,15 +54,15 @@ export function ImportTxtMockDialog({
           </li>
 
           <li className="flex flex-col gap-1.5">
-            <span className="text-[12px] font-semibold">2. Cách tách chương</span>
-            <p className="leading-[1.55] text-ink-muted">
+            <span className="text-ui-xs font-semibold">2. Cách tách chương</span>
+            <p className="leading-normal text-ink-muted">
               Đề xuất: một dòng bắt đầu bằng <code className="font-mono text-ink">***</code> là tên
               của chương mới; phần văn bản dưới nó thuộc chương đó. Quy tắc này chưa chốt.
             </p>
           </li>
 
           <li className="flex flex-col gap-1.5">
-            <span className="text-[12px] font-semibold">3. Xem trước</span>
+            <span className="text-ui-xs font-semibold">3. Xem trước</span>
             <p className="text-ink-muted">Tìm thấy {SAMPLE_CHAPTERS.length} chương (mẫu)</p>
             <ul className="flex flex-col divide-y divide-line rounded-control border border-line">
               {SAMPLE_CHAPTERS.map((title, index) => (
@@ -76,7 +76,7 @@ export function ImportTxtMockDialog({
         </ol>
 
         <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
-          <span id="import-txt-reason" className="mr-auto text-[12px] text-ink-muted">
+          <span id="import-txt-reason" className="mr-auto text-ui-xs text-ink-muted">
             Chưa nhập được: tính năng này đang là bản minh họa.
           </span>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>

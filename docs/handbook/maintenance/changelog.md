@@ -1,5 +1,16 @@
 # Nhật ký handbook
 
+## 2026-10-05 — Làm lại hệ thiết kế theo phân tích Obsidian
+
+- Token ba tầng, khung một màu, hover lớp phủ, thang chữ/radius/shadow có tên; các màn chuyển sang
+  token và `tokens.test.ts` chặn giá trị tùy ý. Cập nhật [module Hệ thiết kế](../../modules/design-system/README.md),
+  hiện trạng và quyết định.
+
+## 2026-10-05 — Phân tích design system Obsidian
+
+- Thêm [phân tích và so sánh](../../modules/design-system/obsidian-comparison.md): giá trị đo từ
+  `app.css` Obsidian 1.13.7, độ lệch của token và component Mira, đề xuất làm lại chờ chốt.
+
 ## 2026-10-05 — Hệ thiết kế giao diện theo hướng Obsidian
 
 - Đối chiếu tài liệu token chính thức của Obsidian; tách quan sát nguồn khỏi ánh xạ semantic của

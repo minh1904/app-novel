@@ -36,7 +36,7 @@ export function Badge({
     <span
       data-slot="badge"
       className={cx(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-control border bg-transparent px-2 py-[3px] text-[12px] font-medium whitespace-nowrap',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-control border bg-transparent px-2 py-[3px] text-ui-xs font-medium whitespace-nowrap',
         tones[tone],
         className
       )}

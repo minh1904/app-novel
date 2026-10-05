@@ -166,7 +166,7 @@ export function App(): JSX.Element {
   const crumbLink = (label: string, onClick: () => void): JSX.Element => (
     <button
       type="button"
-      className="-my-1 max-w-[40%] shrink-0 cursor-pointer truncate rounded-[6px] py-1 text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
+      className="-my-1 max-w-[40%] shrink-0 cursor-pointer truncate rounded-control py-1 text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
       onClick={onClick}
     >
       {label}
@@ -207,15 +207,15 @@ export function App(): JSX.Element {
       title = <h1 className="font-semibold">Thư viện</h1>
       if (library.load === 'loading') {
         content = (
-          <p role="status" className="px-6 pt-8 text-[13px] text-ink-muted">
+          <p role="status" className="px-6 pt-8 text-ui-sm text-ink-muted">
             Đang mở thư viện…
           </p>
         )
       } else if (library.load === 'failed') {
         content = (
           <div className="mx-auto flex max-w-[560px] flex-col gap-3 px-6 pt-12">
-            <h2 className="text-[20px] font-semibold tracking-[-0.04em]">Không mở được thư viện</h2>
-            <p role="alert" className="text-[13px] leading-[1.6] text-ink-muted">
+            <h2 className="text-ui-lg font-semibold tracking-heading">Không mở được thư viện</h2>
+            <p role="alert" className="text-ui-sm leading-normal text-ink-muted">
               {library.loadError}
             </p>
             <div>
@@ -380,7 +380,7 @@ export function App(): JSX.Element {
         {workspaceNotice && (
           <div
             role="alert"
-            className="flex items-center justify-between gap-3 border-b border-line px-4 py-2 text-xs text-ink-muted"
+            className="flex items-center justify-between gap-3 border-b border-line px-4 py-2 text-ui-xs text-ink-muted"
           >
             <span>{workspaceNotice}</span>
             <button type="button" onClick={() => useUiStore.getState().setWorkspaceNotice(null)}>
@@ -389,7 +389,7 @@ export function App(): JSX.Element {
           </div>
         )}
         {!workspaceReady && library.load === 'ready' ? (
-          <p role="status" className="p-6 text-sm text-ink-muted">
+          <p role="status" className="p-6 text-ui-sm text-ink-muted">
             Đang khôi phục phiên làm việc…
           </p>
         ) : view.name === 'library' || view.name === 'create' || view.name === 'settings' ? (

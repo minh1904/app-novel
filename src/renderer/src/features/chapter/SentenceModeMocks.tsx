@@ -26,7 +26,7 @@ export function SentenceFilterToolbarMock(): JSX.Element {
           disabled
           placeholder="Tìm trong bản gốc…"
           aria-label="Tìm trong bản gốc"
-          className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-ink-muted"
+          className="min-w-0 flex-1 bg-transparent text-ui-xs outline-none placeholder:text-ink-muted"
         />
       </label>
       <label className="flex h-6 min-w-[120px] flex-1 items-center gap-1.5 rounded-control border border-line-strong px-2">
@@ -39,7 +39,7 @@ export function SentenceFilterToolbarMock(): JSX.Element {
           disabled
           placeholder="Tìm trong bản dịch…"
           aria-label="Tìm trong bản dịch"
-          className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-ink-muted"
+          className="min-w-0 flex-1 bg-transparent text-ui-xs outline-none placeholder:text-ink-muted"
         />
       </label>
       <Button variant="outline" size="sm" disabled>
@@ -52,7 +52,7 @@ export function SentenceFilterToolbarMock(): JSX.Element {
       <Button variant="outline" size="sm" disabled>
         Tách
       </Button>
-      <span className="ml-auto shrink-0 rounded-[5px] bg-selected px-1.5 py-px text-[11px] text-ink">
+      <span className="ml-auto shrink-0 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
         {SOON_LABEL}
       </span>
     </div>
@@ -77,8 +77,8 @@ export function SentenceSuggestionPanelMock(): JSX.Element {
       aria-label={MOCK_FEATURES.sentenceModeSidePanels.label + ' (' + SOON_LABEL + ')'}
       className="flex h-[150px] shrink-0 flex-col gap-2 rounded-panel border border-line bg-sidebar p-2.5"
     >
-      <div className="flex items-center gap-3 text-[12px]">
-        <span className="rounded-[7px] bg-selected px-2 py-0.5 text-ink">
+      <div className="flex items-center gap-3 text-ui-xs">
+        <span className="rounded-control bg-selected px-2 py-0.5 text-ink">
           Gợi ý <span className="text-ink-muted">(1)</span>
         </span>
         <span aria-disabled="true" className="text-ink-muted">
@@ -90,18 +90,18 @@ export function SentenceSuggestionPanelMock(): JSX.Element {
         <span aria-disabled="true" className="text-ink-muted">
           QA <span className="opacity-60">(2)</span>
         </span>
-        <span className="ml-auto shrink-0 rounded-[5px] bg-selected px-1.5 py-px text-[11px] text-ink">
+        <span className="ml-auto shrink-0 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
           {SOON_LABEL}
         </span>
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-3 overflow-y-auto rounded-control border border-line p-2.5 text-[12px]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-3 overflow-y-auto rounded-control border border-line p-2.5 text-ui-xs">
         <p lang="en">{SUGGESTION.source}</p>
         <p lang="vi">{SUGGESTION.target}</p>
         <span className="flex items-center gap-2">
           <Button size="xs" variant="outline" disabled>
             Chèn
           </Button>
-          <span className="text-[11px] text-success">{SUGGESTION.match}</span>
+          <span className="text-ui-xs text-success">{SUGGESTION.match}</span>
         </span>
       </div>
     </div>

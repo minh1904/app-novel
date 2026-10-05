@@ -50,20 +50,20 @@ export function ChapterNavSidebar({
 
   return (
     <>
-      <div className="flex h-[42px] shrink-0 items-center px-2.5">
+      <div className="flex h-(--header-height) shrink-0 items-center px-2.5">
         <button
           type="button"
-          className="flex min-w-0 items-center gap-1 rounded-control px-1.5 py-1 text-ink-muted outline-none hover:bg-selected hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
+          className="flex min-w-0 items-center gap-1 rounded-control px-1.5 py-1 text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
           onClick={onBackToWork}
           title="Về tác phẩm"
         >
           <AltArrowLeftIcon size={14} className="shrink-0" />
-          <span className="truncate text-[13px] font-semibold text-ink">{workTitle}</span>
+          <span className="truncate text-ui-sm font-semibold text-ink">{workTitle}</span>
         </button>
       </div>
       <nav aria-label="Danh sách chương" className="min-h-0 flex-1 overflow-y-auto p-1.5">
         {load === 'loading' ? (
-          <p role="status" className="px-2 py-1.5 text-[12px] text-ink-muted">
+          <p role="status" className="px-2 py-1.5 text-ui-xs text-ink-muted">
             Đang tải…
           </p>
         ) : (
@@ -88,10 +88,10 @@ export function ChapterNavSidebar({
                 type="button"
                 aria-current={active ? 'page' : undefined}
                 className={cx(
-                  'flex w-full items-center gap-2 rounded-control px-2 py-1 text-left text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
+                  'flex w-full items-center gap-2 rounded-item px-2 py-1 text-left text-ui-sm outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
                   active
-                    ? 'bg-selected text-ink'
-                    : 'text-ink-muted hover:bg-selected/60 hover:text-ink'
+                    ? 'bg-active text-ink'
+                    : 'text-ink-muted hover:bg-hover hover:text-ink'
                 )}
                 onClick={() => onOpenChapter(chapter.id)}
               >
@@ -106,7 +106,7 @@ export function ChapterNavSidebar({
                 {pending > 0 && (
                   <span
                     title={`${pending} đề xuất chờ duyệt`}
-                    className="ml-auto shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-[10.5px] font-medium text-warning tabular-nums"
+                    className="ml-auto shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-ui-xs font-medium text-warning tabular-nums"
                   >
                     {pending}
                   </span>

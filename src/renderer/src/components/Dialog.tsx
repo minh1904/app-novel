@@ -34,17 +34,15 @@ export function Dialog({
   return (
     <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="fixed inset-0 bg-black/30 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <BaseDialog.Backdrop className="fixed inset-0 bg-backdrop transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <BaseDialog.Popup
           finalFocus={finalFocus}
-          className={`fixed top-1/2 left-1/2 flex ${SIZES[size]} -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-panel border border-line bg-popover p-5 text-ink shadow-[0_16px_48px_rgb(0_0_0/0.2)] outline-none`}
+          className={`fixed top-1/2 left-1/2 flex ${SIZES[size]} -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-panel border border-line-strong bg-canvas p-5 text-ink outline-none`}
         >
           <div className="flex flex-col gap-1">
-            <BaseDialog.Title className="text-[15px] font-semibold tracking-[-0.02em]">
-              {title}
-            </BaseDialog.Title>
+            <BaseDialog.Title className="text-ui-md font-semibold">{title}</BaseDialog.Title>
             {description && (
-              <BaseDialog.Description className="text-xs leading-[1.55] text-ink-muted">
+              <BaseDialog.Description className="text-ui-xs leading-normal text-ink-muted">
                 {description}
               </BaseDialog.Description>
             )}

@@ -8,11 +8,11 @@ import type { ChromeTheme } from '../../shared/contracts/desktop-api'
 export const OVERLAY_TITLE_BAR = process.platform !== 'darwin'
 
 /**
- * Height of the buttons in px. The page's top bar is `h-[42px]` in AppShell, and its last pixel row
- * is the bottom border; stopping one short leaves that border visible under the buttons instead of
- * painting over it.
+ * Height of the buttons in px. The page's top bar is `--header-height` (40px) in AppShell, and its
+ * last pixel row is the bottom border; stopping one short leaves that border visible under the
+ * buttons instead of painting over it.
  */
-export const TOP_BAR_HEIGHT = 41
+export const TOP_BAR_HEIGHT = 39
 
 /**
  * What the window buttons wear, per theme. These are `--surface-chrome` and `--text-muted` from
@@ -20,6 +20,6 @@ export const TOP_BAR_HEIGHT = 41
  * `titleBar.test.ts` fails when the two drift apart.
  */
 export const CHROME_COLORS: Record<ChromeTheme, { color: string; symbolColor: string }> = {
-  dark: { color: '#333333', symbolColor: '#999999' },
+  dark: { color: '#282828', symbolColor: '#b3b3b3' },
   light: { color: '#f6f6f6', symbolColor: '#5c5c5c' }
 }
