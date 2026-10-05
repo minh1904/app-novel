@@ -1,0 +1,71 @@
+{
+  "sourceParagraphs": 73,
+  "targetParagraphs": 73,
+  "aligned": true,
+  "segments": 117,
+  "written": 117,
+  "residue": 0,
+  "residueSamples": [],
+  "lengthChecked": 57,
+  "lengthOutliers": 1,
+  "repetition": 0,
+  "glossaryChecked": 68,
+  "glossaryStrict": 33,
+  "glossaryLenient": 33,
+  "glossaryMissed": {
+    "公爵家": 2,
+    "イレーヌ・フォン・シュテルンハイム": 20,
+    "伯爵家": 2,
+    "マクシミリアン・フォン・シュテルンハイム": 1,
+    "公爵邸": 1,
+    "大奥様": 5,
+    "旦那様": 3,
+    "公爵位": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "paragraph",
+  "rules": [
+    {
+      "rule": "◇ティルダ視点",
+      "status": "pass"
+    },
+    {
+      "rule": "「奥様、起きていらっしゃいますか？　ティルダが朝のお支度に参りました」",
+      "status": "pass"
+    },
+    {
+      "rule": "私、ティルダが公爵家に仕えて十六年ほどになる。",
+      "status": "pass"
+    },
+    {
+      "rule": "ミルク粥。伯爵家にいた頃",
+      "status": "pass"
+    },
+    {
+      "rule": "そこへ、大奥様が入ってこられた。",
+      "status": "fail",
+      "detail": "thiếu \"lão phu nhân\""
+    },
+    {
+      "rule": "しかも、旦那様の前では一度もそれをなさらなかった。",
+      "status": "fail",
+      "detail": "thiếu \"ông chủ\""
+    },
+    {
+      "rule": "イレーヌ様は十五でマクシミリアン様とご婚約なさり",
+      "status": "pass"
+    },
+    {
+      "rule": "『お前。いつまでも田舎の娘ではないのだから",
+      "status": "manual"
+    },
+    {
+      "rule": "『ごめんなさいね、ティルダ。せっかく用意してくれたのに』",
+      "status": "manual"
+    },
+    {
+      "rule": "＊",
+      "status": "pass"
+    }
+  ]
+}

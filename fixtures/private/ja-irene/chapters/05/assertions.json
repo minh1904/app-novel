@@ -1,0 +1,14 @@
+{
+  "status": "draft",
+  "rules": [
+    { "line": "◇ヴィルヘルム視点", "kind": "structure", "mustContain": ["Wilhelm"], "mustContainAny": ["◇"] },
+    { "where": "伯父上は、父様の姉である伯母上を妻に迎えた", "kind": "kinship", "mustContain": ["bác"], "dependsOnDraft": true, "note": "Quan hệ: chồng của chị gái cha." },
+    { "where": "公爵家で騒動を起こしたロレッタは領地の屋敷にて蟄居とし", "kind": "term", "mustContain": ["cấm túc", "lãnh địa"] },
+    { "where": "ロレッタの侍女には紹介状なしで暇を出し", "kind": "term", "mustContain": ["thư giới thiệu"] },
+    { "where": "甥である僕にではなく、公爵家の嫡男に向けた礼だった。", "kind": "term", "mustContain": ["trưởng nam"], "dependsOnDraft": true },
+    { "where": "「今朝、君の父――公爵閣下から書状が届いたよ」", "kind": "pronoun", "pair": ["bác (伯父上)", "Wilhelm"], "note": "Dấu gạch ―― ngắt lời giữa câu: giữ dạng ngắt." },
+    { "where": "「伯父上、ロレッタはいますか」", "kind": "pronoun", "pair": ["Wilhelm", "bác (伯父上)"] },
+    { "where": "（ロレッタが母様を……？　あんなに良くしてもらっているのに、なぜ）", "kind": "meaning", "note": "Độc thoại trong （）: giữ dạng độc thoại." },
+    { "line": "＊", "kind": "structure", "mustContainAny": ["＊", "*"] }
+  ]
+}

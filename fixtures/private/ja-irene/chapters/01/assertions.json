@@ -1,0 +1,19 @@
+{
+  "status": "draft",
+  "rules": [
+    { "where": "ヴィルヘルム。十五歳。", "kind": "name", "mustContain": ["Wilhelm"], "mustContainAny": ["mười lăm", "15"] },
+    { "where": "イレーヌ・フォン・シュテルンハイムという人", "kind": "name", "mustContain": ["Irene von Sternheim"] },
+    { "where": "わたくしをおば様と呼ぶ娘", "kind": "kinship", "mustContain": ["mợ"], "mustNotContainWord": ["dì"], "dependsOnDraft": true, "note": "Irene là vợ của cậu Loretta." },
+    { "where": "侯爵令嬢で、ヴィルヘルムの婚約者", "kind": "term", "mustContain": ["Hầu tước", "hôn thê"] },
+    { "where": "「奥様、医師を呼んでおりますので」", "kind": "address", "mustContain": ["phu nhân"] },
+    { "where": "（これはいわゆる転生ってやつなのかしら）", "kind": "term", "mustContain": ["chuyển sinh"] },
+    { "where": "深夜のコンビニでプリンを", "kind": "meaning", "mustContain": ["cửa hàng tiện lợi"], "note": "Ký ức kiếp trước: mua pudding/flan ở cửa hàng tiện lợi lúc nửa đêm, ngã xe đạp." },
+    { "where": "叱られた娘が逆上して義母を突き落とす", "kind": "kinship", "mustContain": ["mẹ chồng"], "dependsOnDraft": true },
+    { "line": "＊＊＊", "kind": "structure", "mustContainAny": ["＊＊＊", "***", "* * *"], "note": "Dấu ngắt cảnh là một đoạn riêng; không được gộp vào đoạn bên cạnh." },
+    { "where": "「母様が君を呼ぶわけがないだろう！", "kind": "pronoun", "pair": ["Wilhelm", "Adeline"], "note": "Kiểm bằng giám khảo/người chấm, không so chuỗi." },
+    { "where": "「ロレッタ。言いなさい。母様に隠し事をするものではない」", "kind": "pronoun", "pair": ["Wilhelm", "Loretta"] },
+    { "where": "「わたし見たのです。アデラインさまが、おば様を、押したのです」", "kind": "pronoun", "pair": ["Loretta", "Irene"] },
+    { "where": "色々な視点を交えながら", "kind": "author-note", "note": "Lời tác giả cuối chương, nằm liền dòng với đoạn truyện cuối (không có dòng trống ngăn). Bỏ đi không tính là sót; dịch thì phải là đoạn riêng, không trộn vào đoạn truyện." },
+    { "where": "短編で省略したイレーヌの過去", "kind": "author-note" }
+  ]
+}

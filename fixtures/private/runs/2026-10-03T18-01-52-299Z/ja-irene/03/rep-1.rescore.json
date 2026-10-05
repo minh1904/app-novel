@@ -1,0 +1,84 @@
+{
+  "sourceParagraphs": 99,
+  "targetParagraphs": 100,
+  "aligned": false,
+  "shifted": false,
+  "segments": 160,
+  "written": 160,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 0,
+  "quoteSamples": [],
+  "dialogueStyle": "none",
+  "lengthChecked": 0,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 22,
+  "glossaryStrict": 19,
+  "glossaryLenient": 20,
+  "glossaryMissed": {
+    "公爵令息": 1,
+    "女主人": 1,
+    "王都": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "chapter",
+  "rules": [
+    {
+      "rule": "マクシミリアン・フォン・シュテルンハイム公爵はこの家の主",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "わたし、ヴィルヘルム様の従姉妹ですよ。マクシミリアン様の姪です！",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「つもりで済んだら警察はいらないのよ！」",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「けいさつ」",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "親父にも殴られたことがない",
+      "status": "manual"
+    },
+    {
+      "rule": "寝台の上で土下座をすると",
+      "status": "manual"
+    },
+    {
+      "rule": "「……こんなに腫れて。イレーヌ、無茶をしすぎだ」",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "＊",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「ヴィルヘルム。とりあえず、一発殴っていいかしら」",
+      "status": "manual"
+    },
+    {
+      "rule": "「そんな、とんでもないことでございます。……あの、私と一緒にお茶会をしていただけませんか」",
+      "status": "manual"
+    },
+    {
+      "rule": "「ヴィルヘルムさま！　い、今のは、イレーヌさま、どうして」",
+      "status": "manual"
+    },
+    {
+      "rule": "「本日は階段からお落ちになったばかりでございます。",
+      "status": "manual"
+    }
+  ]
+}

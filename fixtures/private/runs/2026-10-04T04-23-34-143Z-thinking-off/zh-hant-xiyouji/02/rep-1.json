@@ -1,0 +1,160 @@
+{
+  "sourceParagraphs": 54,
+  "targetParagraphs": 5,
+  "aligned": false,
+  "shifted": false,
+  "segments": 326,
+  "written": 49,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 2,
+  "quoteSamples": [
+    "Mày đừng sợ, cứ ăn một quyền của Lão Tôn đây!” Vừa dứt lời, Tôn Ngộ Không nhảy lên, giáng một quyền vào mặt yêu quái. Ma vương đưa tay đỡ đòn: “Ngươi lùn tịt nh",
+    "Người đạt được tiên thể, xuất thần biến hóa không lường. Không biết hầu vương này từ khi đắc đạo, trên người có tám vạn bốn nghìn sợi lông, sợi nào cũng có thể "
+  ],
+  "dialogueStyle": "vi",
+  "lengthChecked": 0,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 44,
+  "glossaryStrict": 10,
+  "glossaryLenient": 10,
+  "glossaryMissed": {
+    "七十二般變化": 1,
+    "三十六般變化": 1,
+    "三星仙洞": 1,
+    "東勝神洲": 2,
+    "混世魔王": 1,
+    "五臟六腑": 1,
+    "美猴王": 1,
+    "花果山": 1,
+    "水簾洞": 1,
+    "傲來國": 1,
+    "水臟洞": 1,
+    "坎源山": 1,
+    "觔斗雲": 1,
+    "地煞數": 1,
+    "天罡數": 1,
+    "湧泉穴": 1,
+    "泥垣宮": 1,
+    "祖師": 1,
+    "菩提": 1,
+    "蒼梧": 1,
+    "三災": 1,
+    "陰火": 1,
+    "贔風": 1,
+    "金丹": 1,
+    "口訣": 1,
+    "騰雲": 1,
+    "爬雲": 1,
+    "丹田": 1,
+    "九竅": 1,
+    "戒尺": 1,
+    "小妖": 1,
+    "弟子": 1,
+    "九幽": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "chapter",
+  "rules": [
+    {
+      "rule": "第二回　悟徹菩提真妙理　斷魔歸本合元神",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "話表美猴王得了姓名",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "那祖師即命大眾引孫悟空出二門外",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「『道』字門中有三百六十傍門",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "悟空道：「不學，不學。」",
+      "status": "manual"
+    },
+    {
+      "rule": "「難！難！難！道最玄，莫把金丹作等閑。不遇至人傳妙訣，空言口困舌頭乾！」",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "有一般天罡數，該三十六般變化；有一般地煞數，該七十二般變化",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "傳你個觔斗雲罷",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "一觔斗就有十萬八千里路哩",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "這個算不得騰雲，只算得爬雲而已",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "喚做『陰火』",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "我自東勝神洲傲來國花果山水簾洞來的",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "那廝自稱混世魔王",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "大王是老孫，我們都是二孫、三孫、細孫、小孫",
+      "status": "manual"
+    },
+    {
+      "rule": "月明清露冷，八極迥無塵。",
+      "status": "manual"
+    },
+    {
+      "rule": "畢竟不知怎生結果，居此界終始如何，且聽下回分解。",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "祖師道：「你既識妙音，我且問你，你到洞中多少時了？」",
+      "status": "manual"
+    },
+    {
+      "rule": "「你這潑猴，十分無狀。",
+      "status": "manual"
+    },
+    {
+      "rule": "「不瞞諸兄長說，一則是師父傳授",
+      "status": "manual"
+    },
+    {
+      "rule": "即開口叫道：「孩兒們，我來了也！」",
+      "status": "manual"
+    },
+    {
+      "rule": "猴王喝道：「這潑魔這般眼大，看不見老孫。」",
+      "status": "manual"
+    }
+  ]
+}

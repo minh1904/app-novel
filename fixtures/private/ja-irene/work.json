@@ -1,0 +1,17 @@
+{
+  "slug": "ja-irene",
+  "lang": "ja",
+  "title": null,
+  "author": null,
+  "url": null,
+  "genre": "chuyển sinh vào phu nhân quý tộc phương Tây; gia đình, phản diện bị vạch mặt",
+  "source": "Chủ sản phẩm dán vào hội thoại ngày 2026-10-03; 5 chương liên tiếp",
+  "rights": "Có bản quyền của tác giả. Chỉ để ở fixtures/private (bị ignore), không đưa vào repo. Khi chạy thí nghiệm, văn bản được gửi tới nhà cung cấp AI đã chọn.",
+  "chapters": [
+    "01",
+    "02",
+    "03",
+    "04",
+    "05"
+  ]
+}

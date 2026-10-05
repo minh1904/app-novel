@@ -1,0 +1,35 @@
+{
+  "baselineId": "2026-10-03T18-01-52-299Z",
+  "candidateId": "2026-10-03T19-12-34-088Z-ja-vi-conventions",
+  "commonChapters": [
+    "ja-irene/01",
+    "ja-irene/02",
+    "ja-irene/03",
+    "ja-irene/04",
+    "ja-irene/05"
+  ],
+  "baseT0": {
+    "omissions": 0,
+    "additions": 2,
+    "merges": 0,
+    "splits": 2,
+    "strictGlossaryRate": 65.67656765676567
+  },
+  "candT0": {
+    "omissions": 6,
+    "additions": 0,
+    "merges": 1,
+    "splits": 9,
+    "strictGlossaryRate": 71.61716171617162
+  },
+  "e6Result": {
+    "decision": "no-keep",
+    "reason": "Kiểm tất định T0 xấu đi: lỗi cấu trúc tăng từ 4 lên 16.",
+    "t0Worsened": true,
+    "details": {
+      "baselineStructureIssues": 4,
+      "candidateStructureIssues": 16,
+      "strictGlossaryDiff": 5.94
+    }
+  }
+}

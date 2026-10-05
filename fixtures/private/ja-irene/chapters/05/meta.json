@@ -1,0 +1,31 @@
+{
+  "id": "05",
+  "order": 5,
+  "lang": "ja",
+  "title": "公爵令息ヴィルヘルム④",
+  "pov": "Wilhelm",
+  "paragraphs": 53,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng, kể cả U+3000, là trống",
+  "blankSeparatedBlocks": 51,
+  "chars": 2142,
+  "tags": [
+    "pov-switch",
+    "kinship",
+    "formal-letter",
+    "scene-break",
+    "trailing-ideographic-space"
+  ],
+  "notes": [
+    "Dòng cuối chỉ có U+3000: định nghĩa đoạn phải coi là trống.",
+    "Thoại thường có dòng trống ngăn, khác các chương trước."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": [
+        "＊",
+        "◇",
+        "―"
+      ]
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "status": "approved",
+  "approved": "2026-10-04: chủ sản phẩm chọn phương án (a) cho mọi mục decision (bảng 43 mục trong hội thoại). Mục không có decision giữ như bản soạn, chưa duyệt từng dòng.",
+  "note": "Ma trận xưng hô nháp cho 5 chương, soạn 2026-10-03. Mỗi hàng một chiều: người nói → người nghe. 'self' là cách người nói tự xưng, 'address' là cách gọi người nghe. Hàng có 'decision: true' là lựa chọn văn phong, cần chủ sản phẩm chốt. Bối cảnh: quý tộc phương Tây (truyện Nhật), nên tránh xưng hô cổ phong kiểu cung đình Trung Hoa trừ khi cố ý.",
+  "narration": [
+    { "chapters": ["01", "02", "03"], "pov": "Irene", "self": "tôi", "alternatives": ["ta"], "note": "わたくし trong lời kể. Lời độc thoại trong （） cũng là Irene.", "decision": true },
+    { "chapters": ["04"], "pov": "Tilda", "self": "tôi", "refersToIrene": "phu nhân Irene", "note": "イレーヌ様 trong lời kể của Tilda." },
+    { "chapters": ["05"], "pov": "Wilhelm", "self": "tôi", "refersToParents": { "母様": "mẹ", "父様": "cha" }, "note": "僕." }
+  ],
+  "pairs": [
+    { "speaker": "Irene", "listener": "Wilhelm", "self": "mẹ", "address": "con", "fromChapter": "01" },
+    { "speaker": "Wilhelm", "listener": "Irene", "self": "con", "address": "mẹ", "fromChapter": "01" },
+
+    { "speaker": "Irene", "listener": "Adeline", "self": "ta", "address": "con", "alternatives": [{ "self": "ta", "address": "cháu" }], "fromChapter": "01", "note": "Mẹ chồng tương lai, từ chương 02 ấm áp hơn hẳn.", "decision": true },
+    { "speaker": "Adeline", "listener": "Irene", "self": "tôi", "address": "phu nhân", "alternatives": [{ "self": "con", "address": "phu nhân" }], "fromChapter": "01", "note": "私 + イレーヌさま; cô còn sợ và giữ lễ.", "decision": true },
+
+    { "speaker": "Irene", "listener": "Loretta", "self": "mợ", "address": "cháu", "alternatives": [{ "self": "ta", "address": "cháu" }], "fromChapter": "01", "note": "Từ chương 03 Irene nghiêm khắc; có thể đổi sang 'ta' khi răn.", "decision": true },
+    { "speaker": "Loretta", "listener": "Irene", "self": "cháu", "address": "mợ", "fromChapter": "01", "note": "わたし + おば様. Xem mục おば様 trong glossary." },
+
+    { "speaker": "Loretta", "listener": "Wilhelm", "self": "em", "address": "anh Wilhelm", "fromChapter": "01", "note": "ヴィルヘルム様; Loretta làm nũng. Theo vai vế Loretta là chị họ (xem 従姉妹).", "decision": true },
+    { "speaker": "Wilhelm", "listener": "Loretta", "self": "anh", "address": "em", "fromChapter": "01", "decision": true },
+
+    { "speaker": "Wilhelm", "listener": "Adeline", "self": "tôi", "address": "cô", "fromChapter": "01", "note": "君, lạnh lùng và buộc tội ở chương 01. Có thể đổi khi quan hệ đổi (chưa có trong 5 chương)." },
+    { "speaker": "Adeline", "listener": "Wilhelm", "self": "tôi", "address": "ngài Wilhelm", "fromChapter": "03", "note": "ヴィルヘルムさま ở chương 03." },
+
+    { "speaker": "Tilda", "listener": "Irene", "self": "tôi", "address": "phu nhân", "alternatives": [{ "self": "nô tì", "address": "phu nhân" }], "fromChapter": "01", "note": "Chương 04 Tilda tự xưng bằng tên (ティルダが…参りました): giữ 'Tilda'. 'nô tì' là cổ phong.", "decision": true },
+    { "speaker": "Irene", "listener": "Tilda", "self": "ta", "address": "Tilda", "fromChapter": "01", "note": "あなた. Tilda lớn tuổi hơn và hầu Irene từ nhỏ, nên gọi tên hợp hơn 'em' hay 'ngươi'.", "decision": true },
+
+    { "speaker": "Irene", "listener": "thị nữ của Loretta", "self": "ta", "address": "cô", "alternatives": [{ "self": "ta", "address": "ngươi" }], "fromChapter": "02", "note": "Tra hỏi kẻ nói dối.", "decision": true },
+    { "speaker": "thị nữ của Loretta", "listener": "Irene", "self": "tôi", "address": "phu nhân", "fromChapter": "02" },
+
+    { "speaker": "lão phu nhân", "listener": "Irene", "self": "ta", "address": "cô", "alternatives": [{ "self": "ta", "address": "ngươi" }], "fromChapter": "04", "note": "お前, khinh miệt; chỉ trong ký ức của Tilda (『』).", "decision": true },
+
+    { "speaker": "bác (伯父上)", "listener": "Wilhelm", "self": "bác", "address": "cháu", "fromChapter": "05", "note": "Dùng 君 nhưng 'bác – cháu' tự nhiên hơn." },
+    { "speaker": "Wilhelm", "listener": "bác (伯父上)", "self": "cháu", "address": "bác", "fromChapter": "05" },
+
+    { "speaker": "người không nêu tên (cuối chương 03)", "listener": "Irene (đang ngủ)", "self": null, "address": "Irene", "fromChapter": "03", "note": "Gợi ý là chồng nhưng truyện cố ý không nói. Bản dịch không được tự thêm tên người nói." }
+  ]
+}

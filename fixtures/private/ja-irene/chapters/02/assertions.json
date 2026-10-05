@@ -1,0 +1,15 @@
+{
+  "status": "draft",
+  "rules": [
+    { "where": "公爵令息ヴィルヘルム②", "kind": "structure", "mustContain": ["Wilhelm"], "note": "Tên chương; số ② giữ hoặc đổi thành 2." },
+    { "where": "『イレーヌさまがお呼びです、サロンへお越しください』", "kind": "structure", "mustContain": ["phu nhân"], "note": "Lời dẫn lồng trong thoại (『』 trong 「」): bản dịch phải phân biệt được hai lớp ngoặc." },
+    { "where": "踊り場から上は、下からは見えないはずよね", "kind": "term", "mustContain": ["chiếu nghỉ"], "note": "Chi tiết then chốt vạch lời nói dối của thị nữ." },
+    { "where": "わたくしにはアデラインから話を聞く義務があり", "kind": "meaning", "mustContain": ["nghĩa vụ", "quyền"] },
+    { "where": "聞き間違い。ずいぶんと都合のよい耳をお持ちなのね", "kind": "meaning", "note": "Mỉa mai; giữ được giọng châm biếm." },
+    { "where": "先ほどは聞き間違い、今度は見間違いかしら", "kind": "meaning", "note": "Cặp chơi chữ nghe nhầm / nhìn nhầm phải giữ song song." },
+    { "where": "「アデライン、どうぞ仰って。", "kind": "pronoun", "pair": ["Irene", "Adeline"] },
+    { "where": "「あなたね。わたくし、アデラインを呼んだ覚えはないのだけれど", "kind": "pronoun", "pair": ["Irene", "thị nữ của Loretta"] },
+    { "where": "「も、申し訳ございません。聞き間違えたのでございます。", "kind": "pronoun", "pair": ["thị nữ của Loretta", "Irene"] },
+    { "where": "「まさかロレッタを疑っているのですか。", "kind": "pronoun", "pair": ["Wilhelm", "Irene"] }
+  ]
+}

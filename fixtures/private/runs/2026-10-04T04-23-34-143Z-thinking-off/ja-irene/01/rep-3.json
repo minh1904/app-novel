@@ -1,0 +1,111 @@
+{
+  "sourceParagraphs": 87,
+  "targetParagraphs": 3,
+  "aligned": false,
+  "shifted": false,
+  "segments": 148,
+  "written": 5,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 0,
+  "quoteSamples": [],
+  "dialogueStyle": "none",
+  "lengthChecked": 0,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 21,
+  "glossaryStrict": 2,
+  "glossaryLenient": 2,
+  "glossaryMissed": {
+    "イレーヌ・フォン・シュテルンハイム": 1,
+    "ヴィルヘルム": 1,
+    "アデライン": 1,
+    "ティルダ": 1,
+    "公爵夫人": 1,
+    "侯爵令嬢": 1,
+    "公爵邸": 1,
+    "おば様": 1,
+    "従姉妹": 1,
+    "婚約者": 1,
+    "使用人": 1,
+    "サロン": 1,
+    "応接間": 1,
+    "奥様": 1,
+    "母様": 1,
+    "義母": 1,
+    "侍女": 1,
+    "書庫": 1,
+    "転生": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "chapter",
+  "rules": [
+    {
+      "rule": "ヴィルヘルム。十五歳。",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "イレーヌ・フォン・シュテルンハイムという人",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "わたくしをおば様と呼ぶ娘",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "侯爵令嬢で、ヴィルヘルムの婚約者",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「奥様、医師を呼んでおりますので」",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "（これはいわゆる転生ってやつなのかしら）",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "深夜のコンビニでプリンを",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "叱られた娘が逆上して義母を突き落とす",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "＊＊＊",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「母様が君を呼ぶわけがないだろう！",
+      "status": "manual"
+    },
+    {
+      "rule": "「ロレッタ。言いなさい。母様に隠し事をするものではない」",
+      "status": "manual"
+    },
+    {
+      "rule": "「わたし見たのです。アデラインさまが、おば様を、押したのです」",
+      "status": "manual"
+    },
+    {
+      "rule": "色々な視点を交えながら",
+      "status": "manual"
+    },
+    {
+      "rule": "短編で省略したイレーヌの過去",
+      "status": "manual"
+    }
+  ]
+}

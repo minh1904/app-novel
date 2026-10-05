@@ -1,0 +1,81 @@
+{
+  "model": "gemini-2.5-flash",
+  "commit": "",
+  "repeats": 1,
+  "httpStatuses": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "summary": [
+    {
+      "chapter": "zh-kongyiji/01",
+      "lang": "zh-Hans",
+      "runs": 1,
+      "sourceParagraphs": 15,
+      "targetParagraphs": [
+        15
+      ],
+      "aligned": "1/1",
+      "untranslatedSegments": 0,
+      "residue": 1,
+      "lengthOutliers": "0/13",
+      "repetition": 0,
+      "glossaryStrict": "54%",
+      "glossaryLenient": "56%",
+      "glossaryChecked": 48,
+      "glossaryMostMissed": [
+        [
+          "掌柜",
+          6
+        ],
+        [
+          "茴香豆",
+          4
+        ],
+        [
+          "粉板",
+          3
+        ],
+        [
+          "短衣帮",
+          1
+        ],
+        [
+          "鲁镇",
+          1
+        ],
+        [
+          "咸亨酒店",
+          1
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 7,
+        "fail": 1,
+        "skip": 0,
+        "manual": 6
+      },
+      "failedRules": [
+        "（一九一九年三月。） → thiếu một trong [\"1919\",\"một chín một chín\"]"
+      ],
+      "usage": {
+        "inputTokens": 7032,
+        "outputTokens": 21625
+      },
+      "httpCalls": 4,
+      "seconds": 100,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        }
+      ]
+    }
+  ]
+}

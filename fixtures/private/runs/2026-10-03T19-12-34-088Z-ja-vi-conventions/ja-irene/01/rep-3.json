@@ -1,0 +1,96 @@
+{
+  "sourceParagraphs": 87,
+  "targetParagraphs": 88,
+  "aligned": false,
+  "segments": 148,
+  "written": 147,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 0,
+  "quoteSamples": [],
+  "dialogueStyle": "vi",
+  "lengthChecked": 0,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 21,
+  "glossaryStrict": 16,
+  "glossaryLenient": 17,
+  "glossaryMissed": {
+    "公爵夫人": 1,
+    "侯爵令嬢": 1,
+    "公爵邸": 1,
+    "おば様": 1,
+    "サロン": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "chapter",
+  "rules": [
+    {
+      "rule": "ヴィルヘルム。十五歳。",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "イレーヌ・フォン・シュテルンハイムという人",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "わたくしをおば様と呼ぶ娘",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "侯爵令嬢で、ヴィルヘルムの婚約者",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「奥様、医師を呼んでおりますので」",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "（これはいわゆる転生ってやつなのかしら）",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "深夜のコンビニでプリンを",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "叱られた娘が逆上して義母を突き落とす",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "＊＊＊",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「母様が君を呼ぶわけがないだろう！",
+      "status": "manual"
+    },
+    {
+      "rule": "「ロレッタ。言いなさい。母様に隠し事をするものではない」",
+      "status": "manual"
+    },
+    {
+      "rule": "「わたし見たのです。アデラインさまが、おば様を、押したのです」",
+      "status": "manual"
+    },
+    {
+      "rule": "色々な視点を交えながら",
+      "status": "manual"
+    },
+    {
+      "rule": "短編で省略したイレーヌの過去",
+      "status": "manual"
+    }
+  ]
+}

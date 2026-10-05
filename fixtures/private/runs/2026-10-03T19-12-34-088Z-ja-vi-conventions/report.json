@@ -1,0 +1,727 @@
+{
+  "model": "gemini-2.5-flash",
+  "label": "ja-vi-conventions",
+  "commit": "unknown",
+  "repeats": 3,
+  "promptReplaced": 100,
+  "httpStatuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "summary": [
+    {
+      "chapter": "ja-irene/01",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 87,
+      "targetParagraphs": [
+        87,
+        87,
+        88
+      ],
+      "aligned": "2/3",
+      "untranslatedSegments": 1,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        1,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "0/122",
+      "repetition": 0,
+      "glossaryStrict": "79%",
+      "glossaryLenient": "82%",
+      "glossaryChecked": 205,
+      "glossaryMostMissed": [
+        [
+          "イレーヌ・フォン・シュテルンハイム",
+          12
+        ],
+        [
+          "おば様",
+          9
+        ],
+        [
+          "サロン",
+          5
+        ],
+        [
+          "公爵夫人",
+          4
+        ],
+        [
+          "侍女",
+          3
+        ],
+        [
+          "公爵邸",
+          3
+        ]
+      ],
+      "forbiddenHits": 4,
+      "rules": {
+        "pass": 14,
+        "fail": 4,
+        "skip": 9,
+        "manual": 15
+      },
+      "failedRules": [
+        "わたくしをおば様と呼ぶ娘 → thiếu \"mợ\"; có \"dì\"",
+        "イレーヌ・フォン・シュテルンハイムという人 → thiếu \"Irene von Sternheim\"",
+        "わたくしをおば様と呼ぶ娘 → thiếu \"mợ\"",
+        "叱られた娘が逆上して義母を突き落とす → thiếu \"mẹ chồng\""
+      ],
+      "usage": {
+        "inputTokens": 32117,
+        "outputTokens": 74932
+      },
+      "httpCalls": 21,
+      "seconds": 543,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 4,
+          "message": "Nhà cung cấp không trả bản dịch cho 4 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/02",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 69,
+      "targetParagraphs": [
+        69,
+        71,
+        69
+      ],
+      "aligned": "2/3",
+      "untranslatedSegments": 4,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        0,
+        2,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "3/98",
+      "repetition": 0,
+      "glossaryStrict": "76%",
+      "glossaryLenient": "77%",
+      "glossaryChecked": 137,
+      "glossaryMostMissed": [
+        [
+          "侍女",
+          8
+        ],
+        [
+          "イレーヌ・フォン・シュテルンハイム",
+          7
+        ],
+        [
+          "サロン",
+          5
+        ],
+        [
+          "ヴィルヘルム",
+          3
+        ],
+        [
+          "公爵令息",
+          3
+        ],
+        [
+          "ロレッタ",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 6,
+        "fail": 2,
+        "skip": 4,
+        "manual": 18
+      },
+      "failedRules": [
+        "公爵令息ヴィルヘルム② → thiếu \"Wilhelm\"",
+        "わたくしにはアデラインから話を聞く義務があり → thiếu \"nghĩa vụ\""
+      ],
+      "usage": {
+        "inputTokens": 24700,
+        "outputTokens": 71134
+      },
+      "httpCalls": 17,
+      "seconds": 354,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 3,
+          "message": "Nhà cung cấp không trả bản dịch cho 3 câu."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 3,
+          "message": "Phản hồi thiếu 3 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 2,
+          "message": "Nhà cung cấp không trả bản dịch cho 2 câu."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/03",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 99,
+      "targetParagraphs": [
+        99,
+        97,
+        101
+      ],
+      "aligned": "1/3",
+      "untranslatedSegments": 4,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        1,
+        2,
+        1
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "40/65",
+      "repetition": 0,
+      "glossaryStrict": "39%",
+      "glossaryLenient": "42%",
+      "glossaryChecked": 109,
+      "glossaryMostMissed": [
+        [
+          "アデライン",
+          13
+        ],
+        [
+          "ロレッタ",
+          11
+        ],
+        [
+          "ヴィルヘルム",
+          11
+        ],
+        [
+          "イレーヌ・フォン・シュテルンハイム",
+          6
+        ],
+        [
+          "公爵令息",
+          3
+        ],
+        [
+          "王都",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 2,
+        "fail": 4,
+        "skip": 12,
+        "manual": 18
+      },
+      "failedRules": [
+        "マクシミリアン・フォン・シュテルンハイム公爵はこの家の主 → thiếu \"Maximilian von Sternheim\"",
+        "わたし、ヴィルヘルム様の従姉妹ですよ。マクシミリアン様の姪です！ → thiếu \"Maximilian\"; thiếu \"cháu gái\"",
+        "「けいさつ」 → thiếu một trong [\"cảnh sát\",\"Cảnh sát\",\"cảnh… sát\",\"Cảnh… sát\",\"cảnh-sát\"]",
+        "＊ → thiếu một trong [\"＊\",\"*\"]"
+      ],
+      "usage": {
+        "inputTokens": 35134,
+        "outputTokens": 84147
+      },
+      "httpCalls": 28,
+      "seconds": 488,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 2,
+          "message": "Nhà cung cấp không trả bản dịch cho 2 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 2,
+          "message": "Phản hồi thiếu 2 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/04",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 73,
+      "targetParagraphs": [
+        73,
+        73,
+        73
+      ],
+      "aligned": "3/3",
+      "untranslatedSegments": 2,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        2,
+        2,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "35/171",
+      "repetition": 0,
+      "glossaryStrict": "50%",
+      "glossaryLenient": "52%",
+      "glossaryChecked": 204,
+      "glossaryMostMissed": [
+        [
+          "イレーヌ・フォン・シュテルンハイム",
+          20
+        ],
+        [
+          "大奥様",
+          15
+        ],
+        [
+          "公爵家",
+          10
+        ],
+        [
+          "輿入れ",
+          9
+        ],
+        [
+          "ティルダ",
+          8
+        ],
+        [
+          "伯爵家",
+          8
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 13,
+        "fail": 11,
+        "skip": 0,
+        "manual": 6
+      },
+      "failedRules": [
+        "◇ティルダ視点 → thiếu một trong [\"◇\"]",
+        "「奥様、起きていらっしゃいますか？　ティルダが朝のお支度に参りました」 → thiếu \"phu nhân\"; thiếu \"Tilda\"",
+        "私、ティルダが公爵家に仕えて十六年ほどになる。 → thiếu \"Tilda\"; thiếu một trong [\"mười sáu\",\"16\"]",
+        "ミルク粥。伯爵家にいた頃 → thiếu \"cháo sữa\"",
+        "そこへ、大奥様が入ってこられた。 → thiếu \"lão phu nhân\"",
+        "しかも、旦那様の前では一度もそれをなさらなかった。 → thiếu \"ông chủ\"",
+        "イレーヌ様は十五でマクシミリアン様とご婚約なさり → thiếu một trong [\"mười lăm\",\"15\"]",
+        "＊ → thiếu một trong [\"＊\",\"*\"]"
+      ],
+      "usage": {
+        "inputTokens": 25343,
+        "outputTokens": 65582
+      },
+      "httpCalls": 18,
+      "seconds": 348,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/05",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 53,
+      "targetParagraphs": [
+        53,
+        52,
+        53
+      ],
+      "aligned": "2/3",
+      "untranslatedSegments": 3,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        0,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "10/82",
+      "repetition": 0,
+      "glossaryStrict": "62%",
+      "glossaryLenient": "74%",
+      "glossaryChecked": 195,
+      "glossaryMostMissed": [
+        [
+          "王都",
+          15
+        ],
+        [
+          "公爵家",
+          7
+        ],
+        [
+          "蟄居",
+          7
+        ],
+        [
+          "ロレッタ",
+          5
+        ],
+        [
+          "伯爵家",
+          4
+        ],
+        [
+          "伯父上",
+          4
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 5,
+        "fail": 7,
+        "skip": 6,
+        "manual": 9
+      },
+      "failedRules": [
+        "伯父上は、父様の姉である伯母上を妻に迎えた → thiếu \"bác\"",
+        "公爵家で騒動を起こしたロレッタは領地の屋敷にて蟄居とし → thiếu \"cấm túc\"; thiếu \"lãnh địa\"",
+        "ロレッタの侍女には紹介状なしで暇を出し → thiếu \"thư giới thiệu\"",
+        "甥である僕にではなく、公爵家の嫡男に向けた礼だった。 → thiếu \"trưởng nam\"",
+        "＊ → thiếu một trong [\"＊\",\"*\"]",
+        "公爵家で騒動を起こしたロレッタは領地の屋敷にて蟄居とし → thiếu \"cấm túc\""
+      ],
+      "usage": {
+        "inputTokens": 19000,
+        "outputTokens": 50890
+      },
+      "httpCalls": 16,
+      "seconds": 297,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 2,
+          "message": "Nhà cung cấp không trả bản dịch cho 2 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 2,
+          "message": "Phản hồi thiếu 2 segment."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        }
+      ]
+    }
+  ]
+}

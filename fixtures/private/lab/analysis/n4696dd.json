@@ -1,0 +1,204 @@
+{
+  "ncode": "n4696dd",
+  "model": "gemini-3.1-flash-lite",
+  "register": "ja-fantasy",
+  "chapters": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "at": "2026-10-05T17:52:39.753Z",
+  "characters": [
+    {
+      "source": "リオン",
+      "gender": "male",
+      "thirdPerson": "Rion",
+      "notes": "Nhân vật chính, chuyển sinh"
+    },
+    {
+      "source": "ミリィ",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Hầu gái thân thiết của Rion"
+    },
+    {
+      "source": "クレアリディル",
+      "gender": "female",
+      "thirdPerson": "nàng",
+      "notes": "Chị gái của Rion, hay gọi Rion là 'em trai'"
+    },
+    {
+      "source": "ソフィア",
+      "gender": "female",
+      "thirdPerson": "cô bé",
+      "notes": "Tiểu thư nhà Sフィール, hôn thê của Rion"
+    },
+    {
+      "source": "アリスティア",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Thiếu nữ nô lệ được Rion cứu"
+    },
+    {
+      "source": "ミシェル",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Hầu gái riêng của Claire"
+    },
+    {
+      "source": "レジス",
+      "gender": "male",
+      "thirdPerson": "ông",
+      "notes": "Quản gia"
+    },
+    {
+      "source": "キャロライン",
+      "gender": "female",
+      "thirdPerson": "bà",
+      "notes": "Mẹ của Blake, phu nhân bá tước"
+    },
+    {
+      "source": "ブレイク",
+      "gender": "male",
+      "thirdPerson": "hắn",
+      "notes": "Anh trai của Rion"
+    }
+  ],
+  "dyads": [
+    {
+      "from": "ミリィ",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "Rion-sama",
+      "secondPerson": "cậu",
+      "notes": "Luôn dùng kính ngữ với chủ",
+      "evidence": [
+        "ch3: 「リオン様ったらまた部屋から抜け出して、探しましたよ？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "ミリィ",
+      "self": "tôi",
+      "address": "Milly",
+      "secondPerson": "cô",
+      "notes": "Xưng hô thân thiết",
+      "evidence": [
+        "ch3: 「ごめんね、ミリィ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "クレアリディル",
+      "to": "リオン",
+      "self": "chị",
+      "address": "em trai",
+      "secondPerson": "em",
+      "notes": "Chị gái xưng hô với em trai",
+      "evidence": [
+        "ch8: 「誰だ……って、クレアねぇ？ どうかした――」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "クレアリディル",
+      "self": "tôi",
+      "address": "chị Claire",
+      "secondPerson": "chị",
+      "notes": "Gọi chị theo cách thân mật",
+      "evidence": [
+        "ch8: 「誰だ……って、クレアねぇ？ どうかした――」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ソフィア",
+      "to": "リオン",
+      "self": "em",
+      "address": "anh Rion",
+      "secondPerson": "anh",
+      "notes": "Thay đổi cách gọi sau khi thân thiết",
+      "evidence": [
+        "ch14: 「初めまして。俺はリオンって言うんだ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "ソフィア",
+      "self": "tôi",
+      "address": "Sophia",
+      "secondPerson": "cô bé",
+      "notes": "Xưng hô lịch sự với tiểu thư",
+      "evidence": [
+        "ch14: 「初めまして。俺はリオンって言うんだ。ねぇソフィア、良かったらキミの名前を教えてくれないかな？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "アリスティア",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "Rion-sama",
+      "secondPerson": "cậu",
+      "notes": "Dùng kính ngữ sau khi được cứu",
+      "evidence": [
+        "ch14: 「リオン様！ アリスさんがっ。アリスさんが連れ去られてしまいました！」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "レジス",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "Rion-sama",
+      "secondPerson": "cậu",
+      "notes": "Quản gia nói với chủ",
+      "evidence": [
+        "ch13: 「かしこまりました。それではリオン様。お嬢様のお部屋までは、わたくし――レジスが案内いたします」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ブレイク",
+      "to": "リオン",
+      "self": "ta",
+      "address": "ngươi",
+      "secondPerson": "ngươi",
+      "notes": "Giọng bề trên, khinh miệt",
+      "evidence": [
+        "ch11: 「ブレイク、ノックもせずになんだ」"
+      ],
+      "confidence": "cao"
+    }
+  ]
+}

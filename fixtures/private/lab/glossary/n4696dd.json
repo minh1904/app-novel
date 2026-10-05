@@ -1,0 +1,233 @@
+{
+  "note": "Nháp do Claude soạn 2026-10-06 từ tần suất tên, cách gọi và furigana trong 30 chương đầu; phiên Latin theo cách đọc phổ biến, chưa đối chiếu bản dịch chính thức. Nhân vật và cặp xưng hô ở trạng thái tạm dùng, chờ người dịch chốt.",
+  "entries": [
+    {
+      "source": "グランシェス",
+      "target": "Grancheth",
+      "notes": "Họ, nhà bá tước của Rion"
+    },
+    {
+      "source": "スフィール",
+      "target": "Sfiel",
+      "notes": "Họ, gia tộc thân với nhà Grancheth"
+    },
+    {
+      "source": "ロバート",
+      "target": "Robert",
+      "notes": "Bá tước Grancheth, cha của Rion"
+    },
+    {
+      "source": "カルロス",
+      "target": "Carlos"
+    },
+    {
+      "source": "エリーゼ",
+      "target": "Elise"
+    },
+    {
+      "source": "マリー",
+      "target": "Marie"
+    },
+    {
+      "source": "エリック",
+      "target": "Eric"
+    },
+    {
+      "source": "裕弥",
+      "target": "Yuuya",
+      "notes": "Tên kiếp trước của Rion"
+    },
+    {
+      "source": "紗弥",
+      "target": "Saya",
+      "notes": "Em gái của Yuuya ở kiếp trước"
+    },
+    {
+      "source": "雨宮",
+      "target": "Amamiya",
+      "notes": "Họ của Yuuya và Saya ở kiếp trước"
+    },
+    {
+      "source": "魔力素子",
+      "target": "mana",
+      "notes": "Hạt ma lực; tác giả chú cách đọc là マナ"
+    },
+    {
+      "source": "恩恵",
+      "target": "ân huệ",
+      "notes": "Năng lực trời ban; 恩恵二つ持ち đọc là ダブル: người mang hai ân huệ"
+    },
+    {
+      "source": "ハイエルフ",
+      "target": "high elf"
+    },
+    {
+      "source": "エルフ",
+      "target": "elf"
+    }
+  ],
+  "characters": [
+    {
+      "source": "リオン",
+      "target": "Rion",
+      "aliases": [],
+      "gender": "male",
+      "role": "nhân vật chính, con thứ (con của thiếp) nhà bá tước Grancheth, người kể chuyện",
+      "notes": "Họ tên: Rion Grancheth. Chuyển sinh từ Amamiya Yuuya. Lời kể xưng 俺 → \"tôi\"",
+      "thirdPerson": "Rion"
+    },
+    {
+      "source": "ミリィ",
+      "target": "Milly",
+      "aliases": [],
+      "gender": "female",
+      "role": "hầu gái nuôi Rion từ bé",
+      "notes": "Gọi Rion là リオン様, nói kính ngữ",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "クレアリディル",
+      "target": "Clearidyl",
+      "aliases": [
+        "クレア"
+      ],
+      "gender": "female",
+      "role": "chị của Rion",
+      "notes": "Tên gọi thân: クレア → Claire. Tự xưng あたし, gọi Rion là 弟くん",
+      "thirdPerson": "nàng"
+    },
+    {
+      "source": "ソフィア",
+      "target": "Sophia",
+      "aliases": [],
+      "gender": "female",
+      "role": "cô bé nhỏ tuổi hơn Rion",
+      "notes": "Lúc đầu gọi リオンさん, sau gọi リオンお兄ちゃん",
+      "thirdPerson": "cô bé"
+    },
+    {
+      "source": "アリスティア",
+      "target": "Alicetia",
+      "aliases": [
+        "アリス"
+      ],
+      "gender": "female",
+      "role": "thiếu nữ nô lệ được Rion cứu",
+      "notes": "Tên gọi thân: アリス → Alice",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "ミシェル",
+      "target": "Michelle",
+      "aliases": [],
+      "gender": "female",
+      "role": "hầu gái riêng của Claire",
+      "notes": "Hay lo lắng cho Claire",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "レジス",
+      "target": "Regis",
+      "aliases": [],
+      "gender": "male",
+      "role": "quản gia",
+      "notes": "Tự xưng わたくし, gọi Rion là リオン様",
+      "thirdPerson": "ông"
+    },
+    {
+      "source": "キャロライン",
+      "target": "Caroline",
+      "aliases": [
+        "キャロ"
+      ],
+      "gender": "female",
+      "role": "nhân vật nữ, Rion gọi là キャロラインさん",
+      "notes": "Tên gọi thân: キャロ → Caro",
+      "thirdPerson": "bà"
+    },
+    {
+      "source": "ブレイク",
+      "target": "Blake",
+      "aliases": [],
+      "gender": "male",
+      "role": "người được gọi ブレイク様",
+      "notes": "",
+      "thirdPerson": "hắn"
+    }
+  ],
+  "dyads": [
+    {
+      "from": "クレアリディル",
+      "to": "リオン",
+      "self": "chị",
+      "address": "em",
+      "notes": "Gọi 弟くん là \"em trai\" hoặc \"cậu em\"; tự xưng あたし"
+    },
+    {
+      "from": "リオン",
+      "to": "クレアリディル",
+      "self": "em",
+      "address": "chị",
+      "notes": "Gọi \"chị Claire\" khi bản gốc gọi クレア姉さん"
+    },
+    {
+      "from": "ソフィア",
+      "to": "リオン",
+      "self": "em",
+      "address": "anh",
+      "notes": "Gọi \"anh Rion\" khi bản gốc gọi リオンお兄ちゃん; trước đó (リオンさん) gọi \"Rion-san\""
+    },
+    {
+      "from": "リオン",
+      "to": "ソフィア",
+      "self": "anh",
+      "address": "em"
+    },
+    {
+      "from": "ミリィ",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "Rion-sama",
+      "notes": "Hầu gái nói kính ngữ, giữ \"-sama\"",
+      "secondPerson": "cậu"
+    },
+    {
+      "from": "リオン",
+      "to": "ミリィ",
+      "self": "tôi",
+      "address": "chị",
+      "notes": "Người nuôi Rion từ bé; gọi tên \"Milly\" khi bản gốc gọi trống tên"
+    },
+    {
+      "from": "レジス",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "Rion-sama",
+      "notes": "Quản gia, kính ngữ",
+      "secondPerson": "cậu"
+    },
+    {
+      "from": "リオン",
+      "to": "レジス",
+      "self": "tôi",
+      "address": "ông",
+      "notes": "Gọi \"ngài Regis\" hoặc \"Regis-san\" theo bản gốc レジスさん"
+    },
+    {
+      "from": "アリスティア",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "Rion-sama",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Dùng kính ngữ sau khi được cứu"
+    },
+    {
+      "from": "ブレイク",
+      "to": "リオン",
+      "self": "ta",
+      "address": "ngươi",
+      "secondPerson": "ngươi",
+      "notes": "AI đề xuất, chờ duyệt. Giọng bề trên, khinh miệt"
+    }
+  ]
+}

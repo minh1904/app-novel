@@ -1,0 +1,2027 @@
+{
+  "rescoredAt": "2026-10-04T10:36:08.712Z",
+  "results": {
+    "ja-irene": [
+      {
+        "chapter": "01",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 87,
+            "targetParagraphs": 87,
+            "beadCounts": {
+              "1-1": 87,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 24,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 35,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 96,
+            "strictHits": 73,
+            "lenientHits": 73,
+            "forbiddenHits": 4,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 12
+              },
+              {
+                "term": "おば様",
+                "count": 4
+              },
+              {
+                "term": "侍女",
+                "count": 2
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "侯爵令嬢",
+                "count": 1
+              },
+              {
+                "term": "応接間",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": [
+              {
+                "term": "dì",
+                "paragraphIndex": 25
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 32
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 61
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 68
+              }
+            ]
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mợ\"; Chứa từ không được phép: \"dì\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Kiểm bằng giám khảo/người chấm, không so chuỗi."
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời tác giả cuối chương, nằm liền dòng với đoạn truyện cuối (không có dòng trống ngăn). Bỏ đi không tính là sót; dịch thì phải là đoạn riêng, không trộn vào đoạn truyện."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 87,
+            "targetParagraphs": 87,
+            "beadCounts": {
+              "1-1": 87,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 35,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 96,
+            "strictHits": 68,
+            "lenientHits": 73,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 12
+              },
+              {
+                "term": "おば様",
+                "count": 4
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "使用人",
+                "count": 1
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "従姉妹",
+                "count": 1
+              },
+              {
+                "term": "侯爵令嬢",
+                "count": 1
+              },
+              {
+                "term": "義母",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"Irene von Sternheim\""
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mợ\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mẹ chồng\""
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Kiểm bằng giám khảo/người chấm, không so chuỗi."
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời tác giả cuối chương, nằm liền dòng với đoạn truyện cuối (không có dòng trống ngăn). Bỏ đi không tính là sót; dịch thì phải là đoạn riêng, không trộn vào đoạn truyện."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 87,
+            "targetParagraphs": 88,
+            "beadCounts": {
+              "1-1": 86,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 1
+            },
+            "bead11Ratio": 0.9885057471264368,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 35,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 86,
+              "srcLen": 62,
+              "tgtLen": 180,
+              "ratio": 2.903225806451613,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 96,
+            "strictHits": 73,
+            "lenientHits": 76,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 12
+              },
+              {
+                "term": "おば様",
+                "count": 4
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "侯爵令嬢",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mợ\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Kiểm bằng giám khảo/người chấm, không so chuỗi."
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời tác giả cuối chương, nằm liền dòng với đoạn truyện cuối (không có dòng trống ngăn). Bỏ đi không tính là sót; dịch thì phải là đoạn riêng, không trộn vào đoạn truyện."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 69,
+            "targetParagraphs": 69,
+            "beadCounts": {
+              "1-1": 67,
+              "1-0": 1,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 1
+            },
+            "bead11Ratio": 0.9710144927536232,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 40,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 2,
+              "srcLen": 68,
+              "tgtLen": 40,
+              "ratio": 0.5882352941176471,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 7,
+              "srcLen": 31,
+              "tgtLen": 27,
+              "ratio": 0.8709677419354839,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 65,
+            "strictHits": 49,
+            "lenientHits": 50,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "ヴィルヘルム",
+                "count": 3
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "ロレッタ",
+                "count": 1
+              },
+              {
+                "term": "アデライン",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "fail",
+              "reason": "đoạn bị sót"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Mỉa mai; giữ được giọng châm biếm."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Cặp chơi chữ nghe nhầm / nhìn nhầm phải giữ song song."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 69,
+            "targetParagraphs": 71,
+            "beadCounts": {
+              "1-1": 67,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 2
+            },
+            "bead11Ratio": 0.9710144927536232,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 10,
+              "reason": "Ngoặc cong “” không cân"
+            },
+            {
+              "paragraphIndex": 11,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 40,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 65,
+            "strictHits": 55,
+            "lenientHits": 56,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Mỉa mai; giữ được giọng châm biếm."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Cặp chơi chữ nghe nhầm / nhìn nhầm phải giữ song song."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 69,
+            "targetParagraphs": 69,
+            "beadCounts": {
+              "1-1": 69,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 40,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 65,
+            "strictHits": 47,
+            "lenientHits": 47,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "侍女",
+                "count": 7
+              },
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "ロレッタ",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"nghĩa vụ\""
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Mỉa mai; giữ được giọng châm biếm."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Cặp chơi chữ nghe nhầm / nhìn nhầm phải giữ song song."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "03",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 99,
+            "targetParagraphs": 99,
+            "beadCounts": {
+              "1-1": 96,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 1,
+              "1-2": 1
+            },
+            "bead11Ratio": 0.9795918367346939,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 23,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 48,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 27,
+              "srcLen": 26,
+              "tgtLen": 83,
+              "ratio": 3.1923076923076925,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 54,
+              "srcLen": 20,
+              "tgtLen": 65,
+              "ratio": 3.25,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 67,
+            "strictHits": 56,
+            "lenientHits": 58,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "侍女",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Câu meme (Gundam): giữ ý 'chưa từng bị ai đánh, kể cả cha'."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Irene quỳ rạp xin lỗi ngay trên giường."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Một câu gọi cả hai người."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "03",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 99,
+            "targetParagraphs": 97,
+            "beadCounts": {
+              "1-1": 97,
+              "1-0": 2,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 0.9797979797979798,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 4,
+              "reason": "Ngoặc cong “” không cân"
+            },
+            {
+              "paragraphIndex": 46,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 47,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 28,
+              "srcLen": 26,
+              "tgtLen": 72,
+              "ratio": 2.769230769230769,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 67,
+            "strictHits": 53,
+            "lenientHits": 55,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "ヴィルヘルム",
+                "count": 1
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "侍女",
+                "count": 1
+              },
+              {
+                "term": "領地",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"Maximilian\""
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Câu meme (Gundam): giữ ý 'chưa từng bị ai đánh, kể cả cha'."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Irene quỳ rạp xin lỗi ngay trên giường."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Một câu gọi cả hai người."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "03",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 99,
+            "targetParagraphs": 101,
+            "beadCounts": {
+              "1-1": 97,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 2
+            },
+            "bead11Ratio": 0.9797979797979798,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 92,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 52,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 95,
+              "srcLen": 51,
+              "tgtLen": 47,
+              "ratio": 0.9215686274509803,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 67,
+            "strictHits": 57,
+            "lenientHits": 58,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "女主人",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Câu meme (Gundam): giữ ý 'chưa từng bị ai đánh, kể cả cha'."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Irene quỳ rạp xin lỗi ngay trên giường."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Một câu gọi cả hai người."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "04",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 73,
+            "targetParagraphs": 73,
+            "beadCounts": {
+              "1-1": 71,
+              "1-0": 1,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 1
+            },
+            "bead11Ratio": 0.9726027397260274,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 52,
+              "reason": "Ngoặc cong “” không cân"
+            },
+            {
+              "paragraphIndex": 69,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 19,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 44,
+              "srcLen": 35,
+              "tgtLen": 96,
+              "ratio": 2.742857142857143,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 81,
+            "strictHits": 41,
+            "lenientHits": 42,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 19
+              },
+              {
+                "term": "大奥様",
+                "count": 5
+              },
+              {
+                "term": "公爵家",
+                "count": 4
+              },
+              {
+                "term": "伯爵家",
+                "count": 3
+              },
+              {
+                "term": "輿入れ",
+                "count": 3
+              },
+              {
+                "term": "ティルダ",
+                "count": 1
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "使用人",
+                "count": 1
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"lão phu nhân\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Thoại trong ký ức (『』), giọng khinh miệt."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "04",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 73,
+            "targetParagraphs": 73,
+            "beadCounts": {
+              "1-1": 73,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 2,
+              "reason": "Ngoặc cong “” không cân"
+            },
+            {
+              "paragraphIndex": 7,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 18,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 3,
+              "srcLen": 36,
+              "tgtLen": 104,
+              "ratio": 2.888888888888889,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 7,
+              "srcLen": 41,
+              "tgtLen": 15,
+              "ratio": 0.36585365853658536,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 81,
+            "strictHits": 43,
+            "lenientHits": 46,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 19
+              },
+              {
+                "term": "大奥様",
+                "count": 5
+              },
+              {
+                "term": "公爵家",
+                "count": 3
+              },
+              {
+                "term": "伯爵家",
+                "count": 3
+              },
+              {
+                "term": "輿入れ",
+                "count": 3
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"lão phu nhân\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Thoại trong ký ức (『』), giọng khinh miệt."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "04",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 73,
+            "targetParagraphs": 73,
+            "beadCounts": {
+              "1-1": 73,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 18,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 9,
+              "srcLen": 27,
+              "tgtLen": 25,
+              "ratio": 0.9259259259259259,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 81,
+            "strictHits": 43,
+            "lenientHits": 43,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 19
+              },
+              {
+                "term": "大奥様",
+                "count": 5
+              },
+              {
+                "term": "公爵家",
+                "count": 3
+              },
+              {
+                "term": "輿入れ",
+                "count": 3
+              },
+              {
+                "term": "旦那様",
+                "count": 3
+              },
+              {
+                "term": "伯爵家",
+                "count": 2
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "公爵位",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"lão phu nhân\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"ông chủ\""
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Thoại trong ký ức (『』), giọng khinh miệt."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "05",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 53,
+            "targetParagraphs": 53,
+            "beadCounts": {
+              "1-1": 51,
+              "1-0": 1,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 1
+            },
+            "bead11Ratio": 0.9622641509433962,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 12,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 47,
+              "srcLen": 37,
+              "tgtLen": 104,
+              "ratio": 2.810810810810811,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 95,
+            "strictHits": 73,
+            "lenientHits": 88,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "サロン",
+                "count": 1
+              },
+              {
+                "term": "夜会",
+                "count": 1
+              },
+              {
+                "term": "蟄居",
+                "count": 1
+              },
+              {
+                "term": "伯爵家当主",
+                "count": 1
+              },
+              {
+                "term": "伯爵家",
+                "count": 1
+              },
+              {
+                "term": "嫡男",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"cấm túc\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"trưởng nam\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Dấu gạch ―― ngắt lời giữa câu: giữ dạng ngắt."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Độc thoại trong （）: giữ dạng độc thoại."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "05",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 53,
+            "targetParagraphs": 52,
+            "beadCounts": {
+              "1-1": 52,
+              "1-0": 1,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 0.9811320754716981,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 13,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 47,
+              "srcLen": 37,
+              "tgtLen": 105,
+              "ratio": 2.8378378378378377,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 95,
+            "strictHits": 65,
+            "lenientHits": 77,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "公爵家",
+                "count": 5
+              },
+              {
+                "term": "伯爵家",
+                "count": 3
+              },
+              {
+                "term": "ヴィルヘルム",
+                "count": 1
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "父様",
+                "count": 1
+              },
+              {
+                "term": "剣の師",
+                "count": 1
+              },
+              {
+                "term": "サロン",
+                "count": 1
+              },
+              {
+                "term": "夜会",
+                "count": 1
+              },
+              {
+                "term": "伯母上",
+                "count": 1
+              },
+              {
+                "term": "伯爵家当主",
+                "count": 1
+              },
+              {
+                "term": "嫡男",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"cấm túc\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"trưởng nam\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Dấu gạch ―― ngắt lời giữa câu: giữ dạng ngắt."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Độc thoại trong （）: giữ dạng độc thoại."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "05",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 53,
+            "targetParagraphs": 53,
+            "beadCounts": {
+              "1-1": 53,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 13,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 47,
+              "srcLen": 37,
+              "tgtLen": 115,
+              "ratio": 3.108108108108108,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 95,
+            "strictHits": 72,
+            "lenientHits": 82,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "公爵家",
+                "count": 5
+              },
+              {
+                "term": "公爵閣下",
+                "count": 2
+              },
+              {
+                "term": "伯爵家",
+                "count": 2
+              },
+              {
+                "term": "サロン",
+                "count": 1
+              },
+              {
+                "term": "伯爵家当主",
+                "count": 1
+              },
+              {
+                "term": "嫡男",
+                "count": 1
+              },
+              {
+                "term": "甥",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"cấm túc\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"trưởng nam\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Dấu gạch ―― ngắt lời giữa câu: giữ dạng ngắt."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Độc thoại trong （）: giữ dạng độc thoại."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

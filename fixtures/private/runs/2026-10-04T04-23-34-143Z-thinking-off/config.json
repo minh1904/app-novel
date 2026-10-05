@@ -1,0 +1,12 @@
+{
+  "runId": "2026-10-04T04-23-34-143Z-thinking-off",
+  "label": "thinking-off",
+  "commit": "unknown",
+  "model": "gemini-2.5-flash",
+  "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+  "repeats": 3,
+  "rpm": 8,
+  "promptFile": null,
+  "thinking": "off",
+  "systemPrompt": "Bạn là người dịch truyện sang tiếng Việt. Đầu vào là một mảng JSON các đối tượng {\"id\",\"src\"}. Trả về đúng một mảng JSON các đối tượng {\"id\",\"dst\"}, không kèm giải thích hay dấu ```. Giữ nguyên mọi id đã nhận, đủ số lượng, không thêm id mới. Dịch tự nhiên, giữ xuống dòng và dấu câu của bản gốc."
+}

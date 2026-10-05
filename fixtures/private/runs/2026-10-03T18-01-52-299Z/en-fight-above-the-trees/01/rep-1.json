@@ -1,0 +1,93 @@
+{
+  "sourceParagraphs": 57,
+  "targetParagraphs": 57,
+  "aligned": true,
+  "segments": 172,
+  "written": 172,
+  "residue": 0,
+  "residueSamples": [],
+  "lengthChecked": 54,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 102,
+  "glossaryStrict": 97,
+  "glossaryLenient": 98,
+  "glossaryMissed": {
+    "bandolier": 1,
+    "shotgun": 2,
+    "shapeshift": 1,
+    "Corruption": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "paragraph",
+  "rules": [
+    {
+      "rule": "A burst of flames erupted from Thassalin's jaws as the colossal Thraki",
+      "status": "pass"
+    },
+    {
+      "rule": "\"Come on, Tenuk, you've shapeshifted into a Thraki before!\"",
+      "status": "pass"
+    },
+    {
+      "rule": "\"I APOLOGIZE BUT I PICKED UP A SCENT. I HAD TO DEAL WITH IT!\"",
+      "status": "manual"
+    },
+    {
+      "rule": "\"He'll work it out...\" Nyssi tutted. \"Retvik's slow but he's not stupid.\"",
+      "status": "pass"
+    },
+    {
+      "rule": "It was an Orothrack, a very rare, gold and white draconic creature.",
+      "status": "pass"
+    },
+    {
+      "rule": "AS YISINI DEMANDS.",
+      "status": "pass"
+    },
+    {
+      "rule": "pull out her own weapon, a trusty shotgun",
+      "status": "pass"
+    },
+    {
+      "rule": "Kayel tutted as he drew his rifle from his back",
+      "status": "pass"
+    },
+    {
+      "rule": "\"That was... one of the weirder shadowjumps I've ever done... Thanto kat'olon...\"",
+      "status": "pass"
+    },
+    {
+      "rule": "shapeshifting back into his normal Spast form",
+      "status": "pass"
+    },
+    {
+      "rule": "\"YOU KILLED THE CORRUPTIIDS!",
+      "status": "manual"
+    },
+    {
+      "rule": "YOU REMIND ME OF MY OLD FRIEND ARKADIN",
+      "status": "pass"
+    },
+    {
+      "rule": "\"Kayel!\" Tenuk exclaimed as he glided out of the cloud",
+      "status": "manual"
+    },
+    {
+      "rule": "\"Hey, Tenuk, do you mind shapeshifting into something that can fly?\" Kayel asked.",
+      "status": "manual"
+    },
+    {
+      "rule": "\"Did you have to drag us along as well?\" Tenuk snapped",
+      "status": "manual"
+    },
+    {
+      "rule": "\"I, uh, did not mean to do that. Are you all well?\"",
+      "status": "manual"
+    },
+    {
+      "rule": "\"THANK YOU, LITTLE ONE.",
+      "status": "manual"
+    }
+  ]
+}

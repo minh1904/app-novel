@@ -1,0 +1,267 @@
+{
+  "note": "Nháp do Claude soạn 2026-10-05 từ tần suất tên và furigana (ruby.jsonl) của bản gốc; tên Nhật viết romaji theo thứ tự họ trước tên. Chưa người dịch xác minh. Nhân vật và cặp xưng hô soạn 2026-10-05 từ cách tự xưng/gọi đếm được trong bản gốc; trạng thái tạm dùng, chờ người dịch chốt.",
+  "entries": [
+    {
+      "source": "桐谷彰",
+      "target": "Kiritani Akira",
+      "notes": "Nhân vật chính, nam, xưng 俺; muốn làm kẻ ăn bám"
+    },
+    {
+      "source": "桐谷",
+      "target": "Kiritani",
+      "notes": "Họ của Akira và Sumire"
+    },
+    {
+      "source": "彰",
+      "target": "Akira",
+      "aliases": [
+        "アキラ"
+      ],
+      "notes": "Tên của nhân vật chính"
+    },
+    {
+      "source": "桐谷淑蓮",
+      "target": "Kiritani Sumire",
+      "notes": "Em gái của Akira, gọi anh là 兄ちゃん/お兄ちゃん"
+    },
+    {
+      "source": "淑蓮",
+      "target": "Sumire"
+    },
+    {
+      "source": "水無月結",
+      "target": "Minatsuki Yui",
+      "notes": "Bạn cùng lớp, yandere"
+    },
+    {
+      "source": "水無月",
+      "target": "Minatsuki",
+      "notes": "Họ của Yui"
+    },
+    {
+      "source": "衣笠由羅",
+      "target": "Kinugasa Yura",
+      "notes": "Đàn chị (先輩) của Akira"
+    },
+    {
+      "source": "由羅",
+      "target": "Yura"
+    },
+    {
+      "source": "衣笠",
+      "target": "Kinugasa",
+      "notes": "Họ của Yura và Maria"
+    },
+    {
+      "source": "麻莉愛",
+      "target": "Maria",
+      "aliases": [
+        "真理亜",
+        "マリア"
+      ],
+      "notes": "Kinugasa Maria"
+    },
+    {
+      "source": "雲谷",
+      "target": "Unya",
+      "notes": "Cô giáo chủ nhiệm (雲谷先生)"
+    },
+    {
+      "source": "綾",
+      "target": "Aya",
+      "aliases": [
+        "アヤ"
+      ]
+    },
+    {
+      "source": "渚",
+      "target": "Nagisa"
+    },
+    {
+      "source": "フィーネ",
+      "target": "Fiene",
+      "aliases": [
+        "フィー"
+      ],
+      "notes": "Nữ, người nước ngoài; フィー là tên gọi thân mật"
+    },
+    {
+      "source": "アルムホルト",
+      "target": "Almholt",
+      "notes": "Họ của Fiene"
+    },
+    {
+      "source": "モモ",
+      "target": "Momo",
+      "notes": "Cô giáo mẫu giáo (モモ先生) từng giam giữ Akira"
+    },
+    {
+      "source": "アロハ・カニオ",
+      "target": "Aloha Kanio",
+      "notes": "Tên đặt cho một con cua"
+    },
+    {
+      "source": "ヤンデレ",
+      "target": "yandere"
+    },
+    {
+      "source": "ヒモ",
+      "target": "kẻ ăn bám",
+      "notes": "Đàn ông sống nhờ tiền của phụ nữ"
+    }
+  ],
+  "characters": [
+    {
+      "source": "桐谷彰",
+      "target": "Akira",
+      "aliases": [
+        "彰",
+        "アキラ"
+      ],
+      "gender": "male",
+      "role": "nhân vật chính, học sinh cao trung, người kể chuyện",
+      "notes": "Họ tên đầy đủ: Kiritani Akira. Tự xưng 俺; giọng châm biếm, mơ làm kẻ ăn bám"
+    },
+    {
+      "source": "雲谷",
+      "target": "Unya",
+      "aliases": [],
+      "gender": "female",
+      "role": "cô giáo chủ nhiệm, 26 tuổi",
+      "notes": "Nói năng côn đồ (テメェ, ぶち殺す) nhưng tự xưng 私; gọi Akira bằng お前 hoặc họ 桐谷"
+    },
+    {
+      "source": "水無月結",
+      "target": "Minatsuki Yui",
+      "aliases": [
+        "水無月"
+      ],
+      "gender": "female",
+      "role": "bạn cùng lớp, yandere",
+      "notes": "Họ tên đầy đủ: Minatsuki Yui; 水無月 (họ) là Minatsuki. Tự xưng わたし, đôi khi gọi mình là ゆい; gọi Akira là 彰くん"
+    },
+    {
+      "source": "桐谷淑蓮",
+      "target": "Sumire",
+      "aliases": [
+        "淑蓮"
+      ],
+      "gender": "female",
+      "role": "em gái ruột của Akira, yandere",
+      "notes": "Họ tên đầy đủ: Kiritani Sumire. Tự xưng 私, gọi anh là お兄ちゃん"
+    },
+    {
+      "source": "衣笠由羅",
+      "target": "Kinugasa Yura",
+      "aliases": [
+        "由羅"
+      ],
+      "gender": "female",
+      "role": "đàn chị (先輩) của Akira",
+      "notes": "Họ tên đầy đủ: Kinugasa Yura. Rụt rè, tự ti; tự xưng ボク, tôn thờ Akira và gọi là アキラ様"
+    },
+    {
+      "source": "衣笠麻莉愛",
+      "target": "Maria",
+      "aliases": [
+        "麻莉愛",
+        "真理亜",
+        "マリア"
+      ],
+      "gender": "female",
+      "role": "đàn em, em gái của Yura",
+      "notes": "Họ tên đầy đủ: Kinugasa Maria. Tự xưng 私/あたし, gọi Akira là 先輩"
+    },
+    {
+      "source": "フィーネ",
+      "target": "Fiene",
+      "aliases": [
+        "フィー"
+      ],
+      "gender": "female",
+      "role": "cô gái ngoại quốc, tự nhận là hôn thê của Akira",
+      "notes": "Họ tên đầy đủ: Fiene Almholt. Tự xưng bằng tên mình (フィー → Fie), gọi Akira là ダーリン hoặc アキラくん"
+    }
+  ],
+  "dyads": [
+    {
+      "from": "雲谷",
+      "to": "桐谷彰",
+      "self": "cô",
+      "address": "cậu",
+      "notes": "Giữ cô – cậu cả khi gắt, không tự đổi sang em/mày/tao. Giữ lời chửi và đe dọa đúng mức bản gốc qua từ ngữ. Gọi \"Kiritani\" khi bản gốc gọi 桐谷; có thể lược đại từ khi câu vẫn rõ và tự nhiên."
+    },
+    {
+      "from": "桐谷彰",
+      "to": "雲谷",
+      "self": "em",
+      "address": "cô",
+      "notes": "Gọi \"Unya-sensei\" khi bản gốc gọi 雲谷先生"
+    },
+    {
+      "from": "水無月結",
+      "to": "桐谷彰",
+      "self": "tớ",
+      "address": "cậu",
+      "notes": "Gọi \"Akira-kun\" khi bản gốc gọi 彰くん; khi bản gốc tự xưng ゆい thì xưng \"Yui\""
+    },
+    {
+      "from": "桐谷彰",
+      "to": "水無月結",
+      "self": "tôi",
+      "address": "cậu",
+      "notes": "Gọi \"Minatsuki-san\" khi bản gốc gọi 水無月さん"
+    },
+    {
+      "from": "桐谷淑蓮",
+      "to": "桐谷彰",
+      "self": "em",
+      "address": "anh"
+    },
+    {
+      "from": "桐谷彰",
+      "to": "桐谷淑蓮",
+      "self": "anh",
+      "address": "em"
+    },
+    {
+      "from": "衣笠由羅",
+      "to": "桐谷彰",
+      "self": "tôi",
+      "address": "Akira-sama",
+      "notes": "Giọng rụt rè, tôn thờ; giữ \"-sama\""
+    },
+    {
+      "from": "桐谷彰",
+      "to": "衣笠由羅",
+      "self": "tôi",
+      "address": "chị",
+      "notes": "Gọi \"Yura-senpai\" khi bản gốc gọi 由羅先輩"
+    },
+    {
+      "from": "衣笠麻莉愛",
+      "to": "桐谷彰",
+      "self": "em",
+      "address": "senpai"
+    },
+    {
+      "from": "桐谷彰",
+      "to": "衣笠麻莉愛",
+      "self": "tôi",
+      "address": "em"
+    },
+    {
+      "from": "フィーネ",
+      "to": "桐谷彰",
+      "self": "Fie",
+      "address": "darling",
+      "notes": "Tự xưng bằng tên \"Fie\" như bản gốc; gọi \"Akira-kun\" khi bản gốc gọi アキラくん"
+    },
+    {
+      "from": "桐谷彰",
+      "to": "フィーネ",
+      "self": "tôi",
+      "address": "cô"
+    }
+  ]
+}

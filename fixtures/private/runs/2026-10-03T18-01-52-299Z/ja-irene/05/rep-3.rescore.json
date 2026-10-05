@@ -1,0 +1,79 @@
+{
+  "sourceParagraphs": 53,
+  "targetParagraphs": 53,
+  "aligned": true,
+  "shifted": false,
+  "segments": 83,
+  "written": 83,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 13,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 0,
+  "quoteSamples": [],
+  "dialogueStyle": "cjk",
+  "lengthChecked": 41,
+  "lengthOutliers": 1,
+  "repetition": 0,
+  "glossaryChecked": 84,
+  "glossaryStrict": 49,
+  "glossaryLenient": 61,
+  "glossaryMissed": {
+    "公爵令息": 1,
+    "王都": 7,
+    "サロン": 1,
+    "伯父上": 10,
+    "夜会": 1,
+    "伯母上": 1,
+    "公爵閣下": 2,
+    "公爵家": 5,
+    "蟄居": 3,
+    "伯爵家": 1,
+    "伯爵家当主": 1,
+    "嫡男": 1,
+    "甥": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "paragraph",
+  "rules": [
+    {
+      "rule": "◇ヴィルヘルム視点",
+      "status": "pass"
+    },
+    {
+      "rule": "伯父上は、父様の姉である伯母上を妻に迎えた",
+      "status": "fail",
+      "detail": "thiếu \"bác\""
+    },
+    {
+      "rule": "公爵家で騒動を起こしたロレッタは領地の屋敷にて蟄居とし",
+      "status": "fail",
+      "detail": "thiếu \"cấm túc\""
+    },
+    {
+      "rule": "ロレッタの侍女には紹介状なしで暇を出し",
+      "status": "pass"
+    },
+    {
+      "rule": "甥である僕にではなく、公爵家の嫡男に向けた礼だった。",
+      "status": "fail",
+      "detail": "thiếu \"trưởng nam\""
+    },
+    {
+      "rule": "「今朝、君の父――公爵閣下から書状が届いたよ」",
+      "status": "manual"
+    },
+    {
+      "rule": "「伯父上、ロレッタはいますか」",
+      "status": "manual"
+    },
+    {
+      "rule": "（ロレッタが母様を……？　あんなに良くしてもらっているのに、なぜ）",
+      "status": "manual"
+    },
+    {
+      "rule": "＊",
+      "status": "pass"
+    }
+  ]
+}

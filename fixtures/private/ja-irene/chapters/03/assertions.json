@@ -1,0 +1,17 @@
+{
+  "status": "draft",
+  "rules": [
+    { "where": "マクシミリアン・フォン・シュテルンハイム公爵はこの家の主", "kind": "name", "mustContain": ["Maximilian von Sternheim"] },
+    { "where": "わたし、ヴィルヘルム様の従姉妹ですよ。マクシミリアン様の姪です！", "kind": "kinship", "mustContain": ["Maximilian", "cháu gái"], "dependsOnDraft": true },
+    { "where": "「つもりで済んだら警察はいらないのよ！」", "kind": "term", "mustContain": ["cảnh sát"] },
+    { "line": "「けいさつ」", "kind": "meaning", "mustContainAny": ["cảnh sát", "Cảnh sát", "cảnh… sát", "Cảnh… sát", "cảnh-sát"], "note": "Wilhelm lặp lại một từ lạ; bản dịch phải cho thấy cậu không hiểu từ này." },
+    { "where": "親父にも殴られたことがない", "kind": "meaning", "note": "Câu meme (Gundam): giữ ý 'chưa từng bị ai đánh, kể cả cha'." },
+    { "where": "寝台の上で土下座をすると", "kind": "meaning", "note": "Irene quỳ rạp xin lỗi ngay trên giường." },
+    { "where": "「……こんなに腫れて。イレーヌ、無茶をしすぎだ」", "kind": "meaning", "mustNotContain": ["Maximilian", "Công tước"], "note": "Người nói cố ý không được nêu tên; bản dịch không được tự thêm." },
+    { "line": "＊", "kind": "structure", "mustContainAny": ["＊", "*"] },
+    { "where": "「ヴィルヘルム。とりあえず、一発殴っていいかしら」", "kind": "pronoun", "pair": ["Irene", "Wilhelm"] },
+    { "where": "「そんな、とんでもないことでございます。……あの、私と一緒にお茶会をしていただけませんか」", "kind": "pronoun", "pair": ["Adeline", "Irene"] },
+    { "where": "「ヴィルヘルムさま！　い、今のは、イレーヌさま、どうして」", "kind": "pronoun", "pair": ["Adeline", "Wilhelm"], "note": "Một câu gọi cả hai người." },
+    { "where": "「本日は階段からお落ちになったばかりでございます。", "kind": "pronoun", "pair": ["Tilda", "Irene"] }
+  ]
+}

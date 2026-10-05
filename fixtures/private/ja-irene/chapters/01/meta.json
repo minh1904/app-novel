@@ -1,0 +1,34 @@
+{
+  "id": "01",
+  "order": 1,
+  "lang": "ja",
+  "title": null,
+  "pov": "Irene",
+  "paragraphs": 87,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng, kể cả U+3000, là trống",
+  "blankSeparatedBlocks": 69,
+  "chars": 3079,
+  "tags": [
+    "dialogue",
+    "pronoun-matrix",
+    "katakana-western-names",
+    "honorifics",
+    "inner-monologue",
+    "scene-break",
+    "author-note",
+    "adjacent-lines"
+  ],
+  "notes": [
+    "Không có dòng tên chương trong bản dán (có thể là \"公爵令息ヴィルヘルム①\").",
+    "Cuối chương có lời tác giả liền dòng với đoạn truyện cuối."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": [
+        "＊",
+        "◇",
+        "―"
+      ]
+    }
+  }
+}

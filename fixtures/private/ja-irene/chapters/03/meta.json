@@ -1,0 +1,33 @@
+{
+  "id": "03",
+  "order": 3,
+  "lang": "ja",
+  "title": "公爵令息ヴィルヘルム③",
+  "pov": "Irene",
+  "paragraphs": 99,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng, kể cả U+3000, là trống",
+  "blankSeparatedBlocks": 70,
+  "chars": 3071,
+  "tags": [
+    "dialogue",
+    "pronoun-matrix",
+    "meme",
+    "anachronism",
+    "unnamed-speaker",
+    "scene-break",
+    "adjacent-lines"
+  ],
+  "notes": [
+    "\"けいさつ\": Wilhelm lặp lại từ lạ của kiếp trước.",
+    "Cuối chương có người không nêu tên vuốt tóc Irene."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": [
+        "＊",
+        "◇",
+        "―"
+      ]
+    }
+  }
+}

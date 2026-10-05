@@ -1,0 +1,32 @@
+{
+  "note": "Nháp do Claude soạn 2026-10-05 từ tần suất tên trong bản gốc; tên theo bản tiếng Anh chính thức của Hamefura khi biết. Chưa người dịch xác minh.",
+  "entries": [
+    { "source": "カタリナ", "target": "Catarina", "notes": "Nữ chính, tiểu thư nhà Claes" },
+    { "source": "クラエス", "target": "Claes", "notes": "Họ, nhà công tước" },
+    { "source": "ジオルド", "target": "Geordo", "notes": "Hoàng tử thứ ba, hôn phu của Catarina" },
+    { "source": "アラン", "target": "Alan", "notes": "Hoàng tử thứ tư, em sinh đôi của Geordo" },
+    { "source": "スティアート", "target": "Stuart", "notes": "Họ hoàng tộc" },
+    { "source": "キース", "target": "Keith", "notes": "Em trai nuôi của Catarina" },
+    { "source": "メアリ", "target": "Mary", "notes": "Tiểu thư nhà Hunt, hôn thê của Alan" },
+    { "source": "ハント", "target": "Hunt", "notes": "Họ" },
+    { "source": "ニコル", "target": "Nicol", "notes": "Nam, con trai nhà Ascart" },
+    { "source": "ソフィア", "target": "Sophia", "notes": "Em gái của Nicol" },
+    { "source": "アスカルト", "target": "Ascart", "notes": "Họ" },
+    { "source": "マリア", "target": "Maria", "notes": "Nữ chính của trò chơi otome" },
+    { "source": "キャンベル", "target": "Campbell", "notes": "Họ của Maria" },
+    { "source": "シリウス", "target": "Sirius", "notes": "Hội trưởng hội học sinh" },
+    { "source": "ディーク", "target": "Dieke", "notes": "Họ" },
+    { "source": "ラファエル", "target": "Raphael", "notes": "Tên thật của Sirius" },
+    { "source": "ウォルト", "target": "Walt", "notes": "Họ" },
+    { "source": "アン", "target": "Anne", "notes": "Hầu gái riêng của Catarina" },
+    { "source": "シェリー", "target": "Shelley", "notes": "Họ của Anne" },
+    { "source": "ルイジ", "target": "Luigi", "notes": "Cha của Catarina" },
+    { "source": "ミリディアナ", "target": "Milidiana", "notes": "Mẹ của Catarina" },
+    { "source": "トム", "target": "Tom", "notes": "Người làm vườn" },
+    { "source": "ジンジャー", "target": "Ginger" },
+    { "source": "タッカー", "target": "Tucker", "notes": "Họ" },
+    { "source": "破滅フラグ", "target": "cờ diệt vong", "notes": "Cụm then chốt của truyện" },
+    { "source": "乙女ゲーム", "target": "game otome" },
+    { "source": "魔法学園", "target": "Học viện Phép thuật" }
+  ]
+}

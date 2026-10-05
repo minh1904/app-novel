@@ -1,0 +1,126 @@
+{
+  "sourceParagraphs": 54,
+  "targetParagraphs": 54,
+  "aligned": true,
+  "shifted": false,
+  "segments": 326,
+  "written": 326,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 0,
+  "quoteSamples": [],
+  "dialogueStyle": "vi",
+  "lengthChecked": 34,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 140,
+  "glossaryStrict": 114,
+  "glossaryLenient": 126,
+  "glossaryMissed": {
+    "猴王": 1,
+    "戒尺": 1,
+    "猢猻": 1,
+    "三災": 3,
+    "贔風": 1,
+    "九竅": 1,
+    "五臟六腑": 1,
+    "地煞數": 1,
+    "天罡數": 1,
+    "蒼梧": 1,
+    "花果山": 5,
+    "水簾洞": 7,
+    "水臟洞": 1,
+    "小妖": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "paragraph",
+  "rules": [
+    {
+      "rule": "第二回　悟徹菩提真妙理　斷魔歸本合元神",
+      "status": "pass"
+    },
+    {
+      "rule": "話表美猴王得了姓名",
+      "status": "pass"
+    },
+    {
+      "rule": "那祖師即命大眾引孫悟空出二門外",
+      "status": "pass"
+    },
+    {
+      "rule": "「『道』字門中有三百六十傍門",
+      "status": "pass"
+    },
+    {
+      "rule": "悟空道：「不學，不學。」",
+      "status": "manual"
+    },
+    {
+      "rule": "「難！難！難！道最玄，莫把金丹作等閑。不遇至人傳妙訣，空言口困舌頭乾！」",
+      "status": "pass"
+    },
+    {
+      "rule": "有一般天罡數，該三十六般變化；有一般地煞數，該七十二般變化",
+      "status": "pass"
+    },
+    {
+      "rule": "傳你個觔斗雲罷",
+      "status": "pass"
+    },
+    {
+      "rule": "一觔斗就有十萬八千里路哩",
+      "status": "pass"
+    },
+    {
+      "rule": "這個算不得騰雲，只算得爬雲而已",
+      "status": "pass"
+    },
+    {
+      "rule": "喚做『陰火』",
+      "status": "pass"
+    },
+    {
+      "rule": "我自東勝神洲傲來國花果山水簾洞來的",
+      "status": "fail",
+      "detail": "thiếu \"núi Hoa Quả\"; thiếu \"động Thủy Liêm\""
+    },
+    {
+      "rule": "那廝自稱混世魔王",
+      "status": "pass"
+    },
+    {
+      "rule": "大王是老孫，我們都是二孫、三孫、細孫、小孫",
+      "status": "manual"
+    },
+    {
+      "rule": "月明清露冷，八極迥無塵。",
+      "status": "manual"
+    },
+    {
+      "rule": "畢竟不知怎生結果，居此界終始如何，且聽下回分解。",
+      "status": "pass"
+    },
+    {
+      "rule": "祖師道：「你既識妙音，我且問你，你到洞中多少時了？」",
+      "status": "manual"
+    },
+    {
+      "rule": "「你這潑猴，十分無狀。",
+      "status": "manual"
+    },
+    {
+      "rule": "「不瞞諸兄長說，一則是師父傳授",
+      "status": "manual"
+    },
+    {
+      "rule": "即開口叫道：「孩兒們，我來了也！」",
+      "status": "manual"
+    },
+    {
+      "rule": "猴王喝道：「這潑魔這般眼大，看不見老孫。」",
+      "status": "manual"
+    }
+  ]
+}

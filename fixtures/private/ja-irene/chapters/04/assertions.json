@@ -1,0 +1,15 @@
+{
+  "status": "draft",
+  "rules": [
+    { "line": "◇ティルダ視点", "kind": "structure", "mustContain": ["Tilda"], "mustContainAny": ["◇"], "note": "Dấu đổi điểm nhìn: giữ ◇, giữ là một đoạn riêng (nằm liền dòng tên chương)." },
+    { "where": "「奥様、起きていらっしゃいますか？　ティルダが朝のお支度に参りました」", "kind": "address", "mustContain": ["phu nhân", "Tilda"], "note": "Tilda tự xưng bằng tên." },
+    { "where": "私、ティルダが公爵家に仕えて十六年ほどになる。", "kind": "meaning", "mustContain": ["Tilda"], "mustContainAny": ["mười sáu", "16"] },
+    { "where": "ミルク粥。伯爵家にいた頃", "kind": "term", "mustContain": ["cháo sữa"] },
+    { "where": "そこへ、大奥様が入ってこられた。", "kind": "address", "mustContain": ["lão phu nhân"] },
+    { "where": "しかも、旦那様の前では一度もそれをなさらなかった。", "kind": "address", "mustContain": ["ông chủ"], "dependsOnDraft": true },
+    { "where": "イレーヌ様は十五でマクシミリアン様とご婚約なさり", "kind": "meaning", "mustContainAny": ["mười lăm", "15"], "note": "Mốc tuổi: đính hôn 15, về làm dâu 17, sinh Wilhelm 18." },
+    { "where": "『お前。いつまでも田舎の娘ではないのだから", "kind": "pronoun", "pair": ["lão phu nhân", "Irene"], "note": "Thoại trong ký ức (『』), giọng khinh miệt." },
+    { "where": "『ごめんなさいね、ティルダ。せっかく用意してくれたのに』", "kind": "pronoun", "pair": ["Irene", "Tilda"] },
+    { "line": "＊", "kind": "structure", "mustContainAny": ["＊", "*"] }
+  ]
+}

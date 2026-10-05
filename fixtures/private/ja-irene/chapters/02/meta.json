@@ -1,0 +1,30 @@
+{
+  "id": "02",
+  "order": 2,
+  "lang": "ja",
+  "title": "公爵令息ヴィルヘルム②",
+  "pov": "Irene",
+  "paragraphs": 69,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng, kể cả U+3000, là trống",
+  "blankSeparatedBlocks": 40,
+  "chars": 2144,
+  "tags": [
+    "dialogue",
+    "pronoun-matrix",
+    "nested-quotes",
+    "adjacent-lines",
+    "sarcasm"
+  ],
+  "notes": [
+    "Nhiều lượt thoại liền dòng không có dòng trống ngăn."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": [
+        "＊",
+        "◇",
+        "―"
+      ]
+    }
+  }
+}

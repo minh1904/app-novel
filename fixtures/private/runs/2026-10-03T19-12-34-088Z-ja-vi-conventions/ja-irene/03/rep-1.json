@@ -1,0 +1,100 @@
+{
+  "sourceParagraphs": 99,
+  "targetParagraphs": 99,
+  "aligned": true,
+  "segments": 160,
+  "written": 159,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 1,
+  "quoteSamples": [
+    "“Không thể nào, tại sao ạ? Tôi là chị họ của Wilhelm mà. “Là cháu gái của ngài Maximilian!”"
+  ],
+  "dialogueStyle": "vi",
+  "lengthChecked": 65,
+  "lengthOutliers": 40,
+  "repetition": 0,
+  "glossaryChecked": 65,
+  "glossaryStrict": 7,
+  "glossaryLenient": 7,
+  "glossaryMissed": {
+    "公爵令息": 1,
+    "ロレッタ": 11,
+    "前世": 1,
+    "母様": 1,
+    "ヴィルヘルム": 11,
+    "イレーヌ・フォン・シュテルンハイム": 5,
+    "アデライン": 13,
+    "マクシミリアン・フォン・シュテルンハイム": 2,
+    "従姉妹": 1,
+    "姪": 1,
+    "公爵": 1,
+    "王都": 1,
+    "領地": 2,
+    "公爵夫人": 1,
+    "女主人": 1,
+    "侍女": 1,
+    "婚約者": 1,
+    "書庫": 1,
+    "奥様": 1,
+    "ティルダ": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "paragraph",
+  "rules": [
+    {
+      "rule": "マクシミリアン・フォン・シュテルンハイム公爵はこの家の主",
+      "status": "fail",
+      "detail": "thiếu \"Maximilian von Sternheim\""
+    },
+    {
+      "rule": "わたし、ヴィルヘルム様の従姉妹ですよ。マクシミリアン様の姪です！",
+      "status": "fail",
+      "detail": "thiếu \"Maximilian\"; thiếu \"cháu gái\""
+    },
+    {
+      "rule": "「つもりで済んだら警察はいらないのよ！」",
+      "status": "pass"
+    },
+    {
+      "rule": "「けいさつ」",
+      "status": "fail",
+      "detail": "thiếu một trong [\"cảnh sát\",\"Cảnh sát\",\"cảnh… sát\",\"Cảnh… sát\",\"cảnh-sát\"]"
+    },
+    {
+      "rule": "親父にも殴られたことがない",
+      "status": "manual"
+    },
+    {
+      "rule": "寝台の上で土下座をすると",
+      "status": "manual"
+    },
+    {
+      "rule": "「……こんなに腫れて。イレーヌ、無茶をしすぎだ」",
+      "status": "pass"
+    },
+    {
+      "rule": "＊",
+      "status": "fail",
+      "detail": "thiếu một trong [\"＊\",\"*\"]"
+    },
+    {
+      "rule": "「ヴィルヘルム。とりあえず、一発殴っていいかしら」",
+      "status": "manual"
+    },
+    {
+      "rule": "「そんな、とんでもないことでございます。……あの、私と一緒にお茶会をしていただけませんか」",
+      "status": "manual"
+    },
+    {
+      "rule": "「ヴィルヘルムさま！　い、今のは、イレーヌさま、どうして」",
+      "status": "manual"
+    },
+    {
+      "rule": "「本日は階段からお落ちになったばかりでございます。",
+      "status": "manual"
+    }
+  ]
+}

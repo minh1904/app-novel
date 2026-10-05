@@ -1,0 +1,31 @@
+{
+  "id": "04",
+  "order": 4,
+  "lang": "ja",
+  "title": "公爵家使用人ティルダ",
+  "pov": "Tilda",
+  "paragraphs": 73,
+  "paragraphDefinition": "mỗi dòng không trống (ADR-005 Q3); dòng chỉ có khoảng trắng, kể cả U+3000, là trống",
+  "blankSeparatedBlocks": 56,
+  "chars": 2535,
+  "tags": [
+    "pov-switch",
+    "flashback",
+    "nested-quotes",
+    "scene-break",
+    "servant-speech"
+  ],
+  "notes": [
+    "Dòng \"◇ティルダ視点\" nằm liền dòng tên chương.",
+    "Thoại trong ký ức dùng 『』."
+  ],
+  "checks": {
+    "noSourceScript": {
+      "allow": [
+        "＊",
+        "◇",
+        "―"
+      ]
+    }
+  }
+}

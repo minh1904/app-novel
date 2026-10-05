@@ -1,0 +1,618 @@
+{
+  "model": "gemini-2.5-flash",
+  "commit": "",
+  "repeats": 3,
+  "httpStatuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "summary": [
+    {
+      "chapter": "en-fight-above-the-trees/01",
+      "lang": "en",
+      "runs": 3,
+      "sourceParagraphs": 57,
+      "targetParagraphs": [
+        57,
+        57,
+        57
+      ],
+      "aligned": "3/3",
+      "untranslatedSegments": 1,
+      "residue": 0,
+      "lengthOutliers": "0/162",
+      "repetition": 0,
+      "glossaryStrict": "96%",
+      "glossaryLenient": "97%",
+      "glossaryChecked": 306,
+      "glossaryMostMissed": [
+        [
+          "shotgun",
+          6
+        ],
+        [
+          "bandolier",
+          3
+        ],
+        [
+          "Corruption",
+          3
+        ],
+        [
+          "shapeshift",
+          1
+        ]
+      ],
+      "forbiddenHits": 1,
+      "rules": {
+        "pass": 29,
+        "fail": 1,
+        "skip": 0,
+        "manual": 21
+      },
+      "failedRules": [
+        "pull out her own weapon, a trusty shotgu → có \"súng ngắn\""
+      ],
+      "usage": {
+        "inputTokens": 30178,
+        "outputTokens": 78189
+      },
+      "httpCalls": 20,
+      "seconds": 403,
+      "errors": [
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        }
+      ]
+    },
+    {
+      "chapter": "zh-hant-xiyouji/02",
+      "lang": "zh-Hant",
+      "runs": 3,
+      "sourceParagraphs": 54,
+      "targetParagraphs": [
+        54,
+        54,
+        54
+      ],
+      "aligned": "3/3",
+      "untranslatedSegments": 1,
+      "residue": 0,
+      "lengthOutliers": "0/102",
+      "repetition": 0,
+      "glossaryStrict": "81%",
+      "glossaryLenient": "82%",
+      "glossaryChecked": 420,
+      "glossaryMostMissed": [
+        [
+          "水簾洞",
+          21
+        ],
+        [
+          "花果山",
+          15
+        ],
+        [
+          "三災",
+          8
+        ],
+        [
+          "猴王",
+          7
+        ],
+        [
+          "水臟洞",
+          4
+        ],
+        [
+          "戒尺",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 36,
+        "fail": 3,
+        "skip": 0,
+        "manual": 24
+      },
+      "failedRules": [
+        "我自東勝神洲傲來國花果山水簾洞來的 → thiếu \"Ngạo Lai\"; thiếu \"núi Hoa Quả\"; thiếu \"động Thủy Liêm\"",
+        "我自東勝神洲傲來國花果山水簾洞來的 → thiếu \"núi Hoa Quả\"; thiếu \"động Thủy Liêm\""
+      ],
+      "usage": {
+        "inputTokens": 57799,
+        "outputTokens": 174406
+      },
+      "httpCalls": 24,
+      "seconds": 1426,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 52,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        }
+      ]
+    },
+    {
+      "chapter": "zh-kongyiji/01",
+      "lang": "zh-Hans",
+      "runs": 3,
+      "sourceParagraphs": 15,
+      "targetParagraphs": [
+        15,
+        15,
+        15
+      ],
+      "aligned": "3/3",
+      "untranslatedSegments": 0,
+      "residue": 0,
+      "lengthOutliers": "0/39",
+      "repetition": 0,
+      "glossaryStrict": "57%",
+      "glossaryLenient": "60%",
+      "glossaryChecked": 144,
+      "glossaryMostMissed": [
+        [
+          "掌柜",
+          18
+        ],
+        [
+          "茴香豆",
+          12
+        ],
+        [
+          "粉板",
+          9
+        ],
+        [
+          "短衣帮",
+          3
+        ],
+        [
+          "伙计",
+          3
+        ],
+        [
+          "黄酒",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 24,
+        "fail": 0,
+        "skip": 0,
+        "manual": 18
+      },
+      "failedRules": [],
+      "usage": {
+        "inputTokens": 20041,
+        "outputTokens": 61472
+      },
+      "httpCalls": 10,
+      "seconds": 593,
+      "errors": [
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 110,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/01",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 87,
+      "targetParagraphs": [
+        87,
+        88,
+        87
+      ],
+      "aligned": "2/3",
+      "untranslatedSegments": 0,
+      "residue": 0,
+      "lengthOutliers": "1/122",
+      "repetition": 0,
+      "glossaryStrict": "79%",
+      "glossaryLenient": "87%",
+      "glossaryChecked": 205,
+      "glossaryMostMissed": [
+        [
+          "母様",
+          14
+        ],
+        [
+          "おば様",
+          9
+        ],
+        [
+          "サロン",
+          5
+        ],
+        [
+          "公爵邸",
+          3
+        ],
+        [
+          "侯爵令嬢",
+          3
+        ],
+        [
+          "義母",
+          3
+        ]
+      ],
+      "forbiddenHits": 9,
+      "rules": {
+        "pass": 14,
+        "fail": 4,
+        "skip": 9,
+        "manual": 15
+      },
+      "failedRules": [
+        "わたくしをおば様と呼ぶ娘 → thiếu \"mợ\"; có \"dì\"",
+        "叱られた娘が逆上して義母を突き落とす → thiếu \"mẹ chồng\""
+      ],
+      "usage": {
+        "inputTokens": 23962,
+        "outputTokens": 58316
+      },
+      "httpCalls": 9,
+      "seconds": 258,
+      "errors": []
+    },
+    {
+      "chapter": "ja-irene/02",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 69,
+      "targetParagraphs": [
+        69,
+        70,
+        69
+      ],
+      "aligned": "2/3",
+      "untranslatedSegments": 0,
+      "residue": 0,
+      "lengthOutliers": "0/98",
+      "repetition": 0,
+      "glossaryStrict": "87%",
+      "glossaryLenient": "88%",
+      "glossaryChecked": 137,
+      "glossaryMostMissed": [
+        [
+          "侍女",
+          7
+        ],
+        [
+          "サロン",
+          5
+        ],
+        [
+          "公爵令息",
+          3
+        ],
+        [
+          "母様",
+          2
+        ],
+        [
+          "公爵夫人",
+          1
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 7,
+        "fail": 1,
+        "skip": 4,
+        "manual": 18
+      },
+      "failedRules": [
+        "『イレーヌさまがお呼びです、サロンへお越しください』 → thiếu \"phu nhân\""
+      ],
+      "usage": {
+        "inputTokens": 18433,
+        "outputTokens": 42123
+      },
+      "httpCalls": 6,
+      "seconds": 187,
+      "errors": []
+    },
+    {
+      "chapter": "ja-irene/03",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 99,
+      "targetParagraphs": [
+        100,
+        99,
+        100
+      ],
+      "aligned": "1/3",
+      "untranslatedSegments": 0,
+      "residue": 0,
+      "lengthOutliers": "0/65",
+      "repetition": 0,
+      "glossaryStrict": "93%",
+      "glossaryLenient": "95%",
+      "glossaryChecked": 109,
+      "glossaryMostMissed": [
+        [
+          "公爵令息",
+          3
+        ],
+        [
+          "王都",
+          3
+        ],
+        [
+          "女主人",
+          1
+        ],
+        [
+          "アデライン",
+          1
+        ]
+      ],
+      "forbiddenHits": 1,
+      "rules": {
+        "pass": 6,
+        "fail": 0,
+        "skip": 12,
+        "manual": 18
+      },
+      "failedRules": [],
+      "usage": {
+        "inputTokens": 25402,
+        "outputTokens": 69139
+      },
+      "httpCalls": 11,
+      "seconds": 443,
+      "errors": []
+    },
+    {
+      "chapter": "ja-irene/04",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 73,
+      "targetParagraphs": [
+        73,
+        73,
+        73
+      ],
+      "aligned": "3/3",
+      "untranslatedSegments": 0,
+      "residue": 0,
+      "lengthOutliers": "3/171",
+      "repetition": 0,
+      "glossaryStrict": "44%",
+      "glossaryLenient": "47%",
+      "glossaryChecked": 204,
+      "glossaryMostMissed": [
+        [
+          "イレーヌ・フォン・シュテルンハイム",
+          60
+        ],
+        [
+          "大奥様",
+          15
+        ],
+        [
+          "旦那様",
+          9
+        ],
+        [
+          "公爵家",
+          8
+        ],
+        [
+          "輿入れ",
+          6
+        ],
+        [
+          "伯爵家",
+          6
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 18,
+        "fail": 6,
+        "skip": 0,
+        "manual": 6
+      },
+      "failedRules": [
+        "そこへ、大奥様が入ってこられた。 → thiếu \"lão phu nhân\"",
+        "しかも、旦那様の前では一度もそれをなさらなかった。 → thiếu \"ông chủ\""
+      ],
+      "usage": {
+        "inputTokens": 18774,
+        "outputTokens": 46797
+      },
+      "httpCalls": 4,
+      "seconds": 198,
+      "errors": []
+    },
+    {
+      "chapter": "ja-irene/05",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 53,
+      "targetParagraphs": [
+        53,
+        53,
+        53
+      ],
+      "aligned": "3/3",
+      "untranslatedSegments": 0,
+      "residue": 0,
+      "lengthOutliers": "5/123",
+      "repetition": 0,
+      "glossaryStrict": "59%",
+      "glossaryLenient": "74%",
+      "glossaryChecked": 252,
+      "glossaryMostMissed": [
+        [
+          "伯父上",
+          30
+        ],
+        [
+          "王都",
+          21
+        ],
+        [
+          "公爵家",
+          15
+        ],
+        [
+          "蟄居",
+          9
+        ],
+        [
+          "公爵閣下",
+          4
+        ],
+        [
+          "伯爵家",
+          4
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 9,
+        "fail": 9,
+        "skip": 0,
+        "manual": 9
+      },
+      "failedRules": [
+        "伯父上は、父様の姉である伯母上を妻に迎えた → thiếu \"bác\"",
+        "公爵家で騒動を起こしたロレッタは領地の屋敷にて蟄居とし → thiếu \"cấm túc\"",
+        "甥である僕にではなく、公爵家の嫡男に向けた礼だった。 → thiếu \"trưởng nam\""
+      ],
+      "usage": {
+        "inputTokens": 14035,
+        "outputTokens": 36874
+      },
+      "httpCalls": 3,
+      "seconds": 160,
+      "errors": []
+    }
+  ]
+}

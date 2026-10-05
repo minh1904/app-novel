@@ -1,0 +1,30 @@
+{
+  "note": "Nháp do Claude soạn 2026-10-05 từ tần suất tên trong bản gốc; phiên Latin theo cách đọc phổ biến, chưa đối chiếu bản dịch chính thức. Chưa người dịch xác minh.",
+  "entries": [
+    { "source": "アナスタシア", "target": "Anastasia", "aliases": ["アナ"], "notes": "Nữ chính, tiểu thư nhà Sevensworth; アナ là tên gọi thân mật" },
+    { "source": "セブンズワース", "target": "Sevensworth", "notes": "Họ, nhà công tước" },
+    { "source": "ジーノリウス", "target": "Ginorius", "aliases": ["ジーノ"], "notes": "Nam chính, người chuyển sinh; ジーノ là tên gọi thân mật" },
+    { "source": "バルバリエ", "target": "Barbarie", "notes": "Họ của Ginorius" },
+    { "source": "ブリジット", "target": "Bridget" },
+    { "source": "オードラン", "target": "Audran", "notes": "Họ của Bridget" },
+    { "source": "ケイト", "target": "Kate" },
+    { "source": "マシュー", "target": "Matthew" },
+    { "source": "エイブリー", "target": "Avery" },
+    { "source": "メルヴィン", "target": "Melvin" },
+    { "source": "ブルガーノフ", "target": "Bulganov", "notes": "Họ của Melvin" },
+    { "source": "デミ", "target": "Demi" },
+    { "source": "メアリ", "target": "Mary" },
+    { "source": "アドルニー", "target": "Adorney" },
+    { "source": "レスリー", "target": "Leslie" },
+    { "source": "シモン", "target": "Simon" },
+    { "source": "シャルロッテ", "target": "Charlotte" },
+    { "source": "ハイジ", "target": "Heidi" },
+    { "source": "リラード", "target": "Lillard", "notes": "Họ" },
+    { "source": "マリオット", "target": "Marriott", "notes": "Họ" },
+    { "source": "バイロン", "target": "Byron", "notes": "Họ" },
+    { "source": "スザンナ", "target": "Susanna" },
+    { "source": "ゴブリン令嬢", "target": "tiểu thư Goblin", "notes": "Biệt danh chế giễu Anastasia" },
+    { "source": "ゴーレム", "target": "golem" },
+    { "source": "ミスリル", "target": "mithril" }
+  ]
+}

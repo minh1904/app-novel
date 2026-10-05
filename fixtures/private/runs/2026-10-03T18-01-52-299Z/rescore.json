@@ -1,0 +1,5524 @@
+{
+  "rescoredAt": "2026-10-04T10:52:50.795Z",
+  "results": {
+    "en-fight-above-the-trees": [
+      {
+        "chapter": "01",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 57,
+            "targetParagraphs": 57,
+            "beadCounts": {
+              "1-1": 57,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 34,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 102,
+            "strictHits": 97,
+            "lenientHits": 98,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "bandolier",
+                "count": 1
+              },
+              {
+                "term": "shapeshift",
+                "count": 1
+              },
+              {
+                "term": "shotgun",
+                "count": 1
+              },
+              {
+                "term": "Corruption",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "manual",
+              "reason": "Lời Thassalin luôn in hoa toàn bộ; bản dịch phải giữ in hoa."
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Tên Corruptiid và 'the Corruption' phải nhất quán với glossary sau khi chốt."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời thoại xen lời dẫn trong cùng đoạn: bản dịch phải giữ ngoặc kép cho cả hai mảnh thoại. Bản tham chiếu bỏ ngoặc ở mảnh đầu."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 14,
+              "result": "manual",
+              "reason": "Tenuk đang nói với cả Nyssi và Thassalin."
+            },
+            {
+              "ruleIndex": 15,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 16,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 57,
+            "targetParagraphs": 57,
+            "beadCounts": {
+              "1-1": 57,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 22,
+              "reason": "Số dấu ngoặc kép ASCII \" là số lẻ"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 34,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 102,
+            "strictHits": 98,
+            "lenientHits": 99,
+            "forbiddenHits": 1,
+            "missedTerms": [
+              {
+                "term": "bandolier",
+                "count": 1
+              },
+              {
+                "term": "shotgun",
+                "count": 1
+              },
+              {
+                "term": "Corruption",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": [
+              {
+                "term": "súng ngắn",
+                "paragraphIndex": 29
+              }
+            ]
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "manual",
+              "reason": "Lời Thassalin luôn in hoa toàn bộ; bản dịch phải giữ in hoa."
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "fail",
+              "reason": "Chứa chuỗi không được phép: \"súng ngắn\""
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Tên Corruptiid và 'the Corruption' phải nhất quán với glossary sau khi chốt."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời thoại xen lời dẫn trong cùng đoạn: bản dịch phải giữ ngoặc kép cho cả hai mảnh thoại. Bản tham chiếu bỏ ngoặc ở mảnh đầu."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 14,
+              "result": "manual",
+              "reason": "Tenuk đang nói với cả Nyssi và Thassalin."
+            },
+            {
+              "ruleIndex": 15,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 16,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 57,
+            "targetParagraphs": 57,
+            "beadCounts": {
+              "1-1": 57,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 53,
+              "reason": "Số dấu ngoặc kép ASCII \" là số lẻ"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 34,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 102,
+            "strictHits": 98,
+            "lenientHits": 99,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "bandolier",
+                "count": 1
+              },
+              {
+                "term": "shotgun",
+                "count": 1
+              },
+              {
+                "term": "Corruption",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "manual",
+              "reason": "Lời Thassalin luôn in hoa toàn bộ; bản dịch phải giữ in hoa."
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Tên Corruptiid và 'the Corruption' phải nhất quán với glossary sau khi chốt."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời thoại xen lời dẫn trong cùng đoạn: bản dịch phải giữ ngoặc kép cho cả hai mảnh thoại. Bản tham chiếu bỏ ngoặc ở mảnh đầu."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 14,
+              "result": "manual",
+              "reason": "Tenuk đang nói với cả Nyssi và Thassalin."
+            },
+            {
+              "ruleIndex": 15,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 16,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      }
+    ],
+    "zh-hant-xiyouji": [
+      {
+        "chapter": "02",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 54,
+            "targetParagraphs": 54,
+            "beadCounts": {
+              "1-1": 54,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 16,
+              "reason": "Số dấu ngoặc kép ASCII \" là số lẻ"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 24,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 142,
+            "strictHits": 94,
+            "lenientHits": 106,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "孫悟空",
+                "count": 23
+              },
+              {
+                "term": "三災",
+                "count": 2
+              },
+              {
+                "term": "猴王",
+                "count": 1
+              },
+              {
+                "term": "戒尺",
+                "count": 1
+              },
+              {
+                "term": "三星仙洞",
+                "count": 1
+              },
+              {
+                "term": "地煞數",
+                "count": 1
+              },
+              {
+                "term": "天罡數",
+                "count": 1
+              },
+              {
+                "term": "傲來國",
+                "count": 1
+              },
+              {
+                "term": "東勝神洲",
+                "count": 1
+              },
+              {
+                "term": "水簾洞",
+                "count": 1
+              },
+              {
+                "term": "魔王",
+                "count": 1
+              },
+              {
+                "term": "水臟洞",
+                "count": 1
+              },
+              {
+                "term": "小妖",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Điệp khúc 'không học, không học' lặp ở bốn đoạn; bản dịch nên giữ nhịp lặp."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"Ngạo Lai\"; Thiếu chuỗi: \"núi Hoa Quả\"; Thiếu chuỗi: \"động Thủy Liêm\""
+            },
+            {
+              "ruleIndex": 12,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Chơi chữ họ Tôn (孫 = cháu): bản dịch phải giữ được ý 'Đại vương là lão Tôn, chúng con là Tôn hai, Tôn ba…'."
+            },
+            {
+              "ruleIndex": 14,
+              "result": "manual",
+              "reason": "Thơ chen giữa văn xuôi: mỗi câu thơ là một đoạn riêng, giữ thành dòng riêng."
+            },
+            {
+              "ruleIndex": 15,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 16,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 17,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 18,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 19,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 20,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 54,
+            "targetParagraphs": 54,
+            "beadCounts": {
+              "1-1": 54,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 16,
+              "reason": "Số dấu ngoặc kép ASCII \" là số lẻ"
+            },
+            {
+              "paragraphIndex": 49,
+              "reason": "Số dấu ngoặc kép ASCII \" là số lẻ"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 24,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 142,
+            "strictHits": 89,
+            "lenientHits": 100,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "孫悟空",
+                "count": 23
+              },
+              {
+                "term": "猴王",
+                "count": 5
+              },
+              {
+                "term": "三災",
+                "count": 3
+              },
+              {
+                "term": "水臟洞",
+                "count": 2
+              },
+              {
+                "term": "戒尺",
+                "count": 1
+              },
+              {
+                "term": "猢猻",
+                "count": 1
+              },
+              {
+                "term": "贔風",
+                "count": 1
+              },
+              {
+                "term": "泥垣宮",
+                "count": 1
+              },
+              {
+                "term": "天罡數",
+                "count": 1
+              },
+              {
+                "term": "東勝神洲",
+                "count": 1
+              },
+              {
+                "term": "水簾洞",
+                "count": 1
+              },
+              {
+                "term": "坎源山",
+                "count": 1
+              },
+              {
+                "term": "小妖",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Điệp khúc 'không học, không học' lặp ở bốn đoạn; bản dịch nên giữ nhịp lặp."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"núi Hoa Quả\"; Thiếu chuỗi: \"động Thủy Liêm\""
+            },
+            {
+              "ruleIndex": 12,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Chơi chữ họ Tôn (孫 = cháu): bản dịch phải giữ được ý 'Đại vương là lão Tôn, chúng con là Tôn hai, Tôn ba…'."
+            },
+            {
+              "ruleIndex": 14,
+              "result": "manual",
+              "reason": "Thơ chen giữa văn xuôi: mỗi câu thơ là một đoạn riêng, giữ thành dòng riêng."
+            },
+            {
+              "ruleIndex": 15,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 16,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 17,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 18,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 19,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 20,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 54,
+            "targetParagraphs": 54,
+            "beadCounts": {
+              "1-1": 53,
+              "1-0": 1,
+              "0-1": 1,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 0.9636363636363636,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 24,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 142,
+            "strictHits": 92,
+            "lenientHits": 104,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "孫悟空",
+                "count": 23
+              },
+              {
+                "term": "三災",
+                "count": 3
+              },
+              {
+                "term": "猴王",
+                "count": 1
+              },
+              {
+                "term": "戒尺",
+                "count": 1
+              },
+              {
+                "term": "猢猻",
+                "count": 1
+              },
+              {
+                "term": "贔風",
+                "count": 1
+              },
+              {
+                "term": "地煞數",
+                "count": 1
+              },
+              {
+                "term": "天罡數",
+                "count": 1
+              },
+              {
+                "term": "五臟六腑",
+                "count": 1
+              },
+              {
+                "term": "蒼梧",
+                "count": 1
+              },
+              {
+                "term": "東勝神洲",
+                "count": 1
+              },
+              {
+                "term": "水簾洞",
+                "count": 1
+              },
+              {
+                "term": "水臟洞",
+                "count": 1
+              },
+              {
+                "term": "小妖",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Điệp khúc 'không học, không học' lặp ở bốn đoạn; bản dịch nên giữ nhịp lặp."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"núi Hoa Quả\"; Thiếu chuỗi: \"động Thủy Liêm\""
+            },
+            {
+              "ruleIndex": 12,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Chơi chữ họ Tôn (孫 = cháu): bản dịch phải giữ được ý 'Đại vương là lão Tôn, chúng con là Tôn hai, Tôn ba…'."
+            },
+            {
+              "ruleIndex": 14,
+              "result": "manual",
+              "reason": "Thơ chen giữa văn xuôi: mỗi câu thơ là một đoạn riêng, giữ thành dòng riêng."
+            },
+            {
+              "ruleIndex": 15,
+              "result": "fail",
+              "reason": "Không chứa bất kỳ chuỗi nào trong: [hồi sau, Hồi sau]"
+            },
+            {
+              "ruleIndex": 16,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 17,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 18,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 19,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 20,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      }
+    ],
+    "zh-kongyiji": [
+      {
+        "chapter": "01",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 15,
+            "targetParagraphs": 15,
+            "beadCounts": {
+              "1-1": 15,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 7,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 48,
+            "strictHits": 28,
+            "lenientHits": 38,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "茴香豆",
+                "count": 4
+              },
+              {
+                "term": "粉板",
+                "count": 3
+              },
+              {
+                "term": "短衣帮",
+                "count": 1
+              },
+              {
+                "term": "描红纸",
+                "count": 1
+              },
+              {
+                "term": "服辩",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "manual",
+              "reason": "Câu nổi tiếng: 窃 (văn ngôn) và 偸 (khẩu ngữ) cùng nghĩa 'trộm'; Khổng Ất Kỷ ngụy biện bằng chữ sang. Bản dịch phải giữ được hai cách nói khác tầng."
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Câu văn ngôn giữa lời nói thường; nên giữ dạng Hán-Việt hoặc lối cổ để thấy chất nhà nho."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Đoạn này chứa nhiều lượt thoại liền nhau trong một dòng."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 15,
+            "targetParagraphs": 15,
+            "beadCounts": {
+              "1-1": 15,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 4,
+              "paragraphIndex": 4,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 6,
+              "paragraphIndex": 6,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 7,
+              "paragraphIndex": 7,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 8,
+              "paragraphIndex": 8,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 10,
+              "paragraphIndex": 10,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 11,
+              "paragraphIndex": 11,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 12,
+              "paragraphIndex": 12,
+              "chars": [
+                "『",
+                "』"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 7,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 48,
+            "strictHits": 27,
+            "lenientHits": 28,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "掌柜",
+                "count": 6
+              },
+              {
+                "term": "茴香豆",
+                "count": 4
+              },
+              {
+                "term": "粉板",
+                "count": 3
+              },
+              {
+                "term": "之乎者也",
+                "count": 2
+              },
+              {
+                "term": "短衣帮",
+                "count": 1
+              },
+              {
+                "term": "咸亨酒店",
+                "count": 1
+              },
+              {
+                "term": "伙计",
+                "count": 1
+              },
+              {
+                "term": "描红纸",
+                "count": 1
+              },
+              {
+                "term": "服辩",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "manual",
+              "reason": "Câu nổi tiếng: 窃 (văn ngôn) và 偸 (khẩu ngữ) cùng nghĩa 'trộm'; Khổng Ất Kỷ ngụy biện bằng chữ sang. Bản dịch phải giữ được hai cách nói khác tầng."
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Câu văn ngôn giữa lời nói thường; nên giữ dạng Hán-Việt hoặc lối cổ để thấy chất nhà nho."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Đoạn này chứa nhiều lượt thoại liền nhau trong một dòng."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 15,
+            "targetParagraphs": 15,
+            "beadCounts": {
+              "1-1": 15,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 7,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 48,
+            "strictHits": 27,
+            "lenientHits": 30,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "掌柜",
+                "count": 5
+              },
+              {
+                "term": "茴香豆",
+                "count": 4
+              },
+              {
+                "term": "粉板",
+                "count": 3
+              },
+              {
+                "term": "短衣帮",
+                "count": 1
+              },
+              {
+                "term": "咸亨酒店",
+                "count": 1
+              },
+              {
+                "term": "伙计",
+                "count": 1
+              },
+              {
+                "term": "描红纸",
+                "count": 1
+              },
+              {
+                "term": "丁举人",
+                "count": 1
+              },
+              {
+                "term": "服辩",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "manual",
+              "reason": "Câu nổi tiếng: 窃 (văn ngôn) và 偸 (khẩu ngữ) cùng nghĩa 'trộm'; Khổng Ất Kỷ ngụy biện bằng chữ sang. Bản dịch phải giữ được hai cách nói khác tầng."
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Câu văn ngôn giữa lời nói thường; nên giữ dạng Hán-Việt hoặc lối cổ để thấy chất nhà nho."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Đoạn này chứa nhiều lượt thoại liền nhau trong một dòng."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      }
+    ],
+    "ja-irene": [
+      {
+        "chapter": "01",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 87,
+            "targetParagraphs": 87,
+            "beadCounts": {
+              "1-1": 87,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 40,
+              "reason": "Ngoặc cong “” không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 35,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 68,
+              "srcLen": 31,
+              "tgtLen": 29,
+              "ratio": 0.9354838709677419,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 96,
+            "strictHits": 66,
+            "lenientHits": 73,
+            "forbiddenHits": 4,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 12
+              },
+              {
+                "term": "おば様",
+                "count": 4
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "従姉妹",
+                "count": 1
+              },
+              {
+                "term": "侯爵令嬢",
+                "count": 1
+              },
+              {
+                "term": "応接間",
+                "count": 1
+              },
+              {
+                "term": "義母",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": [
+              {
+                "term": "dì",
+                "paragraphIndex": 25
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 32
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 61
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 68
+              }
+            ]
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mợ\"; Chứa từ không được phép: \"dì\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mẹ chồng\""
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Kiểm bằng giám khảo/người chấm, không so chuỗi."
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời tác giả cuối chương, nằm liền dòng với đoạn truyện cuối (không có dòng trống ngăn). Bỏ đi không tính là sót; dịch thì phải là đoạn riêng, không trộn vào đoạn truyện."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 87,
+            "targetParagraphs": 88,
+            "beadCounts": {
+              "1-1": 87,
+              "1-0": 0,
+              "0-1": 1,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 0.9886363636363636,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 34,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 96,
+            "strictHits": 46,
+            "lenientHits": 55,
+            "forbiddenHits": 4,
+            "missedTerms": [
+              {
+                "term": "アデライン",
+                "count": 17
+              },
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 12
+              },
+              {
+                "term": "おば様",
+                "count": 4
+              },
+              {
+                "term": "公爵夫人",
+                "count": 3
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "侯爵令嬢",
+                "count": 1
+              },
+              {
+                "term": "義母",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": [
+              {
+                "term": "dì",
+                "paragraphIndex": 25
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 32
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 61
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 68
+              }
+            ]
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mợ\"; Chứa từ không được phép: \"dì\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mẹ chồng\""
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Kiểm bằng giám khảo/người chấm, không so chuỗi."
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời tác giả cuối chương, nằm liền dòng với đoạn truyện cuối (không có dòng trống ngăn). Bỏ đi không tính là sót; dịch thì phải là đoạn riêng, không trộn vào đoạn truyện."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "01",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 87,
+            "targetParagraphs": 87,
+            "beadCounts": {
+              "1-1": 87,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 35,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 96,
+            "strictHits": 66,
+            "lenientHits": 75,
+            "forbiddenHits": 4,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 12
+              },
+              {
+                "term": "おば様",
+                "count": 4
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "侯爵令嬢",
+                "count": 1
+              },
+              {
+                "term": "義母",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": [
+              {
+                "term": "dì",
+                "paragraphIndex": 25
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 32
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 61
+              },
+              {
+                "term": "dì",
+                "paragraphIndex": 68
+              }
+            ]
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mợ\"; Chứa từ không được phép: \"dì\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 5,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"mẹ chồng\""
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Kiểm bằng giám khảo/người chấm, không so chuỗi."
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 12,
+              "result": "manual",
+              "reason": "Lời tác giả cuối chương, nằm liền dòng với đoạn truyện cuối (không có dòng trống ngăn). Bỏ đi không tính là sót; dịch thì phải là đoạn riêng, không trộn vào đoạn truyện."
+            },
+            {
+              "ruleIndex": 13,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 69,
+            "targetParagraphs": 69,
+            "beadCounts": {
+              "1-1": 69,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 1,
+              "paragraphIndex": 1,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 3,
+              "paragraphIndex": 3,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 9,
+              "paragraphIndex": 9,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 10,
+              "paragraphIndex": 10,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 11,
+              "paragraphIndex": 11,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 13,
+              "paragraphIndex": 13,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 14,
+              "paragraphIndex": 14,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 15,
+              "paragraphIndex": 15,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 16,
+              "paragraphIndex": 16,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 19,
+              "paragraphIndex": 19,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 20,
+              "paragraphIndex": 20,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 21,
+              "paragraphIndex": 21,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 23,
+              "paragraphIndex": 23,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 25,
+              "paragraphIndex": 25,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 26,
+              "paragraphIndex": 26,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 30,
+              "paragraphIndex": 30,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 34,
+              "paragraphIndex": 34,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 37,
+              "paragraphIndex": 37,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 38,
+              "paragraphIndex": 38,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 39,
+              "paragraphIndex": 39,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 40,
+              "paragraphIndex": 40,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 41,
+              "paragraphIndex": 41,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 43,
+              "paragraphIndex": 43,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 44,
+              "paragraphIndex": 44,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 45,
+              "paragraphIndex": 45,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 46,
+              "paragraphIndex": 46,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 48,
+              "paragraphIndex": 48,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 52,
+              "paragraphIndex": 52,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 53,
+              "paragraphIndex": 53,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 54,
+              "paragraphIndex": 54,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 55,
+              "paragraphIndex": 55,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 57,
+              "paragraphIndex": 57,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 58,
+              "paragraphIndex": 58,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 59,
+              "paragraphIndex": 59,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 60,
+              "paragraphIndex": 60,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 62,
+              "paragraphIndex": 62,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 64,
+              "paragraphIndex": 64,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 65,
+              "paragraphIndex": 65,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 66,
+              "paragraphIndex": 66,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 39,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 65,
+            "strictHits": 56,
+            "lenientHits": 56,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Mỉa mai; giữ được giọng châm biếm."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Cặp chơi chữ nghe nhầm / nhìn nhầm phải giữ song song."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 69,
+            "targetParagraphs": 70,
+            "beadCounts": {
+              "1-1": 68,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 1
+            },
+            "bead11Ratio": 0.9855072463768116,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [
+            {
+              "beadIndex": 1,
+              "paragraphIndex": 1,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 3,
+              "paragraphIndex": 3,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 9,
+              "paragraphIndex": 9,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 9,
+              "paragraphIndex": 10,
+              "chars": [
+                "「"
+              ]
+            },
+            {
+              "beadIndex": 10,
+              "paragraphIndex": 11,
+              "chars": [
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 11,
+              "paragraphIndex": 12,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 13,
+              "paragraphIndex": 14,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 14,
+              "paragraphIndex": 15,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 15,
+              "paragraphIndex": 16,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 16,
+              "paragraphIndex": 17,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 19,
+              "paragraphIndex": 20,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 20,
+              "paragraphIndex": 21,
+              "chars": [
+                "「",
+                "『",
+                "』",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 21,
+              "paragraphIndex": 22,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 23,
+              "paragraphIndex": 24,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 25,
+              "paragraphIndex": 26,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 26,
+              "paragraphIndex": 27,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 28,
+              "paragraphIndex": 29,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 30,
+              "paragraphIndex": 31,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 34,
+              "paragraphIndex": 35,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 37,
+              "paragraphIndex": 38,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 38,
+              "paragraphIndex": 39,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 39,
+              "paragraphIndex": 40,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 40,
+              "paragraphIndex": 41,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 41,
+              "paragraphIndex": 42,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 43,
+              "paragraphIndex": 44,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 44,
+              "paragraphIndex": 45,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 45,
+              "paragraphIndex": 46,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 46,
+              "paragraphIndex": 47,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 48,
+              "paragraphIndex": 49,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 52,
+              "paragraphIndex": 53,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 53,
+              "paragraphIndex": 54,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 54,
+              "paragraphIndex": 55,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 55,
+              "paragraphIndex": 56,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 57,
+              "paragraphIndex": 58,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 58,
+              "paragraphIndex": 59,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 59,
+              "paragraphIndex": 60,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 60,
+              "paragraphIndex": 61,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 62,
+              "paragraphIndex": 63,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 64,
+              "paragraphIndex": 65,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 65,
+              "paragraphIndex": 66,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 66,
+              "paragraphIndex": 67,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 10,
+              "reason": "Ngoặc vuông 「」 không cân"
+            },
+            {
+              "paragraphIndex": 11,
+              "reason": "Ngoặc vuông 「」 không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 41,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 65,
+            "strictHits": 53,
+            "lenientHits": 54,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "母様",
+                "count": 1
+              },
+              {
+                "term": "公爵夫人",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"phu nhân\""
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Mỉa mai; giữ được giọng châm biếm."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Cặp chơi chữ nghe nhầm / nhìn nhầm phải giữ song song."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "02",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 69,
+            "targetParagraphs": 69,
+            "beadCounts": {
+              "1-1": 69,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 1,
+              "paragraphIndex": 1,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 3,
+              "paragraphIndex": 3,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 9,
+              "paragraphIndex": 9,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 10,
+              "paragraphIndex": 10,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 11,
+              "paragraphIndex": 11,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 13,
+              "paragraphIndex": 13,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 14,
+              "paragraphIndex": 14,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 15,
+              "paragraphIndex": 15,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 16,
+              "paragraphIndex": 16,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 19,
+              "paragraphIndex": 19,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 20,
+              "paragraphIndex": 20,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 21,
+              "paragraphIndex": 21,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 23,
+              "paragraphIndex": 23,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 25,
+              "paragraphIndex": 25,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 26,
+              "paragraphIndex": 26,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 30,
+              "paragraphIndex": 30,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 34,
+              "paragraphIndex": 34,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 37,
+              "paragraphIndex": 37,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 38,
+              "paragraphIndex": 38,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 39,
+              "paragraphIndex": 39,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 40,
+              "paragraphIndex": 40,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 41,
+              "paragraphIndex": 41,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 43,
+              "paragraphIndex": 43,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 44,
+              "paragraphIndex": 44,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 45,
+              "paragraphIndex": 45,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 46,
+              "paragraphIndex": 46,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 48,
+              "paragraphIndex": 48,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 52,
+              "paragraphIndex": 52,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 53,
+              "paragraphIndex": 53,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 54,
+              "paragraphIndex": 54,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 55,
+              "paragraphIndex": 55,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 57,
+              "paragraphIndex": 57,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 58,
+              "paragraphIndex": 58,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 59,
+              "paragraphIndex": 59,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 60,
+              "paragraphIndex": 60,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 62,
+              "paragraphIndex": 62,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 64,
+              "paragraphIndex": 64,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 65,
+              "paragraphIndex": 65,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 66,
+              "paragraphIndex": 66,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 39,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 65,
+            "strictHits": 47,
+            "lenientHits": 49,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "侍女",
+                "count": 7
+              },
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "サロン",
+                "count": 2
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"phu nhân\""
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Mỉa mai; giữ được giọng châm biếm."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Cặp chơi chữ nghe nhầm / nhìn nhầm phải giữ song song."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "03",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 99,
+            "targetParagraphs": 100,
+            "beadCounts": {
+              "1-1": 98,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 1
+            },
+            "bead11Ratio": 0.98989898989899,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "other",
+            "counts": {
+              "vi": 0,
+              "cjk": 0,
+              "other": 50
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 67,
+            "strictHits": 56,
+            "lenientHits": 57,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "女主人",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Câu meme (Gundam): giữ ý 'chưa từng bị ai đánh, kể cả cha'."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Irene quỳ rạp xin lỗi ngay trên giường."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Một câu gọi cả hai người."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "03",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 99,
+            "targetParagraphs": 99,
+            "beadCounts": {
+              "1-1": 99,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 1,
+              "paragraphIndex": 1,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 6,
+              "paragraphIndex": 6,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 8,
+              "paragraphIndex": 8,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 9,
+              "paragraphIndex": 9,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 10,
+              "paragraphIndex": 10,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 12,
+              "paragraphIndex": 12,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 13,
+              "paragraphIndex": 13,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 15,
+              "paragraphIndex": 15,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 21,
+              "paragraphIndex": 21,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 22,
+              "paragraphIndex": 22,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 23,
+              "paragraphIndex": 23,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 24,
+              "paragraphIndex": 24,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 29,
+              "paragraphIndex": 29,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 31,
+              "paragraphIndex": 31,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 32,
+              "paragraphIndex": 32,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 33,
+              "paragraphIndex": 33,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 34,
+              "paragraphIndex": 34,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 37,
+              "paragraphIndex": 37,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 39,
+              "paragraphIndex": 39,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 41,
+              "paragraphIndex": 41,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 44,
+              "paragraphIndex": 44,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 45,
+              "paragraphIndex": 45,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 46,
+              "paragraphIndex": 46,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 48,
+              "paragraphIndex": 48,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 51,
+              "paragraphIndex": 51,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 53,
+              "paragraphIndex": 53,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 54,
+              "paragraphIndex": 54,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 55,
+              "paragraphIndex": 55,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 56,
+              "paragraphIndex": 56,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 57,
+              "paragraphIndex": 57,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 61,
+              "paragraphIndex": 61,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 62,
+              "paragraphIndex": 62,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 63,
+              "paragraphIndex": 63,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 64,
+              "paragraphIndex": 64,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 66,
+              "paragraphIndex": 66,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 68,
+              "paragraphIndex": 68,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 70,
+              "paragraphIndex": 70,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 71,
+              "paragraphIndex": 71,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 72,
+              "paragraphIndex": 72,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 73,
+              "paragraphIndex": 73,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 76,
+              "paragraphIndex": 76,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 77,
+              "paragraphIndex": 77,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 79,
+              "paragraphIndex": 79,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 80,
+              "paragraphIndex": 80,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 82,
+              "paragraphIndex": 82,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 83,
+              "paragraphIndex": 83,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 84,
+              "paragraphIndex": 84,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 90,
+              "paragraphIndex": 90,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "mixed",
+            "counts": {
+              "vi": 1,
+              "cjk": 48,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 67,
+            "strictHits": 57,
+            "lenientHits": 58,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Câu meme (Gundam): giữ ý 'chưa từng bị ai đánh, kể cả cha'."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Irene quỳ rạp xin lỗi ngay trên giường."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Một câu gọi cả hai người."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "03",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 99,
+            "targetParagraphs": 100,
+            "beadCounts": {
+              "1-1": 99,
+              "1-0": 0,
+              "0-1": 1,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 0.99,
+            "structureMismatch": false,
+            "isPerfectMatch": false
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 51,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 28,
+              "srcLen": 26,
+              "tgtLen": 88,
+              "ratio": 3.3846153846153846,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 55,
+              "srcLen": 20,
+              "tgtLen": 67,
+              "ratio": 3.35,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 98,
+              "srcLen": 41,
+              "tgtLen": 34,
+              "ratio": 0.8292682926829268,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 67,
+            "strictHits": 43,
+            "lenientHits": 44,
+            "forbiddenHits": 14,
+            "missedTerms": [
+              {
+                "term": "アデライン",
+                "count": 14
+              },
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 6
+              },
+              {
+                "term": "公爵",
+                "count": 1
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": [
+              {
+                "term": "Adelain",
+                "paragraphIndex": 21
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 36
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 43
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 49
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 50
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 53
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 59
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 61
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 63
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 67
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 69
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 75
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 82
+              },
+              {
+                "term": "Adelain",
+                "paragraphIndex": 85
+              }
+            ]
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "manual",
+              "reason": "Câu meme (Gundam): giữ ý 'chưa từng bị ai đánh, kể cả cha'."
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Irene quỳ rạp xin lỗi ngay trên giường."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 10,
+              "result": "manual",
+              "reason": "Một câu gọi cả hai người."
+            },
+            {
+              "ruleIndex": 11,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "04",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 73,
+            "targetParagraphs": 73,
+            "beadCounts": {
+              "1-1": 73,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 2,
+              "paragraphIndex": 2,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 3,
+              "paragraphIndex": 3,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 6,
+              "paragraphIndex": 6,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 7,
+              "paragraphIndex": 7,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 17,
+              "paragraphIndex": 17,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 18,
+              "paragraphIndex": 18,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 21,
+              "paragraphIndex": 21,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 28,
+              "paragraphIndex": 28,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 30,
+              "paragraphIndex": 30,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 31,
+              "paragraphIndex": 31,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 32,
+              "paragraphIndex": 32,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 35,
+              "paragraphIndex": 35,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 49,
+              "paragraphIndex": 49,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 52,
+              "paragraphIndex": 52,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 53,
+              "paragraphIndex": 53,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 58,
+              "paragraphIndex": 58,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 59,
+              "paragraphIndex": 59,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 61,
+              "paragraphIndex": 61,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 62,
+              "paragraphIndex": 62,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 63,
+              "paragraphIndex": 63,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 68,
+              "paragraphIndex": 68,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 69,
+              "paragraphIndex": 69,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 70,
+              "paragraphIndex": 70,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 32,
+              "reason": "Ngoặc 『』 không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 23,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 81,
+            "strictHits": 41,
+            "lenientHits": 45,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 19
+              },
+              {
+                "term": "大奥様",
+                "count": 5
+              },
+              {
+                "term": "輿入れ",
+                "count": 3
+              },
+              {
+                "term": "旦那様",
+                "count": 3
+              },
+              {
+                "term": "公爵家",
+                "count": 2
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "伯爵家",
+                "count": 1
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "公爵位",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"lão phu nhân\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"ông chủ\""
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Thoại trong ký ức (『』), giọng khinh miệt."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "04",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 73,
+            "targetParagraphs": 73,
+            "beadCounts": {
+              "1-1": 73,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 2,
+              "paragraphIndex": 2,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 3,
+              "paragraphIndex": 3,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 6,
+              "paragraphIndex": 6,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 7,
+              "paragraphIndex": 7,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 17,
+              "paragraphIndex": 17,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 18,
+              "paragraphIndex": 18,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 21,
+              "paragraphIndex": 21,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 28,
+              "paragraphIndex": 28,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 30,
+              "paragraphIndex": 30,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 31,
+              "paragraphIndex": 31,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 32,
+              "paragraphIndex": 32,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 35,
+              "paragraphIndex": 35,
+              "chars": [
+                "『"
+              ]
+            },
+            {
+              "beadIndex": 49,
+              "paragraphIndex": 49,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 52,
+              "paragraphIndex": 52,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 53,
+              "paragraphIndex": 53,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 58,
+              "paragraphIndex": 58,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 59,
+              "paragraphIndex": 59,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 61,
+              "paragraphIndex": 61,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 62,
+              "paragraphIndex": 62,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 63,
+              "paragraphIndex": 63,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 68,
+              "paragraphIndex": 68,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 69,
+              "paragraphIndex": 69,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 70,
+              "paragraphIndex": 70,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 35,
+              "reason": "Ngoặc 『』 không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 23,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 39,
+              "srcLen": 21,
+              "tgtLen": 58,
+              "ratio": 2.761904761904762,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 43,
+              "srcLen": 40,
+              "tgtLen": 113,
+              "ratio": 2.825,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 81,
+            "strictHits": 40,
+            "lenientHits": 41,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 19
+              },
+              {
+                "term": "大奥様",
+                "count": 5
+              },
+              {
+                "term": "公爵家",
+                "count": 4
+              },
+              {
+                "term": "伯爵家",
+                "count": 3
+              },
+              {
+                "term": "輿入れ",
+                "count": 3
+              },
+              {
+                "term": "旦那様",
+                "count": 3
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "公爵位",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"lão phu nhân\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"ông chủ\""
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Thoại trong ký ức (『』), giọng khinh miệt."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "04",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 73,
+            "targetParagraphs": 73,
+            "beadCounts": {
+              "1-1": 73,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 2,
+              "paragraphIndex": 2,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 3,
+              "paragraphIndex": 3,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 6,
+              "paragraphIndex": 6,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 7,
+              "paragraphIndex": 7,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 17,
+              "paragraphIndex": 17,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 18,
+              "paragraphIndex": 18,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 21,
+              "paragraphIndex": 21,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 28,
+              "paragraphIndex": 28,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 30,
+              "paragraphIndex": 30,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 31,
+              "paragraphIndex": 31,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 32,
+              "paragraphIndex": 32,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 35,
+              "paragraphIndex": 35,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 49,
+              "paragraphIndex": 49,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 52,
+              "paragraphIndex": 52,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 58,
+              "paragraphIndex": 58,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 59,
+              "paragraphIndex": 59,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 61,
+              "paragraphIndex": 61,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 62,
+              "paragraphIndex": 62,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 63,
+              "paragraphIndex": 63,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 68,
+              "paragraphIndex": 68,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 69,
+              "paragraphIndex": 69,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 70,
+              "paragraphIndex": 70,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [
+            {
+              "paragraphIndex": 32,
+              "reason": "Ngoặc 『』 không cân"
+            }
+          ],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 22,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 43,
+              "srcLen": 40,
+              "tgtLen": 111,
+              "ratio": 2.775,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 81,
+            "strictHits": 46,
+            "lenientHits": 46,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "イレーヌ・フォン・シュテルンハイム",
+                "count": 20
+              },
+              {
+                "term": "大奥様",
+                "count": 5
+              },
+              {
+                "term": "旦那様",
+                "count": 3
+              },
+              {
+                "term": "公爵家",
+                "count": 2
+              },
+              {
+                "term": "伯爵家",
+                "count": 2
+              },
+              {
+                "term": "マクシミリアン・フォン・シュテルンハイム",
+                "count": 1
+              },
+              {
+                "term": "公爵邸",
+                "count": 1
+              },
+              {
+                "term": "公爵位",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 2,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"lão phu nhân\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"ông chủ\""
+            },
+            {
+              "ruleIndex": 6,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Thoại trong ký ức (『』), giọng khinh miệt."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 9,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "05",
+        "repeat": 1,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 53,
+            "targetParagraphs": 53,
+            "beadCounts": {
+              "1-1": 53,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "vi",
+            "counts": {
+              "vi": 12,
+              "cjk": 0,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 47,
+              "srcLen": 37,
+              "tgtLen": 111,
+              "ratio": 3,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 95,
+            "strictHits": 59,
+            "lenientHits": 71,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "伯父上",
+                "count": 10
+              },
+              {
+                "term": "公爵家",
+                "count": 5
+              },
+              {
+                "term": "公爵閣下",
+                "count": 2
+              },
+              {
+                "term": "伯爵家",
+                "count": 2
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "サロン",
+                "count": 1
+              },
+              {
+                "term": "夜会",
+                "count": 1
+              },
+              {
+                "term": "伯爵家当主",
+                "count": 1
+              },
+              {
+                "term": "甥",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"bác\""
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"cấm túc\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"trưởng nam\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Dấu gạch ―― ngắt lời giữa câu: giữ dạng ngắt."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Độc thoại trong （）: giữ dạng độc thoại."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "05",
+        "repeat": 2,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 53,
+            "targetParagraphs": 53,
+            "beadCounts": {
+              "1-1": 53,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 7,
+              "paragraphIndex": 7,
+              "chars": [
+                "『",
+                "』"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "mixed",
+            "counts": {
+              "vi": 12,
+              "cjk": 1,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 33,
+              "srcLen": 64,
+              "tgtLen": 179,
+              "ratio": 2.796875,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 47,
+              "srcLen": 37,
+              "tgtLen": 110,
+              "ratio": 2.972972972972973,
+              "band": [
+                0.96,
+                2.71
+              ]
+            },
+            {
+              "beadIndex": 48,
+              "srcLen": 51,
+              "tgtLen": 140,
+              "ratio": 2.7450980392156863,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 95,
+            "strictHits": 61,
+            "lenientHits": 75,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "伯父上",
+                "count": 10
+              },
+              {
+                "term": "伯爵家",
+                "count": 3
+              },
+              {
+                "term": "蟄居",
+                "count": 3
+              },
+              {
+                "term": "剣の師",
+                "count": 1
+              },
+              {
+                "term": "サロン",
+                "count": 1
+              },
+              {
+                "term": "夜会",
+                "count": 1
+              },
+              {
+                "term": "伯爵家当主",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"bác\""
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"cấm túc\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"trưởng nam\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Dấu gạch ―― ngắt lời giữa câu: giữ dạng ngắt."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Độc thoại trong （）: giữ dạng độc thoại."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            }
+          ]
+        }
+      },
+      {
+        "chapter": "05",
+        "repeat": 3,
+        "score": {
+          "structure": {
+            "sourceParagraphs": 53,
+            "targetParagraphs": 53,
+            "beadCounts": {
+              "1-1": 53,
+              "1-0": 0,
+              "0-1": 0,
+              "2-1": 0,
+              "1-2": 0
+            },
+            "bead11Ratio": 1,
+            "structureMismatch": false,
+            "isPerfectMatch": true
+          },
+          "residualChars": [
+            {
+              "beadIndex": 7,
+              "paragraphIndex": 7,
+              "chars": [
+                "『",
+                "』"
+              ]
+            },
+            {
+              "beadIndex": 23,
+              "paragraphIndex": 23,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 25,
+              "paragraphIndex": 25,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 26,
+              "paragraphIndex": 26,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 29,
+              "paragraphIndex": 29,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 31,
+              "paragraphIndex": 31,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 40,
+              "paragraphIndex": 40,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 41,
+              "paragraphIndex": 41,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 42,
+              "paragraphIndex": 42,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 44,
+              "paragraphIndex": 44,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 47,
+              "paragraphIndex": 47,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 50,
+              "paragraphIndex": 50,
+              "chars": [
+                "「",
+                "」"
+              ]
+            },
+            {
+              "beadIndex": 52,
+              "paragraphIndex": 52,
+              "chars": [
+                "「",
+                "」"
+              ]
+            }
+          ],
+          "unbalancedQuotes": [],
+          "dialogueStyle": {
+            "style": "cjk",
+            "counts": {
+              "vi": 0,
+              "cjk": 13,
+              "other": 0
+            }
+          },
+          "lengthOutliers": [
+            {
+              "beadIndex": 47,
+              "srcLen": 37,
+              "tgtLen": 116,
+              "ratio": 3.135135135135135,
+              "band": [
+                0.96,
+                2.71
+              ]
+            }
+          ],
+          "loops": [],
+          "glossary": {
+            "totalChecks": 95,
+            "strictHits": 59,
+            "lenientHits": 71,
+            "forbiddenHits": 0,
+            "missedTerms": [
+              {
+                "term": "伯父上",
+                "count": 10
+              },
+              {
+                "term": "公爵家",
+                "count": 5
+              },
+              {
+                "term": "公爵閣下",
+                "count": 2
+              },
+              {
+                "term": "伯爵家",
+                "count": 2
+              },
+              {
+                "term": "公爵令息",
+                "count": 1
+              },
+              {
+                "term": "サロン",
+                "count": 1
+              },
+              {
+                "term": "夜会",
+                "count": 1
+              },
+              {
+                "term": "伯爵家当主",
+                "count": 1
+              },
+              {
+                "term": "甥",
+                "count": 1
+              }
+            ],
+            "forbiddenViolations": []
+          },
+          "assertions": [
+            {
+              "ruleIndex": 0,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 1,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"bác\""
+            },
+            {
+              "ruleIndex": 2,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"cấm túc\""
+            },
+            {
+              "ruleIndex": 3,
+              "result": "pass"
+            },
+            {
+              "ruleIndex": 4,
+              "result": "fail",
+              "reason": "Thiếu chuỗi: \"trưởng nam\""
+            },
+            {
+              "ruleIndex": 5,
+              "result": "manual",
+              "reason": "Dấu gạch ―― ngắt lời giữa câu: giữ dạng ngắt."
+            },
+            {
+              "ruleIndex": 6,
+              "result": "manual",
+              "reason": "Cần chấm tay"
+            },
+            {
+              "ruleIndex": 7,
+              "result": "manual",
+              "reason": "Độc thoại trong （）: giữ dạng độc thoại."
+            },
+            {
+              "ruleIndex": 8,
+              "result": "pass"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

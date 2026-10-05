@@ -1,0 +1,1253 @@
+{
+  "model": "gemini-2.5-flash",
+  "label": "thinking-off",
+  "commit": "unknown",
+  "repeats": 3,
+  "promptReplaced": 0,
+  "sentParams": {
+    "model": "gemini-2.5-flash",
+    "reasoning_effort": "none"
+  },
+  "httpStatuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "summary": [
+    {
+      "chapter": "en-fight-above-the-trees/01",
+      "lang": "en",
+      "runs": 3,
+      "sourceParagraphs": 57,
+      "targetParagraphs": [
+        57,
+        23,
+        57
+      ],
+      "aligned": "2/3",
+      "untranslatedSegments": 88,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        2,
+        1,
+        2
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "0/108",
+      "repetition": 0,
+      "glossaryStrict": "92%",
+      "glossaryLenient": "92%",
+      "glossaryChecked": 224,
+      "glossaryMostMissed": [
+        [
+          "shotgun",
+          5
+        ],
+        [
+          "bandolier",
+          3
+        ],
+        [
+          "Corruption",
+          3
+        ],
+        [
+          "Thanto kat'olon",
+          2
+        ],
+        [
+          "shapeshift",
+          1
+        ],
+        [
+          "Orothrack",
+          1
+        ]
+      ],
+      "forbiddenHits": 3,
+      "rules": {
+        "pass": 17,
+        "fail": 3,
+        "skip": 10,
+        "manual": 21
+      },
+      "failedRules": [
+        "\"Come on, Tenuk, you've shapeshifted int → thiếu \"biến hình\"",
+        "pull out her own weapon, a trusty shotgu → có \"súng ngắn\"",
+        "\"That was... one of the weirder shadowju → thiếu \"Thanto kat'olon\""
+      ],
+      "usage": {
+        "inputTokens": 27568,
+        "outputTokens": 32390
+      },
+      "httpCalls": 44,
+      "seconds": 495,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 37,
+          "message": "Phản hồi thiếu 37 segment."
+        },
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 39,
+          "message": "Phản hồi thiếu 39 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 50,
+          "message": "Phản hồi thiếu 50 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 50,
+          "message": "Phản hồi thiếu 50 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 37,
+          "message": "Phản hồi thiếu 37 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 37,
+          "message": "Phản hồi thiếu 37 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 39,
+          "message": "Phản hồi thiếu 39 segment."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi thiếu 1 segment."
+        }
+      ]
+    },
+    {
+      "chapter": "zh-hant-xiyouji/02",
+      "lang": "zh-Hant",
+      "runs": 3,
+      "sourceParagraphs": 54,
+      "targetParagraphs": [
+        5,
+        5,
+        5
+      ],
+      "aligned": "0/3",
+      "untranslatedSegments": 826,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        2,
+        1,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "0/0",
+      "repetition": 0,
+      "glossaryStrict": "23%",
+      "glossaryLenient": "23%",
+      "glossaryChecked": 132,
+      "glossaryMostMissed": [
+        [
+          "東勝神洲",
+          6
+        ],
+        [
+          "七十二般變化",
+          3
+        ],
+        [
+          "三十六般變化",
+          3
+        ],
+        [
+          "三星仙洞",
+          3
+        ],
+        [
+          "混世魔王",
+          3
+        ],
+        [
+          "五臟六腑",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 0,
+        "fail": 0,
+        "skip": 39,
+        "manual": 24
+      },
+      "failedRules": [],
+      "usage": {
+        "inputTokens": 10015,
+        "outputTokens": 11916
+      },
+      "httpCalls": 49,
+      "seconds": 1534,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 141,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 141,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 133,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 133,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 3,
+          "message": "Nhà cung cấp không trả bản dịch cho 3 câu."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 3,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 141,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 141,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 133,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 133,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 141,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 141,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 133,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 133,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        }
+      ]
+    },
+    {
+      "chapter": "zh-kongyiji/01",
+      "lang": "zh-Hans",
+      "runs": 3,
+      "sourceParagraphs": 15,
+      "targetParagraphs": [
+        15,
+        15,
+        15
+      ],
+      "aligned": "3/3",
+      "untranslatedSegments": 0,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        1,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "vi"
+      ],
+      "lengthOutliers": "0/39",
+      "repetition": 0,
+      "glossaryStrict": "58%",
+      "glossaryLenient": "58%",
+      "glossaryChecked": 144,
+      "glossaryMostMissed": [
+        [
+          "掌柜",
+          18
+        ],
+        [
+          "茴香豆",
+          12
+        ],
+        [
+          "粉板",
+          9
+        ],
+        [
+          "短衣帮",
+          3
+        ],
+        [
+          "咸亨酒店",
+          3
+        ],
+        [
+          "伙计",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 24,
+        "fail": 0,
+        "skip": 0,
+        "manual": 18
+      },
+      "failedRules": [],
+      "usage": {
+        "inputTokens": 20387,
+        "outputTokens": 22979
+      },
+      "httpCalls": 12,
+      "seconds": 248,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/01",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 87,
+      "targetParagraphs": [
+        87,
+        86,
+        3
+      ],
+      "aligned": "1/3",
+      "untranslatedSegments": 144,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        0,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "vi",
+        "none"
+      ],
+      "lengthOutliers": "1/61",
+      "repetition": 0,
+      "glossaryStrict": "72%",
+      "glossaryLenient": "73%",
+      "glossaryChecked": 134,
+      "glossaryMostMissed": [
+        [
+          "おば様",
+          6
+        ],
+        [
+          "サロン",
+          4
+        ],
+        [
+          "侍女",
+          3
+        ],
+        [
+          "公爵邸",
+          3
+        ],
+        [
+          "侯爵令嬢",
+          3
+        ],
+        [
+          "義母",
+          3
+        ]
+      ],
+      "forbiddenHits": 5,
+      "rules": {
+        "pass": 7,
+        "fail": 2,
+        "skip": 18,
+        "manual": 15
+      },
+      "failedRules": [
+        "わたくしをおば様と呼ぶ娘 → thiếu \"mợ\"; có \"dì\"",
+        "叱られた娘が逆上して義母を突き落とす → thiếu \"mẹ chồng\""
+      ],
+      "usage": {
+        "inputTokens": 16707,
+        "outputTokens": 18559
+      },
+      "httpCalls": 18,
+      "seconds": 926,
+      "errors": [
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 143,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 143,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/02",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 69,
+      "targetParagraphs": [
+        0,
+        0,
+        0
+      ],
+      "aligned": "0/3",
+      "untranslatedSegments": 357,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        0,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "none",
+        "none",
+        "none"
+      ],
+      "lengthOutliers": "0/0",
+      "repetition": 0,
+      "glossaryStrict": "0%",
+      "glossaryLenient": "0%",
+      "glossaryChecked": 33,
+      "glossaryMostMissed": [
+        [
+          "ヴィルヘルム",
+          3
+        ],
+        [
+          "アデライン",
+          3
+        ],
+        [
+          "イレーヌ・フォン・シュテルンハイム",
+          3
+        ],
+        [
+          "ロレッタ",
+          3
+        ],
+        [
+          "公爵夫人",
+          3
+        ],
+        [
+          "公爵令息",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 0,
+        "fail": 0,
+        "skip": 12,
+        "manual": 18
+      },
+      "failedRules": [],
+      "usage": {},
+      "httpCalls": 18,
+      "seconds": 463,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 119,
+          "message": "Phản hồi thiếu 119 segment."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 119,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 119,
+          "message": "Phản hồi thiếu 119 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 119,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 119,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 119,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/03",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 99,
+      "targetParagraphs": [
+        4,
+        4,
+        4
+      ],
+      "aligned": "0/3",
+      "untranslatedSegments": 459,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        0,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "none",
+        "none",
+        "none"
+      ],
+      "lengthOutliers": "0/0",
+      "repetition": 0,
+      "glossaryStrict": "5%",
+      "glossaryLenient": "5%",
+      "glossaryChecked": 66,
+      "glossaryMostMissed": [
+        [
+          "マクシミリアン・フォン・シュテルンハイム",
+          6
+        ],
+        [
+          "ヴィルヘルム",
+          3
+        ],
+        [
+          "アデライン",
+          3
+        ],
+        [
+          "ティルダ",
+          3
+        ],
+        [
+          "ロレッタ",
+          3
+        ],
+        [
+          "公爵夫人",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 0,
+        "fail": 0,
+        "skip": 18,
+        "manual": 18
+      },
+      "failedRules": [],
+      "usage": {
+        "inputTokens": 1516,
+        "outputTokens": 1606
+      },
+      "httpCalls": 27,
+      "seconds": 670,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 153,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 1,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 153,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 153,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 153,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 7,
+          "message": "Phản hồi thiếu 7 segment."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 153,
+          "message": "Phản hồi thiếu 153 segment."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 153,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/04",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 73,
+      "targetParagraphs": [
+        73,
+        0,
+        0
+      ],
+      "aligned": "1/3",
+      "untranslatedSegments": 234,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        0,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "none",
+        "none"
+      ],
+      "lengthOutliers": "1/57",
+      "repetition": 0,
+      "glossaryStrict": "22%",
+      "glossaryLenient": "29%",
+      "glossaryChecked": 104,
+      "glossaryMostMissed": [
+        [
+          "イレーヌ・フォン・シュテルンハイム",
+          24
+        ],
+        [
+          "大奥様",
+          7
+        ],
+        [
+          "公爵家",
+          6
+        ],
+        [
+          "奥様",
+          5
+        ],
+        [
+          "輿入れ",
+          5
+        ],
+        [
+          "公爵夫人",
+          5
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 5,
+        "fail": 3,
+        "skip": 16,
+        "manual": 6
+      },
+      "failedRules": [
+        "「奥様、起きていらっしゃいますか？　ティルダが朝のお支度に参りました」 → thiếu \"phu nhân\"",
+        "そこへ、大奥様が入ってこられた。 → thiếu \"lão phu nhân\"",
+        "しかも、旦那様の前では一度もそれをなさらなかった。 → thiếu \"ông chủ\""
+      ],
+      "usage": {
+        "inputTokens": 6312,
+        "outputTokens": 6365
+      },
+      "httpCalls": 16,
+      "seconds": 447,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 1,
+          "message": "Nhà cung cấp không trả bản dịch cho 1 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 117,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 117,
+          "message": "Phản hồi thiếu 117 segment."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 117,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 117,
+          "message": "Phản hồi thiếu 117 segment."
+        }
+      ]
+    },
+    {
+      "chapter": "ja-irene/05",
+      "lang": "ja",
+      "runs": 3,
+      "sourceParagraphs": 53,
+      "targetParagraphs": [
+        53,
+        0,
+        0
+      ],
+      "aligned": "1/3",
+      "untranslatedSegments": 166,
+      "residue": 0,
+      "cjkBrackets": [
+        0,
+        0,
+        0
+      ],
+      "cjkPunctuation": [
+        0,
+        0,
+        0
+      ],
+      "quoteUnbalanced": [
+        0,
+        0,
+        0
+      ],
+      "dialogueStyle": [
+        "vi",
+        "none",
+        "none"
+      ],
+      "lengthOutliers": "2/41",
+      "repetition": 0,
+      "glossaryStrict": "36%",
+      "glossaryLenient": "38%",
+      "glossaryChecked": 138,
+      "glossaryMostMissed": [
+        [
+          "伯父上",
+          12
+        ],
+        [
+          "王都",
+          9
+        ],
+        [
+          "公爵家",
+          7
+        ],
+        [
+          "蟄居",
+          5
+        ],
+        [
+          "公爵閣下",
+          4
+        ],
+        [
+          "公爵令息",
+          3
+        ]
+      ],
+      "forbiddenHits": 0,
+      "rules": {
+        "pass": 3,
+        "fail": 3,
+        "skip": 12,
+        "manual": 9
+      },
+      "failedRules": [
+        "伯父上は、父様の姉である伯母上を妻に迎えた → thiếu \"bác\"",
+        "公爵家で騒動を起こしたロレッタは領地の屋敷にて蟄居とし → thiếu \"cấm túc\"",
+        "甥である僕にではなく、公爵家の嫡男に向けた礼だった。 → thiếu \"trưởng nam\""
+      ],
+      "usage": {
+        "inputTokens": 4900,
+        "outputTokens": 4811
+      },
+      "httpCalls": 16,
+      "seconds": 321,
+      "errors": [
+        {
+          "rep": 1,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 2,
+          "message": "Nhà cung cấp không trả bản dịch cho 2 câu."
+        },
+        {
+          "rep": 2,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 83,
+          "message": "Phản hồi thiếu 83 segment."
+        },
+        {
+          "rep": 2,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 83,
+          "message": "Phản hồi thiếu 83 segment."
+        },
+        {
+          "rep": 3,
+          "attempt": 1,
+          "kind": "invalid_response",
+          "failed": 83,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        },
+        {
+          "rep": 3,
+          "attempt": 2,
+          "kind": "invalid_response",
+          "failed": 83,
+          "message": "Phản hồi không phải JSON hợp lệ."
+        }
+      ]
+    }
+  ]
+}

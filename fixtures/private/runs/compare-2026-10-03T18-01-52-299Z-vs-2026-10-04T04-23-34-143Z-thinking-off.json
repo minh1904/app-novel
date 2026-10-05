@@ -1,0 +1,32 @@
+{
+  "baselineId": "2026-10-03T18-01-52-299Z",
+  "candidateId": "2026-10-04T04-23-34-143Z-thinking-off",
+  "commonChapters": [
+    "en-fight-above-the-trees/01",
+    "ja-irene/01",
+    "ja-irene/02",
+    "ja-irene/03",
+    "ja-irene/04",
+    "ja-irene/05",
+    "zh-hant-xiyouji/02",
+    "zh-kongyiji/01"
+  ],
+  "baseT0": {
+    "omissions": 1,
+    "additions": 3,
+    "merges": 0,
+    "splits": 2,
+    "strictGlossaryRate": 69.25287356321839
+  },
+  "candT0": {
+    "omissions": 997,
+    "additions": 0,
+    "merges": 13,
+    "splits": 0,
+    "strictGlossaryRate": 26.427879961277835
+  },
+  "t1": null,
+  "t3": null,
+  "decisionProfile": null,
+  "advisory": null
+}

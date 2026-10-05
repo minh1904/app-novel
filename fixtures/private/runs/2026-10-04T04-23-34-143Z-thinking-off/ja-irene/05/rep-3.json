@@ -1,0 +1,96 @@
+{
+  "sourceParagraphs": 53,
+  "targetParagraphs": 0,
+  "aligned": false,
+  "shifted": false,
+  "segments": 83,
+  "written": 0,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 0,
+  "quoteSamples": [],
+  "dialogueStyle": "none",
+  "lengthChecked": 0,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 27,
+  "glossaryStrict": 0,
+  "glossaryLenient": 0,
+  "glossaryMissed": {
+    "ヴィルヘルム": 1,
+    "アデライン": 1,
+    "伯爵家当主": 1,
+    "ロレッタ": 1,
+    "公爵夫人": 1,
+    "公爵令息": 1,
+    "公爵閣下": 1,
+    "家庭教師": 1,
+    "公爵家": 1,
+    "伯爵家": 1,
+    "伯父上": 1,
+    "伯母上": 1,
+    "使用人": 1,
+    "サロン": 1,
+    "応接間": 1,
+    "紹介状": 1,
+    "剣の師": 1,
+    "嫡男": 1,
+    "母様": 1,
+    "父様": 1,
+    "侍女": 1,
+    "王都": 1,
+    "領地": 1,
+    "書庫": 1,
+    "夜会": 1,
+    "蟄居": 1,
+    "甥": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "chapter",
+  "rules": [
+    {
+      "rule": "◇ヴィルヘルム視点",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "伯父上は、父様の姉である伯母上を妻に迎えた",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "公爵家で騒動を起こしたロレッタは領地の屋敷にて蟄居とし",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "ロレッタの侍女には紹介状なしで暇を出し",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "甥である僕にではなく、公爵家の嫡男に向けた礼だった。",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "「今朝、君の父――公爵閣下から書状が届いたよ」",
+      "status": "manual"
+    },
+    {
+      "rule": "「伯父上、ロレッタはいますか」",
+      "status": "manual"
+    },
+    {
+      "rule": "（ロレッタが母様を……？　あんなに良くしてもらっているのに、なぜ）",
+      "status": "manual"
+    },
+    {
+      "rule": "＊",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    }
+  ]
+}

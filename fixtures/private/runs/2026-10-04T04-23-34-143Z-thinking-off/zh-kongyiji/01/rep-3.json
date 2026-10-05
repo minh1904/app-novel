@@ -1,0 +1,91 @@
+{
+  "sourceParagraphs": 15,
+  "targetParagraphs": 15,
+  "aligned": true,
+  "shifted": false,
+  "segments": 110,
+  "written": 110,
+  "residue": 0,
+  "residueSamples": [],
+  "cjkBrackets": 0,
+  "cjkPunctuation": 0,
+  "quoteUnbalanced": 0,
+  "quoteSamples": [],
+  "dialogueStyle": "vi",
+  "lengthChecked": 13,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 48,
+  "glossaryStrict": 30,
+  "glossaryLenient": 30,
+  "glossaryMissed": {
+    "短衣帮": 1,
+    "茴香豆": 4,
+    "咸亨酒店": 1,
+    "掌柜": 6,
+    "伙计": 1,
+    "描红纸": 1,
+    "粉板": 3,
+    "服辩": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "paragraph",
+  "rules": [
+    {
+      "rule": "孔乙己",
+      "status": "pass"
+    },
+    {
+      "rule": "便在镇口的咸亨酒店里当伙计",
+      "status": "pass"
+    },
+    {
+      "rule": "从描红纸上的『上大人孔乙己』",
+      "status": "pass"
+    },
+    {
+      "rule": "『窃书不能算偸……窃书！……读书人的事，能算偸么？』",
+      "status": "manual"
+    },
+    {
+      "rule": "回字有四样写法，你知道么？",
+      "status": "pass"
+    },
+    {
+      "rule": "『不多不多！多乎哉？不多也。』",
+      "status": "manual"
+    },
+    {
+      "rule": "竟偸到丁举人家里去了",
+      "status": "pass"
+    },
+    {
+      "rule": "掌柜正在慢慢的结帐，取下粉板",
+      "status": "pass"
+    },
+    {
+      "rule": "我到现在终于没有见——大约孔乙己的确死了。",
+      "status": "pass"
+    },
+    {
+      "rule": "（一九一九年三月。）",
+      "status": "pass"
+    },
+    {
+      "rule": "孔乙己睁大眼睛说：『你怎么这样凭空污人清白……』",
+      "status": "manual"
+    },
+    {
+      "rule": "有一回对我说道，『你读过书么？』",
+      "status": "manual"
+    },
+    {
+      "rule": "『谁要你教，不是草头底下一个来回的回字么？』",
+      "status": "manual"
+    },
+    {
+      "rule": "『孔乙己么？你还欠十九个钱呢！』",
+      "status": "manual"
+    }
+  ]
+}

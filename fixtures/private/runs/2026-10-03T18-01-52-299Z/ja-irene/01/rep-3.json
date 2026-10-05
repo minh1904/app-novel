@@ -1,0 +1,86 @@
+{
+  "sourceParagraphs": 87,
+  "targetParagraphs": 87,
+  "aligned": true,
+  "segments": 148,
+  "written": 148,
+  "residue": 0,
+  "residueSamples": [],
+  "lengthChecked": 61,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 92,
+  "glossaryStrict": 74,
+  "glossaryLenient": 83,
+  "glossaryMissed": {
+    "侍女": 2,
+    "母様": 7,
+    "公爵邸": 1,
+    "おば様": 4,
+    "侯爵令嬢": 1,
+    "サロン": 2,
+    "義母": 1
+  },
+  "forbiddenHits": 4,
+  "glossaryLevel": "paragraph",
+  "rules": [
+    {
+      "rule": "ヴィルヘルム。十五歳。",
+      "status": "pass"
+    },
+    {
+      "rule": "イレーヌ・フォン・シュテルンハイムという人",
+      "status": "pass"
+    },
+    {
+      "rule": "わたくしをおば様と呼ぶ娘",
+      "status": "fail",
+      "detail": "thiếu \"mợ\"; có \"dì\""
+    },
+    {
+      "rule": "侯爵令嬢で、ヴィルヘルムの婚約者",
+      "status": "pass"
+    },
+    {
+      "rule": "「奥様、医師を呼んでおりますので」",
+      "status": "pass"
+    },
+    {
+      "rule": "（これはいわゆる転生ってやつなのかしら）",
+      "status": "pass"
+    },
+    {
+      "rule": "深夜のコンビニでプリンを",
+      "status": "pass"
+    },
+    {
+      "rule": "叱られた娘が逆上して義母を突き落とす",
+      "status": "fail",
+      "detail": "thiếu \"mẹ chồng\""
+    },
+    {
+      "rule": "＊＊＊",
+      "status": "pass"
+    },
+    {
+      "rule": "「母様が君を呼ぶわけがないだろう！",
+      "status": "manual"
+    },
+    {
+      "rule": "「ロレッタ。言いなさい。母様に隠し事をするものではない」",
+      "status": "manual"
+    },
+    {
+      "rule": "「わたし見たのです。アデラインさまが、おば様を、押したのです」",
+      "status": "manual"
+    },
+    {
+      "rule": "色々な視点を交えながら",
+      "status": "manual"
+    },
+    {
+      "rule": "短編で省略したイレーヌの過去",
+      "status": "manual"
+    }
+  ]
+}

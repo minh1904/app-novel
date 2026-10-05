@@ -1,0 +1,68 @@
+{
+  "sourceParagraphs": 69,
+  "targetParagraphs": 70,
+  "aligned": false,
+  "segments": 119,
+  "written": 119,
+  "residue": 0,
+  "residueSamples": [],
+  "lengthChecked": 0,
+  "lengthOutliers": 0,
+  "repetition": 0,
+  "glossaryChecked": 11,
+  "glossaryStrict": 8,
+  "glossaryLenient": 8,
+  "glossaryMissed": {
+    "公爵夫人": 1,
+    "公爵令息": 1,
+    "サロン": 1
+  },
+  "forbiddenHits": 0,
+  "glossaryLevel": "chapter",
+  "rules": [
+    {
+      "rule": "公爵令息ヴィルヘルム②",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "『イレーヌさまがお呼びです、サロンへお越しください』",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "踊り場から上は、下からは見えないはずよね",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "わたくしにはアデラインから話を聞く義務があり",
+      "status": "skip",
+      "detail": "số đoạn hai bên lệch, không ghép được"
+    },
+    {
+      "rule": "聞き間違い。ずいぶんと都合のよい耳をお持ちなのね",
+      "status": "manual"
+    },
+    {
+      "rule": "先ほどは聞き間違い、今度は見間違いかしら",
+      "status": "manual"
+    },
+    {
+      "rule": "「アデライン、どうぞ仰って。",
+      "status": "manual"
+    },
+    {
+      "rule": "「あなたね。わたくし、アデラインを呼んだ覚えはないのだけれど",
+      "status": "manual"
+    },
+    {
+      "rule": "「も、申し訳ございません。聞き間違えたのでございます。",
+      "status": "manual"
+    },
+    {
+      "rule": "「まさかロレッタを疑っているのですか。",
+      "status": "manual"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "note": "Nháp do Claude soạn 2026-10-05 từ tần suất tên trong bản gốc; phiên Latin theo cách đọc phổ biến, chưa đối chiếu bản dịch chính thức. Chưa người dịch xác minh.",
+  "entries": [
+    { "source": "ニコル", "target": "Nicole", "notes": "Nữ chính" },
+    { "source": "ポートレット", "target": "Portlet", "notes": "Họ của Nicole" },
+    { "source": "ケイオス", "target": "Chaos", "notes": "Hôn phu của Nicole; cách viết Latin chưa chắc" },
+    { "source": "ブランズ", "target": "Brands", "notes": "Họ của Chaos" },
+    { "source": "キャロライン", "target": "Caroline", "notes": "Công chúa, bạn thanh mai của Chaos" },
+    { "source": "ロベリア", "target": "Lobelia" },
+    { "source": "オーレンス", "target": "Orens", "notes": "Họ của Lobelia" },
+    { "source": "ロナルド", "target": "Ronald" },
+    { "source": "エミリオ", "target": "Emilio" },
+    { "source": "お一人様", "target": "đi một mình", "aliases": ["おひとり様"], "notes": "Chủ đề của truyện: tự đi dự tiệc, tự đi chơi một mình" }
+  ]
+}
