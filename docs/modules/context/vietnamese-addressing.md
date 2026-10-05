@@ -1,0 +1,192 @@
+# Xưng hô tiếng Việt: bộ mặc định theo bối cảnh
+
+Cập nhật: 2026-10-06 · Trạng thái: các quyết định ở mục 1 **đã chốt**; bộ mặc định và luật trong prompt
+`v2` **đã triển khai**, đo sơ bộ trên một truyện trước thay đổi thầy trò; luật hạn chế mày/tao áp cả dịch và chat `v1`/`v2`, **chưa đo lại chất lượng bằng model**; lưu lựa chọn theo tác phẩm, nhiều dạng tên cho một nhân
+vật và bước phân tích trước khi dịch là **đề xuất**.
+Chủ trì: chủ sản phẩm (quyết định), kỹ thuật/đánh giá (bộ mặc định, phép đo).
+Câu hỏi: khi chưa có cặp xưng hô đã duyệt, AI nên xưng hô thế nào; và làm sao để xưng hô không lộn xộn
+giữa các lô, các chương?
+
+## 1. Quyết định đã chốt (chủ sản phẩm, 2026-10-05)
+
+1. **Đổi cặp xưng hô theo mốc trong truyện**, ghi bằng phạm vi chương của cặp; không bắt buộc người yêu
+   phải "anh – em", không đổi sớm hơn nguyên tác.
+2. **Quan hệ quyết định cặp; đại từ bản gốc là tín hiệu về giọng điệu**, không phải bảng quy đổi từng
+   từ. お前/テメェ không bắt buộc thành "mày" trong quan hệ thầy trò.
+3. **Không dùng "tôi – bạn" trong lời thoại.**
+4. **Giữ thay đổi giọng điệu giữa cảnh** khi bản gốc đổi (giận, mỉa, chuyển kính ngữ), qua từ ngữ,
+   tên gọi hoặc kính ngữ trong phạm vi đã duyệt; không tự phá cặp đã chốt chỉ vì nhân vật giận.
+5. **Đại từ ngôi ba tùy bối cảnh và ngữ cảnh**, theo nghiên cứu ở mục 4.
+6. **Giọng vùng miền theo tính cách nhân vật**, không có mặc định chung.
+7. **Phân loại theo bối cảnh, không theo thể loại**: truyện tình cảm và trinh thám cùng đặt ở học đường
+   Nhật dùng chung một bộ; thể loại chỉ bật/tắt vài luật. Làm **sau** việc gửi đủ ngữ cảnh.
+
+8. **Giáo viên hạn chế "mày/tao"** (chốt sau khi xem bản dịch, triển khai 2026-10-06). Học đường hiện
+   đại mặc định "thầy/cô – em"; giáo viên cộc hoặc xa cách có thể dùng "thầy/cô – cậu". Học trò lễ
+   phép dùng "em – thầy/cô". Chỉ dùng mày/tao khi cặp đã duyệt hoặc quy ước người dịch cho phép rõ.
+   Giữ độ gắt, lời chửi, đe dọa đúng mức qua từ ngữ và nhịp câu; không làm nhẹ tình tiết hoặc thêm
+   xúc phạm. Giữ tên/chức danh theo bản gốc và quy ước tên; lược đại từ khi tiếng Việt đã rõ.
+
+**Cặp riêng đã chốt:** Unya → Akira là **"cô – cậu"**, chiều ngược **"em – cô"**. Thay lựa chọn
+"cô – mày" trước đây; không tự đổi sang "em" khi dịu hay "mày" khi giận. Khi gọi 桐谷 vẫn dùng
+"Kiritani". Đây là lựa chọn biên tập, không khẳng định mọi bản dịch fan đều dùng như vậy.
+"tôi – cậu" vẫn là mặc định cho nam chính xưng 俺/僕 với bạn đồng lứa chưa thân.
+
+### Mặc định chốt tạm theo khảo sát bản dịch fan (2026-10-05)
+
+Chủ sản phẩm cho cập nhật các mặc định dưới đây; lựa chọn thầy trò hiện hành ở mục 1 thay phần còn
+cân nhắc về "cô – mày" trong khảo sát ban đầu:
+
+- **Cổ trang Trung:** người yêu "ta – nàng" (nam) và "ta – chàng" (nữ), "thiếp" chỉ khi trang trọng hoặc
+  trước người ngoài; xưng hô Hán Việt (huynh, đệ, tỷ, muội), trừ nhân vật xuyên không kể chuyện; sư phụ
+  "ta / vi sư – ngươi / đồ nhi", không dùng "con"; vua theo bản gốc (朕 → trẫm, 我 → ta); 臣妾 là
+  "thần thiếp".
+- **Ngôi ba:** mỗi nhân vật một đại từ cố định cho cả truyện. Cổ trang: nam chính "hắn", nhân vật thanh
+  nhã "y", nữ trẻ "nàng", "chàng" chỉ khi nhìn từ người yêu.
+- **Fantasy phương Tây (nguồn Nhật):** không dùng "thần" (chỉ cận vệ, quan lại trực thuộc); bề tôi xưng
+  "tôi" và gọi "người / ngài", kèm "thưa Điện hạ"; người hầu mặc định "tôi", "em" khi là thiếu nữ nhỏ
+  tuổi gắn bó với chủ; hôn phu – hôn thê chọn một cặp và khóa tới mốc.
+- **Học đường Nhật:** nhân vật chính "tôi – cậu"; "tao – mày" cho vai phụ ồn ào, côn đồ hoặc cặp thân lâu
+  năm cùng nói thô.
+- **Bộ mới `ja-court`** cho truyện Nhật đặt trong cung đình kiểu Á Đông: thần, nương nương, nô tỳ, thần
+  thiếp.
+- **Hậu tố:** mặc định của tác phẩm vẫn là **giữ** (quyết định 2026-10-04). Bộ fantasy chỉ ghi gợi ý: nếu
+  người dịch chọn Việt hóa thì -sama → ngài / tiểu thư / công chúa, **không ghép lai** "công chúa-sama".
+  Đổi mặc định cho fantasy cần quyết định riêng.
+
+## 2. Thứ tự ưu tiên khi dịch
+
+1. **Cặp đã duyệt** trong ma trận xưng hô (có chiều, có phạm vi chương, có ghi chú) — bắt buộc, kể cả
+   khi nhân vật nói gắt.
+2. **Bộ mặc định theo bối cảnh** của tác phẩm — chỉ cho cặp chưa có ở trên.
+3. **Luật chung** (mục 1) — luôn áp.
+
+Thẻ nhân vật (giới tính, vai trò, ghi chú) đi kèm, vì thiếu nó model đoán giới tính từ giọng nói: trước
+khi có thẻ, cô Unya bị gọi "thầy" 26 lần trong 20 chương.
+
+## 3. Sáu bộ mặc định
+
+Dữ liệu và từng dòng nằm ở [`addressingPresets.ts`](../../../src/shared/contracts/addressingPresets.ts).
+Mỗi dòng: loại quan hệ (A → B), tín hiệu bản gốc, cặp chiều thuận, cặp chiều ngược khi khác, ghi chú.
+
+| Mã | Bối cảnh | Điểm chính |
+| --- | --- | --- |
+| `ja-modern` | Nhật hiện đại, học đường, công sở | bạn chưa thân "tôi – cậu"; bạn thân thô "tao – mày"; thầy cô thô "cô/thầy – cậu"; người yêu "anh – em" chỉ khi đã tỏ tình **và** gọi trống tên |
+| `ja-court` | Cung đình Á Đông (nguồn Nhật) | thần – bệ hạ, nô tỳ – nương nương, thần thiếp; vua riêng tư "ta – nàng" |
+| `ja-fantasy` | Fantasy quý tộc, isekai (nguồn Nhật) | hầu "tôi – tiểu thư"; "ta – ngươi" chỉ ở nghi lễ và phản diện; hôn phu – hôn thê giữ một cặp tới mốc; kính ngữ ngang hàng là màu giai cấp |
+| `zh-ancient` | Cổ trang, tiên hiệp, kiếm hiệp, cung đấu | sư môn theo thứ tự nhập môn; tiền bối theo cảnh giới; 臣妾 là "thần thiếp"; không ép mọi thoại thành "ta – ngươi" |
+| `zh-modern` | Đô thị, hiện đại Trung | bạn học "tớ – cậu"; 学长 không ngụ ý yêu; 宝贝/亲爱的 có thể chỉ là gọi bạn; không dùng "hắn – nàng" |
+| `en-western` | Phương Tây hiện đại và fantasy (nguồn Anh) | I/you chọn theo quan hệ; chưa yêu "tôi – cậu"; vua – bề tôi "ta – khanh", tránh "trẫm" |
+
+Gợi ý bộ cho tác phẩm theo ngôn ngữ và trường thể loại (`suggestRegister`): tiếng Nhật có dấu hiệu dị
+giới/quý tộc → `ja-fantasy`, còn lại `ja-modern`; tiếng Trung theo nhóm cổ đại/hiện đại, không chắc thì
+không chọn bộ; tiếng Anh → `en-western`. Ghi thẳng mã vào thể loại (ví dụ `[ja-fantasy]`) thì mã đó thắng.
+**Lưu lựa chọn riêng theo tác phẩm chưa có** (cần schema); đây là chỗ tạm.
+
+`ja-modern` có ba ví dụ **tự soạn**: giáo viên quát nhưng giữ cặp, giữ nguyên lời đe dọa, học trò
+lễ phép và lược đại từ. Chỉ gửi ví dụ của bộ đã chọn trong system prompt `v2`; không gửi thành đoạn
+nguồn, không cho phép ví dụ ghi đè cặp đã duyệt. Các bộ khác chưa thêm ví dụ khi chưa có ca lỗi cụ thể.
+
+## 4. Căn cứ nghiên cứu (quan sát, đọc 2026-10-05)
+
+**Ngôn ngữ học.** Tiếng Việt gọi người nghe chủ yếu bằng từ thân tộc, mỗi từ mã hóa tuổi và thế hệ tương
+đối, không cặp nào đối xứng ([Lương Văn Hy 1990](https://benjamins.com/catalog/pbns.11)). Người ngang
+hàng tránh lộ chênh lệch tuổi bằng đại từ thật, tên, hoặc từ thân tộc lệch
+([Sidnell & Shohet 2013](https://rai.onlinelibrary.wiley.com/doi/abs/10.1111/1467-9655.12053)). Đổi xưng
+hô là tín hiệu cảm xúc mạnh; "tao – mày" có thể thân hoặc xúc phạm
+([Wikipedia](https://en.wikipedia.org/wiki/Vietnamese_pronouns)). Không tìm thấy thang điểm số cho trục
+quyền thế/thân hữu trong tiếng Việt.
+
+**Đại từ ngôi ba.** Ngôi ba tiếng Việt ít trung tính: "hắn" lạnh/khinh, "gã" coi thường, "nàng" văn
+chương cho nữ trẻ, "nó" cho trẻ con hoặc người bị khinh
+([khảo sát Nam Cao](https://nguvandhag.wordpress.com/2012/02/02/kh%E1%BA%A3o-sat-cac-%C4%91%E1%BA%A1i-t%E1%BB%AB-nhan-x%C6%B0ng-va-l%E1%BB%9Bp-t%E1%BB%AB-x%C6%B0ng-ho/)).
+Bản dịch Kim Dung cũ dùng "hắn" gần như trung tính cho nam chính
+([hồi 59](https://vnexpress.net/tieu-ngao-giang-ho-hoi-59-2754481.html)); bản khác cùng truyện dùng
+"chàng" ([hồi 40](https://truyenkimdung.net/tieu-ngao-giang-ho/hoi-40-may-troi-nuoc-chay-theo-y-minh)) —
+đây là lựa chọn của từng dịch giả, nên là thiết lập cấp dự án. Lý Lan gọi Harry là "nó".
+
+**Cộng đồng dịch.** Tiến trình "mình – bạn → cậu – tớ → anh – em"
+([Feilunhai](https://feilunhai1010.wordpress.com/2012/06/09/tam-nham-ve-cach-xung-ho-trong-tieu-thuyet/));
+hạn chế "ta – ngươi" của bản convert, nữ chính xuyên không kể chuyện xưng "tôi"
+([Tuyết Trên Tay](https://tuyettrentay.wordpress.com/2013/04/19/mot-vai-kinh-nghiem-nho-nho-khi-edit/));
+hệ xưng hô cổ trang ([vandamphongkhuynh](https://vandamphongkhuynh.com/2024/04/02/cach-xung-ho-trong-truyen-co-dai/)).
+**Không có bảng quy đổi công khai cho light novel Nhật.** Bản dịch fan Hamefura trên docln gọi hôn thê
+lẫn lộn "anh – nàng", "ta – nàng" — đúng loại lỗi bộ mặc định cần chặn.
+
+**Khảo sát thầy trò ngày 2026-10-05 (căn cứ trao đổi trước quyết định mới).** Bản dịch fan Oregairu
+đã tham khảo cho cô Hiratsuka dùng "tôi – cậu", lúc gắt có "nhóc"
+([Sonako](https://sonako.fandom.com/vi/wiki/Yahari_Ore_no_Seishun_Love_Come_wa_Machigatteiru_T%E1%BA%ADp_1_-_Ch%C6%B0%C6%A1ng_1)).
+Các bài về giao tiếp học đường phản ánh sắc thái nặng của mày/tao
+([Giáo dục Việt Nam](https://giaoduc.net.vn/thay-co-xung-ho-voi-hoc-tro-pho-thong-nhu-the-nao-cho-phu-hop-post205506.gd),
+[Tuổi Trẻ](https://tuoitre.vn/thay-giao-xung-tao-bop-cam-chui-hoc-sinh-tho-tuc-ngay-tren-buc-giang-20231002104733503.htm));
+đó là bối cảnh tiếp nhận tiếng Việt, không phải quy tắc bắt buộc cho văn học. Nhận định ban đầu
+"cô – mày sát nhất" đã được thay bằng lựa chọn biên tập ở mục 1; không thể kết luận độ trung thành
+chỉ từ đối chiếu riêng 私 và お前.
+
+**Công cụ AI cho tiếng Việt.**
+[zh-vi-novel-translation](https://github.com/duongmkqn005-ai/zh-vi-novel-translation): bảng có chiều,
+phạm vi chương, chứng cứ, trạng thái; không đổi sớm hơn nguyên tác.
+[MTLS](https://github.com/thang97-21/MTLS) (Nhật → Việt): bậc cặp theo độ thân, "anh – em" khi đủ hai
+tín hiệu; nhưng dùng "tôi – bạn" cho người lạ và bắt buộc "anh – em" cho người yêu — **trái** mục 1.
+[Donut4055/truyen](https://github.com/Donut4055/truyen): khóa cặp cả chương — trái mục 1.4.
+
+**Kho gốc trong máy** (đếm thoại 「」): tỉ lệ câu có kính ngữ — n5955en (học đường) 13%, Hamefura 33%,
+Goblin 46%. Fantasy romance gần như không dùng xưng hô cổ (拙者, 朕, 汝, そなた đều vắng).
+
+**Bản dịch fan và convert (khảo sát 2026-10-05).** Khoảng 20 light novel trên docln, Sonako và các bản
+edit truyện Trung. Hai chuẩn ngầm mạnh nhất: cổ trang khác hiện đại (giữ "ta – ngươi, hắn, nàng" trong
+truyện hiện đại bị coi là lỗi convert — *"cái hay của truyện chắc mất đến 70%"*,
+[congchuakhangiay](https://congchuakhangiay.wordpress.com/2011/10/01/danh-cho-cho-cac-b%E1%BA%A1n-m%E1%BB%9Bi-edit-truy%E1%BB%87n/));
+fantasy phương Tây khác cung đình Á Đông (người dịch Tearmoon từ chối "thần" vì *"theme kiểu phương
+Tây"*, [ch.17](https://docln.net/truyen/6624-chuyen-ve-de-quoc-tearmoon/c63346-chuong-17-bien-nien-su-ve-cong-chua-thanh-nu-mia)).
+Người yêu cổ trang phổ biến "ta – nàng", "thiếp – chàng" bị chê sáo
+([chiase.org](https://chiase.org/threads/kinh-nghiem-edit-truyen-ngon-tinh.1614/)). Nhân vật chính học
+đường gần như luôn "tôi – cậu" hoặc "tớ – cậu"; "tao – mày" cho vai phụ côn đồ. Nhóm dịch cũ giữ hậu tố
+theo quy chuẩn, nhóm mới dịch thành "Ngài Myne", "tiểu thư Rafina"; ghép lai bị coi là kém. Độc giả ít
+bình luận về xưng hô; hai lời chê lặp lại là xưng hô "ngang" (thiếu phân cấp) và **đổi giữa chương không
+lý do**. Quy chuẩn tốt ghi rõ mốc đổi, ví dụ DanMachi: *"Lilly (em) – ngài; sau vụ cuối… (em) – anh"*.
+Giới hạn: nhiều trang chặn truy cập, một phần chỉ đọc qua tóm tắt; tỉ lệ là ước định tính.
+
+**Dịch máy.** Không tìm thấy bộ dữ liệu hay phân tích lỗi nào riêng về xưng hô khi LLM dịch sang tiếng
+Việt — Lab của Mira là nơi đo đầu tiên.
+
+## 5. Kết quả đo (n5955en, chương 1–20, `gemini-3.1-flash-lite`)
+
+Số đo dưới đây thuộc phiên bản **trước** cập nhật thầy trò ngày 2026-10-06, không phải bằng chứng
+rằng prompt mới đã cải thiện chất lượng. Cần dịch lại cùng mẫu để đánh giá tác động.
+
+| Bản | Gọi nhầm "thầy" | 「」 sót / ngoặc thẳng | Glossary | Lô mỗi chương | Chi phí |
+| --- | --- | --- | --- | --- | --- |
+| v2, không thinking | 26 | 96 / 815 | 99% | 2–3 | $0,092 |
+| v2, có thinking | 24 | 337 / 337 | 100% | 2–3 | $0,195 |
+| v2 + thẻ nhân vật, cặp xưng hô, nguyên chương | 0 | 0 / 0 | 89%* | 1 | $0,087 |
+| + bộ mặc định `ja-modern` và luật chung | 0–1 | 0 / 0 | 96% | 1 | $0,090 |
+
+\* Tụt vì lỗi dữ liệu và format: thẻ nhân vật ghi tên không có mũi tên nên model đọc 淑蓮 thành
+"Shukuren"; họ 桐谷 bị gắn làm biến thể của Akira nên mất mục "桐谷 → Kiritani" (Mira không cho một tên
+vừa là thuật ngữ vừa là nhân vật). Đã sửa format thành `桐谷淑蓮, 淑蓮 → Sumire`.
+
+Thinking không đỡ lỗi xưng hô mà đắt gấp 2 lần. Ngữ cảnh đủ mới là thứ sửa được. Số mẫu câu cô giáo nói
+thô còn ít (3), cần đo thêm trước khi kết luận về "tao".
+
+## 6. Còn mở
+
+**Cần chủ sản phẩm chốt.**
+- **Hậu tố trong fantasy:** giữ (mặc định hiện tại) hay đổi mặc định sang Việt hóa cho bộ fantasy.
+- Nguồn Anh: "mình – bồ" cho mọi nhóm bạn teen hay chỉ kiểu Harry Potter; nhân viên với sếp "tôi" hay
+  "em" (chưa có nguồn bản dịch fan).
+
+**Đề xuất kỹ thuật.**
+- **Lưu bộ mặc định theo tác phẩm** (schema), ghi đè được theo nhân vật hoặc cảnh — ví dụ nội tâm người
+  chuyển sinh giữ giọng hiện đại trong truyện `ja-fantasy`.
+- **Nhiều dạng tên cho một nhân vật**, mỗi dạng một bản dịch (họ tên, tên, họ, biệt danh). Hiện mỗi nhân
+  vật có một tên dịch, và tên đã là nhân vật thì không còn là thuật ngữ — prompt `v1` mất luôn bản dịch
+  tên đó.
+- **Bước phân tích trước khi dịch**: đếm cách tự xưng và cách gọi trong bản gốc như mục 1 đã làm tay, đề
+  xuất cặp kèm câu bằng chứng để người dịch duyệt.
+- **Bộ kiểm tra nhất quán**: nhân vật nữ bị gọi "thầy", cặp đổi giữa chương không có mốc, dấu thoại lẫn
+  kiểu — các chỉ số của mục 5 thành kiểm tra tự động.
+- **Kiểm chứng bằng bản in** (IPM, Amak, Kim Đồng; Lý Lan; Kim Dung bản Vũ Đức Sao Biển) — chưa có trích
+  đoạn chính xác.
+
+[Về module Ngữ cảnh](README.md)

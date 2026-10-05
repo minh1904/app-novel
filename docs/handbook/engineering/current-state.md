@@ -4,9 +4,9 @@ Cập nhật: **2026-10-05** · Trạng thái: quan sát repository và working 
 
 **Module Đề xuất đang triển khai:** Working tree đã thêm schema tác phẩm v7, phiên/lượt chat bền,
 đề xuất và checkpoint, thao tác duyệt qua transaction, cùng đường dịch chương theo từng dòng không
-trống vào hàng chờ. Composer có hành động Gửi, Tạo đề xuất, Áp dụng thẳng theo lượt; hộp dịch mặc
+trống vào hàng chờ. Composer mặc định Tạo đề xuất rồi mở diff tại editor khi lượt xong, kèm Chỉ hỏi trong chat và Áp dụng thẳng theo lượt; không còn khối xem nguồn gửi kèm hay nút thêm nguồn; hộp dịch mặc
 định Duyệt trước và có lựa chọn Áp dụng thẳng. Đây chưa phải Module 5 hoàn tất: diff trong editor,
-đặt vị trí trên bản dịch có chữ, Markdown chat, picker ngữ cảnh và nghiệm thu Electron còn mở. Danh
+đặt vị trí trên bản dịch có chữ, Markdown chat và nghiệm thu Electron còn mở. Danh
 sách task và tiêu chí nằm ở [OpenSpec](../../../openspec/changes/proposals/tasks.md). Các mục bên
 dưới phần lớn mô tả baseline đã commit trước Module 5; không dùng chúng phủ nhận trạng thái working
 tree vừa nêu.
@@ -53,6 +53,7 @@ Trang này được viết lại ngày 2026-10-03 để thêm cột Số phận 
 | Minh họa “Sắp có” | Có | Giữ tới khi có màn thật; mock của Từng câu gỡ cùng mode (Gỡ Từng câu) |
 | Thuật ngữ (glossary) | Chạy trên kho thật: CRUD, alias, import Names.txt, so khớp CJK/Latin, tiêm Tầng C prompt, UI GlossaryScreen | **Đã hoàn thành Module 3 (2026-10-04)** |
 | Xưng hô (addressing) | Chạy trên kho thật: CRUD nhân vật, dyad có chiều, hiệu lực chương, tiêm Tầng B prompt, kiểm tra đại từ, UI AddressingScreen | **Đã hoàn thành Module 4 (2026-10-04)** |
+| Prompt dịch và chat | Một bộ dựng request cho lượt chính, lượt hỏi lại và hash trace; `v1` mặc định, `v2` sau `MIRA_PROMPT_VERSION`. Luật thầy trò áp cả dịch/chat `v1`/`v2`; `ja-modern` có ví dụ, `v1` giữ ghi chú cặp (2026-10-06) | Chưa đo lại chất lượng thầy trò bằng model; đo `v1`/`v2` rồi mới đổi mặc định; xem [hệ thống prompt](../../modules/context/prompt-system.md) |
 | Xuất bản dịch (Export) | Chạy trên kho thật: 4 định dạng chuẩn ebook novel (TXT, MD, Word DOCX, PDF native printToPDF), đơn chương và gộp/tách tác phẩm | **Đã hoàn thành Module 6 (2026-10-05)** |
 | Build và kiểm tra | 1620+ test | Giữ |
 | Cấu trúc mã nguồn | Bốn tầng, lint ép | Giữ |

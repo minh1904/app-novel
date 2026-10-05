@@ -3,6 +3,9 @@
 Cập nhật: 2026-10-04 · Trạng thái: mặc định hậu tố đã chốt; mô hình và cách kiểm là đề xuất.
 Chủ trì: người dịch/sản phẩm. Câu hỏi: làm sao hỗ trợ lựa chọn của người dịch mà không đoán sai quan hệ?
 
+> 2026-10-05: các quyết định về xưng hô tiếng Việt (đổi theo mốc, không "tôi – bạn", đổi giữa cảnh,
+> bộ mặc định theo bối cảnh) và căn cứ nghiên cứu nằm ở [Xưng hô tiếng Việt](vietnamese-addressing.md).
+
 ## Tách ba lớp
 
 | Lớp | Ghi nhận | Không suy diễn thành |

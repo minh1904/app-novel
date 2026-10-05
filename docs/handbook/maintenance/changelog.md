@@ -1,5 +1,44 @@
 # Nhật ký handbook
 
+## 2026-10-06 — Hạn chế mày/tao trong quan hệ thầy trò
+
+- Chốt giáo viên hiện đại "thầy/cô – em", giáo viên cộc có thể "thầy/cô – cậu"; mày/tao chỉ theo
+  ngoại lệ đã duyệt. Giữ độ gắt bằng từ ngữ, không làm nhẹ tình tiết; Unya – Akira chốt "cô – cậu" /
+  "em – cô", thay lựa chọn còn mở ngày 05/10.
+- Áp luật cho dịch và chat `v1`/`v2`, thêm ghi chú cặp vào `v1` và ba ví dụ tự soạn cho `ja-modern`.
+  Cập nhật [quyết định xưng hô](../../modules/context/vietnamese-addressing.md) và
+  [hệ thống prompt](../../modules/context/prompt-system.md). Chưa đo lại chất lượng bằng model.
+
+## 2026-10-05 — Xưng hô tiếng Việt theo bối cảnh
+
+- Chủ sản phẩm chốt: đổi cặp theo mốc truyện; quan hệ quyết định cặp, đại từ gốc quyết định mức thô;
+  không "tôi – bạn" trong thoại; cho đổi giữa cảnh; ngôi ba và giọng vùng miền theo bối cảnh và tính
+  cách; phân loại theo bối cảnh chứ không theo thể loại.
+- Thêm [Xưng hô tiếng Việt](../../modules/context/vietnamese-addressing.md): nghiên cứu ngôn ngữ học,
+  cộng đồng dịch, công cụ AI và kho gốc; năm bộ mặc định; số đo trên n5955en.
+- Prompt `v2` thêm thẻ nhân vật, luật xưng hô chung, bảng mặc định theo bối cảnh và chốt dấu thoại
+  tiếng Nhật. Mira Lab nạp nhân vật và cặp xưng hô từ tệp, có biến thể thinking và `--batch-tokens`.
+- Khảo sát bản dịch fan (docln, Sonako, bản edit truyện Trung) và cặp "cô – mày"; chốt tạm mặc định cổ
+  trang, fantasy, học đường và thêm bộ `ja-court`. "cô – mày" và hậu tố trong fantasy còn chờ chốt.
+
+## 2026-10-05 — Nghiên cứu và dựng lại hệ thống prompt
+
+- Thêm [hệ thống prompt](../../modules/context/prompt-system.md): hiện trạng, đối chiếu LinguaGacha,
+  GalTransl, AiNiee, Sakura, NovelCrafter, Sudowrite và hướng dẫn nhà cung cấp; thiết kế `v2`.
+- Một bộ dựng request cho dịch; lượt hỏi lại ID thiếu mang cùng glossary và xưng hô (sửa lỗi, áp cả
+  `v1`); trace đề xuất ghi phiên bản prompt; Bộ đo ghi hash của prompt đã gửi thật.
+- `v2` (system cố định, ngữ cảnh trong user có thẻ, đoạn trước, profile ngôn ngữ × thể loại, chat đặt
+  ngữ cảnh cuối) bật bằng `MIRA_PROMPT_VERSION`/`MIRA_BENCH_PROMPT_VERSION`; mặc định vẫn `v1` tới
+  khi đo.
+- Chat tự đọc glossary và xưng hô đã duyệt của truyện từ kho (khớp theo chương), gửi kèm, ghi vào lượt
+  và hiện trong mục “Đã gửi kèm”; áp cả `v1`.
+
+## 2026-10-05 — Composer chat viết thẳng vào editor
+
+- Chủ sản phẩm chốt: gửi trong composer mặc định là Tạo đề xuất và đề xuất mở ngay tại editor; bỏ
+  khối xem nguồn gửi kèm và nút thêm nguồn từ chương khác. Cập nhật
+  [quyết định Module Đề xuất](../../modules/proposals/decisions.md) (mục 7–8), luồng duyệt và hiện trạng.
+
 ## 2026-10-05 — Status bar cho editor chương
 
 - Chủ sản phẩm chốt năm câu hỏi của bản phân tích Obsidian; thêm status bar dưới màn chương (số chữ,

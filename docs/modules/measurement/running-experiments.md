@@ -25,8 +25,11 @@ node_modules/.bin/vitest run --config scripts/bench/vitest.config.mjs scripts/be
 Trang T3 dùng tên mù dạng `rating-<hash>.html`; tên run/condition chỉ nằm trong tệp key riêng ở
 `fixtures/private/runs/`. Runner in tên trang cần mở sau khi sinh xong.
 
-Biến chính: `MIRA_BENCH_MODEL`, `MIRA_BENCH_PROMPT`, `MIRA_BENCH_THINKING`,
-`MIRA_BENCH_REPEATS`, `MIRA_BENCH_ONLY`, `MIRA_RUN_A/B`, `MIRA_RUN_BASELINE/CANDIDATE`. Bật
+Biến chính: `MIRA_BENCH_MODEL`, `MIRA_BENCH_PROMPT`, `MIRA_BENCH_PROMPT_VERSION` (`v1` mặc định,
+`v2` theo [hệ thống prompt](../context/prompt-system.md)), `MIRA_BENCH_THINKING`,
+`MIRA_BENCH_REPEATS`, `MIRA_BENCH_ONLY`, `MIRA_RUN_A/B`, `MIRA_RUN_BASELINE/CANDIDATE`. Từ
+2026-10-05, `config.json` ghi `promptVersion` và hash của các system prompt **đã gửi thật**, đọc từ
+request; các lần chạy trước ghi hash của prompt MVP, không khớp thứ đã chạy. Bật
 khuyến nghị E6 lịch sử bằng `MIRA_BENCH_DECISION_PROFILE=legacy-e6`; không khai thì báo metrics mà
 không tự kết luận giữ/bỏ.
 
@@ -36,5 +39,26 @@ hoặc `.env` bị ignore; mọi output được quét secret trước khi ghi. 
 
 Một lần chạy có ý nghĩa phải ghi commit, fixture, model, prompt hash, tham số thực gửi, số lần lặp,
 usage, lỗi và thời gian. Khi code/fixture/oracle đổi, dùng `rescore` và giữ kết quả cũ thay vì ghi đè.
+
+## Mira Lab: thử prompt trên truyện thật
+
+`node scripts/lab/mira-lab.mjs help` (2026-10-05). CLI nạp truyện xuất từ syosetsu-downloader
+(`meta.json` + `plain/*.txt`) thành **hai bản** `[v1]` và `[v2]` trong một thư viện riêng ở
+`fixtures/private/lab/data`, với cùng bản gốc và cùng glossary lấy từ
+`fixtures/private/lab/glossary/<ncode>.json`. Lệnh dịch đi qua đúng đường của UI
+(`ParagraphTranslator`, chính sách tự áp dụng), nên `open` in lệnh mở thư viện lab bằng app
+(`MIRA_DATA_DIR`) để đọc kết quả trong editor.
+
+| Lệnh | Việc |
+| --- | --- |
+| `import <thư mục…>` | nạp hai bản và glossary |
+| `glossary [ncode…]` | nạp lại glossary sau khi sửa tệp |
+| `prompt <ncode> --chapter N --batch K` | in prompt sẽ gửi, không gọi mạng |
+| `translate [ncode…] --chapters 1-3` | dịch thật; mỗi request ghi vào `fixtures/private/lab/runs/` |
+| `report [ncode…]` | so số đoạn, tuân thủ glossary, token và cache, từng đoạn cạnh nhau |
+
+Glossary của ba truyện thử là **nháp do AI soạn**, ghi `origin: ai` nhưng đánh dấu đã duyệt để đi vào
+prompt; người dịch cần xác minh trước khi coi điểm tuân thủ là thước đo. Khóa API chỉ nằm trong DB lab
+dưới dạng mã hóa bằng khóa ngẫu nhiên của tiến trình, và kết nối bị xóa khi lệnh kết thúc.
 
 [Về module Bộ đo](README.md)

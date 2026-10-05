@@ -19,6 +19,8 @@ Tập hợp những gì đã nghiên cứu về glossary, nhân vật, xưng hô
 | Học văn phong từ đâu, nhớ gì và tránh tiết lộ sớm thế nào? | [Văn phong và ký ức](style-and-memory.md) |
 | Lưu, duyệt, sửa và truy vết dữ liệu ra sao? | [Dữ liệu và vòng đời](data-lifecycle.md) |
 | Chọn gì để gửi AI, cắt gì khi thiếu chỗ? | [Lắp ngữ cảnh](context-assembly.md) |
+| Prompt dịch và chat xếp thế nào, các sản phẩm khác làm gì? | [Hệ thống prompt](prompt-system.md) |
+| Chưa có cặp xưng hô thì AI xưng hô thế nào, theo bối cảnh nào? | [Xưng hô tiếng Việt](vietnamese-addressing.md) |
 | Chứng minh tốt hơn và tránh báo lỗi nhầm thế nào? | [Chất lượng và kiểm chứng](quality-and-evaluation.md) |
 | Làm theo thứ tự nào, còn phải chốt gì? | [Lộ trình và câu hỏi mở](roadmap.md) |
 | Kết luận bắt nguồn từ đâu, tài liệu cũ nằm ở đâu? | [Bằng chứng và bản đồ nguồn](evidence.md) |

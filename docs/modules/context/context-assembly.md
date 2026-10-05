@@ -19,7 +19,7 @@ Nội dung truyện, tài liệu nhập, ví dụ và ghi chú là **dữ liệu
 
 Spec cũ đòi B giống từng ký tự cho cả chương. Nếu có ngoại lệ theo cảnh thì cần tách phần B ổn định và phần áp dụng theo cảnh, hoặc thu hẹp phạm vi snapshot. Không vừa cam kết B bất biến cả chương vừa chèn ngoại lệ cảnh mà không sửa hợp đồng.
 
-Vị trí system/user/assistant và số message là biến thiết kế cần kiểm. Các khẳng định cũ “glossary phải ở system” hoặc “memory ở assistant tốt hơn” chưa có bằng chứng Mira. [Chat hiện tại](../../../src/main/services/ai/chatPrompt.ts) đặt khối ngữ cảnh trong user message trước lịch sử; không đổi nó chỉ để khớp sơ đồ nghiên cứu.
+Vị trí system/user/assistant và số message là biến thiết kế cần kiểm. Các khẳng định cũ “glossary phải ở system” hoặc “memory ở assistant tốt hơn” chưa có bằng chứng Mira. [Chat hiện tại](../../../src/main/services/ai/chatPrompt.ts) đặt khối ngữ cảnh trong user message trước lịch sử; không đổi nó chỉ để khớp sơ đồ nghiên cứu. *(2026-10-05: bản `v2` sau cờ đặt tầng B/C và ngữ cảnh chat trong message user cuối, để system và lịch sử thành tiền tố ổn định; chưa đo, xem [hệ thống prompt](prompt-system.md).)*
 
 ## Chọn theo loại thông tin
 
