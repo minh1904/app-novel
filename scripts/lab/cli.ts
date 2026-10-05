@@ -28,6 +28,14 @@ import { createServices, type Services } from '../../src/main/services/createSer
 import { GlossaryService } from '../../src/main/services/context/glossaryService'
 import { AddressingService } from '../../src/main/services/context/addressingService'
 import type { CharacterGender } from '../../src/shared/contracts/addressing'
+import { addressingGaps, isPronounLike } from '../../src/shared/algorithms/addressingGaps'
+import {
+  buildAnalysisMessages,
+  collectAddressingEvidence,
+  parseAnalysis
+} from '../../src/main/services/ai/addressingAnalysis'
+import { suggestRegister } from '../../src/main/services/ai/translate/languageProfiles'
+import type { TranslationModelCaller } from '../../src/shared/contracts/translateCore'
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
 import { parsePromptVersion, type PromptVersion } from '../../src/main/services/ai/promptVersion'
 import { paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
@@ -261,6 +269,7 @@ interface GlossaryFile {
     aliases?: string[]
     gender?: CharacterGender
     role?: string
+    thirdPerson?: string
     notes?: string
   }>
   /** Cặp xưng hô có chiều; `chapters` dạng "1-20" giới hạn phạm vi áp dụng. */
@@ -269,6 +278,8 @@ interface GlossaryFile {
     to: string
     self: string
     address: string
+    /** Đại từ ngôi hai khi `address` là tên hoặc danh xưng. */
+    secondPerson?: string
     formality?: string
     notes?: string
     chapters?: string
@@ -328,6 +339,7 @@ function syncAddressing(library: LibraryStore, workId: string, file: GlossaryFil
       aliases: character.aliases ?? [],
       gender: character.gender ?? 'unknown',
       role: character.role ?? null,
+      thirdPerson: character.thirdPerson ?? null,
       notes: character.notes ?? null,
       status: 'approved'
     })
@@ -345,6 +357,7 @@ function syncAddressing(library: LibraryStore, workId: string, file: GlossaryFil
       targetCharacterId: to,
       speakerPronoun: dyad.self,
       recipientPronoun: dyad.address,
+      secondPerson: dyad.secondPerson ?? null,
       formality: dyad.formality ?? null,
       notes: dyad.notes ?? null,
       fromChapterId: Number.isInteger(first) ? (chapters[first - 1] ?? null) : null,
@@ -439,6 +452,8 @@ interface CallRecord {
   cachedTokens: number
   outputTokens: number
   reasoningTokens: number
+  /** Chữ model trả về, để đọc lại nhãn người nói của `v3`. */
+  response?: string
   ms: number
 }
 
@@ -455,13 +470,15 @@ function recordingFetch(
       const body = JSON.parse(init.body) as { messages?: CallRecord['messages'] }
       let usage: Record<string, unknown> = {}
       let finish: string | null = null
+      let content: string | undefined
       try {
         const payload = (await response.clone().json()) as {
           usage?: Record<string, unknown>
-          choices?: Array<{ finish_reason?: string }>
+          choices?: Array<{ finish_reason?: string; message?: { content?: string } }>
         }
         usage = payload.usage ?? {}
         finish = payload.choices?.[0]?.finish_reason ?? null
+        content = payload.choices?.[0]?.message?.content
       } catch {
         // phản hồi không phải JSON (lỗi mạng, stream): vẫn ghi request
       }
@@ -478,6 +495,7 @@ function recordingFetch(
         cachedTokens: Number(details?.cached_tokens ?? 0),
         outputTokens: completion,
         reasoningTokens: Math.max(0, total - prompt - completion),
+        response: content,
         ms: Date.now() - started
       })
     }
@@ -1158,7 +1176,301 @@ function costReport(manifest: Manifest, args: Args): void {
   }
 }
 
+// ---------------------------------------------------------------- phân tích xưng hô
+
+/**
+ * Đề xuất nhân vật và cặp xưng hô đủ ô kèm bằng chứng. Ghi ra tệp để duyệt; \`--apply\` chỉ điền
+ * những ô còn trống trong tệp glossary và thêm cặp mới, không ghi đè lựa chọn đã có.
+ */
+async function analyze(manifest: Manifest, args: Args): Promise<void> {
+  const key = env('GEMINI_API_KEY')
+  if (!key) throw new Error('Thiếu GEMINI_API_KEY (biến môi trường hoặc .env).')
+  const model = args.flags.get('model') ?? env('MIRA_LAB_ANALYSIS_MODEL', 'gemini-3.1-flash-lite')
+  const baseUrl =
+    args.flags.get('base-url') ??
+    env('MIRA_LAB_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta/openai')
+  const library = openLibrary(manifest)
+  mkdirSync(join(LAB, 'analysis'), { recursive: true })
+  try {
+    for (const novel of pickNovels(manifest, args.positional)) {
+      const file = glossaryFileOf(novel.ncode)
+      const characters = file?.characters ?? []
+      if (characters.length === 0) {
+        console.log(`${novel.ncode}: tệp glossary chưa có nhân vật nào, bỏ qua.`)
+        continue
+      }
+      const workId = Object.values(novel.copies)[0]
+      const work = library.get(workId)
+      const ids = chapterIds(library, workId)
+      const wanted = parseRange(args.flags.get('chapters') ?? '1-30', ids.length)
+      const chapters = wanted.map((n) => ({
+        number: n,
+        text: library.readText(workId, ids[n - 1], 'source').content
+      }))
+      const register = suggestRegister(work.sourceLang, work.genre)
+      const evidence = collectAddressingEvidence(chapters, characters, work.sourceLang)
+      const messages = buildAnalysisMessages({
+        sourceLang: work.sourceLang,
+        register,
+        characters,
+        evidence
+      })
+
+      const services = createServices({ library, crypto: volatileCrypto, fetch })
+      const connection = await setupConnection(services, key, model, baseUrl, 30, undefined)
+      let text = ''
+      let usd = 0
+      try {
+        const provider = services.connections.translator(
+          connection.connectionId,
+          connection.entryId
+        ).provider as unknown as TranslationModelCaller
+        const result = await provider.complete(messages)
+        text = result.text
+        const usage = result.usage as { inputTokens?: number; outputTokens?: number } | null
+        usd =
+          costOfUsage(
+            { inputTokens: usage?.inputTokens ?? 0, outputTokens: usage?.outputTokens ?? 0 },
+            lookupModel(model, 'google')
+          ) ?? 0
+      } finally {
+        services.connections.delete(connection.connectionId)
+      }
+      const result = parseAnalysis(text)
+      const out = join(LAB, 'analysis', `${novel.ncode}.json`)
+      writeFileSync(
+        out,
+        JSON.stringify(
+          {
+            ncode: novel.ncode,
+            model,
+            register,
+            chapters: wanted,
+            at: new Date().toISOString(),
+            ...result
+          },
+          null,
+          2
+        ) + '\n',
+        'utf8'
+      )
+      console.log(
+        `\n${novel.ncode}: ${result.characters.length} nhân vật, ${result.dyads.length} cặp, ≈ $${usd.toFixed(4)} → ${out}`
+      )
+      for (const dyad of result.dyads) {
+        const second = dyad.secondPerson ? `, ngôi hai "${dyad.secondPerson}"` : ''
+        console.log(
+          `  ${dyad.from} → ${dyad.to}: "${dyad.self}" – "${dyad.address}"${second} [${dyad.confidence ?? '?'}]`
+        )
+      }
+
+      if (args.flags.has('apply') && file) {
+        let filled = 0
+        let added = 0
+        for (const proposed of result.characters) {
+          const current = characters.find((c) => c.source === proposed.source)
+          if (!current) continue
+          if (!current.thirdPerson && proposed.thirdPerson) {
+            current.thirdPerson = proposed.thirdPerson
+            filled++
+          }
+          if ((!current.gender || current.gender === 'unknown') && proposed.gender) {
+            current.gender = proposed.gender as CharacterGender
+            filled++
+          }
+        }
+        file.dyads ??= []
+        for (const proposed of result.dyads) {
+          if (
+            !characters.some((c) => c.source === proposed.from) ||
+            !characters.some((c) => c.source === proposed.to)
+          )
+            continue
+          const current = file.dyads.find((d) => d.from === proposed.from && d.to === proposed.to)
+          if (current) {
+            if (!current.secondPerson && proposed.secondPerson && !isPronounLike(current.address)) {
+              current.secondPerson = proposed.secondPerson
+              filled++
+            }
+          } else {
+            file.dyads.push({
+              from: proposed.from,
+              to: proposed.to,
+              self: proposed.self,
+              address: proposed.address,
+              ...(proposed.secondPerson ? { secondPerson: proposed.secondPerson } : {}),
+              notes: ['AI đề xuất, chờ duyệt', proposed.notes].filter(Boolean).join('. ')
+            })
+            added++
+          }
+        }
+        const path = join(LAB, 'glossary', novel.ncode + '.json')
+        writeFileSync(path, JSON.stringify(file, null, 2) + '\n', 'utf8')
+        console.log(
+          `  Đã điền ${filled} ô trống và thêm ${added} cặp vào ${path}. Chạy "glossary ${novel.ncode}" để nạp.`
+        )
+      }
+    }
+  } finally {
+    library.close()
+  }
+}
+
+// ---------------------------------------------------------------- chấm cặp xưng hô
+
+const PRONOUN_CANDIDATES = [
+  'tôi',
+  'tao',
+  'tớ',
+  'mình',
+  'ta',
+  'anh',
+  'em',
+  'chị',
+  'cậu',
+  'mày',
+  'ngài',
+  'cô',
+  'ông',
+  'bà',
+  'ngươi',
+  'con'
+]
+
+/** Đại từ đứng riêng trong câu; bỏ dạng nhắc tên hay ngôi ba ("chị Claire", "anh ấy", "em gái"). */
+function pronounsIn(text: string): string[] {
+  const found: string[] = []
+  const lower = text.toLowerCase()
+  for (const word of PRONOUN_CANDIDATES) {
+    const pattern = new RegExp(`(^|[^\\p{L}])${word}(?=[^\\p{L}]|$)`, 'gu')
+    for (const match of lower.matchAll(pattern)) {
+      const after = text.slice(
+        (match.index ?? 0) + match[0].length,
+        (match.index ?? 0) + match[0].length + 12
+      )
+      if (/^ (ấy|ta|trai|gái|họ|nhà)\b/.test(after) || /^ \p{Lu}/u.test(after)) continue
+      found.push(word)
+    }
+  }
+  return found
+}
+
+function allowedWords(dyad: { self: string; address: string; secondPerson?: string }): Set<string> {
+  return new Set(
+    [dyad.self, dyad.address, dyad.secondPerson ?? '']
+      .join(' ')
+      .toLowerCase()
+      .split(/[^\p{L}]+/u)
+      .filter(Boolean)
+  )
+}
+
+/**
+ * Chấm độ khớp cặp xưng hô: nhãn "người nói→người nghe" lấy từ phản hồi của một bản \`v3\`
+ * (\`--labels\`), áp lên bản dịch của mọi biến thể cùng truyện theo chữ của đoạn gốc.
+ */
+function pairs(manifest: Manifest, args: Args): void {
+  const [ncode] = args.positional
+  const novel = pickNovels(manifest, [ncode ?? ''])[0]
+  const labelVariant = args.flags.get('labels')
+  if (!labelVariant) throw new Error('Cần --labels <biến thể v3 có nhãn người nói>.')
+  const file = glossaryFileOf(novel.ncode)
+  const nameOf = new Map((file?.characters ?? []).map((c) => [c.source, c.target]))
+  const dyads = new Map(
+    (file?.dyads ?? []).map((d) => [
+      `${nameOf.get(d.from) ?? d.from}→${nameOf.get(d.to) ?? d.to}`,
+      d
+    ])
+  )
+  // Nhãn: chữ gốc → "A→B", lấy từ mọi lần chạy, lần sau đè lần trước.
+  const labels = new Map<string, string>()
+  const runsDir = join(LAB, 'runs')
+  for (const run of existsSync(runsDir) ? readdirSync(runsDir).sort() : []) {
+    const path = join(runsDir, run, `${novel.ncode}-${labelVariant}.jsonl`)
+    if (!existsSync(path)) continue
+    for (const line of readFileSync(path, 'utf8').split('\n').filter(Boolean)) {
+      const record = JSON.parse(line) as CallRecord
+      const user = record.messages.find((m) => m.role === 'user')?.content ?? ''
+      const source = /<nguon>\n([\s\S]*?)\n<\/nguon>/.exec(user)?.[1]
+      if (!source || !record.response) continue
+      try {
+        const sent = JSON.parse(source) as Array<{ id: string; src: string }>
+        const got = JSON.parse(record.response.replace(/```(?:json)?/g, '').trim()) as Array<{
+          id: string
+          noi?: string
+        }>
+        const srcById = new Map(sent.map((item) => [item.id, item.src]))
+        for (const item of got) {
+          const src = srcById.get(item.id)
+          if (src && item.noi && !item.noi.includes('?'))
+            labels.set(src.trim(), item.noi.replace(/\s/g, ''))
+        }
+      } catch {
+        // phản hồi hỏng: bỏ qua lần gọi này
+      }
+    }
+  }
+  console.log(`${novel.ncode}: ${labels.size} câu thoại có nhãn từ ${labelVariant}.`)
+
+  const library = openLibrary(manifest)
+  try {
+    for (const variant of variantsOf(novel, args.flags)) {
+      const workId = novel.copies[variant.label]
+      const ids = chapterIds(library, workId)
+      let checked = 0
+      let off = 0
+      const byPair = new Map<string, { checked: number; off: number; example?: string }>()
+      for (const n of parseRange(args.flags.get('chapters'), ids.length)) {
+        const source = paragraphs(library.readText(workId, ids[n - 1], 'source').content)
+        const target = paragraphs(library.readText(workId, ids[n - 1], 'target').content)
+        if (target.length !== source.length) continue
+        source.forEach((src, i) => {
+          const label = labels.get(src.trim())
+          const dyad = label ? dyads.get(label) : undefined
+          if (!label || !dyad) return
+          const allowed = allowedWords(dyad)
+          const bad = pronounsIn(target[i]).filter((word) => !allowed.has(word))
+          const stat = byPair.get(label) ?? { checked: 0, off: 0 }
+          stat.checked++
+          checked++
+          if (bad.length > 0) {
+            stat.off++
+            off++
+            stat.example ??= `ch${n}: ${target[i].slice(0, 90)} [${bad.join(', ')}]`
+          }
+          byPair.set(label, stat)
+        })
+      }
+      console.log(`\n[${variant.label}] lệch cặp: ${off}/${checked} câu (${pct(off, checked)})`)
+      for (const [label, stat] of [...byPair].sort((a, b) => b[1].off - a[1].off)) {
+        console.log(
+          `  ${label}: ${stat.off}/${stat.checked}${stat.example ? '  vd: ' + stat.example : ''}`
+        )
+      }
+    }
+  } finally {
+    library.close()
+  }
+}
+
 // ---------------------------------------------------------------- lệnh
+
+/** Ô còn trống trong dữ liệu xưng hô của mỗi truyện — chỗ model sẽ phải tự đoán. */
+function gaps(manifest: Manifest, args: Args): void {
+  const library = openLibrary(manifest)
+  try {
+    for (const novel of pickNovels(manifest, args.positional)) {
+      const workId = Object.values(novel.copies)[0]
+      const service = new AddressingService(library, () => Date.now())
+      const found = addressingGaps(service.listCharacters(workId), service.listDyads(workId))
+      console.log(`
+${novel.ncode}: ${found.length} ô trống`)
+      for (const gap of found) console.log('  - ' + gap.message)
+    }
+  } finally {
+    library.close()
+  }
+}
 
 function list(manifest: Manifest): void {
   const library = openLibrary(manifest)
@@ -1201,6 +1513,13 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: v2-nothink+ctx.
       So các biến thể: số đoạn, tuân thủ glossary, token, thinking, chi phí; vài chương đặt cạnh nhau.
   export | pdf [ncode…|all] [--variants …]
       Xuất mỗi bản ra txt, hoặc PDF khổ A5 cùng định dạng ebook của module Xuất.
+  analyze [ncode…|all] [--chapters 1-30] [--model gemini-3.1-flash-lite] [--apply]
+      AI đề xuất giới tính, đại từ ngôi ba và cặp xưng hô đủ ô kèm câu bằng chứng, ghi vào
+      fixtures/private/lab/analysis/<ncode>.json; --apply điền ô trống và thêm cặp mới vào tệp glossary.
+  pairs <ncode> --labels <biến thể v3> [--variants …] [--chapters 1-10]
+      Chấm số câu thoại lệch cặp xưng hô đã chốt, dùng nhãn người nói của một bản v3.
+  gaps [ncode…|all]
+      Ô còn trống trong nhân vật và cặp xưng hô (thiếu đại từ ngôi hai, ngôi ba, giới tính).
   cost [ncode…|all]
       Token, chi phí (gồm thinking) và tần suất gọi của các lần chạy.
   list | open
@@ -1261,6 +1580,12 @@ async function main(): Promise<void> {
       return exportPdfs(manifest, args)
     case 'cost':
       return costReport(manifest, args)
+    case 'analyze':
+      return analyze(manifest, args)
+    case 'pairs':
+      return pairs(manifest, args)
+    case 'gaps':
+      return gaps(manifest, args)
     case 'list':
       return list(manifest)
     case 'open':
