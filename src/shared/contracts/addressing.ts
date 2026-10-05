@@ -11,6 +11,8 @@ export interface CharacterItem {
   target: string
   gender: CharacterGender
   role: string | null
+  /** Đại từ người kể dùng cho nhân vật ở ngôi ba (hắn, cô ấy, y…); vắng là chưa chốt. */
+  thirdPerson?: string | null
   status: ContextStatus
   notes: string | null
   aliases: string[]
@@ -23,7 +25,13 @@ export interface AddressingDyadItem {
   sourceCharacterId: string
   targetCharacterId: string
   speakerPronoun: string
+  /** Cách gọi người nghe: đại từ, hoặc tên/danh xưng như "Rion-sama". */
   recipientPronoun: string
+  /**
+   * Đại từ ngôi hai dùng khi bản gốc lược chủ ngữ hoặc dùng đại từ (貴方, あなた, 你) trong lúc cách
+   * gọi ở trên là tên hoặc danh xưng. Thiếu ô này, model tự điền theo tuổi: hầu gái gọi chủ nhỏ là "em".
+   */
+  secondPerson?: string | null
   formality: string | null
   status: ContextStatus
   fromChapterId: string | null
@@ -102,6 +110,7 @@ export const createCharacterSchema = v.strictObject({
   target: characterNameSchema,
   gender: v.optional(characterGenderSchema, 'unknown'),
   role: v.optional(v.nullish(v.pipe(v.string(), v.trim(), v.maxLength(CHARACTER_ROLE_MAX)))),
+  thirdPerson: v.optional(v.nullish(v.pipe(v.string(), v.trim(), v.maxLength(PRONOUN_MAX)))),
   status: v.optional(v.picklist(CONTEXT_STATUSES), 'approved'),
   notes: v.optional(v.nullish(v.pipe(v.string(), v.trim()))),
   aliases: v.optional(v.array(characterNameSchema), [])
@@ -114,6 +123,7 @@ export const updateCharacterSchema = v.strictObject({
   target: v.optional(characterNameSchema),
   gender: v.optional(characterGenderSchema),
   role: v.optional(v.nullish(v.pipe(v.string(), v.trim(), v.maxLength(CHARACTER_ROLE_MAX)))),
+  thirdPerson: v.optional(v.nullish(v.pipe(v.string(), v.trim(), v.maxLength(PRONOUN_MAX)))),
   status: v.optional(v.picklist(CONTEXT_STATUSES)),
   notes: v.optional(v.nullish(v.pipe(v.string(), v.trim()))),
   aliases: v.optional(v.array(characterNameSchema))
@@ -137,6 +147,7 @@ export const setDyadSchema = v.strictObject({
   targetCharacterId: characterId,
   speakerPronoun: pronounSchema,
   recipientPronoun: pronounSchema,
+  secondPerson: v.optional(v.nullish(v.pipe(v.string(), v.trim(), v.maxLength(PRONOUN_MAX)))),
   formality: v.optional(v.nullish(v.pipe(v.string(), v.trim()))),
   fromChapterId: v.optional(chapterIdNullable),
   toChapterId: v.optional(chapterIdNullable),

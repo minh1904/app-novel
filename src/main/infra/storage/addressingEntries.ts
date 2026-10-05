@@ -32,12 +32,14 @@ interface AliasRow {
 interface CharacterMetadata {
   gender?: CharacterGender
   role?: string | null
+  thirdPerson?: string | null
   userNotes?: string | null
 }
 
 interface DyadMetadata {
   speakerPronoun: string
   recipientPronoun: string
+  secondPerson?: string | null
   formality?: string | null
   userNotes?: string | null
 }
@@ -49,20 +51,22 @@ function touchWork(db: Db, now: number): void {
 function parseCharacterNotes(notes: string | null): {
   gender: CharacterGender
   role: string | null
+  thirdPerson: string | null
   userNotes: string | null
 } {
   if (!notes) {
-    return { gender: 'unknown', role: null, userNotes: null }
+    return { gender: 'unknown', role: null, thirdPerson: null, userNotes: null }
   }
   try {
     const parsed = JSON.parse(notes) as CharacterMetadata
     return {
       gender: parsed.gender ?? 'unknown',
       role: parsed.role ?? null,
+      thirdPerson: parsed.thirdPerson ?? null,
       userNotes: parsed.userNotes ?? null
     }
   } catch {
-    return { gender: 'unknown', role: null, userNotes: notes }
+    return { gender: 'unknown', role: null, thirdPerson: null, userNotes: notes }
   }
 }
 
@@ -75,6 +79,7 @@ function parseDyadNotes(notes: string | null): DyadMetadata {
     return {
       speakerPronoun: parsed.speakerPronoun ?? '',
       recipientPronoun: parsed.recipientPronoun ?? '',
+      secondPerson: parsed.secondPerson ?? null,
       formality: parsed.formality ?? null,
       userNotes: parsed.userNotes ?? null
     }
@@ -91,6 +96,7 @@ function toCharacterItem(row: ContextEntryRow, aliases: string[] = []): Characte
     target: row.target,
     gender: meta.gender,
     role: meta.role,
+    thirdPerson: meta.thirdPerson,
     status: row.status,
     notes: meta.userNotes,
     aliases,
@@ -107,6 +113,7 @@ function toDyadItem(row: ContextEntryRow): AddressingDyadItem {
     targetCharacterId: row.target,
     speakerPronoun: meta.speakerPronoun,
     recipientPronoun: meta.recipientPronoun,
+    secondPerson: meta.secondPerson ?? null,
     formality: meta.formality ?? null,
     status: row.status,
     fromChapterId: row.from_chapter_id,
@@ -218,6 +225,7 @@ export interface CreateCharacterParams {
   target: string
   gender?: CharacterGender
   role?: string | null
+  thirdPerson?: string | null
   status?: ContextStatus
   notes?: string | null
   aliases?: string[]
@@ -246,6 +254,7 @@ export function createCharacter(
   const meta: CharacterMetadata = {
     gender: params.gender ?? 'unknown',
     role: params.role?.trim() || null,
+    thirdPerson: params.thirdPerson?.trim() || null,
     userNotes: params.notes?.trim() || null
   }
   const notesJson = JSON.stringify(meta)
@@ -283,6 +292,7 @@ export interface UpdateCharacterParams {
   target?: string
   gender?: CharacterGender
   role?: string | null
+  thirdPerson?: string | null
   status?: ContextStatus
   notes?: string | null
   aliases?: string[]
@@ -318,6 +328,10 @@ export function updateCharacter(
   const meta: CharacterMetadata = {
     gender: params.gender !== undefined ? params.gender : current.gender,
     role: params.role !== undefined ? params.role?.trim() || null : current.role,
+    thirdPerson:
+      params.thirdPerson !== undefined
+        ? params.thirdPerson?.trim() || null
+        : (current.thirdPerson ?? null),
     userNotes: params.notes !== undefined ? params.notes?.trim() || null : current.notes
   }
   const notesJson = JSON.stringify(meta)
@@ -438,6 +452,7 @@ export interface SetDyadParams {
   targetCharacterId: string
   speakerPronoun: string
   recipientPronoun: string
+  secondPerson?: string | null
   formality?: string | null
   fromChapterId?: string | null
   toChapterId?: string | null
@@ -472,6 +487,7 @@ export function setDyad(
   const meta: DyadMetadata = {
     speakerPronoun,
     recipientPronoun,
+    secondPerson: params.secondPerson?.trim() || null,
     formality: params.formality?.trim() || null,
     userNotes: params.notes?.trim() || null
   }
