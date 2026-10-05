@@ -1,5 +1,12 @@
 # Nhật ký handbook
 
+## 2026-10-06 — Ô xưng hô đầy đủ, phân tích trước khi dịch, prompt v3
+
+- Cặp xưng hô có đại từ ngôi hai dự phòng, nhân vật có đại từ ngôi ba; bước phân tích đề xuất cặp kèm
+  bằng chứng; `v3` cho model tự khai người nói → người nghe. Số đo ở
+  [Xưng hô tiếng Việt](../../modules/context/vietnamese-addressing.md). Dữ liệu `fixtures/private` thôi
+  bị ignore theo yêu cầu chủ sản phẩm.
+
 ## 2026-10-06 — Hạn chế mày/tao trong quan hệ thầy trò
 
 - Chốt giáo viên hiện đại "thầy/cô – em", giáo viên cộc có thể "thầy/cô – cậu"; mày/tao chỉ theo

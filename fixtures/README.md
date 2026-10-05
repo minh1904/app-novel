@@ -16,7 +16,7 @@ thái oracle; việc qua schema không có nghĩa nội dung đã được ngư�
 | Thư mục | Trong repo | Dùng cho |
 | --- | --- | --- |
 | `public/` | **Có** | Văn bản thuộc phạm vi công cộng hoặc có giấy phép mở. Ai cũng chạy lại được |
-| `private/` | **Không**, bị `.gitignore` | Raw có bản quyền (truyện mạng hiện đại). Chỉ nằm trên máy người đo |
+| `private/` | **Có** từ 2026-10-06 (chủ sản phẩm bỏ khỏi `.gitignore`) | Raw có bản quyền (truyện mạng hiện đại), thư viện và kết quả của Mira Lab. Không chia sẻ repo ra ngoài khi còn thư mục này |
 
 Khi chạy thí nghiệm, văn bản của cả hai thư mục được gửi tới nhà cung cấp AI đã chọn.
 

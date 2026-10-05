@@ -169,6 +169,31 @@ vừa là thuật ngữ vừa là nhân vật). Đã sửa format thành `桐谷
 Thinking không đỡ lỗi xưng hô mà đắt gấp 2 lần. Ngữ cảnh đủ mới là thứ sửa được. Số mẫu câu cô giáo nói
 thô còn ít (3), cần đo thêm trước khi kết luận về "tao".
 
+## 5b. Sửa theo loại lỗi, không theo từng lỗi (2026-10-06)
+
+Mỗi lỗi đọc được xếp vào một trong ba loại: thiếu nguyên tắc chung (sửa ở luật chung, hiếm), thiếu dữ
+kiện riêng của truyện (sửa ở **dữ liệu**), model không đủ sức (sửa bằng model hoặc lượt soát). Prompt
+chung giữ ngắn; kiến thức riêng nằm ở dữ liệu. Đã làm:
+
+- **Cặp xưng hô đủ ô.** Cặp có thêm `secondPerson` — đại từ ngôi hai khi bản gốc lược chủ ngữ hoặc dùng
+  あなた/貴方/你 trong lúc cách gọi là tên ("Rion-sama"); nhân vật có thêm `thirdPerson` — đại từ người
+  kể dùng. Lưu trong JSON của cột `notes`, không cần migration. Thiếu ô này, hầu gái Milly gọi con trai
+  nhà chủ là "em". `addressingGaps` liệt kê ô trống; Lab: `gaps`.
+- **Phân tích trước khi dịch** ([`addressingAnalysis.ts`](../../../src/main/services/ai/addressingAnalysis.ts)):
+  mã gom câu thoại có tên từng nhân vật kèm câu dẫn, model đề xuất giới tính, đại từ ngôi ba và cặp đủ ô
+  kèm câu trích làm chứng. Lab: `analyze`, `--apply` chỉ điền ô trống. Trên n4696dd (30 chương,
+  ≈ 0,003 USD): tự đề xuất Milly → Rion "tôi – Rion-sama, ngôi hai: cậu", tìm ra giới tính của Blake và vai
+  của Caroline; ô trống 12 → 0. Model tự chấm mọi cặp "cao" và hai lần chạy khác nhau — vẫn phải duyệt.
+- **`v3` = `v2` + tự khai người nói.** Lỗi Rion xưng "anh" với Milly đến từ việc model chọn một cách tự
+  xưng cho Rion trong cả cảnh (cùng cảnh có Sophia, Rion xưng "anh" với Sophia). `v3` bắt model ghi
+  `"noi":"Rion→Milly"` cho từng câu thoại trước khi dịch. Lab: `pairs` chấm câu lệch cặp đã chốt bằng
+  nhãn của `v3`. Kết quả sơ bộ (flash-lite, lô cả chương): chị em dị giới 17% → 13%, yandere 31% → 27%,
+  chi phí +~10%. Phép chấm còn nhiễu ("mình" phản thân, "chúng ta"); dùng để so, chưa phải tỉ lệ lỗi thật.
+
+Còn đề xuất: gắn nhãn người nói bằng mã cho câu dễ và lượt riêng cho câu khó; bộ kiểm tra theo cặp dùng
+nhãn để chỉ sửa câu lệch; so lô cả chương với lô nhỏ kèm bản đã dịch của đoạn trước; thử chỉ dẫn tiếng
+Anh với dữ liệu tiếng Việt.
+
 ## 6. Còn mở
 
 **Cần chủ sản phẩm chốt.**
