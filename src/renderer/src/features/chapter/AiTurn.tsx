@@ -121,14 +121,22 @@ function ProposalSummary({
 
 export function AiTurn({
   turn,
+  currentChapterId,
+  chapterLabel,
+  targetChapterExists = true,
   onCancel,
   onRetry,
-  onApply
+  onApply,
+  onNavigateChapter
 }: {
   turn: TurnView
+  currentChapterId?: string
+  chapterLabel?: string
+  targetChapterExists?: boolean
   onCancel(requestId: string): void
   onRetry(question: string): void
   onApply(turn: TurnView): void
+  onNavigateChapter?(chapterId: string): void
 }): JSX.Element {
   const proposal = proposalOf(turn)
   const explanation = proposal === null ? turn.answer :
@@ -241,13 +249,41 @@ export function AiTurn({
       )}
 
       {proposal !== null && turn.range !== null && (
-        <ProposalSummary
-          before={turn.range.text}
-          after={proposal}
-          onAccept={turn.proposalId !== undefined &&
-            (turn.proposalStatus === 'pending' || turn.proposalStatus === 'conflict' || turn.proposalStatus === 'stale')
-              ? () => onApply(turn) : undefined}
-        />
+        <>
+          {turn.chapterId && currentChapterId && turn.chapterId !== currentChapterId ? (
+            <div className="flex flex-col gap-1.5 rounded-panel border border-line bg-canvas p-2 text-[11px]">
+              {targetChapterExists ? (
+                <>
+                  <p className="text-ink-muted">
+                    Đề xuất này thuộc <strong>{chapterLabel ?? 'chương khác'}</strong>.
+                  </p>
+                  {onNavigateChapter && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="self-start"
+                      onClick={() => onNavigateChapter(turn.chapterId!)}
+                    >
+                      Mở {chapterLabel ?? 'chương'} để xem
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <p className="text-error">
+                  Chương thuộc đề xuất này đã bị xóa nên không áp dụng được.
+                </p>
+              )}
+            </div>
+          ) : (
+            <ProposalSummary
+              before={turn.range.text}
+              after={proposal}
+              onAccept={turn.proposalId !== undefined &&
+                (turn.proposalStatus === 'pending' || turn.proposalStatus === 'conflict' || turn.proposalStatus === 'stale')
+                  ? () => onApply(turn) : undefined}
+            />
+          )}
+        </>
       )}
 
       {/* The model was asked for a fenced block and did not give one: read it as a plain reply rather

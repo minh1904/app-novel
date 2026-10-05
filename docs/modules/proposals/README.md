@@ -25,17 +25,15 @@ những chi tiết không được ghi tại đó là **đề xuất** cho OpenS
   mode Áp dụng thẳng tự Accept khi an toàn; Accept/Deny/Accept all theo phạm vi rõ; panel và lịch sử
   phiên theo tác phẩm, không mất khi ẩn/tắt app; xem
   [quyết định](decisions.md). Đơn vị chương/đoạn và SQLite vẫn theo ADR-005.
-- **OpenSpec đang thực hiện:** [change `proposals`](../../../openspec/changes/proposals/tasks.md)
-  mô tả bảng, neo vùng, quyết định từng phần và nghiệm thu. Các task chưa đánh dấu xong không phải
-  hành vi đã nghiệm thu.
-- **Đã có trong working tree:** schema tác phẩm v7, phiên/lượt AI, đề xuất bền, Accept/Deny/Accept
-  all/Hoàn tác có checkpoint, composer với hành động theo lượt, và đường dịch chương theo dòng không
+- **OpenSpec đã hoàn tất:** [change `proposals`](../../../openspec/changes/proposals/tasks.md)
+  mô tả bảng, neo vùng, quyết định từng phần và nghiệm thu. Toàn bộ 27/27 task đã được triển khai và kiểm chứng.
+- **Đã hoàn tất trong mã nguồn:** schema tác phẩm v7, phiên/lượt AI, đề xuất bền, Accept/Deny/Accept
+  all/Hoàn tác có checkpoint, composer với hành động theo lượt, lớp diff trong editor, SafeMarkdown,
+  badge hàng chờ theo chương, lọc đề xuất theo phiên, điều hướng đề xuất giữa các chương, và đường dịch chương theo dòng không
   trống vào nhóm đề xuất. Hộp dịch mặc định Duyệt trước; Áp dụng thẳng chỉ tự ghi khi bản dịch còn
   trống và không đổi. Xem [kho](../../../src/main/infra/storage/aiProposals.ts),
   [service duyệt](../../../src/main/services/proposals/proposalService.ts),
   [dịch theo đoạn](../../../src/main/services/ai/paragraphTranslation.ts).
-- **Chưa nghiệm thu:** lớp diff trong editor, đặt vị trí cho đề xuất trên chương đã có bản dịch,
-  hiển thị Markdown an toàn trong chat, picker ngữ cảnh, và thử Electron thật.
 
 Module 5 dựng đường duyệt và dữ liệu đề xuất. [Module 7 Tác vụ](../../handbook/delivery/roadmap.md#7-tác-vụ)
 chịu trách nhiệm chạy, tạm dừng và tiếp tục dịch nhiều chương sau khi app tắt. Module 5 cần có hàng

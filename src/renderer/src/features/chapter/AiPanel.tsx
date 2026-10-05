@@ -9,6 +9,7 @@ import { CHAT_BLOCK_TEXT_MAX, type ChatContextBlock } from '../../../../shared/c
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { ProposalQueueItem } from '../../../../shared/contracts/aiProposals'
 import { Button } from '../../components/Button'
+import { cx } from '../../components/cx'
 import { Dialog } from '../../components/Dialog'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
 import type { TargetRange } from '../editor/chatRange'
@@ -17,6 +18,7 @@ import { AiTurn } from './AiTurn'
 import { buildChatContext, rangeLabel, type ContextScope } from './chatContext'
 import { addedChapterContext, type AddedChapterContext } from './chatContextSelection'
 import { useAiChat, type ChatEditor } from './useAiChat'
+import { useUiStore } from '../../stores/uiStore'
 
 /**
  * Asking AI about the stretch being worked on. A real third column next to the two panes (it never
@@ -68,6 +70,7 @@ export function AiPanel({
 }): JSX.Element {
   const [pinnedWhole, setPinnedWhole] = useState(false)
   const [queueOpen, setQueueOpen] = useState(false)
+  const [queueFilter, setQueueFilter] = useState<'all' | 'session'>('all')
   const [queue, setQueue] = useState<ProposalQueueItem[]>([])
   const [pendingCount, setPendingCount] = useState(0)
   const [undoAvailable, setUndoAvailable] = useState(false)
@@ -331,36 +334,65 @@ export function AiPanel({
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 py-3">
         {pendingCount > 0 && (
           <div className="rounded-panel border border-line-strong bg-canvas p-2">
-            <button type="button" className="text-[12px] font-medium text-ink" aria-expanded={queueOpen}
-              onClick={() => setQueueOpen((value) => !value)}>
-              Đề xuất chờ · {chapterLabel} ({pendingCount}) {queueOpen ? '▴' : '▾'}
-            </button>
+            <div className="flex items-center justify-between">
+              <button type="button" className="text-[12px] font-medium text-ink" aria-expanded={queueOpen}
+                onClick={() => setQueueOpen((value) => !value)}>
+                Đề xuất chờ · {chapterLabel} ({pendingCount}) {queueOpen ? '▴' : '▾'}
+              </button>
+              {queueOpen && (
+                <div className="flex items-center gap-1 text-[11px]">
+                  <button
+                    type="button"
+                    className={cx('rounded-control px-1.5 py-0.5', queueFilter === 'all' ? 'bg-control font-semibold text-ink' : 'text-ink-muted hover:text-ink')}
+                    onClick={() => setQueueFilter('all')}
+                  >
+                    Tất cả
+                  </button>
+                  <button
+                    type="button"
+                    className={cx('rounded-control px-1.5 py-0.5', queueFilter === 'session' ? 'bg-control font-semibold text-ink' : 'text-ink-muted hover:text-ink')}
+                    onClick={() => setQueueFilter('session')}
+                  >
+                    Phiên này
+                  </button>
+                </div>
+              )}
+            </div>
             {queueOpen && (
               <div className="mt-2 space-y-2">
                 <Button size="sm" onClick={() => void acceptAll()}>
                   Áp dụng tất cả {pendingCount} phần của {chapterLabel}
                 </Button>
-                {queue.flatMap((proposal) => proposal.parts.filter((part) =>
-                  ['pending', 'conflict', 'stale', 'needs-placement'].includes(part.status)
-                ).map((part) => (
-                  <details key={part.id} className="rounded-control border border-line p-2 text-[11px]">
-                    <summary className="cursor-pointer text-ink">
-                      {proposal.origin === 'chat' ? 'Chat' : 'Dịch chương'} · {partStatusLabel[part.status]}
-                    </summary>
-                    <p className="mt-2 text-ink-muted">Chữ trước</p>
-                    <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.beforeText}</pre>
-                    <p className="mt-2 text-ink-muted">Bản đề xuất</p>
-                    <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.afterText}</pre>
-                    <div className="mt-2 flex gap-1">
-                      {part.baseFrom !== null && part.baseTo !== null &&
-                        <Button size="sm" variant="outline" onClick={() => showInEditor(part)}>
-                          Xem trong editor
-                        </Button>}
-                      <Button size="sm" disabled={part.status === 'needs-placement'} onClick={() => void acceptPart(part.id)}>Áp dụng</Button>
-                      <Button size="sm" variant="outline" onClick={() => void denyPart(part.id)}>Bỏ</Button>
-                    </div>
-                  </details>
-                )))}
+                {(() => {
+                  const filteredQueue = queueFilter === 'session'
+                    ? queue.filter((proposal) => proposal.sessionId === chat.sessionId)
+                    : queue
+                  const parts = filteredQueue.flatMap((proposal) => proposal.parts.filter((part) =>
+                    ['pending', 'conflict', 'stale', 'needs-placement'].includes(part.status)
+                  ).map((part) => ({ proposal, part })))
+                  if (parts.length === 0) {
+                    return <p className="text-[11px] text-ink-muted">Không có đề xuất nào thuộc phiên này.</p>
+                  }
+                  return parts.map(({ proposal, part }) => (
+                    <details key={part.id} className="rounded-control border border-line p-2 text-[11px]">
+                      <summary className="cursor-pointer text-ink">
+                        {proposal.origin === 'chat' ? 'Chat' : 'Dịch chương'} · {partStatusLabel[part.status]}
+                      </summary>
+                      <p className="mt-2 text-ink-muted">Chữ trước</p>
+                      <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.beforeText}</pre>
+                      <p className="mt-2 text-ink-muted">Bản đề xuất</p>
+                      <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.afterText}</pre>
+                      <div className="mt-2 flex gap-1">
+                        {part.baseFrom !== null && part.baseTo !== null &&
+                          <Button size="sm" variant="outline" onClick={() => showInEditor(part)}>
+                            Xem trong editor
+                          </Button>}
+                        <Button size="sm" disabled={part.status === 'needs-placement'} onClick={() => void acceptPart(part.id)}>Áp dụng</Button>
+                        <Button size="sm" variant="outline" onClick={() => void denyPart(part.id)}>Bỏ</Button>
+                      </div>
+                    </details>
+                  ))
+                })()}
               </div>
             )}
           </div>
@@ -414,15 +446,25 @@ export function AiPanel({
           </p>
         )}
 
-        {chat.session.turns.map((turn) => (
-          <AiTurn
-            key={turn.localId}
-            turn={turn}
-            onCancel={chat.cancel}
-            onRetry={(question) => void chat.send(question, turn.mode)}
-            onApply={(applied) => void chat.apply(applied)}
-          />
-        ))}
+        {chat.session.turns.map((turn) => {
+          const isOtherChapter = Boolean(turn.chapterId && turn.chapterId !== chapterId)
+          const other = isOtherChapter ? chapterChoices.find((c) => c.id === turn.chapterId) : undefined
+          return (
+            <AiTurn
+              key={turn.localId}
+              turn={turn}
+              currentChapterId={chapterId}
+              chapterLabel={other ? `Chương ${other.number}` : undefined}
+              targetChapterExists={!isOtherChapter || other !== undefined}
+              onCancel={chat.cancel}
+              onRetry={(question) => void chat.send(question, turn.mode)}
+              onApply={(applied) => void chat.apply(applied)}
+              onNavigateChapter={(targetId) => {
+                void useUiStore.getState().navigate({ name: 'chapter', workId, chapterId: targetId })
+              }}
+            />
+          )
+        })}
 
         {chat.applyState.kind === 'stale' && (
           <div className="flex flex-col items-start gap-1.5 rounded-panel border border-error/40 bg-error/5 p-2">

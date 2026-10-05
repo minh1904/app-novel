@@ -64,6 +64,7 @@ export interface ProposalPartView {
 export interface ProposalQueueItem {
   id: string
   chapterId: string
+  sessionId?: string | null
   origin: 'chat' | 'translate'
   policy: 'review' | 'auto'
   createdAt: number

@@ -1,4 +1,4 @@
-import type { JSX } from 'react'
+import { useEffect, useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import type { WorkSummary } from '../../../../shared/contracts/library'
 import { cx } from '../../components/cx'
@@ -26,6 +26,27 @@ export function ChapterNavSidebar({
   onWorkChanged(summary: WorkSummary): void
 }): JSX.Element {
   const { load, chapters } = useChapters(workId, onWorkChanged)
+  const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    let active = true
+    const loadCounts = async (): Promise<void> => {
+      if (!window.mira?.ai?.proposals?.pendingCounts) return
+      const result = await window.mira.ai.proposals.pendingCounts(workId)
+      if (active && result.ok) {
+        const counts: Record<string, number> = {}
+        for (const item of result.value.counts) counts[item.chapterId] = item.count
+        setPendingCounts(counts)
+      }
+    }
+    void loadCounts()
+    const refresh = (): void => { void loadCounts() }
+    window.addEventListener('mira:proposals-changed', refresh)
+    return () => {
+      active = false
+      window.removeEventListener('mira:proposals-changed', refresh)
+    }
+  }, [workId])
 
   return (
     <>
@@ -60,6 +81,7 @@ export function ChapterNavSidebar({
                 : chapter.hasSource
                   ? 'Chưa dịch'
                   : 'Chưa có bản gốc'
+            const pending = pendingCounts[chapter.id] ?? 0
             return (
               <button
                 key={chapter.id}
@@ -81,6 +103,14 @@ export function ChapterNavSidebar({
                 <span className="truncate">
                   {chapter.number}. {displayTitle(chapter)}
                 </span>
+                {pending > 0 && (
+                  <span
+                    title={`${pending} đề xuất chờ duyệt`}
+                    className="ml-auto shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-[10.5px] font-medium text-warning tabular-nums"
+                  >
+                    {pending}
+                  </span>
+                )}
               </button>
             )
           })

@@ -46,7 +46,8 @@ export function proposalHandlers({ library }: HandlerDeps): AreaHandlers<'ai:pro
             readText(db, input.chapterId, 'target').rev === checkpoint.afterRev
         })(),
         proposals: listChapterProposals(db, input.chapterId, 100).map((proposal): ProposalQueueItem => ({
-          id: proposal.id, chapterId: proposal.chapterId, origin: proposal.origin,
+          id: proposal.id, chapterId: proposal.chapterId, sessionId: proposal.sessionId,
+          origin: proposal.origin,
           policy: proposal.policy, createdAt: proposal.createdAt,
           parts: proposal.parts.map((part) => ({
             id: part.id, baseFrom: part.baseFrom, baseTo: part.baseTo,
