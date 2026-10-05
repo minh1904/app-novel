@@ -15,7 +15,7 @@ import { describe, expect, it } from 'vitest'
 import { normalizeRaw } from '../../src/shared/algorithms/rawText'
 import { segment } from '../../src/shared/algorithms/segmenter'
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
-import { SYSTEM_PROMPT } from '../../src/main/infra/providers/openAiCompatible'
+import { parsePromptVersion } from '../../src/main/services/ai/promptVersion'
 import { LibraryStore } from '../../src/main/services/library/library'
 import { createServices } from '../../src/main/services/createServices'
 import { loadFixtures } from './fixtures'
@@ -66,9 +66,17 @@ const PROMPT =
     ? null
     : readFileSync(join(ROOT, PROMPT_FILE), 'utf8').replace(/\r\n?/g, '\n').trim()
 const THINKING = env('MIRA_BENCH_THINKING')
+const PROMPT_VERSION = parsePromptVersion(env('MIRA_BENCH_PROMPT_VERSION'))
+if (PROMPT_VERSION === null) {
+  throw new Error(`MIRA_BENCH_PROMPT_VERSION không hợp lệ: ${env('MIRA_BENCH_PROMPT_VERSION')}`)
+}
 const LABEL = env(
   'MIRA_BENCH_LABEL',
-  [PROMPT_FILE === '' ? '' : 'prompt', THINKING === '' ? '' : `thinking-${THINKING}`]
+  [
+    PROMPT_FILE === '' ? '' : 'prompt',
+    PROMPT_VERSION === 'v1' ? '' : `prompt-${PROMPT_VERSION}`,
+    THINKING === '' ? '' : `thinking-${THINKING}`
+  ]
     .filter(Boolean)
     .join('-') || 'baseline'
 )
@@ -124,8 +132,9 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
       writeFileSync(outPath, text, 'utf8')
     }
 
-    const effectivePrompt = PROMPT ?? SYSTEM_PROMPT
-    const promptHash = createHash('sha256').update(effectivePrompt).digest('hex')
+    // Hash các system prompt **đã gửi thật**, đọc từ request. Bản trước băm prompt MVP của provider
+    // trong khi request mang prompt của lõi dịch, nên hash trong config không khớp thứ đã chạy.
+    const systemHashes = new Set<string>()
     const commit = gitCommit()
     const startedAt = new Date().toISOString()
 
@@ -150,13 +159,18 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
           replaced++
           init = { ...init, body: JSON.stringify(body) }
         }
+        if (system?.role === 'system' && typeof system.content === 'string') {
+          systemHashes.add(createHash('sha256').update(system.content).digest('hex'))
+        }
       }
       const response = await fetch(input, init)
       httpCodes.push(response.status)
       return response
     }) as typeof fetch
 
-    const services = createServices({ library, crypto, fetch: counting })
+    const services = createServices({
+      library, crypto, fetch: counting, promptVersion: PROMPT_VERSION
+    })
     const connection = services.connections.create({
       name: 'Bộ đo',
       baseUrl: BASE_URL,
@@ -360,7 +374,10 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
       commitHash: commit,
       model: MODEL,
       sentParams: sentParams ?? {},
-      promptHash,
+      promptVersion: PROMPT_VERSION,
+      // Một hash khi mọi request cùng system prompt; nhiều hash khi prompt có tầng đổi theo lô (v1).
+      promptHash: [...systemHashes].sort().join(',') || '(none)',
+      systemPromptCount: systemHashes.size,
       promptFile: PROMPT_FILE || '(default)',
       thinkingMode: THINKING || 'default',
       temperature: (sentParams as Record<string, unknown> | null)?.['temperature'] ?? null,
@@ -392,7 +409,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
       `# Translation Run: ${LABEL}`,
       '',
       `- **Model:** ${config.model}`,
-      `- **Prompt:** ${config.promptFile} (${config.promptHash.slice(0, 16)})`,
+      `- **Prompt:** ${config.promptFile}, ${config.promptVersion} (${config.systemPromptCount} system prompt)`,
       `- **Thinking:** ${config.thinkingMode}`,
       `- **Repeats:** ${config.repeats}`,
       `- **Commit:** ${config.commitHash}`,
