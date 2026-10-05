@@ -16,7 +16,9 @@ ADR-005. Diff phải xem được ngay tại pane đích với các phần còn 
 1. Kết quả về được gắn với **tác phẩm, chương và vùng nguồn/đích xác định**, rồi hiện ở hàng chờ.
    Badge trên danh sách chương cho biết số đề xuất chờ; panel hiển thị phiên/lượt dịch và trạng thái.
 2. Mở một đề xuất đưa người dùng đến đúng chương, đúng đoạn; diff ở pane đích cho thấy chữ hiện tại
-   và chữ AI đề xuất. Không đổi chương đang mở chỉ vì một lượt dịch khác vừa xong.
+   và chữ AI đề xuất. Không đổi chương đang mở chỉ vì một lượt dịch khác vừa xong. Với lượt chat
+   **Tạo đề xuất** vừa chạy trong panel, đề xuất tự mở ở editor khi lượt xong; đề xuất của lượt cũ
+   được khôi phục từ lịch sử thì không tự mở mà chờ nút **Xem trong bản dịch**.
 3. **Accept** áp dụng đúng phần được chọn sau khi kiểm tra văn bản đích còn khớp ảnh chụp; lưu
    snapshot trước khi ghi và cho hoàn tác. **Deny** ghi quyết định, không sửa chữ.
 4. **Accept all** chỉ lấy các đề xuất `pending` trong **chương đang mở**, hiển thị số lượng và tên

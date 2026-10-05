@@ -1,22 +1,20 @@
-import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { CloseIcon } from '@solar-icons/react/linear/close'
 import { PenNewRoundIcon } from '@solar-icons/react/linear/pen-new-round'
 import { SettingsIcon } from '@solar-icons/react/linear/settings'
 import { StarsIcon } from '@solar-icons/react/linear/stars'
 import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
 import type { SourceLanguage } from '../../../../shared/contracts/library'
-import { CHAT_BLOCK_TEXT_MAX, type ChatContextBlock } from '../../../../shared/contracts/aiChat'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { ProposalQueueItem } from '../../../../shared/contracts/aiProposals'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
-import { Dialog } from '../../components/Dialog'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
 import type { TargetRange } from '../editor/chatRange'
 import { AiComposer } from './AiComposer'
 import { AiTurn } from './AiTurn'
 import { buildChatContext, rangeLabel, type ContextScope } from './chatContext'
-import { addedChapterContext, type AddedChapterContext } from './chatContextSelection'
+import { revealStep, type TurnView } from './chatTurns'
 import { useAiChat, type ChatEditor } from './useAiChat'
 import { useUiStore } from '../../stores/uiStore'
 
@@ -76,11 +74,6 @@ export function AiPanel({
   const [undoAvailable, setUndoAvailable] = useState(false)
   const [queueNotice, setQueueNotice] = useState<string | null>(null)
   const [chapterChoices, setChapterChoices] = useState<ChapterItem[]>([])
-  const [contextPickerOpen, setContextPickerOpen] = useState(false)
-  const [contextQuery, setContextQuery] = useState('')
-  const [contextNotice, setContextNotice] = useState<string | null>(null)
-  const [extraContext, setExtraContext] = useState<Array<{ key: string; block: ChatContextBlock }>>([])
-  const [pendingContext, setPendingContext] = useState<AddedChapterContext | null>(null)
   const targetText = target?.getText() ?? ''
   const sourceTextNow = source.getText()
 
@@ -110,35 +103,12 @@ export function AiPanel({
     [wholeChapter, target, autoRange]
   )
 
-  const automaticContext = useMemo(() => buildChatContext({
+  const context = useMemo(() => buildChatContext({
     sourceText: sourceTextNow, targetText, range, scope, radius: 2
   }), [sourceTextNow, targetText, range, scope])
-  const context = useMemo(() => [
-    ...automaticContext, ...extraContext.map((item) => item.block)
-  ], [automaticContext, extraContext])
   const sendSnapshot = useMemo(() => ({
     sourceText: sourceTextNow, targetText, range, context
   }), [sourceTextNow, targetText, range, context])
-
-  const addChapterContext = async (chapter: ChapterItem, side: 'source' | 'target'): Promise<void> => {
-    if (extraContext.length >= 4) {
-      setContextNotice('Mỗi lượt thêm tối đa bốn nguồn từ chương khác. Bỏ một nguồn trước khi thêm tiếp.')
-      return
-    }
-    const key = chapter.id + ':' + side
-    if (extraContext.some((item) => item.key === key)) {
-      setContextNotice('Nguồn này đã được thêm.')
-      return
-    }
-    const response = await window.mira.text.get(workId, chapter.id, side)
-    if (!response.ok) { setContextNotice(response.error.message); return }
-    if (!response.value.content.trim()) { setContextNotice('Chương này chưa có nội dung ở bên đã chọn.'); return }
-    const added = addedChapterContext(chapter, side, response.value.content)
-    if (added.truncated) { setPendingContext(added); return }
-    setExtraContext((items) => [...items, { key: added.key, block: added.block }])
-    setContextPickerOpen(false)
-    setContextNotice(null)
-  }
 
   const chat = useAiChat({
     workId,
@@ -220,9 +190,26 @@ export function AiPanel({
     else setQueueNotice(null)
   }
 
-  const contextChapters = chapterChoices.filter((item) => item.id !== chapterId &&
-    (item.title.toLocaleLowerCase('vi').includes(contextQuery.toLocaleLowerCase('vi')) ||
-      String(item.number).includes(contextQuery.trim()))).slice(0, 50)
+  const partOfTurn = (turn: TurnView): ProposalQueueItem['parts'][number] | undefined =>
+    queue.flatMap((proposal) => proposal.parts).find((part) => part.id === turn.partId)
+
+  // The answer to a writing turn belongs in the translation pane, not in the chat: when one that was
+  // running here finishes, its proposal opens there as a review. See `revealStep` for which turns.
+  const reveal = useRef(showInEditor)
+  useEffect(() => {
+    reveal.current = showInEditor
+  })
+  const awaitingReview = useRef<ReadonlySet<string>>(new Set())
+  useEffect(() => {
+    const parts = new Map(queue.flatMap((proposal) => proposal.parts).map((part) => [part.id, part]))
+    const step = revealStep(chat.session.turns, awaitingReview.current, chapterId,
+      (partId) => parts.get(partId)?.status)
+    awaitingReview.current = step.watched
+    for (const partId of step.reveal) {
+      const part = parts.get(partId)
+      if (part) reveal.current(part)
+    }
+  }, [chat.session.turns, queue, chapterId])
 
   const acceptAll = async (): Promise<void> => {
     if (target?.isDirty() || source.isDirty()) {
@@ -459,6 +446,11 @@ export function AiPanel({
               onCancel={chat.cancel}
               onRetry={(question) => void chat.send(question, turn.mode)}
               onApply={(applied) => void chat.apply(applied)}
+              onShowInEditor={(shown) => {
+                const part = partOfTurn(shown)
+                if (part) showInEditor(part)
+                else setQueueNotice('Đề xuất này không còn trong hàng chờ của chương.')
+              }}
               onNavigateChapter={(targetId) => {
                 void useUiStore.getState().navigate({ name: 'chapter', workId, chapterId: targetId })
               }}
@@ -499,48 +491,11 @@ export function AiPanel({
       <AiComposer
         chat={chat}
         snapshot={sendSnapshot}
-        automaticCount={automaticContext.length}
-        onAddContext={() => { setContextNotice(null); setContextPickerOpen(true) }}
-        onRemoveContext={(index) => setExtraContext((items) => items.filter((_, at) => at !== index))}
         rangeLabel={rangeLabel(range, targetText, scope)}
         wholeChapter={wholeChapter}
         wholeChapterForced={emptyTranslation}
         onWholeChapterChange={setPinnedWhole}
       />
-      <Dialog open={contextPickerOpen} onOpenChange={(open) => {
-        setContextPickerOpen(open)
-        if (!open) setPendingContext(null)
-      }} title="Thêm nguồn cho AI đọc" description="Chọn bản gốc hoặc bản dịch của một chương khác. Nguồn này không đổi đích viết." size="wide">
-        <div className="flex flex-col gap-3">
-          <input type="search" value={contextQuery} aria-label="Tìm chương"
-            onChange={(event) => setContextQuery(event.target.value)}
-            placeholder="Tìm theo tên hoặc số chương"
-            className="rounded-control border border-line bg-canvas px-3 py-2 text-ui-xs" />
-          {contextNotice && <p role="alert" className="text-ui-xs text-error">{contextNotice}</p>}
-          {pendingContext && <div className="rounded-control border border-warning/40 bg-warning/10 p-3 text-ui-xs">
-            <p>Nguồn có {pendingContext.length.toLocaleString('vi')} ký tự. Giới hạn gửi kèm là{' '}
-              {CHAT_BLOCK_TEXT_MAX.toLocaleString('vi')} ký tự đầu; phần còn lại sẽ không được gửi.</p>
-            <div className="mt-2 flex gap-2">
-              <Button size="sm" onClick={() => {
-                setExtraContext((items) => [...items, { key: pendingContext.key, block: pendingContext.block }])
-                setPendingContext(null)
-                setContextPickerOpen(false)
-              }}>Thêm phần đầu đã nêu</Button>
-              <Button size="sm" variant="outline" onClick={() => setPendingContext(null)}>Chọn nguồn khác</Button>
-            </div>
-          </div>}
-          {!pendingContext && <div className="max-h-72 space-y-1 overflow-y-auto">
-            {contextChapters.length === 0 && <p className="text-ui-xs text-ink-muted">Không tìm thấy chương khác.</p>}
-            {contextChapters.map((item) => <div key={item.id} className="flex items-center gap-2 rounded-control border border-line p-2 text-ui-xs">
-              <span className="min-w-0 flex-1 truncate">{item.title.trim() || 'Chương ' + item.number}</span>
-              <Button size="sm" variant="outline" disabled={!item.hasSource}
-                onClick={() => void addChapterContext(item, 'source')}>Bản gốc</Button>
-              <Button size="sm" variant="outline" disabled={!item.hasTarget}
-                onClick={() => void addChapterContext(item, 'target')}>Bản dịch</Button>
-            </div>)}
-          </div>}
-        </div>
-      </Dialog>
     </section>
   )
 }

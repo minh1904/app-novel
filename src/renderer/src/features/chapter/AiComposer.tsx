@@ -5,14 +5,21 @@ import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { NotebookIcon } from '@solar-icons/react/linear/notebook'
 import { cx } from '../../components/cx'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
-import type { ChatMode } from '../../../../shared/contracts/aiChat'
-import type { ChatContextBlock } from '../../../../shared/contracts/aiChat'
+import {
+  CHAT_BLOCK_TEXT_MAX,
+  type ChatContextBlock,
+  type ChatMode
+} from '../../../../shared/contracts/aiChat'
 import { ModelSelectionMenu } from '../models/ModelSelectionMenu'
 import type { AiChatController, ChatSendSnapshot } from './useAiChat'
 
 /**
- * The box the translator types in: what is going along as context, the question, and — on the same
- * row as the send button — which mode and which model.
+ * The box the translator types in: where a write would land, the question, and — on the same row as
+ * the send button — which model.
+ *
+ * Sending writes. Enter and the main button both make a proposal that is shown in the translation
+ * pane, so the answer lands where the translator is working instead of coming back as a paragraph in
+ * the chat; the menu next to it is the way out (answer in the chat only, or apply straight in).
  *
  * The scope chip is the one control here that protects something. Left alone a turn is about the
  * paragraph holding the caret; "cả chương" has to be picked, and picking it is visible the whole time
@@ -26,10 +33,7 @@ export function AiComposer({
   wholeChapter,
   wholeChapterForced,
   onWholeChapterChange,
-  snapshot,
-  automaticCount,
-  onAddContext,
-  onRemoveContext
+  snapshot
 }: {
   chat: AiChatController
   /** What the current range covers, in words: the chip the translator reads before sending. */
@@ -39,9 +43,6 @@ export function AiComposer({
   wholeChapterForced: boolean
   onWholeChapterChange(whole: boolean): void
   snapshot: ChatSendSnapshot
-  automaticCount: number
-  onAddContext(): void
-  onRemoveContext(index: number): void
 }): JSX.Element {
   const [draft, setDraft] = useState('')
   const [confirmedTruncationKey, setConfirmedTruncationKey] = useState<string | null>(null)
@@ -57,15 +58,22 @@ export function AiComposer({
     node.style.height = node.scrollHeight + 'px'
   }, [draft])
 
-  const truncationKey = useMemo(() => context.slice(0, automaticCount)
-    .filter((block) => block.detail.includes('đã cắt'))
-    .map((block) => block.label + '\0' + block.detail + '\0' + block.text).join('\0'),
-  [context, automaticCount])
+  // The context is no longer shown before sending, so a cut cannot be taken as seen: it is stated
+  // here and has to be agreed to, or the model answers from half a chapter while the box says nothing.
+  const cutBlocks = useMemo(
+    () => context.filter((block) => block.detail.includes('đã cắt')),
+    [context]
+  )
+  const truncationKey = useMemo(
+    () => cutBlocks.map((block) => block.label + '\0' + block.detail + '\0' + block.text).join('\0'),
+    [cutBlocks]
+  )
   const truncated = truncationKey !== ''
   const contextReady = !truncated || confirmedTruncationKey === truncationKey
-  const ready = chat.canSend(draft) && contextReady
+  const ready = chat.canSend(draft, 'sua') && contextReady
+  const canAnswer = chat.canSend(draft, 'hoi') && contextReady
 
-  const submit = (action: ChatMode = 'hoi'): void => {
+  const submit = (action: ChatMode = 'sua'): void => {
     if (!chat.canSend(draft, action) || !contextReady) return
     const question = draft
     setDraft('')
@@ -109,36 +117,26 @@ export function AiComposer({
           </button>
         </div>
 
-        <div className="px-1 pb-1 text-ui-xs text-ink-muted">
-          <details>
-            <summary className="cursor-pointer">Nguồn Mira gửi kèm · {context.length} khối (xem đúng nội dung)</summary>
-            <ul className="mt-1 max-h-52 space-y-2 overflow-y-auto">
-              {context.map((block, index) => <li key={block.label + String(index)} className="rounded-control border border-line bg-canvas p-2">
-                <div className="flex items-center gap-1">
-                  <strong className="text-ink">{block.label}</strong>
-                  {index >= automaticCount && <button type="button" className="ml-auto text-error underline"
-                    onClick={() => onRemoveContext(index - automaticCount)}>Bỏ nguồn</button>}
-                </div>
-                <p>{block.detail}</p>
-                <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap text-ink">{block.text}</pre>
-              </li>)}
-            </ul>
-          </details>
-          <button type="button" className="mt-1 text-primary underline" onClick={onAddContext}>
-            + Thêm nguồn từ chương khác
-          </button>
-          {truncated && <label className="mt-1 flex items-start gap-1 text-warning">
-            <input type="checkbox" checked={contextReady}
-              onChange={(event) => setConfirmedTruncationKey(event.target.checked ? truncationKey : null)} />
-            Tôi đã xem phần ngữ cảnh bị cắt và đồng ý gửi phần hiển thị.
-          </label>}
-        </div>
+        {truncated && (
+          <label className="flex items-start gap-1 px-1 pb-1 text-ui-xs text-warning">
+            <input
+              type="checkbox"
+              checked={contextReady}
+              onChange={(event) =>
+                setConfirmedTruncationKey(event.target.checked ? truncationKey : null)
+              }
+            />
+            Chỉ gửi kèm {CHAT_BLOCK_TEXT_MAX.toLocaleString('vi')} ký tự đầu của{' '}
+            {cutBlocks.map((block) => block.label.toLocaleLowerCase('vi')).join(' và ')}. Tôi đồng ý
+            gửi như vậy.
+          </label>
+        )}
 
         <textarea
           ref={field}
           rows={1}
           value={draft}
-          aria-label="Câu hỏi cho AI"
+          aria-label="Yêu cầu cho AI"
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             // Enter sends; Shift+Enter is a line break. Never send mid-composition: an input method
@@ -148,7 +146,7 @@ export function AiComposer({
             submit()
           }}
           className="max-h-40 min-h-6 w-full resize-none bg-transparent px-1.5 text-ui-sm leading-normal text-ink outline-none placeholder:text-ink-muted"
-          placeholder="Hỏi về đoạn đang sửa, hoặc cả chương…"
+          placeholder="Nhờ AI viết lại đoạn đang sửa, hoặc cả chương…"
         />
 
         <div className="flex items-center gap-0.5 pt-1">
@@ -165,27 +163,34 @@ export function AiComposer({
             <button
               type="submit"
               disabled={!ready}
-              aria-label="Gửi để trò chuyện"
-              title={ready ? 'Gửi để trò chuyện (Enter)' : 'Chưa gửi được'}
+              aria-label="Viết vào bản dịch để duyệt"
+              title={
+                ready
+                  ? 'Viết vào bản dịch: đề xuất hiện trong editor để duyệt (Enter)'
+                  : 'Chưa viết được: cần yêu cầu và một đoạn đích. Mở menu bên cạnh để chỉ hỏi trong chat'
+              }
               className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control bg-primary px-2 text-ui-xs text-primary-foreground disabled:cursor-not-allowed disabled:opacity-30"
             >
-              Gửi <ArrowUpIcon size={14} />
+              Viết <ArrowUpIcon size={14} />
             </button>
             <MenuRoot>
               <MenuTrigger
-                className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-control border border-line-strong px-2 text-ui-xs text-ink-muted hover:bg-hover disabled:opacity-30"
-                aria-label="Gửi thành đề xuất hoặc áp dụng thẳng"
-                title="Viết vào bản dịch"
-                disabled={!chat.canSend(draft, 'sua') || !contextReady}
+                className="inline-flex h-7 shrink-0 cursor-pointer items-center justify-center rounded-control border border-line-strong px-1.5 text-ui-xs text-ink-muted hover:bg-hover disabled:opacity-30"
+                aria-label="Cách gửi khác"
+                title="Cách gửi khác"
+                disabled={!canAnswer}
               >
-                Viết <AltArrowDownIcon size={14} />
+                <AltArrowDownIcon size={14} />
               </MenuTrigger>
               <MenuPopup align="end">
-                <MenuItem onClick={() => submit('sua')}>
-                  <span>Tạo đề xuất</span>
-                  <span className="text-ui-xs text-ink-muted">Duyệt trước khi ghi</span>
+                <MenuItem onClick={() => submit('hoi')}>
+                  <span>Chỉ hỏi trong chat</span>
+                  <span className="text-ui-xs text-ink-muted">Không ghi vào bản dịch</span>
                 </MenuItem>
-                <MenuItem onClick={() => submit('ap_dung')}>
+                <MenuItem
+                  disabled={!chat.canSend(draft, 'ap_dung') || !contextReady}
+                  onClick={() => submit('ap_dung')}
+                >
                   <span>Áp dụng thẳng</span>
                   <span className="text-ui-xs text-ink-muted">Ghi nếu còn an toàn</span>
                 </MenuItem>

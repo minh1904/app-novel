@@ -72,16 +72,20 @@ function SentContext({ blocks }: { blocks: ChatContextBlock[] }): JSX.Element | 
  *
  * The diff itself is **not** drawn here any more. It used to be, and comparing two places while
  * accepting all-or-nothing was the part that felt wrong: the proposal now goes into the translation
- * pane as marked chunks, each accepted or rejected where it sits.
+ * pane as marked chunks, each accepted or rejected where it sits. `onShow` opens it there again
+ * after the review was closed or the caret moved on; the old before/after text stays one click away
+ * but is no longer the main button.
  */
 function ProposalSummary({
   before,
   after,
-  onAccept
+  onAccept,
+  onShow
 }: {
   before: string
   after: string
   onAccept?: () => void
+  onShow?: () => void
 }): JSX.Element {
   const [open, setOpen] = useState(false)
   const lines = useMemo(() => diffLines(before, after), [before, after])
@@ -89,11 +93,12 @@ function ProposalSummary({
 
   return (
     <div className="rounded-panel border border-line-strong px-2 py-1.5">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="min-w-0 flex-1 text-ui-xs text-ink-muted">
           Đề xuất thay {removed} dòng, thêm {added} dòng
         </span>
-        <Button size="sm" onClick={() => setOpen((value) => !value)}>
+        {onShow && <Button size="sm" onClick={onShow}>Xem trong bản dịch</Button>}
+        <Button size="sm" variant={onShow ? 'outline' : 'default'} onClick={() => setOpen((value) => !value)}>
           {open ? 'Thu gọn' : 'Xem thay đổi'}
         </Button>
       </div>
@@ -127,6 +132,7 @@ export function AiTurn({
   onCancel,
   onRetry,
   onApply,
+  onShowInEditor,
   onNavigateChapter
 }: {
   turn: TurnView
@@ -136,6 +142,8 @@ export function AiTurn({
   onCancel(requestId: string): void
   onRetry(question: string): void
   onApply(turn: TurnView): void
+  /** Opens the turn's proposal in the translation pane as a review. */
+  onShowInEditor(turn: TurnView): void
   onNavigateChapter?(chapterId: string): void
 }): JSX.Element {
   const proposal = proposalOf(turn)
@@ -278,6 +286,8 @@ export function AiTurn({
             <ProposalSummary
               before={turn.range.text}
               after={proposal}
+              onShow={turn.proposalId !== undefined && turn.proposalStatus === 'pending'
+                ? () => onShowInEditor(turn) : undefined}
               onAccept={turn.proposalId !== undefined &&
                 (turn.proposalStatus === 'pending' || turn.proposalStatus === 'conflict' || turn.proposalStatus === 'stale')
                   ? () => onApply(turn) : undefined}

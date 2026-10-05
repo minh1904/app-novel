@@ -27,11 +27,21 @@ Câu hỏi: AI được ghi chữ khi nào, người dùng duyệt theo phạm v
 5. Tiến độ dịch nhiều chương, retry và phục hồi sau khi app tắt thuộc **Module 7 Tác vụ**; đề xuất
    và lịch sử phiên phải lưu bền từ Module 5 để Module 7 có thể gắn kết quả đúng chương.
 6. Chat không bắt người dùng duy trì mode Hỏi/Sửa. Mỗi lần gửi có ba hành động rõ nghĩa:
-   **Gửi** để trò chuyện (không ghi), **Tạo đề xuất** để sửa rồi duyệt và **Áp dụng thẳng** để sửa
+   **Chỉ hỏi trong chat** (không ghi), **Tạo đề xuất** để sửa rồi duyệt và **Áp dụng thẳng** để sửa
    rồi tự nhận phần an toàn. Hành động viết hiển thị đích sửa trước khi gửi; lựa chọn được lưu cùng
    lượt và không đổi khi người dùng chọn hành động khác cho lượt sau. Luồng
    dịch chương có cùng lựa chọn Duyệt trước/Áp dụng thẳng; Module 7 kế thừa lựa chọn cho một tác vụ
    nhiều chương và hiển thị rõ phạm vi trước khi chạy.
+7. **Gửi trong composer mặc định là Tạo đề xuất** (quyết định ngày 2026-10-05, thay mặc định “Gửi để
+   trò chuyện” của mục 6). Enter và nút chính **Viết** tạo đề xuất rồi mở ngay tại editor để
+   Accept/Deny; câu trả lời không quay lại chat thành một đoạn dịch, chat chỉ giữ lời giải thích,
+   số dòng đổi và nút **Xem trong bản dịch**. Chỉ hỏi trong chat và Áp dụng thẳng nằm trong menu
+   cạnh nút Viết. Mặc định vẫn là Duyệt trước: chữ không đổi trước Accept.
+8. Composer **không hiển thị nội dung ngữ cảnh gửi kèm và không có nút thêm nguồn từ chương khác**
+   (quyết định ngày 2026-10-05, bỏ mục 2–3 trong đề xuất của
+   [nghiên cứu panel](chat-panel-research.md)). Ngữ cảnh tự động vẫn được gửi như cũ; lượt đã gửi
+   vẫn liệt kê nhãn các khối ở “Đã gửi kèm”. Khi một khối bị cắt theo giới hạn ký tự, composer nói
+   rõ và chặn gửi cho tới khi người dùng đồng ý, vì giờ không còn chỗ để xem phần bị cắt.
 
 ## Vì sao đổi
 

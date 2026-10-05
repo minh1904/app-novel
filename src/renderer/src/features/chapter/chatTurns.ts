@@ -270,6 +270,43 @@ export function markTurnProposal(
 }
 
 /**
+ * Which finished writing turns should open their proposal in the translation pane right now.
+ *
+ * The answer to a writing turn belongs in the editor, but only for a turn the translator just watched
+ * run: `watched` holds the turns seen open in this panel, so a session restored from history — every
+ * turn already `done` — never opens an old proposal over the text being read. A turn stays watched
+ * until its proposal shows up in the queue (`partStatus` is undefined until then), and is dropped as
+ * soon as it can no longer be shown: it failed, it made no proposal, it belongs to another chapter, or
+ * the proposal is no longer pending.
+ */
+export function revealStep(
+  turns: TurnView[],
+  watched: ReadonlySet<string>,
+  chapterId: string,
+  partStatus: (partId: string) => TurnView['proposalStatus']
+): { watched: Set<string>; reveal: string[] } {
+  const next = new Set(watched)
+  const reveal: string[] = []
+  for (const turn of turns) {
+    if (turn.mode !== 'sua') continue
+    if (isOpen(turn)) {
+      next.add(turn.localId)
+      continue
+    }
+    if (!next.has(turn.localId)) continue
+    if (turn.status !== 'done' || turn.partId === undefined || turn.chapterId !== chapterId) {
+      next.delete(turn.localId)
+      continue
+    }
+    const status = partStatus(turn.partId)
+    if (status === undefined) continue
+    next.delete(turn.localId)
+    if (status === 'pending') reveal.push(turn.partId)
+  }
+  return { watched: next, reveal }
+}
+
+/**
  * The turns to send as history, newest-last, within the budget.
  *
  * Only completed turns go: a truncated answer fed back as the assistant's words would have the model

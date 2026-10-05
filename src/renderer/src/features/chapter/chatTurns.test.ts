@@ -11,6 +11,8 @@ import {
   markAutoApply,
   openRequestIds,
   proposalOf,
+  revealStep,
+  restoredSession,
   type Session
 } from './chatTurns'
 
@@ -325,5 +327,94 @@ describe('history sent with the next question', () => {
   it('reports nothing dropped when everything fits', () => {
     const session = finished('r1', 'Câu', 'Đáp', emptySession)
     expect(historyFor(session).dropped).toBe(0)
+  })
+})
+
+describe('revealStep', () => {
+  const WRITING = { mode: 'sua' as const, chapterId: 'c1' }
+  const proposalDone = (requestId: string, partId = 'p-' + requestId): ChatChunk => ({
+    ...done(requestId),
+    proposal: { proposalId: 'pr-' + requestId, partId, status: 'pending' }
+  })
+  const begun = (requestId: string, options: { mode?: ChatMode; chapterId?: string } = {}): Session => {
+    const localId = 'L-' + requestId
+    const mode = options.mode ?? WRITING.mode
+    return attachRequestId(
+      beginTurn(emptySession, {
+        localId,
+        question: 'Viết lại',
+        mode,
+        chapterId: options.chapterId ?? WRITING.chapterId,
+        context: [],
+        range: mode === 'hoi' ? null : RANGE
+      }),
+      localId,
+      requestId
+    )
+  }
+  const pending = (partId: string): 'pending' | undefined => (partId === 'p-r1' ? 'pending' : undefined)
+
+  it('opens the proposal of a writing turn that was seen running, once it is in the queue', () => {
+    const running = begun('r1')
+    const watching = revealStep(running.turns, new Set(), 'c1', pending)
+    expect(watching.reveal).toEqual([])
+    expect(watching.watched.has('L-r1')).toBe(true)
+
+    const finished = applyChunk(running, proposalDone('r1'))
+    const queued = revealStep(finished.turns, watching.watched, 'c1', pending)
+    expect(queued.reveal).toEqual(['p-r1'])
+    // Shown once: the same turn must not reopen on the next render.
+    expect(queued.watched.size).toBe(0)
+    expect(revealStep(finished.turns, queued.watched, 'c1', pending).reveal).toEqual([])
+  })
+
+  it('waits while the proposal has not reached the queue yet', () => {
+    const finished = applyChunk(begun('r1'), proposalDone('r1'))
+    const watching = revealStep(begun('r1').turns, new Set(), 'c1', () => undefined)
+    const early = revealStep(finished.turns, watching.watched, 'c1', () => undefined)
+    expect(early.reveal).toEqual([])
+    expect(early.watched.has('L-r1')).toBe(true)
+  })
+
+  it('never opens a turn restored from history', () => {
+    const restored = restoredSession([
+      {
+        id: 't1', question: 'Viết lại', answer: 'x', action: 'sua', status: 'done', chapterId: 'c1',
+        usage: null, costUsd: null, finishReason: 'stop', droppedTurns: 0, context: [], tools: [],
+        range: RANGE, proposalId: 'pr-t1', partId: 'p-r1', proposalStatus: 'pending'
+      }
+    ] as unknown as Parameters<typeof restoredSession>[0])
+    expect(revealStep(restored.turns, new Set(), 'c1', pending)).toEqual({
+      watched: new Set(),
+      reveal: []
+    })
+  })
+
+  it('leaves chat-only and direct-apply turns alone', () => {
+    for (const mode of ['hoi', 'ap_dung'] as const) {
+      const finished = applyChunk(begun('r1', { mode }), proposalDone('r1'))
+      const step = revealStep(finished.turns, new Set(['L-r1']), 'c1', pending)
+      expect(step.reveal).toEqual([])
+    }
+  })
+
+  it('drops a turn that failed, made no proposal, or belongs to another chapter', () => {
+    const failed = applyChunk(begun('r1'), failure('r1', 'network'))
+    expect(revealStep(failed.turns, new Set(['L-r1']), 'c1', pending).watched.size).toBe(0)
+
+    const noProposal = applyChunk(begun('r1'), done('r1'))
+    expect(revealStep(noProposal.turns, new Set(['L-r1']), 'c1', pending).watched.size).toBe(0)
+
+    const elsewhere = applyChunk(begun('r1', { chapterId: 'c2' }), proposalDone('r1'))
+    const step = revealStep(elsewhere.turns, new Set(['L-r1']), 'c1', pending)
+    expect(step.reveal).toEqual([])
+    expect(step.watched.size).toBe(0)
+  })
+
+  it('does not open a proposal that is no longer pending', () => {
+    const finished = applyChunk(begun('r1'), proposalDone('r1'))
+    const step = revealStep(finished.turns, new Set(['L-r1']), 'c1', () => 'applied')
+    expect(step.reveal).toEqual([])
+    expect(step.watched.size).toBe(0)
   })
 })

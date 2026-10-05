@@ -3,6 +3,12 @@
 Ngày đọc: 2026-10-04 · Trạng thái: **quan sát mã và tài liệu chính thức; thiết kế bên dưới là đề xuất, chưa chốt**.
 Chủ trì: sản phẩm/kỹ thuật. Câu hỏi: panel giúp người dịch hỏi, chọn ngữ cảnh và xem kết quả như thế nào để không hiểu sai phạm vi?
 
+> **Cập nhật 2026-10-05:** chủ sản phẩm quyết định bỏ khối xem nguồn gửi kèm và nút thêm nguồn từ
+> chương khác khỏi composer, và đặt “viết vào bản dịch” làm hành động gửi mặc định. Mục 2–3 của
+> phần đề xuất bên dưới (picker ngữ cảnh, xem trước payload) vì vậy **không làm**; các mục còn lại
+> vẫn là đề xuất. Xem [quyết định 7–8](decisions.md). Bảng “Quan sát Mira hiện tại” giữ nguyên như
+> lúc đọc mã ngày 2026-10-04.
+
 ## Vấn đề người dùng nêu
 
 Panel hiện cho cảm giác câu trả lời là text thuần và các nút thêm/chọn ngữ cảnh chưa hợp lý. Đây là
