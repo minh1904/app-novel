@@ -17,6 +17,9 @@ export function sanitizeJsonString(text: string): string {
   return text
     // Xóa dấu phẩy thừa trước dấu đóng mảng: , ] -> ]
     .replace(/,\s*([\]}])/g, '$1')
+    // v3/v4: model đôi khi viết thừa `"dst":` trước khóa nhãn ("dst":"noi":"A→B"); bỏ phần thừa để
+    // "noi" không bị đọc thành bản dịch.
+    .replace(/"dst"\s*:\s*"(noi|xung|goi)"\s*:/g, '"$1":')
 }
 
 /**
@@ -68,7 +71,7 @@ export function regexFallbackExtract(text: string): ParsedTranslateItem[] {
 
   // Mẫu: {"id": "[1]", "dst": "nội dung"}
   const pattern =
-    /["'](?:id|ID|Id)["']\s*:\s*(?:"([^"]+)"|'([^']+)'|(\d+))\s*,\s*["'](?:dst|text|translation|vi|target)["']\s*:\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')/g
+    /["'](?:id|ID|Id)["']\s*:\s*(?:"([^"]+)"|'([^']+)'|(\d+))\s*,\s*["'](?:dst|text|translation|vi|target)["']\s*:\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')(?!\s*:)/g
 
   let match: RegExpExecArray | null
   while ((match = pattern.exec(text)) !== null) {
@@ -87,7 +90,7 @@ export function regexFallbackExtract(text: string): ParsedTranslateItem[] {
   // Mẫu ngược lại: {"dst": "nội dung", "id": "[1]"}
   if (items.length === 0) {
     const reversePattern =
-      /["'](?:dst|text|translation|vi|target)["']\s*:\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')\s*,\s*["'](?:id|ID|Id)["']\s*:\s*(?:"([^"]+)"|'([^']+)'|(\d+))/g
+      /["'](?:dst|text|translation|vi|target)["']\s*:\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')(?!\s*:)\s*,\s*["'](?:id|ID|Id)["']\s*:\s*(?:"([^"]+)"|'([^']+)'|(\d+))/g
     while ((match = reversePattern.exec(text)) !== null) {
       let rawText = match[1] ?? match[2] ?? ''
       const rawId = (match[3] ?? match[4] ?? match[5] ?? '').trim()

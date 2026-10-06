@@ -89,6 +89,21 @@ Chúc bạn một ngày tốt lành!`
     ])
   })
 
+  it('v4: "dst" thừa trước khóa nhãn không biến "noi" thành bản dịch', () => {
+    const raw =
+      '[{"id":"[1]","dst":"noi":"Milly→Rion","xung":"tôi","goi":"cậu","dst":"“Cậu về rồi à?”"},' +
+      '{"id":"[2]","noi":"Rion→Milly","xung":"tôi","goi":"chị","dst":"“Ừ.”"}]'
+    expect(parseTranslationResponse(raw)).toEqual([
+      { tempId: '[1]', text: '“Cậu về rồi à?”' },
+      { tempId: '[2]', text: '“Ừ.”' }
+    ])
+  })
+
+  it('regex dự phòng không lấy tên khóa làm bản dịch', () => {
+    const raw = '{"id":"[1]","dst":"noi":"Milly→Rion" rồi hỏng hẳn'
+    expect(parseTranslationResponse(raw)).toEqual([])
+  })
+
   it('trả về mảng rỗng khi chuỗi hoàn toàn không chứa bản dịch hợp lệ', () => {
     const raw = 'Xin lỗi, tôi không thể dịch nội dung này.'
     const items = parseTranslationResponse(raw)
