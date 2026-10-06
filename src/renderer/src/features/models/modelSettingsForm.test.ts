@@ -7,7 +7,6 @@ import {
   jsonPatch,
   parseJsonField,
   parseTaskField,
-  replaceById,
   roundSlider,
   sliderPatch,
   taskFormOf,
@@ -267,26 +266,6 @@ describe('the JSON boxes', () => {
     expect(jsonPatch('extraHeaders', false, {})).toEqual({
       extraHeaders: { enabled: false, value: {} }
     })
-  })
-})
-
-describe('replaceById', () => {
-  const list = [
-    { id: 'a', n: 1 },
-    { id: 'b', n: 2 }
-  ]
-
-  it('swaps the item with the same id and keeps the order', () => {
-    expect(replaceById(list, { id: 'a', n: 9 })).toEqual([
-      { id: 'a', n: 9 },
-      { id: 'b', n: 2 }
-    ])
-  })
-
-  it('appends an item that is new, and leaves the list it was given alone', () => {
-    const next = replaceById(list, { id: 'c', n: 3 })
-    expect(next.map((item) => item.id)).toEqual(['a', 'b', 'c'])
-    expect(list).toHaveLength(2)
   })
 })
 

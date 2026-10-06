@@ -293,14 +293,3 @@ export const ADVANCED_HINTS = {
 
 export const TEMPERATURE_LOCKED_HINT =
   'Theo bảng dữ liệu đi kèm, model này không nhận nhiệt độ nên Mira khóa ô này.'
-
-// ---- small shared helpers --------------------------------------------------------------------------------------
-
-/** `view` replaces the connection of the same id in a list, or is added at the end if it is new. */
-export function replaceById<T extends { id: string }>(list: readonly T[], view: T): T[] {
-  const at = list.findIndex((item) => item.id === view.id)
-  if (at === -1) return [...list, view]
-  const next = [...list]
-  next[at] = view
-  return next
-}

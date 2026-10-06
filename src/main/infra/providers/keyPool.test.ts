@@ -3,7 +3,6 @@ import { classifyHttpError, parseDuration } from './classifyError'
 import {
   MAX_SHORT_FREEZE_MS,
   SHORT_FREEZE_MS,
-  chooseKey,
   decideFreeze,
   earliestRecovery,
   isUsable,
@@ -199,28 +198,19 @@ describe('classifyHttpError', () => {
   })
 })
 
-describe('chooseKey (fill-first)', () => {
-  it('uses the first key until it stops working, not round-robin', () => {
-    const keys = [key('a'), key('b')]
-    expect(chooseKey(keys, NOW)?.id).toBe('a')
-    expect(chooseKey(keys, NOW)?.id).toBe('a')
+describe('key usability', () => {
+  it('uses a frozen key again once the freeze is over', () => {
+    const frozen = key('a', { frozenUntil: NOW + 1_000 })
+    expect(isUsable(frozen, NOW)).toBe(false)
+    expect(isUsable(frozen, NOW + 2_000)).toBe(true)
   })
 
-  it('moves to the next key only while the first is frozen', () => {
-    const keys = [key('a', { frozenUntil: NOW + 1_000 }), key('b')]
-    expect(chooseKey(keys, NOW)?.id).toBe('b')
-    expect(chooseKey(keys, NOW + 2_000)?.id).toBe('a')
+  it('never uses a key known to be wrong', () => {
+    expect(isUsable(key('a', { state: 'invalid' }), NOW + 10 ** 9)).toBe(false)
   })
 
-  it('skips a key known to be wrong, for good', () => {
-    const keys = [key('a', { state: 'invalid' }), key('b')]
-    expect(chooseKey(keys, NOW)?.id).toBe('b')
-    expect(isUsable(keys[0], NOW + 10 ** 9)).toBe(false)
-  })
-
-  it('returns nothing when every key is frozen, and says when the first comes back', () => {
+  it('says when the first frozen key comes back', () => {
     const keys = [key('a', { frozenUntil: NOW + 9_000 }), key('b', { frozenUntil: NOW + 4_000 })]
-    expect(chooseKey(keys, NOW)).toBeUndefined()
     expect(earliestRecovery(keys, NOW)).toBe(NOW + 4_000)
   })
 

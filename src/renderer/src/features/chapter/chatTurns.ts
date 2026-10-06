@@ -247,14 +247,6 @@ export function proposalOf(turn: TurnView): string | null {
   return extractFence(turn.answer)
 }
 
-export function markAutoApply(
-  session: Session,
-  localId: string,
-  outcome: 'applied' | 'needs-review'
-): Session {
-  return mapTurn(session, (turn) => turn.localId === localId, (turn) => ({ ...turn, autoApply: outcome }))
-}
-
 export function markTurnProposal(
   session: Session,
   localId: string,

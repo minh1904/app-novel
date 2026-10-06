@@ -32,14 +32,6 @@ export function isUsable(key: Pick<KeyCipher, 'state' | 'frozenUntil'>, now: num
   return key.frozenUntil === null || key.frozenUntil <= now
 }
 
-/** Khóa đầu tiên còn dùng được, theo đúng thứ tự người dùng khai. */
-export function chooseKey<T extends Pick<KeyCipher, 'state' | 'frozenUntil'>>(
-  keys: T[],
-  now: number
-): T | undefined {
-  return keys.find((key) => isUsable(key, now))
-}
-
 /** Mốc sớm nhất có khóa sống lại, để báo cho người dùng biết chờ tới bao giờ. */
 export function earliestRecovery(
   keys: ReadonlyArray<Pick<KeyCipher, 'state' | 'frozenUntil'>>,

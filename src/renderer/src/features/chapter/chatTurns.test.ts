@@ -8,7 +8,6 @@ import {
   emptySession,
   failTurn,
   historyFor,
-  markAutoApply,
   openRequestIds,
   proposalOf,
   revealStep,
@@ -201,8 +200,6 @@ describe('what a turn offers to apply', () => {
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, done('r1'))
     expect(proposalOf(turnOf(session, 'r1'))).toBe('Nhờ ngoại hình, cô được nhiều người để ý.')
-    session = markAutoApply(session, 'L-r1', 'applied')
-    expect(turnOf(session, 'r1').autoApply).toBe('applied')
   })
 
   it('does not offer a replacement when provider cut off the answer', () => {
@@ -336,7 +333,10 @@ describe('revealStep', () => {
     ...done(requestId),
     proposal: { proposalId: 'pr-' + requestId, partId, status: 'pending' }
   })
-  const begun = (requestId: string, options: { mode?: ChatMode; chapterId?: string } = {}): Session => {
+  const begun = (
+    requestId: string,
+    options: { mode?: ChatMode; chapterId?: string } = {}
+  ): Session => {
     const localId = 'L-' + requestId
     const mode = options.mode ?? WRITING.mode
     return attachRequestId(
@@ -352,7 +352,8 @@ describe('revealStep', () => {
       requestId
     )
   }
-  const pending = (partId: string): 'pending' | undefined => (partId === 'p-r1' ? 'pending' : undefined)
+  const pending = (partId: string): 'pending' | undefined =>
+    partId === 'p-r1' ? 'pending' : undefined
 
   it('opens the proposal of a writing turn that was seen running, once it is in the queue', () => {
     const running = begun('r1')
@@ -379,9 +380,22 @@ describe('revealStep', () => {
   it('never opens a turn restored from history', () => {
     const restored = restoredSession([
       {
-        id: 't1', question: 'Viết lại', answer: 'x', action: 'edit', status: 'done', chapterId: 'c1',
-        usage: null, costUsd: null, finishReason: 'stop', droppedTurns: 0, context: [], tools: [],
-        range: RANGE, proposalId: 'pr-t1', partId: 'p-r1', proposalStatus: 'pending'
+        id: 't1',
+        question: 'Viết lại',
+        answer: 'x',
+        action: 'edit',
+        status: 'done',
+        chapterId: 'c1',
+        usage: null,
+        costUsd: null,
+        finishReason: 'stop',
+        droppedTurns: 0,
+        context: [],
+        tools: [],
+        range: RANGE,
+        proposalId: 'pr-t1',
+        partId: 'p-r1',
+        proposalStatus: 'pending'
       }
     ] as unknown as Parameters<typeof restoredSession>[0])
     expect(revealStep(restored.turns, new Set(), 'c1', pending)).toEqual({
