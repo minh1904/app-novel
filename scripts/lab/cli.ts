@@ -39,6 +39,7 @@ import type { TranslationModelCaller } from '../../src/shared/contracts/translat
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
 import { parsePromptVersion, type PromptVersion } from '../../src/main/services/ai/promptVersion'
 import { paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
+import { sanitizeJsonString } from '../../src/shared/algorithms/lenientParser'
 import { costOfUsage } from '../../src/main/services/ai/costEstimate'
 import { lookupModel } from '../../src/main/infra/providers/modelCatalog'
 import { formatAsNovelHtml } from '../../src/main/services/export/formatters/pdfFormatter'
@@ -1395,7 +1396,7 @@ function pairs(manifest: Manifest, args: Args): void {
       if (!source || !record.response) continue
       try {
         const sent = JSON.parse(source) as Array<{ id: string; src: string }>
-        const got = JSON.parse(record.response.replace(/```(?:json)?/g, '').trim()) as Array<{
+        const got = JSON.parse(sanitizeJsonString(record.response.replace(/```(?:json)?/g, '').trim())) as Array<{
           id: string
           noi?: string
         }>
