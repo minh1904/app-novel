@@ -1,6 +1,6 @@
 {
   "ncode": "n4696dd",
-  "model": "gemini-3.1-flash-lite",
+  "model": "gemini-2.5-flash",
   "register": "ja-fantasy",
   "chapters": [
     1,
@@ -34,73 +34,209 @@
     29,
     30
   ],
-  "at": "2026-10-05T17:52:39.753Z",
+  "at": "2026-10-06T09:07:33.597Z",
   "characters": [
+    {
+      "source": "アリス",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Hầu gái nuôi Leon từ bé; sau này được tiết lộ là Elf. Luôn nói kính ngữ với chủ. Tên đầy đủ là Alicetia."
+    },
+    {
+      "source": "クレア",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Chị gái cùng cha khác mẹ của nhân vật chính."
+    },
     {
       "source": "リオン",
       "gender": "male",
-      "thirdPerson": "Rion",
-      "notes": "Nhân vật chính, chuyển sinh"
+      "thirdPerson": "anh",
+      "notes": "Nhân vật chính, con trai thứ của gia đình Bá tước Granches, con của vợ lẽ."
     },
     {
       "source": "ミリィ",
       "gender": "female",
       "thirdPerson": "cô",
-      "notes": "Hầu gái thân thiết của Rion"
-    },
-    {
-      "source": "クレアリディル",
-      "gender": "female",
-      "thirdPerson": "nàng",
-      "notes": "Chị gái của Rion, hay gọi Rion là 'em trai'"
+      "notes": "Người giúp việc đã nuôi dưỡng nhân vật chính từ nhỏ."
     },
     {
       "source": "ソフィア",
       "gender": "female",
-      "thirdPerson": "cô bé",
-      "notes": "Tiểu thư nhà Sフィール, hôn thê của Rion"
+      "thirdPerson": "cô",
+      "notes": "Con gái của gia đình Sfeel, được hứa hôn với nhân vật chính."
     },
     {
-      "source": "アリスティア",
+      "source": "キャロ",
       "gender": "female",
-      "thirdPerson": "cô",
-      "notes": "Thiếu nữ nô lệ được Rion cứu"
-    },
-    {
-      "source": "ミシェル",
-      "gender": "female",
-      "thirdPerson": "cô",
-      "notes": "Hầu gái riêng của Claire"
+      "thirdPerson": "bà",
+      "notes": "Vợ cả của Bá tước Granches, mẹ của Claire."
     },
     {
       "source": "レジス",
       "gender": "male",
       "thirdPerson": "ông",
-      "notes": "Quản gia"
-    },
-    {
-      "source": "キャロライン",
-      "gender": "female",
-      "thirdPerson": "bà",
-      "notes": "Mẹ của Blake, phu nhân bá tước"
+      "notes": "Quản gia của gia đình Sfeel."
     },
     {
       "source": "ブレイク",
       "gender": "male",
-      "thirdPerson": "hắn",
-      "notes": "Anh trai của Rion"
+      "thirdPerson": "anh",
+      "notes": "Con trai của bá tước Granches và vợ cả, anh trai của Claire, anh trai cùng cha khác mẹ của Leon."
+    },
+    {
+      "source": "紗弥",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Bạn gái của nhân vật chính ở kiếp trước, đã qua đời vì bệnh."
+    },
+    {
+      "source": "ミシェル",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Người hầu gái riêng của Claire."
+    },
+    {
+      "source": "カルロス",
+      "gender": "male",
+      "thirdPerson": "ông",
+      "notes": "Chủ gia đình Sfeel."
+    },
+    {
+      "source": "マリー",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Người giúp việc mới, kiêm nhiệm giám sát nhân vật chính sau khi Milly rời đi."
+    },
+    {
+      "source": "アリスママ",
+      "gender": "female",
+      "thirdPerson": "bà",
+      "notes": "Mẹ của Alice, tộc trưởng Elf. Không có thoại trực tiếp."
+    },
+    {
+      "source": "エリーゼ",
+      "gender": "female",
+      "thirdPerson": "bà",
+      "notes": "Vợ của Carlos, chủ gia đình Sfeel."
+    },
+    {
+      "source": "リスティア",
+      "gender": "female",
+      "thirdPerson": "cô",
+      "notes": "Đây là tên đầy đủ của Alice (Alicetia). Các câu thoại có 'リスティア' đều dùng 'アリスティア'."
+    },
+    {
+      "source": "ロバート",
+      "gender": "male",
+      "thirdPerson": "ông",
+      "notes": "Cha của nhân vật chính."
+    },
+    {
+      "source": "グランプ",
+      "gender": "male",
+      "thirdPerson": "ông",
+      "notes": "Hầu tước được nhắc đến là vị hôn phu của chị nữ chính. Không có thoại trực tiếp."
+    },
+    {
+      "source": "アリスパパ",
+      "gender": "male",
+      "thirdPerson": "ông",
+      "notes": "Cha của Alice. Không có thoại trực tiếp."
+    },
+    {
+      "source": "エリック",
+      "gender": "male",
+      "thirdPerson": "anh",
+      "notes": "Anh trai của Sofia."
+    },
+    {
+      "source": "裕弥",
+      "gender": "male",
+      "thirdPerson": "anh",
+      "notes": "Tên của nhân vật chính ở thế giới cũ."
     }
   ],
   "dyads": [
     {
-      "from": "ミリィ",
+      "from": "アリス",
       "to": "リオン",
       "self": "tôi",
-      "address": "Rion-sama",
-      "secondPerson": "cậu",
-      "notes": "Luôn dùng kính ngữ với chủ",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "Alice là hầu gái của Leon, luôn nói kính ngữ. Leon tự xưng 'tôi' với người kể. Alice gọi trực tiếp: リオン様",
       "evidence": [
-        "ch3: 「リオン様ったらまた部屋から抜け出して、探しましたよ？」"
+        "ch3: 「リオン様ったらまた部屋から抜け出して、探しましたよ？」",
+        "ch13: 「はぁ……ど、どうしてリオン様はそんな体力があるんですか？ はぁっ、私だって毎日一緒に走ってるのにぃ～」",
+        "ch25: 「覚えてますよ。一週間後――つまり今日、アリスが俺の処遇を決めるんですよね？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "アリス",
+      "self": "tôi",
+      "address": "Alice",
+      "secondPerson": "em",
+      "notes": "Leon là chủ của Alice, gọi tên trực tiếp, xưng 'tôi' (ngôi một người kể). Alice là người hầu nhỏ tuổi hơn, chăm sóc Leon từ bé.",
+      "evidence": [
+        "ch13: 「ほらほら、どうしたアリス。もう息が上がってるぞ？」",
+        "ch22: 「アリス、こっちだ！」",
+        "ch24: 「どうしたんだアリス！？」",
+        "ch28: 「じゃあ俺が先に入るから、アリスは続いて入ってきてくれ」",
+        "ch12: 「それじゃアリス。良ければ俺のこともリオンって呼んでくれ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "クレア",
+      "to": "リオン",
+      "self": "chị",
+      "address": "em",
+      "secondPerson": "em",
+      "notes": "Claire là chị gái cùng cha khác mẹ của Leon, thân thiết. Ban đầu dùng 貴方, sau thân hơn dùng 弟くん.",
+      "evidence": [
+        "ch5: 「そうはいかないわ。あたしの名前はクレアリディル。クレアリディル・グランシェスよ。改めてお礼をしたいから、貴方の名前を教えて？」",
+        "ch8: 「助けて、弟くん！ ミシェルが、ミシェルがこのままじゃ殺されちゃう！」",
+        "ch18: 「どうしたもこうしたも、弟くんがブレイク兄さんと口論したってホントなの！？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "クレア",
+      "self": "tôi",
+      "address": "chị Claire",
+      "secondPerson": "chị",
+      "notes": "Leon là em trai của Claire, gọi kính trọng bằng お姉ちゃん/ねぇ. Xưng 'tôi' cho phù hợp với ngôi kể hiện đại.",
+      "evidence": [
+        "ch8: 「誰だ……って、クレアねぇ？ どうかした――」",
+        "ch10: 「あぁそれか。あの時も言っただろ、それはミリィも俺も覚悟の上だったんだ。だから、クレアねぇは謝る必要なんてないんだよ」",
+        "ch18: 「クレアねぇ、今度はどうしたんだ？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "キャロ",
+      "to": "クレア",
+      "self": "mẹ",
+      "address": "Claire",
+      "secondPerson": "con",
+      "notes": "Caroline là mẹ của Claire, gọi tên thân mật.",
+      "evidence": [
+        "ch9: 「クレア。お前の気持ちは痛いほど判る。わしとてお前と気持ちは同じだ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ミシェル",
+      "to": "クレア",
+      "self": "tôi",
+      "address": "tiểu thư Claire",
+      "secondPerson": "tiểu thư",
+      "notes": "Michelle là hầu gái riêng của Claire, dùng kính ngữ.",
+      "evidence": [
+        "ch7: 「クレア様いらっしゃい。飲み物は暖かい紅茶でよろしいですか？」"
       ],
       "confidence": "cao"
     },
@@ -109,46 +245,27 @@
       "to": "ミリィ",
       "self": "tôi",
       "address": "Milly",
-      "secondPerson": "cô",
-      "notes": "Xưng hô thân thiết",
-      "evidence": [
-        "ch3: 「ごめんね、ミリィ」"
-      ],
-      "confidence": "cao"
-    },
-    {
-      "from": "クレアリディル",
-      "to": "リオン",
-      "self": "chị",
-      "address": "em trai",
-      "secondPerson": "em",
-      "notes": "Chị gái xưng hô với em trai",
-      "evidence": [
-        "ch8: 「誰だ……って、クレアねぇ？ どうかした――」"
-      ],
-      "confidence": "cao"
-    },
-    {
-      "from": "リオン",
-      "to": "クレアリディル",
-      "self": "tôi",
-      "address": "chị Claire",
       "secondPerson": "chị",
-      "notes": "Gọi chị theo cách thân mật",
+      "notes": "Leon gọi Milly bằng tên, xem như người thân, xưng 'tôi' (ngôi kể hiện đại). Milly là người lớn hơn, nuôi Leon từ bé.",
       "evidence": [
-        "ch8: 「誰だ……って、クレアねぇ？ どうかした――」"
+        "ch3: 「ごめんね、ミリィ」",
+        "ch4: 「――ミリィ、今のはどういう意味？」",
+        "ch8: 「ミリィ、いつもありがとな」",
+        "ch9: 「ミリィ、なんでここに！？」"
       ],
       "confidence": "cao"
     },
     {
-      "from": "ソフィア",
+      "from": "ミリィ",
       "to": "リオン",
-      "self": "em",
-      "address": "anh Rion",
-      "secondPerson": "anh",
-      "notes": "Thay đổi cách gọi sau khi thân thiết",
+      "self": "tôi",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "Milly là hầu gái của Leon, luôn dùng kính ngữ. Leon tự xưng 'tôi' với người kể.",
       "evidence": [
-        "ch14: 「初めまして。俺はリオンって言うんだ」"
+        "ch3: 「リオン様ったらまた部屋から抜け出して、探しましたよ？」",
+        "ch4: 「……え、リオン様？ 寝てらしたんじゃないんですか！？」",
+        "ch8: 「リオン様……ふふ、明日は雨でしょうか」"
       ],
       "confidence": "cao"
     },
@@ -157,22 +274,63 @@
       "to": "ソフィア",
       "self": "tôi",
       "address": "Sophia",
-      "secondPerson": "cô bé",
-      "notes": "Xưng hô lịch sự với tiểu thư",
+      "secondPerson": "cô",
+      "notes": "Leon và Sophia là vị hôn phu – hôn thê chưa thân thiết. Leon xưng 'tôi' (ngôi kể hiện đại), gọi tên.",
       "evidence": [
         "ch14: 「初めまして。俺はリオンって言うんだ。ねぇソフィア、良かったらキミの名前を教えてくれないかな？」"
       ],
       "confidence": "cao"
     },
     {
-      "from": "アリスティア",
+      "from": "ソフィア",
       "to": "リオン",
-      "self": "tôi",
-      "address": "Rion-sama",
-      "secondPerson": "cậu",
-      "notes": "Dùng kính ngữ sau khi được cứu",
+      "self": "em",
+      "address": "anh Leon",
+      "secondPerson": "anh",
+      "notes": "Sophia là vị hôn thê của Leon, xưng 'em' và gọi 'anh Leon' vì cô bé còn nhỏ và cách gọi thân mật 'お兄ちゃん'.",
       "evidence": [
-        "ch14: 「リオン様！ アリスさんがっ。アリスさんが連れ去られてしまいました！」"
+        "ch14: 「それじゃリオンお兄ちゃんは、そのクレアさんと仲が良いんだね」",
+        "ch14: 「……ソフィアは、ソフィアだよ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "キャロ",
+      "self": "tôi",
+      "address": "bà Caroline",
+      "secondPerson": "bà",
+      "notes": "Leon là con riêng của Bá tước, Caroline là vợ cả, có khoảng cách và sự cảnh giác. Leon dùng cách gọi trang trọng, xa cách.",
+      "evidence": [
+        "ch4: 「俺が妾の子供だから、キャロラインさんは息子の地位を俺が脅かさないか警戒してるんだよね？」",
+        "ch16: 「キャロラインさんが俺を警戒しているのは、兄の地位を脅かすかも知れないからでしょう？ 俺はグランシェス家の地位に興味が無いと、そう言いに来たんです」",
+        "ch21: 「なあ、キャロラインさんと話をさせてくれないか？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "キャロ",
+      "to": "リオン",
+      "self": "ta",
+      "address": "Leon",
+      "secondPerson": "cậu",
+      "notes": "Caroline là mẹ kế của Leon, có thái độ cứng rắn. Dùng 'ta – cậu' với sắc thái bề trên nhưng không quá hạ thấp.",
+      "evidence": [
+        "ch16: 「お前は……懐が深いな。流石はミリィが育てただけの事はある」",
+        "ch16: 「それを判っていながらわしのところに来た、その理由はなんだ？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "レジス",
+      "self": "tôi",
+      "address": "Regis",
+      "secondPerson": "ông",
+      "notes": "Leon gọi Regis là 'Regis-san' ban đầu, sau đó Regis yêu cầu gọi trống tên. Vẫn xưng 'tôi' và gọi 'ông' cho quản gia lớn tuổi.",
+      "evidence": [
+        "ch13: 「レジスさん、一つ聞いても良いですか？」",
+        "ch13: 「それじゃ、レジス。一つ聞いても良いか？」"
       ],
       "confidence": "cao"
     },
@@ -180,23 +338,228 @@
       "from": "レジス",
       "to": "リオン",
       "self": "tôi",
-      "address": "Rion-sama",
-      "secondPerson": "cậu",
-      "notes": "Quản gia nói với chủ",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "Regis là quản gia của gia đình Sfeel, dùng kính ngữ với Leon, gọi 'thiếu gia Leon'.",
       "evidence": [
-        "ch13: 「かしこまりました。それではリオン様。お嬢様のお部屋までは、わたくし――レジスが案内いたします」"
+        "ch13: 「かしこまりました。それではリオン様。お嬢様のお部屋までは、わたくし――レジスが案内いたします。どうぞこちらへ」",
+        "ch13: 「わたくしはただの執事。どうぞレジスと呼び捨てになさって下さい。そのような敬語も必要ありません」"
       ],
       "confidence": "cao"
     },
     {
-      "from": "ブレイク",
-      "to": "リオン",
-      "self": "ta",
-      "address": "ngươi",
-      "secondPerson": "ngươi",
-      "notes": "Giọng bề trên, khinh miệt",
+      "from": "リオン",
+      "to": "ブレイク",
+      "self": "tôi",
+      "address": "Blake",
+      "secondPerson": "anh",
+      "notes": "Leon là em trai của Blake, gọi thẳng tên. Giọng điệu có thể gắt.",
       "evidence": [
         "ch11: 「ブレイク、ノックもせずになんだ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "マリー",
+      "self": "tôi",
+      "address": "Marie",
+      "secondPerson": "cô",
+      "notes": "Leon là chủ của Marie, gọi tên trực tiếp. Marie là người hầu.",
+      "evidence": [
+        "ch12: 「いや、別に様や敬語も必要ない……あぁでも、マリーの目もあるしなぁ。悪いけど、当面はそれで頼むよ」",
+        "ch15: 「マリーはいざという時に頼む。クレアねぇなら話くらいは聞いてくれると思うからさ」",
+        "ch17: 「俺の方こそ礼を言うよ。マリーがアリスが攫われたことを教えてくれなかったら、間に合わないところだった。本当にありがとうな」",
+        "ch25: 「うん。本当は最初からそう思ってたんだけど、マリーとかに聞かれると厄介だから、仕方なく敬語を使って貰ってたんだ。良い機会だから、普通に話してくれよ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "マリー",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "Marie là hầu gái của Leon, luôn dùng kính ngữ.",
+      "evidence": [
+        "ch17: 「お帰りなさいませ、リオン様。随分と遅いお帰りですが……今まで何処でなにをされていたのですか？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ミリィ",
+      "to": "ロバート",
+      "self": "tôi",
+      "address": "Bá tước Robert",
+      "secondPerson": "ngài",
+      "notes": "Milly là người hầu, Robert là chủ gia đình. Dùng kính ngữ trang trọng.",
+      "evidence": [
+        "ch9: 「ロバート様、ご無沙汰しています」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "ロバート",
+      "self": "con",
+      "address": "cha",
+      "secondPerson": "cha",
+      "notes": "Leon là con trai của Robert, nhưng lại bị đối xử ghẻ lạnh. Anh dùng kính ngữ trang trọng với Robert, gọi 'cha' (nếu trực tiếp gọi, bản gốc không dùng đại từ để xưng).",
+      "evidence": [
+        "ch15: 「……ロバート様、ですか？ 味方になってくれるんですか？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ロバート",
+      "to": "リオン",
+      "self": "cha",
+      "address": "Leon",
+      "secondPerson": "con",
+      "notes": "Robert là cha của Leon, xưng 'cha' và gọi 'con'.",
+      "evidence": [
+        "ch9: 「今度はなんだ？ お前は……リオン？ 何故ここに居る！？」",
+        "ch11: 「リオンよ、お前の婚約者が決定した」",
+        "ch16: 「……リオン？ なにをしに来たんだ」",
+        "ch22: 「そんな顔をするな。お前にはミリィやクレア。それにアリスティアが居るだろ？ 随分と仲良くしているようじゃないか」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ソフィア",
+      "to": "エリック",
+      "self": "em",
+      "address": "anh Eric",
+      "secondPerson": "anh",
+      "notes": "Sophia là em gái của Eric, xưng 'em' và gọi 'anh Eric'.",
+      "evidence": [
+        "ch14: 「お兄ちゃんはいるけど、お姉ちゃんはいないから。それに、エリックお兄ちゃんは騎士団に入団してて、時々しか帰ってこないの」",
+        "ch14: 「そうだよぉ。エリックお兄ちゃんは凄く才能があるって、レジスが言ってた」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "紗弥",
+      "to": "裕弥",
+      "self": "em",
+      "address": "anh Yuya",
+      "secondPerson": "anh",
+      "notes": "Saya là bạn gái kiếp trước của Yuya, xưng 'em' và gọi 'anh Yuya'.",
+      "evidence": [
+        "ch2: 「……裕弥兄さん。今まで側にいてくれて、ありがとうね」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "裕弥",
+      "to": "紗弥",
+      "self": "anh",
+      "address": "Saya",
+      "secondPerson": "em",
+      "notes": "Yuya gọi Saya bằng tên, xưng 'anh'.",
+      "evidence": [
+        "ch2: 「……紗弥？ おい、紗弥？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ミシェル",
+      "to": "ミリィ",
+      "self": "tôi",
+      "address": "Milly",
+      "secondPerson": "chị",
+      "notes": "Michelle là hầu gái của Claire, Milly là hầu gái của Leon. Cả hai là đồng nghiệp. Michelle dùng kính ngữ khi giới thiệu bản thân.",
+      "evidence": [
+        "ch6: 「突然の来訪で申し訳ありません。私はクレアリディル様お付きのメイドで、ミシェルと申します」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ミリィ",
+      "to": "ミシェル",
+      "self": "tôi",
+      "address": "Michelle",
+      "secondPerson": "em",
+      "notes": "Milly là người trông coi biệt thự, có thể có vị thế cao hơn hầu gái riêng của Claire. Xưng 'tôi' và gọi 'em'.",
+      "evidence": [
+        "ch6: 「そのミシェルさんが、離れになんのご用でしょう？ ここは許可された人間以外の立ち入りを禁じられているはずですが？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "クレア",
+      "to": "ミシェル",
+      "self": "chị",
+      "address": "Michelle",
+      "secondPerson": "em",
+      "notes": "Claire là chủ của Michelle, gọi thẳng tên và xưng 'chị'.",
+      "evidence": [
+        "ch7: 「なるほど。後でミシェルに作って貰うつもりか」",
+        "ch9: 「そんな……嫌、嫌よ。ミシェル、お願いだから、そんなことを言わないで！」",
+        "ch10: 「あたしは花嫁修業の一環として、ミシェルにそっちの教育もして貰ってるから大丈夫。お姉ちゃんがリードしてあ げ る」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "ミシェル",
+      "self": "tôi",
+      "address": "Michelle",
+      "secondPerson": "em",
+      "notes": "Leon là chủ, Michelle là người hầu. Gọi tên thẳng, xưng 'tôi'.",
+      "evidence": [
+        "ch7: 「ミシェルに教えてやってくれるか？」",
+        "ch21: 「ミシェル！」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "カルロス",
+      "to": "リオン",
+      "self": "ta",
+      "address": "Leon",
+      "secondPerson": "cậu",
+      "notes": "Carlos là chủ gia đình Sfeel, thân phận cao hơn Leon (con thứ, con vợ lẽ). Dùng 'ta – cậu' với sắc thái bề trên.",
+      "evidence": [
+        "ch13: 「良く来てくれた。俺はスフィール家の当主カルロス。そしてこっちが妻のエリーゼだ。君を歓迎するよ」",
+        "ch29: 「俺がキミとソフィアを結婚させようと思ったのは、グランシェス家との繋がりが欲しかったからだ。だが、疎まれている妾の子では繋がりが弱すぎる」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "レジス",
+      "to": "エリーゼ",
+      "self": "tôi",
+      "address": "phu nhân Elise",
+      "secondPerson": "phu nhân",
+      "notes": "Regis là quản gia, Elise là phu nhân chủ nhà. Dùng kính ngữ trang trọng.",
+      "evidence": [
+        "ch30: 「それはっ、エリーゼ様」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "カルロス",
+      "to": "レジス",
+      "self": "tôi",
+      "address": "Regis",
+      "secondPerson": "ông",
+      "notes": "Carlos là chủ nhà, Regis là quản gia. Gọi thẳng tên, xưng 'tôi'.",
+      "evidence": [
+        "ch13: 「……レジス、彼の案内を頼む」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "エリーゼ",
+      "to": "レジス",
+      "self": "tôi",
+      "address": "Regis",
+      "secondPerson": "ông",
+      "notes": "Elise là phu nhân chủ nhà, Regis là quản gia. Gọi thẳng tên, xưng 'tôi'.",
+      "evidence": [
+        "ch30: 「レジス、まだ動けますね？」",
+        "ch30: 「レジス、聞こえなかったのですか？」"
       ],
       "confidence": "cao"
     }

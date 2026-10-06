@@ -1,0 +1,1031 @@
+{
+  "origin": "ai",
+  "note": "AI trích xuất 2026-10-06 bằng gemini-2.5-flash (không thinking) từ chương 1–30, lệnh \"extract\". Tự duyệt để đo; chưa người dịch duyệt.",
+  "extraction": {
+    "model": "gemini-2.5-flash",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "at": "2026-10-06T09:06:11.778Z",
+    "runId": "2026-10-06T09-05-05-922Z",
+    "codeCandidates": 145,
+    "sweptForms": 88,
+    "candidates": 160,
+    "accepted": 48,
+    "rejected": 103,
+    "dropped": []
+  },
+  "entries": [
+    {
+      "source": "スフィール",
+      "target": "gia tộc Sfeel",
+      "notes": "organization: Một gia đình quý tộc có quan hệ thân thiết với gia tộc Granches."
+    },
+    {
+      "source": "エルフ",
+      "target": "Elf",
+      "notes": "term: Tộc người trong thế giới giả tưởng, được miêu tả có tuổi thọ cao và kiến thức phong phú."
+    },
+    {
+      "source": "スフィール家",
+      "target": "gia tộc Sfeel",
+      "notes": "organization: Một gia đình quý tộc có quan hệ thân thiết với gia tộc Granches."
+    },
+    {
+      "source": "グランシェス",
+      "target": "gia tộc Granches",
+      "aliases": [
+        "グランシェス家"
+      ],
+      "notes": "organization: Gia đình quý tộc mà nhân vật chính thuộc về. Nhân vật chính là con trai thứ của Bá tước Granches."
+    },
+    {
+      "source": "インフルエンザ",
+      "target": "cúm",
+      "notes": "term: Một loại bệnh truyền nhiễm."
+    },
+    {
+      "source": "プリン",
+      "target": "pudding",
+      "notes": "item: Món tráng miệng."
+    },
+    {
+      "source": "エルフの里",
+      "target": "làng Elf",
+      "notes": "place: Nơi sinh sống của tộc Elf."
+    },
+    {
+      "source": "エンゲージ",
+      "target": "engagement",
+      "notes": "term: Thuật ngữ chỉ hành động đính ước hoặc gắn kết."
+    },
+    {
+      "source": "貴族",
+      "target": "quý tộc",
+      "notes": "term: Tầng lớp xã hội cao trong thế giới truyện."
+    },
+    {
+      "source": "ハイエルフ",
+      "target": "High Elf",
+      "notes": "term: Một loại Elf trong thế giới giả tưởng, được cho là có kiến thức sâu rộng và tuổi thọ rất cao."
+    },
+    {
+      "source": "日本",
+      "target": "Nhật Bản",
+      "notes": "place"
+    },
+    {
+      "source": "スフィール領",
+      "target": "Lãnh địa Sfil",
+      "notes": "place: một lãnh địa lân cận"
+    },
+    {
+      "source": "テンプレート",
+      "target": "khuôn mẫu",
+      "notes": "term"
+    },
+    {
+      "source": "侯爵",
+      "target": "Hầu tước",
+      "notes": "title"
+    },
+    {
+      "source": "族長",
+      "target": "Tộc trưởng",
+      "notes": "title: tộc trưởng tộc Elf"
+    },
+    {
+      "source": "チート",
+      "target": "hack/cheat",
+      "notes": "term: ám chỉ năng lực vượt trội"
+    },
+    {
+      "source": "紋",
+      "target": "Ma thuật Khắc ấn",
+      "aliases": [
+        "紋様魔術"
+      ],
+      "notes": "skill: Một loại ma thuật dựa trên việc khắc ấn/hoa văn"
+    },
+    {
+      "source": "ショートソード",
+      "target": "Kiếm ngắn",
+      "notes": "item"
+    },
+    {
+      "source": "エルフ族",
+      "target": "tộc Elf",
+      "notes": "term"
+    },
+    {
+      "source": "姫",
+      "target": "Công chúa",
+      "notes": "title"
+    },
+    {
+      "source": "カスタードプディング",
+      "target": "bánh pudding custard",
+      "notes": "item: một món bánh được nhắc tới nhiều lần"
+    },
+    {
+      "source": "サーズ",
+      "target": "Sirs",
+      "notes": "term: tên một căn bệnh, được nhắc đến như là bệnh thứ ba dễ mắc phải"
+    },
+    {
+      "source": "ストックホルム",
+      "target": "Hội chứng Stockholm",
+      "aliases": [
+        "ストックホルム症候群"
+      ],
+      "notes": "term: Hội chứng Stockholm là một hiện tượng tâm lý trong đó con tin phát triển mối quan hệ tâm lý với những kẻ bắt giữ của họ"
+    },
+    {
+      "source": "テンサイ",
+      "target": "củ cải đường",
+      "notes": "item: cây dùng để sản xuất đường"
+    },
+    {
+      "source": "フレイムランス",
+      "target": "Flame Lance",
+      "notes": "skill: tên một kỹ năng hoặc phép thuật"
+    },
+    {
+      "source": "ベッドサイドモニター",
+      "target": "máy theo dõi đầu giường",
+      "notes": "item: thiết bị y tế"
+    },
+    {
+      "source": "マジックアイテム",
+      "target": "vật phẩm ma thuật",
+      "notes": "term: vật phẩm có năng lực ma thuật"
+    },
+    {
+      "source": "マナ",
+      "target": "mana",
+      "notes": "term: năng lượng ma thuật"
+    }
+  ],
+  "characters": [
+    {
+      "source": "アリス",
+      "target": "Alice",
+      "aliases": [
+        "アリスティア"
+      ],
+      "gender": "female",
+      "role": "Tên đầy đủ là Alicetia. Người giúp việc (maid) đã chăm sóc nhân vật chính từ nhỏ, sau này được tiết lộ là một Elf. Tên gọi tắt là Alice.",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "クレア",
+      "target": "Claire",
+      "aliases": [
+        "クレアお姉ちゃん",
+        "クレアねぇ",
+        "クレアリディル",
+        "クレアリディル・グランシェス",
+        "クレア様"
+      ],
+      "gender": "female",
+      "role": "Tên đầy đủ là Clearidyl Granches. Chị gái cùng cha khác mẹ của nhân vật chính.",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "リオン",
+      "target": "Leon",
+      "aliases": [
+        "リオン・グランシェス",
+        "リオン様"
+      ],
+      "gender": "male",
+      "role": "Nhân vật chính, con trai thứ của gia đình Bá tước Granches, con của vợ lẽ.",
+      "thirdPerson": "anh"
+    },
+    {
+      "source": "ミリィ",
+      "target": "Milly",
+      "gender": "female",
+      "role": "Người giúp việc đã nuôi dưỡng nhân vật chính từ nhỏ. Được miêu tả là một 'maid'.",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "ソフィア",
+      "target": "Sophia",
+      "aliases": [
+        "ソフィア嬢",
+        "ソフィアちゃん"
+      ],
+      "gender": "female",
+      "role": "Con gái của gia đình Sfeel, được hứa hôn với nhân vật chính.",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "キャロ",
+      "target": "Caroline",
+      "aliases": [
+        "キャロライン"
+      ],
+      "gender": "female",
+      "role": "Vợ cả của Bá tước Granches, mẹ của Claire. Tên đầy đủ là Caroline.",
+      "thirdPerson": "bà"
+    },
+    {
+      "source": "レジス",
+      "target": "Regis",
+      "gender": "male",
+      "role": "Quản gia của gia đình Sfeel.",
+      "thirdPerson": "ông"
+    },
+    {
+      "source": "ブレイク",
+      "target": "Blake",
+      "gender": "male",
+      "role": "Con trai của bá tước Granches và vợ cả, anh trai của Claire, anh trai cùng cha khác mẹ của Leon.",
+      "thirdPerson": "anh"
+    },
+    {
+      "source": "紗弥",
+      "target": "Sāya Amamiya",
+      "aliases": [
+        "雨宮 紗弥"
+      ],
+      "gender": "female",
+      "role": "Bạn gái của nhân vật chính ở kiếp trước, đã qua đời vì bệnh.",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "ミシェル",
+      "target": "Michelle",
+      "gender": "female",
+      "role": "Người hầu gái riêng của Claire.",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "カルロス",
+      "target": "Carlos",
+      "gender": "male",
+      "role": "Chủ gia đình Sfeel.",
+      "thirdPerson": "ông"
+    },
+    {
+      "source": "マリー",
+      "target": "Marie",
+      "gender": "female",
+      "role": "Người giúp việc mới, kiêm nhiệm giám sát nhân vật chính sau khi Milly rời đi.",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "アリスママ",
+      "target": "mẹ của Alice",
+      "gender": "female",
+      "role": "Mẹ của Alice, tộc trưởng Elf.",
+      "thirdPerson": "bà"
+    },
+    {
+      "source": "エリーゼ",
+      "target": "Elise",
+      "gender": "female",
+      "role": "Vợ của Carlos, chủ gia đình Sfeel.",
+      "thirdPerson": "bà"
+    },
+    {
+      "source": "リスティア",
+      "target": "Listia",
+      "gender": "female",
+      "role": "Nhân vật chính của một tác phẩm khác, tên cô bé nô lệ Elf",
+      "thirdPerson": "cô"
+    },
+    {
+      "source": "ロバート",
+      "target": "Robert",
+      "gender": "male",
+      "role": "cha của nhân vật chính",
+      "thirdPerson": "ông"
+    },
+    {
+      "source": "グランプ",
+      "target": "Glamp",
+      "aliases": [
+        "グランプ侯爵様"
+      ],
+      "gender": "male",
+      "role": "Hầu tước được nhắc đến là vị hôn phu của chị nữ chính",
+      "thirdPerson": "ông"
+    },
+    {
+      "source": "アリスパパ",
+      "target": "Bố Alice",
+      "gender": "male",
+      "role": "cha của Listia/Alice",
+      "thirdPerson": "ông"
+    },
+    {
+      "source": "エリック",
+      "target": "Eric",
+      "gender": "male",
+      "role": "anh trai của Sofia",
+      "thirdPerson": "anh"
+    },
+    {
+      "source": "裕弥",
+      "target": "Yuya",
+      "gender": "male",
+      "role": "tên của nhân vật chính ở thế giới cũ",
+      "thirdPerson": "anh"
+    }
+  ],
+  "dyads": [
+    {
+      "from": "アリス",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "AI đề xuất, chờ duyệt. Alice là hầu gái của Leon, luôn nói kính ngữ. Leon tự xưng 'tôi' với người kể. Alice gọi trực tiếp: リオン様"
+    },
+    {
+      "from": "リオン",
+      "to": "アリス",
+      "self": "tôi",
+      "address": "Alice",
+      "secondPerson": "em",
+      "notes": "AI đề xuất, chờ duyệt. Leon là chủ của Alice, gọi tên trực tiếp, xưng 'tôi' (ngôi một người kể). Alice là người hầu nhỏ tuổi hơn, chăm sóc Leon từ bé."
+    },
+    {
+      "from": "クレア",
+      "to": "リオン",
+      "self": "chị",
+      "address": "em",
+      "secondPerson": "em",
+      "notes": "AI đề xuất, chờ duyệt. Claire là chị gái cùng cha khác mẹ của Leon, thân thiết. Ban đầu dùng 貴方, sau thân hơn dùng 弟くん."
+    },
+    {
+      "from": "リオン",
+      "to": "クレア",
+      "self": "tôi",
+      "address": "chị Claire",
+      "secondPerson": "chị",
+      "notes": "AI đề xuất, chờ duyệt. Leon là em trai của Claire, gọi kính trọng bằng お姉ちゃん/ねぇ. Xưng 'tôi' cho phù hợp với ngôi kể hiện đại."
+    },
+    {
+      "from": "キャロ",
+      "to": "クレア",
+      "self": "mẹ",
+      "address": "Claire",
+      "secondPerson": "con",
+      "notes": "AI đề xuất, chờ duyệt. Caroline là mẹ của Claire, gọi tên thân mật."
+    },
+    {
+      "from": "ミシェル",
+      "to": "クレア",
+      "self": "tôi",
+      "address": "tiểu thư Claire",
+      "secondPerson": "tiểu thư",
+      "notes": "AI đề xuất, chờ duyệt. Michelle là hầu gái riêng của Claire, dùng kính ngữ."
+    },
+    {
+      "from": "リオン",
+      "to": "ミリィ",
+      "self": "tôi",
+      "address": "Milly",
+      "secondPerson": "chị",
+      "notes": "AI đề xuất, chờ duyệt. Leon gọi Milly bằng tên, xem như người thân, xưng 'tôi' (ngôi kể hiện đại). Milly là người lớn hơn, nuôi Leon từ bé."
+    },
+    {
+      "from": "ミリィ",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "AI đề xuất, chờ duyệt. Milly là hầu gái của Leon, luôn dùng kính ngữ. Leon tự xưng 'tôi' với người kể."
+    },
+    {
+      "from": "リオン",
+      "to": "ソフィア",
+      "self": "tôi",
+      "address": "Sophia",
+      "secondPerson": "cô",
+      "notes": "AI đề xuất, chờ duyệt. Leon và Sophia là vị hôn phu – hôn thê chưa thân thiết. Leon xưng 'tôi' (ngôi kể hiện đại), gọi tên."
+    },
+    {
+      "from": "ソフィア",
+      "to": "リオン",
+      "self": "em",
+      "address": "anh Leon",
+      "secondPerson": "anh",
+      "notes": "AI đề xuất, chờ duyệt. Sophia là vị hôn thê của Leon, xưng 'em' và gọi 'anh Leon' vì cô bé còn nhỏ và cách gọi thân mật 'お兄ちゃん'."
+    },
+    {
+      "from": "リオン",
+      "to": "キャロ",
+      "self": "tôi",
+      "address": "bà Caroline",
+      "secondPerson": "bà",
+      "notes": "AI đề xuất, chờ duyệt. Leon là con riêng của Bá tước, Caroline là vợ cả, có khoảng cách và sự cảnh giác. Leon dùng cách gọi trang trọng, xa cách."
+    },
+    {
+      "from": "キャロ",
+      "to": "リオン",
+      "self": "ta",
+      "address": "Leon",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Caroline là mẹ kế của Leon, có thái độ cứng rắn. Dùng 'ta – cậu' với sắc thái bề trên nhưng không quá hạ thấp."
+    },
+    {
+      "from": "リオン",
+      "to": "レジス",
+      "self": "tôi",
+      "address": "Regis",
+      "secondPerson": "ông",
+      "notes": "AI đề xuất, chờ duyệt. Leon gọi Regis là 'Regis-san' ban đầu, sau đó Regis yêu cầu gọi trống tên. Vẫn xưng 'tôi' và gọi 'ông' cho quản gia lớn tuổi."
+    },
+    {
+      "from": "レジス",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "AI đề xuất, chờ duyệt. Regis là quản gia của gia đình Sfeel, dùng kính ngữ với Leon, gọi 'thiếu gia Leon'."
+    },
+    {
+      "from": "リオン",
+      "to": "ブレイク",
+      "self": "tôi",
+      "address": "Blake",
+      "secondPerson": "anh",
+      "notes": "AI đề xuất, chờ duyệt. Leon là em trai của Blake, gọi thẳng tên. Giọng điệu có thể gắt."
+    },
+    {
+      "from": "リオン",
+      "to": "マリー",
+      "self": "tôi",
+      "address": "Marie",
+      "secondPerson": "cô",
+      "notes": "AI đề xuất, chờ duyệt. Leon là chủ của Marie, gọi tên trực tiếp. Marie là người hầu."
+    },
+    {
+      "from": "マリー",
+      "to": "リオン",
+      "self": "tôi",
+      "address": "thiếu gia Leon",
+      "secondPerson": "thiếu gia",
+      "notes": "AI đề xuất, chờ duyệt. Marie là hầu gái của Leon, luôn dùng kính ngữ."
+    },
+    {
+      "from": "ミリィ",
+      "to": "ロバート",
+      "self": "tôi",
+      "address": "Bá tước Robert",
+      "secondPerson": "ngài",
+      "notes": "AI đề xuất, chờ duyệt. Milly là người hầu, Robert là chủ gia đình. Dùng kính ngữ trang trọng."
+    },
+    {
+      "from": "リオン",
+      "to": "ロバート",
+      "self": "con",
+      "address": "cha",
+      "secondPerson": "cha",
+      "notes": "AI đề xuất, chờ duyệt. Leon là con trai của Robert, nhưng lại bị đối xử ghẻ lạnh. Anh dùng kính ngữ trang trọng với Robert, gọi 'cha' (nếu trực tiếp gọi, bản gốc không dùng đại từ để xưng)."
+    },
+    {
+      "from": "ロバート",
+      "to": "リオン",
+      "self": "cha",
+      "address": "Leon",
+      "secondPerson": "con",
+      "notes": "AI đề xuất, chờ duyệt. Robert là cha của Leon, xưng 'cha' và gọi 'con'."
+    },
+    {
+      "from": "ソフィア",
+      "to": "エリック",
+      "self": "em",
+      "address": "anh Eric",
+      "secondPerson": "anh",
+      "notes": "AI đề xuất, chờ duyệt. Sophia là em gái của Eric, xưng 'em' và gọi 'anh Eric'."
+    },
+    {
+      "from": "紗弥",
+      "to": "裕弥",
+      "self": "em",
+      "address": "anh Yuya",
+      "secondPerson": "anh",
+      "notes": "AI đề xuất, chờ duyệt. Saya là bạn gái kiếp trước của Yuya, xưng 'em' và gọi 'anh Yuya'."
+    },
+    {
+      "from": "裕弥",
+      "to": "紗弥",
+      "self": "anh",
+      "address": "Saya",
+      "secondPerson": "em",
+      "notes": "AI đề xuất, chờ duyệt. Yuya gọi Saya bằng tên, xưng 'anh'."
+    },
+    {
+      "from": "ミシェル",
+      "to": "ミリィ",
+      "self": "tôi",
+      "address": "Milly",
+      "secondPerson": "chị",
+      "notes": "AI đề xuất, chờ duyệt. Michelle là hầu gái của Claire, Milly là hầu gái của Leon. Cả hai là đồng nghiệp. Michelle dùng kính ngữ khi giới thiệu bản thân."
+    },
+    {
+      "from": "ミリィ",
+      "to": "ミシェル",
+      "self": "tôi",
+      "address": "Michelle",
+      "secondPerson": "em",
+      "notes": "AI đề xuất, chờ duyệt. Milly là người trông coi biệt thự, có thể có vị thế cao hơn hầu gái riêng của Claire. Xưng 'tôi' và gọi 'em'."
+    },
+    {
+      "from": "クレア",
+      "to": "ミシェル",
+      "self": "chị",
+      "address": "Michelle",
+      "secondPerson": "em",
+      "notes": "AI đề xuất, chờ duyệt. Claire là chủ của Michelle, gọi thẳng tên và xưng 'chị'."
+    },
+    {
+      "from": "リオン",
+      "to": "ミシェル",
+      "self": "tôi",
+      "address": "Michelle",
+      "secondPerson": "em",
+      "notes": "AI đề xuất, chờ duyệt. Leon là chủ, Michelle là người hầu. Gọi tên thẳng, xưng 'tôi'."
+    },
+    {
+      "from": "カルロス",
+      "to": "リオン",
+      "self": "ta",
+      "address": "Leon",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Carlos là chủ gia đình Sfeel, thân phận cao hơn Leon (con thứ, con vợ lẽ). Dùng 'ta – cậu' với sắc thái bề trên."
+    },
+    {
+      "from": "レジス",
+      "to": "エリーゼ",
+      "self": "tôi",
+      "address": "phu nhân Elise",
+      "secondPerson": "phu nhân",
+      "notes": "AI đề xuất, chờ duyệt. Regis là quản gia, Elise là phu nhân chủ nhà. Dùng kính ngữ trang trọng."
+    },
+    {
+      "from": "カルロス",
+      "to": "レジス",
+      "self": "tôi",
+      "address": "Regis",
+      "secondPerson": "ông",
+      "notes": "AI đề xuất, chờ duyệt. Carlos là chủ nhà, Regis là quản gia. Gọi thẳng tên, xưng 'tôi'."
+    },
+    {
+      "from": "エリーゼ",
+      "to": "レジス",
+      "self": "tôi",
+      "address": "Regis",
+      "secondPerson": "ông",
+      "notes": "AI đề xuất, chờ duyệt. Elise là phu nhân chủ nhà, Regis là quản gia. Gọi thẳng tên, xưng 'tôi'."
+    }
+  ],
+  "rejected": [
+    {
+      "source": "弟",
+      "reason": "Từ chỉ mối quan hệ gia đình thông thường, không phải tên riêng hay thuật ngữ cụ thể."
+    },
+    {
+      "source": "父",
+      "reason": "Từ chỉ mối quan hệ gia đình thông thường, không phải tên riêng hay thuật ngữ cụ thể."
+    },
+    {
+      "source": "行",
+      "reason": "Một phần của nhiều từ khác nhau ('đi', 'hành động đúng', 'tình trạng trì trệ'), không phải một thuật ngữ thống nhất."
+    },
+    {
+      "source": "貴",
+      "reason": "Một phần của các từ 'quý tộc' (貴族) hoặc 'ngươi/bạn' (貴方), không phải một thuật ngữ thống nhất."
+    },
+    {
+      "source": "兄",
+      "reason": "Từ chỉ mối quan hệ gia đình thông thường, không phải tên riêng hay thuật ngữ cụ thể."
+    },
+    {
+      "source": "姉",
+      "reason": "Từ chỉ mối quan hệ gia đình thông thường, không phải tên riêng hay thuật ngữ cụ thể."
+    },
+    {
+      "source": "貴方",
+      "reason": "Đại từ nhân xưng, không phải tên riêng hay thuật ngữ."
+    },
+    {
+      "source": "ダメ",
+      "reason": "Từ thông dụng, có nghĩa là 'không được', 'tệ', 'vô dụng'."
+    },
+    {
+      "source": "母",
+      "reason": "Từ chỉ mối quan hệ gia đình thông thường, không phải tên riêng hay thuật ngữ cụ thể."
+    },
+    {
+      "source": "メイド",
+      "reason": "Từ thông dụng, có nghĩa là 'người giúp việc', 'hầu gái'."
+    },
+    {
+      "source": "モノ",
+      "reason": "Một phần của các từ khác nhau, có nghĩa là 'thứ', 'vật', 'điều', hoặc từ bổ trợ."
+    },
+    {
+      "source": "泣",
+      "reason": "Một phần của động từ 'khóc'."
+    },
+    {
+      "source": "続",
+      "reason": "Một phần của động từ 'tiếp tục'."
+    },
+    {
+      "source": "有",
+      "reason": "Một phần của các từ 'có', 'tồn tại', 'có thể'."
+    },
+    {
+      "source": "着",
+      "reason": "Một phần của các động từ 'mặc', 'đến', 'trở nên bình tĩnh'."
+    },
+    {
+      "source": "ホント",
+      "reason": "Từ thông dụng, viết tắt của 'honto' (thật)."
+    },
+    {
+      "source": "キミ",
+      "reason": "Đại từ nhân xưng, có nghĩa là 'cậu', 'em', 'anh'."
+    },
+    {
+      "source": "イメージ",
+      "reason": "Từ mượn thông dụng, có nghĩa là 'hình ảnh', 'ấn tượng'."
+    },
+    {
+      "source": "バレ",
+      "reason": "Một phần của động từ 'bắt quả tang', 'lộ ra' (バレる)."
+    },
+    {
+      "source": "吐",
+      "reason": "Một phần của động từ 'nói dối' (嘘を吐く) hoặc 'thở ra'."
+    },
+    {
+      "source": "レベル",
+      "reason": "Từ mượn thông dụng, có nghĩa là 'mức độ', 'cấp độ'."
+    },
+    {
+      "source": "嬢",
+      "reason": "Kính ngữ chỉ con gái nhà quý tộc hoặc phụ nữ trẻ (お嬢様), không phải tên riêng."
+    },
+    {
+      "source": "バカ",
+      "reason": "Từ thông dụng, có nghĩa là 'ngốc', 'khờ'."
+    },
+    {
+      "source": "主人",
+      "reason": "Từ thông dụng, có nghĩa là 'chủ nhân'."
+    },
+    {
+      "source": "ベッド",
+      "reason": "Từ mượn thông dụng, có nghĩa là 'giường'."
+    },
+    {
+      "source": "プレゼント",
+      "reason": "Từ mượn thông dụng, có nghĩa là 'quà tặng'."
+    },
+    {
+      "source": "ブロンド",
+      "reason": "Từ mượn thông dụng, có nghĩa là 'tóc vàng'."
+    },
+    {
+      "source": "セリフ",
+      "reason": "Từ mượn thông dụng, có nghĩa là 'lời thoại'."
+    },
+    {
+      "source": "神",
+      "reason": "Một phần của 'tâm trí/tinh thần' (精神), không phải 'thần' (神) hay một thuật ngữ thống nhất."
+    },
+    {
+      "source": "スカート",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "プラチナブロンド",
+      "reason": "từ chỉ màu tóc"
+    },
+    {
+      "source": "皆",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "マシ",
+      "reason": "từ thông dụng, tính từ"
+    },
+    {
+      "source": "マジ",
+      "reason": "từ thông dụng, phó từ/tính từ"
+    },
+    {
+      "source": "ナイフ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "奥",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "苦労",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イジワル",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "キス",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "リード",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "間諜",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イラスト",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ギュッ",
+      "reason": "từ tượng thanh"
+    },
+    {
+      "source": "サトウキビ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ショック",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ノック",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ベッドサイド",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ボク",
+      "reason": "đại từ nhân xưng"
+    },
+    {
+      "source": "マーク",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イヤ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ウィルス",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "カウンター",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "キスマーク",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ケース",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "コミュ",
+      "reason": "dạng viết tắt của từ thông dụng"
+    },
+    {
+      "source": "サポート",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "スプーン",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ダメージ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ハッキリ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ハッタリ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "パニック",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ブラ",
+      "reason": "dạng viết tắt của từ thông dụng, từ chỉ màu sắc"
+    },
+    {
+      "source": "フリ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "マネ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ムキ",
+      "reason": "dạng viết tắt của từ thông dụng"
+    },
+    {
+      "source": "メートル",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "モニター",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "リスク",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "婚約者",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "看護師",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "アウト",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "アラーム",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "アルコール",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イヤミ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ウィッグ",
+      "reason": "từ mượn thông dụng: tóc giả (wig)"
+    },
+    {
+      "source": "ウェーブ",
+      "reason": "từ mượn thông dụng: gợn sóng (wave)"
+    },
+    {
+      "source": "キッズモデル",
+      "reason": "từ mượn thông dụng: người mẫu nhí (kids model)"
+    },
+    {
+      "source": "キッパリ",
+      "reason": "từ tượng thanh, phó từ: dứt khoát"
+    },
+    {
+      "source": "キレ",
+      "reason": "từ thông dụng: sắc bén, có khí chất; trong ngữ cảnh có vẻ ám chỉ sự sắc bén của ma thuật"
+    },
+    {
+      "source": "クスクス",
+      "reason": "từ tượng thanh: khúc khích (cười)"
+    },
+    {
+      "source": "クスリ",
+      "reason": "từ tượng thanh: khẽ cười"
+    },
+    {
+      "source": "コミュニケーション",
+      "reason": "từ mượn thông dụng: giao tiếp (communication)"
+    },
+    {
+      "source": "シルバー",
+      "reason": "từ mượn thông dụng: màu bạc (silver)"
+    },
+    {
+      "source": "ズルイ",
+      "reason": "từ thông dụng: gian xảo, ranh mãnh"
+    },
+    {
+      "source": "セミロング",
+      "reason": "từ mượn thông dụng: tóc ngang vai (semi-long)"
+    },
+    {
+      "source": "ソファ",
+      "reason": "từ mượn thông dụng: ghế sofa (sofa)"
+    },
+    {
+      "source": "ダメダメ",
+      "reason": "từ lóng: tệ hại, vô dụng"
+    },
+    {
+      "source": "テーブル",
+      "reason": "từ mượn thông dụng: bàn (table)"
+    },
+    {
+      "source": "ドア",
+      "reason": "từ mượn thông dụng: cửa (door)"
+    },
+    {
+      "source": "トレイ",
+      "reason": "từ mượn thông dụng: cái khay (tray)"
+    },
+    {
+      "source": "ネタバレ",
+      "reason": "từ lóng: tiết lộ tình tiết (spoiler)"
+    },
+    {
+      "source": "パーツ",
+      "reason": "từ mượn thông dụng: bộ phận, chi tiết (parts)"
+    },
+    {
+      "source": "パンデミック",
+      "reason": "từ mượn thông dụng: đại dịch (pandemic)"
+    },
+    {
+      "source": "プライド",
+      "reason": "từ mượn thông dụng: lòng kiêu hãnh (pride)"
+    },
+    {
+      "source": "フラグ",
+      "reason": "từ lóng trong anime/manga: dấu hiệu (flag)"
+    },
+    {
+      "source": "プロポーズ",
+      "reason": "từ mượn thông dụng: cầu hôn (propose)"
+    },
+    {
+      "source": "ホッ",
+      "reason": "từ tượng thanh: thở phào nhẹ nhõm"
+    },
+    {
+      "source": "ミルク",
+      "reason": "từ mượn thông dụng: sữa (milk)"
+    },
+    {
+      "source": "メッセージ",
+      "reason": "từ mượn thông dụng: tin nhắn (message)"
+    },
+    {
+      "source": "メニュー",
+      "reason": "từ mượn thông dụng: thực đơn, chương trình (menu)"
+    },
+    {
+      "source": "ランタン",
+      "reason": "từ mượn thông dụng: đèn lồng (lantern)"
+    },
+    {
+      "source": "ループ",
+      "reason": "từ mượn thông dụng: lặp lại (loop)"
+    },
+    {
+      "source": "レシピ",
+      "reason": "từ mượn thông dụng: công thức (recipe)"
+    }
+  ]
+}
