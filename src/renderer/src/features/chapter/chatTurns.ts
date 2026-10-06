@@ -89,9 +89,12 @@ export function restoredSession(turns: AiTurnView[]): Session {
       usd: turn.costUsd,
       keyTail: null,
       finishReason: turn.finishReason,
-      autoApply: turn.action === 'apply' && turn.proposalStatus !== null
-        ? turn.proposalStatus === 'applied' ? 'applied' : 'needs-review'
-        : null,
+      autoApply:
+        turn.action === 'apply' && turn.proposalStatus !== null
+          ? turn.proposalStatus === 'applied'
+            ? 'applied'
+            : 'needs-review'
+          : null,
       context: turn.context,
       tools: turn.tools,
       range: turn.range,
@@ -193,14 +196,19 @@ export function applyChunk(session: Session, chunk: ChatChunk): Session {
       usd: chunk.usd,
       keyTail: chunk.keyTail,
       finishReason: chunk.finishReason ?? null,
-      ...(chunk.proposal ? {
-        proposalId: chunk.proposal.proposalId,
-        partId: chunk.proposal.partId,
-        proposalStatus: chunk.proposal.status,
-        autoApply: turn.mode === 'apply'
-          ? chunk.proposal.status === 'applied' ? 'applied' : 'needs-review'
-          : null
-      } : {})
+      ...(chunk.proposal
+        ? {
+            proposalId: chunk.proposal.proposalId,
+            partId: chunk.proposal.partId,
+            proposalStatus: chunk.proposal.status,
+            autoApply:
+              turn.mode === 'apply'
+                ? chunk.proposal.status === 'applied'
+                  ? 'applied'
+                  : 'needs-review'
+                : null
+          }
+        : {})
     }))
   }
   return mapTurn(session, matches, (turn) => ({
@@ -252,13 +260,18 @@ export function markTurnProposal(
   localId: string,
   proposal: { proposalId: string; partId: string; status: TurnView['proposalStatus'] }
 ): Session {
-  return mapTurn(session, (turn) => turn.localId === localId, (turn) => ({
-    ...turn, proposalId: proposal.proposalId, partId: proposal.partId,
-    proposalStatus: proposal.status,
-    autoApply: turn.mode === 'apply'
-      ? proposal.status === 'applied' ? 'applied' : 'needs-review'
-      : null
-  }))
+  return mapTurn(
+    session,
+    (turn) => turn.localId === localId,
+    (turn) => ({
+      ...turn,
+      proposalId: proposal.proposalId,
+      partId: proposal.partId,
+      proposalStatus: proposal.status,
+      autoApply:
+        turn.mode === 'apply' ? (proposal.status === 'applied' ? 'applied' : 'needs-review') : null
+    })
+  )
 }
 
 /**
