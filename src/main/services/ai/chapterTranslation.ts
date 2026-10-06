@@ -95,7 +95,6 @@ export class ChapterTranslator {
     const batches = planBatches(sendable.map(toSegmentText), {
       maxTokens: taskLimit(entry.settings.inputTokenLimit) || undefined,
       maxUnits: taskLimit(entry.settings.inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
-      maxUnitChars: Number.MAX_SAFE_INTEGER,
       sourceLang: work.sourceLang
     }).batches.map((batch) => ({
       sourceIds: batch.units.map((segment) => segment.id),

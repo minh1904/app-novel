@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  planBatches,
-  splitLongUnit,
-  reassembleSplitUnits,
-  estimateTextTokens
-} from './translatePlanner'
+import { planBatches, estimateTextTokens } from './translatePlanner'
 
 describe('translatePlanner — Lập kế hoạch phân lô Lõi dịch', () => {
   it('ước tính số token phân biệt theo ngôn ngữ', () => {
@@ -42,26 +37,17 @@ describe('translatePlanner — Lập kế hoạch phân lô Lõi dịch', () => 
     expect(plan.batches.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('tách một đoạn văn bản quá dài thành các mảnh nhỏ và ráp lại đúng ID gốc', () => {
-    const longText = 'Câu một. '.repeat(100) + 'Câu hai. '.repeat(100)
-    const longUnit = { id: 'long-u1', text: longText }
+  // Mảnh tạm không được ráp lại ở đâu cả, nên cắt đoạn là làm mất bản dịch của đoạn đó.
+  it('giữ nguyên một đoạn dài hơn trần token, đặt nó trong một lô riêng', () => {
+    const longUnit = { id: 'long-u1', text: 'Câu một. '.repeat(600) }
+    const plan = planBatches([{ id: 'u0', text: 'Ngắn.' }, longUnit, { id: 'u2', text: 'Ngắn.' }])
 
-    const pieces = splitLongUnit(longUnit, 200)
-    expect(pieces.length).toBeGreaterThan(1)
-    expect(pieces[0].id).toContain('long-u1__part_1_of_')
-
-    const plan = planBatches([longUnit], { maxUnitChars: 200 })
-    expect(plan.splitMap.size).toBe(pieces.length)
-
-    // Giả lập kết quả dịch cho các mảnh
-    const translatedPieces = plan.batches.flatMap((b) => b.units).map((u, i) => ({
-      id: u.id,
-      text: `[Dịch mảnh ${i + 1}]`
-    }))
-
-    const reassembled = reassembleSplitUnits(translatedPieces, plan.splitMap)
-    expect(reassembled).toHaveLength(1)
-    expect(reassembled[0].id).toBe('long-u1')
-    expect(reassembled[0].text).toContain('[Dịch mảnh 1]')
+    expect(plan.batches.map((batch) => batch.units.map((unit) => unit.id))).toEqual([
+      ['u0'],
+      ['long-u1'],
+      ['u2']
+    ])
+    expect(plan.batches[1].units[0]).toEqual(longUnit)
+    expect(plan.totalUnits).toBe(3)
   })
 })

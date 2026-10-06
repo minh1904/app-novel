@@ -81,7 +81,6 @@ export class ParagraphTranslator {
     const batches = planBatches(units, {
       maxTokens: taskLimit(entry.settings.inputTokenLimit) || undefined,
       maxUnits: taskLimit(entry.settings.inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
-      maxUnitChars: Number.MAX_SAFE_INTEGER,
       sourceLang: work.sourceLang
     }).batches.map((batch) => ({
       sourceIds: batch.units.map((unit) => unit.id),
