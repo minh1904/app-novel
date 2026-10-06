@@ -166,13 +166,31 @@ Chi tiết, số đo và các điểm còn mở: [Xưng hô tiếng Việt](viet
 
 ## Điều chỉnh thầy trò ngày 2026-10-06 (đã triển khai, chưa đo lại bằng model)
 
-- Một luật dùng chung cho dịch chính, hỏi lại và chat Hỏi/Sửa: giáo viên hạn chế
-  mày/tao, chỉ dùng khi có ngoại lệ đã duyệt; không đổi cặp vì giận, không làm nhẹ lời chửi/đe dọa.
+- Luật thầy trò (giáo viên hạn chế mày/tao, chỉ dùng khi có ngoại lệ đã duyệt; không đổi cặp vì giận,
+  không làm nhẹ lời chửi/đe dọa) áp cho dịch chính, hỏi lại và chat Hỏi/Sửa, **nhưng chỉ khi tác phẩm
+  dùng bộ `ja-modern` hoặc `zh-modern`** (xem mục dưới).
 - `ja-modern` đổi giáo viên nói thô sang "cô/thầy – cậu", kèm ba ví dụ tự soạn trong system prompt.
   Ví dụ chỉ minh họa cách xử lý, không phải đoạn nguồn và không ghi đè cặp đã duyệt.
 - Quy ước Unya → Akira trong dữ liệu Lab đổi sang "cô – cậu", chiều ngược "em – cô". Các bản xuất
   cũ là kết quả lịch sử; số đo cũ chưa đánh giá chính sách mới. Chi tiết quyết định ở
   [Xưng hô tiếng Việt](vietnamese-addressing.md).
+
+## Luật theo bộ mặc định (đã triển khai 2026-10-06, chưa đo lại bằng model)
+
+Luật thầy trò từng nằm trong luật chung và nhúng cứng vào system prompt chat, nên truyện tiên hiệp hay
+fantasy phương Tây cũng nhận câu về お前/テメェ và "thầy/cô – em". Nay luật chia ba tầng:
+
+| Tầng | Chỗ ở | Nội dung |
+| --- | --- | --- |
+| Luật chung | `ADDRESSING_RULES` | Nguyên tắc không gắn ngôn ngữ nguồn; gồm luật gọi tên, lược đại từ (`NAME_ADDRESSING_RULE`) |
+| Bộ mặc định | `RegisterPreset.rules` | `ja-modern`, `zh-modern`: ba luật thầy trò; riêng `ja-modern` thêm luật không tự quy お前/テメェ/貴様 → mày, 俺 → tao |
+| Tác phẩm | ma trận xưng hô, ghi chú cặp | Ngoại lệ đã duyệt, ví dụ Unya → Akira "cô – cậu" trong dữ liệu Lab `n5955en` |
+
+- Dịch: `presetSection` thêm dòng "Luật riêng của bối cảnh này" trong `<addressing_defaults>`, chỉ khi
+  có bộ. Không có bộ (ví dụ truyện Trung chưa rõ cổ/hiện đại) thì không có luật thầy trò.
+- Chat: `systemPrompt(mode, register)` gồm luật gọi tên và luật của bộ; bộ chọn bằng `suggestRegister`
+  như lô dịch. Bộ chỉ phụ thuộc tác phẩm nên system prompt chat vẫn giữ nguyên giữa các lượt.
+- Bộ vẫn đoán từ ngôn ngữ và thể loại; lưu lựa chọn theo tác phẩm vẫn là đề xuất ở mục dưới.
 
 ## Còn để sau (đề xuất)
 

@@ -372,6 +372,9 @@ export function presetSection(preset: RegisterPreset): string[] {
     ...rows,
     'Người kể gọi nhân vật ở ngôi ba:',
     ...preset.thirdPerson.map((line) => '- ' + line),
+    ...(preset.rules?.length
+      ? ['Luật riêng của bối cảnh này:', ...preset.rules.map((rule) => '- ' + rule)]
+      : []),
     ...(preset.examples?.length
       ? [
           'Ví dụ minh họa cách xưng hô (tự soạn, không phải dữ liệu cần dịch; không chép vào đầu ra; cặp đã duyệt luôn thắng ví dụ):',

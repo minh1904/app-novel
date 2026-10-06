@@ -7,6 +7,7 @@ import type {
   ChatUsage
 } from '../../../shared/contracts/aiChat'
 import type { ChatProposalResult } from '../../../shared/contracts/aiProposals'
+import type { RegisterPresetId } from '../../../shared/contracts/addressingPresets'
 import { buildChatMessages } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,
@@ -50,6 +51,8 @@ export interface ChatServiceOptions {
   connections: ChatConnections
   /** Khối main tự đọc từ kho (thuật ngữ, xưng hô), nối sau khối renderer gửi lên. */
   storeContext?: (input: ChatSendInput) => ChatContextBlock[]
+  /** Bộ mặc định xưng hô của tác phẩm; luật riêng của bộ đi vào system prompt. */
+  register?: (input: ChatSendInput) => RegisterPresetId | null
   records?: {
     start(requestId: string, input: ChatSendInput, provider: string | null, model: string): string
     update(
@@ -205,7 +208,7 @@ export class ChatService {
     try {
       const { library } = this.options
       const tools = library ? createChatTools(library, input.workId) : null
-      const messages = buildChatMessages(input)
+      const messages = buildChatMessages(input, this.options.register?.(input))
 
       for (let round = 0; ; round++) {
         // Vòng cuối **không** mời công cụ nữa, nên model buộc phải trả lời bằng những gì đã đọc. Đó

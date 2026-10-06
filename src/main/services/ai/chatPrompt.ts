@@ -5,7 +5,11 @@ import {
   type ChatSendInput
 } from '../../../shared/contracts/aiChat'
 import type { ChatMessage } from '../../infra/providers/openAiCompatible'
-import { TEACHER_ADDRESSING_RULES } from '../../../shared/contracts/addressingPresets'
+import {
+  NAME_ADDRESSING_RULE,
+  REGISTER_PRESETS,
+  type RegisterPresetId
+} from '../../../shared/contracts/addressingPresets'
 
 /**
  * Lắp một lượt hội thoại thành `messages`.
@@ -65,8 +69,14 @@ const COMMON = [
   'Trả lời ngắn, đi thẳng vào việc, bằng tiếng Việt.'
 ].join(' ')
 
-export function systemPrompt(mode: ChatMode): string {
-  return [COMMON, ...TEACHER_ADDRESSING_RULES, mode === 'ask' ? ASK_ONLY : EDIT].join(' ')
+/**
+ * Luật riêng của bộ mặc định đi theo tác phẩm, không nhúng cứng: luật thầy trò của học đường hiện đại
+ * không có chỗ trong chat về một truyện tiên hiệp. Bộ chỉ phụ thuộc tác phẩm nên system prompt vẫn giữ
+ * nguyên giữa các lượt.
+ */
+export function systemPrompt(mode: ChatMode, register?: RegisterPresetId | null): string {
+  const rules = (register ? REGISTER_PRESETS[register].rules : undefined) ?? []
+  return [COMMON, NAME_ADDRESSING_RULE, ...rules, mode === 'ask' ? ASK_ONLY : EDIT].join(' ')
 }
 
 const CHAT_TAG_PATTERN = /<(\/?)(context|block|question)\b/gi
@@ -102,8 +112,11 @@ function renderBlock(block: ChatContextBlock): string {
  *
  * Hàm thuần, không gọi mạng, không đọc kho: cùng đầu vào cho cùng đầu ra.
  */
-export function buildChatMessages(input: ChatSendInput): ChatMessage[] {
-  const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(input.mode) }]
+export function buildChatMessages(
+  input: ChatSendInput,
+  register?: RegisterPresetId | null
+): ChatMessage[] {
+  const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(input.mode, register) }]
   for (const turn of input.history) {
     messages.push({ role: turn.role, content: turn.text })
   }

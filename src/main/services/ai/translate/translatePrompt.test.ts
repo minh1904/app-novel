@@ -314,7 +314,29 @@ describe('translatePrompt — nhân vật và bộ mặc định', () => {
     ]).messages[0].content
     expect(one).toContain('Bối cảnh: Nhật hiện đại, học đường.')
     expect(one).toContain('- Thầy cô → học trò, thô [私 + お前/テメェ]: cô / thầy – cậu.')
+    expect(one).toContain(
+      'Luật riêng của bối cảnh này:\n- Giáo viên nói với học trò: hạn chế "mày/tao"'
+    )
     expect(one).toBe(two)
+  })
+
+  it('luật thầy trò chỉ đi theo bộ học đường hiện đại, không lọt vào truyện cổ trang', () => {
+    const plain = buildTranslateRequest(base, units).messages[0].content
+    const ancient = buildTranslateRequest(
+      { ...base, sourceLang: 'zh-Hans', register: 'zh-ancient' },
+      units
+    ).messages[0].content
+    for (const prompt of [plain, ancient]) {
+      expect(prompt).not.toContain('hạn chế "mày/tao"')
+      expect(prompt).not.toContain('お前/テメェ/貴様')
+      expect(prompt).toContain('giữ cách gọi tương ứng theo quy ước tên')
+    }
+    const urban = buildTranslateRequest(
+      { ...base, sourceLang: 'zh-Hans', register: 'zh-modern' },
+      units
+    ).messages[0].content
+    expect(urban).toContain('hạn chế "mày/tao"')
+    expect(urban).not.toContain('お前/テメェ/貴様')
   })
 
   it('giữ cặp và ghi chú đã duyệt ở lượt chính lẫn hỏi lại', () => {

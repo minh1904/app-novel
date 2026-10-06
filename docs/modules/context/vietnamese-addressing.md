@@ -1,7 +1,7 @@
 # Xưng hô tiếng Việt: bộ mặc định theo bối cảnh
 
 Cập nhật: 2026-10-06 · Trạng thái: các quyết định ở mục 1 **đã chốt**; bộ mặc định và luật trong prompt
-**đã triển khai**, đo sơ bộ trên một truyện trước thay đổi thầy trò; luật hạn chế mày/tao áp cả dịch và chat, **chưa đo lại chất lượng bằng model**; lưu lựa chọn theo tác phẩm, nhiều dạng tên cho một nhân
+**đã triển khai**, đo sơ bộ trên một truyện trước thay đổi thầy trò; luật hạn chế mày/tao áp cả dịch và chat của bộ `ja-modern`/`zh-modern`, **chưa đo lại chất lượng bằng model**; lưu lựa chọn theo tác phẩm, nhiều dạng tên cho một nhân
 vật và bước phân tích trước khi dịch là **đề xuất**.
 
 > `v1`–`v4` trong chương này là tên thế hệ prompt **của các thí nghiệm đã chạy**; mã nay chỉ còn một
@@ -62,8 +62,10 @@ cân nhắc về "cô – mày" trong khảo sát ban đầu:
 
 1. **Cặp đã duyệt** trong ma trận xưng hô (có chiều, có phạm vi chương, có ghi chú) — bắt buộc, kể cả
    khi nhân vật nói gắt.
-2. **Bộ mặc định theo bối cảnh** của tác phẩm — chỉ cho cặp chưa có ở trên.
-3. **Luật chung** (mục 1) — luôn áp.
+2. **Bộ mặc định theo bối cảnh** của tác phẩm — bảng cặp chỉ cho cặp chưa có ở trên; luật riêng của bộ
+   (luật thầy trò của `ja-modern`/`zh-modern`) chỉ vào prompt khi tác phẩm dùng bộ đó.
+3. **Luật chung** (mục 1) — luôn áp; chỉ giữ nguyên tắc không gắn ngôn ngữ nguồn hay một quan hệ riêng.
+   Phân tầng ở [hệ thống prompt](prompt-system.md#luật-theo-bộ-mặc-định-đã-triển-khai-2026-10-06-chưa-đo-lại-bằng-model).
 
 Thẻ nhân vật (giới tính, vai trò, ghi chú) đi kèm, vì thiếu nó model đoán giới tính từ giọng nói: trước
 khi có thẻ, cô Unya bị gọi "thầy" 26 lần trong 20 chương.

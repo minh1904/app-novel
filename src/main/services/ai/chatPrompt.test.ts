@@ -38,13 +38,27 @@ const chapterBlock = {
 }
 
 describe('systemPrompt', () => {
-  it('cả Hỏi và Sửa giữ luật thầy trò và ngoại lệ đã duyệt', () => {
+  it('cả Hỏi và Sửa giữ luật thầy trò khi tác phẩm dùng bộ học đường hiện đại', () => {
     for (const mode of ['ask', 'edit'] as const) {
-      const prompt = systemPrompt(mode)
-      expect(prompt).toContain('hạn chế "mày/tao"')
-      expect(prompt).toContain('Ngoại lệ đã duyệt có ưu tiên cao hơn')
-      expect(prompt).toContain('không làm nhẹ tình tiết')
-      expect(prompt).toContain('không tự chuyển qua lại em/cậu/mày')
+      for (const register of ['ja-modern', 'zh-modern'] as const) {
+        const prompt = systemPrompt(mode, register)
+        expect(prompt).toContain('hạn chế "mày/tao"')
+        expect(prompt).toContain('Ngoại lệ đã duyệt có ưu tiên cao hơn')
+        expect(prompt).toContain('không làm nhẹ tình tiết')
+        expect(prompt).toContain('không tự chuyển qua lại em/cậu/mày')
+      }
+      expect(systemPrompt(mode, 'ja-modern')).toContain('お前/テメェ/貴様')
+      expect(systemPrompt(mode, 'zh-modern')).not.toContain('お前')
+    }
+  })
+
+  // Luật thầy trò từng nằm cứng trong mọi chat, kể cả truyện tiên hiệp, nơi sư phụ không phải "thầy".
+  it('bộ khác hoặc chưa có bộ thì không có luật thầy trò, chỉ còn luật gọi tên', () => {
+    for (const register of [undefined, null, 'zh-ancient', 'en-western'] as const) {
+      const prompt = systemPrompt('ask', register)
+      expect(prompt).not.toContain('mày/tao')
+      expect(prompt).not.toContain('お前')
+      expect(prompt).toContain('giữ cách gọi tương ứng theo quy ước tên')
     }
   })
 

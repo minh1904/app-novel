@@ -37,6 +37,24 @@ describe('bộ mặc định xưng hô', () => {
     expect(lovers?.notes).toContain('Không dùng "thiếp – chàng"')
   })
 
+  it('luật chung không gắn đại từ của một ngôn ngữ nguồn hay một quan hệ riêng', () => {
+    const general = ADDRESSING_RULES.join('\n')
+    expect(general).not.toMatch(/[぀-ヿ]|お前|貴様/)
+    expect(general).not.toContain('Giáo viên')
+    expect(general).toContain('giữ cách gọi tương ứng theo quy ước tên')
+  })
+
+  it('luật thầy trò thuộc bộ học đường hiện đại; luật đại từ Nhật chỉ ở bộ Nhật', () => {
+    for (const id of ['ja-modern', 'zh-modern'] as const) {
+      expect(REGISTER_PRESETS[id].rules?.join('\n')).toContain('hạn chế "mày/tao"')
+    }
+    expect(REGISTER_PRESETS['ja-modern'].rules?.join('\n')).toContain('お前/テメェ/貴様')
+    expect(REGISTER_PRESETS['zh-modern'].rules?.join('\n')).not.toContain('お前')
+    for (const id of ['ja-fantasy', 'ja-court', 'zh-ancient', 'en-western'] as const) {
+      expect(REGISTER_PRESETS[id].rules ?? []).toEqual([])
+    }
+  })
+
   it('giáo viên nói thô mặc định dùng cậu, dành mày/tao cho ngoại lệ đã duyệt', () => {
     const row = REGISTER_PRESETS['ja-modern'].rows.find((item) => item.relation.includes('thô'))
     expect(row?.forward).toBe('cô / thầy – cậu')

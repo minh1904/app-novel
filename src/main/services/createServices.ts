@@ -1,4 +1,5 @@
 import { chatStoreContext } from './ai/chatStoreContext'
+import { suggestRegister } from './ai/translate/languageProfiles'
 import type { SecretCrypto } from '../infra/storage/secretStore'
 import { SecretStore } from '../infra/storage/secretStore'
 import { ChapterTranslator } from './ai/chapterTranslation'
@@ -67,6 +68,15 @@ export function createServices({
   const chat = new ChatService({
     connections,
     storeContext: (input) => chatStoreContext(library, input),
+    // Cùng cách chọn bộ với lô dịch. Đọc tác phẩm lỗi thì chat chạy không có luật của bộ, không chặn lượt.
+    register: (input) => {
+      try {
+        const work = library.get(input.workId)
+        return suggestRegister(work.sourceLang, work.genre)
+      } catch {
+        return null
+      }
+    },
     records: {
       start: (requestId, input, provider, model) =>
         library.withWork(input.workId, (db) =>

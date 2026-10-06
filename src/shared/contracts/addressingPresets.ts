@@ -39,16 +39,24 @@ export interface RegisterPreset {
   rows: PresetRow[]
   /** Cách người kể gọi nhân vật ở ngôi ba. */
   thirdPerson: string[]
+  /** Luật chỉ đúng trong bối cảnh này; chỉ vào prompt khi tác phẩm dùng bộ này. */
+  rules?: string[]
   /** Ví dụ tự soạn, chỉ minh họa bộ này; không phải các mục cần dịch. */
   examples?: Array<{ context: string; source: string; translation: string }>
 }
 
-/** Dùng chung cho dịch chính, hỏi lại và chat, cả v1 lẫn v2. */
-export const TEACHER_ADDRESSING_RULES = [
-  'Giáo viên nói với học trò: hạn chế "mày/tao"; chỉ dùng khi cặp xưng hô đã duyệt hoặc quy ước người dịch cho phép rõ. Ngoại lệ đã duyệt có ưu tiên cao hơn mặc định này.',
-  'Trong bối cảnh học đường hiện đại, mặc định thầy/cô – em; giáo viên nói cộc hoặc xa cách có thể dùng thầy/cô – cậu. Học trò lễ phép xưng em – thầy/cô. Cặp đã chốt giữ ổn định cả khi giận, không tự chuyển qua lại em/cậu/mày.',
-  'Không tự quy お前/テメェ/貴様 thành "mày" hoặc 俺 thành "tao" trong quan hệ thầy trò. Giữ độ gắt, lời chửi và đe dọa bằng từ ngữ, nhịp câu đúng mức bản gốc; không làm nhẹ tình tiết, không thêm lời xúc phạm.',
+/** Gọi tên và lược đại từ: đúng với mọi ngôn ngữ nguồn, nên vừa ở luật chung vừa đi vào chat. */
+export const NAME_ADDRESSING_RULE =
   'Khi bản gốc gọi tên hoặc chức danh thì giữ cách gọi tương ứng theo quy ước tên; có thể lược đại từ nếu câu vẫn rõ và tự nhiên, không nhét đủ cặp xưng hô vào mọi câu.'
+
+/**
+ * Giáo viên hạn chế "mày/tao" (chốt 2026-10-06), cho học đường hiện đại nguồn Nhật lẫn Trung. Luật gắn
+ * với đại từ tiếng Nhật nằm riêng trong `ja-modern`.
+ */
+const MODERN_TEACHER_RULES = [
+  'Giáo viên nói với học trò: hạn chế "mày/tao"; chỉ dùng khi cặp xưng hô đã duyệt hoặc quy ước người dịch cho phép rõ. Ngoại lệ đã duyệt có ưu tiên cao hơn mặc định này.',
+  'Giáo viên mặc định thầy/cô – em; giáo viên nói cộc hoặc xa cách có thể dùng thầy/cô – cậu. Học trò lễ phép xưng em – thầy/cô. Cặp đã chốt giữ ổn định cả khi giận, không tự chuyển qua lại em/cậu/mày.',
+  'Giữ độ gắt, lời chửi và đe dọa của giáo viên bằng từ ngữ, nhịp câu đúng mức bản gốc; không làm nhẹ tình tiết, không thêm lời xúc phạm.'
 ]
 
 /** Luật chung cho mọi bộ: chốt bởi chủ sản phẩm ngày 2026-10-05. */
@@ -60,7 +68,7 @@ export const ADDRESSING_RULES = [
   'Không dùng "tôi – bạn" trong lời thoại.',
   'Giọng vùng miền (tớ – cậu hay tui – ông/bà) theo tính cách nhân vật, không theo mặc định chung.',
   'Người kể gọi mỗi nhân vật bằng một đại từ ngôi ba cố định cho cả truyện; chỉ đổi khi thái độ của người kể đổi theo mốc truyện.',
-  ...TEACHER_ADDRESSING_RULES
+  NAME_ADDRESSING_RULE
 ]
 
 export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
@@ -149,6 +157,10 @@ export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
         notes: 'Không dùng "bạn"'
       },
       { relation: 'Kẻ thù, côn đồ', signals: '俺 + てめぇ/貴様', forward: 'tao – mày' }
+    ],
+    rules: [
+      ...MODERN_TEACHER_RULES,
+      'Không tự quy お前/テメェ/貴様 thành "mày" hoặc 俺 thành "tao" trong quan hệ thầy trò.'
     ],
     examples: [
       {
@@ -475,6 +487,7 @@ export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
         notes: 'Gọi theo nghề'
       }
     ],
+    rules: MODERN_TEACHER_RULES,
     thirdPerson: [
       'Nam chính: anh, anh ấy; nữ chính: cô, cô ấy. Không dùng cặp "hắn – nàng" cho truyện hiện đại.',
       'Phản diện, người bị ghét: anh ta, cô ta, gã, hắn; người lớn tuổi: ông ấy, bà ấy; trẻ con: nó, thằng bé, con bé.'
