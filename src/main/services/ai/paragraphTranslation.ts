@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto'
 import type {
-  ParagraphBatchInput, ParagraphBatchResult, ParagraphFinalizeInput,
-  ParagraphFinalizeResult, ParagraphPlanInput, ParagraphTranslationPlan
+  ParagraphBatchInput,
+  ParagraphBatchResult,
+  ParagraphFinalizeInput,
+  ParagraphFinalizeResult,
+  ParagraphPlanInput,
+  ParagraphTranslationPlan
 } from '../../../shared/contracts/aiTranslateProposals'
 import type { TranslateFailure, TranslateUsage } from '../../../shared/contracts/aiTranslate'
 import { taskLimit } from '../../../shared/contracts/modelSettings'
@@ -18,13 +22,19 @@ import type { ConnectionService } from './connectionService'
 import { estimateCost } from './costEstimate'
 import { executeTranslateBatch } from './translate/translationCore'
 import { listCharacters } from '../../infra/storage/addressingEntries'
-import { buildTranslateRequest, charactersMentionedIn, dyadsMentionedIn, PREVIOUS_PARAGRAPHS,
-  type TranslatePromptContext } from './translate/translatePrompt'
-import { DEFAULT_PROMPT_VERSION, type PromptVersion, usesContextBlocks } from './promptVersion'
+import {
+  buildTranslateRequest,
+  charactersMentionedIn,
+  dyadsMentionedIn,
+  PREVIOUS_PARAGRAPHS,
+  type TranslatePromptContext
+} from './translate/translatePrompt'
 import { suggestRegister } from './translate/languageProfiles'
 import { acceptProposalParts, textHash } from '../proposals/proposalService'
 
-interface ParagraphUnit extends SegmentText { order: number }
+interface ParagraphUnit extends SegmentText {
+  order: number
+}
 
 function paragraphId(order: number, text: string): string {
   const hex = createHash('sha256').update(`${order}\0${text}`).digest('hex')
@@ -33,26 +43,31 @@ function paragraphId(order: number, text: string): string {
 
 /** Each nonblank source line is one paragraph, as defined by ADR-005. */
 export function paragraphUnits(content: string): ParagraphUnit[] {
-  return content.split(/\r?\n/).map((text) => text.trim())
-    .filter(Boolean).map((text, order) => ({ id: paragraphId(order, text), text, order }))
+  return content
+    .split(/\r?\n/)
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .map((text, order) => ({ id: paragraphId(order, text), text, order }))
 }
 
 function failure(error: unknown, now: number): TranslateFailure {
-  if (error instanceof ProviderError) return {
-    kind: error.kind, message: error.message,
-    recoverAt: error.retryAfterMs === undefined ? null : now + Math.max(0, error.retryAfterMs)
-  }
+  if (error instanceof ProviderError)
+    return {
+      kind: error.kind,
+      message: error.message,
+      recoverAt: error.retryAfterMs === undefined ? null : now + Math.max(0, error.retryAfterMs)
+    }
   throw error
 }
 
 export class ParagraphTranslator {
-  constructor(private readonly options: {
-    library: LibraryStore
-    connections: ConnectionService
-    now: () => number
-    /** Thế hệ prompt; mặc định `v1` cho tới khi Bộ đo cho thấy `v2` không tệ hơn. */
-    promptVersion?: PromptVersion
-  }) {}
+  constructor(
+    private readonly options: {
+      library: LibraryStore
+      connections: ConnectionService
+      now: () => number
+    }
+  ) {}
 
   plan({ workId, chapterId, connectionId, entryId }: ParagraphPlanInput): ParagraphTranslationPlan {
     const { library, connections } = this.options
@@ -61,23 +76,36 @@ export class ParagraphTranslator {
     const source = library.readText(workId, chapterId, 'source')
     const target = library.readText(workId, chapterId, 'target')
     const units = paragraphUnits(source.content)
-    if (units.length === 0) throw new StorageError('validation', 'Chương này chưa có đoạn gốc để dịch.')
+    if (units.length === 0)
+      throw new StorageError('validation', 'Chương này chưa có đoạn gốc để dịch.')
     const batches = planBatches(units, {
       maxTokens: taskLimit(entry.settings.inputTokenLimit) || undefined,
       maxUnits: taskLimit(entry.settings.inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
-      maxUnitChars: Number.MAX_SAFE_INTEGER, sourceLang: work.sourceLang
+      maxUnitChars: Number.MAX_SAFE_INTEGER,
+      sourceLang: work.sourceLang
     }).batches.map((batch) => ({
-      sourceIds: batch.units.map((unit) => unit.id), sourceChars: batch.charCount
+      sourceIds: batch.units.map((unit) => unit.id),
+      sourceChars: batch.charCount
     }))
     return {
-      runId: library.newAppId(), sourceRev: source.rev, targetRev: target.rev,
-      targetBaseContent: target.content, connectionId, connectionName: connection.name,
-      entryId, entryName: entry.name, model: entry.model, settingsKey,
-      catalogReadAt: CATALOG_READ_AT, paragraphCount: units.length, batches,
+      runId: library.newAppId(),
+      sourceRev: source.rev,
+      targetRev: target.rev,
+      targetBaseContent: target.content,
+      connectionId,
+      connectionName: connection.name,
+      entryId,
+      entryName: entry.name,
+      model: entry.model,
+      settingsKey,
+      catalogReadAt: CATALOG_READ_AT,
+      paragraphCount: units.length,
+      batches,
       hasTranslation: target.content.trim() !== '',
       estimate: estimateCost({
         sourceChars: batches.reduce((sum, batch) => sum + batch.sourceChars, 0),
-        sourceLang: work.sourceLang, batchCount: batches.length,
+        sourceLang: work.sourceLang,
+        batchCount: batches.length,
         model: lookupModel(entry.model, connection.providerId ?? undefined)
       })
     }
@@ -92,8 +120,11 @@ export class ParagraphTranslator {
     const work = library.get(input.workId)
     const source = library.readText(input.workId, input.chapterId, 'source')
     const target = library.readText(input.workId, input.chapterId, 'target')
-    if (source.rev !== input.sourceRev || target.rev !== input.targetRev ||
-      target.content !== input.targetBaseContent) {
+    if (
+      source.rev !== input.sourceRev ||
+      target.rev !== input.targetRev ||
+      target.content !== input.targetBaseContent
+    ) {
       throw new StorageError('conflict', 'Bản gốc hoặc bản dịch đã đổi. Hãy lập kế hoạch lại.')
     }
     const all = paragraphUnits(source.content)
@@ -108,40 +139,63 @@ export class ParagraphTranslator {
       const row = db.prepare('SELECT id FROM proposal WHERE run_key = ?').get<{ id: string }>(key)
       return row ? getProposal(db, row.id) : null
     })
-    if (prior && (prior.chapterId !== input.chapterId || prior.sourceHash !== textHash(source.content) ||
-      prior.targetBaseRev !== input.targetRev || prior.targetBaseContent !== target.content ||
-      prior.policy !== input.policy || prior.model !== translator.entry.model)) {
+    if (
+      prior &&
+      (prior.chapterId !== input.chapterId ||
+        prior.sourceHash !== textHash(source.content) ||
+        prior.targetBaseRev !== input.targetRev ||
+        prior.targetBaseContent !== target.content ||
+        prior.policy !== input.policy ||
+        prior.model !== translator.entry.model)
+    ) {
       throw new StorageError('conflict', 'Lượt dịch không còn khớp kế hoạch ban đầu.')
     }
     const done = new Set(prior?.parts.map((part) => part.batchKey) ?? [])
     const units = requested.filter((unit) => !done.has(`${key}:${unit.id}`))
-    if (units.length === 0) return {
-      proposalId: prior?.id ?? null, proposed: requested.map((unit) => unit.id),
-      failed: [], error: null, usage: null, keyTail: null
-    }
+    if (units.length === 0)
+      return {
+        proposalId: prior?.id ?? null,
+        proposed: requested.map((unit) => unit.id),
+        failed: [],
+        error: null,
+        usage: null,
+        keyTail: null
+      }
 
-    const glossary = library.getEffectiveGlossary(input.workId, input.chapterId, { approvedOnly: true })
-    const matched = matchContextEntries(units.map((unit) => unit.text).join('\n'), glossary, work.sourceLang)
-    const version = this.options.promptVersion ?? DEFAULT_PROMPT_VERSION
+    const glossary = library.getEffectiveGlossary(input.workId, input.chapterId, {
+      approvedOnly: true
+    })
+    const matched = matchContextEntries(
+      units.map((unit) => unit.text).join('\n'),
+      glossary,
+      work.sourceLang
+    )
     const allDyads = library.getEffectiveAddressing(input.workId, input.chapterId)
-    // v2 gửi đúng các cặp có mặt trong chương và vài đoạn gốc liền trước lô; v1 giữ nguyên hành vi.
-    const dyads = usesContextBlocks(version) ? dyadsMentionedIn(allDyads, source.content) : allDyads
+    // Gửi đúng các cặp có mặt trong chương và vài đoạn gốc liền trước lô.
+    const dyads = dyadsMentionedIn(allDyads, source.content)
     const first = Math.min(...units.map((unit) => unit.order))
     const prompt: TranslatePromptContext = {
-      version, sourceLang: work.sourceLang, genre: work.genre, glossary: matched, dyads,
-      register: usesContextBlocks(version) ? suggestRegister(work.sourceLang, work.genre) : undefined,
-      characters: usesContextBlocks(version)
-        ? charactersMentionedIn(library.withWork(input.workId, (db) =>
-          listCharacters(db, { status: 'approved' })), source.content)
-        : undefined,
-      previous: usesContextBlocks(version)
-        ? all.slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), first).map((unit) => unit.text)
-        : undefined
+      sourceLang: work.sourceLang,
+      genre: work.genre,
+      glossary: matched,
+      dyads,
+      register: suggestRegister(work.sourceLang, work.genre),
+      characters: charactersMentionedIn(
+        library.withWork(input.workId, (db) => listCharacters(db, { status: 'approved' })),
+        source.content
+      ),
+      previous: all.slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), first).map((unit) => unit.text)
     }
     const context = [...matched, ...dyads]
     // Hash của request lượt chính, tính bằng cùng bộ dựng lõi dịch dùng để gửi: không thể lệch nhau.
-    const planned = buildTranslateRequest(prompt,
-      units.map((unit, index) => ({ tempId: `[${index + 1}]`, originalId: unit.id, text: unit.text })))
+    const planned = buildTranslateRequest(
+      prompt,
+      units.map((unit, index) => ({
+        tempId: `[${index + 1}]`,
+        originalId: unit.id,
+        text: unit.text
+      }))
+    )
     let contextHash = planned.requestHash
     let items: SegmentText[] = []
     let usage: TranslateUsage | null = null
@@ -149,7 +203,10 @@ export class ParagraphTranslator {
     try {
       if (typeof (translator.provider as TranslationModelCaller).complete === 'function') {
         const result = await executeTranslateBatch({
-          caller: translator.provider as TranslationModelCaller, units, prompt, now
+          caller: translator.provider as TranslationModelCaller,
+          units,
+          prompt,
+          now
         })
         contextHash = result.request?.requestHash ?? contextHash
         items = result.items
@@ -157,14 +214,22 @@ export class ParagraphTranslator {
         error = result.error
       } else {
         const result = await translator.provider.translate({
-          sourceLang: work.sourceLang, targetLang: 'vi', segments: units
+          sourceLang: work.sourceLang,
+          targetLang: 'vi',
+          segments: units
         })
         items = result.items
         usage = result.usage ? toWireUsage(result.usage) : null
       }
     } catch (caught) {
-      return { proposalId: prior?.id ?? null, proposed: [], failed: units.map((unit) => unit.id),
-        error: failure(caught, now()), usage: null, keyTail: translator.lastKeyTail() }
+      return {
+        proposalId: prior?.id ?? null,
+        proposed: [],
+        failed: units.map((unit) => unit.id),
+        error: failure(caught, now()),
+        usage: null,
+        keyTail: translator.lastKeyTail()
+      }
     }
     const returned = new Map(items.map((item) => [item.id, item.text.trim()]))
     const good = units.filter((unit) => returned.get(unit.id))
@@ -173,60 +238,105 @@ export class ParagraphTranslator {
     let proposalId = prior?.id ?? null
     if (good.length > 0) {
       const trace = {
-        sourceIds: units.map((unit) => unit.id), context, contextHash,
-        promptVersion: planned.version, systemHash: planned.systemHash, usage
+        sourceIds: units.map((unit) => unit.id),
+        context,
+        contextHash,
+        promptVersion: planned.version,
+        systemHash: planned.systemHash,
+        usage
       }
       const parts = good.map((unit) => ({
-        id: library.newAppId(), baseFrom: target.content === '' ? 0 : null,
-        baseTo: target.content === '' ? 0 : null, beforeText: '',
-        afterText: returned.get(unit.id)!, sourceOrder: unit.order, sourceText: unit.text,
+        id: library.newAppId(),
+        baseFrom: target.content === '' ? 0 : null,
+        baseTo: target.content === '' ? 0 : null,
+        beforeText: '',
+        afterText: returned.get(unit.id)!,
+        sourceOrder: unit.order,
+        sourceText: unit.text,
         batchKey: `${key}:${unit.id}`,
-        status: target.content === '' ? 'pending' as const : 'needs-placement' as const
+        status: target.content === '' ? ('pending' as const) : ('needs-placement' as const)
       }))
-      library.withWork(input.workId, (db) => db.transaction(() => {
-        const existing = db.prepare('SELECT id FROM proposal WHERE run_key = ?').get<{ id: string }>(key)
-        proposalId = existing?.id ?? proposalId
-        if (proposalId === null) {
-          proposalId = library.newAppId()
-          createProposal(db, {
-            id: proposalId, chapterId: input.chapterId, origin: 'translate', policy: input.policy,
-            sourceRev: source.rev, sourceHash: textHash(source.content),
-            targetBaseRev: target.rev, targetBaseContent: target.content,
-            context: [trace], contextHash: textHash(JSON.stringify([contextHash])),
-            provider: translator.provider.id, model: translator.entry.model,
-            usage, runKey: key, now: now(), parts
-          })
-        } else {
-          const saved = getProposal(db, proposalId)
-          if (saved.chapterId !== input.chapterId || saved.sourceHash !== textHash(source.content) ||
-            saved.targetBaseRev !== input.targetRev || saved.targetBaseContent !== target.content ||
-            saved.policy !== input.policy || saved.model !== translator.entry.model) {
-            throw new StorageError('conflict', 'Lượt dịch không còn khớp kế hoạch ban đầu.')
-          }
-          const fresh = parts.filter((part) => !saved.parts.some((old) => old.batchKey === part.batchKey))
-          if (fresh.length > 0) {
-            appendProposalParts(db, proposalId, fresh, now())
-            const traces = [...saved.context, trace]
-            const oldUsage = saved.usage as TranslateUsage | null
-            const totalUsage = usage ? {
-              inputTokens: (oldUsage?.inputTokens ?? 0) + usage.inputTokens,
-              outputTokens: (oldUsage?.outputTokens ?? 0) + usage.outputTokens
-            } : oldUsage
-            db.prepare(`UPDATE proposal SET context_json = ?, context_hash = ?, usage_json = ?,
-              updated_at = ? WHERE id = ?`).run(
-                JSON.stringify(traces), textHash(JSON.stringify(traces.map((item) =>
-                  (item as typeof trace).contextHash))),
-                totalUsage ? JSON.stringify(totalUsage) : null, now(), proposalId
+      library.withWork(input.workId, (db) =>
+        db.transaction(() => {
+          const existing = db
+            .prepare('SELECT id FROM proposal WHERE run_key = ?')
+            .get<{ id: string }>(key)
+          proposalId = existing?.id ?? proposalId
+          if (proposalId === null) {
+            proposalId = library.newAppId()
+            createProposal(db, {
+              id: proposalId,
+              chapterId: input.chapterId,
+              origin: 'translate',
+              policy: input.policy,
+              sourceRev: source.rev,
+              sourceHash: textHash(source.content),
+              targetBaseRev: target.rev,
+              targetBaseContent: target.content,
+              context: [trace],
+              contextHash: textHash(JSON.stringify([contextHash])),
+              provider: translator.provider.id,
+              model: translator.entry.model,
+              usage,
+              runKey: key,
+              now: now(),
+              parts
+            })
+          } else {
+            const saved = getProposal(db, proposalId)
+            if (
+              saved.chapterId !== input.chapterId ||
+              saved.sourceHash !== textHash(source.content) ||
+              saved.targetBaseRev !== input.targetRev ||
+              saved.targetBaseContent !== target.content ||
+              saved.policy !== input.policy ||
+              saved.model !== translator.entry.model
+            ) {
+              throw new StorageError('conflict', 'Lượt dịch không còn khớp kế hoạch ban đầu.')
+            }
+            const fresh = parts.filter(
+              (part) => !saved.parts.some((old) => old.batchKey === part.batchKey)
+            )
+            if (fresh.length > 0) {
+              appendProposalParts(db, proposalId, fresh, now())
+              const traces = [...saved.context, trace]
+              const oldUsage = saved.usage as TranslateUsage | null
+              const totalUsage = usage
+                ? {
+                    inputTokens: (oldUsage?.inputTokens ?? 0) + usage.inputTokens,
+                    outputTokens: (oldUsage?.outputTokens ?? 0) + usage.outputTokens
+                  }
+                : oldUsage
+              db.prepare(
+                `UPDATE proposal SET context_json = ?, context_hash = ?, usage_json = ?,
+              updated_at = ? WHERE id = ?`
+              ).run(
+                JSON.stringify(traces),
+                textHash(JSON.stringify(traces.map((item) => (item as typeof trace).contextHash))),
+                totalUsage ? JSON.stringify(totalUsage) : null,
+                now(),
+                proposalId
               )
+            }
           }
-        }
-      }))
+        })
+      )
     }
     return {
-      proposalId, proposed, failed,
-      error: error ?? (failed.length ? {
-        kind: 'invalid_response', message: `Thiếu bản dịch cho ${failed.length} đoạn.`, recoverAt: null
-      } : null), usage, keyTail: translator.lastKeyTail()
+      proposalId,
+      proposed,
+      failed,
+      error:
+        error ??
+        (failed.length
+          ? {
+              kind: 'invalid_response',
+              message: `Thiếu bản dịch cho ${failed.length} đoạn.`,
+              recoverAt: null
+            }
+          : null),
+      usage,
+      keyTail: translator.lastKeyTail()
     }
   }
 
@@ -236,8 +346,14 @@ export class ParagraphTranslator {
       const key = `translate:${input.runId}`
       const row = db.prepare('SELECT id FROM proposal WHERE run_key = ?').get<{ id: string }>(key)
       const target = library.readText(input.workId, input.chapterId, 'target')
-      if (!row) return { proposed: 0, applied: 0, needsReview: 0,
-        targetRev: target.rev, targetContent: target.content }
+      if (!row)
+        return {
+          proposed: 0,
+          applied: 0,
+          needsReview: 0,
+          targetRev: target.rev,
+          targetContent: target.content
+        }
       const proposal = getProposal(db, row.id)
       if (proposal.chapterId !== input.chapterId || proposal.policy !== input.policy) {
         throw new StorageError('validation', 'Lượt dịch không thuộc chương hoặc chính sách này.')
@@ -245,8 +361,12 @@ export class ParagraphTranslator {
       const ids = proposal.parts.filter((part) => part.status === 'pending').map((part) => part.id)
       if (input.policy === 'auto' && ids.length > 0) {
         acceptProposalParts(db, {
-          chapterId: input.chapterId, partIds: ids, commandId: input.runId,
-          actor: 'auto', now: this.options.now(), newId: () => library.newAppId()
+          chapterId: input.chapterId,
+          partIds: ids,
+          commandId: input.runId,
+          actor: 'auto',
+          now: this.options.now(),
+          newId: () => library.newAppId()
         })
       }
       const final = getProposal(db, proposal.id)
@@ -254,8 +374,11 @@ export class ParagraphTranslator {
       return {
         proposed: final.parts.length,
         applied: final.parts.filter((part) => part.status === 'applied').length,
-        needsReview: final.parts.filter((part) => part.status !== 'applied' && part.status !== 'rejected').length,
-        targetRev: latest.rev, targetContent: latest.content
+        needsReview: final.parts.filter(
+          (part) => part.status !== 'applied' && part.status !== 'rejected'
+        ).length,
+        targetRev: latest.rev,
+        targetContent: latest.content
       }
     })
   }

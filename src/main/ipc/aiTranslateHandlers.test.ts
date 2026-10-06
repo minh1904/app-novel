@@ -66,7 +66,9 @@ function fakeEndpoint(replies: Reply[]): {
       messages?: Array<{ content?: string }>
     }
     bodies.push(sent as Record<string, unknown>)
-    const asked = JSON.parse(sent.messages?.[1]?.content ?? '[]') as Array<{
+    const asked = JSON.parse(
+      /<source>\n([\s\S]*?)\n<\/source>/.exec(sent.messages?.[1]?.content ?? '')?.[1] ?? '[]'
+    ) as Array<{
       id: string
       src: string
     }>

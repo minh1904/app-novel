@@ -25,8 +25,8 @@ node_modules/.bin/vitest run --config scripts/bench/vitest.config.mjs scripts/be
 Trang T3 dùng tên mù dạng `rating-<hash>.html`; tên run/condition chỉ nằm trong tệp key riêng ở
 `fixtures/private/runs/`. Runner in tên trang cần mở sau khi sinh xong.
 
-Biến chính: `MIRA_BENCH_MODEL`, `MIRA_BENCH_PROMPT`, `MIRA_BENCH_PROMPT_VERSION` (`v1` mặc định,
-`v2` theo [hệ thống prompt](../context/prompt-system.md)), `MIRA_BENCH_THINKING`,
+Biến chính: `MIRA_BENCH_MODEL`, `MIRA_BENCH_PROMPT`, `MIRA_BENCH_THINKING` (từ 2026-10-06 không còn
+`MIRA_BENCH_PROMPT_VERSION`: chỉ còn một [prompt dịch](../context/prompt-system.md)),
 `MIRA_BENCH_REPEATS`, `MIRA_BENCH_ONLY`, `MIRA_RUN_A/B`, `MIRA_RUN_BASELINE/CANDIDATE`. Từ
 2026-10-05, `config.json` ghi `promptVersion` và hash của các system prompt **đã gửi thật**, đọc từ
 request; các lần chạy trước ghi hash của prompt MVP, không khớp thứ đã chạy. Bật
@@ -43,7 +43,8 @@ usage, lỗi và thời gian. Khi code/fixture/oracle đổi, dùng `rescore` v�
 ## Mira Lab: thử prompt trên truyện thật
 
 `node scripts/lab/mira-lab.mjs help` (2026-10-05). CLI nạp truyện xuất từ syosetsu-downloader
-(`meta.json` + `plain/*.txt`) thành **hai bản** `[v1]` và `[v2]` trong một thư viện riêng ở
+(`meta.json` + `plain/*.txt`) thành các **bản** theo nhãn biến thể tự đặt (mặc định `base`; thêm mức
+thinking sau dấu `-`, ví dụ `base-nothink`) trong một thư viện riêng ở
 `fixtures/private/lab/data`, với cùng bản gốc và cùng glossary lấy từ
 `fixtures/private/lab/glossary/<ncode>.json`. Lệnh dịch đi qua đúng đường của UI
 (`ParagraphTranslator`, chính sách tự áp dụng), nên `open` in lệnh mở thư viện lab bằng app

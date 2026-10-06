@@ -9,7 +9,10 @@ import { normalizeRaw } from '../../../shared/algorithms/rawText'
 import { segment } from '../../../shared/algorithms/segmenter'
 import { extractParagraphs } from '../../../shared/algorithms/fixtureCheck'
 import { alignParagraphs } from '../../../shared/algorithms/paragraphAlign'
-import { checkStructure, checkResidualSourceChars } from '../../../shared/algorithms/translationChecks'
+import {
+  checkStructure,
+  checkResidualSourceChars
+} from '../../../shared/algorithms/translationChecks'
 
 const crypto: SecretCrypto = {
   isEncryptionAvailable: () => true,
@@ -36,7 +39,8 @@ describe('Lõi dịch — Runner kiểm thử với mock provider offline', () =
           messages: Array<{ role: string; content: string }>
         }
         const userMsg = body.messages.find((m) => m.role === 'user')?.content ?? '[]'
-        const inputSegments = JSON.parse(userMsg) as Array<{ id: string; src: string }>
+        const sourceBlock = /<source>\n([\s\S]*?)\n<\/source>/.exec(userMsg)?.[1] ?? userMsg
+        const inputSegments = JSON.parse(sourceBlock) as Array<{ id: string; src: string }>
         const items = inputSegments.map((s) => ({
           id: s.id,
           dst: s.src.includes('第一段')
@@ -86,7 +90,8 @@ describe('Lõi dịch — Runner kiểm thử với mock provider offline', () =
       })
       const { chapter: chapterRecord } = library.createChapter(workRecord.id, 'Chương 1')
 
-      const sourceText = '这是第一段中文测试内容，用于验证翻译管线。\n\n这是第二段测试文本，用于确认段落对齐与检查。'
+      const sourceText =
+        '这是第一段中文测试内容，用于验证翻译管线。\n\n这是第二段测试文本，用于确认段落对齐与检查。'
       const normalized = normalizeRaw(sourceText).text
       const raw = segment(normalized, 'zh-Hans')
       library.saveText(workRecord.id, chapterRecord.id, 'source', normalized, 0, raw)

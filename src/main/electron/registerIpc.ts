@@ -1,4 +1,3 @@
-import { parsePromptVersion } from '../services/ai/promptVersion'
 import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { CHANNELS } from '../../shared/contracts/channels'
@@ -49,21 +48,24 @@ export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
 ): void {
-  // Biến môi trường dành cho thử nghiệm; giá trị lạ thì báo và chạy mặc định thay vì không mở được app.
-  const promptVersion = parsePromptVersion(process.env.MIRA_PROMPT_VERSION) ?? undefined
-  if (promptVersion === undefined) {
-    console.warn('MIRA_PROMPT_VERSION không hợp lệ, dùng mặc định:', process.env.MIRA_PROMPT_VERSION)
-  }
   const { connections, translator, paragraphTranslator, chat } = createServices({
     library,
     crypto: electronSafeStorage,
-    fetch: electronFetch,
-    promptVersion
+    fetch: electronFetch
   })
   const exportService = new ExportService(library, electronExportFilePicker(), electronPdfPrinter())
   const handlers = guardHandlers(
-    createLibraryHandlers(library, electronFilePicker(), connections, translator, chat,
-      undefined, undefined, paragraphTranslator, exportService),
+    createLibraryHandlers(
+      library,
+      electronFilePicker(),
+      connections,
+      translator,
+      chat,
+      undefined,
+      undefined,
+      paragraphTranslator,
+      exportService
+    ),
     isTrustedSender,
     // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để
     // tầng handler không phải import Electron và test được không cần một cửa sổ thật.

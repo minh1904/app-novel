@@ -96,7 +96,7 @@ describe('chatStoreContext', () => {
     const blocks = chatStoreContext(library('韩立看着南宫婉，说了脏话。'), input())
     expect(blocks.map((block) => block.kind)).toEqual(['term', 'dyad'])
     expect(blocks[0].text).toContain('- 韩立 → Hàn Lập')
-    expect(blocks[0].text).toContain('Không dùng:\n- "Từ Cấm" (cho từ gốc 脏话)')
+    expect(blocks[0].text).toContain('Forbidden:\n- "Từ Cấm" (for source term 脏话)')
     expect(blocks[0].text).not.toContain('Trúc Cơ')
     expect(blocks[0].detail).toBe('2 mục khớp chương')
     expect(blocks[1].text).toBe(

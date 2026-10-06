@@ -15,7 +15,7 @@ import { describe, expect, it } from 'vitest'
 import { normalizeRaw } from '../../src/shared/algorithms/rawText'
 import { segment } from '../../src/shared/algorithms/segmenter'
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
-import { parsePromptVersion } from '../../src/main/services/ai/promptVersion'
+import { TRANSLATE_PROMPT_VERSION } from '../../src/main/services/ai/translate/translatePrompt'
 import { LibraryStore } from '../../src/main/services/library/library'
 import { createServices } from '../../src/main/services/createServices'
 import { loadFixtures } from './fixtures'
@@ -66,15 +66,10 @@ const PROMPT =
     ? null
     : readFileSync(join(ROOT, PROMPT_FILE), 'utf8').replace(/\r\n?/g, '\n').trim()
 const THINKING = env('MIRA_BENCH_THINKING')
-const PROMPT_VERSION = parsePromptVersion(env('MIRA_BENCH_PROMPT_VERSION'))
-if (PROMPT_VERSION === null) {
-  throw new Error(`MIRA_BENCH_PROMPT_VERSION không hợp lệ: ${env('MIRA_BENCH_PROMPT_VERSION')}`)
-}
 const LABEL = env(
   'MIRA_BENCH_LABEL',
   [
     PROMPT_FILE === '' ? '' : 'prompt',
-    PROMPT_VERSION === 'v1' ? '' : `prompt-${PROMPT_VERSION}`,
     THINKING === '' ? '' : `thinking-${THINKING}`
   ]
     .filter(Boolean)
@@ -169,7 +164,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
     }) as typeof fetch
 
     const services = createServices({
-      library, crypto, fetch: counting, promptVersion: PROMPT_VERSION
+      library, crypto, fetch: counting
     })
     const connection = services.connections.create({
       name: 'Bộ đo',
@@ -374,7 +369,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
       commitHash: commit,
       model: MODEL,
       sentParams: sentParams ?? {},
-      promptVersion: PROMPT_VERSION,
+      promptVersion: TRANSLATE_PROMPT_VERSION,
       // Một hash khi mọi request cùng system prompt; nhiều hash khi prompt có tầng đổi theo lô (v1).
       promptHash: [...systemHashes].sort().join(',') || '(none)',
       systemPromptCount: systemHashes.size,

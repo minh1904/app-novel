@@ -3,7 +3,7 @@
  *
  * Mỗi truyện nạp thành nhiều **bản** (biến thể) trong một thư viện Mira riêng
  * (`fixtures/private/lab/data`), cùng bản gốc và cùng glossary. Một biến thể là phiên bản prompt
- * cộng mức thinking: `v1`, `v2-nothink`, `v2-think`… Dịch đi qua đúng đường của UI
+ * cộng mức thinking: `a`, `a-nothink`, `a-think`… Dịch đi qua đúng đường của UI
  * (`ParagraphTranslator`, chính sách tự áp dụng), nên mở thư viện này bằng app (`MIRA_DATA_DIR`) là
  * đọc được kết quả ngay trong editor.
  *
@@ -37,7 +37,6 @@ import {
 import { suggestRegister } from '../../src/main/services/ai/translate/languageProfiles'
 import type { TranslationModelCaller } from '../../src/shared/contracts/translateCore'
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
-import { parsePromptVersion, type PromptVersion } from '../../src/main/services/ai/promptVersion'
 import { paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
 import { sanitizeJsonString } from '../../src/shared/algorithms/lenientParser'
 import { costOfUsage } from '../../src/main/services/ai/costEstimate'
@@ -51,7 +50,7 @@ import type { ContextEntryItem } from '../../src/shared/contracts/glossary'
 const ROOT = process.cwd()
 const LAB = join(ROOT, 'fixtures', 'private', 'lab')
 const MANIFEST = join(LAB, 'lab.json')
-const DEFAULT_VARIANTS = ['v1', 'v2']
+const DEFAULT_VARIANTS = ['base']
 /** Mức thinking mà hậu tố `-think` chọn. */
 const THINK_LEVEL: ThinkingLevel = 'medium'
 
@@ -114,25 +113,22 @@ function parseRange(spec: string | undefined, max: number): number[] {
 
 interface Variant {
   label: string
-  version: PromptVersion
   /** Vắng là để mặc định của model. */
   thinking?: ThinkingLevel
 }
 
 /**
- * `v1` → prompt v1, thinking mặc định. `v2-nothink` → thinking `off`. `v2-think` → `medium`.
- * Có thể ghi thẳng mức: `v2-low`, `v1-high`.
+ * Nhãn là tên tự đặt (prompt chỉ còn một thế hệ): `a` → thinking mặc định. `a-nothink` → thinking
+ * `off`. `a-think` → `medium`. Có thể ghi thẳng mức: `a-low`, `b-high`.
  */
 function parseVariant(label: string): Variant {
-  // Phần sau "+" chỉ là nhãn để giữ nhiều lần thử cạnh nhau (ví dụ "v2-nothink+ctx"), không đổi cấu hình.
-  const [head, suffix] = label.split('+')[0].split('-', 2)
-  const version = parsePromptVersion(head)
-  if (version === null) throw new Error('Biến thể không hợp lệ: ' + label)
-  if (suffix === undefined) return { label, version }
-  if (suffix === 'nothink') return { label, version, thinking: 'off' }
-  if (suffix === 'think') return { label, version, thinking: THINK_LEVEL }
+  // Phần sau "+" chỉ là nhãn để giữ nhiều lần thử cạnh nhau (ví dụ "a-nothink+ctx"), không đổi cấu hình.
+  const suffix = label.split('+')[0].split('-', 2)[1]
+  if (suffix === undefined) return { label }
+  if (suffix === 'nothink') return { label, thinking: 'off' }
+  if (suffix === 'think') return { label, thinking: THINK_LEVEL }
   if ((THINKING_LEVELS as readonly string[]).includes(suffix)) {
-    return { label, version, thinking: suffix as ThinkingLevel }
+    return { label, thinking: suffix as ThinkingLevel }
   }
   throw new Error('Mức thinking không hợp lệ trong ' + label)
 }
@@ -144,7 +140,7 @@ function describeVariant(variant: Variant): string {
       : variant.thinking === 'off'
         ? 'không thinking'
         : `thinking ${variant.thinking}`
-  return `prompt ${variant.version}, ${thinking}`
+  return thinking
 }
 
 /** Biến thể của truyện mà lệnh nhắm tới: `--variants` lọc, không có thì mọi bản đã nạp. */
@@ -453,7 +449,7 @@ interface CallRecord {
   cachedTokens: number
   outputTokens: number
   reasoningTokens: number
-  /** Chữ model trả về, để đọc lại nhãn người nói của `v3`. */
+  /** Chữ model trả về, để đọc lại nhãn người nói. */
   response?: string
   ms: number
 }
@@ -648,8 +644,7 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     const services = createServices({
       library,
       crypto: volatileCrypto,
-      fetch: recordingFetch(fetch, context, sink),
-      promptVersion: variant.version
+      fetch: recordingFetch(fetch, context, sink)
     })
     const ids = await setupConnection(
       services,
@@ -774,8 +769,7 @@ async function showPrompt(manifest: Manifest, args: Args): Promise<void> {
       const services = createServices({
         library,
         crypto: volatileCrypto,
-        fetch: fake,
-        promptVersion: variant.version
+        fetch: fake
       })
       const ids = await setupConnection(
         services,
@@ -1374,7 +1368,7 @@ function pairs(manifest: Manifest, args: Args): void {
   const [ncode] = args.positional
   const novel = pickNovels(manifest, [ncode ?? ''])[0]
   const labelVariant = args.flags.get('labels')
-  if (!labelVariant) throw new Error('Cần --labels <biến thể v3 có nhãn người nói>.')
+  if (!labelVariant) throw new Error('Cần --labels <biến thể có nhãn người nói>.')
   const file = glossaryFileOf(novel.ncode)
   const nameOf = new Map((file?.characters ?? []).map((c) => [c.source, c.target]))
   const dyads = new Map(
@@ -1392,19 +1386,24 @@ function pairs(manifest: Manifest, args: Args): void {
     for (const line of readFileSync(path, 'utf8').split('\n').filter(Boolean)) {
       const record = JSON.parse(line) as CallRecord
       const user = record.messages.find((m) => m.role === 'user')?.content ?? ''
-      const source = /<nguon>\n([\s\S]*?)\n<\/nguon>/.exec(user)?.[1]
+      // Bản chạy cũ gói nguồn trong thẻ `<nguon>`; vẫn đọc được các lần chạy đã lưu.
+      const source = /<(?:source|nguon)>\n([\s\S]*?)\n<\/(?:source|nguon)>/.exec(user)?.[1]
       if (!source || !record.response) continue
       try {
         const sent = JSON.parse(source) as Array<{ id: string; src: string }>
-        const got = JSON.parse(sanitizeJsonString(record.response.replace(/```(?:json)?/g, '').trim())) as Array<{
+        const got = JSON.parse(
+          sanitizeJsonString(record.response.replace(/```(?:json)?/g, '').trim())
+        ) as Array<{
           id: string
+          speaker_to_listener?: string
           noi?: string
         }>
         const srcById = new Map(sent.map((item) => [item.id, item.src]))
         for (const item of got) {
           const src = srcById.get(item.id)
-          if (src && item.noi && !item.noi.includes('?'))
-            labels.set(src.trim(), item.noi.replace(/\s/g, ''))
+          // Bản chạy cũ ghi nhãn ở khóa `noi`; vẫn đọc được để dùng lại các lần chạy đã lưu.
+          const label = item.speaker_to_listener ?? item.noi
+          if (src && label && !label.includes('?')) labels.set(src.trim(), label.replace(/\s/g, ''))
         }
       } catch {
         // phản hồi hỏng: bỏ qua lần gọi này
@@ -1494,15 +1493,15 @@ function list(manifest: Manifest): void {
 
 const HELP = `Mira Lab — thử prompt và cấu hình model trên truyện thật
 
-Biến thể: v1, v2 (thinking mặc định), v1-nothink, v2-think (= ${THINK_LEVEL}), v2-low, v1-high…
-Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: v2-nothink+ctx.
+Biến thể: nhãn tự đặt, thêm mức thinking sau dấu "-": a (thinking mặc định), a-nothink, a-think (= ${THINK_LEVEL}), a-low…
+Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
 
-  import <thư mục truyện…> [--variants v1,v2] [--replace] [--name "Tên tiếng Việt"]
+  import <thư mục truyện…> [--variants base] [--replace] [--name "Tên tiếng Việt"]
       Nạp truyện syosetsu-downloader (meta.json + plain/*.txt) thành các biến thể còn thiếu,
       kèm glossary ở fixtures/private/lab/glossary/<ncode>.json.
   glossary [ncode…|all]
       Nạp lại glossary, nhân vật và cặp xưng hô từ tệp cho mọi bản (thay toàn bộ).
-  prompt <ncode> [--chapter 1] [--batch 1] [--variants v2] [--repair]
+  prompt <ncode> [--chapter 1] [--batch 1] [--variants base] [--repair]
       In đúng prompt sẽ gửi, không gọi mạng, không tốn token.
   translate [ncode…|all] [--variants …] [--chapters 1-3] [--model gemini-2.5-flash]
             [--parallel] [--concurrency 1] [--rpm 8] [--max-usd 5] [--batch-tokens 16000]
@@ -1517,8 +1516,8 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: v2-nothink+ctx.
   analyze [ncode…|all] [--chapters 1-30] [--model gemini-3.1-flash-lite] [--apply]
       AI đề xuất giới tính, đại từ ngôi ba và cặp xưng hô đủ ô kèm câu bằng chứng, ghi vào
       fixtures/private/lab/analysis/<ncode>.json; --apply điền ô trống và thêm cặp mới vào tệp glossary.
-  pairs <ncode> --labels <biến thể v3> [--variants …] [--chapters 1-10]
-      Chấm số câu thoại lệch cặp xưng hô đã chốt, dùng nhãn người nói của một bản v3.
+  pairs <ncode> --labels <biến thể> [--variants …] [--chapters 1-10]
+      Chấm số câu thoại lệch cặp xưng hô đã chốt, dùng nhãn người nói của một biến thể.
   gaps [ncode…|all]
       Ô còn trống trong nhân vật và cặp xưng hô (thiếu đại từ ngôi hai, ngôi ba, giới tính).
   cost [ncode…|all]

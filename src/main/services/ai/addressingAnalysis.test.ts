@@ -34,7 +34,7 @@ describe('addressingAnalysis', () => {
       evidence: collectAddressingEvidence(chapters, characters, 'ja')
     })
     expect(messages[0].content).toContain('BẮT BUỘC có "secondPerson"')
-    expect(messages[0].content).toContain('<xung_ho_mac_dinh>')
+    expect(messages[0].content).toContain('<addressing_defaults>')
     expect(messages[1].content).toContain(
       'ch1: [ミリィが扉を開けた。] 「リオン様ったら、探しましたよ？」'
     )

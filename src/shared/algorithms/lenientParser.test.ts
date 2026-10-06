@@ -89,10 +89,10 @@ Chúc bạn một ngày tốt lành!`
     ])
   })
 
-  it('v4: "dst" thừa trước khóa nhãn không biến "noi" thành bản dịch', () => {
+  it('"dst" thừa trước khóa nhãn không biến khóa nhãn thành bản dịch', () => {
     const raw =
-      '[{"id":"[1]","dst":"noi":"Milly→Rion","xung":"tôi","goi":"cậu","dst":"“Cậu về rồi à?”"},' +
-      '{"id":"[2]","noi":"Rion→Milly","xung":"tôi","goi":"chị","dst":"“Ừ.”"}]'
+      '[{"id":"[1]","dst":"speaker_to_listener":"Milly→Rion","self_ref":"tôi","addr_ref":"cậu","dst":"“Cậu về rồi à?”"},' +
+      '{"id":"[2]","speaker_to_listener":"Rion→Milly","self_ref":"tôi","addr_ref":"chị","dst":"“Ừ.”"}]'
     expect(parseTranslationResponse(raw)).toEqual([
       { tempId: '[1]', text: '“Cậu về rồi à?”' },
       { tempId: '[2]', text: '“Ừ.”' }
@@ -100,7 +100,7 @@ Chúc bạn một ngày tốt lành!`
   })
 
   it('regex dự phòng không lấy tên khóa làm bản dịch', () => {
-    const raw = '{"id":"[1]","dst":"noi":"Milly→Rion" rồi hỏng hẳn'
+    const raw = '{"id":"[1]","dst":"speaker_to_listener":"Milly→Rion" rồi hỏng hẳn'
     expect(parseTranslationResponse(raw)).toEqual([])
   })
 

@@ -1,8 +1,12 @@
 import type {
-  ChatChunk, ChatContextBlock, ChatFinishReason, ChatSendInput, ChatStartResult, ChatUsage
+  ChatChunk,
+  ChatContextBlock,
+  ChatFinishReason,
+  ChatSendInput,
+  ChatStartResult,
+  ChatUsage
 } from '../../../shared/contracts/aiChat'
 import type { ChatProposalResult } from '../../../shared/contracts/aiProposals'
-import type { PromptVersion } from './promptVersion'
 import { buildChatMessages } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,
@@ -44,23 +48,31 @@ export interface ChatConnections {
 
 export interface ChatServiceOptions {
   connections: ChatConnections
-  /** Thế hệ prompt chat; mặc định `v1`. */
-  promptVersion?: PromptVersion
   /** Khối main tự đọc từ kho (thuật ngữ, xưng hô), nối sau khối renderer gửi lên. */
   storeContext?: (input: ChatSendInput) => ChatContextBlock[]
   records?: {
     start(requestId: string, input: ChatSendInput, provider: string | null, model: string): string
-    update(requestId: string, workId: string, patch: {
-      answer: string
-      status: 'running' | 'done' | 'error' | 'cancelled'
-      tools: Array<{ name: string; detail: string }>
-      usage?: ChatUsage | null
-      costUsd?: number | null
-      finishReason?: ChatFinishReason | null
-    }): void
-    complete?(requestId: string, input: ChatSendInput, answer: string,
-      tools: Array<{ name: string; detail: string }>, usage: ChatUsage | null,
-      costUsd: number | null, finishReason: ChatFinishReason | null): ChatProposalResult | null
+    update(
+      requestId: string,
+      workId: string,
+      patch: {
+        answer: string
+        status: 'running' | 'done' | 'error' | 'cancelled'
+        tools: Array<{ name: string; detail: string }>
+        usage?: ChatUsage | null
+        costUsd?: number | null
+        finishReason?: ChatFinishReason | null
+      }
+    ): void
+    complete?(
+      requestId: string,
+      input: ChatSendInput,
+      answer: string,
+      tools: Array<{ name: string; detail: string }>,
+      usage: ChatUsage | null,
+      costUsd: number | null,
+      finishReason: ChatFinishReason | null
+    ): ChatProposalResult | null
   }
   /**
    * Kho để các công cụ **chỉ đọc** nhìn vào. Thiếu nó thì lượt vẫn chạy, chỉ là model không với được
@@ -143,7 +155,10 @@ export class ChatService {
 
     const requestId = newId()
     const sessionId = this.options.records?.start(
-      requestId, input, session.connection.providerId ?? null, session.entry.model
+      requestId,
+      input,
+      session.connection.providerId ?? null,
+      session.entry.model
     )
     const controller = new AbortController()
     this.running.set(requestId, controller)
@@ -190,7 +205,7 @@ export class ChatService {
     try {
       const { library } = this.options
       const tools = library ? createChatTools(library, input.workId) : null
-      const messages = buildChatMessages(input, this.options.promptVersion)
+      const messages = buildChatMessages(input)
 
       for (let round = 0; ; round++) {
         // Vòng cuối **không** mời công cụ nữa, nên model buộc phải trả lời bằng những gì đã đọc. Đó
@@ -208,9 +223,14 @@ export class ChatService {
           if (event.kind === 'delta') {
             partial = true
             answer += event.text
-            if (this.options.records && (answer.length - persistedLength >= 1024 || now() - persistedAt >= 1000)) {
+            if (
+              this.options.records &&
+              (answer.length - persistedLength >= 1024 || now() - persistedAt >= 1000)
+            ) {
               this.options.records.update(requestId, input.workId, {
-                answer, status: 'running', tools: toolSteps
+                answer,
+                status: 'running',
+                tools: toolSteps
               })
               persistedLength = answer.length
               persistedAt = now()
@@ -246,7 +266,9 @@ export class ChatService {
           emit({ requestId, kind: 'tool', name: result.name, detail: result.detail })
           toolSteps.push({ name: result.name, detail: result.detail })
           this.options.records?.update(requestId, input.workId, {
-            answer, status: 'running', tools: toolSteps
+            answer,
+            status: 'running',
+            tools: toolSteps
           })
           messages.push({ role: 'tool', tool_call_id: result.id, content: result.content })
         }
@@ -256,13 +278,24 @@ export class ChatService {
       const wireUsage = usage === null ? null : toWireUsage(usage)
       const usd = usage === null ? null : costOfUsage(usage, this.modelInfo(session))
       const proposal = this.options.records?.complete
-        ? this.options.records.complete(requestId, input, answer, toolSteps,
-          wireUsage, usd, finishReason ?? null)
+        ? this.options.records.complete(
+            requestId,
+            input,
+            answer,
+            toolSteps,
+            wireUsage,
+            usd,
+            finishReason ?? null
+          )
         : null
       if (!this.options.records?.complete) {
         this.options.records?.update(requestId, input.workId, {
-          answer, status: 'done', tools: toolSteps,
-          usage: wireUsage, costUsd: usd, finishReason: finishReason ?? null
+          answer,
+          status: 'done',
+          tools: toolSteps,
+          usage: wireUsage,
+          costUsd: usd,
+          finishReason: finishReason ?? null
         })
       }
       emit({
@@ -271,9 +304,15 @@ export class ChatService {
         usage: wireUsage,
         usd,
         keyTail: session.lastKeyTail(),
-        ...(proposal ? { proposal: {
-          proposalId: proposal.proposalId, partId: proposal.partId, status: proposal.status
-        } } : {}),
+        ...(proposal
+          ? {
+              proposal: {
+                proposalId: proposal.proposalId,
+                partId: proposal.partId,
+                status: proposal.status
+              }
+            }
+          : {}),
         ...(finishReason === undefined ? {} : { finishReason })
       })
     } catch (error) {
@@ -281,7 +320,9 @@ export class ChatService {
       const chunk = toChatError(error, now())
       try {
         this.options.records?.update(requestId, input.workId, {
-          answer, status: chunk.error.kind === 'cancelled' ? 'cancelled' : 'error', tools: toolSteps
+          answer,
+          status: chunk.error.kind === 'cancelled' ? 'cancelled' : 'error',
+          tools: toolSteps
         })
       } catch {
         // The original failure is still reported; a later startup marks any unfinished row interrupted.

@@ -8,7 +8,7 @@ import { GlossaryService } from '../context/glossaryService'
 import { acceptProposalParts, textHash } from '../proposals/proposalService'
 import { ConnectionService } from './connectionService'
 import { ParagraphTranslator, paragraphUnits } from './paragraphTranslation'
-import type { PromptVersion } from './promptVersion'
+import { TRANSLATE_PROMPT_VERSION } from './translate/translatePrompt'
 
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -21,7 +21,7 @@ const crypto: SecretCrypto = {
 }
 
 function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText = '',
-  beforeReply?: () => void, promptVersion?: PromptVersion): {
+  beforeReply?: () => void): {
   library: LibraryStore
   translator: ParagraphTranslator
   workId: string
@@ -39,7 +39,7 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
     const body = JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> }
     messages.push(body.messages)
     const user = body.messages[1].content
-    const units = JSON.parse(/<nguon>\n([\s\S]*?)\n<\/nguon>/.exec(user)?.[1] ?? user) as
+    const units = JSON.parse(/<source>\n([\s\S]*?)\n<\/source>/.exec(user)?.[1] ?? user) as
       Array<{ id: string; src: string }>
     calls.push(units.map((unit) => unit.src))
     beforeReply?.()
@@ -54,7 +54,7 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
     db: library.appDb, secrets: new SecretStore(crypto),
     now: () => 1000, newId: () => library.newAppId(), fetchImpl
   })
-  const translator = new ParagraphTranslator({ library, connections, now: () => 1000, promptVersion })
+  const translator = new ParagraphTranslator({ library, connections, now: () => 1000 })
   const work = library.create({ title: 'A', sourceLang: 'en' })
   const chapter = library.createChapter(work.id, 'Một').chapter
   library.saveText(work.id, chapter.id, 'source', sourceText, 0, segment(sourceText, 'en'))
@@ -219,8 +219,8 @@ describe('paragraph translation proposals', () => {
       sourceIds: plan.batches.flatMap((item) => item.sourceIds)
     })
     const payload = h.messages[0]
-    expect(payload[0].content).toContain('Đầu')
-    expect(payload[0].content).not.toContain('Không gửi')
+    expect(payload[1].content).toContain('Đầu')
+    expect(payload[1].content).not.toContain('Không gửi')
     const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
     const trace = proposal.context[0] as { context: unknown[]; contextHash: string; usage: unknown }
     expect(JSON.stringify(trace.context)).toContain(approved.id)
@@ -230,8 +230,8 @@ describe('paragraph translation proposals', () => {
     expect(proposal.usage).toMatchObject({ inputTokens: 10, outputTokens: 5 })
   })
 
-  it('v2 sends the paragraphs before the batch and records the prompt version it used', async () => {
-    const h = setup('One.\nTwo.\nThree.\nFour.\nFive.', '', undefined, 'v2')
+  it('sends the paragraphs before the batch and records the prompt version it used', async () => {
+    const h = setup('One.\nTwo.\nThree.\nFour.\nFive.', '')
     const plan = h.translator.plan(h)
     const ids = plan.batches.flatMap((item) => item.sourceIds)
     const batch = await h.translator.runBatch({
@@ -241,12 +241,12 @@ describe('paragraph translation proposals', () => {
       targetBaseContent: plan.targetBaseContent, policy: 'review', sourceIds: ids.slice(4)
     })
     const [system, user] = h.messages[0]
-    expect(system.content).toContain('<dau_ra>')
-    expect(user.content).toContain('<doan_truoc>\nTwo.\nThree.\nFour.\n</doan_truoc>')
+    expect(system.content).toContain('<output>')
+    expect(user.content).toContain('<previous>\nTwo.\nThree.\nFour.\n</previous>')
     expect(h.calls[0]).toEqual(['Five.'])
     const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
     const trace = proposal.context[0] as { contextHash: string; promptVersion: string }
-    expect(trace.promptVersion).toBe('translate-v2')
+    expect(trace.promptVersion).toBe(TRANSLATE_PROMPT_VERSION)
     expect(trace.contextHash).toBe(textHash(JSON.stringify([system.content, user.content])))
   })
 

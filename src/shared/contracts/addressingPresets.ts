@@ -53,7 +53,7 @@ export const TEACHER_ADDRESSING_RULES = [
 
 /** Luật chung cho mọi bộ: chốt bởi chủ sản phẩm ngày 2026-10-05. */
 export const ADDRESSING_RULES = [
-  'Cặp xưng hô đã duyệt trong <xung_ho> là bắt buộc, kể cả khi nhân vật nói gắt; bảng mặc định chỉ dùng cho cặp chưa có ở đó.',
+  'Cặp xưng hô đã duyệt trong <addressing> là bắt buộc, kể cả khi nhân vật nói gắt; bảng mặc định chỉ dùng cho cặp chưa có ở đó.',
   'Quan hệ giữa hai người quyết định cặp xưng hô; đại từ của bản gốc chỉ quyết định mức thô hay lịch sự.',
   'Khi bản gốc đổi cách xưng gọi giữa cảnh (giận, mỉa mai, chuyển sang kính ngữ), thể hiện thay đổi bằng giọng điệu, tên gọi hoặc kính ngữ trong phạm vi quy ước đã duyệt; không tự phá cặp đã chốt chỉ vì nhân vật giận.',
   'Chỉ đổi cặp theo mốc có trong truyện (tỏ tình, cưới, bái sư, lộ thân phận…), không đổi sớm hơn nguyên tác.',

@@ -17,9 +17,9 @@ export function sanitizeJsonString(text: string): string {
   return text
     // Xóa dấu phẩy thừa trước dấu đóng mảng: , ] -> ]
     .replace(/,\s*([\]}])/g, '$1')
-    // v3/v4: model đôi khi viết thừa `"dst":` trước khóa nhãn ("dst":"noi":"A→B"); bỏ phần thừa để
-    // "noi" không bị đọc thành bản dịch.
-    .replace(/"dst"\s*:\s*"(noi|xung|goi)"\s*:/g, '"$1":')
+    // Model đôi khi viết thừa `"dst":` trước khóa nhãn ("dst":"speaker_to_listener":"A→B"); bỏ phần
+    // thừa để khóa nhãn không bị đọc thành bản dịch.
+    .replace(/"dst"\s*:\s*"(speaker_to_listener|self_ref|addr_ref)"\s*:/g, '"$1":')
 }
 
 /**

@@ -1,8 +1,12 @@
 # Xưng hô tiếng Việt: bộ mặc định theo bối cảnh
 
 Cập nhật: 2026-10-06 · Trạng thái: các quyết định ở mục 1 **đã chốt**; bộ mặc định và luật trong prompt
-`v2` **đã triển khai**, đo sơ bộ trên một truyện trước thay đổi thầy trò; luật hạn chế mày/tao áp cả dịch và chat `v1`/`v2`, **chưa đo lại chất lượng bằng model**; lưu lựa chọn theo tác phẩm, nhiều dạng tên cho một nhân
+**đã triển khai**, đo sơ bộ trên một truyện trước thay đổi thầy trò; luật hạn chế mày/tao áp cả dịch và chat, **chưa đo lại chất lượng bằng model**; lưu lựa chọn theo tác phẩm, nhiều dạng tên cho một nhân
 vật và bước phân tích trước khi dịch là **đề xuất**.
+
+> `v1`–`v4` trong chương này là tên thế hệ prompt **của các thí nghiệm đã chạy**; mã nay chỉ còn một
+> prompt và thẻ/khóa đổi sang tiếng Anh (`noi`/`xung`/`goi` → `speaker_to_listener`/`self_ref`/`addr_ref`,
+> `<nguon>` → `<source>`…). Xem [bảng đổi tên](prompt-system.md#hợp-nhất-prompt-ngày-2026-10-06).
 Chủ trì: chủ sản phẩm (quyết định), kỹ thuật/đánh giá (bộ mặc định, phép đo).
 Câu hỏi: khi chưa có cặp xưng hô đã duyệt, AI nên xưng hô thế nào; và làm sao để xưng hô không lộn xộn
 giữa các lô, các chương?

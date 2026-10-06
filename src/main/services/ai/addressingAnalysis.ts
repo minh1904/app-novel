@@ -149,13 +149,13 @@ export function buildAnalysisMessages(input: {
     `Bạn là biên tập viên dịch truyện ${languageName(input.sourceLang)} sang tiếng Việt, đang lập bảng xưng hô cho một bộ truyện TRƯỚC khi dịch.`,
     'Nhiệm vụ: từ các câu thoại bằng chứng, đề xuất cho mỗi nhân vật giới tính và đại từ người kể dùng (ngôi ba), và cho mỗi cặp người nói → người nghe có bằng chứng: tự xưng, cách gọi người nghe, đại từ ngôi hai dự phòng.',
     '',
-    '<luat>',
+    '<rules>',
     ...ADDRESSING_RULES.map((rule) => '- ' + rule),
     '- "address" là cách gọi người nghe như bản gốc (tên kèm hậu tố, danh xưng, hoặc đại từ). Nếu "address" là tên hoặc danh xưng thì BẮT BUỘC có "secondPerson": đại từ tiếng Việt dùng khi bản gốc lược chủ ngữ hoặc dùng あなた/貴方/你.',
     '- "secondPerson" phải hợp vai: người dưới gọi người trên không dùng đại từ hạ vai (hầu gái nói kính ngữ với con trai nhà chủ: "cậu", không phải "em").',
     '- Chỉ đề xuất cặp có ít nhất một câu bằng chứng; trích nguyên câu gốc kèm số chương. Không chắc thì ghi rõ trong "notes" và để "confidence": "thấp".',
     '- Không bịa nhân vật mới; dùng đúng "source" đã cho.',
-    '</luat>',
+    '</rules>',
     ...(preset ? ['', ...presetSection(preset)] : []),
     '',
     'Trả về đúng một đối tượng JSON, không kèm giải thích hay dấu ```, theo mẫu:',
@@ -173,14 +173,14 @@ export function buildAnalysisMessages(input: {
     )
     const facts = [character.gender, character.role, character.notes].filter(Boolean).join('; ')
     return [
-      `<nhan_vat source="${character.source}" target="${character.target}"${character.aliases?.length ? ` bien_the="${character.aliases.join(', ')}"` : ''}>`,
+      `<character source="${character.source}" target="${character.target}"${character.aliases?.length ? ` aliases="${character.aliases.join(', ')}"` : ''}>`,
       facts ? `Đã biết: ${facts}` : '',
       pronouns ? `Đại từ trong các câu có tên nhân vật: ${pronouns}` : '',
       lines.length > 0
         ? 'Câu thoại có tên nhân vật ([câu dẫn] câu thoại):'
         : 'Không có câu thoại nào có tên.',
       ...lines,
-      '</nhan_vat>'
+      '</character>'
     ]
       .filter(Boolean)
       .join('\n')

@@ -7,7 +7,7 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
       async complete() {
         return {
           text: JSON.stringify([
-            { id: '[1]', noi: 'A→B', xung: 'tôi', goi: 'cậu', dst: 'Cậu về rồi à?' }
+            { id: '[1]', speaker_to_listener: 'A→B', self_ref: 'tôi', addr_ref: 'cậu', dst: 'Cậu về rồi à?' }
           ]),
           usage: null
         }
@@ -16,7 +16,6 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
     const result = await executeTranslateBatch({
       caller,
       units: [{ id: 'u1', text: '「帰った？」' }],
-      prompt: { version: 'v4' }
     })
     expect(result.error).toBeNull()
     expect(result.failedIds).toEqual([])
@@ -83,7 +82,7 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
           }
         }
         // Lượt 2 (repair): Nhận prompt hỏi lại và trả ID [2]
-        expect(messages[0].content).toContain('thiếu')
+        expect(messages[1].content).toContain('thiếu')
         return {
           text: JSON.stringify([{ id: '[2]', dst: 'Câu 2 bổ sung' }]),
           usage: { inputTokens: 5, outputTokens: 5 }

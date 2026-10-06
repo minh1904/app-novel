@@ -25,7 +25,6 @@ import {
   PREVIOUS_PARAGRAPHS,
   type TranslatePromptContext
 } from './translate/translatePrompt'
-import { DEFAULT_PROMPT_VERSION, type PromptVersion, usesContextBlocks } from './promptVersion'
 import { suggestRegister } from './translate/languageProfiles'
 import { matchContextEntries } from '../../../shared/algorithms/contextMatching'
 import { originFor } from './provenance'
@@ -47,8 +46,6 @@ export interface ChapterTranslatorOptions {
   library: LibraryStore
   connections: ConnectionService
   now: () => number
-  /** Thế hệ prompt; Bộ đo chọn `v2` để so với mặc định. */
-  promptVersion?: PromptVersion
 }
 
 /**
@@ -95,15 +92,12 @@ export class ChapterTranslator {
     }
 
     // Cỡ lô là giới hạn token đầu vào của mục (0 là mặc định).
-    const batches = planBatches(
-      sendable.map(toSegmentText),
-      {
-        maxTokens: taskLimit(entry.settings.inputTokenLimit) || undefined,
-        maxUnits: taskLimit(entry.settings.inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
-        maxUnitChars: Number.MAX_SAFE_INTEGER,
-        sourceLang: work.sourceLang
-      }
-    ).batches.map((batch) => ({
+    const batches = planBatches(sendable.map(toSegmentText), {
+      maxTokens: taskLimit(entry.settings.inputTokenLimit) || undefined,
+      maxUnits: taskLimit(entry.settings.inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
+      maxUnitChars: Number.MAX_SAFE_INTEGER,
+      sourceLang: work.sourceLang
+    }).batches.map((batch) => ({
       sourceIds: batch.units.map((segment) => segment.id),
       sourceChars: batch.charCount
     }))
@@ -169,11 +163,13 @@ export class ChapterTranslator {
     let translationError: TranslateFailure | null = null
 
     try {
-      if (typeof (translator.provider as unknown as TranslationModelCaller).complete === 'function') {
-        const version = this.options.promptVersion ?? DEFAULT_PROMPT_VERSION
+      if (
+        typeof (translator.provider as unknown as TranslationModelCaller).complete === 'function'
+      ) {
         const prompt: TranslatePromptContext = {
-          version, sourceLang: work.sourceLang, genre: work.genre,
-          register: usesContextBlocks(version) ? suggestRegister(work.sourceLang, work.genre) : undefined
+          sourceLang: work.sourceLang,
+          genre: work.genre,
+          register: suggestRegister(work.sourceLang, work.genre)
         }
         try {
           const glossaryEntries = library.getEffectiveGlossary(workId, chapterId, {
@@ -182,21 +178,17 @@ export class ChapterTranslator {
           const combinedSource = segments.map((s) => s.text).join('\n')
           prompt.glossary = matchContextEntries(combinedSource, glossaryEntries, work.sourceLang)
           const dyads = library.getEffectiveAddressing(workId, chapterId)
-          if (usesContextBlocks(version)) {
-            const ordered = [...rows.values()]
-            const chapterSource = ordered.map((row) => row.sourceText).join('\n')
-            prompt.dyads = dyadsMentionedIn(dyads, chapterSource)
-            prompt.characters = charactersMentionedIn(
-              library.withWork(workId, (db) => listCharacters(db, { status: 'approved' })),
-              chapterSource
-            )
-            const first = ordered.findIndex((row) => row.sourceId === sourceIds[0])
-            prompt.previous = ordered
-              .slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), Math.max(0, first))
-              .map((row) => row.sourceText)
-          } else {
-            prompt.dyads = dyads
-          }
+          const ordered = [...rows.values()]
+          const chapterSource = ordered.map((row) => row.sourceText).join('\n')
+          prompt.dyads = dyadsMentionedIn(dyads, chapterSource)
+          prompt.characters = charactersMentionedIn(
+            library.withWork(workId, (db) => listCharacters(db, { status: 'approved' })),
+            chapterSource
+          )
+          const first = ordered.findIndex((row) => row.sourceId === sourceIds[0])
+          prompt.previous = ordered
+            .slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), Math.max(0, first))
+            .map((row) => row.sourceText)
         } catch {
           // If context loading fails, continue translation without layers
         }
