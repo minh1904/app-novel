@@ -190,6 +190,38 @@ chung giữ ngắn; kiến thức riêng nằm ở dữ liệu. Đã làm:
   nhãn của `v3`. Kết quả sơ bộ (flash-lite, lô cả chương): chị em dị giới 17% → 13%, yandere 31% → 27%,
   chi phí +~10%. Phép chấm còn nhiễu ("mình" phản thân, "chúng ta"); dùng để so, chưa phải tỉ lệ lỗi thật.
 
+- **Lỗi bộ phân tích làm hỏng bản dịch `v3`/`v4` (đã sửa 2026-10-06).** Model đôi khi viết thừa `"dst":` ở
+  đầu đối tượng (`{"id":"[29]","dst":"noi":"Milly→Rion",…,"dst":"…"}`). `JSON.parse` hỏng, bộ regex dự
+  phòng đọc `"noi"` thành bản dịch và lưu im lặng: 68 đoạn của một lần chạy `v3`, 35 của `v3` nguyên chương,
+  43 của `v4` trong n4696dd, tập trung ở chương có nhiều thoại. Các đoạn đó cũng làm `pairs` mất nhãn nên
+  chương 3 không được chấm. `lenientParser` nay bỏ `"dst":` thừa và không nhận tên khóa làm bản dịch.
+  **Số đo `v3` ở mục trên có thể bị ảnh hưởng và chưa đo lại.**
+- **`v4` = `v3` + khai `xung`/`goi` trước `dst`, thử một lần (n4696dd, chương 1–10, flash-lite, không
+  thinking).** Chấm 185 câu thoại Milly↔Rion (chương 3–9) bằng nhãn `noi` của `v4`, loại các cờ do danh từ
+  ("cô bé", "con gái", "bà ta", "sinh con") và "mình" phản thân; so cùng cặp đã duyệt (Milly: tôi – cậu;
+  Rion: tôi – chị). Câu lệch thật: `v3` cũ (nhiều lô) 35, `v3` + dòng cặp mới (T1) 20, `v3` + dòng cặp
+  mới nguyên chương (T1-full, đối chứng của `v4`) 25, `v4` 18. Theo chiều: Milly→Rion `v3` cũ 14, T1 0,
+  T1-full 19 ("ngài" ở chương 4 và 8), `v4` 1; Rion→Milly `v3` cũ 21, T1 20, T1-full 6, `v4` 17 ("em" ở
+  chương 3, "ta/cô" ở chương 9).
+  - Cùng điều kiện nguyên chương, `v4` giảm lệch ở Milly→Rion (19 → 1) nhưng không ở Rion→Milly.
+  - Ở `v4`, khoảng 20 trong 89 câu Rion→Milly và 7 trong 96 câu Milly→Rion có `xung`/`goi` khai đúng cặp
+    mà `dst` vẫn dùng đại từ khác: khai trước chưa ràng buộc được câu dịch.
+  - Giới hạn: một lần chạy mỗi điều kiện, nhiễu giữa các lần lớn (dịch lại 5 chương của T1 làm "ngài" ở
+    chương 8 biến mất); phân loại bằng bộ lọc cộng đọc tay chưa kiểm hết; chỉ một truyện. Chưa đổi mặc định.
+
+- **Giả thuyết về Rion tự xưng "em" với Milly ở `v4` (2026-10-06, chưa kiểm chứng bằng thí nghiệm).**
+  Cặp đã duyệt là tôi – chị, nhưng 13 trong 26 câu Rion→Milly có đại từ ngôi một ra "em". Bằng chứng
+  quan sát: khi nguyên tác có 俺/僕 thì "tôi" 13/16 và không có "em"; khi nguyên tác lược đại từ thì
+  "em" 13/26. Hai nguồn trong prompt có thể kéo về "em – chị":
+  1. Bảng mặc định `ja-fantasy`, dòng "Hầu gái, quản gia → chủ", ghi "chủ nhỏ tuổi: em – chị"; bảng gắn
+     nhãn "chỉ dùng cho cặp chưa có" nhưng model vẫn dùng khi phải tự điền đại từ.
+  2. Luật chung "đại từ của bản gốc chỉ quyết định mức thô hay lịch sự" làm yếu neo 俺 → "tôi".
+  Ngoài ra "ta/cô" ở chương 9 (câu có 俺, giọng ra lệnh) có thể do dòng "Hôn phu thô [俺 + お前]: ta –
+  cô"; chưa kiểm. `v4` khai `xung:"tôi"` đúng nhưng `dst` vẫn dùng "em" ở khoảng 20/89 câu Rion→Milly.
+  Thí nghiệm dự kiến (T3): bỏ dòng mặc định hầu gái→chủ cho truyện có cặp duyệt, so với `v4`. Nếu
+  đúng, sửa bằng mã: không gửi dòng mặc định của quan hệ đã có cặp duyệt, thêm luật "nguyên tác lược
+  đại từ mà đã có cặp duyệt thì dùng cách tự xưng của cặp", và gắn cờ câu có `xung` khác đại từ trong `dst`.
+
 Còn đề xuất: gắn nhãn người nói bằng mã cho câu dễ và lượt riêng cho câu khó; bộ kiểm tra theo cặp dùng
 nhãn để chỉ sửa câu lệch; so lô cả chương với lô nhỏ kèm bản đã dịch của đoạn trước; thử chỉ dẫn tiếng
 Anh với dữ liệu tiếng Việt.

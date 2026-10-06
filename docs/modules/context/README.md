@@ -22,6 +22,7 @@ Tập hợp những gì đã nghiên cứu về glossary, nhân vật, xưng hô
 | Prompt dịch và chat xếp thế nào, các sản phẩm khác làm gì? | [Hệ thống prompt](prompt-system.md) |
 | Chưa có cặp xưng hô thì AI xưng hô thế nào, theo bối cảnh nào? | [Xưng hô tiếng Việt](vietnamese-addressing.md) |
 | Chứng minh tốt hơn và tránh báo lỗi nhầm thế nào? | [Chất lượng và kiểm chứng](quality-and-evaluation.md) |
+| Cần dữ liệu gì để đo cách người dịch xử lý xưng hô và độ linh hoạt? | [Kho đối chiếu bản dịch người](human-translation-corpus.md) |
 | Làm theo thứ tự nào, còn phải chốt gì? | [Lộ trình và câu hỏi mở](roadmap.md) |
 | Kết luận bắt nguồn từ đâu, tài liệu cũ nằm ở đâu? | [Bằng chứng và bản đồ nguồn](evidence.md) |
 
