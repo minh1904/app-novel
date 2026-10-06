@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 7, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 8, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -151,7 +151,7 @@ describe('work schema', () => {
 
     // Upgrade through the current schema.
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(7)
+    expect(readPragmas(db).userVersion).toBe(8)
 
     // Data preserved
     const row = db.prepare('SELECT title FROM work WHERE id = ?').get<{ title: string }>('w1')
@@ -164,7 +164,9 @@ describe('work schema', () => {
       INSERT INTO context_alias (id, entry_id, form, created_at)
       VALUES ('a1', 'e1', 'Trúc Cơ Kỳ', 1);
     `)
-    const entry = db.prepare('SELECT * FROM context_entry WHERE id = ?').get<{ source: string }>('e1')
+    const entry = db
+      .prepare('SELECT * FROM context_entry WHERE id = ?')
+      .get<{ source: string }>('e1')
     expect(entry?.source).toBe('筑基')
 
     const alias = db.prepare('SELECT * FROM context_alias WHERE id = ?').get<{ form: string }>('a1')
@@ -191,16 +193,27 @@ describe('work schema', () => {
       INSERT INTO provenance (segment_id, origin, at) VALUES ('s', 'human', 1);
     `)
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(7)
-    expect(db.prepare("SELECT content, rev FROM chapter_text WHERE chapter_id = 'c' AND side = 'target'").get()).toEqual({ content: 'Bản dịch cũ', rev: 4 })
-    expect(db.prepare("SELECT id, status FROM segment WHERE id = 's'").get()).toEqual({ id: 's', status: 'ok' })
-    expect(db.prepare("SELECT link_id, segment_id FROM link_member WHERE link_id = 'l'").get()).toEqual({ link_id: 'l', segment_id: 's' })
-    expect(db.prepare("SELECT origin FROM provenance WHERE segment_id = 's'").get()).toEqual({ origin: 'human' })
+    expect(readPragmas(db).userVersion).toBe(8)
+    expect(
+      db
+        .prepare("SELECT content, rev FROM chapter_text WHERE chapter_id = 'c' AND side = 'target'")
+        .get()
+    ).toEqual({ content: 'Bản dịch cũ', rev: 4 })
+    expect(db.prepare("SELECT id, status FROM segment WHERE id = 's'").get()).toEqual({
+      id: 's',
+      status: 'ok'
+    })
+    expect(
+      db.prepare("SELECT link_id, segment_id FROM link_member WHERE link_id = 'l'").get()
+    ).toEqual({ link_id: 'l', segment_id: 's' })
+    expect(db.prepare("SELECT origin FROM provenance WHERE segment_id = 's'").get()).toEqual({
+      origin: 'human'
+    })
 
     db.exec(`
       INSERT INTO ai_session (id, title, created_at, updated_at) VALUES ('session', 'Dịch', 2, 2);
       INSERT INTO ai_turn (id, session_id, chapter_id, action, question, status, created_at, updated_at)
-        VALUES ('turn', 'session', 'c', 'ap_dung', 'Dịch', 'done', 2, 2);
+        VALUES ('turn', 'session', 'c', 'apply', 'Dịch', 'done', 2, 2);
       INSERT INTO proposal (id, chapter_id, session_id, turn_id, origin, policy, source_rev, source_hash,
         target_base_rev, target_base_content, created_at, updated_at)
         VALUES ('p', 'c', 'session', 'turn', 'chat', 'auto', 0, 'hash', 4, 'Bản dịch cũ', 2, 2);
@@ -209,11 +222,69 @@ describe('work schema', () => {
       INSERT INTO text_snapshot (id, command_id, chapter_id, before_rev, after_rev, before_content, decisions_json, actor, created_at)
         VALUES ('snapshot', 'command', 'c', 4, 5, 'Bản dịch cũ', '[]', 'auto', 3);
     `)
-    expect(thrown(() => db.exec("INSERT INTO proposal_part (id, proposal_id, ordinal, after_text, status) VALUES ('bad', 'p', 1, 'x', 'unknown')"))).toBe(true)
+    expect(
+      thrown(() =>
+        db.exec(
+          "INSERT INTO proposal_part (id, proposal_id, ordinal, after_text, status) VALUES ('bad', 'p', 1, 'x', 'unknown')"
+        )
+      )
+    ).toBe(true)
     db.exec("DELETE FROM chapter WHERE id = 'c'")
     expect(db.prepare('SELECT count(*) AS n FROM proposal').get<{ n: number }>()!.n).toBe(0)
     expect(db.prepare('SELECT count(*) AS n FROM text_snapshot').get<{ n: number }>()!.n).toBe(0)
-    expect(db.prepare("SELECT chapter_id FROM ai_turn WHERE id = 'turn'").get()).toEqual({ chapter_id: null })
+    expect(db.prepare("SELECT chapter_id FROM ai_turn WHERE id = 'turn'").get()).toEqual({
+      chapter_id: null
+    })
+    db.close()
+  })
+
+  it('upgrades v7 to v8: chat actions get English codes and proposals keep their turn', () => {
+    const db = openDatabase(join(tempDir(), 'v7_to_v8.mira'))
+    migrate(db, {
+      applicationId: WORK_APPLICATION_ID,
+      migrations: workSchema.migrations.slice(0, 7)
+    })
+    db.exec(`
+      INSERT INTO work (id, title, source_lang, created_at, updated_at) VALUES ('w', 'T', 'ja', 1, 1);
+      INSERT INTO chapter (id, position, created_at, updated_at) VALUES ('c', 0, 1, 1);
+      INSERT INTO ai_session (id, title, created_at, updated_at) VALUES ('s', 'Dịch', 1, 1);
+      INSERT INTO ai_turn (id, session_id, chapter_id, action, question, answer, status, created_at, updated_at)
+        VALUES ('t-ask', 's', 'c', 'hoi', 'Hỏi', 'Đáp', 'done', 1, 1),
+               ('t-edit', 's', 'c', 'sua', 'Sửa', 'Bản sửa', 'done', 2, 2),
+               ('t-apply', 's', 'c', 'ap_dung', 'Áp', 'Bản áp', 'done', 3, 3);
+      INSERT INTO proposal (id, chapter_id, session_id, turn_id, origin, policy, source_rev, source_hash,
+        target_base_rev, target_base_content, created_at, updated_at)
+        VALUES ('p-edit', 'c', 's', 't-edit', 'chat', 'review', 0, 'h', 0, '', 2, 2),
+               ('p-free', 'c', 's', NULL, 'translate', 'review', 0, 'h', 0, '', 3, 3);
+    `)
+
+    migrate(db, workSchema)
+
+    expect(readPragmas(db).userVersion).toBe(8)
+    expect(db.prepare('SELECT id, action, answer FROM ai_turn ORDER BY created_at').all()).toEqual([
+      { id: 't-ask', action: 'ask', answer: 'Đáp' },
+      { id: 't-edit', action: 'edit', answer: 'Bản sửa' },
+      { id: 't-apply', action: 'apply', answer: 'Bản áp' }
+    ])
+    // The rebuild must not unlink proposals from their turn.
+    expect(db.prepare('SELECT id, turn_id FROM proposal ORDER BY id').all()).toEqual([
+      { id: 'p-edit', turn_id: 't-edit' },
+      { id: 'p-free', turn_id: null }
+    ])
+    expect(
+      thrown(() =>
+        db.exec(
+          "INSERT INTO ai_turn (id, session_id, action, question, status, created_at, updated_at) VALUES ('x', 's', 'hoi', 'q', 'done', 4, 4)"
+        )
+      )
+    ).toBe(true)
+    // The foreign keys and indexes of the new table still work.
+    db.exec("DELETE FROM chapter WHERE id = 'c'")
+    expect(db.prepare("SELECT chapter_id FROM ai_turn WHERE id = 't-edit'").get()).toEqual({
+      chapter_id: null
+    })
+    db.exec("DELETE FROM ai_session WHERE id = 's'")
+    expect(db.prepare('SELECT count(*) AS n FROM ai_turn').get<{ n: number }>()!.n).toBe(0)
     db.close()
   })
 
@@ -228,16 +299,20 @@ describe('work schema', () => {
 
     // Deleting chapter nullifies from_chapter_id and to_chapter_id
     db.exec("DELETE FROM chapter WHERE id = 'c'")
-    const entryAfterChapDel = db.prepare('SELECT from_chapter_id, to_chapter_id FROM context_entry WHERE id = ?').get<{
-      from_chapter_id: string | null
-      to_chapter_id: string | null
-    }>('e1')
+    const entryAfterChapDel = db
+      .prepare('SELECT from_chapter_id, to_chapter_id FROM context_entry WHERE id = ?')
+      .get<{
+        from_chapter_id: string | null
+        to_chapter_id: string | null
+      }>('e1')
     expect(entryAfterChapDel?.from_chapter_id).toBeNull()
     expect(entryAfterChapDel?.to_chapter_id).toBeNull()
 
     // Deleting context_entry cascades to context_alias
     db.exec("DELETE FROM context_entry WHERE id = 'e1'")
-    const countAlias = db.prepare('SELECT count(*) as count FROM context_alias WHERE entry_id = ?').get<{ count: number }>('e1')
+    const countAlias = db
+      .prepare('SELECT count(*) as count FROM context_alias WHERE entry_id = ?')
+      .get<{ count: number }>('e1')
     expect(countAlias?.count).toBe(0)
 
     db.close()
@@ -253,7 +328,9 @@ describe('work schema', () => {
     `)
     expect(
       thrown(() =>
-        db.exec("INSERT INTO context_alias (id, entry_id, form, created_at) VALUES ('a2', 'e2', 'alias1', 1)")
+        db.exec(
+          "INSERT INTO context_alias (id, entry_id, form, created_at) VALUES ('a2', 'e2', 'alias1', 1)"
+        )
       )
     ).toBe(true)
     db.close()

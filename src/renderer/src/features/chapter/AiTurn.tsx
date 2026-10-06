@@ -236,11 +236,11 @@ export function AiTurn({
         </div>
       )}
 
-      {turn.mode === 'ap_dung' && turn.autoApply === 'applied' && (
+      {turn.mode === 'apply' && turn.autoApply === 'applied' && (
         <p className="text-ui-xs text-success">Đã áp dụng thẳng vào bản dịch.</p>
       )}
 
-      {turn.mode === 'sua' && turn.proposalStatus === 'applied' && (
+      {turn.mode === 'edit' && turn.proposalStatus === 'applied' && (
         <p className="text-ui-xs text-success">Đề xuất đã được áp dụng.</p>
       )}
 
@@ -250,7 +250,7 @@ export function AiTurn({
         </p>
       )}
 
-      {turn.mode === 'ap_dung' && turn.autoApply === 'needs-review' && (
+      {turn.mode === 'apply' && turn.autoApply === 'needs-review' && (
         <p className="text-ui-xs text-ink-muted">
           Bản gốc hoặc bản dịch đã đổi, hoặc còn chữ chưa lưu. Đề xuất cần được xem lại.
         </p>
@@ -298,7 +298,7 @@ export function AiTurn({
 
       {/* The model was asked for a fenced block and did not give one: read it as a plain reply rather
           than guessing which part of the answer was meant to replace the paragraph. */}
-      {turn.mode !== 'hoi' && turn.status === 'done' && proposal === null && (
+      {turn.mode !== 'ask' && turn.status === 'done' && proposal === null && (
         <p className="text-ui-xs text-ink-muted">
           Câu trả lời chưa có khối thay thế hoàn chỉnh nên không có gì để áp dụng. Hỏi lại và nói rõ
           phạm vi cần sửa.

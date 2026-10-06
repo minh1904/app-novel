@@ -1,4 +1,5 @@
 import type { SchemaSpec } from './migrate'
+import type { Db } from './sqlite'
 
 /** "MIRA" in ASCII. A constant of the file format: never change it once users have data. */
 export const WORK_APPLICATION_ID = 0x4d495241
@@ -276,6 +277,61 @@ CREATE TABLE proposal_accept_command (
 );
 `
 
+/**
+ * Chat actions were stored as Vietnamese codes (`hoi`, `sua`, `ap_dung`); they are now `ask`, `edit`,
+ * `apply`. SQLite cannot change a CHECK constraint in place, so `ai_turn` is rebuilt.
+ *
+ * Dropping the old table fires `proposal.turn_id ON DELETE SET NULL`, which would silently unlink every
+ * proposal from its turn. The links are stashed in a temp table first and written back afterwards.
+ */
+function migrateChatActions(db: Db): void {
+  db.exec(`
+CREATE TEMP TABLE proposal_turn_link AS SELECT id, turn_id FROM proposal WHERE turn_id IS NOT NULL;
+
+CREATE TABLE ai_turn_next (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES ai_session (id) ON DELETE CASCADE,
+  chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  action TEXT NOT NULL CHECK (action IN ('ask', 'edit', 'apply')),
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL CHECK (status IN ('sending', 'running', 'done', 'cancelled', 'error', 'interrupted')),
+  context_json TEXT NOT NULL DEFAULT '[]',
+  target_range_json TEXT,
+  tools_json TEXT NOT NULL DEFAULT '[]',
+  dropped_turns INTEGER NOT NULL DEFAULT 0 CHECK (dropped_turns >= 0),
+  provider TEXT,
+  model TEXT,
+  usage_json TEXT,
+  cost_usd REAL,
+  finish_reason TEXT CHECK (finish_reason IN ('stop', 'length', 'tool_calls', 'filter')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+INSERT INTO ai_turn_next (
+  id, session_id, chapter_id, action, question, answer, status, context_json, target_range_json,
+  tools_json, dropped_turns, provider, model, usage_json, cost_usd, finish_reason, created_at, updated_at
+)
+SELECT
+  id, session_id, chapter_id,
+  CASE action WHEN 'hoi' THEN 'ask' WHEN 'sua' THEN 'edit' WHEN 'ap_dung' THEN 'apply' ELSE action END,
+  question, answer, status, context_json, target_range_json,
+  tools_json, dropped_turns, provider, model, usage_json, cost_usd, finish_reason, created_at, updated_at
+FROM ai_turn;
+
+DROP TABLE ai_turn;
+ALTER TABLE ai_turn_next RENAME TO ai_turn;
+CREATE INDEX ai_turn_session_order ON ai_turn (session_id, created_at, id);
+CREATE INDEX ai_turn_chapter ON ai_turn (chapter_id, created_at);
+
+UPDATE proposal
+SET turn_id = (SELECT link.turn_id FROM proposal_turn_link link WHERE link.id = proposal.id)
+WHERE id IN (SELECT id FROM proposal_turn_link);
+DROP TABLE proposal_turn_link;
+`)
+}
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -321,7 +377,12 @@ export const workSchema: SchemaSpec = {
       up(db) {
         db.exec(version7)
       }
+    },
+    {
+      version: 8,
+      up(db) {
+        migrateChatActions(db)
+      }
     }
   ]
 }
-

@@ -89,7 +89,7 @@ export function restoredSession(turns: AiTurnView[]): Session {
       usd: turn.costUsd,
       keyTail: null,
       finishReason: turn.finishReason,
-      autoApply: turn.action === 'ap_dung' && turn.proposalStatus !== null
+      autoApply: turn.action === 'apply' && turn.proposalStatus !== null
         ? turn.proposalStatus === 'applied' ? 'applied' : 'needs-review'
         : null,
       context: turn.context,
@@ -197,7 +197,7 @@ export function applyChunk(session: Session, chunk: ChatChunk): Session {
         proposalId: chunk.proposal.proposalId,
         partId: chunk.proposal.partId,
         proposalStatus: chunk.proposal.status,
-        autoApply: turn.mode === 'ap_dung'
+        autoApply: turn.mode === 'apply'
           ? chunk.proposal.status === 'applied' ? 'applied' : 'needs-review'
           : null
       } : {})
@@ -242,7 +242,7 @@ export function openRequestIds(session: Session): string[] {
  * answer as a plain reply instead of guessing which part was the proposal.
  */
 export function proposalOf(turn: TurnView): string | null {
-  if (turn.mode === 'hoi' || turn.status !== 'done' || turn.range === null) return null
+  if (turn.mode === 'ask' || turn.status !== 'done' || turn.range === null) return null
   if (turn.finishReason !== 'stop') return null
   return extractFence(turn.answer)
 }
@@ -263,7 +263,7 @@ export function markTurnProposal(
   return mapTurn(session, (turn) => turn.localId === localId, (turn) => ({
     ...turn, proposalId: proposal.proposalId, partId: proposal.partId,
     proposalStatus: proposal.status,
-    autoApply: turn.mode === 'ap_dung'
+    autoApply: turn.mode === 'apply'
       ? proposal.status === 'applied' ? 'applied' : 'needs-review'
       : null
   }))
@@ -288,7 +288,7 @@ export function revealStep(
   const next = new Set(watched)
   const reveal: string[] = []
   for (const turn of turns) {
-    if (turn.mode !== 'sua') continue
+    if (turn.mode !== 'edit') continue
     if (isOpen(turn)) {
       next.add(turn.localId)
       continue

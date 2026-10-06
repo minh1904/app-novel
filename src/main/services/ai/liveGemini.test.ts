@@ -150,7 +150,7 @@ describe.skipIf(!LIVE)('live Gemini through connection → entry → gateway (ta
         chapterId: chapter.id,
         connectionId,
         entryId: entries.quiet,
-        mode: 'hoi',
+        mode: 'ask',
         sourceLang: 'en',
         question: 'Trả lời đúng một từ: OK.',
         history: [],

@@ -22,7 +22,7 @@ function setup(): { library: LibraryStore; workId: string; chapterId: string; ha
 }
 
 const payload = (workId: string, chapterId: string): ChatProposalInput => ({
-  workId, chapterId, commandId: randomUUID(), action: 'ap_dung', blockAutoApply: false,
+  workId, chapterId, commandId: randomUUID(), action: 'apply', blockAutoApply: false,
   sourceRev: 1, sourceContent: '原文', targetBaseRev: 0, targetBaseContent: '',
   range: { from: 0, to: 0, text: '' }, replacement: 'Bản dịch'
 })

@@ -66,7 +66,7 @@ const COMMON = [
 ].join(' ')
 
 export function systemPrompt(mode: ChatMode): string {
-  return [COMMON, ...TEACHER_ADDRESSING_RULES, mode === 'hoi' ? ASK_ONLY : EDIT].join(' ')
+  return [COMMON, ...TEACHER_ADDRESSING_RULES, mode === 'ask' ? ASK_ONLY : EDIT].join(' ')
 }
 
 const CHAT_TAG_PATTERN = /<(\/?)(context|block|question)\b/gi

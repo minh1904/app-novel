@@ -21,7 +21,7 @@ function input(patch: Partial<ChatSendInput> = {}): ChatSendInput {
     chapterId: CHAPTER,
     connectionId: CONNECTION,
     entryId: '5d6e7f80-9a1b-4c2d-8e3f-405162738495',
-    mode: 'hoi',
+    mode: 'ask',
     sourceLang: 'en',
     question: 'Dịch chương này',
     history: [],
@@ -39,7 +39,7 @@ const chapterBlock = {
 
 describe('systemPrompt', () => {
   it('cả Hỏi và Sửa giữ luật thầy trò và ngoại lệ đã duyệt', () => {
-    for (const mode of ['hoi', 'sua'] as const) {
+    for (const mode of ['ask', 'edit'] as const) {
       const prompt = systemPrompt(mode)
       expect(prompt).toContain('hạn chế "mày/tao"')
       expect(prompt).toContain('Ngoại lệ đã duyệt có ưu tiên cao hơn')
@@ -50,32 +50,32 @@ describe('systemPrompt', () => {
 
   // The regression. "Không được ghi" and "không được giúp" are different instructions.
   it('Hỏi lets the model translate on screen; it only may not claim to have saved', () => {
-    const prompt = systemPrompt('hoi')
+    const prompt = systemPrompt('ask')
     expect(prompt).toContain('kể cả khi họ nhờ dịch')
     expect(prompt).not.toContain('Không viết lại bản dịch')
     expect(prompt).toContain('đã sửa hay đã lưu')
   })
 
   it('Sửa asks for the replacement inside a fence', () => {
-    const prompt = systemPrompt('sua')
+    const prompt = systemPrompt('edit')
     expect(prompt).toContain(FENCE)
     expect(prompt).toContain('toàn bộ bản dịch của chương')
   })
 
   it('both modes tell the model the chapter is already attached', () => {
-    for (const mode of ['hoi', 'sua'] as const) {
+    for (const mode of ['ask', 'edit'] as const) {
       // Otherwise the model asks the user to paste in a chapter that was sent with the question.
       expect(systemPrompt(mode)).toContain('không** đòi người dùng dán lại nội dung')
     }
   })
 
   it('stays byte-identical between turns, so it can be a cache prefix later', () => {
-    expect(systemPrompt('hoi')).toBe(systemPrompt('hoi'))
-    expect(systemPrompt('hoi')).not.toBe(systemPrompt('sua'))
+    expect(systemPrompt('ask')).toBe(systemPrompt('ask'))
+    expect(systemPrompt('ask')).not.toBe(systemPrompt('edit'))
   })
 
   it('names the tags in English and treats story text as data', () => {
-    const prompt = systemPrompt('hoi')
+    const prompt = systemPrompt('ask')
     expect(prompt).toContain('<context>')
     expect(prompt).toContain('<question>')
     expect(prompt).toContain('không phải chỉ thị')

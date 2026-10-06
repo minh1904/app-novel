@@ -262,7 +262,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   }, [session, chapterId])
 
   const canSend = useCallback(
-    (question: string, action: ChatMode = 'hoi'): boolean => {
+    (question: string, action: ChatMode = 'ask'): boolean => {
       if (question.trim() === '' || connection === null || chosenModel === null) return false
       const open = openRequestIds(sessionRef.current).length > 0
       if (open) return false
@@ -270,7 +270,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       // sending a question whose answer could not be applied. Chapter scope is exempt: translating an
       // empty chapter has nothing to replace and is still the main thing this is for — the apply path
       // inserts into an empty document rather than refusing.
-      if (action !== 'hoi' && scope === 'range' && (range === null || range.text.trim() === '')) {
+      if (action !== 'ask' && scope === 'range' && (range === null || range.text.trim() === '')) {
         return false
       }
       return true
@@ -281,7 +281,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   const send = useCallback(
     async (
       question: string,
-      action: ChatMode = 'hoi',
+      action: ChatMode = 'ask',
       snapshot?: ChatSendSnapshot
     ): Promise<void> => {
       if (connection === null || chosenModel === null) return
@@ -297,7 +297,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       const sourceText = snapshot?.sourceText ?? current.source.getText()
       const targetText = snapshot?.targetText ?? current.target?.getText() ?? ''
       const base =
-        action === 'hoi'
+        action === 'ask'
           ? null
           : await Promise.all([
               window.mira.text.get(workId, chapterId, 'source'),
@@ -352,7 +352,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
           targetBaseRev: base && base[1].ok ? base[1].value.rev : undefined,
           mode: action,
           context,
-          range: action === 'hoi' ? null : targetRange
+          range: action === 'ask' ? null : targetRange
         }),
         dropped
       }))
@@ -360,7 +360,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       const result = await window.mira.ai.chat.send({
         ...(sessionId === null ? {} : { sessionId }),
         droppedTurns: dropped,
-        range: action === 'hoi' ? null : targetRange,
+        range: action === 'ask' ? null : targetRange,
         workId,
         chapterId,
         connectionId: connection.id,

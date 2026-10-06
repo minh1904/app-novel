@@ -11,7 +11,7 @@ export const chatProposalSchema = v.strictObject({
   chapterId,
   commandId: idSchema,
   turnId: v.optional(idSchema),
-  action: v.picklist(['sua', 'ap_dung']),
+  action: v.picklist(['edit', 'apply']),
   blockAutoApply: v.boolean(),
   sourceRev: revision,
   sourceContent: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS)),

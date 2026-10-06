@@ -70,10 +70,10 @@ export function AiComposer({
   )
   const truncated = truncationKey !== ''
   const contextReady = !truncated || confirmedTruncationKey === truncationKey
-  const ready = chat.canSend(draft, 'sua') && contextReady
-  const canAnswer = chat.canSend(draft, 'hoi') && contextReady
+  const ready = chat.canSend(draft, 'edit') && contextReady
+  const canAnswer = chat.canSend(draft, 'ask') && contextReady
 
-  const submit = (action: ChatMode = 'sua'): void => {
+  const submit = (action: ChatMode = 'edit'): void => {
     if (!chat.canSend(draft, action) || !contextReady) return
     const question = draft
     setDraft('')
@@ -183,13 +183,13 @@ export function AiComposer({
                 <AltArrowDownIcon size={14} />
               </MenuTrigger>
               <MenuPopup align="end">
-                <MenuItem onClick={() => submit('hoi')}>
+                <MenuItem onClick={() => submit('ask')}>
                   <span>Chỉ hỏi trong chat</span>
                   <span className="text-ui-xs text-ink-muted">Không ghi vào bản dịch</span>
                 </MenuItem>
                 <MenuItem
-                  disabled={!chat.canSend(draft, 'ap_dung') || !contextReady}
-                  onClick={() => submit('ap_dung')}
+                  disabled={!chat.canSend(draft, 'apply') || !contextReady}
+                  onClick={() => submit('apply')}
                 >
                   <span>Áp dụng thẳng</span>
                   <span className="text-ui-xs text-ink-muted">Ghi nếu còn an toàn</span>

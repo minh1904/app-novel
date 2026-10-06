@@ -20,7 +20,7 @@ import type { ChatProposalResult } from './aiProposals'
  */
 
 /** Gửi chỉ trả lời; hai hành động viết tạo đề xuất có hoặc không tự Accept. Không có Agent (ADR-004). */
-export const CHAT_MODES = ['hoi', 'sua', 'ap_dung'] as const
+export const CHAT_MODES = ['ask', 'edit', 'apply'] as const
 export type ChatMode = (typeof CHAT_MODES)[number]
 
 /** Một lượt trong hội thoại. Lịch sử bền trong tác phẩm và đi kèm mỗi lần gửi. */

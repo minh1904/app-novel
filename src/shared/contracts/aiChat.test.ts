@@ -28,7 +28,7 @@ function input(patch: Partial<ChatSendInput> = {}): unknown {
     chapterId: CHAPTER_ID,
     connectionId: ID,
     entryId: ID,
-    mode: 'hoi',
+    mode: 'ask',
     sourceLang: 'en',
     question: 'Dịch tự nhiên hơn giúp tôi.',
     history: [],

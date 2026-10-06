@@ -128,7 +128,7 @@ describe('createServices', () => {
     const entryId = services.connections.addModels(connection.id, [{ model: 'gemini-flash-latest' }]).models[0].id
     const input: ChatSendInput = {
       workId: work.id, chapterId: chapter.id, connectionId: connection.id, entryId,
-      mode: 'sua', sourceLang: 'en', question: 'Dịch', history: [], context: [],
+      mode: 'edit', sourceLang: 'en', question: 'Dịch', history: [], context: [],
       range: { from: 0, to: 0, text: '', targetIds: [] },
       proposalBase: { sourceRev: 1, sourceContent: 'Winter', targetRev: 0,
         targetContent: '', blockAutoApply: false }

@@ -32,7 +32,7 @@ describe('AI sessions in a work file', () => {
     createAiSession(db, 's1', 'Dịch chương', 10)
     const context = [{ kind: 'chapter-source' as const, label: 'Bản gốc', detail: 'Chương 1', text: '原文' }]
     startAiTurn(db, {
-      id: 't1', sessionId: 's1', chapterId: 'c', action: 'ap_dung', question: 'Dịch',
+      id: 't1', sessionId: 's1', chapterId: 'c', action: 'apply', question: 'Dịch',
       context, droppedTurns: 2, provider: 'openai', model: 'gpt-test', now: 11
     })
     updateAiTurn(db, 't1', {
@@ -45,7 +45,7 @@ describe('AI sessions in a work file', () => {
     const reopened = openDatabase(db.path)
     migrate(reopened, workSchema)
     expect(getAiTurn(reopened, 't1')).toMatchObject({
-      action: 'ap_dung', context, answer: 'Bản dịch', status: 'done', droppedTurns: 2,
+      action: 'apply', context, answer: 'Bản dịch', status: 'done', droppedTurns: 2,
       provider: 'openai', model: 'gpt-test', usage: { inputTokens: 12, outputTokens: 8 }
     })
     expect(listAiTurns(reopened, 's1', 10).map((turn) => turn.id)).toEqual(['t1'])
@@ -59,7 +59,7 @@ describe('AI sessions in a work file', () => {
     expect(listAiSessions(db, 2, { updatedAt: 10, id: 'b' }).map((item) => item.id)).toEqual(['a'])
     for (const id of ['a', 'b', 'c']) {
       startAiTurn(db, {
-        id, sessionId: 'c', chapterId: 'c', action: 'hoi', question: id,
+        id, sessionId: 'c', chapterId: 'c', action: 'ask', question: id,
         context: [], droppedTurns: 0, provider: null, model: null, now: 11
       })
     }
@@ -72,7 +72,7 @@ describe('AI sessions in a work file', () => {
     const db = fresh()
     createAiSession(db, 's', '', 1)
     startAiTurn(db, {
-      id: 't', sessionId: 's', chapterId: 'c', action: 'sua', question: 'Viết lại',
+      id: 't', sessionId: 's', chapterId: 'c', action: 'edit', question: 'Viết lại',
       context: [], droppedTurns: 0, provider: null, model: null, now: 2
     })
     updateAiTurn(db, 't', { status: 'running', answer: 'Một nửa' }, 3)
@@ -85,7 +85,7 @@ describe('AI sessions in a work file', () => {
     const db = fresh()
     createAiSession(db, 's', '', 1)
     expect(() => startAiTurn(db, {
-      id: 't', sessionId: 's', chapterId: 'missing', action: 'hoi', question: 'Hỏi',
+      id: 't', sessionId: 's', chapterId: 'missing', action: 'ask', question: 'Hỏi',
       context: [], droppedTurns: 0, provider: null, model: null, now: 2
     })).toThrow()
     expect(listAiTurns(db, 's', 10)).toEqual([])

@@ -52,9 +52,9 @@ function started(
   const begun = beginTurn(from, {
     localId,
     question: options.question ?? 'Dịch tự nhiên hơn',
-    mode: options.mode ?? 'hoi',
+    mode: options.mode ?? 'ask',
     context: [],
-    range: options.mode === 'sua' || options.mode === 'ap_dung' ? RANGE : null
+    range: options.mode === 'edit' || options.mode === 'apply' ? RANGE : null
   })
   return attachRequestId(begun, localId, requestId)
 }
@@ -70,7 +70,7 @@ describe('a turn from start to finish', () => {
     const session = beginTurn(emptySession, {
       localId: 'L1',
       question: 'Hỏi gì đó',
-      mode: 'hoi',
+      mode: 'ask',
       context: [],
       range: null
     })
@@ -81,7 +81,7 @@ describe('a turn from start to finish', () => {
     const begun = beginTurn(emptySession, {
       localId: 'L1',
       question: 'Hỏi',
-      mode: 'hoi',
+      mode: 'ask',
       context: [],
       range: null
     })
@@ -190,14 +190,14 @@ describe('what a turn offers to apply', () => {
   const answer = 'Chỗ cứng là "được hưởng".\n\n```\nNhờ ngoại hình, cô được nhiều người để ý.\n```'
 
   it('a finished Sửa turn offers the fenced block', () => {
-    let session = started('r1', { mode: 'sua' })
+    let session = started('r1', { mode: 'edit' })
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, done('r1'))
     expect(proposalOf(turnOf(session, 'r1'))).toBe('Nhờ ngoại hình, cô được nhiều người để ý.')
   })
 
   it('a finished direct-apply turn offers the same anchored replacement', () => {
-    let session = started('r1', { mode: 'ap_dung' })
+    let session = started('r1', { mode: 'apply' })
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, done('r1'))
     expect(proposalOf(turnOf(session, 'r1'))).toBe('Nhờ ngoại hình, cô được nhiều người để ý.')
@@ -206,14 +206,14 @@ describe('what a turn offers to apply', () => {
   })
 
   it('does not offer a replacement when provider cut off the answer', () => {
-    let session = started('r1', { mode: 'ap_dung' })
+    let session = started('r1', { mode: 'apply' })
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, { ...done('r1'), finishReason: 'length' })
     expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
   })
 
   it('does not offer a replacement when completion is unconfirmed', () => {
-    let session = started('r1', { mode: 'sua' })
+    let session = started('r1', { mode: 'edit' })
     session = applyChunk(session, delta('r1', answer))
     const unknown = done('r1')
     delete unknown.finishReason
@@ -222,7 +222,7 @@ describe('what a turn offers to apply', () => {
   })
 
   it('a Hỏi turn never offers anything, fence or not', () => {
-    let session = started('r1', { mode: 'hoi' })
+    let session = started('r1', { mode: 'ask' })
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, done('r1'))
     expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
@@ -230,35 +230,35 @@ describe('what a turn offers to apply', () => {
 
   // A truncated rewrite would silently shorten the paragraph it replaces.
   it('a cancelled Sửa turn offers nothing even with a complete fence', () => {
-    let session = started('r1', { mode: 'sua' })
+    let session = started('r1', { mode: 'edit' })
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, failure('r1', 'cancelled'))
     expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
   })
 
   it('a failed Sửa turn offers nothing', () => {
-    let session = started('r1', { mode: 'sua' })
+    let session = started('r1', { mode: 'edit' })
     session = applyChunk(session, delta('r1', answer))
     session = applyChunk(session, failure('r1', 'rate_limited'))
     expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
   })
 
   it('offers nothing when the model ignored the fence', () => {
-    let session = started('r1', { mode: 'sua' })
+    let session = started('r1', { mode: 'edit' })
     session = applyChunk(session, delta('r1', 'Tôi nghĩ nên viết lại nhẹ hơn một chút.'))
     session = applyChunk(session, done('r1'))
     expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
   })
 
   it('offers nothing when the fenced block is empty', () => {
-    let session = started('r1', { mode: 'sua' })
+    let session = started('r1', { mode: 'edit' })
     session = applyChunk(session, delta('r1', 'Giải thích.\n\n```\n\n```'))
     session = applyChunk(session, done('r1'))
     expect(proposalOf(turnOf(session, 'r1'))).toBeNull()
   })
 
   it('takes the last fence, so a quoted example does not win', () => {
-    let session = started('r1', { mode: 'sua' })
+    let session = started('r1', { mode: 'edit' })
     session = applyChunk(
       session,
       delta('r1', 'Bản gốc:\n```\ncâu gốc\n```\nBản sửa:\n```\ncâu đã sửa\n```')
@@ -331,7 +331,7 @@ describe('history sent with the next question', () => {
 })
 
 describe('revealStep', () => {
-  const WRITING = { mode: 'sua' as const, chapterId: 'c1' }
+  const WRITING = { mode: 'edit' as const, chapterId: 'c1' }
   const proposalDone = (requestId: string, partId = 'p-' + requestId): ChatChunk => ({
     ...done(requestId),
     proposal: { proposalId: 'pr-' + requestId, partId, status: 'pending' }
@@ -346,7 +346,7 @@ describe('revealStep', () => {
         mode,
         chapterId: options.chapterId ?? WRITING.chapterId,
         context: [],
-        range: mode === 'hoi' ? null : RANGE
+        range: mode === 'ask' ? null : RANGE
       }),
       localId,
       requestId
@@ -379,7 +379,7 @@ describe('revealStep', () => {
   it('never opens a turn restored from history', () => {
     const restored = restoredSession([
       {
-        id: 't1', question: 'Viết lại', answer: 'x', action: 'sua', status: 'done', chapterId: 'c1',
+        id: 't1', question: 'Viết lại', answer: 'x', action: 'edit', status: 'done', chapterId: 'c1',
         usage: null, costUsd: null, finishReason: 'stop', droppedTurns: 0, context: [], tools: [],
         range: RANGE, proposalId: 'pr-t1', partId: 'p-r1', proposalStatus: 'pending'
       }
@@ -391,7 +391,7 @@ describe('revealStep', () => {
   })
 
   it('leaves chat-only and direct-apply turns alone', () => {
-    for (const mode of ['hoi', 'ap_dung'] as const) {
+    for (const mode of ['ask', 'apply'] as const) {
       const finished = applyChunk(begun('r1', { mode }), proposalDone('r1'))
       const step = revealStep(finished.turns, new Set(['L-r1']), 'c1', pending)
       expect(step.reveal).toEqual([])

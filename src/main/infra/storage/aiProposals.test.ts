@@ -56,7 +56,7 @@ describe('persistent proposals', () => {
     const db = fresh()
     createAiSession(db, 'session', '', 1)
     startAiTurn(db, {
-      id: 'turn', sessionId: 'session', chapterId: 'c1', action: 'sua', question: 'Sửa',
+      id: 'turn', sessionId: 'session', chapterId: 'c1', action: 'edit', question: 'Sửa',
       context: [], droppedTurns: 0, provider: null, model: null, now: 2
     })
     expect(() => createProposal(db, { ...input('c2'), id: 'other', runKey: 'other', sessionId: 'session', turnId: 'turn' })).toThrow()
@@ -108,7 +108,7 @@ describe('persistent proposals', () => {
       library.withWork(work.id, (db) => db.transaction(() => {
         createAiSession(db, 'session', 'Hội thoại', 1)
         startAiTurn(db, {
-          id: 'turn', sessionId: 'session', chapterId: chapter.id, action: 'sua',
+          id: 'turn', sessionId: 'session', chapterId: chapter.id, action: 'edit',
           question: 'Sửa', context: [], droppedTurns: 0, provider: null, model: null, now: 2
         })
         createProposal(db, {

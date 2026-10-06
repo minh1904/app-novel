@@ -29,7 +29,7 @@ function input(workId: string, chapterId: string, action: ChatProposalInput['act
 describe('chat proposal service', () => {
   it('stores a review proposal without changing a blank translation', () => {
     const { library, workId, chapterId } = fresh()
-    const result = createChatProposal(library, input(workId, chapterId, 'sua'))
+    const result = createChatProposal(library, input(workId, chapterId, 'edit'))
     expect(result).toMatchObject({ status: 'pending', content: null, rev: null })
     expect(library.readText(workId, chapterId, 'target')).toMatchObject({ content: '', rev: 0 })
     expect(library.withWork(workId, (db) => getProposal(db, result.proposalId)).parts[0].afterText).toBe('Bản dịch')
@@ -38,7 +38,7 @@ describe('chat proposal service', () => {
 
   it('uses the same accept service for direct apply and is idempotent', () => {
     const { library, workId, chapterId } = fresh()
-    const request = input(workId, chapterId, 'ap_dung')
+    const request = input(workId, chapterId, 'apply')
     const first = createChatProposal(library, request)
     expect(first).toMatchObject({ status: 'applied', content: 'Bản dịch', rev: 1 })
     expect(createChatProposal(library, request).proposalId).toBe(first.proposalId)
@@ -48,7 +48,7 @@ describe('chat proposal service', () => {
 
   it('keeps a direct action for review if source changed or editor has unsaved text', () => {
     const { library, workId, chapterId } = fresh()
-    const request = input(workId, chapterId, 'ap_dung')
+    const request = input(workId, chapterId, 'apply')
     library.saveText(workId, chapterId, 'source', '変更', 1, [])
     expect(createChatProposal(library, request).status).toBe('stale')
     expect(library.readText(workId, chapterId, 'target').content).toBe('')
@@ -59,10 +59,10 @@ describe('chat proposal service', () => {
 
   it('rejects a wrong chapter or an anchor that does not match the sent base', () => {
     const { library, workId, chapterId } = fresh()
-    expect(() => createChatProposal(library, { ...input(workId, chapterId, 'sua'),
+    expect(() => createChatProposal(library, { ...input(workId, chapterId, 'edit'),
       range: { from: 0, to: 0, text: 'khác' }
     })).toThrow()
-    expect(() => createChatProposal(library, input(workId, randomUUID(), 'sua'))).toThrow()
+    expect(() => createChatProposal(library, input(workId, randomUUID(), 'edit'))).toThrow()
     library.close()
   })
 
@@ -75,14 +75,14 @@ describe('chat proposal service', () => {
     library.withWork(workId, (db) => {
       createAiSession(db, sessionId, 'Dịch', 100)
       startAiTurn(db, {
-        id: turnId, sessionId, chapterId, action: 'sua', question: 'Dịch', context,
+        id: turnId, sessionId, chapterId, action: 'edit', question: 'Dịch', context,
         range: { from: 0, to: 0, text: '', targetIds: [] },
         droppedTurns: 0, provider: 'google', model: 'gemini', now: 100
       })
       updateAiTurn(db, turnId, { status: 'done', answer: 'Bản dịch',
         usage: { inputTokens: 12, outputTokens: 4 } }, 101)
     })
-    const result = createChatProposal(library, { ...input(workId, chapterId, 'sua'), turnId })
+    const result = createChatProposal(library, { ...input(workId, chapterId, 'edit'), turnId })
     const stored = library.withWork(workId, (db) => getProposal(db, result.proposalId))
     expect(stored).toMatchObject({ sessionId, turnId, provider: 'google', model: 'gemini' })
     expect(stored.context).toEqual(context)

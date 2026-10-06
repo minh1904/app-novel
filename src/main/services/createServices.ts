@@ -113,8 +113,8 @@ export function createServices({
             )
             const base = input.proposalBase
             const replacement =
-              finishReason === 'stop' && input.mode !== 'hoi' ? extractFence(answer) : null
-            if (!base || !input.range || replacement === null || input.mode === 'hoi') return null
+              finishReason === 'stop' && input.mode !== 'ask' ? extractFence(answer) : null
+            if (!base || !input.range || replacement === null || input.mode === 'ask') return null
             return createChatProposalInDb(
               db,
               {

@@ -57,7 +57,7 @@ export function createChatProposalInDb(
     createProposal(db, {
       id: proposalId, chapterId: input.chapterId,
       sessionId: turn?.sessionId, turnId: turn?.id, origin: 'chat',
-      policy: input.action === 'ap_dung' ? 'auto' : 'review',
+      policy: input.action === 'apply' ? 'auto' : 'review',
       sourceRev: input.sourceRev, sourceHash: textHash(input.sourceContent),
       targetBaseRev: input.targetBaseRev, targetBaseContent: input.targetBaseContent,
       context: turn?.context,
@@ -69,7 +69,7 @@ export function createChatProposalInDb(
         beforeText: input.range.text, afterText: input.replacement
       }]
     })
-    if (input.action === 'sua') {
+    if (input.action === 'edit') {
       return { proposalId, partId, status: 'pending', content: null, rev: null }
     }
     if (input.blockAutoApply) {

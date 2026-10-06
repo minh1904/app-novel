@@ -82,7 +82,7 @@ function input(patch: Partial<ChatSendInput> = {}): ChatSendInput {
     chapterId: 'ch',
     connectionId: 'c',
     entryId: 'e',
-    mode: 'sua',
+    mode: 'edit',
     sourceLang: 'zh-Hans',
     question: 'Sửa đoạn này',
     history: [],
