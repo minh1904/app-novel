@@ -13,7 +13,7 @@ Câu hỏi: AI được ghi chữ khi nào, người dùng duyệt theo phạm v
    chắn hay có chữ chưa lưu, kết quả ở lại chờ duyệt; không ghi đè ngầm. Chế độ này áp dụng cả pane
    trống lẫn vùng đã có chữ khi người dùng chọn đúng đích. Quyết định ngày 2026-10-05 thay luật
    “mọi kết quả chờ duyệt” ngày 2026-10-04; cả hai cùng thay **ngoại lệ pane trống tự ghi không cần
-   lựa chọn** ở mục 5 của [ADR-005](../../handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md).
+   lựa chọn** ở mục 5 của [ADR-005](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md).
    Phần còn lại của ADR-005 giữ nguyên.
 2. Người dịch xem diff ngay tại editor rồi **Accept** hoặc **Deny** từng phần. **Accept all** tại
    chương chỉ nhận các đề xuất còn chờ của chương đang mở, hiển thị chương và số lượng trước khi
@@ -59,7 +59,7 @@ muốn đi hết luồng chọn Áp dụng thẳng. Cả hai giữ nguồn gốc
 - Mã MVP còn các đường cũ dùng hàng/segment để tương thích nội bộ, dù giao diện dịch chương đang
   chuyển sang đường đề xuất. OpenSpec, roadmap và tài liệu cũ phải phân biệt baseline và hành vi mới;
   tài liệu này không tự chứng minh một task đã nghiệm thu.
-- Schema và cơ chế neo đang được kiểm qua [OpenSpec](../../../openspec/changes/proposals/tasks.md);
+- Schema và cơ chế neo đang được kiểm qua [OpenSpec](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/proposals/tasks.md);
   retention, đặt vị trí và UX diff còn mở. Xem [bằng chứng và câu hỏi mở](evidence.md).
 
 [Luồng duyệt](review-flow.md) · [Phiên và nhiều chương](sessions-and-jobs.md) · [Về mục lục](README.md)

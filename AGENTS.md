@@ -2,15 +2,11 @@
 
 ## Product documentation
 
-Start with [module documentation](docs/modules/README.md), then read
-[current decisions](docs/handbook/product/decisions.md) and
-[implementation status](docs/handbook/engineering/current-state.md) before product work.
-The [Mira Handbook](docs/handbook/README.md) remains the source for topics not yet migrated.
-For a migrated module, update its canonical chapter in `docs/modules/` and leave a short pointer
-in the handbook when an old chapter is still a common entry point. Distinguish accepted decisions,
-proposals, research observations, and implemented behavior. Follow the
-[maintenance guide](docs/handbook/maintenance/handbook-guide.md) when adding research,
-specifications, or decision records. Write product documentation in Vietnamese.
+Start with [module documentation](docs/modules/README.md) before product work, and write decisions,
+research, and implementation status in the module they belong to. The old handbook was removed on
+2026-10-06; links to it point at its last version in commit `501be2a` and are history only, so do
+not add new content there. Distinguish accepted decisions, proposals, research observations, and
+implemented behavior. Write product documentation in Vietnamese.
 
 ## Checks
 

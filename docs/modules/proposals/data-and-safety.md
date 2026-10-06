@@ -63,7 +63,7 @@ neo theo nội dung + revision, và định nghĩa lại khi cấu trúc đoạn
 với bảng segment/câu vĩnh viễn.
 
 Nguồn: [quyết định module](decisions.md),
-[V11–V12](../../handbook/delivery/validation.md),
+[V11–V12](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/validation.md),
 [dữ liệu ngữ cảnh](../context/data-lifecycle.md).
 
 [Về mục lục](README.md)

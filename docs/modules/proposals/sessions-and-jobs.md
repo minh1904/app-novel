@@ -40,6 +40,6 @@ chương hoặc lượt dịch. Đó là yêu cầu điều hướng dữ liệu
 duyệt. Không buộc người dùng đứng ở chương mà AI đang dịch.
 
 Nguồn: [quyết định module](decisions.md),
-[roadmap](../../handbook/delivery/roadmap.md#7-tác-vụ).
+[roadmap](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ).
 
 [Về mục lục](README.md)

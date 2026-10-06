@@ -33,8 +33,8 @@ import { SentenceMode, type SentenceModeHandle } from './SentenceMode'
 const IDLE: SessionStatus = { state: 'saved', message: null, dirty: false }
 
 /**
- * Tab "Từng câu" bị ẩn khỏi giao diện và sẽ bị gỡ cùng dữ liệu câu (ADR-005,
- * docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md). Mã của mode còn lại (state,
+ * Tab "Từng câu" bị ẩn khỏi giao diện và sẽ bị gỡ cùng dữ liệu câu (ADR-005, nay chỉ còn trong lịch sử
+ * git ở commit 501be2a). Mã của mode còn lại (state,
  * switchMode, SentenceMode) chỉ vì đường dịch hiện vẫn ghi theo hàng; nó bị xóa trong change gỡ segment,
  * không bật lại.
  */

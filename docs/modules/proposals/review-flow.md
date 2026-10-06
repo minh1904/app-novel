@@ -54,6 +54,6 @@ Không dùng thứ tự dòng hoặc `paragraphId` suy từ thứ tự làm khó
 định khi người dùng tách/gộp dòng còn phải chốt trong OpenSpec.
 
 Nguồn ràng buộc: [quyết định module](decisions.md),
-[V11–V12](../../handbook/delivery/validation.md), [kiến trúc AI-first](../../handbook/engineering/ai-first-architecture.md).
+[V11–V12](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/validation.md), [kiến trúc AI-first](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/ai-first-architecture.md).
 
 [Về mục lục](README.md)

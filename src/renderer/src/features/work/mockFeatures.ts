@@ -1,7 +1,6 @@
 /**
- * Features that exist only as a picture on screen. Each one is labelled "Sắp có", does not read a
- * file, call the main process or write data, and has a row with the same `id` in
- * docs/handbook/delivery/backlog.md (checked by a test). Remove the entry when the feature is real.
+ * Features that exist only as a picture on screen. Each one is labelled "Sắp có" and does not read a
+ * file, call the main process or write data. Remove the entry when the feature is real.
  */
 export interface MockFeature {
   id: string

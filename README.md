@@ -4,20 +4,19 @@ Mira là workspace dịch thuật cho Windows, dành trước tiên cho dịch g
 
 > **Trạng thái: bản MVP để thử nghiệm.** Repo hiện chạy được (thư viện, kho SQLite, editor hai pane, dịch chương, panel Hỏi AI) nhưng chưa phải bản hoàn chỉnh, **chưa gọi nhà cung cấp AI thật lần nào** và **không dùng để giữ bản dịch thật**. Sắp tới từng module được làm lại hoàn chỉnh theo kiến trúc bên dưới, mỗi module có spec, test và nghiệm thu trước khi sang module kế.
 
-**Bắt đầu tại [Mira Handbook](docs/handbook/README.md).** Bộ tài liệu nối nghiên cứu thị trường → mục tiêu → phạm vi → trải nghiệm → kỹ thuật → kiểm chứng.
+**Bắt đầu tại [tài liệu theo module](docs/modules/README.md).** Handbook cũ đã gỡ khỏi repo ngày 2026-10-06; các link vào handbook dưới đây trỏ tới bản cuối của nó ở commit `501be2a`, chỉ để tra lịch sử.
 
 | Bạn cần | Đọc |
 | --- | --- |
-| Hiểu sản phẩm | [Định hướng](docs/handbook/product/vision.md), [quyết định hiện hành](docs/handbook/product/decisions.md) |
-| Hiểu kiến trúc đích | [ADR-005](docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md), [Luồng làm việc và kiến trúc AI-first](docs/handbook/engineering/ai-first-architecture.md) |
-| Biết repo đang có gì | [Hiện trạng](docs/handbook/engineering/current-state.md) (mỗi phần ghi giữ, viết lại hay gỡ) |
-| Biết làm gì tiếp | [Lộ trình theo module](docs/handbook/delivery/roadmap.md), [scope](docs/handbook/product/scope.md) |
-| Hiểu đối thủ | [Thị trường](docs/handbook/research/market-landscape.md), [mapping với Mira](docs/handbook/research/feature-map.md) |
-| Bổ sung handbook | [Cách vận hành](docs/handbook/maintenance/handbook-guide.md), [mẫu tài liệu](docs/handbook/maintenance/templates.md) |
-
+| Biết module nào đang làm gì | [Tài liệu theo module](docs/modules/README.md) |
+| Hiểu sản phẩm | [Định hướng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/vision.md), [quyết định hiện hành](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/decisions.md) |
+| Hiểu kiến trúc đích | [ADR-005](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md), [Luồng làm việc và kiến trúc AI-first](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/ai-first-architecture.md) |
+| Biết repo đang có gì | [Hiện trạng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/current-state.md) (mỗi phần ghi giữ, viết lại hay gỡ) |
+| Biết làm gì tiếp | [Lộ trình theo module](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md), [scope](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/scope.md) |
+| Hiểu đối thủ | [Thị trường](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/research/market-landscape.md), [mapping với Mira](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/research/feature-map.md) |
 ## Kiến trúc
 
-Hướng kiến trúc đã chốt ở [ADR-005](docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md); thiết kế đầy đủ ở [kiến trúc AI-first](docs/handbook/engineering/ai-first-architecture.md). Năm ý chính:
+Hướng kiến trúc đã chốt ở [ADR-005](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md); thiết kế đầy đủ ở [kiến trúc AI-first](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/ai-first-architecture.md). Năm ý chính:
 
 1. **Đơn vị làm việc là chương, bên trong là đoạn** (mỗi dòng không trống). Không lưu ranh giới câu, không liên kết giữa câu gốc và câu dịch. Mode dịch **Từng câu đã bị bỏ**.
 2. **Một nguồn sự thật có cấu trúc: SQLite.** Mỗi tác phẩm là một tệp `.mira`, kèm `library.db` làm chỉ mục. Markdown chỉ là cách chiếu dữ liệu ra (cho editor, prompt, xuất), không phải nơi lưu.
@@ -52,7 +51,7 @@ flowchart LR
   JOB --> API
 ```
 
-Sơ đồ là kiến trúc **đích**; mã đang chạy ở [hiện trạng](docs/handbook/engineering/current-state.md). Phần chưa làm: tác vụ dịch bền trong `main`, bảng đề xuất/snapshot, dấu AI, `buildContext` dùng chung.
+Sơ đồ là kiến trúc **đích**; mã đang chạy ở [hiện trạng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/current-state.md). Phần chưa làm: tác vụ dịch bền trong `main`, bảng đề xuất/snapshot, dấu AI, `buildContext` dùng chung.
 
 ### Cấu trúc mã nguồn
 
@@ -71,11 +70,11 @@ src/
   renderer/src/        app/, components/, features/, styles/
 ```
 
-Mỗi tầng của `main` chỉ được import tầng dưới nó: `infra` < `services` < `ipc` < `electron`. Luật này do `no-restricted-imports` trong [`eslint.config.mjs`](eslint.config.mjs) ép, không chỉ là quy ước. Chi tiết và cách thêm thành phần mới: [Cấu trúc mã nguồn và luật ranh giới](docs/handbook/engineering/architecture.md#cấu-trúc-mã-nguồn-và-luật-ranh-giới).
+Mỗi tầng của `main` chỉ được import tầng dưới nó: `infra` < `services` < `ipc` < `electron`. Luật này do `no-restricted-imports` trong [`eslint.config.mjs`](eslint.config.mjs) ép, không chỉ là quy ước. Chi tiết và cách thêm thành phần mới: [Cấu trúc mã nguồn và luật ranh giới](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/architecture.md#cấu-trúc-mã-nguồn-và-luật-ranh-giới).
 
 ### Lộ trình theo module
 
-Mỗi module là một change openspec riêng; xong module trước mới sang module sau. Điều kiện xong và trạng thái đầy đủ ở [lộ trình](docs/handbook/delivery/roadmap.md).
+Mỗi module là một change openspec riêng; xong module trước mới sang module sau. Điều kiện xong và trạng thái đầy đủ ở [lộ trình](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md).
 
 | Module | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -101,6 +100,6 @@ pnpm build:win                # installer Windows bằng electron-builder, chưa
 
 Lần cài/chạy đầu có thể cần tải Electron qua mạng. Nếu terminal đặt `NPM_CONFIG_OFFLINE=true`, chuyển sang `false` khi cài dependency cần mạng.
 
-Brand đổi từ Miyati sang **Mira** ngày 2026-09-29. Thư mục repo `app-novel` giữ nguyên. Xem [brand](docs/handbook/product/brand.md) về định danh bản cài và giới hạn migration.
+Brand đổi từ Miyati sang **Mira** ngày 2026-09-29. Thư mục repo `app-novel` giữ nguyên. Xem [brand](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/brand.md) về định danh bản cài và giới hạn migration.
 
 Commit theo [quy tắc repository](AGENTS.md#commits). Handbook viết bằng tiếng Việt; commit message viết bằng tiếng Anh.

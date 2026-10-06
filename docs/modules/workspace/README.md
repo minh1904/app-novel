@@ -3,7 +3,7 @@
 Cập nhật: 2026-10-05 · Trạng thái: **đã triển khai trong working tree** · Chủ trì: phát triển sản phẩm Mira.
 
 Chương này trả lời cách Mira mở nhiều truyện trong cùng cửa sổ và xử lý bản sửa chưa lưu. Quyết
-định sản phẩm và phạm vi gốc nằm ở [change work-tabs](../../../openspec/changes/work-tabs/proposal.md).
+định sản phẩm và phạm vi gốc nằm ở [change work-tabs](../../../openspec/changes/archive/2026-10-05-work-tabs/proposal.md).
 
 ## Hành vi đã có
 
@@ -31,5 +31,5 @@ Nguồn triển khai: [`uiStore`](../../../src/renderer/src/stores/uiStore.ts),
 Bản sửa chưa lưu chỉ được giữ khi app vẫn chạy; sau crash, Mira khôi phục vị trí tab nhưng không
 khôi phục chữ chưa lưu. Một tab thuộc một truyện, không có tab riêng cho từng chương hoặc chia
 pane. Đóng tab không hủy yêu cầu AI/tác vụ Main. Hàng đợi dịch bền, batch translation, usage và
-trần chi phí thuộc [Module 7: Tác vụ](../../handbook/delivery/roadmap.md#7-tác-vụ), chưa triển
+trần chi phí thuộc [Module 7: Tác vụ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ), chưa triển
 khai trong change này.

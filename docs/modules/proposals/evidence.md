@@ -21,11 +21,11 @@ vi, và quay lại hội thoại**. Mira tự định nghĩa giao dịch văn b�
 
 | Quan sát từ mã | Giới hạn |
 | --- | --- |
-| [`chatReview.ts`](../../../src/renderer/src/features/editor/chatReview.ts) dùng CodeMirror merge để nhận/bỏ từng khối ngay trong pane. | Review này chỉ cho chat; chưa là hồ sơ đề xuất bền vững. |
+| [`chatReview.ts`](https://github.com/minh1904/app-novel/blob/c21c555/src/renderer/src/features/editor/chatReview.ts) dùng CodeMirror merge để nhận/bỏ từng khối ngay trong pane. | Review này chỉ cho chat; chưa là hồ sơ đề xuất bền vững. |
 | [`chatTurns.ts`](../../../src/renderer/src/features/chapter/chatTurns.ts) ghi rõ session chỉ sống khi panel còn mở. [`ChapterWorkspace.tsx`](../../../src/renderer/src/features/chapter/ChapterWorkspace.tsx) chỉ render `AiPanel` khi `aiOpen`. | Đóng panel unmount và mất hội thoại; chưa có lịch sử phiên. |
 | [`AiPanel.tsx`](../../../src/renderer/src/features/chapter/AiPanel.tsx) nhận `chapterId` hiện tại; [`useAiChat.ts`](../../../src/renderer/src/features/chapter/useAiChat.ts) giữ state trong hook. | Panel đang buộc vào chương mở, chưa có hàng chờ xuyên chương. |
-| [Roadmap Module 5](../../handbook/delivery/roadmap.md#5-đề-xuất) dự kiến `proposal`/`text_snapshot`; [Module 7](../../handbook/delivery/roadmap.md#7-tác-vụ) mới có `JobRunner`. | Đều là kế hoạch; chưa có bảng và dịch nhiều chương bền vững. |
-| [Spec content-model](../../../openspec/specs/content-model/spec.md) và [spec dịch chương](../../../openspec/specs/ai-translate-chapter/spec.md) vẫn mô tả segment/provenance. | Đây là hợp đồng MVP cần sửa khi lập change Module 5/8, không phải thiết kế đoạn mới đã chốt. |
+| [Roadmap Module 5](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#5-đề-xuất) dự kiến `proposal`/`text_snapshot`; [Module 7](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ) mới có `JobRunner`. | Đều là kế hoạch; chưa có bảng và dịch nhiều chương bền vững. |
+| [Spec content-model](https://github.com/minh1904/app-novel/blob/501be2a/openspec/specs/content-model/spec.md) và [spec dịch chương](https://github.com/minh1904/app-novel/blob/501be2a/openspec/specs/ai-translate-chapter/spec.md) vẫn mô tả segment/provenance. | Đây là hợp đồng MVP cần sửa khi lập change Module 5/8, không phải thiết kế đoạn mới đã chốt. |
 
 ## Đã chốt sau khi tổng hợp
 
@@ -44,6 +44,6 @@ Accept all trong chương và hành động riêng cho toàn lượt dịch; phi
    tiếp, để sau này tạo dấu mà không suy ngược từ nội dung?
 
 Các câu này không chặn việc ghi yêu cầu UX vào tài liệu. Chúng phải được giải trước khi khóa schema
-và giao diện, đồng thời kiểm V11/V12 và IME theo [kế hoạch kiểm chứng](../../handbook/delivery/validation.md).
+và giao diện, đồng thời kiểm V11/V12 và IME theo [kế hoạch kiểm chứng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/validation.md).
 
 [Về mục lục](README.md)

@@ -92,7 +92,7 @@ nằm trong system prompt:
 
 | Nguồn | Nội dung |
 | --- | --- |
-| Nhật | Bốn chế độ kính ngữ theo [quyết định ngày 04/10](../../handbook/product/decisions.md), mặc định Giữ hậu tố; chủ ngữ bị lược; dấu câu |
+| Nhật | Bốn chế độ kính ngữ theo [quyết định ngày 04/10](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/decisions.md), mặc định Giữ hậu tố; chủ ngữ bị lược; dấu câu |
 | Trung, cổ trang | Hán Việt; xưng hô theo vai vế, không ép “ta – ngươi” |
 | Trung, hiện đại | Lối nói hiện đại; không đổi cặp xưng hô để báo trước diễn biến tình cảm |
 | Trung, chưa rõ | Đọc bối cảnh, giữ một lối cho cả chương |

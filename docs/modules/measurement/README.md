@@ -46,6 +46,6 @@ hoặc một cổng `keep/no-keep` áp cho mọi loại thí nghiệm.
 | B1/B2a/B3 và V14 đã cho thấy gì? | [Kết quả và quyết định](results.md) |
 
 Spec triển khai nằm ở change
-[`measure-harness`](../../../openspec/changes/measure-harness/proposal.md). Fixture ở
+[`measure-harness`](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/measure-harness/proposal.md). Fixture ở
 [`fixtures/`](../../../fixtures/README.md). Các thuật toán thuần có thể được module QA gọi lại,
 nhưng QA tự quyết severity và cách hiển thị.

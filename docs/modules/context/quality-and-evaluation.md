@@ -58,7 +58,7 @@ Không có ca áp dụng thì báo N/A và số mẫu, không cho điểm 100%. 
 
 ## Kết quả cũ thực sự cho thấy gì?
 
-[Báo cáo chất lượng](../../handbook/research/translation-quality.md) ghi thí nghiệm B2a trên 5 chương Nhật, mỗi chương 3 lượt: quy ước prompt sửa được trình bày thoại ở 15/15 lượt, nhưng vẫn còn vấn đề tên và quan hệ; báo 14 ID thiếu so với 0 ở baseline, alignment đạt 7/15 so với 11/15, output tăng khoảng 37% và thời gian khoảng 1,6 lần.
+[Báo cáo chất lượng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/research/translation-quality.md) ghi thí nghiệm B2a trên 5 chương Nhật, mỗi chương 3 lượt: quy ước prompt sửa được trình bày thoại ở 15/15 lượt, nhưng vẫn còn vấn đề tên và quan hệ; báo 14 ID thiếu so với 0 ở baseline, alignment đạt 7/15 so với 11/15, output tăng khoảng 37% và thời gian khoảng 1,6 lần.
 
 Đó là số liệu của báo cáo cũ, chưa tái chạy ở đợt tổ chức tài liệu này. **Thiếu ID không đồng nghĩa đã chứng minh mất 14 câu về nghĩa**: có thể gộp nội dung sang đoạn khác; cần đối chiếu. Mẫu nhỏ và một cấu hình không chứng minh nguyên nhân tổng quát. Bài học đủ chắc để giữ: phải đo đồng thời lợi ích văn phong, bảo toàn nội dung và chi phí.
 

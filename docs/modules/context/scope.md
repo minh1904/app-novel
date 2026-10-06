@@ -18,7 +18,7 @@ Giúp người dịch duy trì lựa chọn dịch nhất quán qua nhiều chư
 | Đơn vị làm việc là chương/đoạn; đã bỏ mô hình câu cố định | Có thể dùng ID tạm cho một request, không hồi sinh hệ thống segment bền vững |
 | Tách lớp provider khỏi nghiệp vụ | Module chọn nội dung; provider vận chuyển, không tự suy quan hệ hoặc tự chọn glossary |
 
-Nguồn quyết định: yêu cầu của người dùng trong phiên làm việc và [sổ quyết định cũ](../../handbook/product/decisions.md). Quy tắc với bản dịch trống và dấu AI thuộc luồng dịch/đề xuất, không phải quyền riêng của module Ngữ cảnh.
+Nguồn quyết định: yêu cầu của người dùng trong phiên làm việc và [sổ quyết định cũ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/decisions.md). Quy tắc với bản dịch trống và dấu AI thuộc luồng dịch/đề xuất, không phải quyền riêng của module Ngữ cảnh.
 
 ## Sáu nhóm thông tin, không nhất thiết sáu bảng hoặc sáu màn hình
 
@@ -45,6 +45,6 @@ Nguồn quyết định: yêu cầu của người dùng trong phiên làm việ
 
 [Mã lắp prompt chat](../../../src/main/services/ai/chatPrompt.ts) đã nhận các khối ngữ cảnh, đặt sau system và trước lịch sử. Điều này **không chứng minh** đã có kho glossary, ma trận xưng hô, truy hồi mẫu hay hệ thống hiệu lực theo chương.
 
-[Change context-core](../../../openspec/changes/context-core/proposal.md) cùng design/spec/tasks là đầu vào thiết kế cũ. Những quy tắc như một alias chỉ thuộc một mục, xóa mốc chương thành NULL, hoặc hash loại bỏ nguồn cần rà lại trước triển khai. Xem [các điểm cần giải quyết](roadmap.md), không coi chúng là hành vi ứng dụng hiện tại.
+[Change context-core](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/context-core/proposal.md) cùng design/spec/tasks là đầu vào thiết kế cũ. Những quy tắc như một alias chỉ thuộc một mục, xóa mốc chương thành NULL, hoặc hash loại bỏ nguồn cần rà lại trước triển khai. Xem [các điểm cần giải quyết](roadmap.md), không coi chúng là hành vi ứng dụng hiện tại.
 
 [Về mục lục](README.md)

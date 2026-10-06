@@ -74,4 +74,4 @@ nghĩa. Đã chụp bản build ở theme sáng và tối (thư viện, màn ch�
 
 ---
 
-[Mục lục module](../README.md) · [Quyết định hiện hành](../../handbook/product/decisions.md)
+[Mục lục module](../README.md) · [Quyết định hiện hành](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/decisions.md)

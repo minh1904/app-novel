@@ -206,7 +206,7 @@ thang z-index theo bảng Obsidian, thời lượng 70/140/300 ms và tắt chuy
 4. **Khung:** gộp màu chrome, titlebar 40 px (đồng bộ `TOP_BAR_HEIGHT` ở `titleBar.ts`), status bar
    nếu được chốt.
 5. Kiểm tương phản cả hai theme ở cỡ cửa sổ Windows thường dùng, rồi cập nhật [chương chính](README.md)
-   và [quyết định](../../handbook/product/decisions.md).
+   và [quyết định](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/decisions.md).
 
 ## 7. Câu hỏi cần chủ sản phẩm chốt
 

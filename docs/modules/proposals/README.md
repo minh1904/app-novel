@@ -25,7 +25,7 @@ những chi tiết không được ghi tại đó là **đề xuất** cho OpenS
   mode Áp dụng thẳng tự Accept khi an toàn; Accept/Deny/Accept all theo phạm vi rõ; panel và lịch sử
   phiên theo tác phẩm, không mất khi ẩn/tắt app; xem
   [quyết định](decisions.md). Đơn vị chương/đoạn và SQLite vẫn theo ADR-005.
-- **OpenSpec đã hoàn tất:** [change `proposals`](../../../openspec/changes/proposals/tasks.md)
+- **OpenSpec đã hoàn tất:** [change `proposals`](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/proposals/tasks.md)
   mô tả bảng, neo vùng, quyết định từng phần và nghiệm thu. Toàn bộ 27/27 task đã được triển khai và kiểm chứng.
 - **Đã hoàn tất trong mã nguồn:** schema tác phẩm v7, phiên/lượt AI, đề xuất bền, Accept/Deny/Accept
   all/Hoàn tác có checkpoint, composer với hành động theo lượt, lớp diff trong editor, SafeMarkdown,
@@ -35,10 +35,10 @@ những chi tiết không được ghi tại đó là **đề xuất** cho OpenS
   [service duyệt](../../../src/main/services/proposals/proposalService.ts),
   [dịch theo đoạn](../../../src/main/services/ai/paragraphTranslation.ts).
 
-Module 5 dựng đường duyệt và dữ liệu đề xuất. [Module 7 Tác vụ](../../handbook/delivery/roadmap.md#7-tác-vụ)
+Module 5 dựng đường duyệt và dữ liệu đề xuất. [Module 7 Tác vụ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ)
 chịu trách nhiệm chạy, tạm dừng và tiếp tục dịch nhiều chương sau khi app tắt. Module 5 cần có hàng
 chờ theo chương ngay từ đầu để Module 7 có chỗ đưa kết quả vào; không đồng nhất lịch sử hội thoại với
-trạng thái tiến độ tác vụ. [Module 8 Gỡ Từng câu](../../handbook/delivery/roadmap.md#8-gỡ-từng-câu)
+trạng thái tiến độ tác vụ. [Module 8 Gỡ Từng câu](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#8-gỡ-từng-câu)
 mới xóa các bảng và đường dữ liệu segment/link/provenance.
 
 Tài liệu này phân biệt quyết định đã chốt, OpenSpec và phần mã mới đang chờ nghiệm thu.

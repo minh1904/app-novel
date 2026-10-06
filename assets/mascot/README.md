@@ -2,7 +2,7 @@
 
 Ngày tạo: 2026-10-03 · Mẫu gốc đã được chủ sản phẩm chốt; bộ ảnh tạo lại bằng imagegen tích hợp, chưa tích hợp vào ứng dụng.
 
-[Ảnh mẫu chuẩn](00-approved-reference.png) · [Thư viện xem ảnh](index.html) · [Prompt từng ảnh trong đợt tiếp tục](prompts.json) · [Quy định nhận diện](../../docs/handbook/product/brand.md)
+[Ảnh mẫu chuẩn](00-approved-reference.png) · [Thư viện xem ảnh](index.html) · [Prompt từng ảnh trong đợt tiếp tục](prompts.json) · [Quy định nhận diện](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/brand.md)
 
 21 tệp PNG riêng, không chữ hoặc khung của bảng mẫu. Icon có góc ngoài trong suốt; các ảnh còn lại nền trắng. Bản toàn thân thử nền trong suốt có quầng xám đã bị loại, không nằm trong bộ này. Đây là ảnh tái tạo theo mẫu, không phải bản cắt giữ nguyên điểm ảnh; khi khác nét hoặc tỷ lệ thì ưu tiên mẫu gốc. Chưa có ICO, cỡ nhỏ hoặc kiểm chứng trong giao diện thật.
 
