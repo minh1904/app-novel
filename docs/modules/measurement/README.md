@@ -44,6 +44,7 @@ hoặc một cổng `keep/no-keep` áp cho mọi loại thí nghiệm.
 | T0/T1/T3 đo gì và không chứng minh gì? | [Phép đo và chấm](metrics-and-judging.md) |
 | Chạy, chấm lại và so hai điều kiện thế nào? | [Vận hành thí nghiệm](running-experiments.md) |
 | B1/B2a/B3 và V14 đã cho thấy gì? | [Kết quả và quyết định](results.md) |
+| Mỗi biến thể Lab đang đạt số nào, chạy bằng prompt/model/commit nào? | [Lịch sử đo](history.md) (sinh tự động từ sổ đăng ký) |
 
 Spec triển khai nằm ở change
 [`measure-harness`](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/measure-harness/proposal.md). Fixture ở

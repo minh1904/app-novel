@@ -52,14 +52,57 @@ thinking sau dấu `-`, ví dụ `base-nothink`) trong một thư viện riêng 
 
 | Lệnh | Việc |
 | --- | --- |
-| `import <thư mục…>` | nạp hai bản và glossary |
-| `glossary [ncode…]` | nạp lại glossary sau khi sửa tệp |
+| `import <thư mục…>` | nạp các bản theo biến thể và glossary |
+| `glossary [ncode…]` | nạp lại glossary, nhân vật, cặp xưng hô sau khi sửa tệp |
 | `prompt <ncode> --chapter N --batch K` | in prompt sẽ gửi, không gọi mạng |
-| `translate [ncode…] --chapters 1-3` | dịch thật; mỗi request ghi vào `fixtures/private/lab/runs/` |
-| `report [ncode…]` | so số đoạn, tuân thủ glossary, token và cache, từng đoạn cạnh nhau |
+| `translate [ncode…] --chapters 1-3 [--note "…"]` | dịch thật; request ghi vào `runs/`, mỗi truyện × biến thể thêm một dòng vào sổ |
+| `report [ncode…] [--glossary-file <tên>]` | số đoạn, tuân thủ glossary và tên nhất quán (mọi bản đo trên cùng glossary tham chiếu), token, chi phí, từng đoạn cạnh nhau; ghi lần đo vào sổ |
+| `pairs <ncode> --labels <biến thể>` | câu thoại lệch cặp xưng hô đã chốt; ghi lần đo vào sổ |
+| `extract <ncode> [--chapters 1-30] [--out <ncode>.ai]` | AI trích xuất thuật ngữ và nhân vật vào tệp glossary riêng `origin: ai` ([thiết kế](../context/glossary-extraction.md)) |
+| `analyze [ncode…] [--glossary-file <tên>] [--apply]` | AI đề xuất giới tính, ngôi ba, cặp xưng hô kèm bằng chứng; `--apply` ghi vào đúng tệp đó |
+| `fork <ncode> --variants … [--from <bản>] [--glossary <tên>\|none]` | tạo bản mới bằng cách chép bản gốc từ bản có sẵn, gán glossary riêng hoặc không glossary |
+| `gaps`, `cost`, `export`, `pdf`, `list`, `open` | ô trống xưng hô, chi phí, xuất txt/PDF, tình trạng, mở bằng app |
+| `runs`, `compare`, `history`, `backfill` | sổ đăng ký lần chạy, xem mục dưới |
 
-Glossary của ba truyện thử là **nháp do AI soạn**, ghi `origin: ai` nhưng đánh dấu đã duyệt để đi vào
-prompt; người dịch cần xác minh trước khi coi điểm tuân thủ là thước đo. Khóa API chỉ nằm trong DB lab
-dưới dạng mã hóa bằng khóa ngẫu nhiên của tiến trình, và kết nối bị xóa khi lệnh kết thúc.
+**Nguồn gốc glossary.** Glossary, nhân vật và cặp xưng hô của năm truyện hiện có là **nháp Claude soạn
+tay** trong phiên làm việc (2026-10-05/06), không đi qua lệnh AI nào của Lab; lệnh `glossary` vẫn gắn
+`origin: ai` cho mục khi nạp vào DB, nên nhãn trong DB không phản ánh nguồn thật. Số đo trên các tệp này
+không nói về luồng thật của sản phẩm, vì bỏ qua bước trích xuất. **Quyết định của chủ sản phẩm
+(2026-10-06):** dữ liệu ngữ cảnh cho thí nghiệm phải do luồng AI của Mira/Lab tạo ra, không soạn hộ;
+tệp ghi `origin` (`ai`, `human`, `claude-draft`) và sổ đăng ký chép nguồn gốc đó vào mỗi lần chạy.
+
+Mỗi bản có thể dùng tệp glossary riêng (`lab.json` → `glossaries[nhãn]`, gán khi `fork`); vắng thì dùng
+tệp chung `<ncode>.json`, `none` là chạy không glossary, nhân vật hay cặp xưng hô nào. `extract` không
+bao giờ ghi đè tệp chung.
+
+Khóa API chỉ nằm trong DB lab dưới dạng mã hóa bằng khóa ngẫu nhiên của tiến trình, và kết nối bị xóa
+khi lệnh kết thúc.
+
+## Sổ đăng ký lần chạy
+
+Thêm 2026-10-06. Trước đó Lab không ghi prompt, hash hay commit; `lab.json` chỉ giữ thống kê mới nhất
+của mỗi biến thể và chương, và số chấm xưng hô chỉ in ra console.
+
+`fixtures/private/lab/registry/` giữ hai tệp JSONL **chỉ thêm**:
+
+| Tệp | Một dòng là | Ghi bởi |
+| --- | --- | --- |
+| `runs.jsonl` | một lần chạy của một biến thể trên một truyện: model, thinking, `promptVersion`, băm system prompt, commit (`+` nếu `src/` còn thay đổi chưa commit), nguồn gốc và băm glossary, chương, lời gọi, lỗi HTTP, token, USD, ghi chú | `translate`; `backfill` cho lần chạy cũ |
+| `measurements.jsonl` | một lần đo trạng thái bản dịch: chương đo, các lần chạy đã sinh ra chúng, cấu trúc, glossary, xưng hô lệch, commit lúc đo | `report`, `pairs` |
+
+Hai loại tách nhau vì lần chạy sau ghi đè bản dịch của biến thể: lần đo chụp chất lượng tại lúc đo và
+trỏ về lần chạy theo `lab.json`. Logic nằm ở
+[`runRegistry.ts`](../../../src/shared/algorithms/runRegistry.ts).
+
+| Lệnh | Việc |
+| --- | --- |
+| `runs [ncode…] [--variants …] [--limit 30]` | liệt kê lần chạy, mới nhất trước |
+| `compare <ncode> <A> <B>` | so hai biến thể theo lần đo gần nhất của từng chỉ số và cấu hình; cảnh báo khi khác chương hoặc khác nhãn người nói |
+| `history` | sinh lại [lịch sử đo](history.md); `translate`, `report`, `pairs` tự làm |
+| `backfill` | nhập lần chạy cũ từ `runs/`; commit đoán theo thời điểm (`~`), prompt `legacy`, glossary `claude-draft` |
+
+Giới hạn: lần đo cũ không dựng lại được vì bản dịch đã bị ghi đè — lịch sử chỉ bắt đầu từ lần `report`/
+`pairs` đầu tiên sau khi có sổ. Lần chạy cũ không còn model trong `lab.json` thì không tính được chi phí.
+Bench (`fixtures/private/runs/`) chưa nối vào sổ.
 
 [Về module Bộ đo](README.md)

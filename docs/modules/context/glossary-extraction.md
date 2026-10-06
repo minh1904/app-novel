@@ -1,0 +1,139 @@
+# AI trích xuất glossary
+
+Cập nhật: 2026-10-06 · Trạng thái: **đề xuất thiết kế**; bước 1–4 đã có trong Lab (`extract`,
+[`glossaryExtraction.ts`](../../../src/main/services/ai/glossaryExtraction.ts)), bước 5–6 (hàng duyệt) và nối
+vào sản phẩm chưa làm. Nguyên tắc ở mục 1 là **quyết định của chủ sản phẩm** (2026-10-06).
+Chủ trì: kỹ thuật (luồng, phép đo), sản phẩm/ngôn ngữ (chính sách phiên âm, hàng duyệt).
+Câu hỏi: làm sao để AI tự lập glossary đủ tốt để bản dịch nhất quán hơn, mà người dịch vẫn là người chốt?
+
+## 1. Nguyên tắc
+
+- **Dữ liệu ngữ cảnh do luồng AI của Mira tạo, không soạn hộ.** Glossary, nhân vật và cặp xưng hô dùng
+  cho thí nghiệm phải đi qua chính lệnh trích xuất mà sản phẩm sẽ chạy. Năm tệp glossary hiện có của Lab
+  là nháp soạn tay (`claude-draft`), nên số đo trên chúng không nói về sản phẩm
+  ([vận hành thí nghiệm](../measurement/running-experiments.md#mira-lab-thử-prompt-trên-truyện-thật)).
+- **AI chỉ tạo ứng viên.** Theo [glossary](glossary.md): ứng viên có dạng nguồn, vị trí, nghĩa dự đoán, bản
+  dịch đề xuất, lý do và bằng chứng; mục chưa duyệt không vào prompt; mục đã loại được nhớ.
+- **Code kiểm những gì kiểm được.** Dạng nguồn phải có thật trong bản gốc, câu bằng chứng phải trích đúng
+  nguyên văn — một tên chỉ có trong output của model không chứng minh gì.
+
+## 2. Các tool khác làm gì (quan sát, đọc 2026-10-06)
+
+| Nguồn | Cách làm | Ghi chú |
+| --- | --- | --- |
+| [KeywordGacha](https://github.com/neavo/KeywordGacha) | LLM đọc văn bản, trả bảng thuật ngữ kèm ngữ cảnh và gợi ý quan hệ nhân vật | Tự báo “trúng ~90%” so với glossary làm tay; README không mô tả pipeline |
+| [LinguaGacha](https://github.com/neavo/LinguaGacha) | “Trích xuất thuật ngữ” là bước riêng nên chạy trước khi dịch cả truyện | Mục tiêu nêu rõ: tên nhân vật thống nhất toàn tác phẩm |
+| Dịch sách bằng LLM ([ví dụ](https://dev.to/jacob_gong/translating-entire-books-with-llms-a-chunking-strategy-that-doesnt-lose-context-257l)) | NER (spaCy) tìm thực thể, LLM xác minh và đề xuất cách dịch | Bài thực hành, không phải nghiên cứu |
+| [WMT25, hệ thống nhất quán thuật ngữ](https://www2.statmt.org/wmt25/pdf/2025.wmt-1.30.pdf) | Bước chuẩn bị: LLM trích thuật ngữ, khớp từ điển song ngữ, gộp glossary người dùng | Miền kỹ thuật, không phải văn học |
+| [ATE bằng LLM, ACL Findings 2025](https://arxiv.org/abs/2506.21222) | Few-shot chọn ví dụ theo cú pháp thay vì theo nghĩa cải thiện F1 trích thuật ngữ | Gợi ý: ví dụ mẫu nên giống **dạng** câu nguồn |
+| [DelTA](https://arxiv.org/abs/2410.08143) | Bộ nhớ tên riêng là một tầng riêng khi dịch tài liệu dài | Ủng hộ tách tên riêng khỏi phần ngữ cảnh khác |
+
+Điểm chung: trích xuất là **bước riêng trước khi dịch**, AI làm phần hiểu (loại, nhóm biến thể, đề xuất
+dịch), và glossary chỉ có giá trị nếu sau đó được giữ nhất quán. Không nguồn nào cho số đo Nhật–Việt.
+
+## 3. Luồng đề xuất
+
+```text
+Chương đã nhập (chỉ tới chương sắp dịch, tránh lộ trước)
+  1. Sinh ứng viên bằng code ──┐
+  2. AI quét mẫu chương ───────┴→ hợp ứng viên, đếm tần suất, gom câu ngữ cảnh
+  3. AI phân loại + đề xuất dịch (theo lô ứng viên, kèm 2–3 câu ngữ cảnh mỗi mục)
+  4. Kiểm bằng code: có trong bản gốc, bằng chứng đúng nguyên văn, trùng/xung đột, mục đã loại
+  5. Lưu ứng viên  status=pending, origin=ai, kèm bằng chứng, model, hash prompt
+  6. Người duyệt (theo loại, theo tần suất) → approved / rejected
+  7. Nhân vật và cặp xưng hô: `analyze` dùng các mục loại "người" đã duyệt làm danh sách nhân vật
+  → Dịch dùng mục đã duyệt như hiện tại
+```
+
+### Bước 1–2: sinh ứng viên — code trước, AI bù
+
+| Nguồn ứng viên | Bắt được | Bỏ sót |
+| --- | --- | --- |
+| Code, tiếng Nhật: chuỗi katakana ≥ 2 ký tự; kanji đi với hậu tố gọi (さん, くん, 様, 先生, 殿下…); ruby/furigana `｜漢字《よみ》` của syosetsu | Tên người, tên Tây, tên có furigana; rẻ và tất định | Tên kanji không hậu tố, kỹ năng, tổ chức |
+| Code, tiếng Trung: chuỗi lặp ≥ N lần đứng trước 说/道/笑 hoặc sau 叫/名叫 | Tên người phổ biến | Phần lớn thuật ngữ; tiếng Trung không có ranh giới từ |
+| AI quét mẫu: vài chương đầu và chương rải đều, hỏi “liệt kê tên riêng và thuật ngữ cần dịch nhất quán” | Kỹ năng, địa danh, tổ chức, vật phẩm, tên kanji | Có thể bịa — bước 4 lọc |
+
+Hợp hai nguồn, giữ ứng viên xuất hiện **ít nhất 2 lần** trong phạm vi quét (ngưỡng thử, cần đo), đếm tần
+suất và gom 2–3 câu ngữ cảnh mỗi mục để gửi bước 3.
+
+### Bước 3: AI phân loại và đề xuất dịch
+
+Một lời gọi cho mỗi lô khoảng 50–100 ứng viên (cỡ lô cần đo). Đầu ra JSON theo mẫu cố định:
+
+```json
+{"terms":[{"source":"桐谷彰","aliases":["桐谷","彰"],"type":"person","reading":"Kiritani Akira",
+  "target":"Kiritani Akira","gender":"male","note":"nhân vật chính, học sinh",
+  "confidence":"cao","evidence":["ch1: 「桐谷、お前の進路希望調査…」"]},
+ {"source":"進路希望調査","type":"term","target":"phiếu khảo sát nguyện vọng","confidence":"trung bình",
+  "evidence":["ch1: …"]},
+ {"source":"先生","type":"not-a-term","reason":"danh xưng chung, dịch theo cảnh"}]}
+```
+
+- `type`: `person`, `place`, `organization`, `skill`, `item`, `title` (chức danh riêng), `term`,
+  `not-a-term`. Loại `not-a-term` được lưu thành mục đã loại để không đề xuất lại.
+- Chính sách dịch đi kèm prompt theo ngôn ngữ, khớp profile hiện có: tên Nhật phiên romaji theo thứ tự
+  họ trước tên (chuẩn Hepburn cụ thể còn phải chốt); tên Tây viết bằng katakana thì khôi phục dạng Latin
+  khi chắc chắn; tên Trung dùng Hán Việt; kỹ năng và vật phẩm dịch nghĩa, ghi dạng gốc trong `note`.
+- Furigana có thì đưa vào làm `reading` — đọc tên Nhật từ kanji là chỗ model hay sai nhất.
+- `note` **không chứa diễn biến**: chỉ vai trò đã lộ trong phạm vi quét. Giả danh, thân phận thật tiết lộ
+  muộn không được đẩy ngược vào chương trước ([glossary](glossary.md#ca-kiểm-bắt-buộc-trước-khi-làm)).
+
+### Bước 4: kiểm bằng code
+
+| Kiểm | Xử lý khi sai |
+| --- | --- |
+| `source` và mọi alias có trong bản gốc của phạm vi quét | bỏ dạng không có; bỏ mục nếu không còn dạng nào |
+| Câu `evidence` trích đúng nguyên văn | bỏ câu sai; không còn câu nào thì hạ `confidence` |
+| Trùng mục đã duyệt | bỏ, hoặc đề xuất thêm alias cho mục đó |
+| Trùng mục đã loại | bỏ, trừ khi bằng chứng mới; khi đó mở lại kèm lý do |
+| Alias trùng giữa hai mục | giữ cả hai, gắn cờ xung đột cho người duyệt |
+| `target` của tên Nhật phải là chữ Latin; của tên Trung phải là chữ tiếng Việt | gắn cờ, không tự sửa |
+
+### Bước 5–6: lưu và duyệt
+
+- Mục mới lưu `status: pending`, `origin: ai`, kèm bằng chứng, model và hash prompt của lần trích.
+- Hàng duyệt xếp theo tần suất và loại; cho duyệt hàng loạt **trong một loại** (ví dụ mọi tên người tần
+  suất cao), sửa bản dịch tại chỗ, loại kèm lý do. Khu vực Ngữ cảnh đang có hàng “Chờ duyệt” minh họa.
+- **Trích tăng dần:** khi nhập thêm chương hoặc trước khi dịch một dải chương mới, chỉ quét chương chưa
+  quét; chỉ đề xuất mục hoặc alias mới.
+
+### Bước 7: nối với nhân vật và xưng hô
+
+`analyze` hiện cần danh sách nhân vật cho sẵn. Đề xuất: mục loại `person` đã duyệt trở thành nhân vật
+(tên gốc, alias, tên dịch, giới tính AI đề xuất ở trạng thái chờ), rồi `analyze` đề xuất cặp xưng hô như
+hiện nay. Vậy toàn bộ dữ liệu ngữ cảnh đi một đường: trích thuật ngữ → nhân vật → xưng hô → người duyệt.
+
+## 4. Thí nghiệm trong Lab (đề xuất)
+
+Lệnh mới `extract <ncode> [--chapters 1-30] [--model …]` ghi `glossary/<ncode>.ai.json` với
+`origin: ai`, không đè tệp soạn tay; sổ đăng ký ghi nguồn gốc mỗi lần chạy
+([sổ đăng ký](../measurement/running-experiments.md#sổ-đăng-ký-lần-chạy)).
+
+| Nhánh | Glossary | Câu hỏi trả lời |
+| --- | --- | --- |
+| A | không có | mốc: model tự giữ tên tới đâu |
+| B | AI trích, duyệt tự động (chỉ để đo) | luồng AI thuần giúp được bao nhiêu |
+| C | AI trích, người duyệt | sản phẩm thật sẽ đạt bao nhiêu |
+| D | soạn tay (`claude-draft`) | đối chứng với các số đo cũ |
+
+| Chỉ số | Cách đo | Cần nhãn người? |
+| --- | --- | --- |
+| **Tên nhất quán** | cùng dạng nguồn có được dịch cùng một cách qua các chương không (tỷ lệ dạng dịch chiếm đa số) | không — đo được cả nhánh A |
+| Độ trúng của trích xuất | so ứng viên với danh sách sau khi người duyệt: đúng, thừa, sót | có |
+| Tuân thủ glossary | như `report` hiện có | không |
+| Chi phí trích xuất | token, USD mỗi chương quét | không |
+
+“Tên nhất quán” là chỉ số chính vì không cần đáp án: nó cho biết glossary có làm bản dịch ổn định hơn
+hay không, kể cả trước khi có người duyệt.
+
+## 5. Câu hỏi còn mở
+
+- Chuẩn phiên romaji: Hepburn có dấu (Ryōta), không dấu (Ryota) hay `ou` (Ryouta)? Cần một quyết định
+  cho mỗi tác phẩm hoặc mặc định chung.
+- Tên Trung: Hán Việt nên tra bằng bảng tất định thay vì để model đoán? Cần nguồn dữ liệu có giấy phép
+  dùng được.
+- Quét bao nhiêu chương đầu là đủ trước khi dịch, và có quét toàn truyện khi người dùng cho phép không?
+- Ngưỡng tần suất và cỡ lô ứng viên: đo trên `n5955en`, `n4696dd`.
+- Khi nào được tự duyệt (ví dụ tên người tần suất cao, độ tin cao) — chỉ sau khi có số đo độ trúng.
+
+[Về module Ngữ cảnh](README.md)

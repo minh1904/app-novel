@@ -15,6 +15,7 @@ Tập hợp những gì đã nghiên cứu về glossary, nhân vật, xưng hô
 | --- | --- |
 | Module làm gì, điều gì đã chốt? | [Phạm vi và quyết định](scope.md) |
 | Quản lý tên riêng, thuật ngữ và biến thể thế nào? | [Glossary](glossary.md) |
+| AI tự lập glossary trước khi dịch thế nào, người duyệt ở đâu? | [AI trích xuất glossary](glossary-extraction.md) |
 | Ai nói với ai, giữ hậu tố hay Việt hóa? | [Nhân vật và xưng hô](characters-and-addressing.md) |
 | Học văn phong từ đâu, nhớ gì và tránh tiết lộ sớm thế nào? | [Văn phong và ký ức](style-and-memory.md) |
 | Lưu, duyệt, sửa và truy vết dữ liệu ra sao? | [Dữ liệu và vòng đời](data-lifecycle.md) |
@@ -22,6 +23,8 @@ Tập hợp những gì đã nghiên cứu về glossary, nhân vật, xưng hô
 | Prompt dịch và chat xếp thế nào, các sản phẩm khác làm gì? | [Hệ thống prompt](prompt-system.md) |
 | Chưa có cặp xưng hô thì AI xưng hô thế nào, theo bối cảnh nào? | [Xưng hô tiếng Việt](vietnamese-addressing.md) |
 | Chứng minh tốt hơn và tránh báo lỗi nhầm thế nào? | [Chất lượng và kiểm chứng](quality-and-evaluation.md) |
+| Sau lượt dịch: kiểm, tự sửa, trau chuốt và để người duyệt thế nào? | [Kiểm, tự sửa và trau chuốt](post-editing.md) |
+| Model từ chối dịch một phần chương thì sao? | [Đoạn bị nhà cung cấp từ chối](content-refusals.md) |
 | Cần dữ liệu gì để đo cách người dịch xử lý xưng hô và độ linh hoạt? | [Kho đối chiếu bản dịch người](human-translation-corpus.md) |
 | Làm theo thứ tự nào, còn phải chốt gì? | [Lộ trình và câu hỏi mở](roadmap.md) |
 | Kết luận bắt nguồn từ đâu, tài liệu cũ nằm ở đâu? | [Bằng chứng và bản đồ nguồn](evidence.md) |
