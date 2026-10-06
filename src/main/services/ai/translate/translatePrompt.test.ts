@@ -274,6 +274,26 @@ describe('translatePrompt — nhân vật và bộ mặc định (v2)', () => {
     expect(user).toContain('Unya tự xưng "cô", gọi Hàn Lập là "mày". Ghi chú: Không xưng tao')
   })
 
+  it('đại từ ngôi hai của cặp áp cho cả chỗ bản gốc gọi bằng tên kèm kính ngữ', () => {
+    const user = buildTranslateRequest(
+      {
+        ...base,
+        dyads: [
+          dyad(unya, han, {
+            speakerPronoun: 'tôi',
+            recipientPronoun: 'Rion-sama',
+            secondPerson: 'cậu'
+          })
+        ]
+      },
+      units
+    ).messages[1].content
+    expect(user).toContain('gọi Hàn Lập là "Rion-sama"')
+    expect(user).toContain('mọi chỗ cần đại từ ngôi hai cho Hàn Lập')
+    expect(user).toContain('lặp tên kèm kính ngữ như 様, さん')
+    expect(user).toContain('đều dùng "cậu"')
+  })
+
   it('luật chung luôn có; bảng mặc định chỉ khi chọn bộ, và giữ nguyên giữa các lô', () => {
     const plain = buildTranslateRequest(base, units).messages[0].content
     expect(plain).toContain('<xung_ho_chung>')

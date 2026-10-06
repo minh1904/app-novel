@@ -213,7 +213,7 @@ export function addressingLines(dyads: AddressingDyadResolved[]): string[] {
     const formality = dyad.formality ? ` (sắc thái: ${dyad.formality})` : ''
     const notes = dyad.notes ? ` Ghi chú: ${dyad.notes}` : ''
     const second = dyad.secondPerson
-      ? `; khi cần đại từ ngôi hai (bản gốc lược chủ ngữ hoặc dùng あなた, 貴方, 你) thì dùng "${dyad.secondPerson}"`
+      ? `; mọi chỗ cần đại từ ngôi hai cho ${to} (bản gốc lược chủ ngữ, dùng あなた, 貴方, 你, hoặc lặp tên kèm kính ngữ như 様, さん) đều dùng "${dyad.secondPerson}", không đổi sang đại từ khác giữa các chương`
       : ''
     return `- ${from} → ${to}: ${from} tự xưng "${dyad.speakerPronoun}", gọi ${to} là "${dyad.recipientPronoun}"${second}${formality}.${notes}`
   })
