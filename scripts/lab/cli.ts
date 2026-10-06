@@ -10,7 +10,7 @@
  * Chạy: `node scripts/lab/mira-lab.mjs <lệnh>`; `help` liệt kê lệnh.
  */
 import { spawnSync } from 'node:child_process'
-import { randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { createRequire } from 'node:module'
 import {
   appendFileSync,
@@ -46,10 +46,53 @@ import { segment } from '../../src/shared/algorithms/segmenter'
 import { DESCRIPTION_MAX } from '../../src/shared/contracts/library'
 import { THINKING_LEVELS, type ThinkingLevel } from '../../src/shared/contracts/modelSettings'
 import type { ContextEntryItem } from '../../src/shared/contracts/glossary'
+import { TRANSLATE_PROMPT_VERSION } from '../../src/main/services/ai/translate/translatePrompt'
+import { nameConsistency, overallConsistency } from '../../src/shared/algorithms/nameConsistency'
+import {
+  buildClassifyMessages,
+  buildSweepMessages,
+  japaneseCandidates,
+  mergeCandidates,
+  parseClassification,
+  parseSweep,
+  sweepChunks,
+  verifyTerms,
+  type ExtractedTerm
+} from '../../src/main/services/ai/glossaryExtraction'
+import {
+  REGISTRY_SCHEMA,
+  compareSnapshots,
+  glossaryOriginOf,
+  historyMarkdown,
+  parseRegistry,
+  runIdToIso,
+  snapshotOf,
+  summarizeRun,
+  type GlossaryOrigin,
+  type GlossaryProvenance,
+  type MeasurementRecord,
+  type RunRecord
+} from '../../src/shared/algorithms/runRegistry'
+import {
+  POLISH_PROMPT_VERSION,
+  buildPolishMessages,
+  parsePolish,
+  polishBatches,
+  verifyEdits,
+  type PolishItem,
+  type PolishName,
+  type PolishTerm,
+  type RejectedEdit
+} from '../../src/main/services/ai/polish'
 
 const ROOT = process.cwd()
 const LAB = join(ROOT, 'fixtures', 'private', 'lab')
 const MANIFEST = join(LAB, 'lab.json')
+/** Sổ đăng ký: mỗi lần chạy và mỗi lần đo một dòng, chỉ thêm. */
+const REGISTRY = join(LAB, 'registry')
+const RUNS_LOG = join(REGISTRY, 'runs.jsonl')
+const MEASUREMENTS_LOG = join(REGISTRY, 'measurements.jsonl')
+const HISTORY = join(ROOT, 'docs', 'modules', 'measurement', 'history.md')
 const DEFAULT_VARIANTS = ['base']
 /** Mức thinking mà hậu tố `-think` chọn. */
 const THINK_LEVEL: ThinkingLevel = 'medium'
@@ -175,6 +218,11 @@ interface NovelEntry {
   copies: Record<string, string>
   /** Tên tiếng Việt người dùng đặt cho từng bản, dùng làm tên tác phẩm và tên tệp xuất. */
   names?: Record<string, string>
+  /**
+   * Tệp glossary của từng bản (tên tệp trong `glossary/`, không đuôi); `null` là bản không có glossary.
+   * Vắng thì dùng tệp chung `<ncode>.json`. Cho mỗi thí nghiệm glossary riêng.
+   */
+  glossaries?: Record<string, string | null>
   stats: Record<string, Record<string, ChapterStats>>
 }
 
@@ -209,6 +257,90 @@ function pickNovels(manifest: Manifest, codes: string[]): NovelEntry[] {
  * Khóa API chỉ nằm trong DB của lab dưới dạng đã XOR với một khóa ngẫu nhiên **của tiến trình này**:
  * tiến trình kết thúc là bản ghi không giải được nữa, kể cả khi lần chạy bị ngắt trước bước xóa kết nối.
  */
+// ---------------------------------------------------------------- sổ đăng ký lần chạy
+
+/**
+ * Commit đang đứng và có thay đổi chưa commit không; ngoài repo git thì để trống. Chỉ xét `src/`, nơi
+ * có prompt và đường dịch: dữ liệu Lab trong `fixtures/` đổi sau mỗi lần chạy nên không phải tín hiệu.
+ */
+function gitState(): { commit: string | null; dirty: boolean | null } {
+  const head = spawnSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: ROOT, encoding: 'utf8' })
+  if (head.status !== 0) return { commit: null, dirty: null }
+  const status = spawnSync('git', ['status', '--porcelain', '--untracked-files=no', '--', 'src'], {
+    cwd: ROOT,
+    encoding: 'utf8'
+  })
+  return { commit: head.stdout.trim(), dirty: status.stdout.trim() !== '' }
+}
+
+/** Commit gần nhất trước một thời điểm, cho lần chạy cũ không ghi commit. */
+function commitBefore(iso: string): string | null {
+  const log = spawnSync('git', ['log', '-1', `--before=${iso}`, '--format=%h'], {
+    cwd: ROOT,
+    encoding: 'utf8'
+  })
+  return log.status === 0 && log.stdout.trim() !== '' ? log.stdout.trim() : null
+}
+
+const sha = (text: string): string => createHash('sha256').update(text).digest('hex').slice(0, 16)
+
+function appendRegistry(file: string, record: RunRecord | MeasurementRecord): void {
+  mkdirSync(REGISTRY, { recursive: true })
+  appendFileSync(file, JSON.stringify(record) + '\n', 'utf8')
+}
+
+function readRegistry(): { runs: RunRecord[]; measurements: MeasurementRecord[] } {
+  const read = <T>(file: string): T[] =>
+    existsSync(file) ? parseRegistry<T>(readFileSync(file, 'utf8')) : []
+  return {
+    runs: read<RunRecord>(RUNS_LOG),
+    measurements: read<MeasurementRecord>(MEASUREMENTS_LOG)
+  }
+}
+
+/** Các lần chạy đã dịch những chương này của biến thể, theo `lab.json` lúc đo. */
+function runIdsOf(novel: NovelEntry, label: string, chapters: number[]): string[] {
+  const stats = novel.stats[label] ?? {}
+  return [...new Set(chapters.map((n) => stats[String(n)]?.at).filter(Boolean) as string[])].sort()
+}
+
+function recordMeasurement(
+  novel: NovelEntry,
+  label: string,
+  chapters: number[],
+  metrics: Pick<MeasurementRecord, 'structure' | 'glossary' | 'addressing'>
+): void {
+  if (chapters.length === 0) return
+  const measuredAt = new Date().toISOString()
+  const kind = Object.keys(metrics).join('+')
+  appendRegistry(MEASUREMENTS_LOG, {
+    kind: 'measurement',
+    schema: REGISTRY_SCHEMA,
+    id: `${measuredAt}/${novel.ncode}/${label}/${kind}`,
+    measuredAt,
+    ...gitState(),
+    ncode: novel.ncode,
+    variant: label,
+    chapters,
+    runIds: runIdsOf(novel, label, chapters),
+    ...metrics
+  })
+}
+
+/** Sinh lại trang lịch sử trong docs từ sổ. */
+function writeHistory(manifest: Manifest): void {
+  const { runs, measurements } = readRegistry()
+  const titles = Object.fromEntries(
+    Object.values(manifest.novels).map((novel) => [novel.ncode, novel.title])
+  )
+  writeFileSync(
+    HISTORY,
+    historyMarkdown(runs, measurements, titles, new Date().toISOString()),
+    'utf8'
+  )
+  console.log(`Lịch sử: ${runs.length} lần chạy, ${measurements.length} lần đo → ${HISTORY}`)
+}
+
 const processKey = randomBytes(64)
 const volatileCrypto: SecretCrypto = {
   isEncryptionAvailable: () => true,
@@ -251,7 +383,13 @@ const SYOSETSU_GENRES: Record<number, string> = {
 }
 
 interface GlossaryFile {
+  /** Ai tạo dữ liệu: `ai` (lệnh trích xuất của Lab), `human` (người dịch), `claude-draft` (soạn tay). */
+  origin?: GlossaryOrigin
   note?: string
+  /** Thông tin lần trích xuất của lệnh `extract`: model, chương, số ứng viên, mục bị bỏ khi kiểm. */
+  extraction?: Record<string, unknown>
+  /** Dạng AI xếp là không phải thuật ngữ; giữ để không đề xuất lại. */
+  rejected?: Array<{ source: string; reason?: string }>
   entries: Array<{
     source: string
     target: string
@@ -283,14 +421,37 @@ interface GlossaryFile {
   }>
 }
 
-function glossaryFileOf(ncode: string): GlossaryFile | null {
-  const path = join(LAB, 'glossary', ncode + '.json')
+/** Tệp glossary theo tên (không đuôi) trong `glossary/`; `null` hoặc không có tệp là không có glossary. */
+function glossaryFileOf(name: string | null): GlossaryFile | null {
+  if (name === null) return null
+  const path = join(LAB, 'glossary', name + '.json')
   return existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as GlossaryFile) : null
 }
 
+/** Tên tệp glossary của một bản; mặc định là tệp chung của truyện. */
+function glossaryNameOf(novel: NovelEntry, label: string): string | null {
+  const name = novel.glossaries?.[label]
+  return name === undefined ? novel.ncode : name
+}
+
+function writeGlossaryFile(name: string, file: GlossaryFile): string {
+  mkdirSync(join(LAB, 'glossary'), { recursive: true })
+  const path = join(LAB, 'glossary', name + '.json')
+  writeFileSync(path, JSON.stringify(file, null, 2) + '\n', 'utf8')
+  return path
+}
+
+/** Băm và nguồn gốc của tệp glossary đang nạp, ghi kèm mỗi lần chạy. */
+function glossaryProvenance(name: string | null): GlossaryProvenance {
+  const path = name === null ? null : join(LAB, 'glossary', name + '.json')
+  if (path === null || !existsSync(path)) return { hash: '-', origin: 'none' }
+  const text = readFileSync(path, 'utf8')
+  return { hash: sha(text), origin: glossaryOriginOf(JSON.parse(text) as GlossaryFile) }
+}
+
 /** Thay toàn bộ thuật ngữ của một bản bằng tệp glossary. Mục đánh dấu `ai` + đã duyệt để đi vào prompt. */
-function syncGlossary(library: LibraryStore, workId: string, ncode: string): number {
-  const file = glossaryFileOf(ncode)
+function syncGlossary(library: LibraryStore, workId: string, name: string | null): number {
+  const file = glossaryFileOf(name)
   const service = new GlossaryService(library, () => Date.now())
   for (const entry of service.list(workId)) {
     if ((entry as ContextEntryItem).kind === 'term') service.delete(workId, entry.id)
@@ -611,6 +772,7 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
   const force = args.flags.has('force')
   const redoFailed = args.flags.has('redo-failed')
   const parallel = args.flags.has('parallel')
+  const note = args.flags.get('note')
   const novels = pickNovels(manifest, args.positional)
   if (!lookupModel(model, 'google')) {
     console.log(
@@ -619,6 +781,8 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
   }
 
   const runId = new Date().toISOString().replace(/[:.]/g, '-')
+  const git = gitState()
+  if (git.dirty) console.log('Cảnh báo: src/ còn thay đổi chưa commit; sổ ghi commit kèm dấu +.')
   const runDir = join(LAB, 'runs', runId)
   mkdirSync(runDir, { recursive: true })
   const library = openLibrary(manifest)
@@ -629,11 +793,17 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
    * Một worker = một kết nối và mục model riêng, dịch tuần tự từng chương nó nhận: fetch ghi request
    * biết chắc lời gọi thuộc chương nào, và RPM tính theo worker.
    */
-  async function worker(novel: NovelEntry, variant: Variant, queue: number[]): Promise<void> {
+  async function worker(
+    novel: NovelEntry,
+    variant: Variant,
+    queue: number[],
+    laneCalls: CallRecord[]
+  ): Promise<void> {
     const context = { ncode: novel.ncode, variant: variant.label, chapter: 0 }
     const calls: CallRecord[] = []
     const sink = (record: CallRecord): void => {
       calls.push(record)
+      laneCalls.push(record)
       spend.usd += usdOf(model, [record])
       appendFileSync(
         join(runDir, `${record.ncode}-${record.variant}.jsonl`),
@@ -706,15 +876,43 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     }
   }
 
-  /** Một luồng = một truyện × một biến thể, chia chương cho `concurrency` worker. */
+  /**
+   * Một luồng = một truyện × một biến thể, chia chương cho `concurrency` worker. Xong luồng (kể cả khi
+   * lỗi giữa chừng) thì ghi một bản ghi vào sổ cho những lời gọi đã gửi.
+   */
   async function lane(novel: NovelEntry, variant: Variant): Promise<void> {
     const total = novel.chapterCount
     const queue = parseRange(args.flags.get('chapters'), total)
-    await Promise.all(
-      Array.from({ length: Math.min(concurrency, queue.length) }, () =>
-        worker(novel, variant, queue)
+    const laneCalls: CallRecord[] = []
+    try {
+      await Promise.all(
+        Array.from({ length: Math.min(concurrency, queue.length) }, () =>
+          worker(novel, variant, queue, laneCalls)
+        )
       )
-    )
+    } finally {
+      if (laneCalls.length > 0) {
+        appendRegistry(
+          RUNS_LOG,
+          summarizeRun(
+            laneCalls,
+            {
+              runId,
+              ncode: novel.ncode,
+              variant: variant.label,
+              thinking: variant.thinking ?? null,
+              model,
+              ...git,
+              glossary: glossaryProvenance(glossaryNameOf(novel, variant.label)),
+              usd: usdOf(model, laneCalls),
+              ...(note ? { note } : {})
+            },
+            sha,
+            TRANSLATE_PROMPT_VERSION
+          )
+        )
+      }
+    }
   }
 
   const lanes = novels.flatMap((novel) =>
@@ -739,6 +937,7 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     }
   } finally {
     library.close()
+    writeHistory(manifest)
   }
   const minutes = Math.round((Date.now() - startedAll) / 6000) / 10
   console.log(
@@ -853,7 +1052,14 @@ function report(manifest: Manifest, args: Args): void {
   mkdirSync(join(LAB, 'reports'), { recursive: true })
   try {
     for (const novel of pickNovels(manifest, args.positional)) {
-      const glossary = glossaryFileOf(novel.ncode)?.entries ?? []
+      // Mọi biến thể đo trên cùng một glossary tham chiếu, kể cả bản chạy không glossary.
+      const reference = args.flags.get('glossary-file') ?? novel.ncode
+      const referenceFile = glossaryFileOf(reference)
+      const glossary = referenceFile?.entries ?? []
+      const characterForms = (referenceFile?.characters ?? []).map((c) => ({
+        name: `${c.source} (${c.target})`,
+        forms: [c.source, ...(c.aliases ?? [])]
+      }))
       const variants = variantsOf(novel, args.flags)
       const ids = Object.fromEntries(
         variants.map((v) => [v.label, chapterIds(library, novel.copies[v.label])])
@@ -872,10 +1078,18 @@ function report(manifest: Manifest, args: Args): void {
         let mismatched = 0
         let missingParas = 0
         const misses = new Map<string, number>()
+        const measured: number[] = []
+        const alignedSource: string[] = []
+        const alignedTarget: string[] = []
         for (const n of wanted) {
           const source = paragraphs(textOf(v, n, 'source'))
           const target = paragraphs(textOf(v, n, 'target'))
           if (target.length === 0) continue
+          measured.push(n)
+          if (target.length === source.length) {
+            alignedSource.push(...source)
+            alignedTarget.push(...target)
+          }
           if (target.length !== source.length) mismatched++
           missingParas += Math.max(0, source.length - target.length)
           const score = glossaryScore(source, target, glossary)
@@ -897,25 +1111,54 @@ function report(manifest: Manifest, args: Args): void {
           reasoning: stats.reduce((sum, s) => sum + (s.reasoningTokens ?? 0), 0),
           usd: stats.reduce((sum, s) => sum + (s.usd ?? 0), 0),
           seconds: stats.reduce((sum, s) => sum + s.seconds, 0),
-          misses
+          misses,
+          measured,
+          names: nameConsistency(alignedSource, alignedTarget, characterForms)
         }
       })
+      for (const s of summary) {
+        recordMeasurement(novel, s.v.label, s.measured, {
+          structure: {
+            chapters: s.measured.length,
+            mismatched: s.mismatched,
+            missingParagraphs: s.missingParas
+          },
+          glossary: { hits: s.hits, checks: s.checks, reference },
+          ...(s.names.length > 0 ? { names: { ...overallConsistency(s.names), reference } } : {})
+        })
+      }
 
       const lines: string[] = [
         `# ${novel.title} — so sánh biến thể`,
         '',
-        `Tạo lúc ${new Date().toISOString()}. Glossary: ${glossary.length} mục (nháp, chưa người dịch duyệt).`,
+        `Tạo lúc ${new Date().toISOString()}. Glossary tham chiếu \`${reference}\`: ${glossary.length} mục (${glossaryProvenance(reference).origin}, chưa người dịch duyệt).`,
         'Tuân thủ glossary: đoạn gốc có thuật ngữ thì bản dịch cùng vị trí có đúng chữ dịch không; chỉ tính chương có số đoạn khớp.',
         '',
-        '| Biến thể | Cấu hình | Chương | Chương lệch số đoạn | Đoạn thiếu | Glossary | Token vào | Ra | Thinking | USD | Giây |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+        'Tên nhất quán: đoạn có tên nhân vật (theo danh sách nhân vật của glossary tham chiếu) dùng đúng cách viết chính; không cần đáp án, đo được cả bản không glossary.',
+        '',
+        '| Biến thể | Cấu hình | Chương | Chương lệch số đoạn | Đoạn thiếu | Glossary | Tên nhất quán | Token vào | Ra | Thinking | USD | Giây |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
       ]
       for (const s of summary) {
+        const names = overallConsistency(s.names)
         lines.push(
           `| ${s.v.label} | ${describeVariant(s.v)} | ${s.chapters} | ${s.mismatched} | ${s.missingParas} | ` +
-            `${pct(s.hits, s.checks)} (${s.hits}/${s.checks}) | ${s.input} | ${s.output} | ${s.reasoning} | ` +
+            `${pct(s.hits, s.checks)} (${s.hits}/${s.checks}) | ` +
+            `${pct(names.consistent, names.paragraphs)} (${names.names} tên) | ${s.input} | ${s.output} | ${s.reasoning} | ` +
             `$${s.usd.toFixed(3)} | ${Math.round(s.seconds)} |`
         )
+      }
+      for (const s of summary) {
+        const shaky = s.names.filter((r) => r.paragraphs > 0 && r.consistent / r.paragraphs < 0.9)
+        if (shaky.length === 0) continue
+        lines.push('', `Tên ${s.v.label} lệch (dưới 90% đoạn dùng cách viết chính):`)
+        for (const r of shaky.slice(0, 8)) {
+          const others = r.others.map((o) => `${o.rendering} ×${o.count}`).join(', ')
+          lines.push(
+            `- ${r.name}: "${r.dominant ?? '?'}" ${r.consistent}/${r.paragraphs}` +
+              (others ? `; khác: ${others}` : '')
+          )
+        }
       }
       for (const s of summary) {
         const top = [...s.misses].sort((a, b) => b[1] - a[1]).slice(0, 10)
@@ -958,6 +1201,7 @@ function report(manifest: Manifest, args: Args): void {
   } finally {
     library.close()
   }
+  writeHistory(manifest)
 }
 
 // ---------------------------------------------------------------- xuất txt và pdf
@@ -988,17 +1232,27 @@ function copiesForExport(library: LibraryStore, manifest: Manifest, args: Args):
       const workId = novel.copies[variant.label]
       const stats = novel.stats[variant.label] ?? {}
       const models = [...new Set(Object.values(stats).map((item) => item.model))].join(', ')
-      const chapters = library.listChapters(workId).map((chapter, index) => ({
-        id: chapter.id,
-        number: index + 1,
-        title: chapter.title,
-        content: library.readText(workId, chapter.id, 'target').content.trim()
-      }))
+      const all = library.listChapters(workId)
+      // `--chapters` chỉ xuất dải đã dịch, để tệp đọc không kèm hàng trăm chương "(chưa dịch)".
+      const keep = new Set(parseRange(args.flags.get('chapters'), all.length))
+      const chapters = all
+        .map((chapter, index) => ({
+          id: chapter.id,
+          number: index + 1,
+          title: chapter.title,
+          content: library.readText(workId, chapter.id, 'target').content.trim()
+        }))
+        .filter((chapter) => keep.has(chapter.number))
+      const glossaryName = glossaryNameOf(novel, variant.label)
+      const glossary =
+        glossaryName === null
+          ? 'không glossary'
+          : `glossary ${glossaryName} (${glossaryProvenance(glossaryName).origin})`
       out.push({
         novel,
         variant,
         author: library.get(workId).author,
-        heading: `Bản dịch Mira: ${describeVariant(variant)}, model ${models || '—'}`,
+        heading: `Bản dịch Mira [${variant.label}]: ${describeVariant(variant)}, ${glossary}, model ${models || '—'}`,
         chapters,
         translated: chapters.filter((chapter) => chapter.content !== '').length,
         base: novel.names?.[variant.label]
@@ -1188,7 +1442,8 @@ async function analyze(manifest: Manifest, args: Args): Promise<void> {
   mkdirSync(join(LAB, 'analysis'), { recursive: true })
   try {
     for (const novel of pickNovels(manifest, args.positional)) {
-      const file = glossaryFileOf(novel.ncode)
+      const fileName = args.flags.get('glossary-file') ?? novel.ncode
+      const file = glossaryFileOf(fileName)
       const characters = file?.characters ?? []
       if (characters.length === 0) {
         console.log(`${novel.ncode}: tệp glossary chưa có nhân vật nào, bỏ qua.`)
@@ -1299,8 +1554,7 @@ async function analyze(manifest: Manifest, args: Args): Promise<void> {
             added++
           }
         }
-        const path = join(LAB, 'glossary', novel.ncode + '.json')
-        writeFileSync(path, JSON.stringify(file, null, 2) + '\n', 'utf8')
+        const path = writeGlossaryFile(fileName, file)
         console.log(
           `  Đã điền ${filled} ô trống và thêm ${added} cặp vào ${path}. Chạy "glossary ${novel.ncode}" để nạp.`
         )
@@ -1369,7 +1623,7 @@ function pairs(manifest: Manifest, args: Args): void {
   const novel = pickNovels(manifest, [ncode ?? ''])[0]
   const labelVariant = args.flags.get('labels')
   if (!labelVariant) throw new Error('Cần --labels <biến thể có nhãn người nói>.')
-  const file = glossaryFileOf(novel.ncode)
+  const file = glossaryFileOf(args.flags.get('glossary-file') ?? novel.ncode)
   const nameOf = new Map((file?.characters ?? []).map((c) => [c.source, c.target]))
   const dyads = new Map(
     (file?.dyads ?? []).map((d) => [
@@ -1420,10 +1674,12 @@ function pairs(manifest: Manifest, args: Args): void {
       let checked = 0
       let off = 0
       const byPair = new Map<string, { checked: number; off: number; example?: string }>()
+      const measured: number[] = []
       for (const n of parseRange(args.flags.get('chapters'), ids.length)) {
         const source = paragraphs(library.readText(workId, ids[n - 1], 'source').content)
         const target = paragraphs(library.readText(workId, ids[n - 1], 'target').content)
-        if (target.length !== source.length) continue
+        if (target.length === 0 || target.length !== source.length) continue
+        measured.push(n)
         source.forEach((src, i) => {
           const label = labels.get(src.trim())
           const dyad = label ? dyads.get(label) : undefined
@@ -1441,6 +1697,11 @@ function pairs(manifest: Manifest, args: Args): void {
           byPair.set(label, stat)
         })
       }
+      if (checked > 0) {
+        recordMeasurement(novel, variant.label, measured, {
+          addressing: { labels: labelVariant, checked, off }
+        })
+      }
       console.log(`\n[${variant.label}] lệch cặp: ${off}/${checked} câu (${pct(off, checked)})`)
       for (const [label, stat] of [...byPair].sort((a, b) => b[1].off - a[1].off)) {
         console.log(
@@ -1451,9 +1712,694 @@ function pairs(manifest: Manifest, args: Args): void {
   } finally {
     library.close()
   }
+  writeHistory(manifest)
 }
 
 // ---------------------------------------------------------------- lệnh
+
+// ---------------------------------------------------------------- bản mới và glossary AI
+
+/**
+ * Tạo bản mới của một truyện bằng cách chép bản gốc từ một bản có sẵn, kèm glossary riêng
+ * (`--glossary <tên tệp>` hoặc `none`). Dùng khi thư mục truyện gốc không còn để `import`.
+ */
+function fork(manifest: Manifest, args: Args): void {
+  const [ncode] = args.positional
+  const novel = pickNovels(manifest, [ncode ?? ''])[0]
+  const from = args.flags.get('from') ?? Object.keys(novel.copies)[0]
+  const fromId = novel.copies[from]
+  if (!fromId) throw new Error(`Không có bản ${from} của ${novel.ncode}.`)
+  const labels = (args.flags.get('variants') ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+  if (labels.length === 0) throw new Error('Cần --variants <nhãn,…>.')
+  labels.forEach(parseVariant)
+  const flag = args.flags.get('glossary')
+  const glossaryName = flag === undefined ? novel.ncode : flag === 'none' ? null : flag
+  if (glossaryName !== null && !glossaryFileOf(glossaryName)) {
+    throw new Error(`Không thấy tệp glossary/${glossaryName}.json.`)
+  }
+  const library = openLibrary(manifest)
+  try {
+    for (const label of labels) {
+      if (novel.copies[label]) {
+        console.log(`${novel.ncode} [${label}]: đã có.`)
+        continue
+      }
+      createCopy(manifest, library, novel, from, label, glossaryName)
+    }
+  } finally {
+    library.close()
+  }
+}
+
+/** Bản mới `label` chép bản gốc từ bản `from`, nạp glossary `glossaryName`; chưa có bản dịch. */
+function createCopy(
+  manifest: Manifest,
+  library: LibraryStore,
+  novel: NovelEntry,
+  from: string,
+  label: string,
+  glossaryName: string | null
+): string {
+  const fromId = novel.copies[from]
+  const base = library.get(fromId)
+  const chapters = library.listChapters(fromId)
+  const work = library.create({
+    title: `${base.originalTitle ?? base.title} [${label}]`.slice(0, 200),
+    ...(base.originalTitle ? { originalTitle: base.originalTitle } : {}),
+    sourceLang: base.sourceLang,
+    ...(base.author ? { author: base.author } : {}),
+    ...(base.genre ? { genre: base.genre } : {}),
+    ...(base.description ? { description: base.description } : {})
+  })
+  for (const chapter of chapters) {
+    const created = library.createChapter(work.id, chapter.title).chapter
+    const text = library.readText(fromId, chapter.id, 'source').content
+    library.saveText(work.id, created.id, 'source', text, 0, segment(text, 'ja'))
+  }
+  novel.copies[label] = work.id
+  novel.glossaries = { ...novel.glossaries, [label]: glossaryName }
+  const terms = syncGlossary(library, work.id, glossaryName)
+  writeManifest(manifest)
+  console.log(
+    `${novel.ncode} [${label}]: ${chapters.length} chương chép từ ${from}, ` +
+      `glossary ${glossaryName ?? 'không có'} (${terms} thuật ngữ).`
+  )
+  return work.id
+}
+
+/**
+ * AI trích xuất glossary và nhân vật từ bản gốc, ghi vào một tệp riêng (`--out`, mặc định
+ * `<ncode>.ai`) với `origin: ai`. Không bao giờ ghi đè tệp chung của truyện. Mục được ghi để đi thẳng
+ * vào prompt khi đo (tự duyệt), và tệp ghi rõ là chưa người dịch duyệt.
+ */
+async function extract(manifest: Manifest, args: Args): Promise<void> {
+  const key = env('GEMINI_API_KEY')
+  if (!key) throw new Error('Thiếu GEMINI_API_KEY (biến môi trường hoặc .env).')
+  const model = args.flags.get('model') ?? env('MIRA_LAB_EXTRACT_MODEL', 'gemini-2.5-flash')
+  const baseUrl =
+    args.flags.get('base-url') ??
+    env('MIRA_LAB_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta/openai')
+  const [ncode] = args.positional
+  const novel = pickNovels(manifest, [ncode ?? ''])[0]
+  const out = args.flags.get('out') ?? `${novel.ncode}.ai`
+  if (out === novel.ncode) throw new Error('Không ghi đè tệp glossary chung; chọn --out khác.')
+  const from = args.flags.get('from') ?? Object.keys(novel.copies)[0]
+  const library = openLibrary(manifest)
+  const runId = new Date().toISOString().replace(/[:.]/g, '-')
+  const runDir = join(LAB, 'runs', runId)
+  mkdirSync(runDir, { recursive: true })
+  const calls: CallRecord[] = []
+  const context = { ncode: novel.ncode, variant: `extract→${out}`, chapter: 0 }
+  const sink = (record: CallRecord): void => {
+    calls.push(record)
+    appendFileSync(
+      join(runDir, `${novel.ncode}-extract.jsonl`),
+      JSON.stringify(record) + '\n',
+      'utf8'
+    )
+  }
+  try {
+    const workId = novel.copies[from]
+    const work = library.get(workId)
+    const ids = chapterIds(library, workId)
+    const wanted = parseRange(args.flags.get('chapters') ?? '1-30', ids.length)
+    const chapters = wanted.map((n) => ({
+      number: n,
+      text: library.readText(workId, ids[n - 1], 'source').content
+    }))
+    const lang = work.sourceLang
+    const services = createServices({
+      library,
+      crypto: volatileCrypto,
+      fetch: recordingFetch(fetch, context, sink)
+    })
+    const connection = await setupConnection(services, key, model, baseUrl, 30, 'off')
+    const provider = services.connections.translator(connection.connectionId, connection.entryId)
+      .provider as unknown as TranslationModelCaller
+    const ask = async (
+      messages: Array<{ role: 'system' | 'user'; content: string }>
+    ): Promise<string> => (await provider.complete(messages)).text
+
+    let file: GlossaryFile
+    try {
+      const fromCode = lang === 'ja' ? japaneseCandidates(chapters) : []
+      console.log(
+        `${novel.ncode}: code tìm ${fromCode.length} ứng viên trong ${chapters.length} chương.`
+      )
+      const swept: string[] = []
+      for (const chunk of sweepChunks(chapters)) {
+        context.chapter = chunk[0].number
+        try {
+          swept.push(...parseSweep(await ask(buildSweepMessages(lang, chunk))))
+        } catch (error) {
+          console.log(
+            `  Quét chương ${chunk[0].number}–${chunk.at(-1)?.number} lỗi: ${String(error)}`
+          )
+        }
+      }
+      const limit = Number(args.flags.get('max-candidates') ?? '300')
+      const candidates = mergeCandidates(fromCode, swept, chapters, { limit })
+      console.log(`  AI quét thêm ${swept.length} dạng; hợp lại còn ${candidates.length} ứng viên.`)
+      const terms: ExtractedTerm[] = []
+      const batchSize = Number(args.flags.get('batch') ?? '60')
+      for (let i = 0; i < candidates.length; i += batchSize) {
+        context.chapter = 0
+        try {
+          terms.push(
+            ...parseClassification(
+              await ask(buildClassifyMessages(lang, candidates.slice(i, i + batchSize)))
+            )
+          )
+        } catch (error) {
+          console.log(`  Phân loại lô ${i / batchSize + 1} lỗi: ${String(error)}`)
+        }
+      }
+      const verified = verifyTerms(terms, chapters, lang)
+      const persons = verified.accepted.filter((term) => term.type === 'person')
+      const others = verified.accepted.filter((term) => term.type !== 'person')
+      const at = new Date().toISOString()
+      file = {
+        origin: 'ai',
+        note:
+          `AI trích xuất ${at.slice(0, 10)} bằng ${model} (không thinking) từ chương ` +
+          `${wanted[0]}–${wanted.at(-1)}, lệnh "extract". Tự duyệt để đo; chưa người dịch duyệt.`,
+        extraction: {
+          model,
+          chapters: wanted,
+          at,
+          runId,
+          codeCandidates: fromCode.length,
+          sweptForms: swept.length,
+          candidates: candidates.length,
+          accepted: verified.accepted.length,
+          rejected: verified.rejected.length,
+          dropped: verified.dropped
+        },
+        entries: others.map((term) => ({
+          source: term.source,
+          target: term.target ?? '',
+          ...(term.aliases?.length ? { aliases: term.aliases } : {}),
+          notes: [term.type, term.note].filter(Boolean).join(': ')
+        })),
+        characters: persons.map((term) => ({
+          source: term.source,
+          target: term.target ?? '',
+          ...(term.aliases?.length ? { aliases: term.aliases } : {}),
+          gender: (term.gender ?? 'unknown') as CharacterGender,
+          ...(term.note ? { role: term.note } : {})
+        })),
+        dyads: [],
+        rejected: verified.rejected.map((term) => ({
+          source: term.source,
+          ...(term.reason ? { reason: term.reason } : {})
+        }))
+      }
+    } finally {
+      services.connections.delete(connection.connectionId)
+    }
+    const path = writeGlossaryFile(out, file)
+    const usd = usdOf(model, calls)
+    appendRegistry(
+      RUNS_LOG,
+      summarizeRun(
+        calls,
+        {
+          runId,
+          ncode: novel.ncode,
+          variant: `extract→${out}`,
+          thinking: 'off',
+          model,
+          ...gitState(),
+          promptVersion: 'glossary-extract-v1',
+          usd,
+          note: 'AI trích xuất glossary'
+        },
+        sha,
+        TRANSLATE_PROMPT_VERSION
+      )
+    )
+    console.log(
+      `  ${file.characters?.length ?? 0} nhân vật, ${file.entries.length} thuật ngữ, ` +
+        `${file.rejected?.length ?? 0} loại, ${(file.extraction as { dropped: unknown[] }).dropped.length} bỏ khi kiểm; ` +
+        `${calls.length} lời gọi ≈ $${usd.toFixed(4)} → ${path}`
+    )
+    for (const character of file.characters ?? []) {
+      console.log(`    ${character.source} → ${character.target} (${character.gender})`)
+    }
+  } finally {
+    library.close()
+    writeHistory(manifest)
+  }
+}
+
+/** Đặt tên tiếng Việt cho một bản: dùng làm tên tác phẩm khi mở bằng app và tên tệp xuất. */
+// ---------------------------------------------------------------- trau chuốt
+
+/** Một đoạn sửa ghi vào nhật ký trau chuốt, đã nhận hoặc bị code loại. */
+interface PolishLogEntry {
+  chapter: number
+  paragraph: number
+  issue: string
+  note: string
+  before: string
+  after: string
+  /** Vắng là đã nhận; có là lý do code loại. */
+  rejected?: string
+}
+
+/** Số lời gọi tối đa để khoanh đoạn bị bộ lọc chặn trong một lô trau chuốt. */
+const POLISH_FILTER_CALLS = 8
+
+/**
+ * Trau chuốt bản dịch của bản `--from` thành bản mới `--to` (biến thể "soát rồi sửa"): model gắn nhãn
+ * lỗi rồi sửa, code kiểm từng đoạn sửa, đoạn không sửa giữ nguyên bản nháp. Mỗi đoạn sửa, nhận hay bị
+ * loại, ghi vào `polish/<ncode>-<to>.jsonl` và một tệp đọc `export/<…> — thay đổi.md`.
+ */
+async function polish(manifest: Manifest, args: Args): Promise<void> {
+  const key = env('GEMINI_API_KEY')
+  if (!key) throw new Error('Thiếu GEMINI_API_KEY (biến môi trường hoặc .env).')
+  const [ncode] = args.positional
+  const novel = pickNovels(manifest, [ncode ?? ''])[0]
+  const from = args.flags.get('from')
+  if (!from || !novel.copies[from]) throw new Error('Cần --from <bản đã dịch>.')
+  const to = args.flags.get('to') ?? `${from}+polish`
+  const variant = parseVariant(to)
+  const model = args.flags.get('model') ?? env('MIRA_LAB_MODEL', 'gemini-2.5-flash')
+  const baseUrl =
+    args.flags.get('base-url') ??
+    env('MIRA_LAB_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta/openai')
+  const rpm = Number(args.flags.get('rpm') ?? env('MIRA_LAB_RPM', '8'))
+  const maxUsd = Number(args.flags.get('max-usd') ?? 'Infinity')
+  const note = args.flags.get('note')
+  const glossaryName = glossaryNameOf(novel, from)
+  const file = glossaryFileOf(glossaryName)
+
+  const runId = new Date().toISOString().replace(/[:.]/g, '-')
+  const git = gitState()
+  const runDir = join(LAB, 'runs', runId)
+  mkdirSync(runDir, { recursive: true })
+  mkdirSync(join(LAB, 'polish'), { recursive: true })
+  const logPath = join(LAB, 'polish', `${novel.ncode}-${to}.jsonl`)
+  const library = openLibrary(manifest)
+  const calls: CallRecord[] = []
+  const context = { ncode: novel.ncode, variant: to, chapter: 0 }
+  const services = createServices({
+    library,
+    crypto: volatileCrypto,
+    fetch: recordingFetch(fetch, context, (record) => {
+      calls.push(record)
+      appendFileSync(join(runDir, `${novel.ncode}-${to}.jsonl`), JSON.stringify(record) + '\n')
+    })
+  })
+  const ids = await setupConnection(services, key, model, baseUrl, rpm, variant.thinking)
+  const caller = services.connections.translator(ids.connectionId, ids.entryId)
+    .provider as unknown as TranslationModelCaller
+
+  const nameOf = new Map<string, string>()
+  for (const character of file?.characters ?? []) {
+    for (const form of [character.source, ...(character.aliases ?? [])]) {
+      nameOf.set(form, character.target)
+    }
+  }
+  const glossary: PolishTerm[] = (file?.entries ?? [])
+    .filter((entry) => !entry.forbidden)
+    .map((entry) => ({ source: entry.source, aliases: entry.aliases, target: entry.target }))
+  const names: PolishName[] = (file?.characters ?? []).map((character) => ({
+    target: character.target,
+    forms: [character.source, ...(character.aliases ?? [])]
+  }))
+
+  try {
+    const toId = novel.copies[to] ?? createCopy(manifest, library, novel, from, to, glossaryName)
+    const fromId = novel.copies[from]
+    const work = library.get(fromId)
+    const fromChapters = chapterIds(library, fromId)
+    const toChapters = chapterIds(library, toId)
+    const totals = { accepted: 0, rejected: 0, filtered: 0, paragraphs: 0 }
+    const log: PolishLogEntry[] = []
+
+    for (const n of parseRange(args.flags.get('chapters'), novel.chapterCount)) {
+      if (usdOf(model, calls) >= maxUsd) {
+        console.log(`Đã chạm ngân sách $${maxUsd}; dừng.`)
+        break
+      }
+      context.chapter = n
+      const source = library.readText(fromId, fromChapters[n - 1], 'source').content
+      const draft = library.readText(fromId, fromChapters[n - 1], 'target').content
+      const srcParas = paragraphs(source)
+      const draftParas = paragraphs(draft)
+      if (draft.trim() === '') continue
+      if (srcParas.length !== draftParas.length) {
+        console.log(`chương ${n}: lệch số đoạn (${srcParas.length}/${draftParas.length}), bỏ qua.`)
+        continue
+      }
+
+      const mentioned = (file?.characters ?? []).filter((character) =>
+        [character.source, ...(character.aliases ?? [])].some((form) => source.includes(form))
+      )
+      const characters = mentioned.map((character) => {
+        const forms = [character.source, ...(character.aliases ?? [])].join(', ')
+        const facts = [
+          character.gender,
+          character.role,
+          character.thirdPerson ? `người kể gọi "${character.thirdPerson}"` : ''
+        ]
+          .filter(Boolean)
+          .join(', ')
+        return `- ${forms} → ${character.target}${facts ? ': ' + facts : ''}`
+      })
+      const present = new Set(mentioned.map((character) => character.source))
+      const addressing = (file?.dyads ?? [])
+        .filter((dyad) => present.has(dyad.from) && present.has(dyad.to))
+        .filter((dyad) => !dyad.chapters || parseRange(dyad.chapters, n).includes(n))
+        .map(
+          (dyad) =>
+            `- ${nameOf.get(dyad.from) ?? dyad.from} → ${nameOf.get(dyad.to) ?? dyad.to}: tự xưng "${dyad.self}", gọi "${dyad.address}"` +
+            (dyad.secondPerson ? `, ngôi hai "${dyad.secondPerson}"` : '')
+        )
+      const polishContext = { sourceLang: work.sourceLang, characters, addressing, glossary }
+
+      // Id tạm theo thứ tự đoạn trong chương; đoạn nháp trống (bị từ chối, thiếu) không gửi.
+      const items: PolishItem[] = srcParas
+        .map((src, i) => ({ id: `[${i + 1}]`, src, dst: draftParas[i] }))
+        .filter((item) => item.dst.trim() !== '')
+      const result = new Map<number, string>()
+      let filteredHere = 0
+
+      const send = async (part: PolishItem[], budget: { calls: number }): Promise<void> => {
+        if (budget.calls >= POLISH_FILTER_CALLS) {
+          filteredHere += part.length
+          return
+        }
+        budget.calls++
+        let reply
+        try {
+          reply = await caller.complete(buildPolishMessages(polishContext, part))
+        } catch (error) {
+          console.log(`chương ${n}: lỗi lô — ${String(error)}`)
+          return
+        }
+        if (reply.finishReason === 'filter') {
+          if (part.length === 1) {
+            filteredHere++
+            return
+          }
+          const middle = Math.ceil(part.length / 2)
+          await send(part.slice(0, middle), budget)
+          await send(part.slice(middle), budget)
+          return
+        }
+        const verdict = verifyEdits(part, parsePolish(reply.text), { glossary, names })
+        const indexOf = (id: string): number => Number(id.slice(1, -1)) - 1
+        for (const edit of verdict.accepted) {
+          result.set(indexOf(edit.id), edit.dst)
+        }
+        for (const edit of [...verdict.accepted, ...verdict.rejected]) {
+          const i = indexOf(edit.id)
+          log.push({
+            chapter: n,
+            paragraph: i + 1,
+            issue: edit.issue,
+            note: edit.note,
+            before: draftParas[i] ?? '',
+            after: edit.dst,
+            ...('reason' in edit ? { rejected: (edit as RejectedEdit).reason } : {})
+          })
+        }
+        totals.rejected += verdict.rejected.length
+      }
+
+      const before = calls.length
+      for (const batch of polishBatches(items)) await send(batch, { calls: 0 })
+      totals.accepted += result.size
+      totals.filtered += filteredHere
+      totals.paragraphs += items.length
+
+      // Thay từng dòng có chữ theo thứ tự, giữ nguyên dòng trống và bố cục của bản nháp.
+      let index = 0
+      const content = draft
+        .split(/\r?\n/)
+        .map((line) => (line.trim() === '' ? line : (result.get(index++) ?? line.trim())))
+        .join('\n')
+      const target = library.readText(toId, toChapters[n - 1], 'target')
+      library.saveText(
+        toId,
+        toChapters[n - 1],
+        'target',
+        content,
+        target.rev,
+        segment(content, 'vi')
+      )
+
+      const mine = calls.slice(before)
+      novel.stats[to] = {
+        ...novel.stats[to],
+        [String(n)]: {
+          at: runId,
+          model,
+          calls: mine.length,
+          inputTokens: mine.reduce((sum, call) => sum + call.inputTokens, 0),
+          cachedTokens: mine.reduce((sum, call) => sum + call.cachedTokens, 0),
+          outputTokens: mine.reduce((sum, call) => sum + call.outputTokens, 0),
+          reasoningTokens: mine.reduce((sum, call) => sum + call.reasoningTokens, 0),
+          usd: usdOf(model, mine),
+          failed: 0,
+          seconds: Math.round(mine.reduce((sum, call) => sum + call.ms, 0) / 100) / 10
+        }
+      }
+      writeManifest(manifest)
+      console.log(
+        `chương ${n}: sửa ${result.size}/${items.length} đoạn` +
+          (filteredHere ? `, ${filteredHere} đoạn bị lọc giữ bản nháp` : '') +
+          ` · tổng $${usdOf(model, calls).toFixed(3)}`
+      )
+    }
+
+    writeFileSync(logPath, log.map((entry) => JSON.stringify(entry)).join('\n') + '\n', 'utf8')
+    const changes = join(LAB, 'export', `${novel.ncode} ${novel.names?.[to] ?? to} — thay đổi.md`)
+    mkdirSync(join(LAB, 'export'), { recursive: true })
+    writeFileSync(changes, polishChangesMarkdown(novel, from, to, log), 'utf8')
+    console.log(
+      `\nSửa ${totals.accepted}/${totals.paragraphs} đoạn, code loại ${totals.rejected} bản sửa, ` +
+        `${totals.filtered} đoạn bị lọc · ≈ $${usdOf(model, calls).toFixed(3)}\nNhật ký: ${logPath}\nĐọc thay đổi: ${changes}`
+    )
+  } finally {
+    services.connections.delete(ids.connectionId)
+    if (calls.length > 0) {
+      appendRegistry(RUNS_LOG, {
+        ...summarizeRun(
+          calls,
+          {
+            runId,
+            ncode: novel.ncode,
+            variant: to,
+            thinking: variant.thinking ?? null,
+            model,
+            ...git,
+            glossary: glossaryProvenance(glossaryName),
+            usd: usdOf(model, calls),
+            note: [`trau chuốt từ ${from}`, note].filter(Boolean).join('; ')
+          },
+          sha,
+          POLISH_PROMPT_VERSION
+        ),
+        promptVersion: POLISH_PROMPT_VERSION
+      })
+    }
+    library.close()
+    writeHistory(manifest)
+  }
+}
+
+/** Tệp đọc các đoạn đã sửa: trước, sau, nhãn và lý do; bản sửa bị code loại để riêng cuối tệp. */
+function polishChangesMarkdown(
+  novel: NovelEntry,
+  from: string,
+  to: string,
+  log: PolishLogEntry[]
+): string {
+  const byPlace = (a: PolishLogEntry, b: PolishLogEntry): number =>
+    a.chapter - b.chapter || a.paragraph - b.paragraph
+  const accepted = log.filter((entry) => !entry.rejected).sort(byPlace)
+  const rejected = log.filter((entry) => entry.rejected).sort(byPlace)
+  const counts = new Map<string, number>()
+  for (const entry of accepted) counts.set(entry.issue, (counts.get(entry.issue) ?? 0) + 1)
+  const lines = [
+    `# ${novel.title} — trau chuốt ${from} → ${to}`,
+    '',
+    `Đã sửa ${accepted.length} đoạn (${[...counts].map(([issue, n]) => `${issue} ${n}`).join(', ')}); ` +
+      `code loại ${rejected.length} bản sửa.`,
+    ''
+  ]
+  let chapter = 0
+  for (const entry of accepted) {
+    if (entry.chapter !== chapter) {
+      chapter = entry.chapter
+      lines.push(`## Chương ${chapter}`, '')
+    }
+    lines.push(
+      `**${entry.paragraph}.** \`${entry.issue}\` ${entry.note}  `,
+      `− ${entry.before}  `,
+      `+ ${entry.after}`,
+      ''
+    )
+  }
+  if (rejected.length > 0) {
+    lines.push('## Bản sửa bị code loại', '')
+    for (const entry of rejected) {
+      lines.push(
+        `**${entry.chapter}.${entry.paragraph}** \`${entry.issue}\` — ${entry.rejected}: ${entry.note}  `,
+        `− ${entry.before}  `,
+        `+ ${entry.after}`,
+        ''
+      )
+    }
+  }
+  return lines.join('\n')
+}
+
+function nameCopy(manifest: Manifest, args: Args): void {
+  const [ncode, label, ...words] = args.positional
+  const novel = pickNovels(manifest, [ncode ?? ''])[0]
+  const name = words.join(' ').trim()
+  if (!label || !novel.copies[label] || name === '') {
+    throw new Error('Cần: name <ncode> <nhãn bản> <tên tiếng Việt>.')
+  }
+  const library = openLibrary(manifest)
+  try {
+    library.update(novel.copies[label], { title: name.slice(0, 200) })
+  } finally {
+    library.close()
+  }
+  novel.names = { ...novel.names, [label]: name }
+  writeManifest(manifest)
+  console.log(`${novel.ncode} [${label}] → ${name}`)
+}
+
+/** Các lần chạy trong sổ, mới nhất trước. */
+function listRuns(manifest: Manifest, args: Args): void {
+  const { runs } = readRegistry()
+  const codes = args.positional
+  const variants = args.flags
+    .get('variants')
+    ?.split(',')
+    .map((value) => value.trim())
+  const limit = Number(args.flags.get('limit') ?? '30')
+  const picked = runs
+    .filter((run) => codes.length === 0 || codes.includes(run.ncode))
+    .filter((run) => !variants || variants.includes(run.variant))
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, limit)
+  if (picked.length === 0) {
+    console.log('Sổ chưa có lần chạy nào khớp; lần chạy cũ nhập bằng `backfill`.')
+    return
+  }
+  for (const run of picked) {
+    const commit = run.commit
+      ? `${run.commit}${run.dirty ? '+' : ''}${run.commitApprox ? '~' : ''}`
+      : '–'
+    console.log(
+      `${run.at.slice(0, 16).replace('T', ' ')}  ${run.ncode} [${run.variant}]  ` +
+        `${run.model ?? '?'} · thinking ${run.thinking ?? 'mặc định'} · ${run.promptVersion ?? '?'} ` +
+        `#${run.systemHashes.map((h) => h.slice(0, 8)).join(',') || '?'} · ${commit} · ` +
+        `ch ${run.chapters.join(',')} · ${run.calls} lời gọi` +
+        (run.httpErrors ? `, ${run.httpErrors} lỗi HTTP` : '') +
+        (run.usd === null ? '' : ` · $${run.usd.toFixed(3)}`) +
+        (run.note ? `\n    ${run.note}` : '')
+    )
+  }
+  const total = Object.keys(manifest.novels).length
+  console.log(`\n${picked.length}/${runs.length} lần chạy; ${total} truyện trong lab.`)
+}
+
+/** So hai biến thể của một truyện theo lần đo gần nhất của từng chỉ số. */
+function compareVariants(args: Args): void {
+  const [ncode, a, b] = args.positional
+  if (!ncode || !a || !b) throw new Error('Cần: compare <ncode> <biến thể A> <biến thể B>.')
+  const { runs, measurements } = readRegistry()
+  const result = compareSnapshots(
+    snapshotOf(ncode, a, runs, measurements),
+    snapshotOf(ncode, b, runs, measurements)
+  )
+  const width = Math.max(...result.rows.map((row) => row.metric.length))
+  console.log(`${ncode}: ${a} ↔ ${b}\n`)
+  for (const row of result.rows) {
+    const mark = row.better === 'a' ? '  ← A tốt hơn' : row.better === 'b' ? '  ← B tốt hơn' : ''
+    console.log(`${row.metric.padEnd(width)}  A ${row.a}  ·  B ${row.b}${mark}`)
+  }
+  for (const warning of result.warnings) console.log('\nCảnh báo: ' + warning)
+  if (!measurements.some((m) => m.ncode === ncode)) {
+    console.log('\nChưa có lần đo nào: chạy `report` và `pairs` cho truyện này trước.')
+  }
+}
+
+/**
+ * Nhập các lần chạy cũ từ `runs/<runId>/*.jsonl` vào sổ. Model lấy từ `lab.json` nếu chương còn trỏ
+ * về lần chạy đó; commit đoán theo thời điểm và đánh dấu. Bản dịch cũ đã bị ghi đè nên không nhập
+ * được lần đo: chạy lại `report`/`pairs` để chụp trạng thái hiện tại.
+ */
+function backfill(manifest: Manifest): void {
+  const runsDir = join(LAB, 'runs')
+  const known = new Set(readRegistry().runs.map((run) => run.id))
+  let added = 0
+  for (const runId of existsSync(runsDir) ? readdirSync(runsDir).sort() : []) {
+    const dir = join(runsDir, runId)
+    if (!statSync(dir).isDirectory()) continue
+    const byLane = new Map<string, CallRecord[]>()
+    for (const file of readdirSync(dir).filter((name) => name.endsWith('.jsonl'))) {
+      for (const record of parseRegistry<CallRecord & { version?: string }>(
+        readFileSync(join(dir, file), 'utf8')
+      )) {
+        const variant = record.variant ?? record.version ?? '?'
+        const key = `${record.ncode}\u0000${variant}`
+        // Bản ghi cũ chưa có `reasoningTokens`; thiếu nó thì chi phí thành NaN.
+        const call = { ...record, variant, reasoningTokens: record.reasoningTokens ?? 0 }
+        byLane.set(key, [...(byLane.get(key) ?? []), call])
+      }
+    }
+    for (const [key, calls] of byLane) {
+      const [ncode, variant] = key.split('\u0000')
+      if (known.has(`${runId}/${ncode}/${variant}`)) continue
+      const stats = Object.values(manifest.novels[ncode]?.stats[variant] ?? {})
+      const model = stats.find((s) => s.at === runId)?.model ?? null
+      let thinking: string | null = null
+      try {
+        thinking = parseVariant(variant).thinking ?? null
+      } catch {
+        // nhãn cũ không theo quy ước hậu tố
+      }
+      const iso = Number.isNaN(Date.parse(runIdToIso(runId))) ? '' : runIdToIso(runId)
+      appendRegistry(
+        RUNS_LOG,
+        summarizeRun(
+          calls,
+          {
+            runId,
+            ncode,
+            variant,
+            thinking,
+            model,
+            commit: iso ? commitBefore(iso) : null,
+            dirty: null,
+            commitApprox: true,
+            // Mọi glossary của Lab trước sổ này đều do Claude soạn tay; nội dung lúc chạy không còn để băm.
+            glossary: { hash: '?', origin: 'claude-draft' },
+            usd: model ? usdOf(model, calls) : null,
+            backfilled: true
+          },
+          sha,
+          TRANSLATE_PROMPT_VERSION
+        )
+      )
+      added++
+    }
+  }
+  console.log(`Đã nhập ${added} lần chạy; sổ đã có sẵn ${known.size} lần chạy.`)
+  writeHistory(manifest)
+}
 
 /** Ô còn trống trong dữ liệu xưng hô của mỗi truyện — chỗ model sẽ phải tự đoán. */
 function gaps(manifest: Manifest, args: Args): void {
@@ -1500,18 +2446,32 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
       Nạp truyện syosetsu-downloader (meta.json + plain/*.txt) thành các biến thể còn thiếu,
       kèm glossary ở fixtures/private/lab/glossary/<ncode>.json.
   glossary [ncode…|all]
-      Nạp lại glossary, nhân vật và cặp xưng hô từ tệp cho mọi bản (thay toàn bộ).
+      Nạp lại glossary, nhân vật và cặp xưng hô từ tệp cho mọi bản (thay toàn bộ); mỗi bản dùng tệp riêng
+      đã gán khi fork, không thì tệp chung <ncode>.json.
+  fork <ncode> --variants a,b [--from <bản>] [--glossary <tên tệp>|none]
+      Tạo bản mới bằng cách chép bản gốc từ một bản có sẵn, gán glossary riêng (hoặc không glossary).
+  extract <ncode> [--chapters 1-30] [--out <ncode>.ai] [--model gemini-2.5-flash] [--from <bản>]
+      AI trích xuất thuật ngữ và nhân vật: code sinh ứng viên, AI quét bổ sung, AI phân loại và đề xuất
+      dịch, code kiểm lại. Ghi tệp riêng origin: ai, không đè tệp chung; ghi lần chạy vào sổ.
   prompt <ncode> [--chapter 1] [--batch 1] [--variants base] [--repair]
       In đúng prompt sẽ gửi, không gọi mạng, không tốn token.
   translate [ncode…|all] [--variants …] [--chapters 1-3] [--model gemini-2.5-flash]
             [--parallel] [--concurrency 1] [--rpm 8] [--max-usd 5] [--batch-tokens 16000]
-            [--force] [--redo-failed]
-      Dịch thật qua đường của UI; cần GEMINI_API_KEY. Mỗi request ghi vào fixtures/private/lab/runs/.
+            [--force] [--redo-failed] [--note "giả thuyết"]
+      Dịch thật qua đường của UI; cần GEMINI_API_KEY. Mỗi request ghi vào fixtures/private/lab/runs/,
+      mỗi truyện × biến thể thêm một dòng vào sổ đăng ký (model, prompt, hash, commit, glossary, chi phí).
       --parallel: mỗi truyện × biến thể một luồng; --concurrency: số chương dịch cùng lúc mỗi luồng;
       --max-usd: dừng nhận chương mới khi chi phí (gồm thinking) chạm mức này.
   report [ncode…|all] [--variants …] [--side-by-side 1-3]
       So các biến thể: số đoạn, tuân thủ glossary, token, thinking, chi phí; vài chương đặt cạnh nhau.
-  export | pdf [ncode…|all] [--variants …]
+  polish <ncode> --from <bản> [--to <bản>+polish] [--chapters 1-30] [--model gemini-2.5-flash]
+         [--max-usd 1] [--note "…"]
+      Trau chuốt "soát rồi sửa": model gắn nhãn lỗi rồi sửa, code kiểm từng đoạn sửa, ghi vào bản mới
+      (nhãn --to; hậu tố -think/-nothink chọn thinking). Ghi polish/<ncode>-<to>.jsonl và
+      export/<…> — thay đổi.md (trước/sau từng đoạn).
+  name <ncode> <nhãn bản> <tên tiếng Việt>
+      Đặt tên cho một bản (tên tác phẩm trong app, tên tệp xuất).
+  export | pdf [ncode…|all] [--variants …] [--chapters 1-30]
       Xuất mỗi bản ra txt, hoặc PDF khổ A5 cùng định dạng ebook của module Xuất.
   analyze [ncode…|all] [--chapters 1-30] [--model gemini-3.1-flash-lite] [--apply]
       AI đề xuất giới tính, đại từ ngôi ba và cặp xưng hô đủ ô kèm câu bằng chứng, ghi vào
@@ -1522,6 +2482,14 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
       Ô còn trống trong nhân vật và cặp xưng hô (thiếu đại từ ngôi hai, ngôi ba, giới tính).
   cost [ncode…|all]
       Token, chi phí (gồm thinking) và tần suất gọi của các lần chạy.
+  runs [ncode…] [--variants …] [--limit 30]
+      Các lần chạy trong sổ đăng ký, mới nhất trước.
+  compare <ncode> <biến thể A> <biến thể B>
+      So hai biến thể theo lần đo gần nhất (report, pairs) và cấu hình đã chạy; cảnh báo khi khác chương.
+  history
+      Sinh lại docs/modules/measurement/history.md từ sổ (report, pairs, translate tự làm việc này).
+  backfill
+      Nhập các lần chạy cũ trong runs/ vào sổ; commit đoán theo thời điểm, glossary ghi claude-draft.
   list | open
       Tình trạng từng bản; lệnh mở thư viện lab bằng app Mira.
 `
@@ -1559,7 +2527,7 @@ async function main(): Promise<void> {
       try {
         for (const novel of pickNovels(manifest, args.positional)) {
           for (const [label, workId] of Object.entries(novel.copies)) {
-            const count = syncGlossary(library, workId, novel.ncode)
+            const count = syncGlossary(library, workId, glossaryNameOf(novel, label))
             console.log(`${novel.ncode} [${label}]: ${count} thuật ngữ.`)
           }
         }
@@ -1586,6 +2554,22 @@ async function main(): Promise<void> {
       return pairs(manifest, args)
     case 'gaps':
       return gaps(manifest, args)
+    case 'fork':
+      return fork(manifest, args)
+    case 'polish':
+      return polish(manifest, args)
+    case 'name':
+      return nameCopy(manifest, args)
+    case 'extract':
+      return extract(manifest, args)
+    case 'runs':
+      return listRuns(manifest, args)
+    case 'compare':
+      return compareVariants(args)
+    case 'history':
+      return writeHistory(manifest)
+    case 'backfill':
+      return backfill(manifest)
     case 'list':
       return list(manifest)
     case 'open':
