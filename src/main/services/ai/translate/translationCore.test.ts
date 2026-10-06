@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
 import { executeTranslateBatch, type TranslationModelCaller } from './translationCore'
 
 describe('translationCore — Điều phối Lõi dịch theo lô', () => {
@@ -7,7 +8,13 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
       async complete() {
         return {
           text: JSON.stringify([
-            { id: '[1]', speaker_to_listener: 'A→B', self_ref: 'tôi', addr_ref: 'cậu', dst: 'Cậu về rồi à?' }
+            {
+              id: '[1]',
+              speaker_to_listener: 'A→B',
+              self_ref: 'tôi',
+              addr_ref: 'cậu',
+              dst: 'Cậu về rồi à?'
+            }
           ]),
           usage: null
         }
@@ -15,7 +22,7 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
     }
     const result = await executeTranslateBatch({
       caller,
-      units: [{ id: 'u1', text: '「帰った？」' }],
+      units: [{ id: 'u1', text: '「帰った？」' }]
     })
     expect(result.error).toBeNull()
     expect(result.failedIds).toEqual([])
@@ -227,5 +234,102 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
     expect(callCount).toBe(1)
     expect(result.items).toEqual([{ id: 'u1', text: 'Đã xong trước khi hủy' }])
     expect(result.failedIds).toEqual(['u2'])
+  })
+
+  /**
+   * Caller giả: chặn mọi request có đoạn chứa "XẤU", và đoạn chứa "NHẠY" khi request kèm glossary;
+   * trả bản dịch cho phần còn lại.
+   */
+  function filteringCaller(): TranslationModelCaller & { calls: number } {
+    const caller = {
+      calls: 0,
+      async complete(messages: Array<{ role: string; content: string }>) {
+        caller.calls++
+        const user = messages.find((message) => message.role === 'user')?.content ?? ''
+        const source = JSON.parse(
+          /<source>\n([\s\S]*?)\n<\/source>/.exec(user)?.[1] ?? '[]'
+        ) as Array<{
+          id: string
+          src: string
+        }>
+        const withGlossary = user.includes('<glossary>')
+        if (
+          source.some(
+            (item) => item.src.includes('XẤU') || (withGlossary && item.src.includes('NHẠY'))
+          )
+        ) {
+          return { text: '', usage: { inputTokens: 1, outputTokens: 0 }, finishReason: 'filter' }
+        }
+        return {
+          text: JSON.stringify(source.map((item) => ({ id: item.id, dst: 'vi:' + item.src }))),
+          usage: { inputTokens: 1, outputTokens: 1 },
+          finishReason: 'stop'
+        }
+      }
+    }
+    return caller
+  }
+
+  it('lô bị bộ lọc nội dung chặn: chia đôi, cứu các đoạn vô can, chỉ báo đúng đoạn bị từ chối', async () => {
+    const caller = filteringCaller()
+    const units = ['a', 'b', 'c', 'XẤU', 'e', 'f'].map((text, i) => ({ id: `u${i + 1}`, text }))
+    const result = await executeTranslateBatch({ caller, units })
+    expect(result.items.map((item) => item.id).sort()).toEqual(['u1', 'u2', 'u3', 'u5', 'u6'])
+    expect(result.items.find((item) => item.id === 'u5')?.text).toBe('vi:e')
+    expect(result.refusedIds).toEqual(['u4'])
+    expect(result.failedIds).toEqual(['u4'])
+    expect(result.error?.kind).toBe('refused')
+    // Lượt chính, rồi 3+3 → 2+1 → 1+1: đoạn xấu được gửi riêng một lần để chắc chính nó bị chặn, và không
+    // bị hỏi lại thêm ở lượt hỏi lại.
+    expect(caller.calls).toBe(7)
+    expect(result.usage?.inputTokens).toBe(7)
+  })
+
+  it('không vượt trần số lời gọi khi mọi đoạn đều bị chặn', async () => {
+    const caller = filteringCaller()
+    const units = Array.from({ length: 40 }, (_, i) => ({ id: `u${i}`, text: 'XẤU ' + i }))
+    const result = await executeTranslateBatch({ caller, units })
+    expect(caller.calls).toBeLessThanOrEqual(1 + 16 + 1)
+    expect(result.items).toEqual([])
+    expect(result.failedIds).toHaveLength(40)
+    expect(result.error?.kind).toBe('refused')
+  })
+
+  it('đoạn vẫn bị chặn thì gửi lại không kèm glossary; qua được thì đánh dấu, không thì báo từ chối', async () => {
+    const caller = filteringCaller()
+    const glossary: ContextEntryItem[] = [
+      {
+        id: 't',
+        kind: 'term',
+        source: 'a',
+        target: 'A',
+        status: 'approved',
+        origin: 'user',
+        forbidden: false,
+        fromChapterId: null,
+        toChapterId: null,
+        notes: null,
+        aliases: [],
+        createdAt: 1,
+        updatedAt: 1
+      }
+    ]
+    const units = ['a NHẠY', 'b', 'XẤU', 'd'].map((text, i) => ({ id: `u${i + 1}`, text }))
+    const result = await executeTranslateBatch({ caller, units, prompt: { glossary } })
+    expect(result.items.map((item) => item.id).sort()).toEqual(['u1', 'u2', 'u4'])
+    expect(result.withoutContextIds).toEqual(['u1'])
+    expect(result.refusedIds).toEqual(['u3'])
+    expect(result.error?.kind).toBe('refused')
+    // Lượt chính, chia 2+2 → 1+1 và 1+1, rồi gửi lại hai đoạn bị chặn không kèm glossary → 1+1.
+    expect(caller.calls).toBe(10)
+  })
+
+  it('prompt không có glossary, nhân vật hay cặp xưng hô thì không gửi lại', async () => {
+    const caller = filteringCaller()
+    const units = ['a', 'XẤU'].map((text, i) => ({ id: `u${i + 1}`, text }))
+    const result = await executeTranslateBatch({ caller, units })
+    expect(result.withoutContextIds).toEqual([])
+    expect(result.refusedIds).toEqual(['u2'])
+    expect(caller.calls).toBe(3)
   })
 })

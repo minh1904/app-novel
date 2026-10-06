@@ -208,7 +208,9 @@ export function mapFinishReason(raw: unknown): FinishReason {
     case 'content_filter':
       return 'filter'
     default:
-      return 'unknown'
+      // Gemini qua endpoint tương thích OpenAI ghi kèm lý do: "content_filter: PROHIBITED_CONTENT",
+      // "content_filter: RECITATION". Bỏ sót dạng này thì lô bị lọc trông như một phản hồi thiếu id.
+      return typeof raw === 'string' && raw.startsWith('content_filter') ? 'filter' : 'unknown'
   }
 }
 
@@ -408,6 +410,17 @@ export class OpenAiChatTransport {
         usage?: unknown
       }
       const content = payload.choices?.[0]?.message?.content
+      const finishReason = mapFinishReason(payload.choices?.[0]?.finish_reason)
+      // Bị bộ lọc nội dung chặn thì không có chữ: đó là một câu trả lời ("từ chối"), không phải phản hồi
+      // hỏng. Ném lỗi ở đây thì lõi dịch không biết để chia nhỏ lô, và cả lô mất.
+      if (typeof content !== 'string' && finishReason === 'filter') {
+        return {
+          text: '',
+          finishReason,
+          usage: normalizeUsage(payload.usage),
+          status: response.status
+        }
+      }
       if (typeof content !== 'string') {
         throw new ProviderError('invalid_response', 'Phản hồi không có nội dung văn bản.', {
           status: response.status
@@ -415,7 +428,7 @@ export class OpenAiChatTransport {
       }
       return {
         text: content,
-        finishReason: mapFinishReason(payload.choices?.[0]?.finish_reason),
+        finishReason,
         usage: normalizeUsage(payload.usage),
         status: response.status
       }

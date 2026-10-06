@@ -268,6 +268,8 @@ describe('mapFinishReason', () => {
     expect(mapFinishReason('tool_calls')).toBe('tool_calls')
     expect(mapFinishReason('function_call')).toBe('tool_calls')
     expect(mapFinishReason('content_filter')).toBe('filter')
+    expect(mapFinishReason('content_filter: PROHIBITED_CONTENT')).toBe('filter')
+    expect(mapFinishReason('content_filter: RECITATION')).toBe('filter')
     expect(mapFinishReason('weird')).toBe('unknown')
     expect(mapFinishReason(undefined)).toBe('unknown')
     expect(mapFinishReason(null)).toBe('unknown')
@@ -313,6 +315,32 @@ describe('complete', () => {
       )
     )
     expect((await t.complete(ask, { apiKey: null })).finishReason).toBe('length')
+  })
+
+  it('returns a filtered answer with no text as "filter", not as a broken response', async () => {
+    // Gemini, OpenAI-compatible endpoint, when its content filter blocks the answer.
+    const t = transport(
+      fetchFake(() =>
+        json({
+          choices: [
+            { message: { role: 'assistant' }, finish_reason: 'content_filter: PROHIBITED_CONTENT' }
+          ],
+          usage: { prompt_tokens: 50, completion_tokens: 0 }
+        })
+      )
+    )
+    expect(await t.complete(ask, { apiKey: KEY })).toEqual({
+      text: '',
+      finishReason: 'filter',
+      usage: { inputTokens: 50, outputTokens: 0 },
+      status: 200
+    })
+  })
+
+  it('still rejects an answer with no text that was not filtered', async () => {
+    const t = transport(fetchFake(() => json({ choices: [{ finish_reason: 'stop' }] })))
+    const error = (await t.complete(ask, { apiKey: KEY }).catch((e: unknown) => e)) as ProviderError
+    expect(error.kind).toBe('invalid_response')
   })
 
   it('reports no usage as no usage, and no finish_reason as unknown', async () => {

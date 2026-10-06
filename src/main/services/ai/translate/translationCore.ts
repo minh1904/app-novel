@@ -1,6 +1,7 @@
 import type { TokenUsage } from '../../../../shared/contracts/usage'
 import type { TranslateFailure } from '../../../../shared/contracts/aiTranslate'
 import type {
+  TempMappedUnit,
   TranslateUnit,
   ModelCompletionResult,
   TranslationModelCaller
@@ -29,6 +30,16 @@ export interface TranslateCoreBatchOptions {
 export interface TranslateCoreBatchOutcome {
   items: TranslateUnit[]
   failedIds: string[]
+  /**
+   * Đơn vị nhà cung cấp từ chối dịch (bộ lọc nội dung), đã khoanh tới từng đoạn. Nằm cả trong
+   * `failedIds`; tách riêng để báo người dịch rằng thử lại cũng vô ích, cần dịch tay hoặc model khác.
+   */
+  refusedIds: string[]
+  /**
+   * Đoạn bộ lọc chặn khi gửi kèm ngữ cảnh tác phẩm nhưng qua được khi gửi lại không kèm glossary,
+   * nhân vật và cặp xưng hô. Đã có bản dịch, nhưng tên và xưng hô chưa được đối chiếu, cần soát lại.
+   */
+  withoutContextIds: string[]
   usage: TokenUsage | null
   error: TranslateFailure | null
   /** Request lượt chính đã gửi; `null` khi lô không có gì để gửi. */
@@ -59,6 +70,8 @@ export async function executeTranslateBatch({
     return {
       items: skippedEmpty,
       failedIds: [],
+      refusedIds: [],
+      withoutContextIds: [],
       usage: null,
       error: null,
       request: null
@@ -85,6 +98,8 @@ export async function executeTranslateBatch({
       return {
         items: skippedEmpty,
         failedIds: sendable.map((u) => u.originalId),
+        refusedIds: [],
+        withoutContextIds: [],
         usage: totalUsage,
         error: { kind: error.kind, message: error.message, recoverAt },
         request
@@ -97,6 +112,8 @@ export async function executeTranslateBatch({
     return {
       items: skippedEmpty,
       failedIds: sendable.map((u) => u.originalId),
+      refusedIds: [],
+      withoutContextIds: [],
       usage: totalUsage,
       error: {
         kind: 'invalid_response',
@@ -107,12 +124,38 @@ export async function executeTranslateBatch({
     }
   }
 
-  // 3. Phân tích cú pháp và đối soát
-  const parsedItems = parseTranslationResponse(mainCall.text)
-  const reconciliation = reconcileTempItems(sendable, tempToId, parsedItems)
+  // 3. Phân tích cú pháp và đối soát. Lô bị bộ lọc nội dung chặn thì chia đôi để cứu các đoạn vô can.
+  const matched: TranslateUnit[] = []
+  let missingIds: string[] = []
+  let refusedIds: string[] = []
+  let withoutContextIds: string[] = []
+  if (mainCall.finishReason === 'filter') {
+    const split = await splitFiltered(sendable, prompt, caller, tempToId, signal)
+    totalUsage = addUsage(totalUsage, split.usage)
+    matched.push(...split.matched)
+    missingIds = split.missing
+    refusedIds = split.refused
 
-  const matched = [...reconciliation.matched]
-  let missingIds = [...reconciliation.missing, ...reconciliation.empty]
+    // Đoạn vẫn bị chặn: thử thêm một vòng không kèm glossary, nhân vật và cặp xưng hô.
+    const bare = withoutWorkContext(prompt)
+    if (refusedIds.length > 0 && bare && !signal?.aborted) {
+      const refusedUnits = sendable.filter((u) => refusedIds.includes(u.originalId))
+      const retry = await splitFiltered(refusedUnits, bare, caller, tempToId, signal, true)
+      totalUsage = addUsage(totalUsage, retry.usage)
+      matched.push(...retry.matched)
+      withoutContextIds = retry.matched.map((item) => item.id)
+      missingIds.push(...retry.missing)
+      refusedIds = retry.refused
+    }
+  } else {
+    const reconciliation = reconcileTempItems(
+      sendable,
+      tempToId,
+      parseTranslationResponse(mainCall.text)
+    )
+    matched.push(...reconciliation.matched)
+    missingIds = [...reconciliation.missing, ...reconciliation.empty]
+  }
 
   // 4. Nếu có ID thiếu và chưa bị hủy, hỏi lại đúng các ID đó 1 lần
   if (missingIds.length > 0 && !signal?.aborted) {
@@ -140,19 +183,114 @@ export async function executeTranslateBatch({
 
   const allItems = [...skippedEmpty, ...matched]
   const error: TranslateFailure | null =
-    missingIds.length > 0
+    refusedIds.length > 0
       ? {
-          kind: 'invalid_response',
-          message: `Thiếu ${missingIds.length} đoạn sau khi đã thử lại.`,
+          kind: 'refused',
+          message:
+            `Nhà cung cấp từ chối dịch ${refusedIds.length} đoạn (bộ lọc nội dung); cần dịch tay hoặc dùng model khác.` +
+            (missingIds.length > 0
+              ? ` Thiếu thêm ${missingIds.length} đoạn sau khi đã thử lại.`
+              : ''),
           recoverAt: null
         }
-      : null
+      : missingIds.length > 0
+        ? {
+            kind: 'invalid_response',
+            message: `Thiếu ${missingIds.length} đoạn sau khi đã thử lại.`,
+            recoverAt: null
+          }
+        : null
 
   return {
     items: allItems,
-    failedIds: missingIds,
+    failedIds: [...missingIds, ...refusedIds],
+    refusedIds,
+    withoutContextIds,
     usage: totalUsage,
     error,
     request
   }
+}
+
+/**
+ * Ngữ cảnh gửi lại cho đoạn bị chặn: bỏ glossary, nhân vật và cặp xưng hô, giữ nguyên bản gốc, đoạn
+ * liền trước và mọi chỉ dẫn. `null` khi prompt vốn không có các khối đó, gửi lại cũng như cũ.
+ */
+function withoutWorkContext(prompt: TranslatePromptContext): TranslatePromptContext | null {
+  const has = (list?: unknown[]): boolean => (list?.length ?? 0) > 0
+  if (!has(prompt.glossary) && !has(prompt.characters) && !has(prompt.dyads)) return null
+  return { ...prompt, glossary: [], characters: [], dyads: [] }
+}
+
+/** Số lời gọi tối đa để khoanh các đoạn bị bộ lọc chặn trong một lô: đủ cho lô 30 đoạn có vài đoạn xấu. */
+export const MAX_FILTER_SPLIT_CALLS = 16
+
+/**
+ * Lô bị bộ lọc nội dung của nhà cung cấp chặn: chia đôi và gửi lại từng nửa, cho tới khi khoanh được
+ * đúng các đoạn vẫn bị chặn khi đứng một mình. Thường chỉ vài câu kích hoạt bộ lọc, mà không chia thì
+ * cả lô mất. Không đổi nội dung hay chỉ dẫn gửi đi: đoạn bộ lọc vẫn chặn thì để trống và báo
+ * `refused`. Nửa trả về bình thường mà thiếu id thì để lượt hỏi lại xử lý như mọi lô.
+ * `untried`: `units` chưa gửi với `prompt` này, gửi cả nhóm trước rồi mới chia.
+ */
+async function splitFiltered(
+  units: TempMappedUnit[],
+  prompt: TranslatePromptContext,
+  caller: TranslationModelCaller,
+  tempToId: Map<string, string>,
+  signal?: AbortSignal,
+  untried = false
+): Promise<{
+  matched: TranslateUnit[]
+  missing: string[]
+  refused: string[]
+  usage: TokenUsage | null
+}> {
+  const matched: TranslateUnit[] = []
+  const missing: string[] = []
+  const refused: string[] = []
+  let usage: TokenUsage | null = null
+  let calls = 0
+  const ids = (part: TempMappedUnit[]): string[] => part.map((unit) => unit.originalId)
+
+  // `part` là phần vừa bị chặn: một đoạn thì đã khoanh xong, nhiều hơn thì chia tiếp.
+  const narrow = async (part: TempMappedUnit[]): Promise<void> => {
+    if (part.length === 1) {
+      refused.push(part[0].originalId)
+      return
+    }
+    const middle = Math.ceil(part.length / 2)
+    for (const half of [part.slice(0, middle), part.slice(middle)]) await attempt(half)
+  }
+
+  const attempt = async (part: TempMappedUnit[]): Promise<void> => {
+    if (signal?.aborted || calls >= MAX_FILTER_SPLIT_CALLS) {
+      missing.push(...ids(part))
+      return
+    }
+    calls++
+    let result: ModelCompletionResult
+    try {
+      result = await caller.complete(buildTranslateRequest(prompt, part).messages, { signal })
+    } catch {
+      missing.push(...ids(part))
+      return
+    }
+    usage = addUsage(usage, result.usage)
+    if (result.finishReason === 'filter') {
+      await narrow(part)
+    } else if (result.finishReason === 'length') {
+      missing.push(...ids(part))
+    } else {
+      const reconciliation = reconcileTempItems(
+        part,
+        tempToId,
+        parseTranslationResponse(result.text)
+      )
+      matched.push(...reconciliation.matched)
+      missing.push(...reconciliation.missing, ...reconciliation.empty)
+    }
+  }
+
+  await (untried ? attempt(units) : narrow(units))
+  return { matched, missing, refused, usage }
 }
