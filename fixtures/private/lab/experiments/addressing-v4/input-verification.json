@@ -1,0 +1,46 @@
+[
+  {
+    "variant": "v3-nothink",
+    "chapters": 242,
+    "sourceHash": "b1c4c6fcbc0c8dd871167698f61be1b9c16876f05a852db22b0b07702f7171b3",
+    "contextEntries": 33,
+    "contextHash": "a6c67da7ad3439175d5f1d57b59d1c79d0caf7504fb87d895f18b9d5a602cfec",
+    "work": [
+      "High fantasy (ハイファンタジー)",
+      "ja"
+    ]
+  },
+  {
+    "variant": "v3-nothink+t1",
+    "chapters": 242,
+    "sourceHash": "b1c4c6fcbc0c8dd871167698f61be1b9c16876f05a852db22b0b07702f7171b3",
+    "contextEntries": 33,
+    "contextHash": "dc0b8ea9654d65e6b260278fe481755979ecc1618ee0b43ac85fc8f6c0131792",
+    "work": [
+      "High fantasy (ハイファンタジー)",
+      "ja"
+    ]
+  },
+  {
+    "variant": "v3-nothink+t1-full",
+    "chapters": 242,
+    "sourceHash": "b1c4c6fcbc0c8dd871167698f61be1b9c16876f05a852db22b0b07702f7171b3",
+    "contextEntries": 33,
+    "contextHash": "dc0b8ea9654d65e6b260278fe481755979ecc1618ee0b43ac85fc8f6c0131792",
+    "work": [
+      "High fantasy (ハイファンタジー)",
+      "ja"
+    ]
+  },
+  {
+    "variant": "v4-nothink",
+    "chapters": 242,
+    "sourceHash": "b1c4c6fcbc0c8dd871167698f61be1b9c16876f05a852db22b0b07702f7171b3",
+    "contextEntries": 33,
+    "contextHash": "dc0b8ea9654d65e6b260278fe481755979ecc1618ee0b43ac85fc8f6c0131792",
+    "work": [
+      "High fantasy (ハイファンタジー)",
+      "ja"
+    ]
+  }
+]

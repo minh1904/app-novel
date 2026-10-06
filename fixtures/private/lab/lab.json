@@ -2824,7 +2824,10 @@
       "chapterCount": 242,
       "copies": {
         "v2-nothink+moi": "f16e1c16-7ace-4edb-b2b3-130077357571",
-        "v3-nothink": "be81c5cf-ba11-4b67-8ba8-2a67d0fc01a0"
+        "v3-nothink": "be81c5cf-ba11-4b67-8ba8-2a67d0fc01a0",
+        "v3-nothink+t1": "e10c206a-fc0a-4efe-b932-fac4685020ba",
+        "v3-nothink+t1-full": "6fd3b351-d527-451d-8582-db077339aacf",
+        "v4-nothink": "bd1d3b4e-6e5d-4b6e-8204-eb235ece9a9c"
       },
       "stats": {
         "v2-nothink+moi": {
@@ -3310,11 +3313,380 @@
             "failed": 0,
             "seconds": 21.4
           }
+        },
+        "v3-nothink+t1": {
+          "1": {
+            "at": "2026-10-06T02-55-25-851Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 2948,
+            "cachedTokens": 0,
+            "outputTokens": 661,
+            "reasoningTokens": 0,
+            "usd": 0.0017,
+            "failed": 0,
+            "seconds": 4.8
+          },
+          "2": {
+            "at": "2026-10-06T03-33-53-514Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 4366,
+            "cachedTokens": 0,
+            "outputTokens": 2435,
+            "reasoningTokens": 0,
+            "usd": 0.0047,
+            "failed": 0,
+            "seconds": 9.5
+          },
+          "3": {
+            "at": "2026-10-06T03-33-53-514Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 2,
+            "inputTokens": 10987,
+            "cachedTokens": 0,
+            "outputTokens": 7223,
+            "reasoningTokens": 0,
+            "usd": 0.0136,
+            "failed": 0,
+            "seconds": 26.7
+          },
+          "4": {
+            "at": "2026-10-06T02-55-25-851Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 3,
+            "inputTokens": 11346,
+            "cachedTokens": 0,
+            "outputTokens": 3817,
+            "reasoningTokens": 0,
+            "usd": 0.0086,
+            "failed": 0,
+            "seconds": 24.9
+          },
+          "5": {
+            "at": "2026-10-06T03-33-53-514Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8012,
+            "cachedTokens": 4078,
+            "outputTokens": 6487,
+            "reasoningTokens": 0,
+            "usd": 0.0108,
+            "failed": 0,
+            "seconds": 26.9
+          },
+          "6": {
+            "at": "2026-10-06T02-55-25-851Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 6,
+            "inputTokens": 22247,
+            "cachedTokens": 0,
+            "outputTokens": 6847,
+            "reasoningTokens": 0,
+            "usd": 0.0158,
+            "failed": 0,
+            "seconds": 45.7
+          },
+          "7": {
+            "at": "2026-10-06T02-55-25-851Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 6,
+            "inputTokens": 21773,
+            "cachedTokens": 0,
+            "outputTokens": 6281,
+            "reasoningTokens": 0,
+            "usd": 0.0149,
+            "failed": 0,
+            "seconds": 44.4
+          },
+          "8": {
+            "at": "2026-10-06T03-33-53-514Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 7114,
+            "cachedTokens": 4076,
+            "outputTokens": 5572,
+            "reasoningTokens": 0,
+            "usd": 0.0092,
+            "failed": 0,
+            "seconds": 20.2
+          },
+          "9": {
+            "at": "2026-10-06T03-33-53-514Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8131,
+            "cachedTokens": 0,
+            "outputTokens": 6531,
+            "reasoningTokens": 0,
+            "usd": 0.0118,
+            "failed": 0,
+            "seconds": 22.5
+          },
+          "10": {
+            "at": "2026-10-06T02-55-25-851Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 5,
+            "inputTokens": 16700,
+            "cachedTokens": 0,
+            "outputTokens": 5474,
+            "reasoningTokens": 0,
+            "usd": 0.0124,
+            "failed": 0,
+            "seconds": 37.2
+          }
+        },
+        "v3-nothink+t1-full": {
+          "1": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 2948,
+            "cachedTokens": 0,
+            "outputTokens": 669,
+            "reasoningTokens": 0,
+            "usd": 0.0017,
+            "failed": 0,
+            "seconds": 3.5
+          },
+          "2": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 4366,
+            "cachedTokens": 0,
+            "outputTokens": 2411,
+            "reasoningTokens": 0,
+            "usd": 0.0047,
+            "failed": 0,
+            "seconds": 13.8
+          },
+          "3": {
+            "at": "2026-10-06T03-35-39-703Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 2,
+            "inputTokens": 10997,
+            "cachedTokens": 4076,
+            "outputTokens": 7355,
+            "reasoningTokens": 0,
+            "usd": 0.0129,
+            "failed": 0,
+            "seconds": 25.2
+          },
+          "4": {
+            "at": "2026-10-06T03-24-13-712Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 5651,
+            "cachedTokens": 0,
+            "outputTokens": 3727,
+            "reasoningTokens": 0,
+            "usd": 0.007,
+            "failed": 0,
+            "seconds": 13.8
+          },
+          "5": {
+            "at": "2026-10-06T03-24-13-712Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8012,
+            "cachedTokens": 0,
+            "outputTokens": 6465,
+            "reasoningTokens": 0,
+            "usd": 0.0117,
+            "failed": 0,
+            "seconds": 22.3
+          },
+          "6": {
+            "at": "2026-10-06T03-24-13-712Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8071,
+            "cachedTokens": 0,
+            "outputTokens": 6726,
+            "reasoningTokens": 0,
+            "usd": 0.0121,
+            "failed": 0,
+            "seconds": 24
+          },
+          "7": {
+            "at": "2026-10-06T03-24-13-712Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 7296,
+            "cachedTokens": 0,
+            "outputTokens": 5521,
+            "reasoningTokens": 0,
+            "usd": 0.0101,
+            "failed": 0,
+            "seconds": 21.1
+          },
+          "8": {
+            "at": "2026-10-06T03-24-13-712Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 7114,
+            "cachedTokens": 0,
+            "outputTokens": 5573,
+            "reasoningTokens": 0,
+            "usd": 0.0101,
+            "failed": 0,
+            "seconds": 20.3
+          },
+          "9": {
+            "at": "2026-10-06T03-24-13-712Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8131,
+            "cachedTokens": 0,
+            "outputTokens": 6493,
+            "reasoningTokens": 0,
+            "usd": 0.0118,
+            "failed": 0,
+            "seconds": 22.6
+          },
+          "10": {
+            "at": "2026-10-06T03-24-13-712Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 6794,
+            "cachedTokens": 0,
+            "outputTokens": 5382,
+            "reasoningTokens": 0,
+            "usd": 0.0098,
+            "failed": 0,
+            "seconds": 20.8
+          }
+        },
+        "v4-nothink": {
+          "1": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 3253,
+            "cachedTokens": 0,
+            "outputTokens": 1050,
+            "reasoningTokens": 0,
+            "usd": 0.0024,
+            "failed": 0,
+            "seconds": 4.2
+          },
+          "2": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 4671,
+            "cachedTokens": 0,
+            "outputTokens": 2613,
+            "reasoningTokens": 0,
+            "usd": 0.0051,
+            "failed": 0,
+            "seconds": 13.7
+          },
+          "3": {
+            "at": "2026-10-06T03-36-05-395Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 7530,
+            "cachedTokens": 0,
+            "outputTokens": 6168,
+            "reasoningTokens": 0,
+            "usd": 0.0111,
+            "failed": 0,
+            "seconds": 21.8
+          },
+          "4": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 5956,
+            "cachedTokens": 0,
+            "outputTokens": 4562,
+            "reasoningTokens": 0,
+            "usd": 0.0083,
+            "failed": 0,
+            "seconds": 16
+          },
+          "5": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8317,
+            "cachedTokens": 0,
+            "outputTokens": 7608,
+            "reasoningTokens": 0,
+            "usd": 0.0135,
+            "failed": 0,
+            "seconds": 27.6
+          },
+          "6": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8376,
+            "cachedTokens": 0,
+            "outputTokens": 8207,
+            "reasoningTokens": 0,
+            "usd": 0.0144,
+            "failed": 0,
+            "seconds": 27.8
+          },
+          "7": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 2,
+            "inputTokens": 13155,
+            "cachedTokens": 0,
+            "outputTokens": 10856,
+            "reasoningTokens": 0,
+            "usd": 0.0196,
+            "failed": 0,
+            "seconds": 37.2
+          },
+          "8": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 7419,
+            "cachedTokens": 0,
+            "outputTokens": 6160,
+            "reasoningTokens": 0,
+            "usd": 0.0111,
+            "failed": 0,
+            "seconds": 21.9
+          },
+          "9": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 8436,
+            "cachedTokens": 0,
+            "outputTokens": 7551,
+            "reasoningTokens": 0,
+            "usd": 0.0134,
+            "failed": 0,
+            "seconds": 26.2
+          },
+          "10": {
+            "at": "2026-10-06T03-20-20-701Z",
+            "model": "gemini-3.1-flash-lite",
+            "calls": 1,
+            "inputTokens": 7099,
+            "cachedTokens": 0,
+            "outputTokens": 6168,
+            "reasoningTokens": 0,
+            "usd": 0.011,
+            "failed": 0,
+            "seconds": 21.8
+          }
         }
       },
       "names": {
         "v2-nothink+moi": "Chị em dị giới không biết tiết chế (bản mới 06-10)",
-        "v3-nothink": "Chị em dị giới (v3 tự khai người nói)"
+        "v3-nothink": "Chị em dị giới (v3 tự khai người nói)",
+        "v3-nothink+t1": "Chị em dị giới (v3 t1: ngôi hai mọi chỗ)",
+        "v3-nothink+t1-full": "Chị em dị giới (T1 đối chứng nguyên chương)",
+        "v4-nothink": "Chị em dị giới (v4 chọn xưng gọi trước khi dịch)"
       }
     }
   }

@@ -1,0 +1,902 @@
+[
+  {
+    "variant": "v3-nothink",
+    "checked": 17,
+    "flagged": 6,
+    "rows": [
+      {
+        "chapter": 3,
+        "paragraph": 111,
+        "pair": "Milly→Rion",
+        "source": "「……リオン様は、何処でそのような知識を」",
+        "target": "“……Rion-sama, ngài lấy kiến thức đó ở đâu ra vậy.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": [
+          "ngài"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 67,
+        "pair": "Rion→Milly",
+        "source": "「うぅ、もうちょっと見て回りたかった」",
+        "target": "“Ừ, em muốn đi xem thêm chút nữa mà.”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 83,
+        "pair": "Rion→Milly",
+        "source": "「……判ったよ。もうミリィに黙ってうろついたりしない」",
+        "target": "“……Biết rồi mà. Em sẽ không tự ý đi lang thang mà không nói với Milly nữa.”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 85,
+        "pair": "Rion→Milly",
+        "source": "「うん、約束する。その代わり、ミリィが話し相手になってよ？」",
+        "target": "“Ừ, hứa đấy. Thay vào đó, Milly làm người trò chuyện với em nhé?”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 87,
+        "pair": "Rion→Milly",
+        "source": "「うん、判った」",
+        "target": "“Ừ, biết rồi.”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 121,
+        "pair": "Rion→Milly",
+        "source": "「……そっか。ごめんね、変なことを聞いて」",
+        "target": "“……Ra vậy. Em xin lỗi, vì đã hỏi chuyện kỳ quặc.”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 6,
+        "paragraph": 17,
+        "pair": "Rion→Milly",
+        "source": "「ごめん、ミリィ。その人と話してみたいんだ」",
+        "target": "“Xin lỗi nhé Milly. Anh muốn thử nói chuyện với người này.”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "anh"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 4,
+        "pair": "Rion→Milly",
+        "source": "「いや、たまには感謝の気持ちを言葉にしておこうかなって思ってさ」",
+        "target": "“Không có gì, chỉ là tôi nghĩ thỉnh thoảng mình nên nói lời cảm ơn thành lời thôi.”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 7,
+        "pair": "Rion→Milly",
+        "source": "「えー酷いなぁ。これでも普段から感謝してるんだぞ？」",
+        "target": "“Ê, chị phũ quá đấy. Tôi vẫn thường biết ơn chị mà, thật đấy!”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 103,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。私が以前言ったこと、忘れてしまわれたんですか？」",
+        "target": "“Rion-sama. Người có quên những gì tôi đã nói trước đây không ạ?”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 108,
+        "pair": "Milly→Rion",
+        "source": "「リオン様こそなにを迷っていらっしゃるんですか？ ここでクレア様に手を差し伸べなければ、一生後悔しますよ？」",
+        "target": "“Rion-sama, người còn đang do dự điều gì nữa ạ? Nếu giờ đây không chìa tay ra với Claire-sama, sau này người sẽ hối hận cả đời đấy ạ.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 113,
+        "pair": "Milly→Rion",
+        "source": "「リオン様、大丈夫ですよ。リオン様のお側には居られなくなるかも知れませんけど、殺されたりはしないはずです」",
+        "target": "“Rion-sama, không sao đâu ạ. Có thể tôi sẽ không được ở cạnh người nữa, nhưng chắc chắn là tôi sẽ không bị giết đâu.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 116,
+        "pair": "Milly→Rion",
+        "source": "「判っているはずですよ、リオン様。クレア様のところへ行ってあげて下さい」",
+        "target": "“Người vốn dĩ hiểu mà, Rion-sama. Hãy đến chỗ của Claire-sama đi ạ.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 123,
+        "pair": "Rion→Milly",
+        "source": "「だから、ミリィが大丈夫って言うなら俺は甘えるぞ？ 甘えて、我が儘を言って、クレアねぇを助けに行くからな？ それでも、本当に良いんだな！？」",
+        "target": "“Cho nên, nếu Milly nói không sao thì tôi sẽ làm nũng nhé? Tôi sẽ ích kỷ làm nũng và đi cứu chị Claire đây. Dù vậy, chị vẫn thật sự ổn chứ!?”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 125,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。その言葉だけで充分です。どうか、クレア様の元へ向かって下さい」",
+        "target": "“Rion-sama. Chỉ cần câu nói đó của người thôi là đủ rồi ạ. Xin hãy đi đến chỗ của Claire-sama đi.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 126,
+        "pair": "Rion→Milly",
+        "source": "「……ありがとう、ミリィ。それじゃ――行ってくる！」",
+        "target": "“……Cảm ơn chị, Milly. Vậy thì——tôi đi đây!”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 9,
+        "paragraph": 92,
+        "pair": "Milly→Rion",
+        "source": "「言いましたよ。私はいつだってリオン様の味方だと」",
+        "target": "“Tôi đã nói rồi mà, tôi luôn luôn đứng về phía Rion-sama.”",
+        "forbidden": [
+          "em"
+        ],
+        "bad": []
+      }
+    ]
+  },
+  {
+    "variant": "v3-nothink+t1",
+    "checked": 17,
+    "flagged": 16,
+    "rows": [
+      {
+        "chapter": 3,
+        "paragraph": 111,
+        "pair": "Milly→Rion",
+        "source": "「……リオン様は、何処でそのような知識を」",
+        "target": "“……Rion-sama, cậu biết những điều đó ở đâu vậy?”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 67,
+        "pair": "Rion→Milly",
+        "source": "「うぅ、もうちょっと見て回りたかった」",
+        "target": "“Ư… mình còn muốn đi xem quanh đây thêm chút nữa.”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "mình"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 83,
+        "pair": "Rion→Milly",
+        "source": "「……判ったよ。もうミリィに黙ってうろついたりしない」",
+        "target": "“…Biết rồi mà. Mình sẽ không tự ý đi lại mà giấu chị nữa.”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "mình"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 85,
+        "pair": "Rion→Milly",
+        "source": "「うん、約束する。その代わり、ミリィが話し相手になってよ？」",
+        "target": "“Ừ, mình hứa. Thay vào đó, chị làm người trò chuyện với mình nhé?”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "mình"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 87,
+        "pair": "Rion→Milly",
+        "source": "「うん、判った」",
+        "target": "“Ừ, mình biết rồi.”",
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "mình"
+        ]
+      },
+      {
+        "chapter": 3,
+        "paragraph": 121,
+        "pair": "Rion→Milly",
+        "source": "「……そっか。ごめんね、変なことを聞いて」",
+        "target": "“…Ra vậy. Chị đừng để tâm, xin lỗi vì em đã hỏi điều kỳ lạ.”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 6,
+        "paragraph": 17,
+        "pair": "Rion→Milly",
+        "source": "「ごめん、ミリィ。その人と話してみたいんだ」",
+        "target": "“Xin lỗi nhé, Milly. Anh muốn nói chuyện với người này một chút.”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "anh"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 4,
+        "pair": "Rion→Milly",
+        "source": "「いや、たまには感謝の気持ちを言葉にしておこうかなって思ってさ」",
+        "target": "“Không có gì, chỉ là em nghĩ thỉnh thoảng cũng nên nói lời cảm ơn ra thành lời thôi.”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 7,
+        "pair": "Rion→Milly",
+        "source": "「えー酷いなぁ。これでも普段から感謝してるんだぞ？」",
+        "target": "“Ê, chị quá đáng nha. Bình thường em vẫn luôn biết ơn chị mà?”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 103,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。私が以前言ったこと、忘れてしまわれたんですか？」",
+        "target": "“Rion-sama. Ngài đã quên những gì tôi nói trước đây rồi sao ạ?”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": [
+          "ngài"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 108,
+        "pair": "Milly→Rion",
+        "source": "「リオン様こそなにを迷っていらっしゃるんですか？ ここでクレア様に手を差し伸べなければ、一生後悔しますよ？」",
+        "target": "“Chính Rion-sama mới là người đang do dự điều gì vậy ạ? Nếu ngài không chìa tay giúp đỡ tiểu thư Claire lúc này, ngài sẽ hối hận cả đời đấy ạ?”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": [
+          "ngài"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 113,
+        "pair": "Milly→Rion",
+        "source": "「リオン様、大丈夫ですよ。リオン様のお側には居られなくなるかも知れませんけど、殺されたりはしないはずです」",
+        "target": "“Rion-sama, ngài không cần lo đâu ạ. Có lẽ tôi sẽ không thể ở bên cạnh Rion-sama được nữa, nhưng chắc chắn tôi sẽ không bị giết đâu ạ.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": [
+          "ngài"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 116,
+        "pair": "Milly→Rion",
+        "source": "「判っているはずですよ、リオン様。クレア様のところへ行ってあげて下さい」",
+        "target": "“Ngài biết mà, Rion-sama. Xin hãy đến chỗ tiểu thư Claire giúp tôi.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": [
+          "ngài"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 123,
+        "pair": "Rion→Milly",
+        "source": "「だから、ミリィが大丈夫って言うなら俺は甘えるぞ？ 甘えて、我が儘を言って、クレアねぇを助けに行くからな？ それでも、本当に良いんだな！？」",
+        "target": "“Thế nên, nếu chị Milly nói không sao thì em sẽ dựa dẫm vào chị đấy nhé? Em sẽ ỷ lại, sẽ làm nũng, rồi đi cứu chị Claire đây! Dù là vậy, chị thật sự thấy ổn chứ!?”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 125,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。その言葉だけで充分です。どうか、クレア様の元へ向かって下さい」",
+        "target": "“Rion-sama. Chỉ riêng câu nói đó thôi là đủ rồi. Xin ngài hãy mau chóng đến chỗ Claire-sama.”",
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": [
+          "ngài"
+        ]
+      },
+      {
+        "chapter": 8,
+        "paragraph": 126,
+        "pair": "Rion→Milly",
+        "source": "「……ありがとう、ミリィ。それじゃ――行ってくる！」",
+        "target": "“...Cảm ơn chị, Milly. Vậy thì—em đi đây!”",
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": [
+          "em"
+        ]
+      },
+      {
+        "chapter": 9,
+        "paragraph": 92,
+        "pair": "Milly→Rion",
+        "source": "「言いましたよ。私はいつだってリオン様の味方だと」",
+        "target": "“Em đã nói rồi mà. Lúc nào em cũng đứng về phía Rion-sama cả.”",
+        "forbidden": [
+          "em"
+        ],
+        "bad": [
+          "em"
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "v3-nothink+t1-full",
+    "checked": 0,
+    "flagged": 0,
+    "rows": [
+      {
+        "chapter": 3,
+        "paragraph": 111,
+        "pair": "Milly→Rion",
+        "source": "「……リオン様は、何処でそのような知識を」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 67,
+        "pair": "Rion→Milly",
+        "source": "「うぅ、もうちょっと見て回りたかった」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 83,
+        "pair": "Rion→Milly",
+        "source": "「……判ったよ。もうミリィに黙ってうろついたりしない」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 85,
+        "pair": "Rion→Milly",
+        "source": "「うん、約束する。その代わり、ミリィが話し相手になってよ？」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 87,
+        "pair": "Rion→Milly",
+        "source": "「うん、判った」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 121,
+        "pair": "Rion→Milly",
+        "source": "「……そっか。ごめんね、変なことを聞いて」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 6,
+        "paragraph": 17,
+        "pair": "Rion→Milly",
+        "source": "「ごめん、ミリィ。その人と話してみたいんだ」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 4,
+        "pair": "Rion→Milly",
+        "source": "「いや、たまには感謝の気持ちを言葉にしておこうかなって思ってさ」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 7,
+        "pair": "Rion→Milly",
+        "source": "「えー酷いなぁ。これでも普段から感謝してるんだぞ？」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 103,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。私が以前言ったこと、忘れてしまわれたんですか？」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 108,
+        "pair": "Milly→Rion",
+        "source": "「リオン様こそなにを迷っていらっしゃるんですか？ ここでクレア様に手を差し伸べなければ、一生後悔しますよ？」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 113,
+        "pair": "Milly→Rion",
+        "source": "「リオン様、大丈夫ですよ。リオン様のお側には居られなくなるかも知れませんけど、殺されたりはしないはずです」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 116,
+        "pair": "Milly→Rion",
+        "source": "「判っているはずですよ、リオン様。クレア様のところへ行ってあげて下さい」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 123,
+        "pair": "Rion→Milly",
+        "source": "「だから、ミリィが大丈夫って言うなら俺は甘えるぞ？ 甘えて、我が儘を言って、クレアねぇを助けに行くからな？ それでも、本当に良いんだな！？」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 125,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。その言葉だけで充分です。どうか、クレア様の元へ向かって下さい」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 126,
+        "pair": "Rion→Milly",
+        "source": "「……ありがとう、ミリィ。それじゃ――行ってくる！」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 9,
+        "paragraph": 92,
+        "pair": "Milly→Rion",
+        "source": "「言いましたよ。私はいつだってリオン様の味方だと」",
+        "target": null,
+        "forbidden": [
+          "em"
+        ],
+        "bad": []
+      }
+    ]
+  },
+  {
+    "variant": "v4-nothink",
+    "checked": 0,
+    "flagged": 0,
+    "rows": [
+      {
+        "chapter": 3,
+        "paragraph": 111,
+        "pair": "Milly→Rion",
+        "source": "「……リオン様は、何処でそのような知識を」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 67,
+        "pair": "Rion→Milly",
+        "source": "「うぅ、もうちょっと見て回りたかった」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 83,
+        "pair": "Rion→Milly",
+        "source": "「……判ったよ。もうミリィに黙ってうろついたりしない」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 85,
+        "pair": "Rion→Milly",
+        "source": "「うん、約束する。その代わり、ミリィが話し相手になってよ？」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 87,
+        "pair": "Rion→Milly",
+        "source": "「うん、判った」",
+        "target": null,
+        "forbidden": [
+          "mình",
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 3,
+        "paragraph": 121,
+        "pair": "Rion→Milly",
+        "source": "「……そっか。ごめんね、変なことを聞いて」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 6,
+        "paragraph": 17,
+        "pair": "Rion→Milly",
+        "source": "「ごめん、ミリィ。その人と話してみたいんだ」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 4,
+        "pair": "Rion→Milly",
+        "source": "「いや、たまには感謝の気持ちを言葉にしておこうかなって思ってさ」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 7,
+        "pair": "Rion→Milly",
+        "source": "「えー酷いなぁ。これでも普段から感謝してるんだぞ？」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 103,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。私が以前言ったこと、忘れてしまわれたんですか？」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 108,
+        "pair": "Milly→Rion",
+        "source": "「リオン様こそなにを迷っていらっしゃるんですか？ ここでクレア様に手を差し伸べなければ、一生後悔しますよ？」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 113,
+        "pair": "Milly→Rion",
+        "source": "「リオン様、大丈夫ですよ。リオン様のお側には居られなくなるかも知れませんけど、殺されたりはしないはずです」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 116,
+        "pair": "Milly→Rion",
+        "source": "「判っているはずですよ、リオン様。クレア様のところへ行ってあげて下さい」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 123,
+        "pair": "Rion→Milly",
+        "source": "「だから、ミリィが大丈夫って言うなら俺は甘えるぞ？ 甘えて、我が儘を言って、クレアねぇを助けに行くからな？ それでも、本当に良いんだな！？」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 125,
+        "pair": "Milly→Rion",
+        "source": "「リオン様。その言葉だけで充分です。どうか、クレア様の元へ向かって下さい」",
+        "target": null,
+        "forbidden": [
+          "ngài",
+          "em"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 8,
+        "paragraph": 126,
+        "pair": "Rion→Milly",
+        "source": "「……ありがとう、ミリィ。それじゃ――行ってくる！」",
+        "target": null,
+        "forbidden": [
+          "em",
+          "anh"
+        ],
+        "bad": []
+      },
+      {
+        "chapter": 9,
+        "paragraph": 92,
+        "pair": "Milly→Rion",
+        "source": "「言いましたよ。私はいつだってリオン様の味方だと」",
+        "target": null,
+        "forbidden": [
+          "em"
+        ],
+        "bad": []
+      }
+    ]
+  }
+]
