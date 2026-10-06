@@ -79,6 +79,28 @@ const units: TempMappedUnit[] = [
   { tempId: '[2]', originalId: 'b', text: '她笑了。' }
 ]
 
+describe('translatePrompt — v4 chọn cặp trước khi dịch', () => {
+  it('giữ cùng dữ liệu với v3 và cùng chỉ dẫn cho lượt repair', () => {
+    const context: TranslatePromptContext = {
+      sourceLang: 'ja',
+      dyads: [
+        dyad(han, nam, { speakerPronoun: 'tôi', recipientPronoun: 'Nam-sama', secondPerson: 'cậu' })
+      ],
+      characters: [han, nam, character({ id: 'secret', source: 'CHUA_DUYET', status: 'pending' })]
+    }
+    const old = buildTranslateRequest({ ...context, version: 'v3' }, units)
+    const main = buildTranslateRequest({ ...context, version: 'v4' }, units)
+    const repair = buildRepairRequest({ ...context, version: 'v4' }, units)
+    expect(main.version).toBe('translate-v4')
+    expect(main.messages[1].content).toBe(old.messages[1].content)
+    expect(main.messages[0].content).toBe(repair.messages[0].content)
+    expect(main.messages[0].content).toContain('"xung"')
+    expect(main.messages[0].content).toContain('"goi"')
+    expect(old.messages[0].content).not.toContain('"xung"')
+    expect(JSON.stringify(main.messages)).not.toContain('CHUA_DUYET')
+  })
+})
+
 /** Mảng JSON trong khối <nguon> của message user ở v2. */
 function sourceOf(user: string): Array<{ id: string; src: string }> {
   const match = /<nguon>\n([\s\S]*?)\n<\/nguon>/.exec(user)

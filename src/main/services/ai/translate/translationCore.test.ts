@@ -2,6 +2,26 @@ import { describe, expect, it } from 'vitest'
 import { executeTranslateBatch, type TranslationModelCaller } from './translationCore'
 
 describe('translationCore — Điều phối Lõi dịch theo lô', () => {
+  it('v4 chỉ lưu dst, bỏ nhãn và các trường chuẩn bị xưng gọi', async () => {
+    const caller: TranslationModelCaller = {
+      async complete() {
+        return {
+          text: JSON.stringify([
+            { id: '[1]', noi: 'A→B', xung: 'tôi', goi: 'cậu', dst: 'Cậu về rồi à?' }
+          ]),
+          usage: null
+        }
+      }
+    }
+    const result = await executeTranslateBatch({
+      caller,
+      units: [{ id: 'u1', text: '「帰った？」' }],
+      prompt: { version: 'v4' }
+    })
+    expect(result.error).toBeNull()
+    expect(result.failedIds).toEqual([])
+    expect(result.items).toEqual([{ id: 'u1', text: 'Cậu về rồi à?' }])
+  })
   it('dịch thành công lô bình thường và tính đúng usage', async () => {
     const caller: TranslationModelCaller = {
       async complete() {
@@ -210,4 +230,3 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
     expect(result.failedIds).toEqual(['u2'])
   })
 })
-

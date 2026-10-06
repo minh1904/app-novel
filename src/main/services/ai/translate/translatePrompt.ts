@@ -133,6 +133,8 @@ function escapeJsonTags(json: string): string {
 }
 
 export function systemPromptV2(context: TranslatePromptContext): string {
+  const grounded = context.version === 'v4'
+  const labeled = context.version === 'v3' || grounded
   const lang = languageName(context.sourceLang)
   const profile = languageProfile({
     sourceLang: context.sourceLang,
@@ -151,10 +153,15 @@ export function systemPromptV2(context: TranslatePromptContext): string {
     '- Trả về đúng một mảng JSON các đối tượng {"id","dst"}, không kèm giải thích hay dấu ```.',
     '- Mỗi id nhận được có đúng một đối tượng: giữ nguyên id, không thêm id mới, không gộp hay tách mục, kể cả khi một câu bị ngắt giữa hai mục.',
     '- "dst" không chứa ký tự xuống dòng.',
-    ...(context.version === 'v3'
+    ...(labeled
       ? [
           '- Với mục là lời thoại (src mở đầu bằng 「, 『 hoặc “), thêm trường "noi" TRƯỚC "dst": "Người nói→Người nghe" bằng tên dịch trong <nhan_vat> (ví dụ "Milly→Rion"); không rõ thì dùng "?" cho phía đó. Lời kể không có "noi".',
-          '- Ví dụ: [{"id":"[1]","noi":"Milly→Rion","dst":"…"},{"id":"[2]","dst":"…"}]'
+          ...(grounded
+            ? [
+                '- Sau "noi", viết "xung" (cách người nói tự xưng) và "goi" (đại từ gọi người nghe), rồi mới viết "dst". Tra đúng chiều trong <xung_ho>: chép cách tự xưng vào "xung"; chép đại từ ngôi hai vào "goi" nếu có, nếu không thì chép cách gọi. Chỉ khi chưa có cặp mới suy theo quan hệ và bảng mặc định; chưa xác định được thì ghi "?".',
+                '- Ví dụ hình dạng: [{"id":"[1]","noi":"A→B","xung":"tôi","goi":"cậu","dst":"…"},{"id":"[2]","dst":"…"}]. Giá trị xưng gọi phải lấy từ cặp của câu đang dịch, không sao chép giá trị trong ví dụ. Lời kể không có "xung"/"goi".'
+              ]
+            : ['- Ví dụ: [{"id":"[1]","noi":"Milly→Rion","dst":"…"},{"id":"[2]","dst":"…"}]'])
         ]
       : []),
     '</dau_ra>',
@@ -165,9 +172,15 @@ export function systemPromptV2(context: TranslatePromptContext): string {
     '- Thuật ngữ trong <thuat_ngu> là lựa chọn người dịch đã chốt: dùng đúng bản dịch cho từ gốc và các biến thể, không dùng dạng nằm trong mục "Không dùng".',
     '- Giới tính và vai của nhân vật lấy theo <nhan_vat>, không đoán từ giọng nói: một cô giáo nói năng thô vẫn là "cô".',
     '- Cặp xưng hô trong <xung_ho> có chiều: dùng khi nhận ra người nói và người nghe trong cảnh.',
-    ...(context.version === 'v3'
+    ...(labeled
       ? [
           '- Với mỗi câu thoại, xác định người nói và người nghe TRƯỚC, rồi mới chọn đại từ theo đúng cặp đó trong <xung_ho>. Một nhân vật có thể tự xưng khác nhau với từng người nghe; cách xưng với người này không được lan sang người khác trong cùng cảnh.'
+        ]
+      : []),
+    ...(grounded
+      ? [
+          '- Viết "dst" theo cặp vừa chọn trong "xung"/"goi". Kính ngữ, lời khẩn cầu, trêu đùa hay đổi cảm xúc không tự cho phép đổi cặp đã duyệt; chỉ áp dụng ngoại lệ nếu ghi chú của cặp cho phép. Thể hiện sắc thái bằng lời văn, nhịp câu và tiểu từ phù hợp.',
+          '- "xung"/"goi" chỉ xác định cách dùng khi cần đại từ, không bắt buộc chèn đại từ vào câu. Khi gọi bằng tên, giữ tên và kính ngữ theo <xung_ho> và bản gốc. Đại từ chỉ người thứ ba, lời được trích và từ phản thân không bị thay bằng cặp của người đang nói.'
         ]
       : []),
     '- Khi chưa rõ ai nói với ai, gọi bằng tên hoặc danh xưng, hoặc lược đại từ nếu câu tiếng Việt vẫn tự nhiên; không đoán giới tính từ một đại từ trung tính.',
