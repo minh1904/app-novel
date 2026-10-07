@@ -101,6 +101,13 @@ trỏ về lần chạy theo `lab.json`. Logic nằm ở
 | `history` | sinh lại [lịch sử đo](history.md); `translate`, `report`, `pairs` tự làm |
 | `backfill` | nhập lần chạy cũ từ `runs/`; commit đoán theo thời điểm (`~`), prompt `legacy`, glossary `claude-draft` |
 
+**Ngữ cảnh theo chương (thêm 2026-10-07).** Mỗi lượt dịch chương dùng một bản chụp ngữ cảnh bất biến
+(xem [hệ thống prompt](../context/prompt-system.md#bản-chụp-ngữ-cảnh-theo-lượt-dịch-đã-triển-khai-2026-10-07)).
+`translate` ghi hash bản chụp vào `lab.json` (`contextHash` của chương) và vào bản ghi lần chạy
+(`contexts`: số chương → hash), và lưu nội dung bản chụp thành `context-<ncode>-<biến thể>-<chương>.json`
+trong thư mục lần chạy. `compare` cảnh báo các chương mà lần chạy mới nhất của hai biến thể dùng ngữ cảnh
+khác hash. Lần chạy trước ngày này không có hash, nên không so được.
+
 Giới hạn: lần đo cũ không dựng lại được vì bản dịch đã bị ghi đè — lịch sử chỉ bắt đầu từ lần `report`/
 `pairs` đầu tiên sau khi có sổ. Lần chạy cũ không còn model trong `lab.json` thì không tính được chi phí.
 Bench (`fixtures/private/runs/`) chưa nối vào sổ.

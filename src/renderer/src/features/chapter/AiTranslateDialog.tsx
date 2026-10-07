@@ -63,6 +63,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
       {count(run.usage.outputTokens)} token ra.
     </p>}
     {run.keyNotice && <p role="status" className="m-0 text-ui-xs text-ink-muted">{run.keyNotice}</p>}
+    {run.contextNotice && <p role="status" className="m-0 text-ui-xs leading-normal text-ink-muted">{run.contextNotice}</p>}
     {run.failure && !(run.failure.kind === 'refused' && run.refusals.length > 0) && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal">
       {run.failure.message}
     </p>}
@@ -119,6 +120,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
         <Figure label="Số lô sẽ gửi" value={count(plan.batches.length)} />
         <Figure label="Token (ước lượng)" value={`${count(plan.estimate.inputTokens)} vào · ${count(plan.estimate.outputTokens)} ra`} />
         <Figure label="Chi phí (ước lượng)" value={money(plan.estimate.usd)} />
+        <Figure label="Ngữ cảnh gửi kèm" value={`${count(plan.context.glossary)} thuật ngữ · ${count(plan.context.characters)} nhân vật · ${count(plan.context.dyads)} cặp xưng hô`} />
       </div>
       <p className="m-0 text-ui-xs leading-normal text-ink-muted">
         Giá tham khảo cập nhật {plan.catalogReadAt}. Lượng dùng thật hiện sau khi dịch.

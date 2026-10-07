@@ -56,6 +56,11 @@ export interface RunRecord {
   chapters: number[]
   /** Glossary, nhân vật và cặp xưng hô đã nạp: băm nội dung và ai tạo ra nó. */
   glossary?: GlossaryProvenance
+  /**
+   * Hash bản chụp ngữ cảnh mà lượt dịch từng chương đã dùng (số chương → hash). Hai lần chạy cùng hash
+   * ở một chương là cùng ngữ cảnh; khác hash thì so sánh lẫn cả thay đổi ngữ cảnh.
+   */
+  contexts?: Record<string, string>
   calls: number
   httpErrors: number
   inputTokens: number
@@ -149,6 +154,7 @@ export interface RunMeta {
   commitApprox?: boolean
   promptVersion?: string | null
   glossary?: GlossaryProvenance
+  contexts?: Record<string, string>
   usd: number | null
   note?: string
   backfilled?: boolean
@@ -205,6 +211,7 @@ export function summarizeRun(
     ...(meta.commitApprox ? { commitApprox: true } : {}),
     chapters: [...new Set(calls.map((call) => call.chapter))].sort((a, b) => a - b),
     ...(meta.glossary ? { glossary: meta.glossary } : {}),
+    ...(meta.contexts && Object.keys(meta.contexts).length > 0 ? { contexts: meta.contexts } : {}),
     calls: calls.length,
     httpErrors: calls.filter((call) => call.status !== 200).length,
     inputTokens: sum((call) => call.inputTokens),
@@ -216,6 +223,28 @@ export function summarizeRun(
     ...(meta.note ? { note: meta.note } : {}),
     ...(meta.backfilled ? { backfilled: true } : {})
   }
+}
+
+/**
+ * Chương mà hai lần chạy đều có hash bản chụp nhưng khác nhau: ở đó hai bản dịch không dùng cùng ngữ
+ * cảnh. `unknown` là chương chỉ một bên có hash (lần chạy cũ chưa ghi), nên không nói được.
+ */
+export function contextDifferences(
+  a: Record<string, string> | undefined,
+  b: Record<string, string> | undefined
+): { differ: number[]; unknown: number[] } {
+  const chapters = [...new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})])]
+    .map(Number)
+    .sort((x, y) => x - y)
+  const differ: number[] = []
+  const unknown: number[] = []
+  for (const chapter of chapters) {
+    const left = a?.[String(chapter)]
+    const right = b?.[String(chapter)]
+    if (left === undefined || right === undefined) unknown.push(chapter)
+    else if (left !== right) differ.push(chapter)
+  }
+  return { differ, unknown }
 }
 
 /** Đọc tệp JSONL của sổ; dòng hỏng bị bỏ qua thay vì làm hỏng cả sổ. */

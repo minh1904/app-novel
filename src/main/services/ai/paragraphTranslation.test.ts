@@ -9,6 +9,8 @@ import { acceptProposalParts, textHash } from '../proposals/proposalService'
 import { ConnectionService } from './connectionService'
 import { ParagraphTranslator, paragraphUnits } from './paragraphTranslation'
 import { TRANSLATE_PROMPT_VERSION } from './translate/translatePrompt'
+import { parseSnapshot, rebuildTranslateRequest } from './translate/contextSnapshot'
+import { getRunContext } from '../../infra/storage/translateRunContext'
 
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -345,5 +347,82 @@ describe('what a failed batch tells the run', () => {
     const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
     expect(proposal.context[0]).not.toHaveProperty('refusals')
     expect(batch.error).toBeNull()
+  })
+})
+
+describe('the context snapshot of a run', () => {
+  const inputOf = (
+    h: ReturnType<typeof setup>, plan: ReturnType<ParagraphTranslator['plan']>
+  ): Omit<Parameters<ParagraphTranslator['runBatch']>[0], 'sourceIds'> => ({
+    workId: h.workId, chapterId: h.chapterId, runId: plan.runId,
+    connectionId: h.connectionId, entryId: h.entryId, settingsKey: plan.settingsKey,
+    sourceRev: plan.sourceRev, targetRev: plan.targetRev,
+    targetBaseContent: plan.targetBaseContent, policy: 'review' as const
+  })
+
+  it('says in the plan how much context the run was frozen with', () => {
+    const h = setup()
+    const glossary = new GlossaryService(h.library, () => 1000)
+    glossary.create(h.workId, { source: 'First', target: 'Đầu', status: 'approved' })
+    glossary.create(h.workId, { source: 'Second', target: 'Chờ', status: 'pending' })
+    const plan = h.translator.plan(h)
+    expect(plan.context).toMatchObject({ glossary: 1, dyads: 0, characters: 0 })
+    expect(plan.context.hash).toMatch(/^[0-9a-f]{64}$/)
+  })
+
+  it('keeps sending the snapshot after the glossary changes mid-run, and says it changed', async () => {
+    const h = setup()
+    const glossary = new GlossaryService(h.library, () => 1000)
+    const entry = glossary.create(h.workId, { source: 'paragraph', target: 'đoạn cũ', status: 'approved' })
+    const plan = h.translator.plan(h)
+    const ids = plan.batches.flatMap((batch) => batch.sourceIds)
+
+    const first = await h.translator.runBatch({ ...inputOf(h, plan), sourceIds: [ids[0]] })
+    expect(first.contextChanged).toBe(false)
+
+    glossary.update(h.workId, entry.id, { target: 'đoạn mới' })
+    const second = await h.translator.runBatch({ ...inputOf(h, plan), sourceIds: [ids[1]] })
+    expect(second.contextChanged).toBe(true)
+    expect(h.messages[1][1].content).toContain('đoạn cũ')
+    expect(h.messages[1][1].content).not.toContain('đoạn mới')
+
+    // Both batches point at the same snapshot.
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, first.proposalId!))
+    const traces = proposal.context as Array<{ snapshot: { runKey: string; hash: string } }>
+    expect(traces).toHaveLength(2)
+    expect(traces[0].snapshot).toEqual({ runKey: `translate:${plan.runId}`, hash: plan.context.hash })
+    expect(traces[1].snapshot).toEqual(traces[0].snapshot)
+  })
+
+  it('refuses a batch whose run has no snapshot, without calling the model', async () => {
+    const h = setup()
+    const plan = h.translator.plan(h)
+    h.library.withWork(h.workId, (db) => db.exec('DELETE FROM translate_run_context'))
+    await expect(h.translator.runBatch({ ...inputOf(h, plan),
+      sourceIds: plan.batches.flatMap((batch) => batch.sourceIds) })).rejects.toMatchObject({
+      code: 'conflict'
+    })
+    expect(h.calls).toHaveLength(0)
+  })
+
+  it('records what the trace needs to rebuild the request, and the rebuild matches', async () => {
+    const h = setup('One.\nTwo.\nThree.\nFour.\nFive.', '')
+    new GlossaryService(h.library, () => 1000)
+      .create(h.workId, { source: 'Five', target: 'Năm', status: 'approved' })
+    const plan = h.translator.plan(h)
+    const ids = plan.batches.flatMap((batch) => batch.sourceIds)
+    const batch = await h.translator.runBatch({ ...inputOf(h, plan), sourceIds: ids.slice(4) })
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
+    const trace = proposal.context[0] as {
+      previous: string[]; contextHash: string; register: unknown; characters: unknown[]
+      snapshot: { runKey: string }
+    }
+    expect(trace.previous).toEqual(['Two.', 'Three.', 'Four.'])
+    expect(trace).toHaveProperty('register')
+    expect(trace.characters).toEqual([])
+    const stored = h.library.withWork(h.workId, (db) => getRunContext(db, trace.snapshot.runKey))!
+    const rebuilt = rebuildTranslateRequest(trace, parseSnapshot(stored.snapshotJson),
+      [{ id: ids[4], text: 'Five.' }])
+    expect(rebuilt.matches).toBe(true)
   })
 })

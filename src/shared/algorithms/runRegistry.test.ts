@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  contextDifferences,
   LEGACY_PROMPT,
   compareSnapshots,
   glossaryOriginOf,
@@ -204,5 +205,19 @@ describe('runRegistry', () => {
     )
     expect(text).toContain('Mọi lần đo, mới nhất trước:')
     expect(text).toContain('đừng sửa tay')
+  })
+})
+
+describe('contextDifferences', () => {
+  it('names the chapters whose context snapshot differs between two runs', () => {
+    expect(contextDifferences({ '1': 'a', '2': 'b', '3': 'c' }, { '1': 'a', '2': 'x', '3': 'c' })).toEqual({
+      differ: [2],
+      unknown: []
+    })
+  })
+
+  it('cannot tell for a chapter only one run recorded, nor for runs from before snapshots', () => {
+    expect(contextDifferences({ '1': 'a', '2': 'b' }, { '1': 'a' })).toEqual({ differ: [], unknown: [2] })
+    expect(contextDifferences(undefined, undefined)).toEqual({ differ: [], unknown: [] })
   })
 })

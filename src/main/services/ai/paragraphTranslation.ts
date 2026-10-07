@@ -14,10 +14,14 @@ import type {
 } from '../../../shared/contracts/aiTranslate'
 import { taskLimit } from '../../../shared/contracts/modelSettings'
 import { planBatches } from '../../../shared/algorithms/translatePlanner'
-import { matchContextEntries } from '../../../shared/algorithms/contextMatching'
 import type { TranslationModelCaller } from '../../../shared/contracts/translateCore'
 import { createProposal, appendProposalParts, getProposal } from '../../infra/storage/aiProposals'
 import { StorageError } from '../../infra/storage/errors'
+import {
+  createRunContext,
+  getRunContext,
+  pruneOrphanRunContexts
+} from '../../infra/storage/translateRunContext'
 import { CATALOG_READ_AT, lookupModel } from '../../infra/providers/modelCatalog'
 import { ProviderError, type SegmentText } from '../../infra/providers/types'
 import { toWireUsage } from '../../infra/providers/usage'
@@ -26,15 +30,12 @@ import type { ConnectionService } from './connectionService'
 import { estimateCost } from './costEstimate'
 import { executeTranslateBatch } from './translate/translationCore'
 import { describeProviderError, withPolicy } from './errorPolicy'
-import { listCharacters } from '../../infra/storage/addressingEntries'
+import { buildTranslateRequest, PREVIOUS_PARAGRAPHS } from './translate/translatePrompt'
 import {
-  buildTranslateRequest,
-  charactersMentionedIn,
-  dyadsMentionedIn,
-  PREVIOUS_PARAGRAPHS,
-  type TranslatePromptContext
-} from './translate/translatePrompt'
-import { suggestRegister } from './translate/languageProfiles'
+  parseSnapshot,
+  promptFromSnapshot,
+  takeContextSnapshot
+} from './translate/contextSnapshot'
 import { acceptProposalParts, textHash } from '../proposals/proposalService'
 
 interface ParagraphUnit extends SegmentText {
@@ -91,8 +92,21 @@ export class ParagraphTranslator {
       sourceIds: batch.units.map((unit) => unit.id),
       sourceChars: batch.charCount
     }))
+    const runId = library.newAppId()
+    // The work context is frozen here, once, for every call of the run (`contextSnapshot.ts`).
+    const record = takeContextSnapshot(library, workId, chapterId, source.content)
+    library.withWork(workId, (db) => {
+      pruneOrphanRunContexts(db, chapterId, this.options.now())
+      createRunContext(db, {
+        runKey: `translate:${runId}`,
+        chapterId,
+        snapshotJson: record.json,
+        snapshotHash: record.hash,
+        createdAt: this.options.now()
+      })
+    })
     return {
-      runId: library.newAppId(),
+      runId,
       sourceRev: source.rev,
       targetRev: target.rev,
       targetBaseContent: target.content,
@@ -111,7 +125,13 @@ export class ParagraphTranslator {
         sourceLang: work.sourceLang,
         batchCount: batches.length,
         model: lookupModel(entry.model, connection.providerId ?? undefined)
-      })
+      }),
+      context: {
+        hash: record.hash,
+        glossary: record.snapshot.glossary.length,
+        dyads: record.snapshot.dyads.length,
+        characters: record.snapshot.characters.length
+      }
     }
   }
 
@@ -139,6 +159,18 @@ export class ParagraphTranslator {
       return unit
     })
     const key = `translate:${input.runId}`
+    const stored = library.withWork(input.workId, (db) => getRunContext(db, key))
+    if (!stored || stored.chapterId !== input.chapterId) {
+      throw new StorageError(
+        'conflict',
+        'Lượt dịch không có bản chụp ngữ cảnh (kế hoạch cũ hoặc đã bị xóa). Hãy lập kế hoạch lại.'
+      )
+    }
+    const snapshot = parseSnapshot(stored.snapshotJson)
+    // So với kho lúc này: khác thì báo, nhưng lô vẫn dùng bản chụp của lượt, không trộn hai phiên bản.
+    const contextChanged =
+      takeContextSnapshot(library, input.workId, input.chapterId, source.content).hash !==
+      stored.snapshotHash
     const prior = library.withWork(input.workId, (db) => {
       const row = db.prepare('SELECT id FROM proposal WHERE run_key = ?').get<{ id: string }>(key)
       return row ? getProposal(db, row.id) : null
@@ -162,36 +194,24 @@ export class ParagraphTranslator {
         proposed: requested.map((unit) => unit.id),
         failed: [],
         refusals: [],
+        contextChanged,
         error: null,
         usage: null,
         keyTail: null
       }
 
-    const glossary = library.getEffectiveGlossary(input.workId, input.chapterId, {
-      approvedOnly: true
-    })
-    const matched = matchContextEntries(
-      units.map((unit) => unit.text).join('\n'),
-      glossary,
-      work.sourceLang
-    )
-    const allDyads = library.getEffectiveAddressing(input.workId, input.chapterId)
-    // Gửi đúng các cặp có mặt trong chương và vài đoạn gốc liền trước lô.
-    const dyads = dyadsMentionedIn(allDyads, source.content)
+    // Ngữ cảnh từ bản chụp của lượt; glossary vẫn lọc theo chữ của lô, nhưng chỉ trong bản chụp.
     const first = Math.min(...units.map((unit) => unit.order))
-    const prompt: TranslatePromptContext = {
-      sourceLang: work.sourceLang,
-      genre: work.genre,
-      glossary: matched,
-      dyads,
-      register: suggestRegister(work.sourceLang, work.genre),
-      characters: charactersMentionedIn(
-        library.withWork(input.workId, (db) => listCharacters(db, { status: 'approved' })),
-        source.content
-      ),
-      previous: all.slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), first).map((unit) => unit.text)
-    }
-    const context = [...matched, ...dyads]
+    const previous = all
+      .slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), first)
+      .map((unit) => unit.text)
+    const prompt = promptFromSnapshot(
+      snapshot,
+      units.map((unit) => unit.text).join('\n'),
+      previous
+    )
+    const matched = prompt.glossary ?? []
+    const context = [...matched, ...snapshot.dyads]
     // Hash của request lượt chính, tính bằng cùng bộ dựng lõi dịch dùng để gửi: không thể lệch nhau.
     const planned = buildTranslateRequest(
       prompt,
@@ -234,6 +254,7 @@ export class ParagraphTranslator {
         proposed: [],
         failed: units.map((unit) => unit.id),
         refusals: [],
+        contextChanged,
         error: failure(caught, now()),
         usage: null,
         keyTail: translator.lastKeyTail()
@@ -252,6 +273,11 @@ export class ParagraphTranslator {
         promptVersion: planned.version,
         systemHash: planned.systemHash,
         usage,
+        // Đủ để dựng lại request lượt chính từ bản chụp (`rebuildTranslateRequest`).
+        snapshot: { runKey: key, hash: stored.snapshotHash },
+        characters: snapshot.characters.map((character) => `${character.source} → ${character.target}`),
+        previous,
+        register: snapshot.register,
         // Chỉ ghi khi có: hồ sơ cũ không có trường này vẫn đọc như trước.
         ...(refusals.length > 0 ? { refusals } : {})
       }
@@ -337,6 +363,7 @@ export class ParagraphTranslator {
       proposed,
       failed,
       refusals,
+      contextChanged,
       error:
         error ??
         (failed.length

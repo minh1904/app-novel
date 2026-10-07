@@ -41,10 +41,11 @@ translate_run_context(
   chapter_id TEXT NOT NULL REFERENCES chapter(id) ON DELETE CASCADE,
   snapshot_json TEXT NOT NULL,         -- nội dung bản chụp, JSON chuẩn hóa
   snapshot_hash TEXT NOT NULL,         -- sha256 của snapshot_json
-  live_fingerprint TEXT NOT NULL,      -- = snapshot_hash lúc tạo; dùng để so với ngữ cảnh sống
   created_at INTEGER NOT NULL
 )
 ```
+
+Cột `live_fingerprint` trong bản nháp đầu bị bỏ khi triển khai: nó luôn bằng `snapshot_hash`, còn bản chụp sống được tính lại mỗi lô chứ không lưu.
 
 Vì sao không nhét vào `proposal`: proposal sinh muộn (sau lô đầu thành công) và có thể không bao giờ sinh
 nếu mọi lô lỗi; bản chụp phải có từ `plan`. Vì sao không giữ trong bộ nhớ main: app khởi động lại thì

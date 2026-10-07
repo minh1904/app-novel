@@ -332,6 +332,22 @@ DROP TABLE proposal_turn_link;
 `)
 }
 
+/**
+ * The approved work context a chapter translation run was planned with, frozen once per run
+ * (change `translation-context-snapshot`). Keyed like `proposal.run_key`, but a table of its own: the
+ * proposal only appears after the first batch succeeds, and the snapshot must exist before that.
+ */
+const version9 = `
+CREATE TABLE translate_run_context (
+  run_key TEXT PRIMARY KEY,
+  chapter_id TEXT NOT NULL REFERENCES chapter (id) ON DELETE CASCADE,
+  snapshot_json TEXT NOT NULL,
+  snapshot_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX translate_run_context_chapter ON translate_run_context (chapter_id, created_at);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -382,6 +398,12 @@ export const workSchema: SchemaSpec = {
       version: 8,
       up(db) {
         migrateChatActions(db)
+      }
+    },
+    {
+      version: 9,
+      up(db) {
+        db.exec(version9)
       }
     }
   ]

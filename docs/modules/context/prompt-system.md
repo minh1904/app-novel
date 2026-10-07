@@ -195,6 +195,29 @@ fantasy phương Tây cũng nhận câu về お前/テメェ và "thầy/cô �
   như lô dịch. Bộ chỉ phụ thuộc tác phẩm nên system prompt chat vẫn giữ nguyên giữa các lượt.
 - Bộ vẫn đoán từ ngôn ngữ và thể loại; lưu lựa chọn theo tác phẩm vẫn là đề xuất ở mục dưới.
 
+## Bản chụp ngữ cảnh theo lượt dịch (đã triển khai 2026-10-07)
+
+Trước đây mỗi lô đọc lại glossary, xưng hô và nhân vật từ kho, nên sửa ngữ cảnh giữa lúc dịch làm các lô
+trong một chương dùng phiên bản khác nhau, và trace chỉ có hash, không dựng lại được request. Change
+`translation-context-snapshot`:
+
+- **Chụp một lần khi lập kế hoạch.** `plan()` chụp glossary hiệu lực đã duyệt của chương (chưa lọc theo
+  lô), cặp xưng hô và nhân vật đã lọc theo chữ cả chương, cùng ngôn ngữ, thể loại và bộ mặc định
+  ([`contextSnapshot.ts`](../../../src/main/services/ai/translate/contextSnapshot.ts)). JSON chuẩn hóa
+  (khóa sắp xếp) rồi băm, lưu vào bảng `translate_run_context` của tệp `.mira` (schema v9) theo khóa
+  `translate:<runId>`. Kế hoạch trả số mục mỗi loại; hộp thoại dịch hiện “Ngữ cảnh gửi kèm”.
+- **Mọi lời gọi của lượt dùng bản chụp**: lượt chính, chia lô, gửi lại không ngữ cảnh, hỏi lại và chạy
+  lại đoạn lỗi. Glossary vẫn lọc theo chữ của lô, nhưng trong bản chụp. Lượt không có bản chụp (kế hoạch
+  cũ) bị từ chối bằng `conflict`, không gọi model.
+- **Ngữ cảnh đổi giữa lượt được báo, không chặn.** Mỗi lô chụp lại từ kho và so hash; khác thì kết quả có
+  `contextChanged` và hộp thoại nói lượt này vẫn dùng ngữ cảnh lúc bắt đầu.
+- **Trace dựng lại được request.** Trace lô thêm `snapshot` (khóa lượt, hash), `characters`, `previous`,
+  `register`, giữ các khóa cũ. `rebuildTranslateRequest` dựng lại request lượt chính từ trace và bản chụp;
+  hash trùng `contextHash` khi bộ dựng prompt chưa đổi (có test).
+- Bản chụp mồ côi (lượt không sinh đề xuất) quá 30 ngày được dọn khi lập kế hoạch lại cùng chương; giá trị
+  30 ngày là tạm. Cache của nhà cung cấp không phải cam kết của tính năng này. Chat và đường cũ
+  `ChapterTranslator` chưa dùng bản chụp.
+
 ## Còn để sau (đề xuất)
 
 - **Lưu chế độ kính ngữ và preset theo tác phẩm:** schema work v8 và ô chọn trong cài đặt tác phẩm.

@@ -29,6 +29,8 @@ export interface ParagraphTranslationPlan {
   batches: Array<{ sourceIds: string[]; sourceChars: number }>
   hasTranslation: boolean
   estimate: TranslateEstimate
+  /** The work context this run was frozen with: every batch builds its prompt from it. */
+  context: { hash: string; glossary: number; dyads: number; characters: number }
 }
 
 export const paragraphPlanSchema = v.strictObject({
@@ -56,6 +58,11 @@ export interface ParagraphBatchResult {
   failed: string[]
   /** Những đoạn trong `failed` bị bộ lọc nội dung chặn, kèm lý do. */
   refusals: SegmentRefusal[]
+  /**
+   * The approved context in the store no longer matches the run's snapshot. The batch still used the
+   * snapshot; planning again is how the change gets applied.
+   */
+  contextChanged: boolean
   error: TranslateFailure | null
   usage: TranslateUsage | null
   keyTail: string | null

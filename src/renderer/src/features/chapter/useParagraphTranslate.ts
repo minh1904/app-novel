@@ -35,6 +35,8 @@ export interface ParagraphTranslateController {
   refusals: SegmentRefusal[]
   usage: TranslateUsage | null
   keyNotice: string | null
+  /** The store's context changed after the plan was made; the run kept the context it started with. */
+  contextNotice: string | null
   cancelled: boolean
   result: { proposed: number; applied: number; needsReview: number } | null
   start(): Promise<void>
@@ -62,6 +64,7 @@ export function useParagraphTranslate(
   const [refusals, setRefusals] = useState<SegmentRefusal[]>([])
   const [usage, setUsage] = useState<TranslateUsage | null>(null)
   const [keyNotice, setKeyNotice] = useState<string | null>(null)
+  const [contextNotice, setContextNotice] = useState<string | null>(null)
   const [cancelled, setCancelled] = useState(false)
   const [result, setResult] = useState<ParagraphTranslateController['result']>(null)
   const [replan, setReplan] = useState(0)
@@ -123,6 +126,7 @@ export function useParagraphTranslate(
     setCancelled(false)
     setFailure(null)
     setKeyNotice(null)
+    setContextNotice(null)
     setFinished(false)
     setRunning(true)
     let lastTail: string | null = null
@@ -170,6 +174,10 @@ export function useParagraphTranslate(
           outputTokens: (previous?.outputTokens ?? 0) + batch.usage.outputTokens
         }
         setUsage(spent)
+      }
+      if (batch.contextChanged) {
+        setContextNotice('Glossary, nhân vật hoặc xưng hô đã đổi sau khi lập kế hoạch. Lượt này vẫn dùng ' +
+          'ngữ cảnh lúc bắt đầu; lập kế hoạch lại để áp dụng thay đổi.')
       }
       if (batch.keyTail) {
         if (lastTail && batch.keyTail !== lastTail) {
@@ -235,7 +243,7 @@ export function useParagraphTranslate(
     pick, loadingTargets: connections === null, plan: settled ? plan : null,
     policy, setPolicy, notice, dismissNotice: () => setNotice(null),
     progress: { processed, proposed: done, total: plan?.paragraphCount ?? 0 },
-    failed, failure, refusals, usage, keyNotice, cancelled, result, start, retryFailed,
+    failed, failure, refusals, usage, keyNotice, contextNotice, cancelled, result, start, retryFailed,
     cancel: () => { stop.current = true; setStopping(true) }
   }
 }

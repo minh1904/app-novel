@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 8, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 9, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -151,7 +151,7 @@ describe('work schema', () => {
 
     // Upgrade through the current schema.
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(8)
+    expect(readPragmas(db).userVersion).toBe(9)
 
     // Data preserved
     const row = db.prepare('SELECT title FROM work WHERE id = ?').get<{ title: string }>('w1')
@@ -193,7 +193,7 @@ describe('work schema', () => {
       INSERT INTO provenance (segment_id, origin, at) VALUES ('s', 'human', 1);
     `)
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(8)
+    expect(readPragmas(db).userVersion).toBe(9)
     expect(
       db
         .prepare("SELECT content, rev FROM chapter_text WHERE chapter_id = 'c' AND side = 'target'")
@@ -260,7 +260,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(8)
+    expect(readPragmas(db).userVersion).toBe(9)
     expect(db.prepare('SELECT id, action, answer FROM ai_turn ORDER BY created_at').all()).toEqual([
       { id: 't-ask', action: 'ask', answer: 'Đáp' },
       { id: 't-edit', action: 'edit', answer: 'Bản sửa' },
@@ -333,6 +333,29 @@ describe('work schema', () => {
         )
       )
     ).toBe(true)
+    db.close()
+  })
+
+  it('upgrades v8 to v9: adds the run context table, which goes with its chapter', () => {
+    const db = openDatabase(join(tempDir(), 'v8_to_v9.mira'))
+    migrate(db, {
+      applicationId: WORK_APPLICATION_ID,
+      migrations: workSchema.migrations.slice(0, 8)
+    })
+    db.exec(`
+      INSERT INTO work (id, title, source_lang, created_at, updated_at) VALUES ('w', 'T', 'ja', 1, 1);
+      INSERT INTO chapter (id, position, created_at, updated_at) VALUES ('c', 0, 1, 1);
+    `)
+
+    migrate(db, workSchema)
+
+    expect(readPragmas(db).userVersion).toBe(9)
+    db.exec(`
+      INSERT INTO translate_run_context (run_key, chapter_id, snapshot_json, snapshot_hash, created_at)
+      VALUES ('translate:r', 'c', '{}', 'h', 1);
+      DELETE FROM chapter WHERE id = 'c';
+    `)
+    expect(db.prepare('SELECT count(*) AS n FROM translate_run_context').get()).toEqual({ n: 0 })
     db.close()
   })
 })

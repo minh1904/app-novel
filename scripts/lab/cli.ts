@@ -41,6 +41,7 @@ import { paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
 import { sanitizeJsonString } from '../../src/shared/algorithms/lenientParser'
 import { costOfUsage } from '../../src/main/services/ai/costEstimate'
 import { lookupModel } from '../../src/main/infra/providers/modelCatalog'
+import { getRunContext } from '../../src/main/infra/storage/translateRunContext'
 import {
   checkThinkingLevel,
   describeThinkingCheck
@@ -68,6 +69,7 @@ import {
   compareSnapshots,
   glossaryOriginOf,
   historyMarkdown,
+  contextDifferences,
   parseRegistry,
   runIdToIso,
   snapshotOf,
@@ -211,6 +213,8 @@ interface ChapterStats {
   usd?: number
   failed: number
   seconds: number
+  /** Hash bản chụp ngữ cảnh lượt dịch chương này đã dùng. */
+  contextHash?: string
 }
 
 interface NovelEntry {
@@ -242,7 +246,19 @@ function readManifest(): Manifest {
 
 function writeManifest(manifest: Manifest): void {
   mkdirSync(LAB, { recursive: true })
-  writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2) + '\n', 'utf8')
+  const text = JSON.stringify(manifest, null, 2) + '\n'
+  // Trên Windows một tiến trình khác (quét virus, chỉ mục, phiên khác) có thể giữ tệp thoáng qua và
+  // open trả UNKNOWN/EBUSY/EPERM; thử lại vài lần thay vì bỏ dở cả lượt dịch đang chạy.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      writeFileSync(MANIFEST, text, 'utf8')
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      if (attempt >= 5 || !['UNKNOWN', 'EBUSY', 'EPERM', 'EACCES'].includes(code ?? '')) throw error
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200 * attempt)
+    }
+  }
 }
 
 function pickNovels(manifest: Manifest, codes: string[]): NovelEntry[] {
@@ -733,7 +749,12 @@ async function translateChapter(
   chapterId: string,
   force: boolean,
   tag: string
-): Promise<{ failed: number; skipped: boolean }> {
+): Promise<{
+  failed: number
+  skipped: boolean
+  /** Bản chụp ngữ cảnh của lượt: hash và JSON đúng như đã lưu trong tệp tác phẩm. */
+  context?: { hash: string; json: string }
+}> {
   const target = library.readText(workId, chapterId, 'target')
   if (target.content.trim() !== '') {
     if (!force) return { failed: 0, skipped: true }
@@ -769,7 +790,12 @@ async function translateChapter(
     }
   }
   translator.finalize({ workId, chapterId, runId: plan.runId, policy: 'auto' })
-  return { failed, skipped: false }
+  const stored = library.withWork(workId, (db) => getRunContext(db, `translate:${plan.runId}`))
+  return {
+    failed,
+    skipped: false,
+    ...(stored ? { context: { hash: stored.snapshotHash, json: stored.snapshotJson } } : {})
+  }
 }
 
 async function translate(manifest: Manifest, args: Args): Promise<void> {
@@ -822,7 +848,8 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     novel: NovelEntry,
     variant: Variant,
     queue: number[],
-    laneCalls: CallRecord[]
+    laneCalls: CallRecord[],
+    laneContexts: Record<string, string>
   ): Promise<void> {
     const context = { ncode: novel.ncode, variant: variant.label, chapter: 0 }
     const calls: CallRecord[] = []
@@ -886,7 +913,16 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
           reasoningTokens: mine.reduce((sum, call) => sum + call.reasoningTokens, 0),
           usd: usdOf(model, mine),
           failed: outcome.failed,
-          seconds: Math.round((Date.now() - started) / 100) / 10
+          seconds: Math.round((Date.now() - started) / 100) / 10,
+          ...(outcome.context ? { contextHash: outcome.context.hash } : {})
+        }
+        if (outcome.context) {
+          laneContexts[String(n)] = outcome.context.hash
+          writeFileSync(
+            join(runDir, `context-${novel.ncode}-${variant.label}-${n}.json`),
+            outcome.context.json,
+            'utf8'
+          )
         }
         novel.stats[variant.label] = { ...novel.stats[variant.label], [String(n)]: stats }
         writeManifest(manifest)
@@ -909,10 +945,11 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     const total = novel.chapterCount
     const queue = parseRange(args.flags.get('chapters'), total)
     const laneCalls: CallRecord[] = []
+    const laneContexts: Record<string, string> = {}
     try {
       await Promise.all(
         Array.from({ length: Math.min(concurrency, queue.length) }, () =>
-          worker(novel, variant, queue, laneCalls)
+          worker(novel, variant, queue, laneCalls, laneContexts)
         )
       )
     } finally {
@@ -929,6 +966,7 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
               model,
               ...git,
               glossary: glossaryProvenance(glossaryNameOf(novel, variant.label)),
+              contexts: laneContexts,
               usd: usdOf(model, laneCalls),
               ...(note ? { note } : {})
             },
@@ -2359,6 +2397,17 @@ function compareVariants(args: Args): void {
     console.log(`${row.metric.padEnd(width)}  A ${row.a}  ·  B ${row.b}${mark}`)
   }
   for (const warning of result.warnings) console.log('\nCảnh báo: ' + warning)
+  // Ngữ cảnh của lần chạy mới nhất mỗi bên: chương khác hash thì so sánh lẫn cả thay đổi ngữ cảnh.
+  const latest = (variant: string): RunRecord | undefined =>
+    runs.filter((run) => run.ncode === ncode && run.variant === variant && run.contexts).at(-1)
+  const contexts = contextDifferences(latest(a)?.contexts, latest(b)?.contexts)
+  if (contexts.differ.length > 0) {
+    console.log(
+      '\nCảnh báo: ngữ cảnh khác nhau ở chương ' +
+        contexts.differ.join(', ') +
+        ' (hash bản chụp khác); chênh lệch ở đó lẫn cả thay đổi glossary, nhân vật hay xưng hô.'
+    )
+  }
   if (!measurements.some((m) => m.ncode === ncode)) {
     console.log('\nChưa có lần đo nào: chạy `report` và `pairs` cho truyện này trước.')
   }
