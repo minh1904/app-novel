@@ -28,7 +28,13 @@ export class CallBudget {
   private mainLeft: number
   private extraLeft: number
   private limitTotal: number
-  private readonly rounds: Record<BudgetRound, number> = { main: 0, split: 0, bare: 0, repair: 0 }
+  private readonly rounds: Record<BudgetRound, number> = {
+    main: 0,
+    split: 0,
+    bare: 0,
+    repair: 0,
+    fallback: 0
+  }
   private attempts = 0
 
   constructor(main: number, extra: number) {
@@ -66,7 +72,7 @@ export class CallBudget {
   }
 
   snapshot(): BudgetSnapshot {
-    const used = this.rounds.main + this.rounds.split + this.rounds.bare + this.rounds.repair
+    const used = Object.values(this.rounds).reduce((sum, count) => sum + count, 0)
     return {
       used,
       limit: this.limitTotal,

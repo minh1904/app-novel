@@ -98,6 +98,12 @@ export interface ModelCapabilityView {
   thinkingLevels: ThinkingLevel[]
   /** `false` chỉ khi bảng dữ liệu nói rõ model không nhận nhiệt độ. */
   temperature: boolean
+  /**
+   * Model nhận `response_format` có JSON schema: catalog khai, hoặc dòng đo thật thêm vào. Chỉ là điều
+   * kiện để Lab thử chế độ đầu ra có schema; sản phẩm mặc định không bật (change
+   * `translate-structured-output-trial`).
+   */
+  structuredOutput: boolean
 }
 
 /** Một mục model như renderer thấy. */

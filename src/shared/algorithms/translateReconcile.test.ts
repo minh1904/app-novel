@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  mapToTempIds,
-  normalizeTempId,
-  reconcileTempItems
-} from './translateReconcile'
+import { mapToTempIds, normalizeTempId, reconcileTempItems } from './translateReconcile'
 
 describe('translateReconcile — Đối soát hợp đồng Lõi dịch', () => {
   it('ánh xạ đúng các đơn vị nguồn sang ID tạm [1], [2] và bỏ qua đơn vị rỗng', () => {
@@ -101,6 +97,22 @@ describe('translateReconcile — Đối soát hợp đồng Lõi dịch', () => 
     expect(result.missing).toEqual(['u2'])
   })
 
+  it('coi bản gốc chép lại là rỗng, trừ đoạn không có chữ', () => {
+    const units = [
+      { id: 'u1', text: '「そうですか」' },
+      { id: 'u2', text: '「――――？」' }
+    ]
+    const { sendable, tempToId } = mapToTempIds(units)
+
+    const result = reconcileTempItems(sendable, tempToId, [
+      { tempId: '[1]', text: '「そうですか」' },
+      { tempId: '[2]', text: '「――――？」' }
+    ])
+
+    expect(result.empty).toEqual(['u1'])
+    expect(result.matched).toEqual([{ id: 'u2', text: '「――――？」' }])
+  })
+
   it('bỏ qua ID lạ ngoài danh sách yêu cầu', () => {
     const units = [{ id: 'u1', text: 'Alpha' }]
     const { sendable, tempToId } = mapToTempIds(units)
@@ -136,5 +148,24 @@ describe('translateReconcile — Đối soát hợp đồng Lõi dịch', () => 
     expect(result.matched).toEqual([{ id: 'u1', text: 'Bản dịch đầu' }])
     expect(result.empty).toEqual(['u2'])
     expect(result.missing).toHaveLength(0)
+  })
+})
+
+describe('reconcileTempItems — duplicates', () => {
+  it('counts a repeated id and keeps the first translation', () => {
+    const { sendable, tempToId } = mapToTempIds([
+      { id: 'a', text: 'x' },
+      { id: 'b', text: 'y' }
+    ])
+    const result = reconcileTempItems(sendable, tempToId, [
+      { tempId: '[1]', text: 'đầu' },
+      { tempId: '[1]', text: 'lặp' },
+      { tempId: '[2]', text: 'hai' }
+    ])
+    expect(result.duplicate).toBe(1)
+    expect(result.matched).toEqual([
+      { id: 'a', text: 'đầu' },
+      { id: 'b', text: 'hai' }
+    ])
   })
 })

@@ -18,6 +18,7 @@ import { addUsage } from '../../../infra/providers/usage'
 import { describeRefusals } from '../../../../shared/algorithms/refusalMessage'
 import { describeProviderError } from '../errorPolicy'
 import { CallBudget, LOCAL_EXTRA, type BudgetRound } from './callBudget'
+import { TRANSLATE_RESPONSE_FORMAT, type OutputMode, type UsedOutputMode } from './outputMode'
 
 export type { ModelCompletionResult, TranslationModelCaller }
 
@@ -60,8 +61,18 @@ export interface TranslateCoreBatchOutcome {
   withoutContextIds: string[]
   usage: TokenUsage | null
   error: CoreFailure | null
-  /** Request lượt chính đã gửi; `null` khi lô không có gì để gửi. */
-  request: { version: string; systemHash: string; requestHash: string } | null
+  /**
+   * Request lượt chính có câu trả lời được dùng; `null` khi lô không có gì để gửi. Khi schema bị từ chối
+   * và lô được gửi lại không schema, đây là request gửi lại, và `outputMode` là `object→fallback`.
+   */
+  request: {
+    version: string
+    systemHash: string
+    requestHash: string
+    outputMode: UsedOutputMode
+  } | null
+  /** Lỗi cấu trúc của câu trả lời lượt chính: mục lạ, mục lặp, và số đoạn phải hỏi lại. */
+  structure: { extraneous: number; duplicate: number; repaired: number }
 }
 
 /**
@@ -84,11 +95,16 @@ export async function executeTranslateBatch({
   // Mọi lời gọi model của lô đi qua đây: xin ngân sách trước, ghi số request HTTP thật sau.
   const call = async (
     round: BudgetRound,
-    messages: Parameters<TranslationModelCaller['complete']>[0]
+    messages: Parameters<TranslationModelCaller['complete']>[0],
+    mode: OutputMode
   ): Promise<ModelCompletionResult | null> => {
     if (!budget.take(round)) return null
     try {
-      const result = await caller.complete(messages, { signal })
+      // Chế độ tắt thì lời gọi y như trước: không có khóa `responseFormat` nào.
+      const result = await caller.complete(
+        messages,
+        mode === 'object' ? { signal, responseFormat: TRANSLATE_RESPONSE_FORMAT } : { signal }
+      )
       budget.addAttempts(result.attempts ?? 1)
       return result
     } catch (error) {
@@ -100,6 +116,7 @@ export async function executeTranslateBatch({
   // 1. Ánh xạ ID tạm và tách đơn vị rỗng
   const { sendable, skippedEmpty, tempToId } = mapToTempIds(units)
 
+  const structure = { extraneous: 0, duplicate: 0, repaired: 0 }
   if (sendable.length === 0) {
     return {
       items: skippedEmpty,
@@ -110,21 +127,41 @@ export async function executeTranslateBatch({
       withoutContextIds: [],
       usage: null,
       error: null,
-      request: null
+      request: null,
+      structure
     }
   }
 
-  // 2. Gửi yêu cầu chính tới mô hình
-  const main = buildTranslateRequest(prompt, sendable)
-  const request = {
+  // 2. Gửi yêu cầu chính tới mô hình. `active` là ngữ cảnh mọi lượt sau dùng: chia lô, gửi lại không ngữ
+  // cảnh và hỏi lại giữ chế độ đầu ra của lô (sau khi rơi về nếu có).
+  let active: TranslatePromptContext = prompt
+  const modeOf = (context: TranslatePromptContext): OutputMode => context.outputMode ?? 'array'
+  let usedMode: UsedOutputMode = modeOf(prompt)
+  let main = buildTranslateRequest(active, sendable)
+  const requestOf = (): NonNullable<TranslateCoreBatchOutcome['request']> => ({
     version: main.version,
     systemHash: main.systemHash,
-    requestHash: main.requestHash
-  }
+    requestHash: main.requestHash,
+    outputMode: usedMode
+  })
+  let request = requestOf()
 
   let mainCall: ModelCompletionResult
   try {
-    const answer = await call('main', main.messages)
+    let answer: ModelCompletionResult | null
+    try {
+      answer = await call('main', main.messages, modeOf(active))
+    } catch (error) {
+      // Schema bị nhà cung cấp từ chối (lỗi cấu hình, không phải nội dung bị chặn): gửi lại lô đúng một lần
+      // không schema, và báo để các lô sau của lượt khỏi gửi schema nữa (D6).
+      if (!(error instanceof ProviderError) || error.kind !== 'invalid_request') throw error
+      if (modeOf(active) !== 'object') throw error
+      active = { ...prompt, outputMode: 'array' }
+      usedMode = 'object→fallback'
+      main = buildTranslateRequest(active, sendable)
+      request = requestOf()
+      answer = await call('fallback', main.messages, 'array')
+    }
     if (answer === null) {
       const ids = sendable.map((u) => u.originalId)
       return {
@@ -140,7 +177,8 @@ export async function executeTranslateBatch({
           message: `Hết ngân sách lời gọi của lượt dịch; ${ids.length} đoạn chưa được gửi. Thử lại phần lỗi để gửi tiếp.`,
           recoverAt: null
         },
-        request
+        request,
+        structure
       }
     }
     mainCall = answer
@@ -159,7 +197,8 @@ export async function executeTranslateBatch({
         withoutContextIds: [],
         usage: totalUsage,
         error: { kind: error.kind, message: describeProviderError(error), recoverAt },
-        request
+        request,
+        structure
       }
     }
     throw error
@@ -179,7 +218,8 @@ export async function executeTranslateBatch({
         message: 'Phản hồi bị cắt vì hết giới hạn đầu ra.',
         recoverAt: null
       },
-      request
+      request,
+      structure
     }
   }
 
@@ -192,8 +232,8 @@ export async function executeTranslateBatch({
   if (mainCall.finishReason === 'filter') {
     const split = await splitFiltered(
       sendable,
-      prompt,
-      (messages) => call('split', messages),
+      active,
+      (messages) => call('split', messages, modeOf(active)),
       tempToId,
       signal,
       false,
@@ -207,14 +247,14 @@ export async function executeTranslateBatch({
 
     // Đoạn vẫn bị chặn: thử thêm một vòng không kèm glossary, nhân vật và cặp xưng hô. Lý do giữ lại là
     // của lần chặn cuối cùng; đoạn qua được ở vòng này thì không còn lý do nào.
-    const bare = withoutWorkContext(prompt)
+    const bare = withoutWorkContext(active)
     if (refusals.length > 0 && bare && !signal?.aborted) {
       const blocked = new Set(refusals.map((refusal) => refusal.id))
       const refusedUnits = sendable.filter((u) => blocked.has(u.originalId))
       const retry = await splitFiltered(
         refusedUnits,
         bare,
-        (messages) => call('bare', messages),
+        (messages) => call('bare', messages, modeOf(bare)),
         tempToId,
         signal,
         true
@@ -235,16 +275,19 @@ export async function executeTranslateBatch({
     )
     matched.push(...reconciliation.matched)
     missingIds = [...reconciliation.missing, ...reconciliation.empty]
+    structure.extraneous = reconciliation.extraneous.length
+    structure.duplicate = reconciliation.duplicate ?? 0
   }
 
   // 4. Nếu có ID thiếu và chưa bị hủy, hỏi lại đúng các ID đó 1 lần
   if (missingIds.length > 0 && !signal?.aborted) {
     const missingUnits = sendable.filter((u) => missingIds.includes(u.originalId))
     if (missingUnits.length > 0) {
-      const repair = buildRepairRequest(prompt, missingUnits)
+      const repair = buildRepairRequest(active, missingUnits)
+      structure.repaired = missingUnits.length
 
       try {
-        const repairCall = await call('repair', repair.messages)
+        const repairCall = await call('repair', repair.messages, modeOf(active))
         if (repairCall === null) {
           // Không còn ngân sách để hỏi lại: thử lại phần lỗi sẽ có ích, nên không gọi là "thiếu".
           budgetIds.push(...missingIds)
@@ -307,7 +350,8 @@ export async function executeTranslateBatch({
     withoutContextIds,
     usage: totalUsage,
     error,
-    request
+    request,
+    structure
   }
 }
 

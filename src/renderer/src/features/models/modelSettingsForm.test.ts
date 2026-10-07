@@ -21,10 +21,19 @@ import {
 
 const flash: ModelCapabilityView = {
   thinkingLevels: ['off', 'low', 'medium', 'high'],
-  temperature: true
+  temperature: true,
+  structuredOutput: true
 }
-const pro: ModelCapabilityView = { thinkingLevels: ['low', 'medium', 'high'], temperature: true }
-const unknown: ModelCapabilityView = { thinkingLevels: [], temperature: true }
+const pro: ModelCapabilityView = {
+  thinkingLevels: ['low', 'medium', 'high'],
+  temperature: true,
+  structuredOutput: false
+}
+const unknown: ModelCapabilityView = {
+  thinkingLevels: [],
+  temperature: true,
+  structuredOutput: false
+}
 
 describe('thinkingOptions', () => {
   const values = (
@@ -301,8 +310,8 @@ describe('staleThinkingNotice', () => {
   })
 
   it('points to the default when the model takes no level', () => {
-    expect(staleThinkingNotice({ thinkingLevels: [], temperature: true }, 'low')).toContain(
-      '“Mặc định”'
-    )
+    expect(
+      staleThinkingNotice({ thinkingLevels: [], temperature: true, structuredOutput: false }, 'low')
+    ).toContain('“Mặc định”')
   })
 })

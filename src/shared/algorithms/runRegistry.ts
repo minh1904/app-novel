@@ -83,6 +83,8 @@ export interface RunRecord {
   outcomes?: { file: string; counts: Partial<OutcomeCounts> }
   /** Ngân sách lời gọi của các lượt dịch chương; thiếu ở lần chạy trước khi có ngân sách. */
   budget?: RunBudget
+  /** Chế độ đầu ra và lỗi cấu trúc; thiếu ở lần chạy trước khi có chế độ schema (nghĩa là \`text\`). */
+  output?: RunOutput
   calls: number
   httpErrors: number
   inputTokens: number
@@ -191,6 +193,7 @@ export interface RunMeta {
   contexts?: Record<string, string>
   outcomes?: { file: string; counts: Partial<OutcomeCounts> }
   budget?: RunBudget
+  output?: RunOutput
   usd: number | null
   note?: string
   backfilled?: boolean
@@ -206,6 +209,36 @@ export interface RunBudget {
   modelCalls: number
   budgetExhausted: number
   maxCalls: number | null
+}
+
+/**
+ * Chế độ đầu ra của lần chạy (change `translate-structured-output-trial`): `requested` là chế độ Lab xin
+ * (`object` khi chạy với `--schema`), `fallbacks` là số lô có schema bị từ chối và gửi lại không schema.
+ * Lỗi cấu trúc của câu trả lời lượt chính, cộng qua các lô: mục lạ, mục lặp, đoạn phải hỏi lại. Lần chạy
+ * trước khi có trường này là `text` (mảng, không schema).
+ */
+export interface RunOutput {
+  requested: 'array' | 'object'
+  batches: number
+  fallbacks: number
+  extraneous: number
+  duplicate: number
+  repaired: number
+}
+
+/** Nhãn chế độ đầu ra của một lần chạy cho bảng: `text`, `schema`, hoặc `schema (N lô rơi về)`. */
+export function outputLabel(run: Pick<RunRecord, 'output'>): string {
+  if (!run.output || run.output.requested === 'array') return 'text'
+  return run.output.fallbacks > 0 ? `schema (${run.output.fallbacks} lô rơi về)` : 'schema'
+}
+
+/** Mục lạ / mục lặp / đoạn phải hỏi lại, cộng qua các lần chạy; `–` khi không lần nào ghi. */
+export function structureLabel(runs: Array<Pick<RunRecord, 'output'>>): string {
+  const recorded = runs.filter((run) => run.output)
+  if (recorded.length === 0) return '–'
+  const sum = (pick: (output: RunOutput) => number): number =>
+    recorded.reduce((total, run) => total + pick(run.output!), 0)
+  return `${sum((o) => o.extraneous)}/${sum((o) => o.duplicate)}/${sum((o) => o.repaired)}`
 }
 
 /** Băm gộp các hash bản chụp theo chương, sắp theo chương để thứ tự ghi không đổi kết quả. */
@@ -274,6 +307,7 @@ export function summarizeRun(
       : {}),
     ...(meta.outcomes ? { outcomes: meta.outcomes } : {}),
     ...(meta.budget ? { budget: meta.budget } : {}),
+    ...(meta.output ? { output: meta.output } : {}),
     calls: calls.length,
     httpErrors: calls.filter((call) => call.status !== 200).length,
     inputTokens: sum((call) => call.inputTokens),
@@ -393,6 +427,8 @@ export function configOf(runs: RunRecord[]): {
   systemHash: string
   commit: string
   glossary: string
+  output: string
+  structure: string
   usd: number | null
 } {
   const usd = runs.some((run) => run.usd !== null)
@@ -409,6 +445,8 @@ export function configOf(runs: RunRecord[]): {
       )
     ),
     glossary: join(runs.map((run) => (run.glossary ? run.glossary.origin : null))),
+    output: join(runs.map((run) => outputLabel(run))),
+    structure: structureLabel(runs),
     usd
   }
 }
@@ -600,8 +638,8 @@ export function historyMarkdown(
       )
     ].sort()
     lines.push(
-      '| Biến thể | Model | Thinking | Prompt | System | Commit | Nguồn glossary | Chương | Lệch đoạn | Đoạn thiếu | Glossary | Tên nhất quán | Xưng hô lệch | USD |',
-      '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+      '| Biến thể | Model | Thinking | Prompt | Đầu ra | System | Commit | Nguồn glossary | Chương | Lệch đoạn | Đoạn thiếu | Lạ/lặp/hỏi lại | Glossary | Tên nhất quán | Xưng hô lệch | USD |',
+      '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
     )
     for (const variant of variants) {
       const snap = snapshotOf(ncode, variant, usable, measurements)
@@ -615,9 +653,9 @@ export function historyMarkdown(
       const n = snap.names?.value
       const x = snap.addressing?.value
       lines.push(
-        `| ${variant} | ${config.model} | ${config.thinking} | ${config.prompt} | ${config.systemHash} | ` +
+        `| ${variant} | ${config.model} | ${config.thinking} | ${config.prompt} | ${config.output} | ${config.systemHash} | ` +
           `${config.commit} | ${config.glossary} | ${chapterSpan(snap.structure?.chapters ?? snap.addressing?.chapters ?? [])} | ` +
-          `${s ? s.mismatched : '–'} | ${s ? s.missingParagraphs : '–'} | ` +
+          `${s ? s.mismatched : '–'} | ${s ? s.missingParagraphs : '–'} | ${config.structure} | ` +
           `${g ? `${percent(rate(g.hits, g.checks))} (${g.hits}/${g.checks})` : '–'} | ` +
           `${n ? `${percent(rate(n.consistent, n.paragraphs))} (${n.names} tên)` : '–'} | ` +
           `${x ? `${percent(rate(x.off, x.checked))} (${x.off}/${x.checked}, nhãn ${x.labels})` : '–'} | ` +

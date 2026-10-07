@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   contextDifferences,
+  outputLabel,
+  structureLabel,
   LEGACY_PROMPT,
   combinedContextHash,
   compareGroups,
@@ -234,7 +236,7 @@ describe('runRegistry', () => {
     )
     expect(text).toContain('## Truyện thử (n1)')
     expect(text).toContain(
-      '| base | gemini-2.5-flash | off | translate-v5 | h8 | abc1234 | claude-draft | 1–3 | 0 | 0 | 90% (9/10) | – | – | $0.010 |'
+      '| base | gemini-2.5-flash | off | translate-v5 | text | h8 | abc1234 | claude-draft | 1–3 | 0 | 0 | – | 90% (9/10) | – | – | $0.010 |'
     )
     expect(text).toContain('Mọi lần đo, mới nhất trước:')
     expect(text).toContain('| Lúc đo | Biến thể | Chương | Cơ sở |')
@@ -302,5 +304,23 @@ describe('contextDifferences', () => {
   it('cannot tell for a chapter only one run recorded, nor for runs from before snapshots', () => {
     expect(contextDifferences({ '1': 'a', '2': 'b' }, { '1': 'a' })).toEqual({ differ: [], unknown: [2] })
     expect(contextDifferences(undefined, undefined)).toEqual({ differ: [], unknown: [] })
+  })
+})
+
+describe('output mode in the registry', () => {
+  it('labels runs before the schema mode as text, and schema runs with their fallbacks', () => {
+    expect(outputLabel({})).toBe('text')
+    const output = {
+      requested: 'object' as const,
+      batches: 4,
+      fallbacks: 0,
+      extraneous: 1,
+      duplicate: 0,
+      repaired: 2
+    }
+    expect(outputLabel({ output })).toBe('schema')
+    expect(outputLabel({ output: { ...output, fallbacks: 2 } })).toBe('schema (2 lô rơi về)')
+    expect(structureLabel([{ output }, { output: { ...output, duplicate: 3 } }, {}])).toBe('2/3/4')
+    expect(structureLabel([{}])).toBe('–')
   })
 })

@@ -59,7 +59,11 @@ describe('modelCapability on the real Gemini rows', () => {
 
 describe('modelCapability, row by row', () => {
   it('gives nothing for a model the catalog does not know', () => {
-    expect(modelCapability(undefined)).toEqual({ thinkingLevels: [], temperature: true })
+    expect(modelCapability(undefined)).toEqual({
+      thinkingLevels: [],
+      temperature: true,
+      structuredOutput: false
+    })
   })
 
   it('gives nothing for a model that does not reason, even if it lists options', () => {
@@ -174,5 +178,17 @@ describe('checkThinkingLevel', () => {
       'Mức suy luận "Tắt" không hợp lệ với gemini-3.5-flash-lite; các mức hợp lệ: minimal, low, medium, ' +
         'high. Gợi ý: minimal.'
     )
+  })
+})
+
+describe('structured output', () => {
+  it('reads the flag from the catalog, and is off for a model outside it', () => {
+    expect(modelCapability(lookupModel('gemini-2.5-flash', 'google')).structuredOutput).toBe(true)
+    expect(modelCapability(undefined).structuredOutput).toBe(false)
+  })
+
+  it('is off for a catalog model that does not declare it', () => {
+    const info = { ...lookupModel('gemini-2.5-flash', 'google')!, structuredOutput: undefined }
+    expect(capabilityFromCatalog(info).structuredOutput).toBe(false)
   })
 })

@@ -80,9 +80,11 @@ export function reconcileTempItems(
   const missing: string[] = []
   const extraneous: string[] = []
   const empty: string[] = []
+  let duplicate = 0
 
   const seenOriginalIds = new Set<string>()
   const expectedOriginalIds = new Set(sendable.map((u) => u.originalId))
+  const sourceOf = new Map(sendable.map((u) => [u.originalId, u.text.trim()]))
 
   for (const item of items) {
     const normTemp = normalizeTempId(item.tempId)
@@ -95,10 +97,15 @@ export function reconcileTempItems(
 
     // Nếu model trả trùng một ID, ưu tiên bản đầu tiên
     if (seenOriginalIds.has(originalId)) {
+      duplicate++
       continue
     }
 
-    if (item.text.trim() === '') {
+    // Chép lại nguyên bản gốc (thường khi bản dịch được đọc từ khóa `src`) không phải bản dịch: coi như
+    // rỗng để lượt hỏi lại dịch đoạn đó. Đoạn không có chữ (「――――？」) dịch ra vẫn y nguyên, giữ lại.
+    const source = sourceOf.get(originalId) ?? ''
+    const echoed = item.text.trim() === source && /\p{L}/u.test(source)
+    if (item.text.trim() === '' || echoed) {
       empty.push(originalId)
       seenOriginalIds.add(originalId)
       continue
@@ -118,5 +125,5 @@ export function reconcileTempItems(
     }
   }
 
-  return { matched, missing, extraneous, empty }
+  return { matched, missing, extraneous, empty, duplicate }
 }

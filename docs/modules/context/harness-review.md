@@ -70,7 +70,7 @@ Tài liệu Google (đọc 2026-10-07) bổ sung ba điều:
 | 2 | Tách lỗi cấu hình khỏi nội dung bị chặn, giữ lý do chặn, bảng mức thinking theo model | `provider-error-reasons` |
 | 2 | Ngân sách lời gọi chung cho một lượt dịch chương | `translation-call-budget` |
 | 3 | `read_chapter` phân trang và tool `search_work` | `chat-tools-paging-search` |
-| 4 | Thử structured output trên đường hiện tại; adapter Gemini gốc chỉ làm khi cần chỉnh ngưỡng an toàn hoặc đọc `promptFeedback` | `translate-structured-output-trial` |
+| 4 | Thử structured output trên đường hiện tại; adapter Gemini gốc chỉ làm khi cần chỉnh ngưỡng an toàn hoặc đọc `promptFeedback` | `translate-structured-output-trial` — mã đã có 2026-10-08, mặc định tắt, chỉ Lab bật (`--schema`); chưa đo |
 | 5 | Sửa có chủ đích cho lỗi glossary/xưng hô, **sau khi** đo tỷ lệ checker báo nhầm | chưa lập, xem [kiểm và tự sửa](post-editing.md) |
 | 6 | Học từ bản người sửa (kích hoạt khi duyệt xong chương, giữ đoạn bằng chứng và phạm vi); tóm tắt lịch sử chat (đo trước, phân biệt lời AI đề xuất với lựa chọn người dịch đã chốt) | chưa lập |
 

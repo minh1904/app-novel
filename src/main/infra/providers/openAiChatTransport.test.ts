@@ -124,6 +124,21 @@ describe('buildChatBody', () => {
     expect(Object.keys(buildChatBody(ask, STANDARD, false)).sort()).toEqual(['messages', 'model'])
   })
 
+  it('writes a call’s response_format, and lets extra_body have the last word', () => {
+    const format = { type: 'json_schema', json_schema: { name: 't', schema: {} } }
+    expect(buildChatBody({ ...ask, responseFormat: format }, STANDARD, false)).toMatchObject({
+      response_format: format
+    })
+    const mine = { type: 'json_object' }
+    expect(
+      buildChatBody(
+        { ...ask, responseFormat: format, extraBody: { response_format: mine } },
+        STANDARD,
+        false
+      ).response_format
+    ).toEqual(mine)
+  })
+
   it('adds the stream flags for a streamed call, and asks for usage only where that is accepted', () => {
     expect(buildChatBody(ask, STANDARD, true)).toMatchObject({
       stream: true,

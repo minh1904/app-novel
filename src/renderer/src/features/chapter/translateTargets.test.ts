@@ -8,7 +8,7 @@ const entry = (id: string, name = id): ModelEntryView => ({
   name,
   model: 'm',
   settings: {},
-  capability: { thinkingLevels: [], temperature: true }
+  capability: { thinkingLevels: [], temperature: true, structuredOutput: false }
 })
 
 const connection = (

@@ -194,3 +194,27 @@ nó vô hại và giúp đọc lại các lần chạy Lab đã có.
   OpenAI hay khai thêm qua `extra_body.google`? Bản đầu dùng định dạng OpenAI, vì tài liệu tương thích
   ghi nhận định dạng đó. Câu trả lời không đổi spec hay task.
 - Có cần biến thể `strict: true` không (xem D1)? Quyết định sau lần đo đầu.
+
+## Ghi chú khi triển khai (2026-10-08)
+
+Chỗ khác với các quyết định trên, và lý do:
+
+- **`outputMode` nằm trong `TranslatePromptContext`**, không là tham số riêng của `systemPrompt` hay
+  `buildTranslateRequest`. Lõi dịch truyền cùng một ngữ cảnh cho lượt chính, chia đôi, gửi lại không ngữ
+  cảnh và hỏi lại, nên đặt chế độ trong ngữ cảnh là cách duy nhất để mọi lượt phụ giữ chế độ của lô mà không
+  thêm tham số ở từng chỗ. Vắng hoặc `array` cho system prompt cũ tới từng byte (test so hash lấy trước khi
+  sửa).
+- **Lời gọi rơi về có vòng ngân sách riêng `fallback`** (`BudgetRound`), không lẫn với `repair`, để
+  trace và Lab đếm được số lần schema bị từ chối.
+- **`request.outputMode` của lõi dịch** là chế độ của câu trả lời được dùng (`object→fallback` khi gửi
+  lại), và `request` là request gửi lại; trace ghi `systemHash` của request đó. `rebuildTranslateRequest`
+  đọc `outputMode` của trace để dựng lại đúng chế độ.
+- **Lý do `run_fell_back`** thêm vào `outputModeReason` cho các lô sau của một lượt đã có lô rơi về.
+- **Cờ bật là tùy chọn `outputSchema` của `ParagraphTranslator`**, không phải cấu hình dịch lưu trong kho.
+  `createServices` không đặt nó, nên sản phẩm không bao giờ gửi schema; Lab dựng một bộ dịch riêng khi chạy
+  `translate --schema` (cờ cho cả lần chạy, không phải hậu tố nhãn: nhãn đã mang mức thinking và số lặp).
+- **Lỗi cấu trúc** (mục lạ, mục lặp, số đoạn phải hỏi lại) lấy từ câu trả lời lượt chính của mỗi lô, trả ra
+  ở `TranslateCoreBatchOutcome.structure`, `ParagraphBatchResult.output.structure` và trace; Lab cộng thành
+  `output` của bản ghi lần chạy.
+- **Chưa làm**: bản ghi sống `__fixtures__/live` (task 1.2) và lần đo quyết định (9.3), vì cần gọi API thật.
+  Change chưa archive cho tới khi hai việc này xong.

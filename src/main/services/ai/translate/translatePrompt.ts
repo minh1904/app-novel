@@ -5,6 +5,7 @@ import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
 import type { MatchedContextEntry } from '../../../../shared/algorithms/contextMatching'
 import type { AddressingDyadResolved, CharacterItem } from '../../../../shared/contracts/addressing'
 import { languageName, languageProfile, type HonorificPolicy } from './languageProfiles'
+import type { OutputMode } from './outputMode'
 import {
   ADDRESSING_RULES,
   REGISTER_PRESETS,
@@ -70,6 +71,11 @@ export interface TranslatePromptContext {
   characters?: CharacterItem[]
   /** Vài đoạn bản gốc liền trước lô, chỉ để hiểu mạch. */
   previous?: string[]
+  /**
+   * Hình dạng câu trả lời: `array` (mặc định, như trước) hay `object` `{"items":[…]}` đi cùng JSON
+   * schema. Chỉ câu đầu và ví dụ của `<output>` đổi; `array` cho system prompt cũ tới từng byte.
+   */
+  outputMode?: OutputMode
 }
 
 export type TranslateMessage = { role: 'system' | 'user'; content: string }
@@ -128,6 +134,7 @@ function escapeJsonTags(json: string): string {
 export function systemPrompt(context: TranslatePromptContext): string {
   const t = TAGS
   const k = RESPONSE_KEYS
+  const asObject = context.outputMode === 'object'
   const lang = languageName(context.sourceLang)
   const profile = languageProfile({
     sourceLang: context.sourceLang,
@@ -143,12 +150,14 @@ export function systemPrompt(context: TranslatePromptContext): string {
     `</${t.input}>`,
     '',
     `<${t.output}>`,
-    '- Trả về đúng một mảng JSON các đối tượng {"id","dst"}, không kèm giải thích hay dấu ```.',
+    asObject
+      ? '- Trả về đúng một object JSON {"items":[…]}: "items" là mảng các đối tượng {"id","dst"}, không kèm giải thích hay dấu ```.'
+      : '- Trả về đúng một mảng JSON các đối tượng {"id","dst"}, không kèm giải thích hay dấu ```.',
     '- Mỗi id nhận được có đúng một đối tượng: giữ nguyên id, không thêm id mới, không gộp hay tách mục, kể cả khi một câu bị ngắt giữa hai mục.',
     '- "dst" không chứa ký tự xuống dòng.',
     `- Với mục là lời thoại (src mở đầu bằng 「, 『 hoặc “), thêm trường "${k.speakerToListener}" TRƯỚC "dst": "Người nói→Người nghe" bằng tên dịch trong <${t.characters}> (ví dụ "Milly→Rion"); không rõ thì dùng "?" cho phía đó. Lời kể không có "${k.speakerToListener}".`,
     `- Sau "${k.speakerToListener}", viết "${k.selfRef}" (cách người nói tự xưng) và "${k.addrRef}" (đại từ gọi người nghe), rồi mới viết "dst". Tra đúng chiều trong <${t.addressing}>: chép cách tự xưng vào "${k.selfRef}"; chép đại từ ngôi hai vào "${k.addrRef}" nếu có, nếu không thì chép cách gọi. Chỉ khi chưa có cặp mới suy theo quan hệ và bảng mặc định; chưa xác định được thì ghi "?".`,
-    `- Ví dụ hình dạng: [{"id":"[1]","${k.speakerToListener}":"A→B","${k.selfRef}":"tôi","${k.addrRef}":"cậu","dst":"…"},{"id":"[2]","dst":"…"}]. Giá trị xưng gọi phải lấy từ cặp của câu đang dịch, không sao chép giá trị trong ví dụ. Lời kể không có "${k.selfRef}"/"${k.addrRef}".`,
+    `- Ví dụ hình dạng: ${asObject ? '{"items":' : ''}[{"id":"[1]","${k.speakerToListener}":"A→B","${k.selfRef}":"tôi","${k.addrRef}":"cậu","dst":"…"},{"id":"[2]","dst":"…"}]${asObject ? '}' : ''}. Giá trị xưng gọi phải lấy từ cặp của câu đang dịch, không sao chép giá trị trong ví dụ. Lời kể không có "${k.selfRef}"/"${k.addrRef}".`,
     `</${t.output}>`,
     '',
     `<${t.rules}>`,

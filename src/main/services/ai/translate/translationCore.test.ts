@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
+import { ProviderError } from '../../../infra/providers/types'
 import { CallBudget } from './callBudget'
 import { executeTranslateBatch, type TranslationModelCaller } from './translationCore'
 
@@ -489,5 +490,139 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
       // Số request HTTP thật được ghi riêng, không trừ vào ngân sách.
       expect(budget.snapshot()).toMatchObject({ used: 1, httpAttempts: 3 })
     })
+  })
+})
+
+describe('chế độ đầu ra có schema', () => {
+  type Seen = { system: string; user: string; responseFormat?: unknown }
+
+  /** Caller giả ghi lại từng lời gọi; `answer` quyết câu trả lời theo lời gọi thứ mấy. */
+  function recordingCaller(
+    answer: (seen: Seen, index: number) => Awaited<ReturnType<TranslationModelCaller['complete']>>
+  ): TranslationModelCaller & { seen: Seen[] } {
+    const seen: Seen[] = []
+    return {
+      seen,
+      async complete(messages, options) {
+        const entry: Seen = {
+          system: messages[0].content,
+          user: messages[1].content,
+          ...(options && 'responseFormat' in options
+            ? { responseFormat: options.responseFormat }
+            : {})
+        }
+        seen.push(entry)
+        return answer(entry, seen.length - 1)
+      }
+    }
+  }
+
+  const idsOf = (user: string): string[] =>
+    (
+      JSON.parse(/<source>\n([\s\S]*?)\n<\/source>/.exec(user)?.[1] ?? '[]') as Array<{
+        id: string
+      }>
+    ).map((item) => item.id)
+
+  const asObject = (ids: string[]): string =>
+    JSON.stringify({ items: ids.map((id) => ({ id, dst: 'vi ' + id })) })
+
+  const units = ['a', 'b', 'c'].map((text, i) => ({ id: `u${i + 1}`, text }))
+
+  it('chế độ tắt thì không lời gọi nào có responseFormat', async () => {
+    const caller = recordingCaller((seen) => ({
+      text: JSON.stringify(idsOf(seen.user).map((id) => ({ id, dst: 'x' }))),
+      usage: null
+    }))
+    const result = await executeTranslateBatch({ caller, units })
+    expect(caller.seen.every((seen) => !('responseFormat' in seen))).toBe(true)
+    expect(result.request?.outputMode).toBe('array')
+  })
+
+  it('chế độ object gửi schema và đọc được {"items":[…]}', async () => {
+    const caller = recordingCaller((seen) => ({ text: asObject(idsOf(seen.user)), usage: null }))
+    const result = await executeTranslateBatch({ caller, units, prompt: { outputMode: 'object' } })
+    expect(caller.seen).toHaveLength(1)
+    expect(caller.seen[0].responseFormat).toMatchObject({ type: 'json_schema' })
+    expect(caller.seen[0].system).toContain('{"items":[…]}')
+    expect(result.items).toHaveLength(3)
+    expect(result.request?.outputMode).toBe('object')
+  })
+
+  it('schema bị từ chối (400 cấu hình) thì gửi lại đúng một lần không schema', async () => {
+    const caller = recordingCaller((seen, index) => {
+      if (index === 0) {
+        throw new ProviderError('invalid_request', 'Invalid JSON schema', { status: 400 })
+      }
+      return {
+        text: JSON.stringify(idsOf(seen.user).map((id) => ({ id, dst: 'x' }))),
+        usage: null
+      }
+    })
+    const budget = new CallBudget(1, 8)
+    const result = await executeTranslateBatch({
+      caller,
+      units,
+      prompt: { outputMode: 'object' },
+      budget
+    })
+    expect(caller.seen).toHaveLength(2)
+    expect(caller.seen[1].responseFormat).toBeUndefined()
+    expect(caller.seen[1].system).not.toContain('"items"')
+    expect(result.request?.outputMode).toBe('object→fallback')
+    expect(result.error).toBeNull()
+    expect(result.items).toHaveLength(3)
+    // Lần gửi lại trừ vào ngân sách của lượt.
+    expect(budget.snapshot().byRound.fallback).toBe(1)
+  })
+
+  it('lỗi khác (ví dụ refused) không rơi về', async () => {
+    const caller = recordingCaller(() => {
+      throw new ProviderError('refused', 'blocked', { status: 400 })
+    })
+    const result = await executeTranslateBatch({ caller, units, prompt: { outputMode: 'object' } })
+    expect(caller.seen).toHaveLength(1)
+    expect(result.error?.kind).toBe('refused')
+  })
+
+  it('bị bộ lọc chặn thì chia đôi giữ schema, không rơi về', async () => {
+    const caller = recordingCaller((seen) =>
+      idsOf(seen.user).length > 1 && seen.user.includes('"b"')
+        ? { text: '', usage: null, finishReason: 'filter' }
+        : seen.user.includes('"src":"b"')
+          ? { text: '', usage: null, finishReason: 'filter' }
+          : { text: asObject(idsOf(seen.user)), usage: null }
+    )
+    const result = await executeTranslateBatch({ caller, units, prompt: { outputMode: 'object' } })
+    expect(caller.seen.length).toBeGreaterThan(1)
+    expect(caller.seen.every((seen) => seen.responseFormat !== undefined)).toBe(true)
+    expect(result.request?.outputMode).toBe('object')
+    expect(result.refusedIds).toEqual(['u2'])
+  })
+
+  it('thiếu một id thì hỏi lại mang schema, và đếm lỗi cấu trúc', async () => {
+    const caller = recordingCaller((seen, index) => {
+      const ids = idsOf(seen.user)
+      if (index === 0) {
+        // Thiếu [3], lặp [1], thêm một id lạ.
+        return {
+          text: JSON.stringify({
+            items: [
+              { id: '[1]', dst: 'một' },
+              { id: '[1]', dst: 'lặp' },
+              { id: '[2]', dst: 'hai' },
+              { id: '[9]', dst: 'lạ' }
+            ]
+          }),
+          usage: null
+        }
+      }
+      return { text: asObject(ids), usage: null }
+    })
+    const result = await executeTranslateBatch({ caller, units, prompt: { outputMode: 'object' } })
+    expect(caller.seen).toHaveLength(2)
+    expect(caller.seen[1].responseFormat).toBeDefined()
+    expect(result.items.map((item) => item.id).sort()).toEqual(['u1', 'u2', 'u3'])
+    expect(result.structure).toEqual({ extraneous: 1, duplicate: 1, repaired: 1 })
   })
 })

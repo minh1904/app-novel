@@ -127,6 +127,25 @@ chương `modelCalls` (lời gọi trừ vào ngân sách; `calls` vẫn là req
 `budgetExhausted`; bản ghi lần chạy có `budget { modelCalls, budgetExhausted, maxCalls }`. Đoạn không được
 gửi vì hết quỹ có kết cục riêng `budget_exhausted` trong phần Hoàn thành, không lẫn với `missing`.
 
+**Chế độ đầu ra có schema (thêm 2026-10-08, đề xuất / đang thử).** `translate --schema` hỏi câu trả lời
+`{"items":[…]}` kèm JSON schema khi model hỗ trợ (xem
+[hệ thống prompt](../context/prompt-system.md)). Bản ghi lần chạy có `output { requested, batches,
+fallbacks, extraneous, duplicate, repaired }`; bảng lịch sử thêm cột "Đầu ra" (`text`, `schema`,
+`schema (N lô rơi về)`; lần chạy cũ là `text`) và "Lạ/lặp/hỏi lại". Chưa có lần đo nào. Kế hoạch đo trước
+khi quyết bật mặc định, cùng model, glossary và mức thinking, mỗi bên ít nhất 3 lần lặp:
+
+```text
+node scripts/lab/mira-lab.mjs fork n4696dd --variants text,schema --from <bản gốc> --repeat 3
+node scripts/lab/mira-lab.mjs translate n4696dd --variants text#1,text#2,text#3 --chapters 1-10 --max-usd 3
+node scripts/lab/mira-lab.mjs translate n4696dd --variants schema#1,schema#2,schema#3 --chapters 1-10 --max-usd 3 --schema
+node scripts/lab/mira-lab.mjs report n4696dd --variants text#1,text#2,text#3,schema#1,schema#2,schema#3
+node scripts/lab/mira-lab.mjs compare n4696dd text schema
+```
+
+Cổng bật mặc định: lỗi cấu trúc (thiếu, lạ, lặp, số đoạn phải hỏi lại) giảm vượt độ dao động; tỷ lệ hoàn
+thành không giảm; tuân thủ glossary và xưng hô không giảm; chi phí và độ trễ được ghi. Không qua cổng thì
+gỡ nhánh `object` và ghi lại kết quả.
+
 Giới hạn: lần đo cũ không dựng lại được vì bản dịch đã bị ghi đè — lịch sử chỉ bắt đầu từ lần `report`/
 `pairs` đầu tiên sau khi có sổ. Lần chạy cũ không còn model trong `lab.json` thì không tính được chi phí.
 Bench (`fixtures/private/runs/`) chưa nối vào sổ.

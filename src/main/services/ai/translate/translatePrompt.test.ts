@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
 import type { AddressingDyadResolved, CharacterItem } from '../../../../shared/contracts/addressing'
@@ -8,6 +9,7 @@ import {
   buildTranslateRequest,
   charactersMentionedIn,
   dyadsMentionedIn,
+  systemPrompt,
   type TranslatePromptContext
 } from './translatePrompt'
 
@@ -381,5 +383,41 @@ describe('translatePrompt — nhân vật và bộ mặc định', () => {
   it('tìm nhân vật theo tên gốc, tên dịch hoặc biến thể', () => {
     const akira = character({ id: 'a', source: '桐谷彰', target: 'Akira', aliases: ['アキラ'] })
     expect(charactersMentionedIn([akira, unya], 'アキラは笑った').map((c) => c.id)).toEqual(['a'])
+  })
+})
+
+describe('output mode', () => {
+  const unit = [{ tempId: '[1]', originalId: 'u', text: 'こんにちは' }]
+  const hash = (text: string): string => createHash('sha256').update(text).digest('hex')
+
+  it('leaves the system prompt byte for byte as it was before the mode existed', () => {
+    // Hashes taken from the builder before `outputMode` was added (2026-10-08).
+    const school = { sourceLang: 'ja', genre: 'Học đường', register: 'ja-modern' as const }
+    expect(hash(systemPrompt(school))).toBe(
+      'c8d2071041d731f8dab3f8a70dd595ad876bd9b8f1763d212087921bbade06dc'
+    )
+    expect(hash(systemPrompt({ ...school, outputMode: 'array' }))).toBe(hash(systemPrompt(school)))
+    expect(hash(systemPrompt({ sourceLang: 'zh' }))).toBe(
+      '111b407eb36a9610c575f78b938bc3268f944013ada560b25d1a7f9d11189998'
+    )
+    const request = buildTranslateRequest({ sourceLang: 'ja' }, unit)
+    expect(request.systemHash).toBe(
+      '16a54d884d8860e8af2f139653b6647c23c3ce272bac4eb214b1f24479f3a8fe'
+    )
+    expect(request.requestHash).toBe(
+      '9873d511f469d3f835969996cfb0e91b0a6f35d433b7209e5cb10f9c41e3d92e'
+    )
+  })
+
+  it('asks for {"items":[…]} in object mode, with a different system hash', () => {
+    const array = buildTranslateRequest({ sourceLang: 'ja' }, unit)
+    const object = buildTranslateRequest({ sourceLang: 'ja', outputMode: 'object' }, unit)
+    expect(object.systemHash).not.toBe(array.systemHash)
+    expect(object.messages[0].content).toContain('object JSON {"items":[…]}')
+    expect(object.messages[0].content).toContain('Ví dụ hình dạng: {"items":[{"id":"[1]"')
+    expect(array.messages[0].content).not.toContain('"items"')
+    // The repair round keeps the mode of its batch.
+    const repair = buildRepairRequest({ sourceLang: 'ja', outputMode: 'object' }, unit)
+    expect(repair.systemHash).toBe(object.systemHash)
   })
 })

@@ -72,6 +72,16 @@ export interface ParagraphBatchResult {
   budgetIds: string[]
   /** The run's call budget after this batch. */
   budget: BudgetReport
+  /**
+   * How the answer was asked for (change `translate-structured-output-trial`): `array` (default),
+   * `object` with a JSON schema, or `object→fallback` when the provider rejected the schema and the batch
+   * was sent again without. `structure`: unknown ids, repeated ids and ids asked again in the main answer.
+   */
+  output: {
+    mode: 'array' | 'object' | 'object→fallback'
+    reason?: 'unsupported' | 'user_response_format' | 'run_fell_back'
+    structure: { extraneous: number; duplicate: number; repaired: number }
+  }
   error: TranslateFailure | null
   usage: TranslateUsage | null
   keyTail: string | null

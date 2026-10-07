@@ -32,6 +32,9 @@ import { executeTranslateBatch } from './translate/translationCore'
 import { CallBudget, defaultExtra, type BudgetSnapshot } from './translate/callBudget'
 import { describeProviderError, withPolicy } from './errorPolicy'
 import { buildTranslateRequest, PREVIOUS_PARAGRAPHS } from './translate/translatePrompt'
+import { chooseOutputMode } from './translate/outputMode'
+import { modelCapability } from '../../infra/providers/modelCapability'
+import { buildGeneration } from '../../infra/providers/generation'
 import {
   parseSnapshot,
   promptFromSnapshot,
@@ -93,7 +96,8 @@ function budgetDelta(
       main: after.byRound.main - before.byRound.main,
       split: after.byRound.split - before.byRound.split,
       bare: after.byRound.bare - before.byRound.bare,
-      repair: after.byRound.repair - before.byRound.repair
+      repair: after.byRound.repair - before.byRound.repair,
+      fallback: after.byRound.fallback - before.byRound.fallback
     },
     httpAttempts: after.httpAttempts - before.httpAttempts
   }
@@ -105,12 +109,22 @@ export class ParagraphTranslator {
    * rarely outlives an app restart, and one that does gets a fresh budget from its plan.
    */
   private readonly budgets = new Map<string, CallBudget>()
+  /**
+   * Runs where a batch's schema was rejected, with how many batches fell back: the run's later batches go
+   * without schema (change `translate-structured-output-trial`, D6). In memory, like the budgets.
+   */
+  private readonly fellBack = new Map<string, number>()
 
   constructor(
     private readonly options: {
       library: LibraryStore
       connections: ConnectionService
       now: () => number
+      /**
+       * Ask for the JSON-schema output mode where the model supports it. Off in the product; only the Lab
+       * turns it on, until a repeated measurement shows it helps.
+       */
+      outputSchema?: boolean
     }
   ) {}
 
@@ -246,6 +260,7 @@ export class ParagraphTranslator {
         budgetIds: [],
         budget: budgetBefore,
         contextChanged,
+        output: { mode: 'array', structure: { extraneous: 0, duplicate: 0, repaired: 0 } },
         error: null,
         usage: null,
         keyTail: null
@@ -256,11 +271,20 @@ export class ParagraphTranslator {
     const previous = all
       .slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), first)
       .map((unit) => unit.text)
-    const prompt = promptFromSnapshot(
-      snapshot,
-      units.map((unit) => unit.text).join('\n'),
-      previous
-    )
+    // Chế độ đầu ra chọn một lần cho lượt; một lô đã rơi về thì các lô sau không gửi schema nữa.
+    const choice = chooseOutputMode({
+      requested: this.options.outputSchema === true,
+      capability: modelCapability(
+        lookupModel(translator.entry.model, translator.connection.providerId ?? undefined)
+      ),
+      extraBody: buildGeneration(translator.entry.settings).extraBody
+    })
+    const runFellBack = (this.fellBack.get(input.runId) ?? 0) > 0
+    const mode = runFellBack ? 'array' : choice.mode
+    const prompt = {
+      ...promptFromSnapshot(snapshot, units.map((unit) => unit.text).join('\n'), previous),
+      ...(mode === 'object' ? { outputMode: mode } : {})
+    }
     const matched = prompt.glossary ?? []
     const context = [...matched, ...snapshot.dyads]
     // Hash của request lượt chính, tính bằng cùng bộ dựng lõi dịch dùng để gửi: không thể lệch nhau.
@@ -273,11 +297,14 @@ export class ParagraphTranslator {
       }))
     )
     let contextHash = planned.requestHash
+    let systemHash = planned.systemHash
     let items: SegmentText[] = []
     let usage: TranslateUsage | null = null
     let error: TranslateFailure | null = null
     let refusals: SegmentRefusal[] = []
     let budgetIds: string[] = []
+    let used: ParagraphBatchResult['output']['mode'] = mode
+    let structure = { extraneous: 0, duplicate: 0, repaired: 0 }
     try {
       if (typeof (translator.provider as TranslationModelCaller).complete === 'function') {
         const result = await executeTranslateBatch({
@@ -293,6 +320,14 @@ export class ParagraphTranslator {
         error = result.error === null ? null : withPolicy(result.error)
         refusals = result.refusals
         budgetIds = result.budgetIds
+        structure = result.structure
+        if (result.request) {
+          used = result.request.outputMode
+          systemHash = result.request.systemHash
+        }
+        if (used === 'object→fallback') {
+          this.fellBack.set(input.runId, (this.fellBack.get(input.runId) ?? 0) + 1)
+        }
       } else {
         const result = await translator.provider.translate({
           sourceLang: work.sourceLang,
@@ -311,6 +346,7 @@ export class ParagraphTranslator {
         budgetIds: [],
         budget: budget.snapshot(),
         contextChanged,
+        output: { mode: used, structure },
         error: failure(caught, now()),
         usage: null,
         keyTail: translator.lastKeyTail()
@@ -321,6 +357,14 @@ export class ParagraphTranslator {
     const proposed = good.map((unit) => unit.id)
     const failed = units.filter((unit) => !returned.get(unit.id)).map((unit) => unit.id)
     const budgetAfter = budget.snapshot()
+    const outputReason: ParagraphBatchResult['output']['reason'] = runFellBack
+      ? 'run_fell_back'
+      : choice.reason
+    const output: ParagraphBatchResult['output'] = {
+      mode: used,
+      ...(outputReason ? { reason: outputReason } : {}),
+      structure
+    }
     let proposalId = prior?.id ?? null
     if (good.length > 0) {
       const trace = {
@@ -328,8 +372,13 @@ export class ParagraphTranslator {
         context,
         contextHash,
         promptVersion: planned.version,
-        systemHash: planned.systemHash,
+        systemHash,
         usage,
+        // Chế độ đầu ra của lô, lý do khi không dùng schema, và số lô của lượt đã rơi về tới lúc này.
+        outputMode: used,
+        ...(outputReason ? { outputModeReason: outputReason } : {}),
+        fallbacks: this.fellBack.get(input.runId) ?? 0,
+        structure,
         // Đủ để dựng lại request lượt chính từ bản chụp (`rebuildTranslateRequest`).
         snapshot: { runKey: key, hash: stored.snapshotHash },
         characters: snapshot.characters.map((character) => `${character.source} → ${character.target}`),
@@ -425,6 +474,7 @@ export class ParagraphTranslator {
       budgetIds,
       budget: budgetAfter,
       contextChanged,
+      output,
       error:
         error ??
         (failed.length
@@ -454,6 +504,7 @@ export class ParagraphTranslator {
 
   finalize(input: ParagraphFinalizeInput): ParagraphFinalizeResult {
     this.budgets.delete(input.runId)
+    this.fellBack.delete(input.runId)
     const { library } = this.options
     return library.withWork(input.workId, (db) => {
       const key = `translate:${input.runId}`

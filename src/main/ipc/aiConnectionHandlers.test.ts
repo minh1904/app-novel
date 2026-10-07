@@ -236,14 +236,19 @@ describe('model entries over IPC', () => {
     const { connection } = await connectionWithEntry(handlers, 'gemini-2.5-flash')
     expect(connection.models[0]!.capability).toEqual({
       thinkingLevels: ['off', 'low', 'medium', 'high'],
-      temperature: true
+      temperature: true,
+      structuredOutput: true
     })
   })
 
   it('offers only the default for a model it knows nothing about', async () => {
     const handlers = setup()
     const { connection } = await connectionWithEntry(handlers, 'ten-rieng-cua-toi')
-    expect(connection.models[0]!.capability).toEqual({ thinkingLevels: [], temperature: true })
+    expect(connection.models[0]!.capability).toEqual({
+      thinkingLevels: [],
+      temperature: true,
+      structuredOutput: false
+    })
   })
 
   it('adds nothing at all when one item of a batch is bad, rather than half of them', async () => {

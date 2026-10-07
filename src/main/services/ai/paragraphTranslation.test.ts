@@ -24,7 +24,8 @@ const crypto: SecretCrypto = {
 
 function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText = '',
   beforeReply?: () => void,
-  answer?: (units: Array<{ id: string; src: string }>) => Response | null): {
+  answer?: (units: Array<{ id: string; src: string }>) => Response | null,
+  options: { outputSchema?: boolean } = {}): {
   library: LibraryStore
   translator: ParagraphTranslator
   workId: string
@@ -33,13 +34,16 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
   entryId: string
   calls: string[][]
   messages: Array<Array<{ content: string }>>
+  bodies: Array<Record<string, unknown>>
 } {
   const library = LibraryStore.open({ dataDir: tempDir() })
   stores.push(library)
   const calls: string[][] = []
   const messages: Array<Array<{ content: string }>> = []
+  const bodies: Array<Record<string, unknown>> = []
   const fetchImpl = (async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body)) as { messages: Array<{ content: string }> }
+    bodies.push(body)
     messages.push(body.messages)
     const user = body.messages[1].content
     const units = JSON.parse(/<source>\n([\s\S]*?)\n<\/source>/.exec(user)?.[1] ?? user) as
@@ -59,7 +63,7 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
     db: library.appDb, secrets: new SecretStore(crypto),
     now: () => 1000, newId: () => library.newAppId(), fetchImpl
   })
-  const translator = new ParagraphTranslator({ library, connections, now: () => 1000 })
+  const translator = new ParagraphTranslator({ library, connections, now: () => 1000, ...options })
   const work = library.create({ title: 'A', sourceLang: 'en' })
   const chapter = library.createChapter(work.id, 'Một').chapter
   library.saveText(work.id, chapter.id, 'source', sourceText, 0, segment(sourceText, 'en'))
@@ -67,7 +71,7 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
   const connection = connections.create({ name: 'Mock', baseUrl: 'http://127.0.0.1:8317/v1', providerId: 'google' })
   const entryId = connections.addModels(connection.id, [{ model: 'gemini-flash-latest' }]).models[0].id
   return { library, translator, workId: work.id, chapterId: chapter.id,
-    connectionId: connection.id, entryId, calls, messages }
+    connectionId: connection.id, entryId, calls, messages, bodies }
 }
 
 describe('paragraph translation proposals', () => {
@@ -450,7 +454,7 @@ describe('the call budget of a run', () => {
     expect(second.budget).toMatchObject({ used: 2, limit: 9, byRound: { main: 2 } })
     const proposal = h.library.withWork(h.workId, (db) => getProposal(db, first.proposalId!))
     expect((proposal.context[0] as { budget: unknown }).budget).toEqual({
-      byRound: { main: 1, split: 0, bare: 0, repair: 0 },
+      byRound: { main: 1, split: 0, bare: 0, repair: 0, fallback: 0 },
       httpAttempts: 1
     })
   })
@@ -481,5 +485,65 @@ describe('the call budget of a run', () => {
       ...base(h, plan), sourceIds: plan.batches.flatMap((item) => item.sourceIds)
     })
     expect(batch.budget).toMatchObject({ used: 1, limit: plan.batches.length + 8 })
+  })
+})
+
+describe('the output mode of a run', () => {
+  const runAll = async (h: ReturnType<typeof setup>): Promise<Array<Awaited<ReturnType<ParagraphTranslator['runBatch']>>>> => {
+    const plan = h.translator.plan(h)
+    const results: Array<Awaited<ReturnType<ParagraphTranslator['runBatch']>>> = []
+    for (const batch of plan.batches) {
+      results.push(await h.translator.runBatch({ workId: h.workId, chapterId: h.chapterId,
+        runId: plan.runId, connectionId: h.connectionId, entryId: h.entryId,
+        settingsKey: plan.settingsKey, sourceRev: plan.sourceRev, targetRev: plan.targetRev,
+        targetBaseContent: plan.targetBaseContent, policy: 'review', sourceIds: batch.sourceIds }))
+    }
+    return results
+  }
+  const objectReply = (units: Array<{ id: string; src: string }>): Response =>
+    new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        items: units.map((unit) => ({ id: unit.id, dst: 'VI:' + unit.src }))
+      }) } }],
+      usage: { prompt_tokens: 10, completion_tokens: 5 }
+    }), { status: 200 })
+
+  it('sends no schema by default', async () => {
+    const h = setup()
+    const [batch] = await runAll(h)
+    expect(h.bodies.every((body) => !('response_format' in body))).toBe(true)
+    expect(batch.output).toEqual({ mode: 'array', structure: { extraneous: 0, duplicate: 0, repaired: 0 } })
+  })
+
+  it('sends the schema when the Lab asks for it and records the mode in the trace', async () => {
+    const h = setup('One.\n\nTwo.', '', undefined, objectReply, { outputSchema: true })
+    const [batch] = await runAll(h)
+    expect(h.bodies[0]).toHaveProperty('response_format')
+    expect(batch.output.mode).toBe('object')
+    expect(batch.proposed).toHaveLength(2)
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
+    expect(proposal.context[0]).toMatchObject({ outputMode: 'object', fallbacks: 0 })
+  })
+
+  it('after one batch falls back, the later batches of the run send no schema', async () => {
+    let first = true
+    const h = setup('One.\nTwo.\nThree.', '', undefined, () => {
+      if (first) {
+        first = false
+        return new Response(JSON.stringify({ error: { code: 400, message: 'Invalid JSON schema' } }),
+          { status: 400 })
+      }
+      return null
+    }, { outputSchema: true })
+    // A limit of 1 token: one batch per paragraph.
+    h.translator['options'].connections.updateEntry(h.entryId, { settings: { inputTokenLimit: 1 } })
+    const results = await runAll(h)
+    expect(results.map((result) => result.output.mode)).toEqual(['object→fallback', 'array', 'array'])
+    expect(results[1].output.reason).toBe('run_fell_back')
+    // One rejected call, then every call without schema.
+    expect(h.bodies.filter((body) => 'response_format' in body)).toHaveLength(1)
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, results[0].proposalId!))
+    expect(proposal.context[0]).toMatchObject({ outputMode: 'object→fallback', fallbacks: 1 })
+    expect(proposal.context[1]).toMatchObject({ outputMode: 'array', outputModeReason: 'run_fell_back' })
   })
 })

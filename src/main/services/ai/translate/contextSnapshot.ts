@@ -86,6 +86,11 @@ export function promptFromSnapshot(
 export interface RebuildableTrace {
   previous: string[]
   contextHash: string
+  /**
+   * The output mode the batch's answer came from; absent on traces from before the mode existed. Only
+   * `object` changes the request: a batch that fell back was sent again as `array`.
+   */
+  outputMode?: string
 }
 
 /**
@@ -98,8 +103,13 @@ export function rebuildTranslateRequest(
   snapshot: ContextSnapshot,
   units: Array<{ id: string; text: string }>
 ): TranslateRequest & { matches: boolean } {
+  const prompt = promptFromSnapshot(
+    snapshot,
+    units.map((unit) => unit.text).join('\n'),
+    trace.previous
+  )
   const request = buildTranslateRequest(
-    promptFromSnapshot(snapshot, units.map((unit) => unit.text).join('\n'), trace.previous),
+    trace.outputMode === 'object' ? { ...prompt, outputMode: 'object' } : prompt,
     units.map((unit, index) => ({ tempId: `[${index + 1}]`, originalId: unit.id, text: unit.text }))
   )
   return { ...request, matches: request.requestHash === trace.contextHash }

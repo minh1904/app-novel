@@ -82,7 +82,8 @@ export type TranslateErrorKind =
   | 'budget_exhausted'
 
 /** Rounds of model calls a translation run makes, counted against its budget. */
-export type BudgetRound = 'main' | 'split' | 'bare' | 'repair'
+/** `fallback`: the main call sent again without a response schema the provider rejected. */
+export type BudgetRound = 'main' | 'split' | 'bare' | 'repair' | 'fallback'
 
 /** How much of a run's call budget is spent, after a batch. */
 export interface BudgetReport {

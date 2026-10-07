@@ -66,6 +66,8 @@ export const MODEL_CAPABILITY_OVERRIDES: Readonly<Record<string, ModelCapability
 
 export interface ModelCapabilityOverride {
   addLevels: ThinkingLevel[]
+  /** Thêm cờ structured output khi lần gọi thật cho thấy model nhận schema mà catalog không khai. */
+  structuredOutput?: true
   /** Ngày đo, `YYYY-MM-DD`. */
   measuredOn: string
   /** Tên tệp trong `__fixtures__/live` ghi lại lần gọi thật. */
@@ -77,7 +79,8 @@ export interface ModelCapabilityOverride {
 export function capabilityFromCatalog(info: ModelInfo | undefined): ModelCapability {
   return {
     thinkingLevels: thinkingLevelsOf(info),
-    temperature: info?.temperature !== false
+    temperature: info?.temperature !== false,
+    structuredOutput: info?.structuredOutput === true
   }
 }
 
@@ -119,7 +122,11 @@ export function modelCapability(info: ModelInfo | undefined): ModelCapability {
   const override = info === undefined ? undefined : MODEL_CAPABILITY_OVERRIDES[info.id]
   if (override === undefined) return base
   const levels = new Set<ThinkingLevel>([...base.thinkingLevels, ...override.addLevels])
-  return { ...base, thinkingLevels: ORDER.filter((level) => levels.has(level)) }
+  return {
+    ...base,
+    thinkingLevels: ORDER.filter((level) => levels.has(level)),
+    structuredOutput: base.structuredOutput || override.structuredOutput === true
+  }
 }
 
 export type ThinkingCheck =

@@ -222,11 +222,18 @@ trong một chương dùng phiên bản khác nhau, và trace chỉ có hash, kh
 
 - **Lưu chế độ kính ngữ và preset theo tác phẩm:** schema work v8 và ô chọn trong cài đặt tác phẩm.
   Hiện profile nhận chế độ qua tham số, mặc định Giữ hậu tố.
-- **Structured output** (`json_schema` của OpenAI, `responseSchema` của Gemini) khi provider hỗ trợ.
-  Root phải là object, nên hợp đồng đổi thành `{"items":[…]}`. Gemini đã nhận `response_format` qua
-  endpoint tương thích OpenAI (beta), nên thử được trên đường hiện tại mà không cần adapter gốc; schema
-  chỉ giữ cú pháp, vẫn phải đối soát id và kiểm nội dung. Đặc tả ở change
-  `translate-structured-output-trial`, làm sau `provider-error-reasons`.
+- **Structured output — đang thử, mặc định tắt (mã có từ 2026-10-08, chưa đo).** Change
+  `translate-structured-output-trial` thêm chế độ đầu ra `object`: `<output>` đổi câu đầu và ví dụ sang
+  `{"items":[…]}`, và lời gọi gửi `response_format` `json_schema` (`TRANSLATE_RESPONSE_SCHEMA` trong
+  [`outputMode.ts`](../../../src/main/services/ai/translate/outputMode.ts): chỉ `type`, `properties`,
+  `items`, `required`; không `enum` id, không đếm mục; `strict: false`). Chế độ `array` (mặc định) cho system
+  prompt cũ tới từng byte, có test hash. Bật khi người gọi xin và catalog khai `structuredOutput` (hoặc dòng
+  đo thật), trừ khi `extra_body` đã có `response_format`; sản phẩm không xin, chỉ Lab (`translate --schema`).
+  Schema bị từ chối (`invalid_request`) thì lô gửi lại đúng một lần không schema, tính vào ngân sách (vòng
+  `fallback`), và các lô sau của lượt không gửi schema nữa; bị bộ lọc chặn thì vẫn chia đôi, không rơi về.
+  Parser đọc object trước, mảng sau; đối soát id, hỏi lại id thiếu và đếm mục lặp vẫn chạy như cũ. Trace
+  đề xuất ghi `outputMode`, `outputModeReason`, `fallbacks`, `structure`. Chưa bật mặc định: cần đo lặp
+  so với `text` (xem [chạy thí nghiệm](../measurement/running-experiments.md)).
 - **Xóa prompt MVP** trong `OpenAiCompatibleProvider.translate()` cùng nhánh dự phòng không chạy.
 - **Sửa toàn chương ở chế độ Sửa:** đổi sang trả từng đoạn cũ → mới thay vì viết lại cả chương.
 

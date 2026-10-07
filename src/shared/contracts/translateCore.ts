@@ -32,6 +32,8 @@ export interface ReconciliationResult {
   extraneous: string[]
   /** Các ID có bản dịch rỗng hoặc chỉ toàn khoảng trắng */
   empty: string[]
+  /** Số mục lặp một ID đã gặp; mục lặp bị bỏ, bản đầu được giữ. Lab đếm đây là lỗi cấu trúc. */
+  duplicate?: number
 }
 
 export interface ModelCompletionResult {
@@ -48,6 +50,7 @@ export interface ModelCompletionResult {
 export interface TranslationModelCaller {
   complete(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-    options?: { signal?: AbortSignal }
+    /** `responseFormat`: a JSON schema for this call's answer (`response_format`); absent, none is sent. */
+    options?: { signal?: AbortSignal; responseFormat?: unknown }
   ): Promise<ModelCompletionResult>
 }

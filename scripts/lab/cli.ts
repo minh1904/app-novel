@@ -37,7 +37,7 @@ import {
 import { suggestRegister } from '../../src/main/services/ai/translate/languageProfiles'
 import type { TranslationModelCaller } from '../../src/shared/contracts/translateCore'
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
-import { paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
+import { ParagraphTranslator, paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
 import { sanitizeJsonString } from '../../src/shared/algorithms/lenientParser'
 import { costOfUsage } from '../../src/main/services/ai/costEstimate'
 import { lookupModel } from '../../src/main/infra/providers/modelCatalog'
@@ -95,6 +95,7 @@ import {
   type GlossaryOrigin,
   type GlossaryProvenance,
   type MeasurementRecord,
+  type RunOutput,
   type RunRecord
 } from '../../src/shared/algorithms/runRegistry'
 import {
@@ -284,7 +285,8 @@ function withFileRetry<T>(action: () => T): T {
       return action()
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code
-      if (attempt >= 10 || !['UNKNOWN', 'EBUSY', 'EPERM', 'EACCES'].includes(code ?? '')) throw error
+      if (attempt >= 10 || !['UNKNOWN', 'EBUSY', 'EPERM', 'EACCES'].includes(code ?? ''))
+        throw error
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500 * attempt)
     }
   }
@@ -785,10 +787,13 @@ async function translateChapter(
   chapterId: string,
   force: boolean,
   tag: string,
-  maxCalls?: number
+  maxCalls?: number,
+  outputSchema = false
 ): Promise<{
   failed: number
   skipped: boolean
+  /** Chế độ đầu ra và lỗi cấu trúc của các lô chương này (change `translate-structured-output-trial`). */
+  output?: RunOutput
   /** Lời gọi model lượt dịch chương đã trừ vào ngân sách (`budget.used` sau lô cuối). */
   modelCalls?: number
   /** Bản chụp ngữ cảnh của lượt: hash và JSON đúng như đã lưu trong tệp tác phẩm. */
@@ -801,7 +806,23 @@ async function translateChapter(
     if (!force) return { failed: 0, skipped: true }
     library.saveText(workId, chapterId, 'target', '', target.rev, [])
   }
-  const translator = services.paragraphTranslator
+  // `--schema`: một bộ dịch riêng bật chế độ có JSON schema; sản phẩm mặc định không bật.
+  const translator = outputSchema
+    ? new ParagraphTranslator({
+        library,
+        connections: services.connections,
+        now: Date.now,
+        outputSchema: true
+      })
+    : services.paragraphTranslator
+  const output: RunOutput = {
+    requested: outputSchema ? 'object' : 'array',
+    batches: 0,
+    fallbacks: 0,
+    extraneous: 0,
+    duplicate: 0,
+    repaired: 0
+  }
   const plan = translator.plan(
     { workId, chapterId, ...ids },
     maxCalls === undefined ? {} : { extraCalls: maxCalls }
@@ -839,6 +860,11 @@ async function translateChapter(
       }
       failed += result.failed.length
       modelCalls = result.budget.used
+      output.batches++
+      if (result.output.mode === 'object→fallback') output.fallbacks++
+      output.extraneous += result.output.structure.extraneous
+      output.duplicate += result.output.structure.duplicate
+      output.repaired += result.output.structure.repaired
       const batchResult = batchOutcomes(batch.sourceIds, result)
       Object.assign(outcomeIds, batchResult.ids)
       Object.assign(reasons, batchResult.reasons)
@@ -853,6 +879,7 @@ async function translateChapter(
     failed,
     skipped: false,
     modelCalls,
+    output,
     ...(stored ? { context: { hash: stored.snapshotHash, json: stored.snapshotJson } } : {}),
     outcomes: { ids: outcomeIds, ...(Object.keys(reasons).length > 0 ? { reasons } : {}) }
   }
@@ -888,7 +915,9 @@ function prepareRepeats(
               `${novel.ncode} [${variant.label}]: chưa có cơ sở ước tính chi phí ${n} lần lặp; cần --max-usd.`
             )
           }
-          console.log(`${novel.ncode} [${variant.label}] ×${n}: chưa có cơ sở ước tính; trần $${maxUsd}.`)
+          console.log(
+            `${novel.ncode} [${variant.label}] ×${n}: chưa có cơ sở ước tính; trần $${maxUsd}.`
+          )
         } else {
           console.log(
             `${novel.ncode} [${variant.label}] ×${n}, ${chapters} chương: ước tính ≈ $${estimate.toFixed(3)}.`
@@ -896,7 +925,14 @@ function prepareRepeats(
         }
         for (const label of repeatLabels(variant.label, n)) {
           if (!novel.copies[label]) {
-            createCopy(manifest, library, novel, variant.label, label, glossaryNameOf(novel, variant.label))
+            createCopy(
+              manifest,
+              library,
+              novel,
+              variant.label,
+              label,
+              glossaryNameOf(novel, variant.label)
+            )
           }
           novel.repeatOf = { ...novel.repeatOf, [label]: variant.label }
           labels.push(label)
@@ -953,6 +989,8 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
   const force = args.flags.has('force')
   const redoFailed = args.flags.has('redo-failed')
   const parallel = args.flags.has('parallel')
+  // Chế độ đầu ra có JSON schema cho mọi biến thể của lần chạy; model không hỗ trợ thì tự về `text`.
+  const outputSchema = args.flags.has('schema')
   const note = args.flags.get('note')
   const novels = pickNovels(manifest, args.positional)
   if (!lookupModel(model, 'google')) {
@@ -993,7 +1031,7 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     laneCalls: CallRecord[],
     laneContexts: Record<string, string>,
     laneOutcomes: ChapterOutcomes[],
-    laneBudget: { modelCalls: number }
+    laneBudget: { modelCalls: number; output: RunOutput }
   ): Promise<void> {
     const context = { ncode: novel.ncode, variant: variant.label, chapter: 0 }
     const calls: CallRecord[] = []
@@ -1037,7 +1075,12 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
           // Chương không tới được vẫn có trong tập định dịch: ghi `not_run` để phần Hoàn thành thấy.
           for (let rest: number | undefined = n; rest !== undefined; rest = queue.shift()) {
             const source = library.readText(workId, chapters[rest - 1], 'source').content
-            recordOutcomes(notRunChapter(rest, paragraphUnits(source).map((unit) => unit.id)))
+            recordOutcomes(
+              notRunChapter(
+                rest,
+                paragraphUnits(source).map((unit) => unit.id)
+              )
+            )
           }
           return
         }
@@ -1054,7 +1097,8 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
           chapters[n - 1],
           redo,
           tag,
-          maxCalls
+          maxCalls,
+          outputSchema
         )
         if (outcome.skipped) continue
         const mine = calls.slice(before)
@@ -1080,6 +1124,11 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
             : {})
         }
         laneBudget.modelCalls += outcome.modelCalls ?? 0
+        if (outcome.output) {
+          for (const key of ['batches', 'fallbacks', 'extraneous', 'duplicate', 'repaired'] as const) {
+            laneBudget.output[key] += outcome.output[key]
+          }
+        }
         if (outcome.outcomes) recordOutcomes({ chapter: n, ...outcome.outcomes })
         if (outcome.context) {
           laneContexts[String(n)] = outcome.context.hash
@@ -1112,7 +1161,17 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     const laneCalls: CallRecord[] = []
     const laneContexts: Record<string, string> = {}
     const laneOutcomes: ChapterOutcomes[] = []
-    const laneBudget = { modelCalls: 0 }
+    const laneBudget = {
+      modelCalls: 0,
+      output: {
+        requested: outputSchema ? ('object' as const) : ('array' as const),
+        batches: 0,
+        fallbacks: 0,
+        extraneous: 0,
+        duplicate: 0,
+        repaired: 0
+      }
+    }
     try {
       await Promise.all(
         Array.from({ length: Math.min(concurrency, queue.length) }, () =>
@@ -1147,6 +1206,7 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
                 budgetExhausted: countOutcomes(laneOutcomes).budget_exhausted,
                 maxCalls: maxCalls ?? null
               },
+              output: laneBudget.output,
               usd: usdOf(model, laneCalls),
               ...(note ? { note } : {})
             },
@@ -2641,7 +2701,9 @@ function compareVariants(args: Args): void {
     const repeats = [
       ...new Set(
         [...runs, ...measurements]
-          .filter((r) => r.ncode === ncode && r.variant !== label && repeatBase(r.variant) === label)
+          .filter(
+            (r) => r.ncode === ncode && r.variant !== label && repeatBase(r.variant) === label
+          )
           .map((r) => r.variant)
       )
     ].sort()
@@ -2813,12 +2875,16 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
   translate [ncode…|all] [--variants …] [--chapters 1-3] [--model gemini-2.5-flash]
             [--parallel] [--concurrency 1] [--rpm 8] [--max-usd 5] [--batch-tokens 16000]
             [--force] [--redo-failed] [--note "giả thuyết"] [--repeat N] [--max-calls 8]
+            [--schema]
       Dịch thật qua đường của UI; cần GEMINI_API_KEY. Mỗi request ghi vào fixtures/private/lab/runs/,
       mỗi truyện × biến thể thêm một dòng vào sổ đăng ký (model, prompt, hash, commit, glossary, chi phí).
       --parallel: mỗi truyện × biến thể một luồng; --concurrency: số chương dịch cùng lúc mỗi luồng;
       --max-usd: dừng nhận chương mới khi chi phí (gồm thinking) chạm mức này.
       --max-calls: quỹ lời gọi phụ mỗi chương (chia lô, gửi lại không ngữ cảnh, hỏi lại); thiếu là
       mặc định của sản phẩm max(8, 2 × số lô). Đoạn không được gửi vì hết quỹ là budget_exhausted.
+      --schema: hỏi câu trả lời dạng {"items":[…]} kèm JSON schema (response_format) khi model hỗ trợ;
+      schema bị từ chối thì lô gửi lại không schema và các lô sau của chương không gửi schema nữa.
+      Sổ đăng ký ghi chế độ đầu ra, số lô rơi về và lỗi cấu trúc (mục lạ/lặp/đoạn phải hỏi lại).
       --repeat N: dịch N bản lặp label#1…#N của mỗi biến thể (cùng bản gốc, cùng glossary) để đo độ
       dao động; in ước tính chi phí trước, chưa có cơ sở ước tính thì bắt buộc --max-usd.
       Mỗi lần chạy ghi kết cục từng đoạn vào runs/<runId>/<ncode>-<biến thể>.outcomes.jsonl.

@@ -383,7 +383,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
    */
   async complete(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-    options?: { signal?: AbortSignal }
+    options?: { signal?: AbortSignal; responseFormat?: unknown }
   ): Promise<ModelCompletionResult> {
     this.guard()
     let attempts = 0
@@ -393,7 +393,10 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
           {
             model: this.options.model,
             messages,
-            ...this.options.generation
+            ...this.options.generation,
+            ...(options?.responseFormat !== undefined
+              ? { responseFormat: options.responseFormat }
+              : {})
           },
           { apiKey: lease.secret, signal: options?.signal }
         ),

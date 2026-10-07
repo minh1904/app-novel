@@ -501,6 +501,24 @@ describe('settings of a model entry', () => {
     return { fetchImpl, bodies }
   }
 
+  describe('complete', () => {
+    it('sends the response format of the call, and none when the call has none', async () => {
+      const { fetchImpl, bodies } = recording()
+      const provider = entryProvider(fetchImpl, { generation: { temperature: 0.3 } })
+      const messages = [
+        { role: 'system' as const, content: 'x' },
+        { role: 'user' as const, content: '[{"id":"[1]","src":"a"}]' }
+      ]
+      await provider.complete(messages, { responseFormat: { type: 'json_object' } })
+      await provider.complete(messages)
+      expect(bodies[0]).toMatchObject({
+        response_format: { type: 'json_object' },
+        temperature: 0.3
+      })
+      expect(bodies[1]).not.toHaveProperty('response_format')
+    })
+  })
+
   describe('translate', () => {
     it('sends the request it always sent when the entry has no settings', async () => {
       const { fetchImpl, bodies } = recording()

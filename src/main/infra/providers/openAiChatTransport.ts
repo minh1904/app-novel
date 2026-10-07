@@ -81,6 +81,11 @@ export interface ChatRequest {
   /** Sent whenever it is set, to any endpoint: a parameter the person chose is never dropped here. */
   reasoningEffort?: string
   /**
+   * `response_format` of this one call (a task's, not the model entry's). Written before `extraBody` is
+   * spread, so a value the person set there still has the last word.
+   */
+  responseFormat?: unknown
+  /**
    * Fields merged into the body last, so the caller has the final say with a vendor's own parameters. Not
    * the final say over the fields Mira reads the answer by: those are removed (`FORBIDDEN_BODY_FIELDS`).
    */
@@ -159,6 +164,7 @@ export function buildChatBody(
   if (request.temperature !== undefined) body.temperature = request.temperature
   if (request.topP !== undefined) body.top_p = request.topP
   if (request.reasoningEffort !== undefined) body.reasoning_effort = request.reasoningEffort
+  if (request.responseFormat !== undefined) body.response_format = request.responseFormat
   return { ...body, ...withoutForbiddenFields(request.extraBody) }
 }
 
@@ -377,7 +383,8 @@ export function toProviderError(error: ClassifiedError, sent?: SentParameters): 
 export function sentParameters(request: ChatRequest): SentParameters {
   const sent: SentParameters = {
     extraBodyKeys: Object.keys(withoutForbiddenFields(request.extraBody)).sort(),
-    responseFormat: request.extraBody?.response_format !== undefined
+    responseFormat:
+      request.responseFormat !== undefined || request.extraBody?.response_format !== undefined
   }
   if (request.reasoningEffort !== undefined) sent.reasoningEffort = request.reasoningEffort
   if (request.temperature !== undefined) sent.temperature = request.temperature
