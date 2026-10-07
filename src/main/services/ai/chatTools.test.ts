@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChapterItem } from '../../../shared/contracts/chapters'
+import type { LinkRecord } from '../../../shared/contracts/links'
 import type { TextRecord, TextSide } from '../../../shared/contracts/text'
 import {
   CHAT_TOOL_DEFINITIONS,
@@ -49,6 +50,9 @@ function libraryOf(texts: Record<string, string> = {}): ChatToolLibrary & { read
         segments: [],
         updatedAt: 0
       } as TextRecord
+    },
+    listLinks(): LinkRecord[] {
+      return []
     }
   }
 }
@@ -60,9 +64,9 @@ const call = (name: string, args: unknown = {}): { id: string; name: string; arg
 })
 
 describe('the tool list', () => {
-  it('offers exactly two tools, and neither of them writes', () => {
+  it('offers three reading tools, and none of them writes', () => {
     const names = CHAT_TOOL_DEFINITIONS.map((tool) => tool.function.name)
-    expect(names).toEqual(['list_chapters', 'read_chapter'])
+    expect(names).toEqual(['list_chapters', 'read_chapter', 'search_work'])
     // A write tool would undo the property the whole feature rests on, so the absence is asserted.
     const text = JSON.stringify(CHAT_TOOL_DEFINITIONS).toLowerCase()
     for (const verb of ['write', 'save', 'update', 'delete', 'apply', 'ghi', 'xóa']) {
@@ -107,14 +111,14 @@ describe('read_chapter', () => {
     expect(result.detail).toContain('trống')
   })
 
-  it('cuts an overlong chapter and says it cut', () => {
+  it('reads an overlong chapter as a first page and says there is more', () => {
     const library = libraryOf({ 'ch-1/source': 'x'.repeat(TOOL_TEXT_MAX + 100) })
     const result = createChatTools(library, WORK).run(
       call('read_chapter', { chapter: 1, side: 'source' })
     )
 
-    expect(result.content).toContain('Đã cắt')
-    expect(result.detail).toContain('đã cắt')
+    expect(result.content).toContain('còn tiếp, con trỏ: c1.source.p1.o20000.r1')
+    expect(result.detail).toContain('còn tiếp')
   })
 
   it('reports a missing chapter as something the model can act on', () => {

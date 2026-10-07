@@ -30,6 +30,28 @@ thấy những cơ chế cụ thể bên dưới; chưa chạy quan sát trực 
 Code đã tránh gửi giữa lúc IME đang composition và có nút Hủy, Sao chép, Hỏi lại. Các điểm này nên
 giữ khi thay thiết kế; không có căn cứ để kết luận toàn bộ panel đều hỏng.
 
+### Tool chat sau change `chat-tools-paging-search` (đã triển khai 2026-10-08)
+
+Hàng `chatTools.ts` ở bảng trên là hiện trạng ngày 2026-10-04. Nay model có ba tool, đều chỉ đọc và buộc
+vào tác phẩm đang mở:
+
+- **`read_chapter` đọc theo trang.** Mỗi lần tối đa 20.000 ký tự, dừng ở ranh giới đoạn (đoạn là dòng
+  không trống); chỉ cắt giữa đoạn khi một đoạn dài hơn cả trang. Đầu kết quả ghi chương, phía, revision,
+  đoạn từ–đến trên tổng, số ký tự và con trỏ đọc tiếp (dạng `c3.target.p81.o0.r12`). Có thể bắt đầu ở
+  `from_paragraph`. Con trỏ của revision cũ vẫn đọc tiếp từ đầu đoạn đó, kèm cảnh báo vị trí có thể lệch;
+  con trỏ hỏng hay của chương khác bị từ chối kèm gợi ý đọc bằng số đoạn. Không còn cắt im lặng.
+- **`search_work(query, side)`** tìm chuỗi 1–100 ký tự trên văn bản đã lưu của mọi chương (chuẩn hóa NFC,
+  chữ Latin không phân biệt hoa thường, chữ CJK không cần dấu cách). Trả tổng chỗ khớp, số chương, tối
+  đa 20 kết quả có chương, số đoạn và đoạn trích. Đoạn tương ứng ở phía kia **chỉ** lấy qua liên kết căn
+  chỉnh; không có liên kết thì ghi “chưa căn chỉnh”, liên kết cần xem lại hay đã hỏng thì ghi “chưa chắc
+  đúng”, không bao giờ ghép theo số thứ tự đoạn. Chưa có chỉ mục FTS5: trên tác phẩm 242 chương, 1,17
+  triệu ký tự, một lần tìm mất 9–52 ms.
+- **Giới hạn mỗi lượt:** tối đa 6 vòng gọi tool và 80.000 ký tự tool trả về; hết thì tool báo “Hết ngân sách
+  đọc của lượt” và vòng cuối không mời tool, nên lượt vẫn kết thúc bằng câu trả lời. Các số này là giá trị
+  khởi đầu.
+- **“AI đã đọc”** vẫn là một dòng mỗi lần gọi (`{ name, detail }`), nay ghi khoảng đoạn và còn tiếp hay hết
+  chương, hoặc chuỗi tìm, tổng chỗ khớp và số kết quả đã trả. Chưa kiểm trên app thật.
+
 ## Đối chiếu sản phẩm khác
 
 Đọc tài liệu chính thức ngày 2026-10-04. Đây là **mẫu tham khảo**, không tự thành yêu cầu của Mira.

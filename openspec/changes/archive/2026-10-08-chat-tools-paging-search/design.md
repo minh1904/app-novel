@@ -86,6 +86,23 @@ Giữ `{ name, detail }`. Ví dụ:
 - `Tìm "魔王" · bản gốc — 37 chỗ ở 9 chương, trả 20`
 - `Hết ngân sách đọc của lượt (80.000 ký tự)`
 
+## Ghi nhận khi triển khai (2026-10-08)
+
+- **Đo task 4.4.** Tác phẩm lớn nhất của Lab (bản sao trong thư mục tạm): 242 chương, 1.165.362 ký tự
+  bản gốc. Đọc từng chương bằng `readText` mất 573 ms (nạp cả segment, mở tệp mỗi lần), phép tìm chỉ
+  5 ms. Thêm `LibraryStore.readSideContents` (một truy vấn, không segment) và chỉ tách đoạn ở chương có
+  chỗ khớp: `魔王` 23 ms, `の` (31.359 chỗ ở 242 chương) 52 ms, chuỗi Việt 9 ms. Dưới 200 ms nên không
+  thêm trần ký tự quét.
+- **`readSideContents` là hàm tùy chọn của `ChatToolLibrary`.** Thiếu thì `search_work` đọc từng chương
+  như trước; `LibraryStore` có nó, nên đường thật luôn nhanh.
+- **Trang luôn ghép lại đúng `content`.** Mỗi đoạn sở hữu cả dòng trống phía sau nó, nên các trang nối
+  lại bằng đúng văn bản đã lưu (task 2.2).
+- **`search_work` giữ trong ngân sách lượt** bằng cách bớt số kết quả hiện, không cắt một kết quả giữa
+  chừng; chạm ngân sách thì ghi "Chỉ hiện N kết quả…".
+- **Dòng "AI đã đọc" chưa được kiểm trên app thật** (task 4.3): panel (`AiPanel.tsx`, `AiTurn.tsx`) đang có
+  thay đổi chưa commit của một phiên khác, và hợp đồng `{ name, detail }` không đổi, nên change này chỉ
+  kiểm chuỗi `detail` bằng test.
+
 ## Risks / Trade-offs
 
 - [Quét tuyến tính chặn main process khi tác phẩm rất lớn] → đo thời gian trên fixture lớn (task 4.4);

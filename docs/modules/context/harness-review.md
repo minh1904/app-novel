@@ -44,7 +44,7 @@ Nguồn: bản checkout `D:\personal\hermes-agent` (commit `1ab7983641`), đọc
 | Mức thinking | UI lọc mức theo catalog, nhưng main không kiểm lại; Lab ghi thẳng mức thinking | Lần chạy `v5-nothink+lite35` đi qua đúng lỗ này. **Đã sửa 2026-10-07** (`checkThinkingLevel` ở main và Lab) |
 | Số lời gọi | `MAX_FILTER_SPLIT_CALLS = 16` đếm riêng mỗi lần gọi `splitFiltered`; vòng gửi lại không ngữ cảnh gọi lại nó | Một lô tối đa 1 + 16 + 16 + 1 = **34** lời gọi model; gateway thử lại tới 2 lần mỗi lời gọi. **Đã sửa 2026-10-08** (ngân sách chung theo lượt, `callBudget.ts`) |
 | Kiểm rồi hỏi lại | [`translationCore.ts`](../../../src/main/services/ai/translate/translationCore.ts) đối soát id và hỏi lại đúng id thiếu/rỗng **một lần** | Đã có phần “kiểm bằng code rồi sửa”; chưa mở rộng sang glossary/xưng hô |
-| Tool chat | Hai tool chỉ đọc; `read_chapter` cắt ở 20.000 ký tự, không đọc tiếp được; chưa có tìm kiếm | Model không tự tra được “chương trước dịch 魔王 là gì” |
+| Tool chat | Hai tool chỉ đọc; `read_chapter` cắt ở 20.000 ký tự, không đọc tiếp được; chưa có tìm kiếm | Model không tự tra được “chương trước dịch 魔王 là gì”. **Đã sửa 2026-10-08** (đọc theo trang, `search_work`) |
 | Lịch sử chat | Giữ các lượt gần nhất trong 24.000 ký tự, báo số lượt bị bỏ | Đúng nguyên tắc D10; chưa có tóm tắt |
 | So sánh Lab | [`compare.run.ts`](../../../scripts/bench/compare.run.ts) lấy giao các chương | Chưa loại đoạn bị từ chối, chưa báo riêng khả năng hoàn thành; [lịch sử đo](../measurement/history.md) để lần chạy hỏng ngang hàng lần chạy hợp lệ |
 

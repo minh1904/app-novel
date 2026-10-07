@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { ChatChunk, ChatSendInput } from '../../../shared/contracts/aiChat'
 import type { ChapterItem } from '../../../shared/contracts/chapters'
+import type { LinkRecord } from '../../../shared/contracts/links'
 import type { ConnectionView } from '../../../shared/contracts/aiConnections'
 import type { TextRecord } from '../../../shared/contracts/text'
 import { StorageError } from '../../infra/storage/errors'
-import { ChatService, type ChatConnections } from './chatService'
+import { ChatService, MAX_TOOL_ROUNDS, type ChatConnections } from './chatService'
 import type { ConnectionTranslator } from './connectionService'
 import type { Generation } from '../../infra/providers/generation'
 import { OpenAiCompatibleProvider, type KeySource } from '../../infra/providers/openAiCompatible'
@@ -515,6 +516,7 @@ const toolFrame = (fragment: unknown): string =>
 function fakeLibrary(): {
   listChapters: () => ChapterItem[]
   readText: () => TextRecord
+  listLinks: () => LinkRecord[]
   reads: number
 } {
   const holder = {
@@ -533,7 +535,8 @@ function fakeLibrary(): {
     readText: (): TextRecord => {
       holder.reads += 1
       return { content: 'Nội dung chương hai.', rev: 1, segments: [], updatedAt: 0 } as TextRecord
-    }
+    },
+    listLinks: (): LinkRecord[] => []
   }
   return holder
 }
@@ -617,6 +620,56 @@ describe('đọc bằng công cụ', () => {
     expect(JSON.stringify(tool)).not.toContain('Nội dung chương hai')
   })
 
+  it('hết ngân sách đọc của lượt thì công cụ báo hết, và lượt vẫn kết thúc bằng câu trả lời', async () => {
+    const sink = collector()
+    const long = Array.from({ length: 400 }, (_, i) => `Đoạn ${i + 1}. ` + 'chữ '.repeat(60)).join(
+      '\n'
+    )
+    const library = {
+      ...fakeLibrary(),
+      readText: (): TextRecord => ({ content: long, rev: 1, segments: [] }) as unknown as TextRecord
+    }
+    const bodies: Array<{ tools?: unknown[] }> = []
+    let round = 0
+    // A model that keeps asking for the next page for as long as it is offered tools.
+    const conns = connections(async (_url, init) => {
+      const sent = JSON.parse(String(init?.body ?? '{}')) as {
+        tools?: unknown[]
+        messages: Array<{ role: string; content: string }>
+      }
+      bodies.push(sent)
+      round += 1
+      if (sent.tools === undefined) return sseResponse([delta('trả lời từ phần đã đọc'), DONE])
+      const last = [...sent.messages].reverse().find((message) => message.role === 'tool')
+      const cursor = last ? /con trỏ: (\S+)/.exec(last.content)?.[1] : undefined
+      const args = cursor ? { chapter: 2, side: 'source', cursor } : { chapter: 2, side: 'source' }
+      return sseResponse([
+        toolFrame({
+          index: 0,
+          id: 'c' + round,
+          function: { name: 'read_chapter', arguments: JSON.stringify(args) }
+        }),
+        DONE
+      ])
+    })
+
+    const chat = serviceWithTools(conns, library)
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+
+    const details = sink.chunks.flatMap((chunk) => (chunk.kind === 'tool' ? [chunk.detail] : []))
+    expect(details).toHaveLength(MAX_TOOL_ROUNDS)
+    // Pages end on paragraph bounds, so four reach just under the budget and a short fifth takes the rest.
+    expect(details.slice(0, -1).every((detail) => detail.includes('còn tiếp'))).toBe(true)
+    expect(details.at(-1)).toBe(`Hết ngân sách đọc của lượt (80.000 ký tự)`)
+    expect(textOf(sink.chunks, requestId)).toBe('trả lời từ phần đã đọc')
+    expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
+    // The last request offers no tools, so the model has to answer.
+    expect(bodies).toHaveLength(MAX_TOOL_ROUNDS + 1)
+    expect(bodies.at(-1)!.tools).toBeUndefined()
+    expect(bodies.slice(0, -1).every((body) => Array.isArray(body.tools))).toBe(true)
+  })
+
   it('cộng dồn hóa đơn của mọi vòng, không chỉ vòng cuối', async () => {
     const sink = collector()
     let round = 0
@@ -670,8 +723,8 @@ describe('đọc bằng công cụ', () => {
 
     expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
     expect(textOf(sink.chunks, requestId)).toBe('đành trả lời vậy')
-    // Three offered rounds, then one final round with no tools on the table.
-    expect(round).toBe(4)
+    // MAX_TOOL_ROUNDS offered rounds, then one final round with no tools on the table.
+    expect(round).toBe(MAX_TOOL_ROUNDS + 1)
   })
 
   it('đọc mục model một lần ở đầu lượt, và mọi vòng đọc công cụ gửi cùng một cấu hình', async () => {

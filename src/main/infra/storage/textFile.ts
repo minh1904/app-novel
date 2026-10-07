@@ -59,6 +59,17 @@ export function readText(db: Db, chapterId: string, side: TextSide): TextRecord 
   }
 }
 
+/**
+ * The content of one side of every chapter, in one query and without segments: what a scan over the
+ * whole work needs (`search_work`). Chapters with nothing saved on that side are absent.
+ */
+export function readSideContents(db: Db, side: TextSide): Map<string, string> {
+  const rows = db
+    .prepare('SELECT chapter_id, content FROM chapter_text WHERE side = ?')
+    .all<{ chapter_id: string; content: string }>(side)
+  return new Map(rows.map((row) => [row.chapter_id, row.content]))
+}
+
 export interface SaveTextArgs {
   chapterId: string
   side: TextSide

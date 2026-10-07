@@ -93,8 +93,15 @@ export interface ChatServiceOptions {
  * Một model vòng vo là một hóa đơn vòng vo, và không có trần thì một câu hỏi mơ hồ có thể đọc hết
  * tác phẩm. Hết vòng thì lượt trả lời bằng những gì đã đọc được, không phải báo lỗi — người dùng vẫn
  * có câu trả lời, chỉ là nó dựa trên ít dữ liệu hơn model muốn.
+ *
+ * Sáu vòng: đọc một chương 60.000 ký tự là ba trang, cộng một vòng tìm và một vòng liệt kê. Thứ chặn
+ * chi phí là ngân sách ký tự bên dưới; số vòng chỉ chặn lặp vô ích. Cả hai là giá trị khởi đầu
+ * (change `chat-tools-paging-search`), chỉnh khi có dữ liệu dùng thật.
  */
-const MAX_TOOL_ROUNDS = 3
+export const MAX_TOOL_ROUNDS = 6
+
+/** Tổng ký tự công cụ được trả cho model trong một lượt (≈ bốn trang `read_chapter`). */
+export const TOOL_CHARS_PER_TURN = 80_000
 
 /** Lỗi của nhà cung cấp về renderer như **dữ liệu trong chunk**, không phải lỗi của kênh IPC. */
 function toChatError(error: unknown, now: number): ChatChunk & { kind: 'error' } {
@@ -211,6 +218,8 @@ export class ChatService {
       const { library } = this.options
       const tools = library ? createChatTools(library, input.workId) : null
       const messages = buildChatMessages(input, this.options.register?.(input))
+      // Ngân sách thuộc lượt, không thuộc runner: mỗi lần gọi nhận phần còn lại và tự rút trang về đó.
+      let toolChars = 0
 
       for (let round = 0; ; round++) {
         // Vòng cuối **không** mời công cụ nữa, nên model buộc phải trả lời bằng những gì đã đọc. Đó
@@ -262,11 +271,14 @@ export class ChatService {
         })
 
         for (const call of calls) {
-          const result: ToolResult = tools.run({
-            id: call.id,
-            name: call.name,
-            args: call.arguments
-          })
+          const result: ToolResult = tools.run(
+            { id: call.id, name: call.name, args: call.arguments },
+            {
+              remainingChars: Math.max(0, TOOL_CHARS_PER_TURN - toolChars),
+              turnBudget: TOOL_CHARS_PER_TURN
+            }
+          )
+          toolChars += result.content.length
           if (!this.running.has(requestId)) return
           emit({ requestId, kind: 'tool', name: result.name, detail: result.detail })
           toolSteps.push({ name: result.name, detail: result.detail })

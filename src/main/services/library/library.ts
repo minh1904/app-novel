@@ -31,7 +31,7 @@ import {
   type RowAuthor,
   type RowRef
 } from '../../infra/storage/sentenceRows'
-import { readText, saveText } from '../../infra/storage/textFile'
+import { readSideContents, readText, saveText } from '../../infra/storage/textFile'
 import { decodeCover, encodeCover } from '../../infra/storage/cover'
 import { decodeImage, encodeImage } from '../../infra/storage/image'
 import { StorageError } from '../../infra/storage/errors'
@@ -188,6 +188,11 @@ export class LibraryStore {
   /** One side of a chapter's text. A side that was never saved reads as empty at revision 0. */
   readText(workId: string, chapterId: string, side: TextSide): TextRecord {
     return this.files.withWork(workId, (db) => readText(db, chapterId, side))
+  }
+
+  /** One side of every chapter's text, in one read: for scans over the whole work. */
+  readSideContents(workId: string, side: TextSide): Map<string, string> {
+    return this.files.withWork(workId, (db) => readSideContents(db, side))
   }
 
   /** Text and segments are replaced together; `expectedRev` guards against a stale writer. */
