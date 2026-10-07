@@ -25,6 +25,7 @@ Tập hợp những gì đã nghiên cứu về glossary, nhân vật, xưng hô
 | Chứng minh tốt hơn và tránh báo lỗi nhầm thế nào? | [Chất lượng và kiểm chứng](quality-and-evaluation.md) |
 | Sau lượt dịch: kiểm, tự sửa, trau chuốt và để người duyệt thế nào? | [Kiểm, tự sửa và trau chuốt](post-editing.md) |
 | Model từ chối dịch một phần chương thì sao? | [Đoạn bị nhà cung cấp từ chối](content-refusals.md) |
+| Học gì từ harness của một agent khác, làm theo thứ tự nào? | [Đối chiếu harness Hermes](harness-review.md) |
 | Cần dữ liệu gì để đo cách người dịch xử lý xưng hô và độ linh hoạt? | [Kho đối chiếu bản dịch người](human-translation-corpus.md) |
 | Làm theo thứ tự nào, còn phải chốt gì? | [Lộ trình và câu hỏi mở](roadmap.md) |
 | Kết luận bắt nguồn từ đâu, tài liệu cũ nằm ở đâu? | [Bằng chứng và bản đồ nguồn](evidence.md) |

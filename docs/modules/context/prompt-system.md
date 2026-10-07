@@ -1,8 +1,9 @@
 # Hệ thống prompt dịch và chat
 
-Cập nhật: 2026-10-06 · Trạng thái: **chỉ còn một prompt, đã triển khai**; phần giao thức (tên thẻ, khóa
-JSON, nhãn dòng) bằng tiếng Anh. Prompt hợp nhất này **chưa được đo** so với `v1` mà sản phẩm từng chạy;
-xem [Hợp nhất prompt](#hợp-nhất-prompt-ngày-2026-10-06).
+Cập nhật: 2026-10-07 · Trạng thái: **chỉ còn một prompt, đã triển khai**; phần giao thức (tên thẻ, khóa
+JSON, nhãn dòng) bằng tiếng Anh. Prompt hợp nhất (`translate-v5`) đã có số đo riêng trong
+[lịch sử đo](../measurement/history.md), nhưng **chưa được so với `v1`** trong điều kiện tương đương, có
+lặp và có chấm nghĩa/văn phong; xem [Hợp nhất prompt](#hợp-nhất-prompt-ngày-2026-10-06).
 
 > Các nhãn `v1`–`v4` trong chương này và trong [Xưng hô tiếng Việt](vietnamese-addressing.md) là tên
 > thế hệ prompt **trong lịch sử thí nghiệm**; mã không còn chọn theo phiên bản. Bảng đổi tên thẻ ở
@@ -138,9 +139,11 @@ vẫn là câu tiếng Việt.
 
 **Hệ quả cần biết:**
 
-- **Sản phẩm đổi từ `v1` sang prompt mới mà chưa đo.** Điều kiện “không tăng lỗi cấu trúc, không giảm
+- **Sản phẩm đổi từ `v1` sang prompt mới mà chưa so.** Điều kiện “không tăng lỗi cấu trúc, không giảm
   tuân thủ glossary, tăng cache” của lần so `v1`/`v2` không còn là cổng chặn mặc định; nó trở thành việc
-  cần đo sau khi đã đổi.
+  cần đo sau khi đã đổi. Từ 2026-10-06 Lab đã có số đo `translate-v5` (ví dụ glossary 334/355 ở một biến
+  thể), nhưng có số đo chưa đồng nghĩa đã chứng minh cải thiện so với `v1`. Cách so có lặp và hai trục
+  báo cáo nằm ở change `lab-completion-quality-report`.
 - **Chưa đo ảnh hưởng của việc đổi ngôn ngữ nhãn.** Số đo cũ (`v2`–`v4`) dùng nhãn tiếng Việt; không có
   bằng chứng nhãn tiếng Anh tốt hơn hay kém hơn. Cần chạy lại Lab trên cùng dữ liệu để so.
 - **Các lần chạy Lab cũ vẫn đọc được:** lệnh `pairs` nhận cả khóa `noi` lẫn `speaker_to_listener`, cả thẻ
@@ -197,7 +200,10 @@ fantasy phương Tây cũng nhận câu về お前/テメェ và "thầy/cô �
 - **Lưu chế độ kính ngữ và preset theo tác phẩm:** schema work v8 và ô chọn trong cài đặt tác phẩm.
   Hiện profile nhận chế độ qua tham số, mặc định Giữ hậu tố.
 - **Structured output** (`json_schema` của OpenAI, `responseSchema` của Gemini) khi provider hỗ trợ.
-  Root phải là object, nên hợp đồng đổi thành `{"items":[…]}`.
+  Root phải là object, nên hợp đồng đổi thành `{"items":[…]}`. Gemini đã nhận `response_format` qua
+  endpoint tương thích OpenAI (beta), nên thử được trên đường hiện tại mà không cần adapter gốc; schema
+  chỉ giữ cú pháp, vẫn phải đối soát id và kiểm nội dung. Đặc tả ở change
+  `translate-structured-output-trial`, làm sau `provider-error-reasons`.
 - **Xóa prompt MVP** trong `OpenAiCompatibleProvider.translate()` cùng nhánh dự phòng không chạy.
 - **Sửa toàn chương ở chế độ Sửa:** đổi sang trả từng đoạn cũ → mới thay vì viết lại cả chương.
 

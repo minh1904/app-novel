@@ -54,4 +54,21 @@ Mỗi experiment phải khai trước mục tiêu chính:
 Quyết định cuối thuộc chủ sản phẩm/người đánh giá và phải nêu trade-off, không chỉ chép nhãn của
 một hàm.
 
+## Đề xuất: hai trục báo cáo và đo lặp (2026-10-07)
+
+Đặc tả ở change OpenSpec `lab-completion-quality-report`; lý do ở
+[đối chiếu harness](../context/harness-review.md).
+
+- **Khả năng hoàn thành** tính trên toàn tập định dịch: đoạn thành công, bị từ chối (theo lý do), thiếu
+  do lỗi, lỗi cấu hình, chi phí, độ trễ.
+- **Chất lượng** chỉ tính trên tập đoạn có đầu ra hợp lệ ở mọi bản đem so, kèm số đoạn bị loại và lý do.
+  Lỗi hoàn thành không bị đổi thành 0 điểm chất lượng.
+- **Phân lớp phép kiểm:** lỗi chứng minh được bằng code (id thiếu/trùng, đầu ra không đọc được) là cổng;
+  heuristic T0 (xưng hô, độ dài, CJK sót, glossary) chỉ gắn cờ; T1 hỗ trợ; T3 vẫn cần cho nghĩa và văn
+  phong.
+- **Đo lặp:** chạy cùng cấu hình nhiều lần trên tập chương cố định với ngữ cảnh đóng băng, báo độ phân
+  tán từng chỉ số; chỉ kết luận khi chênh lệch vượt dao động đo được. Hai lần chạy chưa đủ ước lượng.
+- Lần chạy hỏng (ví dụ `v5-nothink+lite35`, 400 do mức thinking không hợp lệ) phải được đánh dấu riêng
+  trong lịch sử, không nằm ngang hàng lần chạy hợp lệ.
+
 [Về module Bộ đo](README.md)

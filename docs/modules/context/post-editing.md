@@ -73,6 +73,9 @@ Phần còn lại chỉ thành cờ cho người dịch.
   gửi câu sai, mỗi câu kèm lý do cụ thể: `[12] Rion→Milly: cặp đã duyệt là tôi – chị, bản dịch dùng "em"`.
 - Hợp đồng sửa: chỉ đổi chỗ được chỉ, giữ nguyên phần còn lại của câu.
 - **Một lượt.** Vẫn sai thì giữ cờ “còn nghi sai” cho người dịch, không gọi tiếp.
+- Thứ tự (chốt 2026-10-07, [đối chiếu harness](harness-review.md)): chỉ lập change cho bước này **sau
+  khi** đo tỷ lệ checker báo nhầm trên dữ liệu Lab. Phần chứng minh được bằng code (id thiếu/rỗng) đã
+  chạy trong lõi dịch; glossary và xưng hô còn là heuristic.
 
 ### Người duyệt (đề xuất)
 
