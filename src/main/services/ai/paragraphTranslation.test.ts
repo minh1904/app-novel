@@ -21,7 +21,8 @@ const crypto: SecretCrypto = {
 }
 
 function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText = '',
-  beforeReply?: () => void): {
+  beforeReply?: () => void,
+  answer?: (units: Array<{ id: string; src: string }>) => Response | null): {
   library: LibraryStore
   translator: ParagraphTranslator
   workId: string
@@ -43,6 +44,8 @@ function setup(sourceText = 'First paragraph.\n\nSecond paragraph.', targetText 
       Array<{ id: string; src: string }>
     calls.push(units.map((unit) => unit.src))
     beforeReply?.()
+    const special = answer?.(units)
+    if (special) return special
     return new Response(JSON.stringify({
       choices: [{ message: { content: JSON.stringify(units.map((unit) => ({
         id: unit.id, dst: 'VI:' + unit.src
@@ -266,5 +269,81 @@ describe('paragraph translation proposals', () => {
     await h.translator.runBatch({ ...input, sourceIds: [ids[1]] })
     expect(h.library.withWork(h.workId, (db) => getProposal(db, first.proposalId!)).usage)
       .toMatchObject({ inputTokens: 20, outputTokens: 10 })
+  })
+})
+
+describe('what a failed batch tells the run', () => {
+  const blocked = (): Response =>
+    new Response(
+      JSON.stringify({
+        choices: [
+          { message: { role: 'assistant' }, finish_reason: 'content_filter: PROHIBITED_CONTENT' }
+        ],
+        usage: { prompt_tokens: 10, completion_tokens: 0 }
+      }),
+      { status: 200 }
+    )
+
+  const runAll = async (
+    h: ReturnType<typeof setup>
+  ): ReturnType<ParagraphTranslator['runBatch']> => {
+    const plan = h.translator.plan(h)
+    return h.translator.runBatch({
+      workId: h.workId,
+      chapterId: h.chapterId,
+      runId: plan.runId,
+      connectionId: h.connectionId,
+      entryId: h.entryId,
+      settingsKey: plan.settingsKey,
+      sourceRev: plan.sourceRev,
+      targetRev: plan.targetRev,
+      targetBaseContent: plan.targetBaseContent,
+      policy: 'review',
+      sourceIds: plan.batches.flatMap((batch) => batch.sourceIds)
+    })
+  }
+
+  it('lets the run go on past a blocked paragraph, and keeps the reason in the result and the trace', async () => {
+    const h = setup('Clean one.\n\nBLOCKED two.\n\nClean three.', '', undefined, (units) =>
+      units.some((unit) => unit.src.includes('BLOCKED')) ? blocked() : null
+    )
+    const batch = await runAll(h)
+    expect(batch.proposed).toHaveLength(2)
+    expect(batch.refusals).toEqual([
+      { id: expect.any(String), group: 'prohibited', raw: 'PROHIBITED_CONTENT' }
+    ])
+    expect(batch.failed).toEqual([batch.refusals[0].id])
+    expect(batch.error).toMatchObject({ kind: 'refused', haltsRun: false })
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
+    expect((proposal.context[0] as { refusals?: unknown }).refusals).toEqual(batch.refusals)
+  })
+
+  it('stops the run on a request the provider will not take, naming what was sent', async () => {
+    const h = setup(
+      'One.\n\nTwo.',
+      '',
+      undefined,
+      () =>
+        new Response(
+          JSON.stringify({
+            error: { code: 400, message: 'Request contains an invalid argument.' }
+          }),
+          { status: 400 }
+        )
+    )
+    const batch = await runAll(h)
+    expect(batch.proposed).toEqual([])
+    expect(batch.refusals).toEqual([])
+    expect(batch.error).toMatchObject({ kind: 'invalid_request', haltsRun: true })
+    expect(batch.error?.message).toContain('Request contains an invalid argument')
+    expect(batch.error?.message).toContain('Kiểm tra cài đặt model')
+  })
+
+  it('writes no refusals into the trace of an ordinary batch, so old proposals read the same', async () => {
+    const h = setup()
+    const batch = await runAll(h)
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, batch.proposalId!))
+    expect(proposal.context[0]).not.toHaveProperty('refusals')
+    expect(batch.error).toBeNull()
   })
 })

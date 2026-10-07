@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { nearestThinkingLevel } from '../../../../shared/algorithms/thinkingLevels'
 import {
   modelSettingsPatchSchema,
   type ModelCapabilityView,
@@ -76,6 +77,26 @@ export function thinkingOptions(
   }
   options.push({ value: 'default', label: DEFAULT_THINKING_LABEL, hint: DEFAULT_THINKING_HINT })
   return options
+}
+
+/**
+ * The warning for a saved level this model does not take, with the closest one it does; `null` when the
+ * saved level is fine. Main blocks such a level before any call, so without this line the entry would just
+ * fail to translate.
+ */
+export function staleThinkingNotice(
+  capability: ModelCapabilityView,
+  current?: ThinkingLevel
+): string | null {
+  if (current === undefined || capability.thinkingLevels.includes(current)) return null
+  const nearest = nearestThinkingLevel(capability.thinkingLevels, current)
+  return (
+    `Mức “${THINKING_LABELS[current]}” đang lưu không hợp lệ với model này, nên mọi lời gọi bằng mục này ` +
+    'sẽ bị chặn. ' +
+    (nearest === null
+      ? `Chọn “${DEFAULT_THINKING_LABEL}”.`
+      : `Chọn mức khác, ví dụ “${THINKING_LABELS[nearest]}”.`)
+  )
 }
 
 export function thinkingChoiceOf(settings: ModelSettings): ThinkingChoice {

@@ -262,7 +262,7 @@ describe('translate', () => {
     })
   })
 
-  it('does not retry a refusal', async () => {
+  it('does not retry a request the provider rejects', async () => {
     let calls = 0
     const fetchImpl = (async () => {
       calls++
@@ -270,7 +270,21 @@ describe('translate', () => {
     }) as typeof fetch
 
     await expect(provider(fetchImpl).translate(request(1))).rejects.toMatchObject({
-      kind: 'refused'
+      kind: 'invalid_request'
+    })
+    expect(calls).toBe(1)
+  })
+
+  it('does not retry a block the provider says was a safety filter', async () => {
+    let calls = 0
+    const fetchImpl = (async () => {
+      calls++
+      return jsonResponse({ error: { message: 'blocked', blockReason: 'PROHIBITED_CONTENT' } }, 400)
+    }) as typeof fetch
+
+    await expect(provider(fetchImpl).translate(request(1))).rejects.toMatchObject({
+      kind: 'refused',
+      filter: { group: 'prohibited', raw: 'PROHIBITED_CONTENT' }
     })
     expect(calls).toBe(1)
   })
@@ -456,7 +470,7 @@ describe('listModels', () => {
       jsonResponse({ error: { message: 'no such route' } }, 404)) as typeof fetch
 
     await provider(fetchImpl, keys).listModels()
-    expect(keys.reports[0]?.outcome).toMatchObject({ kind: 'refused' })
+    expect(keys.reports[0]?.outcome).toMatchObject({ kind: 'invalid_request' })
   })
 })
 
@@ -619,7 +633,7 @@ describe('settings of a model entry', () => {
         .catch((caught: unknown) => caught)
 
       expect(error).toBeInstanceOf(ProviderError)
-      expect((error as ProviderError).kind).toBe('refused')
+      expect((error as ProviderError).kind).toBe('invalid_request')
       expect((error as ProviderError).message).toContain('temperature does not support 0.3')
       // Not tried again without the setting, and not tried again at all: a 400 about the request does not
       // improve by repeating it, and dropping the setting is the person's decision.
@@ -636,8 +650,9 @@ describe('settings of a model entry', () => {
       await entryProvider(fetchImpl, { keys, generation: { temperature: 0.3 } })
         .probe()
         .catch(() => undefined)
-      // `refused` leaves the key alone; the same 400 for a bad key is `auth`, and Gemini says that differently.
-      expect(keys.reports[0]?.outcome).toMatchObject({ kind: 'refused' })
+      // `invalid_request` leaves the key alone; the same 400 for a bad key is `auth`, and Gemini says that
+      // differently.
+      expect(keys.reports[0]?.outcome).toMatchObject({ kind: 'invalid_request' })
     })
 
     it('stops at once when cancelled, without sending anything', async () => {

@@ -1,5 +1,6 @@
 import { useState, type JSX, type RefObject } from 'react'
 import { StarsIcon } from '@solar-icons/react/linear/stars'
+import { describeRefusals } from '../../../../shared/algorithms/refusalMessage'
 import type { TextRecord } from '../../../../shared/contracts/text'
 import { Banner } from '../../components/Banner'
 import { Button } from '../../components/Button'
@@ -62,8 +63,12 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
       {count(run.usage.outputTokens)} token ra.
     </p>}
     {run.keyNotice && <p role="status" className="m-0 text-ui-xs text-ink-muted">{run.keyNotice}</p>}
-    {run.failure && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal">
+    {run.failure && !(run.failure.kind === 'refused' && run.refusals.length > 0) && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal">
       {run.failure.message}
+    </p>}
+    {/* Counted over the whole run, not the last batch: the filter may block segments in several batches. */}
+    {run.refusals.length > 0 && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal">
+      {describeRefusals(run.refusals.map((item) => item.group))}
     </p>}
     {run.failed.length > 0 && <div className="flex items-center gap-2 rounded-control border border-line bg-canvas px-3 py-2">
       <span className="text-ui-xs">{count(run.failed.length)} đoạn chưa dịch được. Đề xuất đã xong vẫn được giữ.</span>

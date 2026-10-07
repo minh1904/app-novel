@@ -74,6 +74,7 @@ export type TranslateErrorKind =
   | 'auth'
   | 'quota'
   | 'refused'
+  | 'invalid_request'
   | 'invalid_response'
   | 'cancelled'
   | 'conflict'
@@ -83,6 +84,25 @@ export interface TranslateFailure {
   message: string
   /** Mốc sớm nhất có khóa hồi phục, khi lỗi là hết hạn mức và biết được mốc đó. */
   recoverAt: number | null
+  /**
+   * Lỗi này có dừng cả lượt dịch chương không. Main quyết định theo chính sách lỗi
+   * (`errorPolicy.ts`); renderer làm theo, không tự xét theo `kind`.
+   */
+  haltsRun: boolean
+}
+
+/**
+ * Nhóm lý do bộ lọc nội dung chặn một đoạn. `prohibited` không bao giờ được chuyển sang model khác;
+ * `recitation` là bộ lọc trích dẫn, không phải vấn đề nội dung (`content-refusals.md`).
+ */
+export type RefusalGroup = 'prohibited' | 'safety' | 'recitation' | 'other'
+
+/** Một đoạn còn bị bộ lọc chặn sau khi đã chia nhỏ và gửi lại, kèm lý do nhà cung cấp nêu. */
+export interface SegmentRefusal {
+  id: string
+  group: RefusalGroup
+  /** Chữ gốc của nhà cung cấp, ví dụ `PROHIBITED_CONTENT`; rỗng khi không nêu. */
+  raw: string
 }
 
 /** Lượng token nhà cung cấp báo đã dùng thật. Thiếu khi endpoint không báo. */
@@ -94,6 +114,8 @@ export interface TranslateBatchResult {
   held: HeldSuggestion[]
   /** Segment của lô này không dịch được; đi cùng `error`. */
   failed: string[]
+  /** Những segment trong `failed` bị bộ lọc nội dung chặn, kèm lý do. */
+  refusals: SegmentRefusal[]
   error: TranslateFailure | null
   /** Revision bản dịch sau khi ghi; lô sau gửi kèm số này. */
   targetRev: number

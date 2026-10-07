@@ -1,5 +1,6 @@
 import type {
   HeldSuggestion,
+  SegmentRefusal,
   TranslateBatchInput,
   TranslateBatchResult,
   TranslateFailure,
@@ -18,6 +19,7 @@ import { CATALOG_READ_AT, lookupModel } from '../../infra/providers/modelCatalog
 import { planBatches } from '../../../shared/algorithms/translatePlanner'
 import type { TranslationModelCaller } from '../../../shared/contracts/translateCore'
 import { executeTranslateBatch } from './translate/translationCore'
+import { describeProviderError, withPolicy } from './errorPolicy'
 import { listCharacters } from '../../infra/storage/addressingEntries'
 import {
   charactersMentionedIn,
@@ -61,10 +63,10 @@ function toFailure(error: unknown, now: number): TranslateFailure {
   if (error instanceof ProviderError) {
     const recoverAt =
       error.retryAfterMs === undefined ? null : now + Math.max(0, error.retryAfterMs)
-    return { kind: error.kind, message: error.message, recoverAt }
+    return withPolicy({ kind: error.kind, message: describeProviderError(error), recoverAt })
   }
   if (error instanceof StorageError && error.code === 'conflict') {
-    return { kind: 'conflict', message: error.message, recoverAt: null }
+    return withPolicy({ kind: 'conflict', message: error.message, recoverAt: null })
   }
   throw error
 }
@@ -160,6 +162,7 @@ export class ChapterTranslator {
     let usage: TranslateUsage | null = null
     let by: RowAuthor | null = null
     let translationError: TranslateFailure | null = null
+    let refusals: SegmentRefusal[] = []
 
     try {
       if (
@@ -200,7 +203,8 @@ export class ChapterTranslator {
         })
         items = outcome.items
         usage = outcome.usage === null ? null : toWireUsage(outcome.usage)
-        translationError = outcome.error
+        translationError = outcome.error === null ? null : withPolicy(outcome.error)
+        refusals = outcome.refusals
       } else {
         const response = await translator.provider.translate({
           sourceLang: work.sourceLang,
@@ -220,6 +224,7 @@ export class ChapterTranslator {
         written: [],
         held: [],
         failed: sourceIds,
+        refusals: [],
         error: toFailure(error, now()),
         targetRev: target.rev,
         keyTail: translator.lastKeyTail(),
@@ -232,6 +237,7 @@ export class ChapterTranslator {
         written: [],
         held: [],
         failed: sourceIds,
+        refusals,
         error: translationError,
         targetRev: target.rev,
         keyTail: translator.lastKeyTail(),
@@ -279,15 +285,16 @@ export class ChapterTranslator {
       written,
       held,
       failed,
+      refusals,
       // Lô về thiếu câu mà không có lỗi nào: nói rõ ra thay vì im lặng bỏ qua.
       error:
         error ??
         (failed.length > 0
-          ? {
+          ? withPolicy({
               kind: 'invalid_response',
               message: 'Nhà cung cấp không trả bản dịch cho ' + failed.length + ' câu.',
               recoverAt: null
-            }
+            })
           : null),
       targetRev: rev,
       keyTail: translator.lastKeyTail(),

@@ -41,6 +41,10 @@ import { paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
 import { sanitizeJsonString } from '../../src/shared/algorithms/lenientParser'
 import { costOfUsage } from '../../src/main/services/ai/costEstimate'
 import { lookupModel } from '../../src/main/infra/providers/modelCatalog'
+import {
+  checkThinkingLevel,
+  describeThinkingCheck
+} from '../../src/main/infra/providers/modelCapability'
 import { formatAsNovelHtml } from '../../src/main/services/export/formatters/pdfFormatter'
 import { segment } from '../../src/shared/algorithms/segmenter'
 import { DESCRIPTION_MAX } from '../../src/shared/contracts/library'
@@ -680,6 +684,17 @@ function usdOf(model: string, calls: CallRecord[]): number {
 
 // ---------------------------------------------------------------- dịch
 
+/**
+ * Mức thinking của biến thể có được model nhận không, kiểm **trước** lời gọi đầu tiên bằng cùng phép kiểm
+ * main dùng (`checkThinkingLevel`). Không hợp lệ thì trả câu báo: biến thể đó không chạy, và sổ đăng ký
+ * không có một lần chạy toàn lỗi 400 với giá $0.
+ */
+function thinkingProblem(model: string, thinking: ThinkingLevel | undefined): string | null {
+  if (thinking === undefined) return null
+  const check = checkThinkingLevel(lookupModel(model, 'google'), thinking)
+  return check.ok ? null : describeThinkingCheck(model, thinking, check)
+}
+
 function setupConnection(
   services: Services,
   key: string,
@@ -779,6 +794,16 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
       `Cảnh báo: không có giá của ${model} trong bảng; giới hạn --max-usd không có tác dụng.`
     )
   }
+  // Kiểm trước khi tạo thư mục lần chạy hay mở kho: biến thể có mức thinking model không nhận thì không chạy.
+  const lanes = novels
+    .flatMap((novel) => variantsOf(novel, args.flags).map((variant) => ({ novel, variant })))
+    .filter(({ novel, variant }) => {
+      const problem = thinkingProblem(model, variant.thinking)
+      if (problem !== null)
+        console.error(`${novel.ncode} [${variant.label}] không chạy: ${problem}`)
+      return problem === null
+    })
+  if (lanes.length === 0) throw new Error('Không có biến thể nào để dịch (xem --variants).')
 
   const runId = new Date().toISOString().replace(/[:.]/g, '-')
   const git = gitState()
@@ -915,10 +940,6 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     }
   }
 
-  const lanes = novels.flatMap((novel) =>
-    variantsOf(novel, args.flags).map((variant) => ({ novel, variant }))
-  )
-  if (lanes.length === 0) throw new Error('Không có biến thể nào để dịch (xem --variants).')
   console.log(
     `Model ${model}; ${lanes.length} luồng × ${concurrency} worker; RPM mỗi worker ${rpm}` +
       (Number.isFinite(maxUsd) ? `; ngân sách $${maxUsd}` : '')
@@ -1806,6 +1827,11 @@ async function extract(manifest: Manifest, args: Args): Promise<void> {
   const novel = pickNovels(manifest, [ncode ?? ''])[0]
   const out = args.flags.get('out') ?? `${novel.ncode}.ai`
   if (out === novel.ncode) throw new Error('Không ghi đè tệp glossary chung; chọn --out khác.')
+  // Mặc định tắt thinking; model không tắt được (gemini-3.5-flash-lite trả 400) thì dùng --thinking minimal.
+  const thinking = (args.flags.get('thinking') ?? 'off') as ThinkingLevel
+  if (!THINKING_LEVELS.includes(thinking)) throw new Error('Mức thinking không hợp lệ: ' + thinking)
+  const thinkingIssue = thinkingProblem(model, thinking)
+  if (thinkingIssue !== null) throw new Error(thinkingIssue)
   const from = args.flags.get('from') ?? Object.keys(novel.copies)[0]
   const library = openLibrary(manifest)
   const runId = new Date().toISOString().replace(/[:.]/g, '-')
@@ -1836,7 +1862,7 @@ async function extract(manifest: Manifest, args: Args): Promise<void> {
       crypto: volatileCrypto,
       fetch: recordingFetch(fetch, context, sink)
     })
-    const connection = await setupConnection(services, key, model, baseUrl, 30, 'off')
+    const connection = await setupConnection(services, key, model, baseUrl, 30, thinking)
     const provider = services.connections.translator(connection.connectionId, connection.entryId)
       .provider as unknown as TranslationModelCaller
     const ask = async (
@@ -1930,7 +1956,7 @@ async function extract(manifest: Manifest, args: Args): Promise<void> {
           runId,
           ncode: novel.ncode,
           variant: `extract→${out}`,
-          thinking: 'off',
+          thinking,
           model,
           ...gitState(),
           promptVersion: 'glossary-extract-v1',
@@ -1988,6 +2014,8 @@ async function polish(manifest: Manifest, args: Args): Promise<void> {
   const to = args.flags.get('to') ?? `${from}+polish`
   const variant = parseVariant(to)
   const model = args.flags.get('model') ?? env('MIRA_LAB_MODEL', 'gemini-2.5-flash')
+  const problem = thinkingProblem(model, variant.thinking)
+  if (problem !== null) throw new Error(`[${to}] không chạy: ${problem}`)
   const baseUrl =
     args.flags.get('base-url') ??
     env('MIRA_LAB_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta/openai')
@@ -2451,6 +2479,7 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
   fork <ncode> --variants a,b [--from <bản>] [--glossary <tên tệp>|none]
       Tạo bản mới bằng cách chép bản gốc từ một bản có sẵn, gán glossary riêng (hoặc không glossary).
   extract <ncode> [--chapters 1-30] [--out <ncode>.ai] [--model gemini-2.5-flash] [--from <bản>]
+          [--thinking off]
       AI trích xuất thuật ngữ và nhân vật: code sinh ứng viên, AI quét bổ sung, AI phân loại và đề xuất
       dịch, code kiểm lại. Ghi tệp riêng origin: ai, không đè tệp chung; ghi lần chạy vào sổ.
   prompt <ncode> [--chapter 1] [--batch 1] [--variants base] [--repair]

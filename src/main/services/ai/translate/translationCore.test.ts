@@ -324,6 +324,80 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
     expect(caller.calls).toBe(10)
   })
 
+  it('ghi lý do chặn riêng cho từng đoạn, và đếm theo lý do trong thông báo', async () => {
+    // Đoạn chứa "AN_TOAN" bị chặn vì SAFETY, đoạn chứa "TRICH" vì RECITATION; request có cả hai thì lấy
+    // lý do của đoạn đầu tiên, như bộ lọc thật chỉ nêu một lý do cho cả request.
+    const caller: TranslationModelCaller = {
+      async complete(messages) {
+        const user = messages.find((message) => message.role === 'user')?.content ?? ''
+        const source = JSON.parse(
+          /<source>\n([\s\S]*?)\n<\/source>/.exec(user)?.[1] ?? '[]'
+        ) as Array<{ id: string; src: string }>
+        const blocked = source.find(
+          (item) => item.src.includes('AN_TOAN') || item.src.includes('TRICH')
+        )
+        if (blocked) {
+          const raw = blocked.src.includes('AN_TOAN') ? 'SAFETY' : 'RECITATION'
+          return {
+            text: '',
+            usage: null,
+            finishReason: 'filter',
+            filter: { group: raw === 'SAFETY' ? 'safety' : 'recitation', raw }
+          }
+        }
+        return {
+          text: JSON.stringify(source.map((item) => ({ id: item.id, dst: 'vi:' + item.src }))),
+          usage: null,
+          finishReason: 'stop'
+        }
+      }
+    }
+    const units = ['a', 'AN_TOAN', 'c', 'TRICH'].map((text, i) => ({ id: `u${i + 1}`, text }))
+    const result = await executeTranslateBatch({ caller, units })
+    expect(result.refusals).toEqual([
+      { id: 'u2', group: 'safety', raw: 'SAFETY' },
+      { id: 'u4', group: 'recitation', raw: 'RECITATION' }
+    ])
+    expect(result.refusedIds).toEqual(result.refusals.map((refusal) => refusal.id))
+    expect(result.error?.message).toContain('1 đoạn bị bộ lọc an toàn chặn')
+    expect(result.error?.message).toContain(
+      '1 đoạn bị bộ lọc trích dẫn chặn (không phải vấn đề nội dung)'
+    )
+  })
+
+  it('đoạn qua được ở vòng không kèm ngữ cảnh thì không còn lý do chặn', async () => {
+    const caller = filteringCaller()
+    const glossary: ContextEntryItem[] = [
+      {
+        id: 't',
+        kind: 'term',
+        source: 'a',
+        target: 'A',
+        status: 'approved',
+        origin: 'user',
+        forbidden: false,
+        fromChapterId: null,
+        toChapterId: null,
+        notes: null,
+        aliases: [],
+        createdAt: 1,
+        updatedAt: 1
+      }
+    ]
+    const units = ['a NHẠY', 'b'].map((text, i) => ({ id: `u${i + 1}`, text }))
+    const result = await executeTranslateBatch({ caller, units, prompt: { glossary } })
+    expect(result.withoutContextIds).toEqual(['u1'])
+    expect(result.refusals).toEqual([])
+    expect(result.error).toBeNull()
+  })
+
+  it('đoạn bị chặn mà nhà cung cấp không nêu lý do thì vào nhóm other', async () => {
+    const caller = filteringCaller()
+    const units = ['a', 'XẤU'].map((text, i) => ({ id: `u${i + 1}`, text }))
+    const result = await executeTranslateBatch({ caller, units })
+    expect(result.refusals).toEqual([{ id: 'u2', group: 'other', raw: '' }])
+  })
+
   it('prompt không có glossary, nhân vật hay cặp xưng hô thì không gửi lại', async () => {
     const caller = filteringCaller()
     const units = ['a', 'XẤU'].map((text, i) => ({ id: `u${i + 1}`, text }))

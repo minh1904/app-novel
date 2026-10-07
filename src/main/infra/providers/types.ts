@@ -1,5 +1,6 @@
 import type { SourceLanguage } from '../../../shared/contracts/library'
 import type { QuotaScope } from '../storage/connections'
+import type { FilterReason } from './filterReason'
 import type { Usage } from './usage'
 
 /**
@@ -52,7 +53,13 @@ export type ProviderErrorKind =
   | 'auth'
   /** The account is out of credit or billing quota: money, not time, so waiting does not help. */
   | 'quota'
+  /** The provider's safety filter blocked the content, and the response said so. */
   | 'refused'
+  /**
+   * The provider rejected the request itself: a parameter it does not accept, a request too large,
+   * a malformed body. Nothing about the content or the key; sending it again unchanged cannot help.
+   */
+  | 'invalid_request'
   | 'invalid_response'
   | 'cancelled'
 
@@ -65,6 +72,7 @@ const RETRYABLE: Record<ProviderErrorKind, boolean> = {
   auth: false,
   quota: false,
   refused: false,
+  invalid_request: false,
   cancelled: false
 }
 
@@ -80,6 +88,28 @@ export interface ProviderErrorDetails {
   quotaScope?: QuotaScope
   /** A bounded, scrubbed piece of the response body. Never contains a key. */
   bodySnippet?: string
+  /** For `invalid_request`: what was wrong with the request, when that could be told. */
+  requestProblem?: RequestProblem
+  /** For `refused`: the block reason the response gave. */
+  filter?: FilterReason
+  /** For a request error: the generation parameters this call sent, so the message can name them. */
+  sent?: SentParameters
+}
+
+export type RequestProblem = 'too_large'
+
+/**
+ * The generation parameters of one call, as far as they can be shown to the person: values that are not
+ * secret, and only the **names** of the `extra_body` fields (their values may be anything). No headers: a
+ * header can carry a token.
+ */
+export interface SentParameters {
+  reasoningEffort?: string
+  temperature?: number
+  topP?: number
+  maxTokens?: number
+  extraBodyKeys: string[]
+  responseFormat: boolean
 }
 
 export class ProviderError extends Error {
@@ -90,6 +120,9 @@ export class ProviderError extends Error {
   readonly receivedAt?: number
   readonly quotaScope?: QuotaScope
   readonly bodySnippet?: string
+  readonly requestProblem?: RequestProblem
+  readonly filter?: FilterReason
+  readonly sent?: SentParameters
 
   constructor(kind: ProviderErrorKind, message: string, options: ProviderErrorDetails = {}) {
     super(message)
@@ -101,5 +134,8 @@ export class ProviderError extends Error {
     this.receivedAt = options.receivedAt
     this.quotaScope = options.quotaScope
     this.bodySnippet = options.bodySnippet
+    this.requestProblem = options.requestProblem
+    this.filter = options.filter
+    this.sent = options.sent
   }
 }

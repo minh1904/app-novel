@@ -7,7 +7,11 @@ import type {
   ParagraphPlanInput,
   ParagraphTranslationPlan
 } from '../../../shared/contracts/aiTranslateProposals'
-import type { TranslateFailure, TranslateUsage } from '../../../shared/contracts/aiTranslate'
+import type {
+  SegmentRefusal,
+  TranslateFailure,
+  TranslateUsage
+} from '../../../shared/contracts/aiTranslate'
 import { taskLimit } from '../../../shared/contracts/modelSettings'
 import { planBatches } from '../../../shared/algorithms/translatePlanner'
 import { matchContextEntries } from '../../../shared/algorithms/contextMatching'
@@ -21,6 +25,7 @@ import type { LibraryStore } from '../library/library'
 import type { ConnectionService } from './connectionService'
 import { estimateCost } from './costEstimate'
 import { executeTranslateBatch } from './translate/translationCore'
+import { describeProviderError, withPolicy } from './errorPolicy'
 import { listCharacters } from '../../infra/storage/addressingEntries'
 import {
   buildTranslateRequest,
@@ -52,11 +57,11 @@ export function paragraphUnits(content: string): ParagraphUnit[] {
 
 function failure(error: unknown, now: number): TranslateFailure {
   if (error instanceof ProviderError)
-    return {
+    return withPolicy({
       kind: error.kind,
-      message: error.message,
+      message: describeProviderError(error),
       recoverAt: error.retryAfterMs === undefined ? null : now + Math.max(0, error.retryAfterMs)
-    }
+    })
   throw error
 }
 
@@ -156,6 +161,7 @@ export class ParagraphTranslator {
         proposalId: prior?.id ?? null,
         proposed: requested.map((unit) => unit.id),
         failed: [],
+        refusals: [],
         error: null,
         usage: null,
         keyTail: null
@@ -199,6 +205,7 @@ export class ParagraphTranslator {
     let items: SegmentText[] = []
     let usage: TranslateUsage | null = null
     let error: TranslateFailure | null = null
+    let refusals: SegmentRefusal[] = []
     try {
       if (typeof (translator.provider as TranslationModelCaller).complete === 'function') {
         const result = await executeTranslateBatch({
@@ -210,7 +217,8 @@ export class ParagraphTranslator {
         contextHash = result.request?.requestHash ?? contextHash
         items = result.items
         usage = result.usage ? toWireUsage(result.usage) : null
-        error = result.error
+        error = result.error === null ? null : withPolicy(result.error)
+        refusals = result.refusals
       } else {
         const result = await translator.provider.translate({
           sourceLang: work.sourceLang,
@@ -225,6 +233,7 @@ export class ParagraphTranslator {
         proposalId: prior?.id ?? null,
         proposed: [],
         failed: units.map((unit) => unit.id),
+        refusals: [],
         error: failure(caught, now()),
         usage: null,
         keyTail: translator.lastKeyTail()
@@ -242,7 +251,9 @@ export class ParagraphTranslator {
         contextHash,
         promptVersion: planned.version,
         systemHash: planned.systemHash,
-        usage
+        usage,
+        // Chỉ ghi khi có: hồ sơ cũ không có trường này vẫn đọc như trước.
+        ...(refusals.length > 0 ? { refusals } : {})
       }
       const parts = good.map((unit) => ({
         id: library.newAppId(),
@@ -325,14 +336,15 @@ export class ParagraphTranslator {
       proposalId,
       proposed,
       failed,
+      refusals,
       error:
         error ??
         (failed.length
-          ? {
+          ? withPolicy({
               kind: 'invalid_response',
               message: `Thiếu bản dịch cho ${failed.length} đoạn.`,
               recoverAt: null
-            }
+            })
           : null),
       usage,
       keyTail: translator.lastKeyTail()

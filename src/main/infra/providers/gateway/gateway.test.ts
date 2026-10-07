@@ -212,6 +212,20 @@ describe('call: trouble that belongs to the key', () => {
     expect(calls).toBe(1)
     expect(sleeps).toEqual([])
   })
+
+  it('does not retry or move on for a request error either: a wrong parameter is not the key', async () => {
+    const { gateway, sleeps } = rig(['a', 'b'])
+    let calls = 0
+    const error = await gateway
+      .call(async () => {
+        calls++
+        throw fail('invalid_request', { status: 400 })
+      })
+      .catch((e: unknown) => e)
+    expect(error).toMatchObject({ kind: 'invalid_request' })
+    expect(calls).toBe(1)
+    expect(sleeps).toEqual([])
+  })
 })
 
 describe('call: transient trouble on the wire', () => {

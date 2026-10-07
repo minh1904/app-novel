@@ -38,13 +38,19 @@ import { DEFAULT_CONCURRENCY, GatewayRegistry } from '../../infra/providers/gate
 import { createConnectionKeySource } from '../../infra/providers/connectionKeySource'
 import { buildGeneration, settingsKey } from '../../infra/providers/generation'
 import { CATALOG_READ_AT, lookupModel, type ModelInfo } from '../../infra/providers/modelCatalog'
-import { modelCapability } from '../../infra/providers/modelCapability'
+import {
+  checkThinkingLevel,
+  describeThinkingCheck,
+  modelCapability
+} from '../../infra/providers/modelCapability'
+import { sentParameters } from '../../infra/providers/openAiChatTransport'
 import {
   OpenAiCompatibleProvider,
   type KeySource,
   type OpenAiCompatibleOptions
 } from '../../infra/providers/openAiCompatible'
 import { ProviderError } from '../../infra/providers/types'
+import { describeProviderError, taskErrorPolicy } from './errorPolicy'
 import { toWireUsage } from '../../infra/providers/usage'
 
 /**
@@ -67,9 +73,10 @@ export interface ConnectionServiceOptions {
 /** Lỗi của nhà cung cấp đi qua IPC như dữ liệu, giống mọi lỗi khác. */
 function toStorageError(error: unknown): never {
   if (error instanceof ProviderError) {
-    // `auth` và `refused` không thử lại được; phần còn lại là trục trặc đường truyền.
-    const code = error.kind === 'auth' || error.kind === 'refused' ? 'validation' : 'io'
-    throw new StorageError(code, error.message, { cause: error })
+    // Lỗi cài đặt (`auth`, `invalid_request`, `refused`) là `validation`; phần còn lại là trục trặc đường
+    // truyền. Bảng nằm ở `errorPolicy.ts`.
+    const code = taskErrorPolicy('probe', error.kind).probeCode ?? 'io'
+    throw new StorageError(code, describeProviderError(error), { cause: error })
   }
   throw error
 }
@@ -181,6 +188,21 @@ export class ConnectionService {
     const { connectionId, entry } = findModelEntry(db, entryId)
     const settings =
       patch.settings === undefined ? undefined : applySettingsPatch(entry.settings, patch.settings)
+    // Kiểm mức suy luận ở main cho **mọi** đường lưu, không chỉ form, nhưng chỉ khi bản vá đặt mức. Đổi
+    // model hay đổi tên không bị chặn vì một mức đã lưu từ trước: mức đó được báo trên form và bị chặn
+    // ngay trước lời gọi (`blockedBy` trong `translator`), nên không có request sai nào đi ra.
+    if (patch.settings !== undefined && 'thinking' in patch.settings) {
+      const model = patch.model ?? entry.model
+      const level = (settings ?? entry.settings).thinking
+      const connection = getConnection(db, connectionId)
+      const check = checkThinkingLevel(
+        lookupModel(model, connection.providerId ?? undefined),
+        level
+      )
+      if (!check.ok && level !== undefined) {
+        throw new StorageError('validation', describeThinkingCheck(model, level, check))
+      }
+    }
     updateModelEntry(db, entryId, { name: patch.name, model: patch.model, settings })
     return toView(getConnection(db, connectionId))
   }
@@ -230,6 +252,19 @@ export class ConnectionService {
     }
     const entry = getModelEntry(db, id, entryId)
     const connection = toView(stored)
+    const generation = buildGeneration(entry.settings)
+    // Mức đã lưu có thể không còn hợp lệ (catalog đổi sau khi lưu, hay Lab ghi thẳng): chặn trước khi gọi.
+    const level = entry.settings.thinking
+    const check = checkThinkingLevel(
+      lookupModel(entry.model, connection.providerId ?? undefined),
+      level
+    )
+    const blockedBy =
+      check.ok || level === undefined
+        ? undefined
+        : new ProviderError('invalid_request', describeThinkingCheck(entry.model, level, check), {
+            sent: sentParameters({ model: entry.model, messages: [], ...generation })
+          })
 
     let lastKeyId: string | null = null
     const runtime = this.registry.runtimeFor(id)
@@ -265,7 +300,8 @@ export class ConnectionService {
         compat: resolveCompat(connection.providerId),
         limiter: entryRuntime.limiter,
         pacer: entryRuntime.pacer,
-        generation: buildGeneration(entry.settings),
+        generation,
+        blockedBy,
         inputTokenLimit: entry.settings.inputTokenLimit,
         ...this.options.retry,
         fetchImpl,

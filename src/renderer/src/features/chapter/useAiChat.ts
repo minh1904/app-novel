@@ -10,6 +10,7 @@ import { useConnectionStore } from '../../stores/connectionStore'
 import type { SourceLanguage } from '../../../../shared/contracts/library'
 import type { TargetRange, TargetScope } from '../editor/chatRange'
 import { buildChatContext, type ContextScope } from './chatContext'
+import { startFailure } from './chatStartFailure'
 import {
   beginTurn,
   emptySession,
@@ -383,12 +384,9 @@ export function useAiChat(options: AiChatOptions): AiChatController {
             result.value.addedContext
           )
       } else {
-        useAiChatStore.getState().failTurnForWork(workId, localId, {
-          kind: 'refused',
-          message: result.error.message,
-          retryable: false,
-          recoverAt: null
-        })
+        useAiChatStore
+          .getState()
+          .failTurnForWork(workId, localId, startFailure(result.error.code, result.error.message))
       }
       if (result.ok && result.value.sessionId)
         useAiChatStore.getState().setSessionIdForWork(workId, result.value.sessionId)

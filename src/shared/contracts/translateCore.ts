@@ -1,3 +1,5 @@
+import type { RefusalGroup } from './aiTranslate'
+
 /**
  * Hợp đồng dữ liệu cho Lõi dịch (translation-core).
  * Đơn vị làm việc là các block/đoạn văn bản độc lập có ID.
@@ -36,6 +38,8 @@ export interface ModelCompletionResult {
   text: string
   usage: { inputTokens: number; outputTokens: number } | null
   finishReason?: string
+  /** Khi `finishReason` là `filter`: lý do nhà cung cấp nêu, đã gộp nhóm. */
+  filter?: { group: RefusalGroup; raw: string }
   status?: number
 }
 
@@ -45,4 +49,3 @@ export interface TranslationModelCaller {
     options?: { signal?: AbortSignal }
   ): Promise<ModelCompletionResult>
 }
-

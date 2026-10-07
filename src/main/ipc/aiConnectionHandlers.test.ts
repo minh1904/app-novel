@@ -375,6 +375,36 @@ describe('model entries over IPC', () => {
       expect(list.connections[0]!.models[0]!.settings).toEqual({})
     })
 
+    it('refuses a thinking level the model does not take, naming the ones it does', async () => {
+      const handlers = setup()
+      const { entryId } = await connectionWithEntry(handlers, 'gemini-3.5-flash-lite')
+      const result = await call(handlers, CHANNELS.aiModelsUpdate, {
+        entryId,
+        patch: { settings: { thinking: 'off' } }
+      })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.code).toBe('validation')
+        expect(result.error.message).toContain('các mức hợp lệ: minimal, low, medium, high')
+      }
+      const list = unwrap(
+        await call<{ connections: ConnectionView[] }>(handlers, CHANNELS.aiConnectionsList)
+      )
+      expect(list.connections[0]!.models[0]!.settings).toEqual({})
+    })
+
+    it('takes "off" for gemini-3.5-flash, where a measured call showed it works', async () => {
+      const handlers = setup()
+      const { entryId } = await connectionWithEntry(handlers, 'gemini-3.5-flash')
+      const view = unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: { settings: { thinking: 'off' } }
+        })
+      )
+      expect(view.models[0]!.settings).toEqual({ thinking: 'off' })
+    })
+
     it('reports an entry that is not there as not_found', async () => {
       const handlers = setup()
       const result = await call(handlers, CHANNELS.aiModelsUpdate, {
@@ -530,7 +560,12 @@ describe('model entries over IPC', () => {
 
       const result = await call(handlers, CHANNELS.aiModelsTest, { entryId })
       expect(result.ok).toBe(false)
-      if (!result.ok) expect(result.error.message).toContain('Unsupported value: temperature')
+      if (!result.ok) {
+        // A request error is a settings problem, and the message names what was sent.
+        expect(result.error.code).toBe('validation')
+        expect(result.error.message).toContain('Unsupported value: temperature')
+        expect(result.error.message).toContain('temperature: 0.3')
+      }
 
       const list = unwrap(
         await call<{ connections: ConnectionView[] }>(handlers, CHANNELS.aiConnectionsList)
@@ -538,6 +573,38 @@ describe('model entries over IPC', () => {
       expect(list.connections[0]!.models[0]!.settings).toEqual({
         temperature: { enabled: true, value: 0.3 }
       })
+    })
+
+    it('does not send a thinking level the model no longer takes, and says which ones it does', async () => {
+      let calls = 0
+      const fetchImpl = (async () => {
+        calls++
+        return ok()
+      }) as typeof fetch
+      const handlers = setup(fetchImpl)
+      const { entryId } = await connectionWithEntry(handlers)
+      unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: { settings: { thinking: 'off' } }
+        })
+      )
+      // Pointing the entry at a model that cannot switch thinking off is allowed (the level shows as
+      // unsupported in the form), but nothing goes out with it.
+      unwrap(
+        await call<ConnectionView>(handlers, CHANNELS.aiModelsUpdate, {
+          entryId,
+          patch: { model: 'gemini-3.5-flash-lite' }
+        })
+      )
+      const result = await call(handlers, CHANNELS.aiModelsTest, { entryId })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.code).toBe('validation')
+        expect(result.error.message).toContain('"Tắt" không hợp lệ với gemini-3.5-flash-lite')
+        expect(result.error.message).toContain('Gợi ý: minimal')
+      }
+      expect(calls).toBe(0)
     })
 
     it('does not test an entry of a connection that is switched off', async () => {

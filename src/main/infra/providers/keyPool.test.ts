@@ -114,8 +114,10 @@ describe('classifyHttpError', () => {
     expect(at(408)).toBe('network')
     expect(at(500)).toBe('network')
     expect(at(503)).toBe('network')
-    expect(at(400)).toBe('refused')
-    expect(at(404)).toBe('refused')
+    // A 4xx without evidence of a safety block is a request error, not blocked content.
+    expect(at(400)).toBe('invalid_request')
+    expect(at(404)).toBe('invalid_request')
+    expect(at(413)).toBe('invalid_request')
   })
 
   it('keeps the provider message so the user sees what was actually said', () => {

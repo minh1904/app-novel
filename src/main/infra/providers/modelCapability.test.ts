@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { lookupModel, type ModelInfo } from './modelCatalog'
-import { capabilityFromCatalog, modelCapability } from './modelCapability'
+import {
+  capabilityFromCatalog,
+  checkThinkingLevel,
+  describeThinkingCheck,
+  modelCapability
+} from './modelCapability'
 
 /** A model as the catalog would hold it; only the fields the table reads. */
 function model(extra: Partial<ModelInfo>): ModelInfo {
@@ -136,5 +141,38 @@ describe('modelCapability temperature', () => {
 
   it('reads the closed flag from a real reasoning model', () => {
     expect(modelCapability(lookupModel('o4-mini', 'openai')).temperature).toBe(false)
+  })
+})
+
+describe('checkThinkingLevel', () => {
+  it('turns down "off" for gemini-3.5-flash-lite and suggests the lowest level it has', () => {
+    const check = checkThinkingLevel(lookupModel('gemini-3.5-flash-lite', 'google'), 'off')
+    expect(check).toEqual({
+      ok: false,
+      allowed: ['minimal', 'low', 'medium', 'high'],
+      nearest: 'minimal'
+    })
+  })
+
+  it('takes "off" for gemini-3.5-flash, through the measured override', () => {
+    expect(checkThinkingLevel(lookupModel('gemini-3.5-flash', 'google'), 'off')).toEqual({
+      ok: true
+    })
+  })
+
+  it('takes anything for a model outside the catalog, and no level at all for any model', () => {
+    expect(checkThinkingLevel(undefined, 'max')).toEqual({ ok: true })
+    expect(checkThinkingLevel(lookupModel('gemini-2.5-pro', 'google'), undefined)).toEqual({
+      ok: true
+    })
+  })
+
+  it('says which levels are valid and what to pick', () => {
+    const check = checkThinkingLevel(lookupModel('gemini-3.5-flash-lite', 'google'), 'off')
+    if (check.ok) throw new Error('expected a refusal')
+    expect(describeThinkingCheck('gemini-3.5-flash-lite', 'off', check)).toBe(
+      'Mức suy luận "Tắt" không hợp lệ với gemini-3.5-flash-lite; các mức hợp lệ: minimal, low, medium, ' +
+        'high. Gợi ý: minimal.'
+    )
   })
 })

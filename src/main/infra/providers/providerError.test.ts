@@ -10,8 +10,10 @@ describe('ProviderError', () => {
       )
     ).toEqual([true, true, true, true])
     expect(
-      ['auth', 'quota', 'refused', 'cancelled'].map((k) => retryable(k as ProviderErrorKind))
-    ).toEqual([false, false, false, false])
+      ['auth', 'quota', 'refused', 'invalid_request', 'cancelled'].map((k) =>
+        retryable(k as ProviderErrorKind)
+      )
+    ).toEqual([false, false, false, false, false])
   })
 
   it('carries what was known about the response and nothing it was not', () => {

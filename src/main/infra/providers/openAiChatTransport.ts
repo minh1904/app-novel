@@ -5,7 +5,8 @@ import { parseSseStream } from './chatStream'
 import type { Compat } from './compat'
 import { normalizeModelId } from './modelCatalog'
 import { redactSecrets } from './redact'
-import { ProviderError } from './types'
+import { readFilterReason, type FilterReason } from './filterReason'
+import { ProviderError, type SentParameters } from './types'
 import { normalizeUsage, type Usage } from './usage'
 
 /**
@@ -66,7 +67,7 @@ export type ChatStreamEvent =
       usage: Usage | null
       finishReason: FinishReason
     }
-  | { kind: 'done'; usage: Usage | null; finishReason: FinishReason }
+  | { kind: 'done'; usage: Usage | null; finishReason: FinishReason; filter?: FilterReason }
 
 /** What to ask for. Generation parameters are optional and are sent only when set. */
 export interface ChatRequest {
@@ -96,6 +97,8 @@ export interface ChatRequest {
 export interface CompleteResult {
   text: string
   finishReason: FinishReason
+  /** When `finishReason` is `filter`: the block reason the provider gave, grouped. */
+  filter?: FilterReason
   usage: Usage | null
   /** HTTP status of the answer. */
   status: number
@@ -356,14 +359,31 @@ function errorMessage(error: unknown, secret: string | null): string {
   return redactSecrets(error instanceof Error ? error.message : String(error), [secret])
 }
 
-export function toProviderError(error: ClassifiedError): ProviderError {
+export function toProviderError(error: ClassifiedError, sent?: SentParameters): ProviderError {
   return new ProviderError(error.kind, error.message, {
     retryAfterMs: error.retryAfterMs,
     status: error.status,
     receivedAt: error.receivedAt,
     quotaScope: error.quotaScope,
-    bodySnippet: error.bodySnippet
+    bodySnippet: error.bodySnippet,
+    requestProblem: error.requestProblem,
+    filter: error.filter,
+    // Only a request error needs them: they are what the person checks when the provider says "invalid".
+    sent: error.kind === 'invalid_request' ? sent : undefined
   })
+}
+
+/** What a chat request sends, as far as it can be shown: no `extra_body` values, no headers. */
+export function sentParameters(request: ChatRequest): SentParameters {
+  const sent: SentParameters = {
+    extraBodyKeys: Object.keys(withoutForbiddenFields(request.extraBody)).sort(),
+    responseFormat: request.extraBody?.response_format !== undefined
+  }
+  if (request.reasoningEffort !== undefined) sent.reasoningEffort = request.reasoningEffort
+  if (request.temperature !== undefined) sent.temperature = request.temperature
+  if (request.topP !== undefined) sent.topP = request.topP
+  if (request.maxTokens !== undefined) sent.maxTokens = request.maxTokens
+  return sent
 }
 
 export class OpenAiChatTransport {
@@ -403,7 +423,7 @@ export class OpenAiChatTransport {
         { method: 'POST', body, apiKey, extraHeaders: request.extraHeaders },
         attempt
       )
-      if (!response.ok) throw await this.failure(response, apiKey, attempt)
+      if (!response.ok) throw await this.failure(response, apiKey, attempt, sentParameters(request))
 
       const payload = (await this.readJson(response, attempt, apiKey)) as {
         choices?: Array<{ message?: { content?: unknown }; finish_reason?: unknown }>
@@ -411,12 +431,14 @@ export class OpenAiChatTransport {
       }
       const content = payload.choices?.[0]?.message?.content
       const finishReason = mapFinishReason(payload.choices?.[0]?.finish_reason)
+      const filter = readFilterReason(payload.choices?.[0]?.finish_reason)
       // Bị bộ lọc nội dung chặn thì không có chữ: đó là một câu trả lời ("từ chối"), không phải phản hồi
       // hỏng. Ném lỗi ở đây thì lõi dịch không biết để chia nhỏ lô, và cả lô mất.
       if (typeof content !== 'string' && finishReason === 'filter') {
         return {
           text: '',
           finishReason,
+          filter: filter ?? { group: 'other', raw: '' },
           usage: normalizeUsage(payload.usage),
           status: response.status
         }
@@ -429,6 +451,7 @@ export class OpenAiChatTransport {
       return {
         text: content,
         finishReason,
+        ...(finishReason === 'filter' ? { filter: filter ?? { group: 'other', raw: '' } } : {}),
         usage: normalizeUsage(payload.usage),
         status: response.status
       }
@@ -456,7 +479,7 @@ export class OpenAiChatTransport {
         { method: 'POST', body, apiKey, extraHeaders: request.extraHeaders },
         attempt
       )
-      if (!response.ok) throw await this.failure(response, apiKey, attempt)
+      if (!response.ok) throw await this.failure(response, apiKey, attempt, sentParameters(request))
       if (response.body === null) {
         throw new ProviderError('invalid_response', 'Phản hồi không có thân để đọc.', {
           status: response.status
@@ -465,6 +488,7 @@ export class OpenAiChatTransport {
 
       let usage: Usage | null = null
       let finishReason: FinishReason = 'unknown'
+      let filter: FilterReason | undefined
       // Fragments of a tool call are gathered by `index`: the name comes once, the arguments over many frames.
       const pending = new Map<number, { id: string; name: string; arguments: string }>()
       try {
@@ -486,11 +510,15 @@ export class OpenAiChatTransport {
                 body: JSON.stringify({ error: frame.error }),
                 now: this.options.now(),
                 secrets: [apiKey]
-              })
+              }),
+              sentParameters(request)
             )
           }
           if (frame.usage !== null) usage = frame.usage
-          if (frame.finishReason !== undefined) finishReason = mapFinishReason(frame.finishReason)
+          if (frame.finishReason !== undefined) {
+            finishReason = mapFinishReason(frame.finishReason)
+            filter = readFilterReason(frame.finishReason)
+          }
           for (const fragment of frame.toolCalls) {
             const current = pending.get(fragment.index) ?? { id: '', name: '', arguments: '' }
             pending.set(fragment.index, {
@@ -522,7 +550,12 @@ export class OpenAiChatTransport {
         }
         return
       }
-      yield { kind: 'done', usage, finishReason }
+      yield {
+        kind: 'done',
+        usage,
+        finishReason,
+        ...(finishReason === 'filter' ? { filter: filter ?? { group: 'other', raw: '' } } : {})
+      }
     } finally {
       attempt.finish()
     }
@@ -568,7 +601,8 @@ export class OpenAiChatTransport {
   private async failure(
     response: Response,
     apiKey: string | null,
-    attempt: Attempt
+    attempt: Attempt,
+    sent?: SentParameters
   ): Promise<ProviderError> {
     let body = ''
     try {
@@ -586,7 +620,8 @@ export class OpenAiChatTransport {
         headers: response.headers,
         now: this.options.now(),
         secrets: [apiKey]
-      })
+      }),
+      sent
     )
   }
 

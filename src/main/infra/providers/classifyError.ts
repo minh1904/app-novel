@@ -1,6 +1,7 @@
 import type { QuotaScope } from '../storage/connections'
+import { findBlockEvidence, type FilterReason } from './filterReason'
 import { bodyExcerpt, redactSecrets } from './redact'
-import type { ProviderErrorKind } from './types'
+import type { ProviderErrorKind, RequestProblem } from './types'
 
 /**
  * Đọc một phản hồi lỗi của nhà cung cấp thành thứ Mira hành động được.
@@ -31,6 +32,10 @@ export interface ClassifiedError {
   retryAfterMs?: number
   /** Chỉ có khi đọc được bằng chứng rõ ràng. */
   quotaScope?: QuotaScope
+  /** Với `invalid_request`: điều gì sai ở request, khi nhận ra được. */
+  requestProblem?: RequestProblem
+  /** Với `refused`: lý do chặn đọc từ thân lỗi. */
+  filter?: FilterReason
 }
 
 interface GoogleDetail {
@@ -44,10 +49,17 @@ interface GoogleDetail {
 /**
  * Gemini answers a wrong or expired key with **HTTP 400** (`INVALID_ARGUMENT`), not 401 or 403 — seen in a
  * real call on 2026-10-03 (`__fixtures__/live/bad-key.json`: "Please pass a valid API key"). By status alone
- * that is `refused`, a request nothing can fix, so the key would never be marked wrong and every call would
- * keep trying it. The message and the `reason` are what say it is the key.
+ * that is `invalid_request`, a request nothing can fix, so the key would never be marked wrong and every call
+ * would keep trying it. The message and the `reason` are what say it is the key.
  */
 const BAD_KEY_MESSAGE = /api key (not valid|expired)|valid api key/i
+
+/**
+ * A request over the model's input limit. Gemini answers it with 400 "The input token count (…) exceeds the
+ * maximum number of tokens allowed"; others say "too long" or "context length". 413 needs no message.
+ */
+const TOO_LARGE_MESSAGE =
+  /exceeds the maximum number of tokens|input token count|context[_ ]length|too (large|long)|maximum context/i
 
 /** `"34.4s"` → 34400. Trả `undefined` cho mọi thứ không đọc được. */
 export function parseDuration(value: unknown): number | undefined {
@@ -78,9 +90,10 @@ function kindForStatus(status: number): ProviderErrorKind {
   if (status === 402) return 'quota'
   if (status === 429) return 'rate_limited'
   if (status === 408 || status >= 500) return 'network'
-  // Hợp đồng chỉ có sáu loại; một 4xx còn lại là "nhà cung cấp từ chối yêu cầu này" và **không**
-  // nên thử lại — đúng ngữ nghĩa của `refused`, và quan trọng hơn là đúng hành vi thử lại.
-  return 'refused'
+  // Một 4xx còn lại là request sai: tham số không nhận, request quá lớn, thân hỏng. Không thử lại, không
+  // phải lỗi của khóa. Chỉ thành `refused` khi thân lỗi có bằng chứng bộ lọc chặn (`findBlockEvidence`):
+  // gọi nhầm một tác phẩm là "nội dung bị chặn" là lỗi nặng hơn.
+  return 'invalid_request'
 }
 
 export interface ClassifyInput {
@@ -128,7 +141,7 @@ export function classifyHttpError(input: ClassifyInput): ClassifiedError {
     // Lớp 2 — thân kiểu OpenAI (và phần message dùng chung với lớp 1).
     if (typeof error.message === 'string') message = error.message
 
-    if (kind === 'refused' && status === 400) {
+    if (kind === 'invalid_request' && status === 400) {
       const reasons = Array.isArray(details)
         ? (details as GoogleDetail[]).map((d) => d?.reason)
         : []
@@ -162,6 +175,16 @@ export function classifyHttpError(input: ClassifyInput): ClassifiedError {
     quotaScope = 'minute'
   }
 
+  let requestProblem: RequestProblem | undefined
+  let filter: FilterReason | undefined
+  if (kind === 'invalid_request') {
+    filter = findBlockEvidence(body)
+    if (filter !== undefined) kind = 'refused'
+    else if (status === 413 || TOO_LARGE_MESSAGE.test(message) || TOO_LARGE_MESSAGE.test(body)) {
+      requestProblem = 'too_large'
+    }
+  }
+
   // Lớp 4 — không đọc được gì thì vẫn phải có một câu cho người dùng.
   if (message === '') message = body.trim().slice(0, 300) || 'Nhà cung cấp trả lỗi ' + status + '.'
 
@@ -176,5 +199,7 @@ export function classifyHttpError(input: ClassifyInput): ClassifiedError {
   if (snippet !== '') result.bodySnippet = snippet
   if (retryAfterMs !== undefined) result.retryAfterMs = retryAfterMs
   if (quotaScope !== undefined) result.quotaScope = quotaScope
+  if (requestProblem !== undefined) result.requestProblem = requestProblem
+  if (filter !== undefined) result.filter = filter
   return result
 }

@@ -332,6 +332,7 @@ describe('complete', () => {
     expect(await t.complete(ask, { apiKey: KEY })).toEqual({
       text: '',
       finishReason: 'filter',
+      filter: { group: 'prohibited', raw: 'PROHIBITED_CONTENT' },
       usage: { inputTokens: 50, outputTokens: 0 },
       status: 200
     })
@@ -412,8 +413,14 @@ describe('complete', () => {
       .complete({ ...ask, temperature: 0.3 }, { apiKey: KEY })
       .catch((caught: unknown) => caught)
     expect(error).toBeInstanceOf(ProviderError)
-    expect((error as ProviderError).kind).toBe('refused')
+    expect((error as ProviderError).kind).toBe('invalid_request')
     expect((error as ProviderError).message).toContain('Unsupported parameter: temperature')
+    // The error carries what was sent, so the message can name it.
+    expect((error as ProviderError).sent).toEqual({
+      temperature: 0.3,
+      extraBodyKeys: [],
+      responseFormat: false
+    })
     // No second call without the parameter: dropping it is the person's decision, not the app's.
     expect(fake.calls).toHaveLength(1)
     expect(JSON.parse(String(fake.calls[0]!.init.body))).toMatchObject({ temperature: 0.3 })
@@ -487,6 +494,47 @@ describe('stream', () => {
       { kind: 'delta', text: 'chào' },
       { kind: 'done', usage: { inputTokens: 12, outputTokens: 3 }, finishReason: 'stop' }
     ])
+  })
+
+  it('ends a filtered stream with the reason the provider gave', async () => {
+    const t = transport(fetchFake(() => sse([finish('content_filter: RECITATION'), DONE])))
+    expect(await collect(t.stream(ask, { apiKey: KEY }))).toEqual([
+      {
+        kind: 'done',
+        usage: null,
+        finishReason: 'filter',
+        filter: { group: 'recitation', raw: 'RECITATION' }
+      }
+    ])
+  })
+
+  it('names what it sent when the provider rejects the request, and never the key', async () => {
+    const t = transport(
+      fetchFake(() =>
+        json({ error: { code: 400, message: 'Request contains an invalid argument.' } }, 400)
+      )
+    )
+    const error = (await collect(
+      t.stream(
+        {
+          ...ask,
+          reasoningEffort: 'none',
+          maxTokens: 800,
+          extraBody: { google: { thinking_config: {} }, seed: 1 },
+          extraHeaders: { 'x-trace': 'abc' }
+        },
+        { apiKey: KEY }
+      )
+    ).catch((caught: unknown) => caught)) as ProviderError
+    expect(error.kind).toBe('invalid_request')
+    expect(error.sent).toEqual({
+      reasoningEffort: 'none',
+      maxTokens: 800,
+      extraBodyKeys: ['google', 'seed'],
+      responseFormat: false
+    })
+    expect(JSON.stringify(error.sent)).not.toContain(KEY)
+    expect(JSON.stringify(error.sent)).not.toContain('x-trace')
   })
 
   it('reports a cut-off answer as such', async () => {
@@ -738,7 +786,7 @@ describe('listModels', () => {
   it('throws a typed error when the endpoint refuses', async () => {
     const t = transport(fetchFake(() => json({ error: { message: 'Unsupported parameter' } }, 400)))
     expect(await t.listModels({ apiKey: KEY }).catch((e: unknown) => e)).toMatchObject({
-      kind: 'refused',
+      kind: 'invalid_request',
       status: 400
     })
   })

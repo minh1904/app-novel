@@ -58,6 +58,7 @@ describe('decideRetry', () => {
       'quota',
       'auth',
       'refused',
+      'invalid_request',
       'invalid_response',
       'cancelled'
     ] as const) {

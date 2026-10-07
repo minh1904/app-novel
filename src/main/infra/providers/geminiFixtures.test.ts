@@ -172,7 +172,7 @@ describe('reading what Gemini really sent back', () => {
       .listModels({ apiKey: null })
       .catch((e: unknown) => e)
     expect(error).toBeInstanceOf(ProviderError)
-    expect(error).toMatchObject({ kind: 'refused', status: 404 })
+    expect(error).toMatchObject({ kind: 'invalid_request', status: 404 })
   })
 })
 

@@ -1,5 +1,5 @@
 import type { TokenUsage } from '../../../../shared/contracts/usage'
-import type { TranslateFailure } from '../../../../shared/contracts/aiTranslate'
+import type { SegmentRefusal, TranslateFailure } from '../../../../shared/contracts/aiTranslate'
 import type {
   TempMappedUnit,
   TranslateUnit,
@@ -15,8 +15,13 @@ import {
 } from './translatePrompt'
 import { ProviderError } from '../../../infra/providers/types'
 import { addUsage } from '../../../infra/providers/usage'
+import { describeRefusals } from '../../../../shared/algorithms/refusalMessage'
+import { describeProviderError } from '../errorPolicy'
 
 export type { ModelCompletionResult, TranslationModelCaller }
+
+/** Lỗi của một lô theo lời lõi dịch. Việc lỗi có dừng cả lượt hay không do bên gọi quyết theo chính sách. */
+export type CoreFailure = Omit<TranslateFailure, 'haltsRun'>
 
 export interface TranslateCoreBatchOptions {
   caller: TranslationModelCaller
@@ -35,13 +40,15 @@ export interface TranslateCoreBatchOutcome {
    * `failedIds`; tách riêng để báo người dịch rằng thử lại cũng vô ích, cần dịch tay hoặc model khác.
    */
   refusedIds: string[]
+  /** Lý do chặn của từng đoạn trong `refusedIds`, cùng thứ tự. */
+  refusals: SegmentRefusal[]
   /**
    * Đoạn bộ lọc chặn khi gửi kèm ngữ cảnh tác phẩm nhưng qua được khi gửi lại không kèm glossary,
    * nhân vật và cặp xưng hô. Đã có bản dịch, nhưng tên và xưng hô chưa được đối chiếu, cần soát lại.
    */
   withoutContextIds: string[]
   usage: TokenUsage | null
-  error: TranslateFailure | null
+  error: CoreFailure | null
   /** Request lượt chính đã gửi; `null` khi lô không có gì để gửi. */
   request: { version: string; systemHash: string; requestHash: string } | null
 }
@@ -71,6 +78,7 @@ export async function executeTranslateBatch({
       items: skippedEmpty,
       failedIds: [],
       refusedIds: [],
+      refusals: [],
       withoutContextIds: [],
       usage: null,
       error: null,
@@ -99,9 +107,10 @@ export async function executeTranslateBatch({
         items: skippedEmpty,
         failedIds: sendable.map((u) => u.originalId),
         refusedIds: [],
+        refusals: [],
         withoutContextIds: [],
         usage: totalUsage,
-        error: { kind: error.kind, message: error.message, recoverAt },
+        error: { kind: error.kind, message: describeProviderError(error), recoverAt },
         request
       }
     }
@@ -113,6 +122,7 @@ export async function executeTranslateBatch({
       items: skippedEmpty,
       failedIds: sendable.map((u) => u.originalId),
       refusedIds: [],
+      refusals: [],
       withoutContextIds: [],
       usage: totalUsage,
       error: {
@@ -127,25 +137,35 @@ export async function executeTranslateBatch({
   // 3. Phân tích cú pháp và đối soát. Lô bị bộ lọc nội dung chặn thì chia đôi để cứu các đoạn vô can.
   const matched: TranslateUnit[] = []
   let missingIds: string[] = []
-  let refusedIds: string[] = []
+  let refusals: SegmentRefusal[] = []
   let withoutContextIds: string[] = []
   if (mainCall.finishReason === 'filter') {
-    const split = await splitFiltered(sendable, prompt, caller, tempToId, signal)
+    const split = await splitFiltered(
+      sendable,
+      prompt,
+      caller,
+      tempToId,
+      signal,
+      false,
+      mainCall.filter
+    )
     totalUsage = addUsage(totalUsage, split.usage)
     matched.push(...split.matched)
     missingIds = split.missing
-    refusedIds = split.refused
+    refusals = split.refused
 
-    // Đoạn vẫn bị chặn: thử thêm một vòng không kèm glossary, nhân vật và cặp xưng hô.
+    // Đoạn vẫn bị chặn: thử thêm một vòng không kèm glossary, nhân vật và cặp xưng hô. Lý do giữ lại là
+    // của lần chặn cuối cùng; đoạn qua được ở vòng này thì không còn lý do nào.
     const bare = withoutWorkContext(prompt)
-    if (refusedIds.length > 0 && bare && !signal?.aborted) {
-      const refusedUnits = sendable.filter((u) => refusedIds.includes(u.originalId))
+    if (refusals.length > 0 && bare && !signal?.aborted) {
+      const blocked = new Set(refusals.map((refusal) => refusal.id))
+      const refusedUnits = sendable.filter((u) => blocked.has(u.originalId))
       const retry = await splitFiltered(refusedUnits, bare, caller, tempToId, signal, true)
       totalUsage = addUsage(totalUsage, retry.usage)
       matched.push(...retry.matched)
       withoutContextIds = retry.matched.map((item) => item.id)
       missingIds.push(...retry.missing)
-      refusedIds = retry.refused
+      refusals = retry.refused
     }
   } else {
     const reconciliation = reconcileTempItems(
@@ -182,12 +202,13 @@ export async function executeTranslateBatch({
   }
 
   const allItems = [...skippedEmpty, ...matched]
-  const error: TranslateFailure | null =
-    refusedIds.length > 0
+  const refusedIds = refusals.map((refusal) => refusal.id)
+  const error: CoreFailure | null =
+    refusals.length > 0
       ? {
           kind: 'refused',
           message:
-            `Nhà cung cấp từ chối dịch ${refusedIds.length} đoạn (bộ lọc nội dung); cần dịch tay hoặc dùng model khác.` +
+            describeRefusals(refusals.map((refusal) => refusal.group)) +
             (missingIds.length > 0
               ? ` Thiếu thêm ${missingIds.length} đoạn sau khi đã thử lại.`
               : ''),
@@ -205,6 +226,7 @@ export async function executeTranslateBatch({
     items: allItems,
     failedIds: [...missingIds, ...refusedIds],
     refusedIds,
+    refusals,
     withoutContextIds,
     usage: totalUsage,
     error,
@@ -238,24 +260,33 @@ async function splitFiltered(
   caller: TranslationModelCaller,
   tempToId: Map<string, string>,
   signal?: AbortSignal,
-  untried = false
+  untried = false,
+  firstReason?: ModelCompletionResult['filter']
 ): Promise<{
   matched: TranslateUnit[]
   missing: string[]
-  refused: string[]
+  refused: SegmentRefusal[]
   usage: TokenUsage | null
 }> {
   const matched: TranslateUnit[] = []
   const missing: string[] = []
-  const refused: string[] = []
+  const refused: SegmentRefusal[] = []
   let usage: TokenUsage | null = null
   let calls = 0
   const ids = (part: TempMappedUnit[]): string[] => part.map((unit) => unit.originalId)
 
-  // `part` là phần vừa bị chặn: một đoạn thì đã khoanh xong, nhiều hơn thì chia tiếp.
-  const narrow = async (part: TempMappedUnit[]): Promise<void> => {
+  // `part` là phần vừa bị chặn và `reason` là lý do của lần chặn đó: một đoạn thì đã khoanh xong và mang
+  // lý do ấy, nhiều hơn thì chia tiếp.
+  const narrow = async (
+    part: TempMappedUnit[],
+    reason: ModelCompletionResult['filter']
+  ): Promise<void> => {
     if (part.length === 1) {
-      refused.push(part[0].originalId)
+      refused.push({
+        id: part[0].originalId,
+        group: reason?.group ?? 'other',
+        raw: reason?.raw ?? ''
+      })
       return
     }
     const middle = Math.ceil(part.length / 2)
@@ -277,7 +308,7 @@ async function splitFiltered(
     }
     usage = addUsage(usage, result.usage)
     if (result.finishReason === 'filter') {
-      await narrow(part)
+      await narrow(part, result.filter)
     } else if (result.finishReason === 'length') {
       missing.push(...ids(part))
     } else {
@@ -291,6 +322,6 @@ async function splitFiltered(
     }
   }
 
-  await (untried ? attempt(units) : narrow(units))
+  await (untried ? attempt(units) : narrow(units, firstReason))
   return { matched, missing, refused, usage }
 }

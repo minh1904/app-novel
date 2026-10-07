@@ -3,6 +3,7 @@ import {
   type ModelCapabilityView,
   type ThinkingLevel
 } from '../../../shared/contracts/modelSettings'
+import { nearestThinkingLevel } from '../../../shared/algorithms/thinkingLevels'
 import type { ModelInfo, ReasoningOption } from './modelCatalog'
 
 /**
@@ -119,4 +120,58 @@ export function modelCapability(info: ModelInfo | undefined): ModelCapability {
   if (override === undefined) return base
   const levels = new Set<ThinkingLevel>([...base.thinkingLevels, ...override.addLevels])
   return { ...base, thinkingLevels: ORDER.filter((level) => levels.has(level)) }
+}
+
+export type ThinkingCheck =
+  | { ok: true }
+  | {
+      ok: false
+      /** Các mức model này nhận, theo thứ tự `THINKING_LEVELS`; rỗng khi chỉ có "Mặc định". */
+      allowed: ThinkingLevel[]
+      /** Mức hợp lệ gần nhất theo thứ tự; cách đều thì lấy mức thấp hơn. `null` khi không có mức nào. */
+      nearest: ThinkingLevel | null
+    }
+
+/**
+ * Mức suy luận đã lưu có được model này nhận không (D6 của change `provider-error-reasons`). Một chỗ dùng
+ * chung cho lưu cài đặt, ngay trước khi gọi, và Lab. **Không** tự đổi sang mức khác: mức sai bị chặn kèm
+ * gợi ý, vì đổi ngầm là gửi một tham số người dùng không chọn, và Lab sẽ ghi sai biến thể.
+ *
+ * Model ngoài catalog luôn hợp lệ: không biết gì về nó, và đó là phạm vi của `extra_body` cùng lỗi
+ * `invalid_request` khi nhà cung cấp từ chối.
+ */
+export function checkThinkingLevel(
+  info: ModelInfo | undefined,
+  level: ThinkingLevel | undefined
+): ThinkingCheck {
+  if (level === undefined || info === undefined) return { ok: true }
+  const allowed = modelCapability(info).thinkingLevels
+  if (allowed.includes(level)) return { ok: true }
+  return { ok: false, allowed, nearest: nearestThinkingLevel(allowed, level) }
+}
+
+const LEVEL_NAMES: Record<ThinkingLevel, string> = {
+  off: 'Tắt',
+  minimal: 'minimal',
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  xhigh: 'xhigh',
+  max: 'max'
+}
+
+/** Câu báo một mức suy luận không hợp lệ, nêu các mức hợp lệ và mức gợi ý. */
+export function describeThinkingCheck(
+  model: string,
+  level: ThinkingLevel,
+  check: Extract<ThinkingCheck, { ok: false }>
+): string {
+  const allowed =
+    check.allowed.length === 0
+      ? 'model này chỉ dùng mức Mặc định (không gửi tham số suy luận)'
+      : 'các mức hợp lệ: ' + check.allowed.map((item) => LEVEL_NAMES[item]).join(', ')
+  return (
+    `Mức suy luận "${LEVEL_NAMES[level]}" không hợp lệ với ${model}; ${allowed}.` +
+    (check.nearest === null ? '' : ` Gợi ý: ${LEVEL_NAMES[check.nearest]}.`)
+  )
 }

@@ -297,6 +297,32 @@ describe('ChatService', () => {
     expect(failure && failure.kind === 'error' && failure.error.retryable).toBe(false)
   })
 
+  it('yêu cầu sai cấu hình là lỗi cấu hình, không thử lại được, không phải "nhà cung cấp từ chối"', async () => {
+    const sink = collector()
+    const chat = service(
+      connections(
+        async () =>
+          new Response(
+            JSON.stringify({
+              error: { code: 400, message: 'Request contains an invalid argument.' }
+            }),
+            { status: 400 }
+          )
+      )
+    )
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+
+    const failure = sink.chunks.find((c) => c.kind === 'error')
+    expect(failure && failure.kind === 'error' && failure.error).toMatchObject({
+      kind: 'invalid_request',
+      retryable: false
+    })
+    expect(failure && failure.kind === 'error' && failure.error.message).toContain(
+      'Kiểm tra cài đặt model'
+    )
+  })
+
   it('hết hạn mức mang mốc hồi phục tính từ now', async () => {
     const sink = collector()
     const body = {
@@ -731,7 +757,12 @@ describe('khối ngữ cảnh main đọc từ kho', () => {
         update: () => undefined
       }
     })
-    const own = { kind: 'chapter-source' as const, label: 'Bản gốc của chương', detail: '1', text: 'Winter' }
+    const own = {
+      kind: 'chapter-source' as const,
+      label: 'Bản gốc của chương',
+      detail: '1',
+      text: 'Winter'
+    }
     const done = new Promise<void>((resolve) => {
       const started = service.startWithSession(input({ context: [own] }), (chunk) => {
         if (chunk.kind === 'done' || chunk.kind === 'error') resolve()

@@ -109,6 +109,12 @@ export interface OpenAiCompatibleOptions {
    * hai lần.
    */
   inputTokenLimit?: number
+  /**
+   * Lỗi đã biết trước khi gọi, ví dụ mức suy luận model không nhận (`checkThinkingLevel`). Có thì mọi lời
+   * gọi của provider ném nó ngay, **không** đi ra mạng: một request chắc chắn bị từ chối không đáng tốn một
+   * lượt gọi, và lỗi vẫn là `invalid_request` kèm tham số đã định gửi.
+   */
+  blockedBy?: ProviderError
   /** Tiêm vào để test; mặc định là `fetch` của Node. */
   fetchImpl?: typeof fetch
   now?: () => number
@@ -206,6 +212,11 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
    * nên nó rơi đúng vào nhánh "endpoint không liệt kê model" và kết nối hiện ra là nối được nhưng
    * không có model nào. Một lỗi xác thực đội lốt một endpoint thiếu tính năng.
    */
+  /** Ném lỗi đã biết trước (`blockedBy`) trước khi có lời gọi nào. */
+  private guard(): void {
+    if (this.options.blockedBy !== undefined) throw this.options.blockedBy
+  }
+
   async listModels(signal?: AbortSignal): Promise<{ models: string[]; listed: boolean }> {
     try {
       const models = await this.gateway.call(
@@ -229,6 +240,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
     request: TranslateRequest,
     { signal }: TranslateOptions = {}
   ): Promise<TranslateResponse> {
+    this.guard()
     const matched: SegmentText[] = []
     let spent: Usage | null = null
     for (const batch of splitIntoBatches(
@@ -326,6 +338,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
     messages: ChatMessage[],
     { signal, tools }: TranslateOptions & { tools?: readonly unknown[] } = {}
   ): AsyncGenerator<ChatStreamEvent> {
+    this.guard()
     yield* this.gateway.stream(
       (lease) =>
         this.transport.stream(
@@ -348,6 +361,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
    * lỗi nói đúng điều đó (`invalid_response`), vì đó là cấu hình người dùng đã đặt.
    */
   async probe(signal?: AbortSignal): Promise<{ ms: number; usage: Usage | null }> {
+    this.guard()
     const startedAt = this.now()
     const result = await this.gateway.call(
       (lease) =>
@@ -371,6 +385,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
     options?: { signal?: AbortSignal }
   ): Promise<ModelCompletionResult> {
+    this.guard()
     const result = await this.gateway.call(
       (lease) =>
         this.transport.complete(
@@ -387,6 +402,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
       text: result.text,
       usage: result.usage,
       finishReason: result.finishReason,
+      ...(result.filter !== undefined ? { filter: result.filter } : {}),
       status: result.status
     }
   }

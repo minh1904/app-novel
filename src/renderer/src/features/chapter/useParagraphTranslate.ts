@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
-import type { TranslateFailure, TranslateUsage } from '../../../../shared/contracts/aiTranslate'
+import type {
+  SegmentRefusal,
+  TranslateFailure,
+  TranslateUsage
+} from '../../../../shared/contracts/aiTranslate'
 import type { ParagraphTranslationPlan, TranslationPolicy } from '../../../../shared/contracts/aiTranslateProposals'
 import type { TextRecord } from '../../../../shared/contracts/text'
 import { useConnectionStore } from '../../stores/connectionStore'
@@ -8,12 +12,9 @@ import { describe } from '../library/describeError'
 import type { ModelSelection } from '../models/ModelSelectionMenu'
 import { thinkingPatch, type ThinkingChoice } from '../models/modelSettingsForm'
 import { targetKey, targetsOf, type TranslateTarget } from './translateTargets'
+import { tallyBatch } from './translateRun'
 
 type Stage = 'choosing' | 'planning' | 'ready' | 'running' | 'cancelling' | 'finished'
-
-const STOPS = new Set<TranslateFailure['kind']>([
-  'auth', 'quota', 'refused', 'rate_limited', 'conflict', 'cancelled'
-])
 
 export interface ParagraphTranslateController {
   stage: Stage
@@ -30,6 +31,8 @@ export interface ParagraphTranslateController {
   progress: { processed: number; proposed: number; total: number }
   failed: string[]
   failure: TranslateFailure | null
+  /** Đoạn bộ lọc nội dung chặn trong lượt này, kèm lý do; thử lại cũng vô ích. */
+  refusals: SegmentRefusal[]
   usage: TranslateUsage | null
   keyNotice: string | null
   cancelled: boolean
@@ -56,6 +59,7 @@ export function useParagraphTranslate(
   const [processed, setProcessed] = useState(0)
   const [failed, setFailed] = useState<string[]>([])
   const [failure, setFailure] = useState<TranslateFailure | null>(null)
+  const [refusals, setRefusals] = useState<SegmentRefusal[]>([])
   const [usage, setUsage] = useState<TranslateUsage | null>(null)
   const [keyNotice, setKeyNotice] = useState<string | null>(null)
   const [cancelled, setCancelled] = useState(false)
@@ -124,6 +128,7 @@ export function useParagraphTranslate(
     let lastTail: string | null = null
     let spent: TranslateUsage | null = null
     let localFailed: string[] = []
+    let localRefusals: SegmentRefusal[] = []
     let proposedCount = proposedIds.current.size
     let haltedByError = false
     let nextIndex = 0
@@ -138,7 +143,9 @@ export function useParagraphTranslate(
         policy, sourceIds
       })
       if (!response.ok) {
-        setFailure({ kind: 'conflict', message: describe(response.error), recoverAt: null })
+        setFailure({
+          kind: 'conflict', message: describe(response.error), recoverAt: null, haltsRun: true
+        })
         localFailed = [...new Set([...localFailed, ...sourceIds])]
         if (response.error.code === 'conflict') setReplan((value) => value + 1)
         haltedByError = true
@@ -150,7 +157,12 @@ export function useParagraphTranslate(
       for (const id of batch.proposed) proposedIds.current.add(id)
       proposedCount = proposedIds.current.size
       setDone(proposedCount)
-      localFailed = [...new Set([...localFailed, ...batch.failed])]
+      const tally = tallyBatch({ failed: localFailed, refusals: localRefusals, halted: false }, batch)
+      localFailed = tally.failed
+      if (batch.refusals.length > 0) {
+        localRefusals = tally.refusals
+        setRefusals(localRefusals)
+      }
       if (batch.usage) {
         const previous = spent
         spent = {
@@ -165,10 +177,10 @@ export function useParagraphTranslate(
         }
         lastTail = batch.keyTail
       }
-      if (batch.error) {
-        setFailure(batch.error)
-        if (STOPS.has(batch.error.kind)) { haltedByError = true; break }
-      }
+      if (batch.error) setFailure(batch.error)
+      // Main decides which failures stop the run (`errorPolicy.ts`): a few segments blocked by the
+      // filter do not, so the chapter's other batches still get translated.
+      if (tally.halted) { haltedByError = true; break }
     }
     if (nextIndex < sourceGroups.length) {
       localFailed = [...new Set([...localFailed, ...sourceGroups.slice(nextIndex).flat()])]
@@ -204,6 +216,7 @@ export function useParagraphTranslate(
     setDone(0)
     setProcessed(0)
     setFailed([])
+    setRefusals([])
     setUsage(null)
     setResult(null)
     await runBatches(plan.batches.map((batch) => batch.sourceIds), plan)
@@ -222,7 +235,7 @@ export function useParagraphTranslate(
     pick, loadingTargets: connections === null, plan: settled ? plan : null,
     policy, setPolicy, notice, dismissNotice: () => setNotice(null),
     progress: { processed, proposed: done, total: plan?.paragraphCount ?? 0 },
-    failed, failure, usage, keyNotice, cancelled, result, start, retryFailed,
+    failed, failure, refusals, usage, keyNotice, cancelled, result, start, retryFailed,
     cancel: () => { stop.current = true; setStopping(true) }
   }
 }

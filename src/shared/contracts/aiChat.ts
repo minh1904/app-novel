@@ -111,6 +111,7 @@ export type ChatErrorKind =
   | 'auth'
   | 'quota'
   | 'refused'
+  | 'invalid_request'
   | 'invalid_response'
   | 'cancelled'
 

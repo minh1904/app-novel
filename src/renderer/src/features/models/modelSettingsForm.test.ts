@@ -9,6 +9,7 @@ import {
   parseTaskField,
   roundSlider,
   sliderPatch,
+  staleThinkingNotice,
   taskFormOf,
   taskPatch,
   thinkingChoiceOf,
@@ -283,5 +284,25 @@ describe('a settings object stays whole through a round trip', () => {
     expect(form.temperature).toEqual({ enabled: false, value: 0.3 })
     const reparsed = parseJsonField('extraHeaders', form.extraHeaders.text)
     expect(reparsed).toEqual({ ok: true, value: { 'X-Title': 'Mira' } })
+  })
+})
+
+describe('staleThinkingNotice', () => {
+  it('says nothing about a level the model takes, or no level at all', () => {
+    expect(staleThinkingNotice(flash, 'off')).toBeNull()
+    expect(staleThinkingNotice(pro, undefined)).toBeNull()
+  })
+
+  it('warns about a saved level the model does not take and suggests the nearest', () => {
+    const notice = staleThinkingNotice(pro, 'off')
+    expect(notice).toContain('“Tắt” đang lưu không hợp lệ')
+    expect(notice).toContain('bị chặn')
+    expect(notice).toContain('“Thấp”')
+  })
+
+  it('points to the default when the model takes no level', () => {
+    expect(staleThinkingNotice({ thinkingLevels: [], temperature: true }, 'low')).toContain(
+      '“Mặc định”'
+    )
   })
 })

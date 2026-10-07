@@ -1,7 +1,12 @@
 import * as v from 'valibot'
 import { idSchema } from './library'
 import { settingsKeySchema } from './modelSettings'
-import type { TranslateEstimate, TranslateFailure, TranslateUsage } from './aiTranslate'
+import type {
+  SegmentRefusal,
+  TranslateEstimate,
+  TranslateFailure,
+  TranslateUsage
+} from './aiTranslate'
 
 const chapterRef = { workId: idSchema, chapterId: idSchema }
 const rev = v.pipe(v.number(), v.integer(), v.minValue(0))
@@ -49,6 +54,8 @@ export interface ParagraphBatchResult {
   proposalId: string | null
   proposed: string[]
   failed: string[]
+  /** Những đoạn trong `failed` bị bộ lọc nội dung chặn, kèm lý do. */
+  refusals: SegmentRefusal[]
   error: TranslateFailure | null
   usage: TranslateUsage | null
   keyTail: string | null

@@ -19,6 +19,7 @@ import type { ConnectionTranslator } from './connectionService'
 import { costOfUsage } from './costEstimate'
 import { lookupModel } from '../../infra/providers/modelCatalog'
 import { ProviderError } from '../../infra/providers/types'
+import { describeProviderError, taskErrorPolicy } from './errorPolicy'
 import { addUsage, toWireUsage, type Usage } from '../../infra/providers/usage'
 
 /**
@@ -105,8 +106,9 @@ function toChatError(error: unknown, now: number): ChatChunk & { kind: 'error' }
       kind: 'error',
       error: {
         kind: error.kind,
-        message: error.message,
-        retryable: error.retryable,
+        message: describeProviderError(error),
+        // Whether asking again can help is the chat policy's call (`errorPolicy.ts`), not the transport's.
+        retryable: taskErrorPolicy('chat', error.kind).retryable,
         recoverAt
       },
       partial: false

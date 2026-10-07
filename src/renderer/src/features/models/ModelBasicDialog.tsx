@@ -13,6 +13,7 @@ import { TextField } from '../../components/TextField'
 import { messageOf, type ModelEntryActions } from './modelEntryActions'
 import {
   DEFAULT_THINKING_HINT,
+  staleThinkingNotice,
   thinkingChoiceOf,
   thinkingOptions,
   thinkingPatch,
@@ -212,6 +213,7 @@ function BasicForm({
 
   const options = thinkingOptions(entry.capability, entry.settings.thinking)
   const noLevels = entry.capability.thinkingLevels.length === 0
+  const staleThinking = staleThinkingNotice(entry.capability, entry.settings.thinking)
 
   return (
     <div className="flex flex-col">
@@ -273,11 +275,15 @@ function BasicForm({
             : 'Chỉ hiện các mức model này hỗ trợ. ' + DEFAULT_THINKING_HINT
         }
         below={
-          thinkingError === undefined ? undefined : (
+          thinkingError !== undefined ? (
             <span role="alert" className="text-ui-xs text-error">
               {thinkingError}
             </span>
-          )
+          ) : staleThinking !== null ? (
+            <span role="alert" className="text-ui-xs text-error">
+              {staleThinking}
+            </span>
+          ) : undefined
         }
       >
         <Select

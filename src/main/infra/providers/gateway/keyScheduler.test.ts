@@ -239,6 +239,17 @@ describe('what leaves a key alone', () => {
     expect(h.keys[0]).toMatchObject({ frozenUntil: null, freezeStrikes: 0 })
   })
 
+  it('does nothing for a request error: the key is not marked wrong nor frozen', () => {
+    const h = new Harness(record('a'), record('b'))
+    const invalid = classifyHttpError({
+      status: 400,
+      body: '{"error":{"message":"Request contains an invalid argument."}}',
+      now: NOW
+    })
+    expect(h.settle(leaseOf(h.pick()), invalid)).toEqual({ kind: 'none' })
+    expect(h.keys[0]).toMatchObject({ frozenUntil: null, freezeStrikes: 0, state: 'ok' })
+  })
+
   it('marks a wrong key invalid with no timer', () => {
     const h = new Harness(record('a'), record('b'))
     h.settle(leaseOf(h.pick()), AUTH_401())

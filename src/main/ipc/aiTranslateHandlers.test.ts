@@ -247,7 +247,8 @@ describe('translating with a model entry', () => {
     const harness = await setup()
     editEntry(harness, {
       inputTokenLimit: 1,
-      thinking: 'off',
+      // A level the catalog lists for this model: "off" is not one, and main now refuses to save it.
+      thinking: 'low',
       temperature: { enabled: true, value: 0.3 }
     })
     const planned = await plan(harness)
@@ -257,7 +258,7 @@ describe('translating with a model entry', () => {
     }
     expect(harness.bodies).toHaveLength(3)
     for (const body of harness.bodies) {
-      expect(body).toMatchObject({ temperature: 0.3, reasoning_effort: 'none', model: MODEL })
+      expect(body).toMatchObject({ temperature: 0.3, reasoning_effort: 'low', model: MODEL })
     }
   })
 
