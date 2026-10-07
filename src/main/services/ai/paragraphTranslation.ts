@@ -29,6 +29,7 @@ import type { LibraryStore } from '../library/library'
 import type { ConnectionService } from './connectionService'
 import { estimateCost } from './costEstimate'
 import { executeTranslateBatch } from './translate/translationCore'
+import { CallBudget, defaultExtra, type BudgetSnapshot } from './translate/callBudget'
 import { describeProviderError, withPolicy } from './errorPolicy'
 import { buildTranslateRequest, PREVIOUS_PARAGRAPHS } from './translate/translatePrompt'
 import {
@@ -66,7 +67,45 @@ function failure(error: unknown, now: number): TranslateFailure {
   throw error
 }
 
+/** The batches a chapter is cut into for an entry's input limit; the plan and a lost budget use the same cut. */
+function batchesOf(
+  units: ParagraphUnit[],
+  inputTokenLimit: number | undefined,
+  sourceLang: string
+): Array<{ sourceIds: string[]; sourceChars: number }> {
+  return planBatches(units, {
+    maxTokens: taskLimit(inputTokenLimit) || undefined,
+    maxUnits: taskLimit(inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
+    sourceLang
+  }).batches.map((batch) => ({
+    sourceIds: batch.units.map((unit) => unit.id),
+    sourceChars: batch.charCount
+  }))
+}
+
+/** The calls one batch made: the run's counters after it, minus those before it. */
+function budgetDelta(
+  before: BudgetSnapshot,
+  after: BudgetSnapshot
+): { byRound: BudgetSnapshot['byRound']; httpAttempts: number } {
+  return {
+    byRound: {
+      main: after.byRound.main - before.byRound.main,
+      split: after.byRound.split - before.byRound.split,
+      bare: after.byRound.bare - before.byRound.bare,
+      repair: after.byRound.repair - before.byRound.repair
+    },
+    httpAttempts: after.httpAttempts - before.httpAttempts
+  }
+}
+
 export class ParagraphTranslator {
+  /**
+   * The call budget of each run still open, by `runId` (change `translation-call-budget`). In memory: a run
+   * rarely outlives an app restart, and one that does gets a fresh budget from its plan.
+   */
+  private readonly budgets = new Map<string, CallBudget>()
+
   constructor(
     private readonly options: {
       library: LibraryStore
@@ -75,7 +114,14 @@ export class ParagraphTranslator {
     }
   ) {}
 
-  plan({ workId, chapterId, connectionId, entryId }: ParagraphPlanInput): ParagraphTranslationPlan {
+  /**
+   * `extraCalls` overrides the run's extra call fund (`defaultExtra`); only the Lab sets it, to measure what
+   * the default costs.
+   */
+  plan(
+    { workId, chapterId, connectionId, entryId }: ParagraphPlanInput,
+    { extraCalls }: { extraCalls?: number } = {}
+  ): ParagraphTranslationPlan {
     const { library, connections } = this.options
     const { connection, entry, settingsKey } = connections.translator(connectionId, entryId)
     const work = library.get(workId)
@@ -84,15 +130,12 @@ export class ParagraphTranslator {
     const units = paragraphUnits(source.content)
     if (units.length === 0)
       throw new StorageError('validation', 'Chương này chưa có đoạn gốc để dịch.')
-    const batches = planBatches(units, {
-      maxTokens: taskLimit(entry.settings.inputTokenLimit) || undefined,
-      maxUnits: taskLimit(entry.settings.inputTokenLimit) ? Number.MAX_SAFE_INTEGER : undefined,
-      sourceLang: work.sourceLang
-    }).batches.map((batch) => ({
-      sourceIds: batch.units.map((unit) => unit.id),
-      sourceChars: batch.charCount
-    }))
+    const batches = batchesOf(units, entry.settings.inputTokenLimit, work.sourceLang)
     const runId = library.newAppId()
+    this.budgets.set(
+      runId,
+      new CallBudget(batches.length, extraCalls ?? defaultExtra(batches.length))
+    )
     // The work context is frozen here, once, for every call of the run (`contextSnapshot.ts`).
     const record = takeContextSnapshot(library, workId, chapterId, source.content)
     library.withWork(workId, (db) => {
@@ -188,12 +231,20 @@ export class ParagraphTranslator {
     }
     const done = new Set(prior?.parts.map((part) => part.batchKey) ?? [])
     const units = requested.filter((unit) => !done.has(`${key}:${unit.id}`))
+    const budget = this.budgetFor(input.runId, () =>
+      batchesOf(all, translator.entry.settings.inputTokenLimit, work.sourceLang).length
+    )
+    // Thử lại phần lỗi do người dùng bấm: lượt được thêm một phần ngân sách cho lô thử lại đó.
+    if (input.retry === true) budget.grant(1, defaultExtra(1))
+    const budgetBefore = budget.snapshot()
     if (units.length === 0)
       return {
         proposalId: prior?.id ?? null,
         proposed: requested.map((unit) => unit.id),
         failed: [],
         refusals: [],
+        budgetIds: [],
+        budget: budgetBefore,
         contextChanged,
         error: null,
         usage: null,
@@ -226,19 +277,22 @@ export class ParagraphTranslator {
     let usage: TranslateUsage | null = null
     let error: TranslateFailure | null = null
     let refusals: SegmentRefusal[] = []
+    let budgetIds: string[] = []
     try {
       if (typeof (translator.provider as TranslationModelCaller).complete === 'function') {
         const result = await executeTranslateBatch({
           caller: translator.provider as TranslationModelCaller,
           units,
           prompt,
-          now
+          now,
+          budget
         })
         contextHash = result.request?.requestHash ?? contextHash
         items = result.items
         usage = result.usage ? toWireUsage(result.usage) : null
         error = result.error === null ? null : withPolicy(result.error)
         refusals = result.refusals
+        budgetIds = result.budgetIds
       } else {
         const result = await translator.provider.translate({
           sourceLang: work.sourceLang,
@@ -254,6 +308,8 @@ export class ParagraphTranslator {
         proposed: [],
         failed: units.map((unit) => unit.id),
         refusals: [],
+        budgetIds: [],
+        budget: budget.snapshot(),
         contextChanged,
         error: failure(caught, now()),
         usage: null,
@@ -264,6 +320,7 @@ export class ParagraphTranslator {
     const good = units.filter((unit) => returned.get(unit.id))
     const proposed = good.map((unit) => unit.id)
     const failed = units.filter((unit) => !returned.get(unit.id)).map((unit) => unit.id)
+    const budgetAfter = budget.snapshot()
     let proposalId = prior?.id ?? null
     if (good.length > 0) {
       const trace = {
@@ -278,6 +335,8 @@ export class ParagraphTranslator {
         characters: snapshot.characters.map((character) => `${character.source} → ${character.target}`),
         previous,
         register: snapshot.register,
+        // Lời gọi của riêng lô này, theo vòng, và số request HTTP thật đằng sau chúng.
+        budget: budgetDelta(budgetBefore, budgetAfter),
         // Chỉ ghi khi có: hồ sơ cũ không có trường này vẫn đọc như trước.
         ...(refusals.length > 0 ? { refusals } : {})
       }
@@ -363,6 +422,8 @@ export class ParagraphTranslator {
       proposed,
       failed,
       refusals,
+      budgetIds,
+      budget: budgetAfter,
       contextChanged,
       error:
         error ??
@@ -378,7 +439,21 @@ export class ParagraphTranslator {
     }
   }
 
+  /**
+   * The run's budget, or a fresh one from its plan when it was lost (the app restarted mid-run). At worst
+   * such a run gets one more extra fund than it would have.
+   */
+  private budgetFor(runId: string, plannedBatches: () => number): CallBudget {
+    const known = this.budgets.get(runId)
+    if (known) return known
+    const batches = plannedBatches()
+    const budget = new CallBudget(batches, defaultExtra(batches))
+    this.budgets.set(runId, budget)
+    return budget
+  }
+
   finalize(input: ParagraphFinalizeInput): ParagraphFinalizeResult {
+    this.budgets.delete(input.runId)
     const { library } = this.options
     return library.withWork(input.workId, (db) => {
       const key = `translate:${input.runId}`

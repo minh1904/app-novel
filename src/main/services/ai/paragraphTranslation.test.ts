@@ -426,3 +426,60 @@ describe('the context snapshot of a run', () => {
     expect(rebuilt.matches).toBe(true)
   })
 })
+
+describe('the call budget of a run', () => {
+  const blockedAnswer = (): Response => new Response(JSON.stringify({
+    choices: [{ message: { role: 'assistant' }, finish_reason: 'content_filter: SAFETY' }],
+    usage: { prompt_tokens: 1, completion_tokens: 0 }
+  }), { status: 200 })
+  const base = (h: ReturnType<typeof setup>, plan: ReturnType<ParagraphTranslator['plan']>):
+    Omit<Parameters<ParagraphTranslator['runBatch']>[0], 'sourceIds'> => ({
+    workId: h.workId, chapterId: h.chapterId, runId: plan.runId,
+    connectionId: h.connectionId, entryId: h.entryId, settingsKey: plan.settingsKey,
+    sourceRev: plan.sourceRev, targetRev: plan.targetRev,
+    targetBaseContent: plan.targetBaseContent, policy: 'review'
+  })
+
+  it('is shared by the batches of one run, and the trace keeps what each batch used', async () => {
+    const h = setup()
+    const plan = h.translator.plan(h)
+    const ids = plan.batches.flatMap((batch) => batch.sourceIds)
+    const first = await h.translator.runBatch({ ...base(h, plan), sourceIds: [ids[0]] })
+    expect(first.budget).toMatchObject({ used: 1, limit: 1 + 8 })
+    const second = await h.translator.runBatch({ ...base(h, plan), sourceIds: [ids[1]] })
+    expect(second.budget).toMatchObject({ used: 2, limit: 9, byRound: { main: 2 } })
+    const proposal = h.library.withWork(h.workId, (db) => getProposal(db, first.proposalId!))
+    expect((proposal.context[0] as { budget: unknown }).budget).toEqual({
+      byRound: { main: 1, split: 0, bare: 0, repair: 0 },
+      httpAttempts: 1
+    })
+  })
+
+  it('stops splitting when the run is out of calls, and a retry gets a fresh share', async () => {
+    const text = Array.from({ length: 12 }, (_, i) => `BLOCKED ${i}.`).join('\n')
+    const h = setup(text, '', undefined, () => blockedAnswer())
+    const plan = h.translator.plan(h)
+    const ids = plan.batches.flatMap((batch) => batch.sourceIds)
+    const first = await h.translator.runBatch({ ...base(h, plan), sourceIds: ids })
+    expect(h.calls).toHaveLength(1 + 8)
+    expect(first.budget).toMatchObject({ used: 9, limit: 9, warn: true })
+    expect(first.budgetIds.length).toBeGreaterThan(0)
+    expect(first.error).toMatchObject({ kind: 'refused', haltsRun: false })
+
+    const retry = await h.translator.runBatch({
+      ...base(h, plan), sourceIds: first.budgetIds, retry: true
+    })
+    expect(retry.budget.limit).toBe(9 + 1 + 8)
+    expect(retry.budget.used).toBeGreaterThan(9)
+  })
+
+  it('starts a fresh budget for a run it no longer holds', async () => {
+    const h = setup()
+    const plan = h.translator.plan(h)
+    h.translator.finalize({ workId: h.workId, chapterId: h.chapterId, runId: plan.runId, policy: 'review' })
+    const batch = await h.translator.runBatch({
+      ...base(h, plan), sourceIds: plan.batches.flatMap((item) => item.sourceIds)
+    })
+    expect(batch.budget).toMatchObject({ used: 1, limit: plan.batches.length + 8 })
+  })
+})

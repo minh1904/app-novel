@@ -9,7 +9,19 @@
  * Hàm thuần, không đọc tệp; Lab (`scripts/lab/cli.ts`) đọc và ghi.
  */
 
-export const OUTCOMES = ['translated', 'refused', 'missing', 'request_error', 'not_run'] as const
+/**
+ * `budget_exhausted`: đoạn không được gửi hoặc không được hỏi lại vì ngân sách lời gọi của lượt đã hết
+ * (change `translation-call-budget`). Tách khỏi `missing` vì thử lại có ích và vì nó nói về cấu hình
+ * ngân sách, không về model.
+ */
+export const OUTCOMES = [
+  'translated',
+  'refused',
+  'missing',
+  'request_error',
+  'budget_exhausted',
+  'not_run'
+] as const
 export type ParagraphOutcome = (typeof OUTCOMES)[number]
 export type OutcomeCounts = Record<ParagraphOutcome, number>
 
@@ -27,6 +39,8 @@ export interface BatchOutcomeInput {
   proposed: string[]
   failed: string[]
   refusals: Array<{ id: string; group: string; raw: string }>
+  /** Đoạn hết ngân sách lời gọi; thiếu ở kết quả cũ. */
+  budgetIds?: string[]
   error: { kind: string } | null
 }
 
@@ -51,13 +65,21 @@ export function parseOutcomeLines(text: string): Map<number, ChapterOutcomes> {
 }
 
 export function emptyCounts(): OutcomeCounts {
-  return { translated: 0, refused: 0, missing: 0, request_error: 0, not_run: 0 }
+  return {
+    translated: 0,
+    refused: 0,
+    missing: 0,
+    request_error: 0,
+    budget_exhausted: 0,
+    not_run: 0
+  }
 }
 
 /**
  * Kết cục của các đoạn một lô định dịch. Đoạn có bản dịch là `translated`; đoạn bộ lọc chặn là `refused`
  * (lý do là chữ gốc, hoặc nhóm khi nhà cung cấp không nêu); lỗi `invalid_request` của cả lô là
- * `request_error`; phần còn lại trong `failed`, hoặc không được nhắc tới, là `missing`.
+ * `request_error`; đoạn hết ngân sách lời gọi là `budget_exhausted`; phần còn lại trong `failed`, hoặc
+ * không được nhắc tới, là `missing`.
  */
 export function batchOutcomes(
   plannedIds: string[],
@@ -68,11 +90,14 @@ export function batchOutcomes(
   const proposed = new Set(result.proposed)
   const refused = new Map(result.refusals.map((item) => [item.id, item.raw || item.group]))
   const requestError = result.error?.kind === 'invalid_request'
+  const unsent = new Set(result.budgetIds ?? [])
   for (const id of plannedIds) {
     if (proposed.has(id)) ids[id] = 'translated'
     else if (refused.has(id)) {
       ids[id] = 'refused'
       reasons[id] = refused.get(id)!
+    } else if (unsent.has(id)) {
+      ids[id] = 'budget_exhausted'
     } else if (requestError) {
       ids[id] = 'request_error'
       reasons[id] = 'invalid_request'

@@ -22,7 +22,8 @@ describe('taskErrorPolicy', () => {
     ['refused_segments', false, false, null],
     ['missing_segments', false, true, null],
     ['conflict', true, false, null],
-    ['cancelled', true, false, null]
+    ['cancelled', true, false, null],
+    ['budget_exhausted', false, true, null]
   ])('%s: halts %s, retryable %s, probe %s', (kind, halts, retryable, probe) => {
     expect(taskErrorPolicy('translate', kind).haltsRun).toBe(halts)
     expect(taskErrorPolicy('chat', kind).retryable).toBe(retryable)

@@ -37,6 +37,8 @@ export interface ParagraphTranslateController {
   keyNotice: string | null
   /** The store's context changed after the plan was made; the run kept the context it started with. */
   contextNotice: string | null
+  /** The run has used most of its call budget (shown once), or ran out of it. */
+  budgetNotice: string | null
   cancelled: boolean
   result: { proposed: number; applied: number; needsReview: number } | null
   start(): Promise<void>
@@ -65,6 +67,7 @@ export function useParagraphTranslate(
   const [usage, setUsage] = useState<TranslateUsage | null>(null)
   const [keyNotice, setKeyNotice] = useState<string | null>(null)
   const [contextNotice, setContextNotice] = useState<string | null>(null)
+  const [budgetNotice, setBudgetNotice] = useState<string | null>(null)
   const [cancelled, setCancelled] = useState(false)
   const [result, setResult] = useState<ParagraphTranslateController['result']>(null)
   const [replan, setReplan] = useState(0)
@@ -120,13 +123,17 @@ export function useParagraphTranslate(
   else if (!settled) stage = targets.length ? 'planning' : 'choosing'
   else if (plan) stage = 'ready'
 
-  const runBatches = useCallback(async (sourceGroups: string[][], activePlan: ParagraphTranslationPlan): Promise<void> => {
+  const runBatches = useCallback(async (
+    sourceGroups: string[][], activePlan: ParagraphTranslationPlan, retry = false
+  ): Promise<void> => {
     stop.current = false
     setStopping(false)
     setCancelled(false)
     setFailure(null)
     setKeyNotice(null)
     setContextNotice(null)
+    setBudgetNotice(null)
+    let warned = false
     setFinished(false)
     setRunning(true)
     let lastTail: string | null = null
@@ -144,7 +151,7 @@ export function useParagraphTranslate(
         connectionId: activePlan.connectionId, entryId: activePlan.entryId,
         settingsKey: activePlan.settingsKey, sourceRev: activePlan.sourceRev,
         targetRev: activePlan.targetRev, targetBaseContent: activePlan.targetBaseContent,
-        policy, sourceIds
+        policy, sourceIds, ...(retry ? { retry: true } : {})
       })
       if (!response.ok) {
         setFailure({
@@ -174,6 +181,14 @@ export function useParagraphTranslate(
           outputTokens: (previous?.outputTokens ?? 0) + batch.usage.outputTokens
         }
         setUsage(spent)
+      }
+      // Ngân sách lời gọi của lượt (main giữ): báo một lần khi đã dùng 80%, và khi đã hết.
+      if (batch.budgetIds.length > 0) {
+        setBudgetNotice(`Lượt dịch đã dùng hết ${batch.budget.limit} lời gọi cho phép; ` +
+          'các đoạn chưa xong có thể thử lại riêng.')
+      } else if (batch.budget.warn && !warned) {
+        warned = true
+        setBudgetNotice(`Lượt dịch đã dùng ${batch.budget.used}/${batch.budget.limit} lời gọi cho phép.`)
       }
       if (batch.contextChanged) {
         setContextNotice('Glossary, nhân vật hoặc xưng hô đã đổi sau khi lập kế hoạch. Lượt này vẫn dùng ' +
@@ -234,7 +249,8 @@ export function useParagraphTranslate(
     if (!plan || failed.length === 0) return
     const again = [...failed]
     setFailed([])
-    await runBatches([again], plan)
+    // Người dùng bấm thử lại: main cấp thêm một phần ngân sách lời gọi cho lô này.
+    await runBatches([again], plan, true)
   }, [plan, failed, runBatches])
 
   return {
@@ -243,7 +259,7 @@ export function useParagraphTranslate(
     pick, loadingTargets: connections === null, plan: settled ? plan : null,
     policy, setPolicy, notice, dismissNotice: () => setNotice(null),
     progress: { processed, proposed: done, total: plan?.paragraphCount ?? 0 },
-    failed, failure, refusals, usage, keyNotice, contextNotice, cancelled, result, start, retryFailed,
+    failed, failure, refusals, usage, keyNotice, contextNotice, budgetNotice, cancelled, result, start, retryFailed,
     cancel: () => { stop.current = true; setStopping(true) }
   }
 }

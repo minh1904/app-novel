@@ -41,6 +41,7 @@ describe('batchOutcomes', () => {
       refused: 2,
       missing: 1,
       request_error: 0,
+      budget_exhausted: 0,
       not_run: 0
     })
     expect(result.ids.p29).toBe('missing')
@@ -70,6 +71,24 @@ describe('batchOutcomes', () => {
 
   it('marks every paragraph of a chapter the run never reached as not_run', () => {
     expect(countOutcomes([notRunChapter(4, ids(5))]).not_run).toBe(5)
+  })
+})
+
+describe('batchOutcomes and the call budget', () => {
+  it('records segments the run had no calls left for as budget_exhausted, not missing', () => {
+    const result = batchOutcomes(['a', 'b', 'c', 'd'], {
+      proposed: ['a'],
+      failed: ['b', 'c', 'd'],
+      refusals: [{ id: 'b', group: 'safety', raw: 'SAFETY' }],
+      budgetIds: ['c'],
+      error: { kind: 'refused' }
+    })
+    expect(result.ids).toEqual({
+      a: 'translated',
+      b: 'refused',
+      c: 'budget_exhausted',
+      d: 'missing'
+    })
   })
 })
 

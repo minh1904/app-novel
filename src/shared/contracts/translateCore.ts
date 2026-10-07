@@ -41,6 +41,8 @@ export interface ModelCompletionResult {
   /** Khi `finishReason` là `filter`: lý do nhà cung cấp nêu, đã gộp nhóm. */
   filter?: { group: RefusalGroup; raw: string }
   status?: number
+  /** HTTP requests the call took, gateway retries included; absent when the caller does not know. */
+  attempts?: number
 }
 
 export interface TranslationModelCaller {

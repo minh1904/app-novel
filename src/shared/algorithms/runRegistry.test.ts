@@ -261,6 +261,12 @@ describe('runRegistry', () => {
     expect(text).not.toMatch(/^\| v5-nothink\+lite35 \| gemini-2\.5-flash \| off \| translate-v5/m)
   })
 
+  it('ghi ngân sách lời gọi của lần chạy khi có, và không ghi gì khi không có', () => {
+    const budget = { modelCalls: 14, budgetExhausted: 2, maxCalls: 4 }
+    expect(summarizeRun([call()], { ...meta, budget }, hash, 'translate-v5').budget).toEqual(budget)
+    expect(summarizeRun([call()], meta, hash, 'translate-v5')).not.toHaveProperty('budget')
+  })
+
   it('ghi schema 2 với kết cục và hash ngữ cảnh; vẫn đọc bản ghi schema 1', () => {
     const counts = { translated: 9, refused: 1, missing: 0, request_error: 0, not_run: 0 }
     const record = summarizeRun(

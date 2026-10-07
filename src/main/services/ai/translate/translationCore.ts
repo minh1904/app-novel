@@ -17,6 +17,7 @@ import { ProviderError } from '../../../infra/providers/types'
 import { addUsage } from '../../../infra/providers/usage'
 import { describeRefusals } from '../../../../shared/algorithms/refusalMessage'
 import { describeProviderError } from '../errorPolicy'
+import { CallBudget, LOCAL_EXTRA, type BudgetRound } from './callBudget'
 
 export type { ModelCompletionResult, TranslationModelCaller }
 
@@ -30,6 +31,11 @@ export interface TranslateCoreBatchOptions {
   prompt?: TranslatePromptContext
   signal?: AbortSignal
   now?: () => number
+  /**
+   * The run's call budget, shared by every batch of the run. Absent, the batch gets its own with the old
+   * caps (one main call, 33 extra), so callers that do not plan a run behave as before.
+   */
+  budget?: CallBudget
 }
 
 export interface TranslateCoreBatchOutcome {
@@ -42,6 +48,11 @@ export interface TranslateCoreBatchOutcome {
   refusedIds: string[]
   /** Lý do chặn của từng đoạn trong `refusedIds`, cùng thứ tự. */
   refusals: SegmentRefusal[]
+  /**
+   * Đoạn không được gửi (hoặc không được hỏi lại) vì ngân sách lời gọi của lượt đã hết. Nằm cả trong
+   * `failedIds`; khác `refusedIds` ở chỗ thử lại có ích.
+   */
+  budgetIds: string[]
   /**
    * Đoạn bộ lọc chặn khi gửi kèm ngữ cảnh tác phẩm nhưng qua được khi gửi lại không kèm glossary,
    * nhân vật và cặp xưng hô. Đã có bản dịch, nhưng tên và xưng hô chưa được đối chiếu, cần soát lại.
@@ -66,9 +77,25 @@ export async function executeTranslateBatch({
   units,
   prompt = {},
   signal,
-  now
+  now,
+  budget = new CallBudget(1, LOCAL_EXTRA)
 }: TranslateCoreBatchOptions): Promise<TranslateCoreBatchOutcome> {
   let totalUsage: TokenUsage | null = null
+  // Mọi lời gọi model của lô đi qua đây: xin ngân sách trước, ghi số request HTTP thật sau.
+  const call = async (
+    round: BudgetRound,
+    messages: Parameters<TranslationModelCaller['complete']>[0]
+  ): Promise<ModelCompletionResult | null> => {
+    if (!budget.take(round)) return null
+    try {
+      const result = await caller.complete(messages, { signal })
+      budget.addAttempts(result.attempts ?? 1)
+      return result
+    } catch (error) {
+      budget.addAttempts(1)
+      throw error
+    }
+  }
 
   // 1. Ánh xạ ID tạm và tách đơn vị rỗng
   const { sendable, skippedEmpty, tempToId } = mapToTempIds(units)
@@ -79,6 +106,7 @@ export async function executeTranslateBatch({
       failedIds: [],
       refusedIds: [],
       refusals: [],
+      budgetIds: [],
       withoutContextIds: [],
       usage: null,
       error: null,
@@ -96,7 +124,26 @@ export async function executeTranslateBatch({
 
   let mainCall: ModelCompletionResult
   try {
-    mainCall = await caller.complete(main.messages, { signal })
+    const answer = await call('main', main.messages)
+    if (answer === null) {
+      const ids = sendable.map((u) => u.originalId)
+      return {
+        items: skippedEmpty,
+        failedIds: ids,
+        refusedIds: [],
+        refusals: [],
+        budgetIds: ids,
+        withoutContextIds: [],
+        usage: null,
+        error: {
+          kind: 'budget_exhausted',
+          message: `Hết ngân sách lời gọi của lượt dịch; ${ids.length} đoạn chưa được gửi. Thử lại phần lỗi để gửi tiếp.`,
+          recoverAt: null
+        },
+        request
+      }
+    }
+    mainCall = answer
     totalUsage = addUsage(totalUsage, mainCall.usage)
   } catch (error) {
     if (error instanceof ProviderError) {
@@ -108,6 +155,7 @@ export async function executeTranslateBatch({
         failedIds: sendable.map((u) => u.originalId),
         refusedIds: [],
         refusals: [],
+        budgetIds: [],
         withoutContextIds: [],
         usage: totalUsage,
         error: { kind: error.kind, message: describeProviderError(error), recoverAt },
@@ -123,6 +171,7 @@ export async function executeTranslateBatch({
       failedIds: sendable.map((u) => u.originalId),
       refusedIds: [],
       refusals: [],
+      budgetIds: [],
       withoutContextIds: [],
       usage: totalUsage,
       error: {
@@ -138,12 +187,13 @@ export async function executeTranslateBatch({
   const matched: TranslateUnit[] = []
   let missingIds: string[] = []
   let refusals: SegmentRefusal[] = []
+  const budgetIds: string[] = []
   let withoutContextIds: string[] = []
   if (mainCall.finishReason === 'filter') {
     const split = await splitFiltered(
       sendable,
       prompt,
-      caller,
+      (messages) => call('split', messages),
       tempToId,
       signal,
       false,
@@ -153,6 +203,7 @@ export async function executeTranslateBatch({
     matched.push(...split.matched)
     missingIds = split.missing
     refusals = split.refused
+    budgetIds.push(...split.unsent)
 
     // Đoạn vẫn bị chặn: thử thêm một vòng không kèm glossary, nhân vật và cặp xưng hô. Lý do giữ lại là
     // của lần chặn cuối cùng; đoạn qua được ở vòng này thì không còn lý do nào.
@@ -160,12 +211,21 @@ export async function executeTranslateBatch({
     if (refusals.length > 0 && bare && !signal?.aborted) {
       const blocked = new Set(refusals.map((refusal) => refusal.id))
       const refusedUnits = sendable.filter((u) => blocked.has(u.originalId))
-      const retry = await splitFiltered(refusedUnits, bare, caller, tempToId, signal, true)
+      const retry = await splitFiltered(
+        refusedUnits,
+        bare,
+        (messages) => call('bare', messages),
+        tempToId,
+        signal,
+        true
+      )
       totalUsage = addUsage(totalUsage, retry.usage)
       matched.push(...retry.matched)
       withoutContextIds = retry.matched.map((item) => item.id)
       missingIds.push(...retry.missing)
-      refusals = retry.refused
+      // Đoạn chưa được gửi lại vì hết ngân sách vẫn là đoạn đã bị chặn ở vòng có ngữ cảnh: giữ lý do đó.
+      const unsentBare = new Set(retry.unsent)
+      refusals = [...retry.refused, ...refusals.filter((refusal) => unsentBare.has(refusal.id))]
     }
   } else {
     const reconciliation = reconcileTempItems(
@@ -184,10 +244,16 @@ export async function executeTranslateBatch({
       const repair = buildRepairRequest(prompt, missingUnits)
 
       try {
-        const repairCall = await caller.complete(repair.messages, { signal })
-        totalUsage = addUsage(totalUsage, repairCall.usage)
+        const repairCall = await call('repair', repair.messages)
+        if (repairCall === null) {
+          // Không còn ngân sách để hỏi lại: thử lại phần lỗi sẽ có ích, nên không gọi là "thiếu".
+          budgetIds.push(...missingIds)
+          missingIds = []
+        } else {
+          totalUsage = addUsage(totalUsage, repairCall.usage)
+        }
 
-        if (repairCall.finishReason !== 'length') {
+        if (repairCall !== null && repairCall.finishReason !== 'length') {
           const repairParsed = parseTranslationResponse(repairCall.text)
           const repairReconciliation = reconcileTempItems(missingUnits, tempToId, repairParsed)
 
@@ -203,30 +269,41 @@ export async function executeTranslateBatch({
 
   const allItems = [...skippedEmpty, ...matched]
   const refusedIds = refusals.map((refusal) => refusal.id)
+  const budgetNote =
+    budgetIds.length > 0
+      ? ` ${budgetIds.length} đoạn chưa xong vì hết ngân sách lời gọi; thử lại phần lỗi để gửi tiếp.`
+      : ''
+  const missingNote =
+    missingIds.length > 0 ? ` Thiếu thêm ${missingIds.length} đoạn sau khi đã thử lại.` : ''
+  // Nặng nhất đứng tên lỗi: bị chặn (thử lại vô ích), rồi hết ngân sách (thử lại có ích), rồi thiếu.
   const error: CoreFailure | null =
     refusals.length > 0
       ? {
           kind: 'refused',
           message:
-            describeRefusals(refusals.map((refusal) => refusal.group)) +
-            (missingIds.length > 0
-              ? ` Thiếu thêm ${missingIds.length} đoạn sau khi đã thử lại.`
-              : ''),
+            describeRefusals(refusals.map((refusal) => refusal.group)) + missingNote + budgetNote,
           recoverAt: null
         }
-      : missingIds.length > 0
+      : budgetIds.length > 0
         ? {
-            kind: 'invalid_response',
-            message: `Thiếu ${missingIds.length} đoạn sau khi đã thử lại.`,
+            kind: 'budget_exhausted',
+            message: `Hết ngân sách lời gọi của lượt dịch.${budgetNote}${missingNote}`,
             recoverAt: null
           }
-        : null
+        : missingIds.length > 0
+          ? {
+              kind: 'invalid_response',
+              message: `Thiếu ${missingIds.length} đoạn sau khi đã thử lại.`,
+              recoverAt: null
+            }
+          : null
 
   return {
     items: allItems,
-    failedIds: [...missingIds, ...refusedIds],
+    failedIds: [...missingIds, ...refusedIds, ...budgetIds],
     refusedIds,
     refusals,
+    budgetIds,
     withoutContextIds,
     usage: totalUsage,
     error,
@@ -244,7 +321,11 @@ function withoutWorkContext(prompt: TranslatePromptContext): TranslatePromptCont
   return { ...prompt, glossary: [], characters: [], dyads: [] }
 }
 
-/** Số lời gọi tối đa để khoanh các đoạn bị bộ lọc chặn trong một lô: đủ cho lô 30 đoạn có vài đoạn xấu. */
+/**
+ * Trần an toàn cho một vòng chia, cùng với ngân sách lời gọi của lượt (`CallBudget`): đủ cho lô 30 đoạn
+ * có vài đoạn xấu. Ngân sách mặc định của một lượt thấp hơn trần này; trần chỉ còn tác dụng khi lô chạy
+ * không kèm ngân sách lượt.
+ */
 export const MAX_FILTER_SPLIT_CALLS = 16
 
 /**
@@ -257,7 +338,10 @@ export const MAX_FILTER_SPLIT_CALLS = 16
 async function splitFiltered(
   units: TempMappedUnit[],
   prompt: TranslatePromptContext,
-  caller: TranslationModelCaller,
+  /** Gọi model qua ngân sách lượt; `null` là hết ngân sách, phần đó không được gửi. */
+  complete: (
+    messages: Parameters<TranslationModelCaller['complete']>[0]
+  ) => Promise<ModelCompletionResult | null>,
   tempToId: Map<string, string>,
   signal?: AbortSignal,
   untried = false,
@@ -266,11 +350,14 @@ async function splitFiltered(
   matched: TranslateUnit[]
   missing: string[]
   refused: SegmentRefusal[]
+  /** Phần không được gửi vì hết ngân sách lượt. */
+  unsent: string[]
   usage: TokenUsage | null
 }> {
   const matched: TranslateUnit[] = []
   const missing: string[] = []
   const refused: SegmentRefusal[] = []
+  const unsent: string[] = []
   let usage: TokenUsage | null = null
   let calls = 0
   const ids = (part: TempMappedUnit[]): string[] => part.map((unit) => unit.originalId)
@@ -301,7 +388,12 @@ async function splitFiltered(
     calls++
     let result: ModelCompletionResult
     try {
-      result = await caller.complete(buildTranslateRequest(prompt, part).messages, { signal })
+      const answer = await complete(buildTranslateRequest(prompt, part).messages)
+      if (answer === null) {
+        unsent.push(...ids(part))
+        return
+      }
+      result = answer
     } catch {
       missing.push(...ids(part))
       return
@@ -323,5 +415,5 @@ async function splitFiltered(
   }
 
   await (untried ? attempt(units) : narrow(units, firstReason))
-  return { matched, missing, refused, usage }
+  return { matched, missing, refused, unsent, usage }
 }

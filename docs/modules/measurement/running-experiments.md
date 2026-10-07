@@ -120,6 +120,13 @@ của các chương đã dịch); chưa có cơ sở ước tính thì bắt bu�
 nhóm; lần lặp lệch ngữ cảnh, model, thinking, prompt hay tập chương bị loại khỏi nhóm và được nêu tên.
 Nên lặp trên tập chương nhỏ (5–10) vì N lần tốn N lần tiền.
 
+**Ngân sách lời gọi (thêm 2026-10-08).** Mỗi lượt dịch chương có ngân sách lời gọi model như trong sản
+phẩm (xem [đoạn bị từ chối](../context/content-refusals.md)). `translate --max-calls N` đặt quỹ phụ mỗi
+chương thay cho mặc định `max(8, 2 × số lô)`, để đo mặc định tốn hay mất bao nhiêu. `lab.json` ghi theo
+chương `modelCalls` (lời gọi trừ vào ngân sách; `calls` vẫn là request HTTP thật, gồm retry) và
+`budgetExhausted`; bản ghi lần chạy có `budget { modelCalls, budgetExhausted, maxCalls }`. Đoạn không được
+gửi vì hết quỹ có kết cục riêng `budget_exhausted` trong phần Hoàn thành, không lẫn với `missing`.
+
 Giới hạn: lần đo cũ không dựng lại được vì bản dịch đã bị ghi đè — lịch sử chỉ bắt đầu từ lần `report`/
 `pairs` đầu tiên sau khi có sổ. Lần chạy cũ không còn model trong `lab.json` thì không tính được chi phí.
 Bench (`fixtures/private/runs/`) chưa nối vào sổ.

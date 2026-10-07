@@ -2,6 +2,7 @@ import * as v from 'valibot'
 import { idSchema } from './library'
 import { settingsKeySchema } from './modelSettings'
 import type {
+  BudgetReport,
   SegmentRefusal,
   TranslateEstimate,
   TranslateFailure,
@@ -34,7 +35,9 @@ export interface ParagraphTranslationPlan {
 }
 
 export const paragraphPlanSchema = v.strictObject({
-  ...chapterRef, connectionId: idSchema, entryId: idSchema
+  ...chapterRef,
+  connectionId: idSchema,
+  entryId: idSchema
 })
 export type ParagraphPlanInput = v.InferOutput<typeof paragraphPlanSchema>
 
@@ -48,7 +51,9 @@ export const paragraphBatchSchema = v.strictObject({
   targetRev: rev,
   targetBaseContent: v.pipe(v.string(), v.maxLength(2_000_000)),
   policy: v.picklist(['review', 'auto']),
-  sourceIds: v.pipe(v.array(idSchema), v.minLength(1), v.maxLength(2000))
+  sourceIds: v.pipe(v.array(idSchema), v.minLength(1), v.maxLength(2000)),
+  /** The person asked to retry failed segments: the run gets a fresh share of its call budget. */
+  retry: v.optional(v.boolean())
 })
 export type ParagraphBatchInput = v.InferOutput<typeof paragraphBatchSchema>
 
@@ -63,13 +68,19 @@ export interface ParagraphBatchResult {
    * snapshot; planning again is how the change gets applied.
    */
   contextChanged: boolean
+  /** Segments in `failed` that were not tried because the run's call budget ran out. */
+  budgetIds: string[]
+  /** The run's call budget after this batch. */
+  budget: BudgetReport
   error: TranslateFailure | null
   usage: TranslateUsage | null
   keyTail: string | null
 }
 
 export const paragraphFinalizeSchema = v.strictObject({
-  ...chapterRef, runId: idSchema, policy: v.picklist(['review', 'auto'])
+  ...chapterRef,
+  runId: idSchema,
+  policy: v.picklist(['review', 'auto'])
 })
 export type ParagraphFinalizeInput = v.InferOutput<typeof paragraphFinalizeSchema>
 

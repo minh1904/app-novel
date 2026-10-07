@@ -80,7 +80,9 @@ export interface RunRecord {
   /** Băm gộp của `contexts`, không phụ thuộc thứ tự chương: các lần lặp phải trùng giá trị này. */
   contextHash?: string
   /** Tệp kết cục từng đoạn (trong thư mục lần chạy) và số đoạn theo loại kết cục. */
-  outcomes?: { file: string; counts: OutcomeCounts }
+  outcomes?: { file: string; counts: Partial<OutcomeCounts> }
+  /** Ngân sách lời gọi của các lượt dịch chương; thiếu ở lần chạy trước khi có ngân sách. */
+  budget?: RunBudget
   calls: number
   httpErrors: number
   inputTokens: number
@@ -187,10 +189,23 @@ export interface RunMeta {
   promptVersion?: string | null
   glossary?: GlossaryProvenance
   contexts?: Record<string, string>
-  outcomes?: { file: string; counts: OutcomeCounts }
+  outcomes?: { file: string; counts: Partial<OutcomeCounts> }
+  budget?: RunBudget
   usd: number | null
   note?: string
   backfilled?: boolean
+}
+
+/**
+ * Ngân sách lời gọi của các lượt dịch chương trong lần chạy (change `translation-call-budget`):
+ * `modelCalls` là lời gọi model đã trừ vào ngân sách, `budgetExhausted` là số đoạn không được gửi vì hết
+ * ngân sách, `maxCalls` là quỹ phụ mỗi chương đặt bằng `--max-calls` (`null`: mặc định). Số request HTTP
+ * thật là `calls` của bản ghi.
+ */
+export interface RunBudget {
+  modelCalls: number
+  budgetExhausted: number
+  maxCalls: number | null
 }
 
 /** Băm gộp các hash bản chụp theo chương, sắp theo chương để thứ tự ghi không đổi kết quả. */
@@ -258,6 +273,7 @@ export function summarizeRun(
       ? { contexts: meta.contexts, contextHash: combinedContextHash(meta.contexts, hash) }
       : {}),
     ...(meta.outcomes ? { outcomes: meta.outcomes } : {}),
+    ...(meta.budget ? { budget: meta.budget } : {}),
     calls: calls.length,
     httpErrors: calls.filter((call) => call.status !== 200).length,
     inputTokens: sum((call) => call.inputTokens),
@@ -676,12 +692,14 @@ export function historyMarkdown(
  * Dòng phần Hoàn thành của một biến thể: số và tỷ lệ từng loại kết cục trên toàn tập, không loại đoạn
  * nào. Không có kết cục thì nói rõ, không coi là hoàn thành 100%.
  */
-export function completionCells(counts: OutcomeCounts | null): string[] {
+/** `counts` từ sổ có thể thiếu loại kết cục thêm sau ngày ghi; thiếu là 0. */
+export function completionCells(counts: Partial<OutcomeCounts> | null): string[] {
   if (!counts) return ['không có kết cục từng đoạn', ...OUTCOMES.slice(1).map(() => '–')]
-  const total = OUTCOMES.reduce((sum, o) => sum + counts[o], 0)
+  // Bản ghi cũ không có các loại kết cục thêm sau (`budget_exhausted`): thiếu là 0.
+  const total = OUTCOMES.reduce((sum, o) => sum + (counts[o] ?? 0), 0)
   return OUTCOMES.map((o) =>
     o === 'translated'
-      ? `${counts.translated}/${total} (${percent(rate(counts.translated, total))})`
-      : String(counts[o])
+      ? `${counts.translated ?? 0}/${total} (${percent(rate(counts.translated ?? 0, total))})`
+      : String(counts[o] ?? 0)
   )
 }

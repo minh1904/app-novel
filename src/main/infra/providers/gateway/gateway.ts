@@ -112,8 +112,15 @@ export class Gateway {
     this.sleep = options.sleep ?? abortableSleep
   }
 
-  /** One call with a key, retried and moved between keys as the rules say. */
-  async call<T>(attempt: (lease: KeyLease) => Promise<T>, signal?: AbortSignal): Promise<T> {
+  /**
+   * One call with a key, retried and moved between keys as the rules say. `onAttempt` hears of every
+   * request actually sent, retries included, so a caller can report them; it changes no decision.
+   */
+  async call<T>(
+    attempt: (lease: KeyLease) => Promise<T>,
+    signal?: AbortSignal,
+    onAttempt?: () => void
+  ): Promise<T> {
     const release = await this.options.limiter.acquire(signal)
     try {
       let lease = await this.acquireKey(signal)
@@ -121,6 +128,7 @@ export class Gateway {
       for (;;) {
         const guard = new LeaseGuard(this.options.keys, lease)
         try {
+          onAttempt?.()
           const result = await attempt(lease)
           await guard.settle('ok')
           return result

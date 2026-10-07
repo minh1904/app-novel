@@ -64,6 +64,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
     </p>}
     {run.keyNotice && <p role="status" className="m-0 text-ui-xs text-ink-muted">{run.keyNotice}</p>}
     {run.contextNotice && <p role="status" className="m-0 text-ui-xs leading-normal text-ink-muted">{run.contextNotice}</p>}
+    {run.budgetNotice && <p role="status" className="m-0 text-ui-xs leading-normal text-ink-muted">{run.budgetNotice}</p>}
     {run.failure && !(run.failure.kind === 'refused' && run.refusals.length > 0) && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal">
       {run.failure.message}
     </p>}

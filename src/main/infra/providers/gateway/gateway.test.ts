@@ -241,6 +241,22 @@ describe('call: transient trouble on the wire', () => {
     expect(sleeps).toEqual([500])
   })
 
+  it('reports every request it sends, retries included, without changing the result', async () => {
+    const { gateway } = rig(['a'])
+    let calls = 0
+    let attempts = 0
+    const result = await gateway.call(
+      async () => {
+        if (++calls === 1) throw fail('network')
+        return 'done'
+      },
+      undefined,
+      () => attempts++
+    )
+    expect(result).toBe('done')
+    expect(attempts).toBe(2)
+  })
+
   it('stops after two retries and shows the last error', async () => {
     const { gateway, sleeps } = rig(['a'])
     let calls = 0

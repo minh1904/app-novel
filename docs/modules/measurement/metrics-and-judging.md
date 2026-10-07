@@ -64,7 +64,9 @@ Change OpenSpec `lab-completion-quality-report`; lý do ở
 **Kết cục từng đoạn.** Mỗi lần dịch của Lab ghi cho từng đoạn định dịch đúng một kết cục:
 `translated`, `refused` (kèm chữ gốc của nhà cung cấp, ví dụ `PROHIBITED_CONTENT`), `missing` (thiếu
 sau khi hỏi lại, lỗi mạng hay hạn mức), `request_error` (lô bị từ chối vì `invalid_request`, tức cấu
-hình hay tham số) và `not_run` (lô sau một lỗi dừng lượt, hoặc chương không tới được vì chạm ngân sách).
+hình hay tham số), `budget_exhausted` (không được gửi hoặc không được hỏi lại vì ngân sách lời gọi của
+lượt dịch chương đã hết; thêm 2026-10-08) và `not_run` (lô sau một lỗi dừng lượt, hoặc chương không tới
+được vì chạm ngân sách USD của Lab).
 
 **Hoàn thành** tính trên toàn tập định dịch, không loại đoạn nào: số và tỷ lệ từng kết cục, lý do bị
 chặn, token, USD, giây. Lần chạy ghi trước khi có kết cục được nhãn “không có kết cục từng đoạn”, không

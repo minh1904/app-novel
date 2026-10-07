@@ -64,9 +64,12 @@ Hai lỗi của Mira làm thiệt hại lớn hơn cần thiết (sửa 2026-10-
   `content_filter…` là `filter`.
 - [`translationCore.ts`](../../../src/main/services/ai/translate/translationCore.ts): lượt chính bị lọc
   thì chia đôi và gửi lại từng nửa với cùng ngữ cảnh, tới khi khoanh được đoạn vẫn bị chặn khi đứng
-  riêng; trần 16 lời gọi cho mỗi lần chia (vòng gửi lại không ngữ cảnh bên dưới có trần 16 riêng, nên
-  một lô tối đa 34 lời gọi model kể cả lượt chính và lượt hỏi lại; change `translation-call-budget` đề
-  xuất ngân sách chung theo chương). Nội dung và chỉ dẫn không đổi. Đoạn bị chặn trả trong `refusedIds`
+  riêng. Nội dung và chỉ dẫn không đổi. Mọi lời gọi của lượt dịch chương trừ vào **một ngân sách chung**
+  (change `translation-call-budget`, đã triển khai 2026-10-08): mỗi lô có sẵn một lời gọi chính, các
+  vòng phụ (chia lô, gửi lại không ngữ cảnh, hỏi lại) xin từ một quỹ chung `max(8, 2 × số lô)` — chương 3
+  lô tối đa 11 lời gọi model, thay vì 34 mỗi lô trước đây. Hết quỹ thì đoạn chưa được gửi là
+  `budget_exhausted` (không dừng lượt, thử lại phần lỗi được cấp thêm quỹ); trần 16 mỗi vòng chia vẫn
+  giữ làm trần an toàn. Đoạn bị chặn trả trong `refusedIds`
   (cũng nằm trong `failedIds`) với lỗi `refused`.
 - Đoạn vẫn bị chặn sau khi chia thì **gửi lại một vòng không kèm glossary, nhân vật và cặp xưng hô**
   (chủ sản phẩm chốt 2026-10-06). Bản gốc, đoạn liền trước và chỉ dẫn giữ nguyên; không viết lại hay

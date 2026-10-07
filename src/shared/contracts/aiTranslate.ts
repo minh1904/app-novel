@@ -78,6 +78,23 @@ export type TranslateErrorKind =
   | 'invalid_response'
   | 'cancelled'
   | 'conflict'
+  /** The run's call budget ran out before these segments could be tried again (`callBudget.ts`). */
+  | 'budget_exhausted'
+
+/** Rounds of model calls a translation run makes, counted against its budget. */
+export type BudgetRound = 'main' | 'split' | 'bare' | 'repair'
+
+/** How much of a run's call budget is spent, after a batch. */
+export interface BudgetReport {
+  /** Model calls the run has made so far. */
+  used: number
+  limit: number
+  byRound: Record<BudgetRound, number>
+  /** HTTP requests behind those calls, gateway retries included; reported, not counted against the limit. */
+  httpAttempts: number
+  /** At least 80% of the limit is used. */
+  warn: boolean
+}
 
 export interface TranslateFailure {
   kind: TranslateErrorKind

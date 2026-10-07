@@ -41,6 +41,9 @@ const TABLE: Record<PolicyKind, ErrorPolicy> = {
   refused_segments: { haltsRun: false, retryable: false, probeCode: null },
   missing_segments: { haltsRun: false, retryable: true, probeCode: null },
   conflict: { haltsRun: true, retryable: false, probeCode: null },
+  // The run's call budget is spent: the other batches keep their reserved main call, and a retry of the
+  // failed segments is granted a fresh share, so neither stopping nor "no use retrying" is right.
+  budget_exhausted: { haltsRun: false, retryable: true, probeCode: null },
   cancelled: { haltsRun: true, retryable: false, probeCode: null }
 }
 

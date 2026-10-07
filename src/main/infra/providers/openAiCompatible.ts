@@ -386,6 +386,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
     options?: { signal?: AbortSignal }
   ): Promise<ModelCompletionResult> {
     this.guard()
+    let attempts = 0
     const result = await this.gateway.call(
       (lease) =>
         this.transport.complete(
@@ -396,10 +397,12 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
           },
           { apiKey: lease.secret, signal: options?.signal }
         ),
-      options?.signal
+      options?.signal,
+      () => attempts++
     )
     return {
       text: result.text,
+      attempts,
       usage: result.usage,
       finishReason: result.finishReason,
       ...(result.filter !== undefined ? { filter: result.filter } : {}),

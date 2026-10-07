@@ -77,6 +77,27 @@ httpAttempts, warn }`; `warn` bật ở lô đầu tiên làm `used ≥ 0,8 × l
 Không đổi schema. Đề xuất cũ không có trường ngân sách trong trace; giao diện coi là "không rõ". Rollback
 bằng cách bỏ truyền `budget` (lõi dịch về ngân sách cục bộ như cũ).
 
+## Điều chỉnh khi triển khai (2026-10-08)
+
+Change này viết trước khi có `provider-error-reasons`, `translation-context-snapshot` và
+`lab-completion-quality-report`; khi triển khai đã khớp với chúng:
+
+- **Chính sách lỗi.** `budget_exhausted` nằm trong bảng `errorPolicy.ts`: `haltsRun: false` (các lô sau còn
+  lời gọi chính đã dành sẵn), `retryable: true` (thử lại được cấp thêm quỹ). Renderer làm theo `haltsRun`.
+- **Thứ tự nặng nhẹ** của `error.kind` trong một lô: `refused` > `budget_exhausted` > `invalid_response`.
+- **Lượt hỏi lại bị từ chối vì hết quỹ** thì các id thiếu vào `budgetIds`, không vào "thiếu": thử lại có ích.
+- **Trần 16 mỗi vòng chia (`MAX_FILTER_SPLIT_CALLS`) được giữ** làm trần an toàn bên cạnh ngân sách lượt,
+  thay vì bỏ hẳn: không có ngân sách lượt (ngân sách cục bộ, quỹ 33) thì hành vi giống hệt trước, và các test
+  cũ về trần vẫn đúng; có ngân sách lượt thì trần mặc định (≤ 2 × số lô) thấp hơn 16 nên trần này không
+  có tác dụng.
+- **`httpAttempts`**: `ModelCompletionResult.attempts` do provider điền qua callback `onAttempt` của gateway;
+  một lời gọi ném lỗi được tính 1 lần thử (không biết số lần thật).
+- **Ngân sách mất khi khởi động lại** được dựng lại bằng đúng phép chia lô của `plan()` trên cả chương.
+- **Lab:** kết cục từng đoạn có loại mới `budget_exhausted`; registry ghi `budget { modelCalls,
+  budgetExhausted, maxCalls }` theo lần chạy (`calls` sẵn có là số request HTTP thật), còn theo chương ghi
+  trong `lab.json` (`modelCalls`, `budgetExhausted`), không ghi theo chương vào registry.
+- **Cờ `retry`** chỉ gửi khi người dùng bấm "thử lại phần lỗi"; main cấp `grant(1, max(8, 2))` cho lô thử lại.
+
 ## Open Questions
 
 - Mặc định `extra = max(8, 2 × số lô)` cần chỉnh theo số đo Lab; không đổi spec hay cấu trúc.

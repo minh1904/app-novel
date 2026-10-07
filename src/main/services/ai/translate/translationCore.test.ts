@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
+import { CallBudget } from './callBudget'
 import { executeTranslateBatch, type TranslationModelCaller } from './translationCore'
 
 describe('translationCore — Điều phối Lõi dịch theo lô', () => {
@@ -405,5 +406,88 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
     expect(result.withoutContextIds).toEqual([])
     expect(result.refusedIds).toEqual(['u2'])
     expect(caller.calls).toBe(3)
+  })
+
+  describe('ngân sách lời gọi của lượt', () => {
+    it('hết ngân sách giữa lúc chia: giữ đoạn đã dịch, đoạn đã khoanh là bị chặn, phần còn lại hết ngân sách', async () => {
+      const caller = filteringCaller()
+      const budget = new CallBudget(1, 4)
+      const units = ['a', 'b', 'c', 'XẤU', 'e', 'f'].map((text, i) => ({ id: `u${i + 1}`, text }))
+      const result = await executeTranslateBatch({ caller, units, budget })
+      // Lượt chính, rồi 4 lời gọi chia: [a,b,c] ✓, [XẤU,e,f] ✗, [XẤU,e] ✗, [XẤU] ✗; [e] và [f] không còn lời gọi.
+      expect(caller.calls).toBe(5)
+      expect(result.items.map((item) => item.id).sort()).toEqual(['u1', 'u2', 'u3'])
+      expect(result.refusedIds).toEqual(['u4'])
+      expect(result.budgetIds).toEqual(['u5', 'u6'])
+      expect(result.failedIds.sort()).toEqual(['u4', 'u5', 'u6'])
+      expect(result.error?.kind).toBe('refused')
+      expect(result.error?.message).toContain('2 đoạn chưa xong vì hết ngân sách lời gọi')
+      expect(budget.snapshot()).toMatchObject({ used: 5, byRound: { main: 1, split: 4 } })
+    })
+
+    it('chia lô và gửi lại không ngữ cảnh dùng chung một trần', async () => {
+      const caller = filteringCaller()
+      const budget = new CallBudget(1, 3)
+      const glossary: ContextEntryItem[] = [
+        {
+          id: 't',
+          kind: 'term',
+          source: 'a',
+          target: 'A',
+          status: 'approved',
+          origin: 'user',
+          forbidden: false,
+          fromChapterId: null,
+          toChapterId: null,
+          notes: null,
+          aliases: [],
+          createdAt: 1,
+          updatedAt: 1
+        }
+      ]
+      const units = ['a NHẠY', 'b', 'XẤU', 'd'].map((text, i) => ({ id: `u${i + 1}`, text }))
+      await executeTranslateBatch({ caller, units, prompt: { glossary }, budget })
+      expect(caller.calls).toBe(4)
+      const { byRound } = budget.snapshot()
+      expect(byRound.split + byRound.bare + byRound.repair).toBe(3)
+    })
+
+    it('không còn lời gọi cho lượt chính thì không gửi gì và báo hết ngân sách', async () => {
+      const caller = filteringCaller()
+      const result = await executeTranslateBatch({
+        caller,
+        units: [{ id: 'u1', text: 'a' }],
+        budget: new CallBudget(0, 0)
+      })
+      expect(caller.calls).toBe(0)
+      expect(result.budgetIds).toEqual(['u1'])
+      expect(result.error?.kind).toBe('budget_exhausted')
+    })
+
+    it('không còn lời gọi để hỏi lại thì đoạn thiếu là hết ngân sách, không phải thiếu', async () => {
+      const caller: TranslationModelCaller = {
+        async complete() {
+          return {
+            text: '[{"id":"[1]","dst":"A"}]',
+            usage: null,
+            finishReason: 'stop',
+            attempts: 3
+          }
+        }
+      }
+      const budget = new CallBudget(1, 0)
+      const result = await executeTranslateBatch({
+        caller,
+        units: [
+          { id: 'u1', text: 'a' },
+          { id: 'u2', text: 'b' }
+        ],
+        budget
+      })
+      expect(result.budgetIds).toEqual(['u2'])
+      expect(result.error?.kind).toBe('budget_exhausted')
+      // Số request HTTP thật được ghi riêng, không trừ vào ngân sách.
+      expect(budget.snapshot()).toMatchObject({ used: 1, httpAttempts: 3 })
+    })
   })
 })
