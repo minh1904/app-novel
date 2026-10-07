@@ -108,6 +108,18 @@ trỏ về lần chạy theo `lab.json`. Logic nằm ở
 trong thư mục lần chạy. `compare` cảnh báo các chương mà lần chạy mới nhất của hai biến thể dùng ngữ cảnh
 khác hash. Lần chạy trước ngày này không có hash, nên không so được.
 
+**Kết cục từng đoạn và đo lặp (thêm 2026-10-08).** `translate` ghi
+`runs/<runId>/<ncode>-<biến thể>.outcomes.jsonl` (mỗi dòng một chương: id đoạn → kết cục, kèm lý do bị
+chặn); bản ghi lần chạy lên schema 2 với `outcomes { file, counts }` và `contextHash` (băm gộp các hash
+bản chụp theo chương). `report` dựng hai trục Hoàn thành và Chất lượng từ các tệp này (xem
+[phép đo và chấm](metrics-and-judging.md)).
+
+`translate --repeat N` (hoặc `fork --repeat N`) tạo N bản lặp `label#1…#N` từ cùng bản gốc và cùng
+glossary, ghi `repeatOf` trong `lab.json`, in ước tính chi phí N lần trước lời gọi đầu tiên (từ USD/chương
+của các chương đã dịch); chưa có cơ sở ước tính thì bắt buộc `--max-usd`. `compare` gom các bản lặp thành
+nhóm; lần lặp lệch ngữ cảnh, model, thinking, prompt hay tập chương bị loại khỏi nhóm và được nêu tên.
+Nên lặp trên tập chương nhỏ (5–10) vì N lần tốn N lần tiền.
+
 Giới hạn: lần đo cũ không dựng lại được vì bản dịch đã bị ghi đè — lịch sử chỉ bắt đầu từ lần `report`/
 `pairs` đầu tiên sau khi có sổ. Lần chạy cũ không còn model trong `lab.json` thì không tính được chi phí.
 Bench (`fixtures/private/runs/`) chưa nối vào sổ.

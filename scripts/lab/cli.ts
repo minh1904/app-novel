@@ -43,6 +43,23 @@ import { costOfUsage } from '../../src/main/services/ai/costEstimate'
 import { lookupModel } from '../../src/main/infra/providers/modelCatalog'
 import { getRunContext } from '../../src/main/infra/storage/translateRunContext'
 import {
+  OUTCOMES,
+  batchOutcomes,
+  comparableKeys,
+  countOutcomes,
+  exclusionLine,
+  estimateRepeatCost,
+  groupRepeats,
+  notRunChapter,
+  paragraphKey,
+  parseOutcomeLines,
+  refusalReasons,
+  repeatBase,
+  repeatLabels,
+  type ChapterOutcomes,
+  type ParagraphOutcome
+} from '../../src/shared/algorithms/labOutcomes'
+import {
   checkThinkingLevel,
   describeThinkingCheck
 } from '../../src/main/infra/providers/modelCapability'
@@ -66,7 +83,8 @@ import {
 } from '../../src/main/services/ai/glossaryExtraction'
 import {
   REGISTRY_SCHEMA,
-  compareSnapshots,
+  compareGroups,
+  completionCells,
   glossaryOriginOf,
   historyMarkdown,
   contextDifferences,
@@ -172,7 +190,8 @@ interface Variant {
  */
 function parseVariant(label: string): Variant {
   // Phần sau "+" chỉ là nhãn để giữ nhiều lần thử cạnh nhau (ví dụ "a-nothink+ctx"), không đổi cấu hình.
-  const suffix = label.split('+')[0].split('-', 2)[1]
+  // `a-nothink#2` là lần lặp thứ hai của `a-nothink`: cùng cấu hình.
+  const suffix = repeatBase(label).split('+')[0].split('-', 2)[1]
   if (suffix === undefined) return { label }
   if (suffix === 'nothink') return { label, thinking: 'off' }
   if (suffix === 'think') return { label, thinking: THINK_LEVEL }
@@ -231,6 +250,8 @@ interface NovelEntry {
    * Vắng thì dùng tệp chung `<ncode>.json`. Cho mỗi thí nghiệm glossary riêng.
    */
   glossaries?: Record<string, string | null>
+  /** Bản lặp → biến thể gốc (`a#2` → `a`), do `--repeat` tạo. */
+  repeatOf?: Record<string, string>
   stats: Record<string, Record<string, ChapterStats>>
 }
 
@@ -244,14 +265,14 @@ function readManifest(): Manifest {
   return JSON.parse(readFileSync(MANIFEST, 'utf8')) as Manifest
 }
 
-function writeManifest(manifest: Manifest): void {
-  mkdirSync(LAB, { recursive: true })
-  const text = JSON.stringify(manifest, null, 2) + '\n'
-  // Trên Windows một tiến trình khác (quét virus, chỉ mục, phiên khác) có thể giữ tệp thoáng qua và
-  // open trả UNKNOWN/EBUSY/EPERM; thử lại vài lần thay vì bỏ dở cả lượt dịch đang chạy.
+/**
+ * `writeFileSync` có thử lại. Trên Windows một tiến trình khác (quét virus, chỉ mục, phiên khác) có thể
+ * giữ tệp thoáng qua và open trả UNKNOWN/EBUSY/EPERM; thử lại vài lần thay vì bỏ dở cả lượt đang chạy.
+ */
+function writeFileRetry(path: string, data: string, encoding: BufferEncoding): void {
   for (let attempt = 1; ; attempt++) {
     try {
-      writeFileSync(MANIFEST, text, 'utf8')
+      writeFileSync(path, data, encoding)
       return
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code
@@ -259,6 +280,11 @@ function writeManifest(manifest: Manifest): void {
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200 * attempt)
     }
   }
+}
+
+function writeManifest(manifest: Manifest): void {
+  mkdirSync(LAB, { recursive: true })
+  writeFileRetry(MANIFEST, JSON.stringify(manifest, null, 2) + '\n', 'utf8')
 }
 
 function pickNovels(manifest: Manifest, codes: string[]): NovelEntry[] {
@@ -328,11 +354,13 @@ function recordMeasurement(
   novel: NovelEntry,
   label: string,
   chapters: number[],
-  metrics: Pick<MeasurementRecord, 'structure' | 'glossary' | 'addressing'>
+  metrics: Pick<MeasurementRecord, 'structure' | 'glossary' | 'names' | 'addressing' | 'basis'>
 ): void {
   if (chapters.length === 0) return
   const measuredAt = new Date().toISOString()
-  const kind = Object.keys(metrics).join('+')
+  const kind = Object.keys(metrics)
+    .filter((key) => key !== 'basis')
+    .join('+')
   appendRegistry(MEASUREMENTS_LOG, {
     kind: 'measurement',
     schema: REGISTRY_SCHEMA,
@@ -353,7 +381,7 @@ function writeHistory(manifest: Manifest): void {
   const titles = Object.fromEntries(
     Object.values(manifest.novels).map((novel) => [novel.ncode, novel.title])
   )
-  writeFileSync(
+  writeFileRetry(
     HISTORY,
     historyMarkdown(runs, measurements, titles, new Date().toISOString()),
     'utf8'
@@ -457,7 +485,7 @@ function glossaryNameOf(novel: NovelEntry, label: string): string | null {
 function writeGlossaryFile(name: string, file: GlossaryFile): string {
   mkdirSync(join(LAB, 'glossary'), { recursive: true })
   const path = join(LAB, 'glossary', name + '.json')
-  writeFileSync(path, JSON.stringify(file, null, 2) + '\n', 'utf8')
+  writeFileRetry(path, JSON.stringify(file, null, 2) + '\n', 'utf8')
   return path
 }
 
@@ -754,6 +782,8 @@ async function translateChapter(
   skipped: boolean
   /** Bản chụp ngữ cảnh của lượt: hash và JSON đúng như đã lưu trong tệp tác phẩm. */
   context?: { hash: string; json: string }
+  /** Kết cục từng đoạn định dịch của chương (chưa có số chương). */
+  outcomes?: Omit<ChapterOutcomes, 'chapter'>
 }> {
   const target = library.readText(workId, chapterId, 'target')
   if (target.content.trim() !== '') {
@@ -763,7 +793,15 @@ async function translateChapter(
   const translator = services.paragraphTranslator
   const plan = translator.plan({ workId, chapterId, ...ids })
   let failed = 0
+  const outcomeIds: Record<string, ParagraphOutcome> = {}
+  const reasons: Record<string, string> = {}
+  let halted = false
   for (const batch of plan.batches) {
+    // Lô sau một lỗi dừng lượt (cấu hình, xác thực…) không được gửi, như trong sản phẩm.
+    if (halted) {
+      for (const id of batch.sourceIds) outcomeIds[id] = 'not_run'
+      continue
+    }
     for (let attempt = 1; ; attempt++) {
       const result = await translator.runBatch({
         workId,
@@ -785,7 +823,11 @@ async function translateChapter(
         continue
       }
       failed += result.failed.length
+      const batchResult = batchOutcomes(batch.sourceIds, result)
+      Object.assign(outcomeIds, batchResult.ids)
+      Object.assign(reasons, batchResult.reasons)
       if (result.error) console.log(`${tag}: lỗi lô ${result.error.kind} — ${result.error.message}`)
+      if (result.error?.haltsRun) halted = true
       break
     }
   }
@@ -794,8 +836,83 @@ async function translateChapter(
   return {
     failed,
     skipped: false,
-    ...(stored ? { context: { hash: stored.snapshotHash, json: stored.snapshotJson } } : {})
+    ...(stored ? { context: { hash: stored.snapshotHash, json: stored.snapshotJson } } : {}),
+    outcomes: { ids: outcomeIds, ...(Object.keys(reasons).length > 0 ? { reasons } : {}) }
   }
+}
+
+/**
+ * `--repeat N`: mỗi biến thể được chọn có N bản lặp `label#1…#N`, chép từ bản gốc với cùng glossary, rồi
+ * dịch như mọi biến thể. Ước tính chi phí N lần trước lời gọi đầu tiên; chưa có cơ sở ước tính thì bắt
+ * buộc `--max-usd`.
+ */
+function prepareRepeats(
+  manifest: Manifest,
+  novels: NovelEntry[],
+  args: Args,
+  n: number,
+  maxUsd: number
+): void {
+  const labels: string[] = []
+  const library = openLibrary(manifest)
+  try {
+    for (const novel of novels) {
+      const chapters = parseRange(args.flags.get('chapters'), novel.chapterCount).length
+      for (const variant of variantsOf(novel, args.flags)) {
+        if (variant.label.includes('#')) continue
+        const estimate = estimateRepeatCost(
+          Object.values(novel.stats[variant.label] ?? {}),
+          chapters,
+          n
+        )
+        if (estimate === null) {
+          if (!Number.isFinite(maxUsd)) {
+            throw new Error(
+              `${novel.ncode} [${variant.label}]: chưa có cơ sở ước tính chi phí ${n} lần lặp; cần --max-usd.`
+            )
+          }
+          console.log(`${novel.ncode} [${variant.label}] ×${n}: chưa có cơ sở ước tính; trần $${maxUsd}.`)
+        } else {
+          console.log(
+            `${novel.ncode} [${variant.label}] ×${n}, ${chapters} chương: ước tính ≈ $${estimate.toFixed(3)}.`
+          )
+        }
+        for (const label of repeatLabels(variant.label, n)) {
+          if (!novel.copies[label]) {
+            createCopy(manifest, library, novel, variant.label, label, glossaryNameOf(novel, variant.label))
+          }
+          novel.repeatOf = { ...novel.repeatOf, [label]: variant.label }
+          labels.push(label)
+        }
+      }
+    }
+  } finally {
+    library.close()
+  }
+  writeManifest(manifest)
+  if (labels.length === 0) throw new Error('Không có biến thể nào để lặp (xem --variants).')
+  args.flags.set('variants', [...new Set(labels)].join(','))
+}
+
+/** Kết cục từng đoạn của các chương, đọc từ tệp của lần chạy đã dịch từng chương (theo `lab.json`). */
+function outcomesOf(
+  novel: NovelEntry,
+  label: string,
+  chapters: number[]
+): Map<number, ChapterOutcomes> {
+  const files = new Map<string, Map<number, ChapterOutcomes>>()
+  const out = new Map<number, ChapterOutcomes>()
+  for (const n of chapters) {
+    const at = novel.stats[label]?.[String(n)]?.at
+    if (!at) continue
+    const path = join(LAB, 'runs', at, `${novel.ncode}-${label}.outcomes.jsonl`)
+    if (!files.has(path)) {
+      files.set(path, existsSync(path) ? parseOutcomeLines(readFileSync(path, 'utf8')) : new Map())
+    }
+    const line = files.get(path)!.get(n)
+    if (line) out.set(n, line)
+  }
+  return out
 }
 
 async function translate(manifest: Manifest, args: Args): Promise<void> {
@@ -820,6 +937,8 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
       `Cảnh báo: không có giá của ${model} trong bảng; giới hạn --max-usd không có tác dụng.`
     )
   }
+  const repeat = args.flags.get('repeat')
+  if (repeat !== undefined) prepareRepeats(manifest, novels, args, Number(repeat), maxUsd)
   // Kiểm trước khi tạo thư mục lần chạy hay mở kho: biến thể có mức thinking model không nhận thì không chạy.
   const lanes = novels
     .flatMap((novel) => variantsOf(novel, args.flags).map((variant) => ({ novel, variant })))
@@ -849,7 +968,8 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     variant: Variant,
     queue: number[],
     laneCalls: CallRecord[],
-    laneContexts: Record<string, string>
+    laneContexts: Record<string, string>,
+    laneOutcomes: ChapterOutcomes[]
   ): Promise<void> {
     const context = { ncode: novel.ncode, variant: variant.label, chapter: 0 }
     const calls: CallRecord[] = []
@@ -880,11 +1000,21 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     const tag = `${novel.ncode} [${variant.label}]`
     const workId = novel.copies[variant.label]
     const chapters = chapterIds(library, workId)
+    const outcomesFile = join(runDir, `${novel.ncode}-${variant.label}.outcomes.jsonl`)
+    const recordOutcomes = (line: ChapterOutcomes): void => {
+      laneOutcomes.push(line)
+      appendFileSync(outcomesFile, JSON.stringify(line) + '\n', 'utf8')
+    }
     try {
       for (let n = queue.shift(); n !== undefined; n = queue.shift()) {
         if (spend.usd >= maxUsd) {
           if (!spend.stopped) console.log(`\nĐã chạm ngân sách $${maxUsd}; dừng nhận chương mới.`)
           spend.stopped = true
+          // Chương không tới được vẫn có trong tập định dịch: ghi `not_run` để phần Hoàn thành thấy.
+          for (let rest: number | undefined = n; rest !== undefined; rest = queue.shift()) {
+            const source = library.readText(workId, chapters[rest - 1], 'source').content
+            recordOutcomes(notRunChapter(rest, paragraphUnits(source).map((unit) => unit.id)))
+          }
           return
         }
         const last = novel.stats[variant.label]?.[String(n)]
@@ -916,9 +1046,10 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
           seconds: Math.round((Date.now() - started) / 100) / 10,
           ...(outcome.context ? { contextHash: outcome.context.hash } : {})
         }
+        if (outcome.outcomes) recordOutcomes({ chapter: n, ...outcome.outcomes })
         if (outcome.context) {
           laneContexts[String(n)] = outcome.context.hash
-          writeFileSync(
+          writeFileRetry(
             join(runDir, `context-${novel.ncode}-${variant.label}-${n}.json`),
             outcome.context.json,
             'utf8'
@@ -946,10 +1077,11 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
     const queue = parseRange(args.flags.get('chapters'), total)
     const laneCalls: CallRecord[] = []
     const laneContexts: Record<string, string> = {}
+    const laneOutcomes: ChapterOutcomes[] = []
     try {
       await Promise.all(
         Array.from({ length: Math.min(concurrency, queue.length) }, () =>
-          worker(novel, variant, queue, laneCalls, laneContexts)
+          worker(novel, variant, queue, laneCalls, laneContexts, laneOutcomes)
         )
       )
     } finally {
@@ -967,6 +1099,14 @@ async function translate(manifest: Manifest, args: Args): Promise<void> {
               ...git,
               glossary: glossaryProvenance(glossaryNameOf(novel, variant.label)),
               contexts: laneContexts,
+              ...(laneOutcomes.length > 0
+                ? {
+                    outcomes: {
+                      file: `${novel.ncode}-${variant.label}.outcomes.jsonl`,
+                      counts: countOutcomes(laneOutcomes)
+                    }
+                  }
+                : {}),
               usd: usdOf(model, laneCalls),
               ...(note ? { note } : {})
             },
@@ -1129,6 +1269,25 @@ function report(manifest: Manifest, args: Args): void {
         variants.some((v) => textOf(v, n, 'target').trim() !== '')
       )
 
+      // Kết cục từng đoạn: phần Hoàn thành tính trên toàn tập; phần Chất lượng chỉ trên các đoạn
+      // `translated` ở mọi biến thể. Thiếu kết cục ở bất kỳ biến thể nào thì đo theo chương như trước.
+      const outcomes = Object.fromEntries(
+        variants.map((v) => [v.label, outcomesOf(novel, v.label, wanted)])
+      )
+      const complete = variants.every((v) =>
+        wanted.every((n) => outcomes[v.label].has(n) || textOf(v, n, 'target').trim() === '')
+      )
+      const comparable = complete
+        ? comparableKeys(
+            Object.fromEntries(variants.map((v) => [v.label, [...outcomes[v.label].values()]]))
+          )
+        : null
+      const noCommon = comparable !== null && comparable.total > 0 && comparable.keys.size === 0
+      const keep = (n: number, source: string): boolean[] => {
+        const ids = paragraphUnits(source).map((unit) => unit.id)
+        return ids.map((id) => comparable === null || comparable.keys.has(paragraphKey(n, id)))
+      }
+
       // Tổng hợp theo biến thể
       const summary = variants.map((v) => {
         const stats = Object.values(novel.stats[v.label] ?? {})
@@ -1145,13 +1304,18 @@ function report(manifest: Manifest, args: Args): void {
           const target = paragraphs(textOf(v, n, 'target'))
           if (target.length === 0) continue
           measured.push(n)
-          if (target.length === source.length) {
-            alignedSource.push(...source)
-            alignedTarget.push(...target)
+          const kept = keep(n, textOf(v, n, 'source'))
+          const inSet = <T>(list: T[]): T[] => list.filter((_, i) => kept[i])
+          if (target.length === source.length && !noCommon) {
+            alignedSource.push(...inSet(source))
+            alignedTarget.push(...inSet(target))
           }
           if (target.length !== source.length) mismatched++
           missingParas += Math.max(0, source.length - target.length)
-          const score = glossaryScore(source, target, glossary)
+          const score =
+            target.length === source.length && !noCommon
+              ? glossaryScore(inSet(source), inSet(target), glossary)
+              : { hits: 0, checks: 0, misses: new Map<string, number>() }
           hits += score.hits
           checks += score.checks
           for (const [term, count] of score.misses)
@@ -1183,7 +1347,17 @@ function report(manifest: Manifest, args: Args): void {
             missingParagraphs: s.missingParas
           },
           glossary: { hits: s.hits, checks: s.checks, reference },
-          ...(s.names.length > 0 ? { names: { ...overallConsistency(s.names), reference } } : {})
+          ...(s.names.length > 0 ? { names: { ...overallConsistency(s.names), reference } } : {}),
+          ...(comparable
+            ? {
+                basis: {
+                  variants: variants.map((x) => x.label),
+                  paragraphs: comparable.keys.size,
+                  total: comparable.total,
+                  excluded: comparable.excluded
+                }
+              }
+            : {})
         })
       }
 
@@ -1195,16 +1369,43 @@ function report(manifest: Manifest, args: Args): void {
         '',
         'Tên nhất quán: đoạn có tên nhân vật (theo danh sách nhân vật của glossary tham chiếu) dùng đúng cách viết chính; không cần đáp án, đo được cả bản không glossary.',
         '',
-        '| Biến thể | Cấu hình | Chương | Chương lệch số đoạn | Đoạn thiếu | Glossary | Tên nhất quán | Token vào | Ra | Thinking | USD | Giây |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+        '## Hoàn thành (toàn tập định dịch, không loại đoạn nào)',
+        '',
+        `| Biến thể | Cấu hình | ${OUTCOMES.join(' | ')} | Lý do bị chặn | Token vào | Ra | Thinking | USD | Giây |`,
+        `| --- | --- | ${OUTCOMES.map(() => '---').join(' | ')} | --- | --- | --- | --- | --- | --- |`
       ]
+      for (const s of summary) {
+        const lineOutcomes = [...outcomes[s.v.label].values()]
+        const has = wanted.every((n) => outcomes[s.v.label].has(n))
+        const reasons = Object.entries(refusalReasons(lineOutcomes))
+          .map(([reason, count]) => `${reason} ${count}`)
+          .join(', ')
+        lines.push(
+          `| ${s.v.label} | ${describeVariant(s.v)} | ` +
+            `${completionCells(has ? countOutcomes(lineOutcomes) : null).join(' | ')} | ${reasons || '–'} | ` +
+            `${s.input} | ${s.output} | ${s.reasoning} | $${s.usd.toFixed(3)} | ${Math.round(s.seconds)} |`
+        )
+      }
+      lines.push(
+        '',
+        '## Chất lượng',
+        '',
+        comparable
+          ? exclusionLine(comparable)
+          : 'Chưa đủ kết cục từng đoạn cho mọi biến thể (lần chạy cũ): đo theo chương như trước, chưa loại đoạn bị từ chối.',
+        'Lớp: `gate` chứng minh được bằng code; `cờ` là heuristic có thể báo nhầm, là số cần xem chứ không phải số lỗi.',
+        '',
+        '| Biến thể | Chương | Chương lệch số đoạn [gate] | Đoạn thiếu [gate] | Cờ glossary (khớp) [cờ] | Cờ tên (nhất quán) [cờ] |',
+        '| --- | --- | --- | --- | --- | --- |'
+      )
       for (const s of summary) {
         const names = overallConsistency(s.names)
         lines.push(
-          `| ${s.v.label} | ${describeVariant(s.v)} | ${s.chapters} | ${s.mismatched} | ${s.missingParas} | ` +
-            `${pct(s.hits, s.checks)} (${s.hits}/${s.checks}) | ` +
-            `${pct(names.consistent, names.paragraphs)} (${names.names} tên) | ${s.input} | ${s.output} | ${s.reasoning} | ` +
-            `$${s.usd.toFixed(3)} | ${Math.round(s.seconds)} |`
+          `| ${s.v.label} | ${s.chapters} | ${s.mismatched} | ${s.missingParas} | ` +
+            (noCommon
+              ? '– | – |'
+              : `${pct(s.hits, s.checks)} (${s.hits}/${s.checks}) | ` +
+                `${pct(names.consistent, names.paragraphs)} (${names.names} tên) |`)
         )
       }
       for (const s of summary) {
@@ -1254,7 +1455,7 @@ function report(manifest: Manifest, args: Args): void {
         )
       }
       const out = join(LAB, 'reports', `${novel.ncode}.md`)
-      writeFileSync(out, [...lines, ...bodies].join('\n') + '\n', 'utf8')
+      writeFileRetry(out, [...lines, ...bodies].join('\n') + '\n', 'utf8')
       console.log(`${novel.ncode}: ${wanted.length} chương → ${out}`)
     }
   } finally {
@@ -1345,7 +1546,7 @@ function exportTexts(manifest: Manifest, args: Args): void {
         ''
       ])
       const out = join(outDir, copy.base + '.txt')
-      writeFileSync(out, '﻿' + [...header, ...body].join('\r\n'), 'utf8')
+      writeFileRetry(out, '﻿' + [...header, ...body].join('\r\n'), 'utf8')
       console.log(`${copy.base}: ${copy.translated}/${copy.chapters.length} chương → ${out}`)
     }
   } finally {
@@ -1376,7 +1577,7 @@ async function exportPdfs(manifest: Manifest, args: Args): Promise<void> {
       )
       // HTML tạm đặt tên ASCII: Chromium từng lỗi ERR_FAILED với đường dẫn có dấu ngoặc và chữ Nhật.
       const page = join(outDir, `.${copy.novel.ncode}-${copy.variant.label}.html`)
-      writeFileSync(page, html, 'utf8')
+      writeFileRetry(page, html, 'utf8')
       jobs.push(page, join(outDir, copy.base + '.pdf'))
     }
   } finally {
@@ -1547,7 +1748,7 @@ async function analyze(manifest: Manifest, args: Args): Promise<void> {
       }
       const result = parseAnalysis(text)
       const out = join(LAB, 'analysis', `${novel.ncode}.json`)
-      writeFileSync(
+      writeFileRetry(
         out,
         JSON.stringify(
           {
@@ -1793,6 +1994,15 @@ function fork(manifest: Manifest, args: Args): void {
     .map((value) => value.trim())
     .filter(Boolean)
   if (labels.length === 0) throw new Error('Cần --variants <nhãn,…>.')
+  const repeat = args.flags.get('repeat')
+  if (repeat !== undefined) {
+    const expanded = labels.flatMap((label) => repeatLabels(label, Number(repeat)))
+    novel.repeatOf = {
+      ...novel.repeatOf,
+      ...Object.fromEntries(expanded.map((label) => [label, repeatBase(label)]))
+    }
+    labels.splice(0, labels.length, ...expanded)
+  }
   labels.forEach(parseVariant)
   const flag = args.flags.get('glossary')
   const glossaryName = flag === undefined ? novel.ncode : flag === 'none' ? null : flag
@@ -2244,10 +2454,10 @@ async function polish(manifest: Manifest, args: Args): Promise<void> {
       )
     }
 
-    writeFileSync(logPath, log.map((entry) => JSON.stringify(entry)).join('\n') + '\n', 'utf8')
+    writeFileRetry(logPath, log.map((entry) => JSON.stringify(entry)).join('\n') + '\n', 'utf8')
     const changes = join(LAB, 'export', `${novel.ncode} ${novel.names?.[to] ?? to} — thay đổi.md`)
     mkdirSync(join(LAB, 'export'), { recursive: true })
-    writeFileSync(changes, polishChangesMarkdown(novel, from, to, log), 'utf8')
+    writeFileRetry(changes, polishChangesMarkdown(novel, from, to, log), 'utf8')
     console.log(
       `\nSửa ${totals.accepted}/${totals.paragraphs} đoạn, code loại ${totals.rejected} bản sửa, ` +
         `${totals.filtered} đoạn bị lọc · ≈ $${usdOf(model, calls).toFixed(3)}\nNhật ký: ${logPath}\nĐọc thay đổi: ${changes}`
@@ -2386,10 +2596,36 @@ function compareVariants(args: Args): void {
   const [ncode, a, b] = args.positional
   if (!ncode || !a || !b) throw new Error('Cần: compare <ncode> <biến thể A> <biến thể B>.')
   const { runs, measurements } = readRegistry()
-  const result = compareSnapshots(
-    snapshotOf(ncode, a, runs, measurements),
-    snapshotOf(ncode, b, runs, measurements)
-  )
+  // Một biến thể có bản lặp (`a#1…`) được so bằng cả nhóm; lần lặp lệch cấu hình bị loại khỏi nhóm.
+  const groupOf = (label: string): ReturnType<typeof snapshotOf>[] => {
+    const repeats = [
+      ...new Set(
+        [...runs, ...measurements]
+          .filter((r) => r.ncode === ncode && r.variant !== label && repeatBase(r.variant) === label)
+          .map((r) => r.variant)
+      )
+    ].sort()
+    if (repeats.length === 0) return [snapshotOf(ncode, label, runs, measurements)]
+    const latest = repeats
+      .map((variant) => runs.filter((r) => r.ncode === ncode && r.variant === variant).at(-1))
+      .filter((r): r is RunRecord => r !== undefined)
+    const { groups, rejected } = groupRepeats(
+      latest.map((r) => ({
+        variant: r.variant,
+        runId: r.runId,
+        model: r.model,
+        thinking: r.thinking,
+        promptVersion: r.promptVersion,
+        contextHash: r.contextHash,
+        chapters: r.chapters
+      }))
+    )
+    for (const { run, reason } of rejected) {
+      console.log(`Không gộp ${run.variant} vào nhóm ${label}: ${reason}.`)
+    }
+    return (groups[label] ?? []).map((r) => snapshotOf(ncode, r.variant, runs, measurements))
+  }
+  const result = compareGroups(groupOf(a), groupOf(b))
   const width = Math.max(...result.rows.map((row) => row.metric.length))
   console.log(`${ncode}: ${a} ↔ ${b}\n`)
   for (const row of result.rows) {
@@ -2525,8 +2761,9 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
   glossary [ncode…|all]
       Nạp lại glossary, nhân vật và cặp xưng hô từ tệp cho mọi bản (thay toàn bộ); mỗi bản dùng tệp riêng
       đã gán khi fork, không thì tệp chung <ncode>.json.
-  fork <ncode> --variants a,b [--from <bản>] [--glossary <tên tệp>|none]
+  fork <ncode> --variants a,b [--from <bản>] [--glossary <tên tệp>|none] [--repeat N]
       Tạo bản mới bằng cách chép bản gốc từ một bản có sẵn, gán glossary riêng (hoặc không glossary).
+      --repeat N: tạo N bản lặp a#1…a#N cho mỗi nhãn.
   extract <ncode> [--chapters 1-30] [--out <ncode>.ai] [--model gemini-2.5-flash] [--from <bản>]
           [--thinking off]
       AI trích xuất thuật ngữ và nhân vật: code sinh ứng viên, AI quét bổ sung, AI phân loại và đề xuất
@@ -2535,13 +2772,17 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
       In đúng prompt sẽ gửi, không gọi mạng, không tốn token.
   translate [ncode…|all] [--variants …] [--chapters 1-3] [--model gemini-2.5-flash]
             [--parallel] [--concurrency 1] [--rpm 8] [--max-usd 5] [--batch-tokens 16000]
-            [--force] [--redo-failed] [--note "giả thuyết"]
+            [--force] [--redo-failed] [--note "giả thuyết"] [--repeat N]
       Dịch thật qua đường của UI; cần GEMINI_API_KEY. Mỗi request ghi vào fixtures/private/lab/runs/,
       mỗi truyện × biến thể thêm một dòng vào sổ đăng ký (model, prompt, hash, commit, glossary, chi phí).
       --parallel: mỗi truyện × biến thể một luồng; --concurrency: số chương dịch cùng lúc mỗi luồng;
       --max-usd: dừng nhận chương mới khi chi phí (gồm thinking) chạm mức này.
+      --repeat N: dịch N bản lặp label#1…#N của mỗi biến thể (cùng bản gốc, cùng glossary) để đo độ
+      dao động; in ước tính chi phí trước, chưa có cơ sở ước tính thì bắt buộc --max-usd.
+      Mỗi lần chạy ghi kết cục từng đoạn vào runs/<runId>/<ncode>-<biến thể>.outcomes.jsonl.
   report [ncode…|all] [--variants …] [--side-by-side 1-3]
-      So các biến thể: số đoạn, tuân thủ glossary, token, thinking, chi phí; vài chương đặt cạnh nhau.
+      So các biến thể theo hai trục: Hoàn thành (kết cục từng đoạn trên toàn tập, chi phí) và Chất lượng
+      (chỉ trên các đoạn dịch được ở mọi biến thể, kèm số đoạn bị loại); vài chương đặt cạnh nhau.
   polish <ncode> --from <bản> [--to <bản>+polish] [--chapters 1-30] [--model gemini-2.5-flash]
          [--max-usd 1] [--note "…"]
       Trau chuốt "soát rồi sửa": model gắn nhãn lỗi rồi sửa, code kiểm từng đoạn sửa, ghi vào bản mới
@@ -2564,6 +2805,7 @@ Thêm "+nhãn" để giữ nhiều lần thử cạnh nhau: a-nothink+ctx.
       Các lần chạy trong sổ đăng ký, mới nhất trước.
   compare <ncode> <biến thể A> <biến thể B>
       So hai biến thể theo lần đo gần nhất (report, pairs) và cấu hình đã chạy; cảnh báo khi khác chương.
+      Biến thể có bản lặp được so cả nhóm: chỉ ghi "khác biệt" khi mỗi bên ≥ 2 lần và khoảng không chồng.
   history
       Sinh lại docs/modules/measurement/history.md từ sổ (report, pairs, translate tự làm việc này).
   backfill

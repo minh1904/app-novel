@@ -9,6 +9,7 @@ import { join } from 'node:path'
 import { describe, it } from 'vitest'
 import { evaluateE6Decision, type T0Metrics } from '../../src/shared/algorithms/decisionE6'
 import { assertNoSecret } from '../../src/shared/algorithms/secretGuard'
+import { benchChapters, type ParagraphOutcome } from '../../src/shared/algorithms/labOutcomes'
 
 const ROOT = process.cwd()
 const RUNS = join(ROOT, 'fixtures', 'private', 'runs')
@@ -20,6 +21,19 @@ function env(name: string, fallback = ''): string {
 const BASELINE_ID = env('MIRA_RUN_BASELINE', env('MIRA_RUN_A'))
 const CANDIDATE_ID = env('MIRA_RUN_CANDIDATE', env('MIRA_RUN_B'))
 const DECISION_PROFILE = env('MIRA_BENCH_DECISION_PROFILE')
+
+/**
+ * `outcomes.json` của một lần chạy: khóa chương `<work>/<chương>` → id đoạn → kết cục. Vắng là lần chạy cũ.
+ */
+function readOutcomes(runDir: string): Record<string, Record<string, ParagraphOutcome>> | null {
+  const path = join(runDir, 'outcomes.json')
+  if (!existsSync(path)) return null
+  try {
+    return JSON.parse(readFileSync(path, 'utf8')) as Record<string, Record<string, ParagraphOutcome>>
+  } catch {
+    return null
+  }
+}
 
 function extractT0FromRun(runDir: string, chapters: string[]): T0Metrics {
   let omissions = 0
@@ -155,10 +169,13 @@ describe('Bộ đo — So sánh hai lần chạy', () => {
       }
     }
 
-    const commonChapters = Array.from(chaptersBase).filter((c) => chaptersCand.has(c))
-    if (commonChapters.length === 0) {
+    const sharedChapters = Array.from(chaptersBase).filter((c) => chaptersCand.has(c))
+    if (sharedChapters.length === 0) {
       throw new Error('Hai lần chạy không có chương chung nào: từ chối so sánh.')
     }
+    // Cùng quy tắc loại đoạn với Mira Lab, ở mức chương vì số T0 tính theo chương.
+    const filtered = benchChapters(sharedChapters, readOutcomes(dirBase), readOutcomes(dirCand))
+    const commonChapters = filtered.chapters
 
     const baseT0 = extractT0FromRun(dirBase, commonChapters)
     const candT0 = extractT0FromRun(dirCand, commonChapters)
@@ -234,6 +251,9 @@ describe('Bộ đo — So sánh hai lần chạy', () => {
       `- **Số chương chung:** ${commonChapters.length}`,
       '',
       '## Số liệu kiểm tất định T0 (trên các chương chung):',
+      '',
+      `> ${filtered.note}`,
+      '',
       `| Chỉ số | Baseline (${BASELINE_ID}) | Candidate (${CANDIDATE_ID}) | Chênh lệch |`,
       '| --- | --- | --- | --- |',
       `| Đoạn sót (1-0) | ${baseT0.omissions} | ${candT0.omissions} | ${candT0.omissions - baseT0.omissions} |`,

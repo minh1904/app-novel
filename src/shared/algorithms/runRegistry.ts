@@ -7,9 +7,25 @@
  * **lần đo** chụp chất lượng của bản dịch tại thời điểm đo và trỏ về các lần chạy đã sinh ra nó.
  *
  * Hàm thuần: không đọc tệp, không gọi git; hàm băm được truyền vào để dùng được ở mọi tiến trình.
+ *
+ * Schema 2 (change `lab-completion-quality-report`): lần chạy trỏ tới tệp kết cục từng đoạn và mang
+ * `contextHash`; lần đo mang `basis` (tập đoạn đã đo). Bản ghi schema 1 vẫn đọc được: thiếu kết cục
+ * thì nhãn “không có kết cục từng đoạn”.
  */
 
-export const REGISTRY_SCHEMA = 1
+import {
+  METRIC_TIERS,
+  OUTCOMES,
+  VERDICT_LABEL,
+  brokenRunReason,
+  decide,
+  spread,
+  type MetricTier,
+  type OutcomeCounts,
+  type Verdict
+} from './labOutcomes'
+
+export const REGISTRY_SCHEMA = 2
 
 /** Nhãn cho request trước khi prompt hợp nhất (thẻ tiếng Việt `<nguon>`): không biết chắc thế hệ nào. */
 export const LEGACY_PROMPT = 'legacy'
@@ -61,6 +77,10 @@ export interface RunRecord {
    * ở một chương là cùng ngữ cảnh; khác hash thì so sánh lẫn cả thay đổi ngữ cảnh.
    */
   contexts?: Record<string, string>
+  /** Băm gộp của `contexts`, không phụ thuộc thứ tự chương: các lần lặp phải trùng giá trị này. */
+  contextHash?: string
+  /** Tệp kết cục từng đoạn (trong thư mục lần chạy) và số đoạn theo loại kết cục. */
+  outcomes?: { file: string; counts: OutcomeCounts }
   calls: number
   httpErrors: number
   inputTokens: number
@@ -141,6 +161,18 @@ export interface MeasurementRecord {
   glossary?: GlossaryMetric
   names?: NamesMetric
   addressing?: AddressingMetric
+  /**
+   * Tập đoạn số chất lượng được đo trên: các biến thể đem so, số đoạn so được trên tổng, và số đoạn bị
+   * loại theo biến thể và kết cục. Vắng là lần đo theo chương (schema 1).
+   */
+  basis?: MeasurementBasis
+}
+
+export interface MeasurementBasis {
+  variants: string[]
+  paragraphs: number
+  total: number
+  excluded: Record<string, Partial<OutcomeCounts>>
 }
 
 export interface RunMeta {
@@ -155,9 +187,20 @@ export interface RunMeta {
   promptVersion?: string | null
   glossary?: GlossaryProvenance
   contexts?: Record<string, string>
+  outcomes?: { file: string; counts: OutcomeCounts }
   usd: number | null
   note?: string
   backfilled?: boolean
+}
+
+/** Băm gộp các hash bản chụp theo chương, sắp theo chương để thứ tự ghi không đổi kết quả. */
+export function combinedContextHash(
+  contexts: Record<string, string> | undefined,
+  hash: (text: string) => string
+): string | undefined {
+  if (!contexts || Object.keys(contexts).length === 0) return undefined
+  const entries = Object.entries(contexts).sort(([a], [b]) => Number(a) - Number(b))
+  return hash(JSON.stringify(entries))
 }
 
 /** `2026-10-06T03-36-05-395Z` (tên thư mục) → `2026-10-06T03:36:05.395Z`. */
@@ -211,7 +254,10 @@ export function summarizeRun(
     ...(meta.commitApprox ? { commitApprox: true } : {}),
     chapters: [...new Set(calls.map((call) => call.chapter))].sort((a, b) => a - b),
     ...(meta.glossary ? { glossary: meta.glossary } : {}),
-    ...(meta.contexts && Object.keys(meta.contexts).length > 0 ? { contexts: meta.contexts } : {}),
+    ...(meta.contexts && Object.keys(meta.contexts).length > 0
+      ? { contexts: meta.contexts, contextHash: combinedContextHash(meta.contexts, hash) }
+      : {}),
+    ...(meta.outcomes ? { outcomes: meta.outcomes } : {}),
     calls: calls.length,
     httpErrors: calls.filter((call) => call.status !== 200).length,
     inputTokens: sum((call) => call.inputTokens),
@@ -352,30 +398,76 @@ export function configOf(runs: RunRecord[]): {
 }
 
 export interface Comparison {
-  rows: Array<{ metric: string; a: string; b: string; better: 'a' | 'b' | null }>
+  rows: Array<{
+    metric: string
+    a: string
+    b: string
+    better: 'a' | 'b' | null
+    /** Lớp phép kiểm; vắng với dòng cấu hình. */
+    tier?: MetricTier
+    /** Kết luận theo khoảng dao động; vắng với dòng cấu hình. */
+    verdict?: Verdict
+  }>
   warnings: string[]
 }
 
-/** So hai ảnh chụp. Chỉ số chỉ đáng so khi cùng chương; lệch thì cảnh báo, không chặn. */
-export function compareSnapshots(a: VariantSnapshot, b: VariantSnapshot): Comparison {
+type MetricKey = 'mismatched' | 'missingParagraphs' | 'glossary' | 'names' | 'addressing'
+
+/** Giá trị một chỉ số của một ảnh chụp, và chiều tốt hơn. */
+const METRICS: Array<{
+  key: MetricKey
+  higherIsBetter: boolean
+  ratio: boolean
+  value: (s: VariantSnapshot) => number | null
+}> = [
+  { key: 'mismatched', higherIsBetter: false, ratio: false, value: (s) => s.structure?.value.mismatched ?? null },
+  {
+    key: 'missingParagraphs',
+    higherIsBetter: false,
+    ratio: false,
+    value: (s) => s.structure?.value.missingParagraphs ?? null
+  },
+  {
+    key: 'glossary',
+    higherIsBetter: true,
+    ratio: true,
+    value: (s) => (s.glossary ? rate(s.glossary.value.hits, s.glossary.value.checks) : null)
+  },
+  {
+    key: 'names',
+    higherIsBetter: true,
+    ratio: true,
+    value: (s) => (s.names ? rate(s.names.value.consistent, s.names.value.paragraphs) : null)
+  },
+  {
+    key: 'addressing',
+    higherIsBetter: false,
+    ratio: true,
+    value: (s) => (s.addressing ? rate(s.addressing.value.off, s.addressing.value.checked) : null)
+  }
+]
+
+/** Một giá trị, hoặc với nhiều lần lặp: `n=3 · 92–95% · tb 93.5% ± 1.2`. */
+function describeValues(values: number[], show: (v: number) => string, ratio: boolean): string {
+  const s = spread(values)
+  if (!s) return '–'
+  if (s.n === 1) return show(s.min)
+  const sd = ratio ? `${Math.round(s.sd * 1000) / 10}` : `${Math.round(s.sd * 10) / 10}`
+  return `n=${s.n} · ${show(s.min)}–${show(s.max)} · tb ${show(s.mean)} ± ${sd}`
+}
+
+/**
+ * So hai nhóm lần lặp (mỗi nhóm là các ảnh chụp của cùng một cấu hình). Một chỉ số chỉ được đánh dấu
+ * tốt hơn khi cả hai nhóm có ít nhất 2 lần lặp và khoảng [min, max] không chồng nhau; ngược lại ghi
+ * “chưa đủ lần lặp” hoặc “chưa phân biệt được”, kèm số thô.
+ */
+export function compareGroups(aGroup: VariantSnapshot[], bGroup: VariantSnapshot[]): Comparison {
   const warnings: string[] = []
   const rows: Comparison['rows'] = []
+  const a = aGroup[0]
+  const b = bGroup[0]
   const sameChapters = (x?: number[], y?: number[]): boolean =>
     x !== undefined && y !== undefined && chapterSpan(x) === chapterSpan(y)
-
-  const lowerIsBetter = (
-    metric: string,
-    av: number | null,
-    bv: number | null,
-    show: (v: number | null) => string
-  ): void => {
-    rows.push({
-      metric,
-      a: show(av),
-      b: show(bv),
-      better: av === null || bv === null || av === bv ? null : av < bv ? 'a' : 'b'
-    })
-  }
 
   if (a.structure && b.structure && !sameChapters(a.structure.chapters, b.structure.chapters)) {
     warnings.push(
@@ -398,43 +490,36 @@ export function compareSnapshots(a: VariantSnapshot, b: VariantSnapshot): Compar
     }
   }
 
-  const count = (v: number | null): string => (v === null ? '–' : String(v))
-  lowerIsBetter(
-    'Chương lệch số đoạn',
-    a.structure?.value.mismatched ?? null,
-    b.structure?.value.mismatched ?? null,
-    count
-  )
-  lowerIsBetter(
-    'Đoạn thiếu',
-    a.structure?.value.missingParagraphs ?? null,
-    b.structure?.value.missingParagraphs ?? null,
-    count
-  )
-  const ga = a.glossary ? rate(a.glossary.value.hits, a.glossary.value.checks) : null
-  const gb = b.glossary ? rate(b.glossary.value.hits, b.glossary.value.checks) : null
-  // Glossary là chỉ số duy nhất mà cao hơn là tốt hơn.
-  rows.push({
-    metric: 'Glossary đúng',
-    a: percent(ga),
-    b: percent(gb),
-    better: ga === null || gb === null || ga === gb ? null : ga > gb ? 'a' : 'b'
-  })
-  const na = a.names ? rate(a.names.value.consistent, a.names.value.paragraphs) : null
-  const nb = b.names ? rate(b.names.value.consistent, b.names.value.paragraphs) : null
-  rows.push({
-    metric: 'Tên nhất quán',
-    a: percent(na),
-    b: percent(nb),
-    better: na === null || nb === null || na === nb ? null : na > nb ? 'a' : 'b'
-  })
-  const xa = a.addressing ? rate(a.addressing.value.off, a.addressing.value.checked) : null
-  const xb = b.addressing ? rate(b.addressing.value.off, b.addressing.value.checked) : null
-  lowerIsBetter('Câu lệch cặp xưng hô', xa, xb, percent)
+  const count = (v: number): string => String(Math.round(v * 10) / 10)
+  for (const metric of METRICS) {
+    const av = aGroup.map(metric.value).filter((v): v is number => v !== null)
+    const bv = bGroup.map(metric.value).filter((v): v is number => v !== null)
+    const show = metric.ratio ? (v: number): string => percent(v) : count
+    const { verdict, better } = decide(av, bv, metric.higherIsBetter)
+    const tier = METRIC_TIERS[metric.key].tier
+    rows.push({
+      metric: `${METRIC_TIERS[metric.key].label} [${tier}] — ${VERDICT_LABEL[verdict]}`,
+      a: describeValues(av, show, metric.ratio),
+      b: describeValues(bv, show, metric.ratio),
+      better,
+      tier,
+      verdict
+    })
+  }
 
-  const ca = configOf(a.runs)
-  const cb = configOf(b.runs)
-  lowerIsBetter('Chi phí (USD)', ca.usd, cb.usd, (v) => (v === null ? '–' : `$${v.toFixed(3)}`))
+  const usdOf = (group: VariantSnapshot[]): number[] =>
+    group.map((s) => configOf(s.runs).usd).filter((v): v is number => v !== null)
+  const usd = decide(usdOf(aGroup), usdOf(bGroup), false)
+  rows.push({
+    metric: `Chi phí (USD) — ${VERDICT_LABEL[usd.verdict]}`,
+    a: describeValues(usdOf(aGroup), (v) => `$${v.toFixed(3)}`, false),
+    b: describeValues(usdOf(bGroup), (v) => `$${v.toFixed(3)}`, false),
+    better: usd.better,
+    verdict: usd.verdict
+  })
+
+  const ca = configOf(aGroup.flatMap((s) => s.runs))
+  const cb = configOf(bGroup.flatMap((s) => s.runs))
   for (const [metric, x, y] of [
     ['Model', ca.model, cb.model],
     ['Thinking', ca.thinking, cb.thinking],
@@ -445,10 +530,15 @@ export function compareSnapshots(a: VariantSnapshot, b: VariantSnapshot): Compar
   ] as const) {
     rows.push({ metric, a: x, b: y, better: null })
   }
-  if (a.runs.length === 0 || b.runs.length === 0) {
+  if (aGroup.some((s) => s.runs.length === 0) || bGroup.some((s) => s.runs.length === 0)) {
     warnings.push('Một bên chưa có lần chạy trong sổ (chạy `backfill` cho lần chạy cũ).')
   }
   return { rows, warnings }
+}
+
+/** So hai biến thể, mỗi bên một lần chạy: mọi chỉ số là “chưa đủ lần lặp”. */
+export function compareSnapshots(a: VariantSnapshot, b: VariantSnapshot): Comparison {
+  return compareGroups([a], [b])
 }
 
 /** Trang lịch sử sinh tự động: trạng thái hiện tại của từng biến thể và mọi lần đo theo thời gian. */
@@ -473,9 +563,22 @@ export function historyMarkdown(
   const codes = [...new Set([...runs, ...measurements].map((record) => record.ncode))].sort()
   for (const ncode of codes) {
     lines.push('', `## ${titles[ncode] ? `${titles[ncode]} (${ncode})` : ncode}`, '')
+    const measuredRuns = new Set(
+      measurements.filter((m) => m.ncode === ncode).flatMap((m) => m.runIds.map((id) => `${m.variant}\u0000${id}`))
+    )
+    const broken = runs
+      .filter((run) => run.ncode === ncode)
+      .map((run) => ({
+        run,
+        reason: brokenRunReason(run, measuredRuns.has(`${run.variant}\u0000${run.runId}`))
+      }))
+      .filter((item): item is { run: RunRecord; reason: string } => item.reason !== null)
+    const brokenIds = new Set(broken.map((item) => item.run.id))
+    const usable = runs.filter((run) => !brokenIds.has(run.id))
+    // Biến thể chỉ có lần chạy hỏng và chưa có lần đo nào không nằm trong bảng so sánh chính.
     const variants = [
       ...new Set(
-        [...runs, ...measurements]
+        [...usable, ...measurements]
           .filter((record) => record.ncode === ncode)
           .map((record) => record.variant)
       )
@@ -485,11 +588,11 @@ export function historyMarkdown(
       '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
     )
     for (const variant of variants) {
-      const snap = snapshotOf(ncode, variant, runs, measurements)
+      const snap = snapshotOf(ncode, variant, usable, measurements)
       const runsForConfig =
         snap.runs.length > 0
           ? snap.runs
-          : runs.filter((run) => run.ncode === ncode && run.variant === variant)
+          : usable.filter((run) => run.ncode === ncode && run.variant === variant)
       const config = configOf(runsForConfig)
       const s = snap.structure?.value
       const g = snap.glossary?.value
@@ -514,8 +617,8 @@ export function historyMarkdown(
         '',
         'Mọi lần đo, mới nhất trước:',
         '',
-        '| Lúc đo | Biến thể | Chương | Chỉ số | Commit | Lần chạy |',
-        '| --- | --- | --- | --- | --- | --- |'
+        '| Lúc đo | Biến thể | Chương | Cơ sở | Chỉ số | Commit | Lần chạy |',
+        '| --- | --- | --- | --- | --- | --- | --- |'
       )
       for (const m of timeline) {
         const parts: string[] = []
@@ -535,10 +638,50 @@ export function historyMarkdown(
         }
         lines.push(
           `| ${m.measuredAt.slice(0, 16).replace('T', ' ')} | ${m.variant} | ${chapterSpan(m.chapters)} | ` +
+            `${m.basis ? `${m.basis.paragraphs}/${m.basis.total} đoạn so được` : 'theo chương'} | ` +
             `${parts.join('; ')} | ${m.commit ?? '–'}${m.dirty ? '+' : ''} | ${m.runIds.length} |`
         )
       }
     }
+
+    if (broken.length > 0) {
+      lines.push(
+        '',
+        'Lần chạy hỏng (không vào bảng so sánh chính):',
+        '',
+        '| Lúc chạy | Biến thể | Model | Thinking | Lý do | USD |',
+        '| --- | --- | --- | --- | --- | --- |'
+      )
+      for (const { run, reason } of broken.sort((a, b) => b.run.at.localeCompare(a.run.at))) {
+        lines.push(
+          `| ${run.at.slice(0, 16).replace('T', ' ')} | ${run.variant} | ${run.model ?? '–'} | ` +
+            `${run.thinking ?? 'mặc định'} | ${reason} | ${run.usd === null ? '–' : `$${run.usd.toFixed(3)}`} |`
+        )
+      }
+    }
+
+    const noOutcomes = usable.filter((run) => run.ncode === ncode && !run.outcomes)
+    if (noOutcomes.length > 0 && usable.some((run) => run.ncode === ncode && run.outcomes)) {
+      lines.push(
+        '',
+        `${noOutcomes.length} lần chạy không có kết cục từng đoạn (ghi trước schema 2): không tính được ` +
+          'tỷ lệ hoàn thành của chúng.'
+      )
+    }
   }
   return lines.join('\n') + '\n'
+}
+
+/**
+ * Dòng phần Hoàn thành của một biến thể: số và tỷ lệ từng loại kết cục trên toàn tập, không loại đoạn
+ * nào. Không có kết cục thì nói rõ, không coi là hoàn thành 100%.
+ */
+export function completionCells(counts: OutcomeCounts | null): string[] {
+  if (!counts) return ['không có kết cục từng đoạn', ...OUTCOMES.slice(1).map(() => '–')]
+  const total = OUTCOMES.reduce((sum, o) => sum + counts[o], 0)
+  return OUTCOMES.map((o) =>
+    o === 'translated'
+      ? `${counts.translated}/${total} (${percent(rate(counts.translated, total))})`
+      : String(counts[o])
+  )
 }

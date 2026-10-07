@@ -122,3 +122,25 @@ trường mới, schema 1 vẫn hợp lệ.
 ## Open Questions
 
 - Mặc định N cho `--repeat` là 3 hay để bắt buộc khai báo? Không đổi spec (spec chỉ yêu cầu N ≥ 2).
+
+## Ghi chú triển khai (2026-10-08)
+
+Change được viết trước khi `provider-error-reasons` và `translation-context-snapshot` được triển khai;
+khi làm, mình dùng những gì hai change đó đã có thay vì làm lại:
+
+- **Không thêm `refused: string[]`** vào kết quả lô: `ParagraphBatchResult` đã có `refusals` (id, nhóm,
+  chữ gốc). `batchOutcomes` đọc `proposed`, `failed`, `refusals` và `error.kind` của lô.
+- **`request_error` lấy từ `invalid_request` thật**, không xấp xỉ theo “4xx cả lô”. Lô có
+  `haltsRun` thì các lô sau của chương được ghi `not_run`, như sản phẩm dừng lượt.
+- **`contextHash` của lần chạy** là băm gộp các hash bản chụp ngữ cảnh theo chương (`contexts`), sắp
+  theo chương; không băm lại glossary + nhân vật + cặp xưng hô.
+- **Khóa so sánh là `(chương, id đoạn)`**: id đoạn suy từ thứ tự và chữ của bản gốc
+  (`paragraphUnits`), nên các bản sao cùng bản gốc chung id; tương đương `(chapter, order)`.
+- **Logic thuần nằm ở `src/shared/algorithms/labOutcomes.ts`** (kết cục, tập so được, dòng loại trừ,
+  đo lặp, quyết định, lớp phép kiểm, lần chạy hỏng). Bảng Markdown của `report` dựng từ các hàm đó
+  (`completionCells`, `exclusionLine`) nên test các hàm thay cho snapshot cả lệnh `report`.
+- **Bộ đo cũ** chỉ có số T0 theo chương, nên `outcomes.json` (khóa `<work>/<chương>` → id → kết cục)
+  loại **cả chương** có đoạn không dịch được ở một trong hai lần chạy, và nói rõ điều đó.
+- **Chưa chạy Lab thật hay mock** (ghi vào dữ liệu Lab của người dùng): kiểm bằng unit test và lệnh
+  `compare` chỉ đọc trên sổ hiện có (bản ghi schema 1). `history.md` chưa sinh lại vì tệp đang có thay
+  đổi chưa commit của phiên khác; lần chạy `history`/`translate`/`report` kế tiếp sẽ sinh lại.

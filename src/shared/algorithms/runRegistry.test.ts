@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   contextDifferences,
   LEGACY_PROMPT,
+  combinedContextHash,
+  compareGroups,
   compareSnapshots,
+  completionCells,
   glossaryOriginOf,
   historyMarkdown,
   parseRegistry,
@@ -12,6 +15,8 @@ import {
   summarizeRun,
   type Comparison,
   type MeasurementRecord,
+  type VariantSnapshot,
+  type RunRecord,
   type RegistryCall
 } from './runRegistry'
 
@@ -163,13 +168,41 @@ describe('runRegistry', () => {
       ]
     )
     const result = compareSnapshots(a, b)
-    const row = (metric: string): Comparison['rows'][number] | undefined =>
-      result.rows.find((r) => r.metric === metric)
-    expect(row('Đoạn thiếu')?.better).toBe('b')
-    expect(row('Glossary đúng')?.better).toBe('b')
-    expect(row('Câu lệch cặp xưng hô')).toMatchObject({ a: '30%', b: '10%', better: 'b' })
-    expect(row('Chi phí (USD)')?.better).toBe('a')
+    const row = (start: string): Comparison['rows'][number] | undefined =>
+      result.rows.find((r) => r.metric.startsWith(start))
+    // One run a side: numbers are shown, but nothing is called better.
+    expect(row('Đoạn thiếu')).toMatchObject({ a: '2', b: '0', better: null, verdict: 'too_few', tier: 'gate' })
+    expect(row('Cờ glossary')).toMatchObject({ a: '80%', b: '90%', better: null, tier: 'flag' })
+    expect(row('Cờ glossary')?.metric).toContain('chưa đủ lần lặp')
+    expect(row('Cờ xưng hô lệch')).toMatchObject({ a: '30%', b: '10%', better: null })
+    expect(row('Chi phí (USD)')?.better).toBeNull()
+    expect(result.rows.every((r) => !/lỗi glossary/i.test(r.metric))).toBe(true)
     expect(result.warnings).toHaveLength(3)
+  })
+
+  it('so nhóm lần lặp: chỉ kết luận khi khoảng hai bên không chồng nhau', () => {
+    const snap = (variant: string, hits: number, missing: number): VariantSnapshot =>
+      snapshotOf(
+        'n1',
+        variant,
+        [],
+        [
+          measurement({
+            variant,
+            structure: { chapters: 3, mismatched: 0, missingParagraphs: missing },
+            glossary: { hits, checks: 100 }
+          })
+        ]
+      )
+    const result = compareGroups(
+      [snap('a#1', 92, 4), snap('a#2', 95, 5)],
+      [snap('b#1', 94, 0), snap('b#2', 96, 1)]
+    )
+    const row = (start: string): Comparison['rows'][number] =>
+      result.rows.find((r) => r.metric.startsWith(start))!
+    expect(row('Cờ glossary')).toMatchObject({ verdict: 'indistinguishable', better: null })
+    expect(row('Cờ glossary').a).toBe('n=2 · 92%–95% · tb 93.5% ± 2.1')
+    expect(row('Đoạn thiếu')).toMatchObject({ verdict: 'different', better: 'b' })
   })
 
   it('nhận nguồn gốc glossary từ trường origin, hoặc từ ghi chú "Nháp do Claude" của tệp cũ', () => {
@@ -204,7 +237,51 @@ describe('runRegistry', () => {
       '| base | gemini-2.5-flash | off | translate-v5 | h8 | abc1234 | claude-draft | 1–3 | 0 | 0 | 90% (9/10) | – | – | $0.010 |'
     )
     expect(text).toContain('Mọi lần đo, mới nhất trước:')
+    expect(text).toContain('| Lúc đo | Biến thể | Chương | Cơ sở |')
+    expect(text).toContain('theo chương')
     expect(text).toContain('đừng sửa tay')
+  })
+
+  it('tách lần chạy chết vì 400 khỏi bảng chính, kèm lý do', () => {
+    const good = summarizeRun([call()], meta, hash, 'translate-v5')
+    const dead = summarizeRun(
+      [call({ status: 400 }), call({ chapter: 2, status: 400 })],
+      { ...meta, runId: '2026-10-07T15-51-51-275Z', variant: 'v5-nothink+lite35', usd: 0 },
+      hash,
+      'translate-v5'
+    )
+    const text = historyMarkdown(
+      [good, dead],
+      [measurement({ structure: { chapters: 3, mismatched: 0, missingParagraphs: 0 } })],
+      {},
+      '2026-10-07T16:00:00.000Z'
+    )
+    expect(text).toContain('Lần chạy hỏng (không vào bảng so sánh chính):')
+    expect(text).toContain('| v5-nothink+lite35 | gemini-2.5-flash | off | mọi lời gọi lỗi HTTP (2/2) | $0.000 |')
+    expect(text).not.toMatch(/^\| v5-nothink\+lite35 \| gemini-2\.5-flash \| off \| translate-v5/m)
+  })
+
+  it('ghi schema 2 với kết cục và hash ngữ cảnh; vẫn đọc bản ghi schema 1', () => {
+    const counts = { translated: 9, refused: 1, missing: 0, request_error: 0, not_run: 0 }
+    const record = summarizeRun(
+      [call()],
+      { ...meta, contexts: { '2': 'b', '1': 'a' }, outcomes: { file: 'n1-base.outcomes.jsonl', counts } },
+      hash,
+      'translate-v5'
+    )
+    expect(record.schema).toBe(2)
+    expect(record.outcomes).toEqual({ file: 'n1-base.outcomes.jsonl', counts })
+    expect(record.contextHash).toBe(combinedContextHash({ '1': 'a', '2': 'b' }, hash))
+    const old = parseRegistry<RunRecord>(JSON.stringify({ ...record, schema: 1, outcomes: undefined }))[0]
+    expect(completionCells(old.outcomes?.counts ?? null)[0]).toBe('không có kết cục từng đoạn')
+    expect(completionCells(counts)[0]).toBe('9/10 (90%)')
+  })
+
+  it('băm ngữ cảnh gộp không phụ thuộc thứ tự chương', () => {
+    expect(combinedContextHash({ '2': 'y', '10': 'z', '1': 'x' }, hash)).toBe(
+      combinedContextHash({ '1': 'x', '2': 'y', '10': 'z' }, hash)
+    )
+    expect(combinedContextHash({}, hash)).toBeUndefined()
   })
 })
 
