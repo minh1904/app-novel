@@ -1,0 +1,330 @@
+{
+  "ncode": "n4696dd",
+  "model": "gemini-3.5-flash-lite",
+  "register": "ja-fantasy",
+  "chapters": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "at": "2026-10-07T16:47:13.705Z",
+  "characters": [
+    {
+      "source": "アリス",
+      "gender": "female",
+      "thirdPerson": "cô ấy",
+      "notes": "Thiếu nữ tộc Elf, bạn của Rion"
+    },
+    {
+      "source": "クレアリディル",
+      "gender": "female",
+      "thirdPerson": "cô ấy",
+      "notes": "Chị gái của Rion, con gái chính thất Caroline"
+    },
+    {
+      "source": "リオン",
+      "gender": "male",
+      "thirdPerson": "Rion",
+      "notes": "Nhân vật chính, con trai thứ (con vợ lẽ) của bá tước Granches"
+    },
+    {
+      "source": "ミリィ",
+      "gender": "female",
+      "thirdPerson": "Milly",
+      "notes": "Hầu gái chăm sóc Rion từ nhỏ"
+    },
+    {
+      "source": "ソフィア",
+      "gender": "female",
+      "thirdPerson": "Sophia",
+      "notes": "Con gái nhà Sフィール, vị hôn妻 của Rion"
+    },
+    {
+      "source": "キャロライン",
+      "gender": "female",
+      "thirdPerson": "Caroline",
+      "notes": "Chính thất của bá tước Granches, mẹ của Crealydil"
+    },
+    {
+      "source": "レジス",
+      "gender": "male",
+      "thirdPerson": "Regis",
+      "notes": "Quản gia nhà Granches"
+    },
+    {
+      "source": "ブレイク",
+      "gender": "male",
+      "thirdPerson": "Blake",
+      "notes": "Anh trai cùng cha khác mẹ của Rion"
+    },
+    {
+      "source": "紗弥",
+      "gender": "female",
+      "thirdPerson": "Saya",
+      "notes": "Người quen của Rion ở kiếp trước"
+    },
+    {
+      "source": "ミシェル",
+      "gender": "female",
+      "thirdPerson": "Michelle",
+      "notes": "Hầu gái hầu cận Crealydil"
+    },
+    {
+      "source": "カルロス",
+      "gender": "male",
+      "thirdPerson": "Carlos",
+      "notes": "Gia chủ nhà Sフィール"
+    },
+    {
+      "source": "マリー",
+      "gender": "female",
+      "thirdPerson": "Marie",
+      "notes": "Hầu gái giám sát Rion"
+    },
+    {
+      "source": "アリスママ",
+      "gender": "female",
+      "thirdPerson": "mẹ của Alice",
+      "notes": "Tộc trưởng tộc Elf"
+    },
+    {
+      "source": "エリーゼ",
+      "gender": "female",
+      "thirdPerson": "Elise",
+      "notes": "Phu nhân nhà Sフィール"
+    },
+    {
+      "source": "リスティア",
+      "gender": "female",
+      "thirdPerson": "Ristia",
+      "notes": "Thiếu nữ xuất hiện trong truyện"
+    },
+    {
+      "source": "ロバート",
+      "gender": "male",
+      "thirdPerson": "Robert",
+      "notes": "Bá tước Granches, cha của Rion"
+    },
+    {
+      "source": "グランプ",
+      "gender": "male",
+      "thirdPerson": "hầu tước Gramp",
+      "notes": "Đối tượng hứa hôn của Claire"
+    },
+    {
+      "source": "看護師",
+      "gender": "female",
+      "thirdPerson": "y tá",
+      "notes": "Y tá bệnh viện thế giới cũ"
+    },
+    {
+      "source": "アリスパパ",
+      "gender": "male",
+      "thirdPerson": "cha của Alice",
+      "notes": "Cha của Alice"
+    },
+    {
+      "source": "エリック",
+      "gender": "male",
+      "thirdPerson": "Erick",
+      "notes": "Kỵ sĩ, anh trai"
+    }
+  ],
+  "dyads": [
+    {
+      "from": "リオン",
+      "to": "アリス",
+      "self": "俺",
+      "address": "アリス",
+      "secondPerson": "cậu",
+      "notes": "Rion gọi và xưng hô thân mật với Alice",
+      "evidence": [
+        "ch13: 「ほらほら、どうしたアリス。もう息が上がってるぞ？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "アリス",
+      "to": "リオン",
+      "self": "私",
+      "address": "リオン様",
+      "secondPerson": "cậu",
+      "notes": "Alice gọi Rion là Rion-sama khi mới quen",
+      "evidence": [
+        "ch12: 「アリスティアです。よろしければアリスとお呼びください」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "クレアリディル",
+      "self": "俺",
+      "address": "クレアねぇ",
+      "secondPerson": "chị",
+      "notes": "Rion gọi chị gái là Claire-nee",
+      "evidence": [
+        "ch8: 「誰だ……って、クレアねぇ？ どうかした――」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "クレアリディル",
+      "to": "リオン",
+      "self": "あたし",
+      "address": "弟くん",
+      "secondPerson": "em",
+      "notes": "Claire gọi em trai là em (dùng từ cậu em / đệ)",
+      "evidence": [
+        "ch8: 「助けて、弟くん！ ミシェルが、ミシェルがこのままじゃ殺されちゃう！」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ミリィ",
+      "to": "リオン",
+      "self": "私",
+      "address": "リオン様",
+      "secondPerson": "cậu",
+      "notes": "Hầu gái gắn bó xưng tôi gọi tiểu thư/thiếu gia",
+      "evidence": [
+        "ch3: 「リオン様ったらまた部屋から抜け出して、探しましたよ？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "ミリィ",
+      "self": "俺",
+      "address": "ミリィ",
+      "secondPerson": "cậu",
+      "notes": "Rion gọi hầu gái thân thiết từ nhỏ",
+      "evidence": [
+        "ch3: 「ごめんね、ミリィ」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "ソフィア",
+      "self": "俺",
+      "address": "ソフィア",
+      "secondPerson": "cậu",
+      "notes": "Rion nói chuyện với vị hôn thê",
+      "evidence": [
+        "ch14: 「初めまして。俺はリオンって言うんだ。ねぇソフィア、良かったらキミの名前を教えてくれないかな？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ソフィア",
+      "to": "リオン",
+      "self": "わたくし",
+      "address": "リオン様",
+      "secondPerson": "ngài",
+      "notes": "Sophia nói chuyện lịch sự với Rion",
+      "evidence": [
+        "ch19: 「ようこそいらっしゃいましたリオン様、そしてクレアリディル様。」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "キャロライン",
+      "self": "俺",
+      "address": "キャロラインさん",
+      "secondPerson": "bà",
+      "notes": "Rion gọi mẹ kế là Caroline-san",
+      "evidence": [
+        "ch4: 「俺が妾の子供だから、キャロラインさんは息子の地位を俺が脅かさないか警戒してるんだよね？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "レジス",
+      "to": "リオン",
+      "self": "わたくし",
+      "address": "リオン様",
+      "secondPerson": "cậu",
+      "notes": "Quản gia nói chuyện với chủ nhân trẻ",
+      "evidence": [
+        "ch13: 「それではリオン様。お嬢様のお部屋までは、わたくし――レジスが案内いたします。」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "レジス",
+      "self": "俺",
+      "address": "レジス",
+      "secondPerson": "ông",
+      "notes": "Rion nói chuyện với quản gia",
+      "evidence": [
+        "ch13: 「それじゃ、レジス。一つ聞いても良いか？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "ブレイク",
+      "self": "俺",
+      "address": "ブレイク",
+      "secondPerson": "anh",
+      "notes": "Rion nói chuyện với anh trai cùng cha khác mẹ",
+      "evidence": [
+        "ch24: 「……クレアねぇを殺すつもりが無いって言うのか？ ブレイクが殺されるところ、アリスも見てただろ？」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "リオン",
+      "to": "マリー",
+      "self": "俺",
+      "address": "マリー",
+      "secondPerson": "cô",
+      "notes": "Rion nói chuyện với hầu gái giám sát",
+      "evidence": [
+        "ch17: 「それより、俺はマリーがそんな風に心配してくれる方が驚きだな」"
+      ],
+      "confidence": "cao"
+    },
+    {
+      "from": "ロバート",
+      "to": "リオン",
+      "self": "私",
+      "address": "リオン",
+      "secondPerson": "con",
+      "notes": "Cha nói chuyện với con trai",
+      "evidence": [
+        "ch11: 「リオンよ、お前の婚約者が決定した」"
+      ],
+      "confidence": "cao"
+    }
+  ]
+}

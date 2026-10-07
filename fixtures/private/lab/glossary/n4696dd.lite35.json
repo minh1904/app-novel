@@ -1,0 +1,858 @@
+{
+  "origin": "ai",
+  "note": "AI trích xuất 2026-10-07 bằng gemini-3.5-flash-lite (không thinking) từ chương 1–30, lệnh \"extract\". Tự duyệt để đo; chưa người dịch duyệt.",
+  "extraction": {
+    "model": "gemini-3.5-flash-lite",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "at": "2026-10-07T16:10:54.868Z",
+    "runId": "2026-10-07T16-10-28-617Z",
+    "codeCandidates": 145,
+    "sweptForms": 60,
+    "candidates": 150,
+    "accepted": 47,
+    "rejected": 96,
+    "dropped": [
+      {
+        "source": "アリスティア",
+        "reason": "trùng mục khác"
+      }
+    ]
+  },
+  "entries": [
+    {
+      "source": "スフィール",
+      "target": "Sフィール",
+      "aliases": [
+        "スフィール家"
+      ],
+      "notes": "organization: gia tộc quý tộc có quan hệ thân thiết với nhà Granches"
+    },
+    {
+      "source": "エルフ",
+      "target": "Elf",
+      "notes": "term: chủng tộc Elf. Cần xem: bằng chứng không khớp bản gốc"
+    },
+    {
+      "source": "グランシェス",
+      "target": "Granches",
+      "aliases": [
+        "グランシェス家"
+      ],
+      "notes": "organization: gia tộc Bá tước Granches"
+    },
+    {
+      "source": "インフルエンザ",
+      "target": "cúm / influenza",
+      "notes": "term: bệnh cúm trong thế giới này. Cần xem: bằng chứng không khớp bản gốc"
+    },
+    {
+      "source": "プリン",
+      "target": "bánh flan / pudding",
+      "notes": "term: món bánh custard pudding"
+    },
+    {
+      "source": "エンゲージ",
+      "target": "đính hôn / engage",
+      "notes": "term: khế ước đính ước hôn nhân. Cần xem: bằng chứng không khớp bản gốc"
+    },
+    {
+      "source": "ハイエルフ",
+      "target": "High Elf",
+      "notes": "term: chủng tộc High Elf trong truyền thuyết. Cần xem: bằng chứng không khớp bản gốc"
+    },
+    {
+      "source": "テンプレート",
+      "target": "khuôn mẫu",
+      "notes": "term"
+    },
+    {
+      "source": "ナイフ",
+      "target": "dao",
+      "notes": "item"
+    },
+    {
+      "source": "侯爵",
+      "target": "hầu tước",
+      "notes": "title"
+    },
+    {
+      "source": "チート",
+      "target": "cheat / gian lận",
+      "notes": "term"
+    },
+    {
+      "source": "サトウキビ",
+      "target": "cây mía",
+      "notes": "item"
+    },
+    {
+      "source": "ショートソード",
+      "target": "short sword / đoản kiếm",
+      "notes": "item"
+    },
+    {
+      "source": "ウィルス",
+      "target": "virus",
+      "notes": "term"
+    },
+    {
+      "source": "キスマーク",
+      "target": "dấu hôn",
+      "notes": "item"
+    },
+    {
+      "source": "スプーン",
+      "target": "thìa",
+      "notes": "item"
+    },
+    {
+      "source": "姫",
+      "target": "công chúa / vương phi",
+      "notes": "title"
+    },
+    {
+      "source": "婚約者",
+      "target": "vị hôn phu / vị hôn thê",
+      "notes": "term"
+    },
+    {
+      "source": "アルコール",
+      "target": "cồn",
+      "notes": "item"
+    },
+    {
+      "source": "ウィッグ",
+      "target": "tóc giả",
+      "notes": "item"
+    },
+    {
+      "source": "カスタードプディング",
+      "target": "bánh flan / bánh pudding trứng",
+      "notes": "item"
+    },
+    {
+      "source": "ストックホルム",
+      "target": "Stockholm (hội chứng Stockholm)",
+      "aliases": [
+        "ストックホルム症候群"
+      ],
+      "notes": "term"
+    },
+    {
+      "source": "テンサイ",
+      "target": "củ cải đường",
+      "notes": "term: Cần xem: bằng chứng không khớp bản gốc"
+    },
+    {
+      "source": "フレイムランス",
+      "target": "Flame Lance",
+      "notes": "skill"
+    },
+    {
+      "source": "マジックアイテム",
+      "target": "vật phẩm ma thuật",
+      "notes": "item"
+    },
+    {
+      "source": "マナ",
+      "target": "mana",
+      "notes": "term"
+    },
+    {
+      "source": "ランタン",
+      "target": "đèn lồng",
+      "notes": "item"
+    }
+  ],
+  "characters": [
+    {
+      "source": "アリス",
+      "target": "Alice",
+      "gender": "female",
+      "role": "thiếu nữ tộc Elf",
+      "thirdPerson": "cô ấy"
+    },
+    {
+      "source": "クレアリディル",
+      "target": "Crealydil",
+      "aliases": [
+        "クレア",
+        "クレアねぇ",
+        "クレアリディル・グランシェス"
+      ],
+      "gender": "female",
+      "role": "chị gái của nhân vật chính, con gái chính妻キャロライン. Cần xem: bằng chứng không khớp bản gốc",
+      "thirdPerson": "cô ấy"
+    },
+    {
+      "source": "リオン",
+      "target": "Rion",
+      "aliases": [
+        "リオン・グランシェス"
+      ],
+      "gender": "male",
+      "role": "nhân vật chính, con trai thứ hai (con vợ lẽ) của bá tước Granches",
+      "thirdPerson": "Rion"
+    },
+    {
+      "source": "ミリィ",
+      "target": "Milly",
+      "gender": "female",
+      "role": "hầu gái chăm sóc nhân vật chính từ nhỏ",
+      "thirdPerson": "Milly"
+    },
+    {
+      "source": "ソフィア",
+      "target": "Sophia",
+      "aliases": [
+        "ソフィア嬢",
+        "ソフィアちゃん"
+      ],
+      "gender": "female",
+      "role": "con gái nhà Sフィール, đính ước với nhân vật chính. Cần xem: bằng chứng không khớp bản gốc",
+      "thirdPerson": "Sophia"
+    },
+    {
+      "source": "キャロライン",
+      "target": "Caroline",
+      "aliases": [
+        "キャロ"
+      ],
+      "gender": "female",
+      "role": "chính thất của bá tước Granches, mẹ của Crealydil",
+      "thirdPerson": "Caroline"
+    },
+    {
+      "source": "レジス",
+      "target": "Regis",
+      "gender": "male",
+      "role": "quản gia nhà Granches",
+      "thirdPerson": "Regis"
+    },
+    {
+      "source": "ブレイク",
+      "target": "Blake",
+      "gender": "male",
+      "role": "nhân vật trong gia tộc",
+      "thirdPerson": "Blake"
+    },
+    {
+      "source": "紗弥",
+      "target": "Saya",
+      "gender": "female",
+      "role": "người quen của nhân vật chính ở kiếp trước (Amamiya Saya)",
+      "thirdPerson": "Saya"
+    },
+    {
+      "source": "ミシェル",
+      "target": "Michelle",
+      "gender": "female",
+      "role": "hầu gái hầu cận Crealydil. Cần xem: bằng chứng không khớp bản gốc",
+      "thirdPerson": "Michelle"
+    },
+    {
+      "source": "カルロス",
+      "target": "Carlos",
+      "gender": "male",
+      "role": "gia chủ hiện tại của nhà Sフィール. Cần xem: bằng chứng không khớp bản gốc",
+      "thirdPerson": "Carlos"
+    },
+    {
+      "source": "マリー",
+      "target": "Marie",
+      "gender": "female",
+      "role": "hầu gái mới đến làm người giám sát nhân vật chính",
+      "thirdPerson": "Marie"
+    },
+    {
+      "source": "アリスママ",
+      "target": "Mẹ Alice",
+      "gender": "female",
+      "role": "tộc trưởng tộc Elf, mẹ của Alice",
+      "thirdPerson": "mẹ của Alice"
+    },
+    {
+      "source": "エリーゼ",
+      "target": "Elise",
+      "gender": "female",
+      "role": "vợ của Carlos, phu nhân nhà Sフィール. Cần xem: bằng chứng không khớp bản gốc",
+      "thirdPerson": "Elise"
+    },
+    {
+      "source": "リスティア",
+      "target": "Ristia",
+      "aliases": [
+        "アリスティア"
+      ],
+      "gender": "female",
+      "role": "nhân vật trong tác phẩm khác / tiểu thư xuất hiện trong truyện",
+      "thirdPerson": "Ristia"
+    },
+    {
+      "source": "ロバート",
+      "target": "Robert",
+      "gender": "male",
+      "role": "cha của nhân vật chính Rion",
+      "thirdPerson": "Robert"
+    },
+    {
+      "source": "グランプ",
+      "target": "Gramp",
+      "gender": "male",
+      "role": "hầu tước, đối tượng hứa hôn của Claire",
+      "thirdPerson": "hầu tước Gramp"
+    },
+    {
+      "source": "看護師",
+      "target": "y tá",
+      "gender": "female",
+      "role": "y tá trong bệnh viện ở thế giới cũ",
+      "thirdPerson": "y tá"
+    },
+    {
+      "source": "アリスパパ",
+      "target": "Alice-papa / cha của Alice",
+      "gender": "male",
+      "role": "cha của Alice. Cần xem: tên không phải chữ Latin",
+      "thirdPerson": "cha của Alice"
+    },
+    {
+      "source": "エリック",
+      "target": "Erick",
+      "gender": "male",
+      "role": "anh trai của một cô gái trong truyện, thuộc kỵ sĩ đoàn",
+      "thirdPerson": "Erick"
+    }
+  ],
+  "dyads": [
+    {
+      "from": "リオン",
+      "to": "アリス",
+      "self": "俺",
+      "address": "アリス",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Rion gọi và xưng hô thân mật với Alice"
+    },
+    {
+      "from": "アリス",
+      "to": "リオン",
+      "self": "私",
+      "address": "リオン様",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Alice gọi Rion là Rion-sama khi mới quen"
+    },
+    {
+      "from": "リオン",
+      "to": "クレアリディル",
+      "self": "俺",
+      "address": "クレアねぇ",
+      "secondPerson": "chị",
+      "notes": "AI đề xuất, chờ duyệt. Rion gọi chị gái là Claire-nee"
+    },
+    {
+      "from": "クレアリディル",
+      "to": "リオン",
+      "self": "あたし",
+      "address": "弟くん",
+      "secondPerson": "em",
+      "notes": "AI đề xuất, chờ duyệt. Claire gọi em trai là em (dùng từ cậu em / đệ)"
+    },
+    {
+      "from": "ミリィ",
+      "to": "リオン",
+      "self": "私",
+      "address": "リオン様",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Hầu gái gắn bó xưng tôi gọi tiểu thư/thiếu gia"
+    },
+    {
+      "from": "リオン",
+      "to": "ミリィ",
+      "self": "俺",
+      "address": "ミリィ",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Rion gọi hầu gái thân thiết từ nhỏ"
+    },
+    {
+      "from": "リオン",
+      "to": "ソフィア",
+      "self": "俺",
+      "address": "ソフィア",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Rion nói chuyện với vị hôn thê"
+    },
+    {
+      "from": "ソフィア",
+      "to": "リオン",
+      "self": "わたくし",
+      "address": "リオン様",
+      "secondPerson": "ngài",
+      "notes": "AI đề xuất, chờ duyệt. Sophia nói chuyện lịch sự với Rion"
+    },
+    {
+      "from": "リオン",
+      "to": "キャロライン",
+      "self": "俺",
+      "address": "キャロラインさん",
+      "secondPerson": "bà",
+      "notes": "AI đề xuất, chờ duyệt. Rion gọi mẹ kế là Caroline-san"
+    },
+    {
+      "from": "レジス",
+      "to": "リオン",
+      "self": "わたくし",
+      "address": "リオン様",
+      "secondPerson": "cậu",
+      "notes": "AI đề xuất, chờ duyệt. Quản gia nói chuyện với chủ nhân trẻ"
+    },
+    {
+      "from": "リオン",
+      "to": "レジス",
+      "self": "俺",
+      "address": "レジス",
+      "secondPerson": "ông",
+      "notes": "AI đề xuất, chờ duyệt. Rion nói chuyện với quản gia"
+    },
+    {
+      "from": "リオン",
+      "to": "ブレイク",
+      "self": "俺",
+      "address": "ブレイク",
+      "secondPerson": "anh",
+      "notes": "AI đề xuất, chờ duyệt. Rion nói chuyện với anh trai cùng cha khác mẹ"
+    },
+    {
+      "from": "リオン",
+      "to": "マリー",
+      "self": "俺",
+      "address": "マリー",
+      "secondPerson": "cô",
+      "notes": "AI đề xuất, chờ duyệt. Rion nói chuyện với hầu gái giám sát"
+    },
+    {
+      "from": "ロバート",
+      "to": "リオン",
+      "self": "私",
+      "address": "リオン",
+      "secondPerson": "con",
+      "notes": "AI đề xuất, chờ duyệt. Cha nói chuyện với con trai"
+    }
+  ],
+  "rejected": [
+    {
+      "source": "弟",
+      "reason": "từ thông dụng (em trai)"
+    },
+    {
+      "source": "父",
+      "reason": "từ thông dụng (cha)"
+    },
+    {
+      "source": "行",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "貴",
+      "reason": "từ thông dụng / mảnh từ"
+    },
+    {
+      "source": "兄",
+      "reason": "từ thông dụng (anh trai)"
+    },
+    {
+      "source": "姉",
+      "reason": "từ thông dụng (chị gái)"
+    },
+    {
+      "source": "貴方",
+      "reason": "từ đại từ nhân xưng thông dụng"
+    },
+    {
+      "source": "ダメ",
+      "reason": "từ thông dụng (Dame - hỏng, không được)"
+    },
+    {
+      "source": "母",
+      "reason": "từ thông dụng (mẹ)"
+    },
+    {
+      "source": "メイド",
+      "reason": "từ thông dụng (hầu gái / maid)"
+    },
+    {
+      "source": "モノ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "泣",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "続",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "有",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "着",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ホント",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "キミ",
+      "reason": "từ đại từ nhân xưng thông dụng (kimi)"
+    },
+    {
+      "source": "イメージ",
+      "reason": "từ thông dụng (image)"
+    },
+    {
+      "source": "バレ",
+      "reason": "từ thông dụng (bale / lộ tẩy)"
+    },
+    {
+      "source": "吐",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "レベル",
+      "reason": "từ thông dụng (level)"
+    },
+    {
+      "source": "嬢",
+      "reason": "từ thông dụng / hậu tố chỉ tiểu thư"
+    },
+    {
+      "source": "バカ",
+      "reason": "từ thông dụng (ngốc nghếch)"
+    },
+    {
+      "source": "主人",
+      "reason": "từ thông dụng (chủ nhân)"
+    },
+    {
+      "source": "貴族",
+      "reason": "từ thông dụng (quý tộc)"
+    },
+    {
+      "source": "ベッド",
+      "reason": "từ thông dụng (giường / bed)"
+    },
+    {
+      "source": "プレゼント",
+      "reason": "từ thông dụng (quà tặng / present)"
+    },
+    {
+      "source": "ブロンド",
+      "reason": "từ thông dụng (tóc vàng / blonde)"
+    },
+    {
+      "source": "セリフ",
+      "reason": "từ thông dụng (lời thoại)"
+    },
+    {
+      "source": "神",
+      "reason": "từ thông dụng (thần)"
+    },
+    {
+      "source": "スカート",
+      "reason": "từ thông dụng (váy / skirt)"
+    },
+    {
+      "source": "プラチナブロンド",
+      "reason": "từ thông dụng (tóc vàng bạch kim / platinum blonde)"
+    },
+    {
+      "source": "皆",
+      "reason": "từ thông dụng (mọi người)"
+    },
+    {
+      "source": "マシ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "マジ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "奥",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "苦労",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イジワル",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "キス",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "リード",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "紋",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イラスト",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ギュッ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ショック",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ノック",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ベッドサイド",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ボク",
+      "reason": "từ thông dụng (đại từ nhân xưng)"
+    },
+    {
+      "source": "マーク",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イヤ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "カウンター",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ケース",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "コミュ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "サポート",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ダメージ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ハッキリ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ハッタリ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "パニック",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ブラ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "フリ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "マネ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ムキ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "メートル",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "モニター",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "リスク",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "アウト",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "アラーム",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "イヤミ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "ウェーブ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "キッズモデル",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "キッパリ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "キレ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "クスクス",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "クスリ",
+      "reason": "từ tượng thanh cười mỉm, từ thông dụng"
+    },
+    {
+      "source": "コミュニケーション",
+      "reason": "từ mượn thông dụng (communication)"
+    },
+    {
+      "source": "サーズ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "シルバー",
+      "reason": "từ thông dụng chỉ màu sắc/chất liệu (silver)"
+    },
+    {
+      "source": "ズルイ",
+      "reason": "từ thông dụng (zurui - gian xảo, chơi không đẹp)"
+    },
+    {
+      "source": "セミロング",
+      "reason": "từ mượn thông dụng chỉ kiểu tóc (semi-long)"
+    },
+    {
+      "source": "ソファ",
+      "reason": "từ mượn thông dụng (sofa)"
+    },
+    {
+      "source": "ダメダメ",
+      "reason": "từ thông dụng"
+    },
+    {
+      "source": "テーブル",
+      "reason": "từ mượn thông dụng (table)"
+    },
+    {
+      "source": "ドア",
+      "reason": "từ mượn thông dụng (door)"
+    },
+    {
+      "source": "トレイ",
+      "reason": "từ mượn thông dụng (tray)"
+    },
+    {
+      "source": "ネタバレ",
+      "reason": "từ thông dụng (netabare - tiết lộ nội dung)"
+    },
+    {
+      "source": "パーツ",
+      "reason": "từ mượn thông dụng (parts)"
+    },
+    {
+      "source": "パンデミック",
+      "reason": "từ mượn thông dụng (pandemic)"
+    },
+    {
+      "source": "プライド",
+      "reason": "từ mượn thông dụng (pride)"
+    },
+    {
+      "source": "フラグ",
+      "reason": "từ mượn thông dụng (flag - cờ hiệu, điềm báo)"
+    },
+    {
+      "source": "プロポーズ",
+      "reason": "từ mượn thông dụng (propose)"
+    },
+    {
+      "source": "ベッドサイドモニター",
+      "reason": "từ mượn thông dụng (bedside monitor)"
+    },
+    {
+      "source": "ホッ",
+      "reason": "từ tượng thanh thở phào"
+    },
+    {
+      "source": "ミルク",
+      "reason": "từ mượn thông dụng (milk)"
+    },
+    {
+      "source": "メッセージ",
+      "reason": "từ mượn thông dụng (message)"
+    },
+    {
+      "source": "メニュー",
+      "reason": "từ mượn thông dụng (menu)"
+    },
+    {
+      "source": "ループ",
+      "reason": "từ mượn thông dụng (loop)"
+    },
+    {
+      "source": "レシピ",
+      "reason": "từ mượn thông dụng (recipe)"
+    }
+  ]
+}
