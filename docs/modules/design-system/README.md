@@ -1,77 +1,122 @@
 # Hệ thiết kế giao diện Mira
 
-Cập nhật: 2026-10-05 · Trạng thái: **Đã chốt hướng** theo yêu cầu dùng hệ token gần Obsidian;
-**đã triển khai** token ba tầng, control dùng chung, khung app và các màn trong working tree. Chủ trì:
-chủ sản phẩm.
+Cập nhật: 2026-10-08 · Trạng thái: **Đã chốt hướng** làm theo Hermes Desktop (skin "nous"); **đã
+triển khai** trong working tree (change `hermes-design-system`, chưa commit). Chủ trì: chủ sản phẩm.
 
 ## Câu hỏi chương này trả lời
 
-Mira dùng những token nào để các màn thư viện, tác phẩm, chương và cài đặt cùng một ngôn ngữ thị giác?
-Ảnh Obsidian do chủ sản phẩm gửi là **tham chiếu thị giác**, không phải đặc tả hành vi hay tài nguyên
-để sao chép. Mira giữ tên, biểu tượng và tác vụ dịch truyện của mình.
+Mira dùng những token, khung cửa sổ và component nào để mọi màn (thư viện, tác phẩm, chương, cài đặt)
+cùng một ngôn ngữ thị giác? Số đo của Hermes và lý do của từng lựa chọn nằm ở
+[phân tích design system Hermes](hermes-comparison.md).
 
-## Quan sát từ tài liệu Obsidian
+## Quyết định
 
-Đọc ngày 2026-10-05. [Bảng màu chính thức](https://docs.obsidian.md/Reference/CSS%20variables/Foundations/Colors)
-công bố thang trung tính `--color-base-*` cho sáng/tối và các tên ngữ nghĩa như
-`--background-primary`, `--background-secondary`, `--interactive-normal`, `--interactive-accent`,
-`--text-normal`, `--text-muted`. Accent của Obsidian cho phép người dùng đổi; hue mặc định là 258.
-Lưới khoảng cách 4 px, cỡ chữ UI 12 / 13 / 15 / 20 px, editor 16 px, line-height 1,5 và 1,3.
-Giá trị đo trực tiếp từ bản 1.13.7, phép ánh xạ semantic của Obsidian và so sánh từng nhóm với Mira
-nằm ở [phân tích design system Obsidian](obsidian-comparison.md).
+**2026-10-07:** chủ sản phẩm yêu cầu Mira học **y hệt** Hermes Desktop: cỡ chữ, font, nền, kiểu cửa sổ,
+cả design system. Quyết định này thay hướng Obsidian chốt ngày 2026-10-05. Hướng cũ còn trong
+[phân tích Obsidian](obsidian-comparison.md) và trong bản chương này ở commit `f9c101a`; cả hai chỉ còn
+giá trị lịch sử.
 
-## Quyết định áp vào Mira
+**2026-10-08:** chọn "như Hermes" cho hai câu hỏi mở: cửa sổ zoom 90 %, kính acrylic mặc định tắt.
 
-**2026-10-05, lần hai:** chủ sản phẩm yêu cầu triển khai đề xuất trong bản phân tích, rồi trả lời năm
-câu hỏi mở của bản đó: gộp thanh trên vào màu sidebar, chữ phụ như Obsidian, hạ bán kính control,
-**có** status bar cho editor chương, và gom accent về một biến. Cột "Lựa chọn" bên dưới là kết quả.
+**Mira giữ khác Hermes ở bốn điểm:**
 
-**Ba tầng token** trong [`tokens.css`](../../../src/renderer/src/styles/tokens.css): (1) thang
-`--neutral-*` và `--accent`, là màu thô duy nhất; (2) vai trò semantic chỉ trỏ về tầng 1; (3) kích
-thước component (`--header-height`, `--control-height`). Màn hình dùng tầng 2–3 qua tên Tailwind
-trong `@theme inline`, không dùng giá trị thô.
+- **Vòng focus.** Hermes tắt hẳn focus. Mira giữ vòng focus 2 px màu accent cho bàn phím; ô nhập thì báo
+  focus bằng viền chuyển sang accent, như Hermes.
+- **Chọn chữ.** Văn bản truyện, câu trả lời AI và phần diff đề xuất chọn được. Chữ của khung thì không,
+  như Hermes.
+- **Tương phản chữ phụ.** Hermes dùng bậc chữ 54 % cho mô tả; ở theme sáng mức này chỉ 3,5:1. Mira dùng
+  bậc muted cho mô tả, đạt ≥ 6,3:1.
+- **Icon và font editor.** Icon vẫn là Solar; editor chương vẫn dùng Google Sans Flex.
 
-| Nhóm | Token (tối / sáng) | Lựa chọn |
+## Token đang chạy
+
+[`tokens.css`](../../../src/renderer/src/styles/tokens.css) có ba tầng: màu gốc theo theme, vai trò
+semantic dẫn xuất bằng `color-mix()` theo công thức của Hermes, và kích thước. Màn hình chỉ dùng tên
+Tailwind trong `@theme inline`; tên lớp giữ nguyên từ hướng cũ.
+
+| Nhóm | Giá trị (tối / sáng) | Ghi chú |
 | --- | --- | --- |
-| Khung | canvas `#1c1c1c` / `#ffffff`; sidebar **và** thanh trên `#282828` / `#f6f6f6`; raised `#232323` / `#fafafa` | Thanh trên cùng màu sidebar như Obsidian; editor là mặt phẳng duy nhất khác màu. |
-| Control | control `#2e2e2e` / `#efefef`, hover của control `#3f3f3f` / `#e4e4e4` | Nút và ô có nền; hover đổi bậc màu. |
-| Hover, đang chọn | `bg-hover` = lớp phủ `--mono-100` 6,7 %; `bg-active` = accent 15 % | Một hover cho mọi thứ trong suốt (nút ghost, mục menu, dòng danh sách); mục đang mở ở sidebar và dòng chương tô accent. |
-| Chữ | `ink` `#dadada` / `#222222`; `ink-muted` **`#b3b3b3`** / `#5c5c5c`; `ink-faint` `#666666` / `#707070` | Muted theo Obsidian. Faint chỉ cho chữ trang trí (gợi ý phím tắt) vì ở theme tối chỉ ≈ 3:1. |
-| Accent | `#9973eb` / `#7041b9`, hover dẫn xuất bằng `color-mix` | Giữ giá trị Mira vì accent mặc định của Obsidian với chữ trắng chỉ ≈ 4,3:1. Accent gom về một biến `--accent` để sau này có thể cho đổi. |
-| Trạng thái | `info`, `warning`, `error`, `success` | `danger` không còn; mọi nơi dùng `error`. |
-| Chữ UI | `text-ui-xs` 12, `text-ui-sm` 13, `text-ui-md` 15, `text-ui-lg` 20, `text-ui-title` 26; editor 16 | Bỏ 11 px và các cỡ lẻ; tiêu đề panel không viết hoa, không giãn chữ. |
-| Line-height, tracking | `leading-normal` 1,5, `leading-tight` 1,3; `tracking-heading` −0,015em | |
-| Bán kính | `rounded-item` 4, `rounded-control` / `rounded-tab` 6, `rounded-panel` 12 | Hạ control từ 8 xuống 6 px; mục danh sách, menu 4 px. |
-| Kích thước | thanh trên 40 px, control 30 px, mục menu 28 px, tab truyện 34 px | |
-| Nổi | `shadow-popover` cho menu/select; dialog không shadow, viền `line-strong`, nền phủ `bg-backdrop` | |
-| Status bar | Dải 24 px dưới hai pane của màn chương, nền sidebar, chữ 12 px muted, số tabular | Số chữ và ký tự của bản dịch (cập nhật khi gõ, không tính xuống dòng), trạng thái lưu gộp của hai bên, số đề xuất AI chờ duyệt (bấm để mở panel AI). |
-| Chuyển động | `--duration-fast` 140 ms; transition tắt khi `prefers-reduced-motion` | Spinner vẫn quay vì nó báo việc đang chạy. |
+| Màu gốc | chữ `#e6edf3` / `#1f2328`; accent `#4a84fe` / `#0053fd`; nền `#0d1117` / `#ffffff`; sidebar `#010409` / `#f6f8fa` | Skin "nous" của Hermes |
+| Mặt nền | canvas = chrome ≈ `#0d1015` / `#fefefe`; sidebar `#010409` / `#f6f8fa`; raised (card) ≈ `#0e0f12` / `#fbfbfc`; popover là elevated 96 %, có blur | Cột nội dung mặc màu chrome như cột chat của Hermes |
+| Hover, chọn | hover = accent 4 % + chữ 3 %; chọn = accent 8 % + chữ 5 %; control = accent 5 % + chữ 4 % | Đều trong suốt |
+| Chữ | chính 94 %; muted hex `#aeb4b9` / `#595c60`; faint 54 %; decor 36 % | Faint dùng cho placeholder, phím tắt, số phiên bản; decor chỉ dùng trang trí |
+| Viền | `line` = accent 10 % + chữ 5 %; `line-strong` = accent 16 % + chữ 7 % | |
+| Trạng thái | error `#e75e78` / `#cf2d56`; warning `#c08532`; success `#55a583` / `#1f8a65`; info `#6f9ba6` / `#4c7f8c` | |
+| Chọn chữ | vàng `#ffd24a` 38 % / 55 % | Như Hermes |
+| Font | UI `'Segoe WPC', 'Segoe UI'`; code JetBrains Mono 2.304 đóng gói (OFL); editor Google Sans Flex | CSP không cho font từ CDN |
+| Cỡ chữ | `text-ui-2xs` 11, `xs` 12, `sm` 13 (thân), `md` 14, `lg` 16, `title` 20; editor 18 | Cỡ trước zoom; sau zoom 90 % thân ≈ 11,7 px |
+| Bán kính | `item` 2, `control`/`tab` 2,5, `badge` 3, `panel` 3,2, `icon` 4 px | |
+| Bóng | `shadow-popover` (= `shadow-md` của Hermes) cho menu; `shadow-overlay` (= `shadow-nous`) cùng viền `hairline` cho dialog; `shadow-outline` cho nút outline | Dialog có bóng, lớp phủ đen 22 % có blur |
+| Kích thước | thanh trên 34 px; control 28 px; sidebar 237 px | |
+| Chuyển động | 100 ms cho control, 200 ms cho ô nhập và dialog; tắt khi `prefers-reduced-motion` | Spinner vẫn quay |
+| Lớp chồng | `--z-raised` 10, `--z-backdrop` 120, `--z-modal` 130, `--z-modal-popover` 140, `--z-over-modal` 200 | Màn hình không được viết số z-index |
+| Thanh cuộn | rộng 8 px, chỉ hiện khi rê vào vùng cuộn | Dải tab truyện cao 3 px |
 
-UI dùng Segoe UI Variable/Segoe UI trên Windows; editor dùng Google Sans Flex đóng gói kèm fallback.
-Icon tiếp tục dùng Solar Icons. Màu ba nút cửa sổ được sao tay ở
-[`titleBar.ts`](../../../src/main/electron/titleBar.ts) vì Electron vẽ overlay ngoài CSS; test đối
-chiếu hai nơi. Component dùng chung ở [`components/`](../../../src/renderer/src/components/), gồm
-`SettingRow` (tên 13 px, mô tả 12 px muted, control bên phải) chuyển từ màn model sang.
+**Tương phản**, đo ngày 2026-10-08 trên màu đã trộn:
 
-## Phạm vi đã triển khai
+| Theme | Nền | Chữ chính | Muted | Faint | Chữ trên nút primary |
+| --- | --- | --- | --- | --- | --- |
+| Tối | canvas / sidebar | 14,3 / 15,3 | 9,1 / 9,8 | 5,3 | 5,2 |
+| Sáng | canvas / sidebar | 13,1 / 12,5 | 6,7 / 6,3 | 3,5 | 5,7 |
 
-Token, component dùng chung, khung app (thanh trên, tab truyện, sidebar) và các màn feature đã chuyển
-sang tên token: hơn 300 cỡ chữ, 70 line-height, 20 bán kính tùy ý và 30 hover tự đặt đã thay.
-Bìa truyện (`WorkCover`, `LanguageMark`) giữ cỡ chữ theo khung vì đó là hình minh họa.
-[`tokens.test.ts`](../../../src/renderer/src/styles/tokens.test.ts) fail khi một màn dùng lại cỡ
-chữ, line-height, tracking, radius, shadow tùy ý, hoặc đọc `var(--…)` mà `tokens.css` không định
-nghĩa. Đã chụp bản build ở theme sáng và tối (thư viện, màn chương, Cài đặt) trên Windows 11. Không
-đổi luồng lưu, dịch, xuất hay vòng đời tab.
+## Cửa sổ
 
-## Giới hạn và bước kiểm tiếp
+- **Thanh tiêu đề.** Thanh trên của trang là thanh tiêu đề. Ba nút cửa sổ nằm trên overlay nền trong
+  suốt; màu biểu tượng là `--text-muted`, chép tay ở [`titleBar.ts`](../../../src/main/electron/titleBar.ts)
+  và có test đối chiếu.
+- **Zoom.** Cố định 0,9 ([`zoom.ts`](../../../src/main/electron/zoom.ts)). Ctrl + `=` / `-` / `0`,
+  Ctrl + lăn chuột và cử chỉ zoom bị chặn, để overlay luôn khớp thanh trên.
+- **Kính acrylic.** Bật trong Cài đặt → Giao diện. Tùy chọn lưu ở `appearance.json` trong thư mục dữ
+  liệu, được đọc trước khi tạo cửa sổ. Chỉ chạy trên Windows 11 build 22621 trở lên; máy cũ hơn thấy
+  công tắc bị khóa kèm lý do. Khi kính bật, sidebar giữ 71 % màu chrome, vùng nội dung vẫn đặc.
+  `boot.js` đặt `data-glass` trước lần vẽ đầu, nên mở app không chớp nền đặc.
 
-- Chưa có: Tooltip dùng chung (vẫn dùng `title=`), màn Cài đặt dạng nav dọc và
-  nhóm thẻ, tùy chọn đổi accent/font, ribbon (không định làm, xem bản phân tích).
-- Còn khoảng 400 kích thước tùy ý (`h-[…]`, `w-[…]`, `min-w-[…]`) và một số mức alpha tint; chưa có
-  thang z-index.
-- 34 nút và 17 ô nhập trong màn feature vẫn tự style thay vì dùng component chung.
-- Chưa đo tương phản bằng công cụ trên mọi màn; mới tính tay cho chữ, accent và faint.
+## Component dùng chung
+
+Ở [`components/`](../../../src/renderer/src/components/), dựng trên `@base-ui/react`:
+
+- **Button:** biến thể default, outline, secondary, ghost, ghost-muted, destructive, link, text; cỡ xxs
+  đến xl và hai cỡ icon (24 / 32 px). Prop `loading` giữ nguyên kích thước nút.
+- **Ô nhập (TextField, TextArea, SearchField, Select, Slider):** dùng chung lớp `.input-chrome`. Viền mờ
+  đậm lên khi hover, chuyển accent khi focus, đỏ khi không hợp lệ.
+- **Các component khác:** Menu, Dialog, Switch (36×20), Tabs, Badge, Panel, Banner, EmptyState,
+  SettingRow.
+- **Mới:** `Tooltip` (`<Tip label>`, trễ 200 ms) và `SegmentedControl`.
+
+Phép kiểm:
+
+- [`tokens.test.ts`](../../../src/renderer/src/styles/tokens.test.ts) fail khi một màn dùng cỡ chữ,
+  line-height, tracking, bán kính, bóng hoặc z-index tùy ý, hoặc đọc `var(--…)` chưa định nghĩa.
+- [`components.test.ts`](../../../src/renderer/src/components/components.test.ts) fail khi một component
+  tương tác thiếu vòng focus.
+
+## Đã kiểm
+
+Ngày 2026-10-08 đã chạy bản build trên Windows 11 với dữ liệu fixture và chụp chín màn: Thư viện, Tạo
+tác phẩm, Chương, Cài đặt ở hai theme, cùng Chi tiết tác phẩm theme tối. Đã kiểm thêm:
+
+- tooltip;
+- vòng focus khi nhấn Tab;
+- select nằm trên dialog;
+- chọn chữ trong editor;
+- bật/tắt kính.
+
+Việc chạy app tìm ra và sửa hai lỗi:
+
+- `outline-none` làm vòng focus không hiện;
+- thanh cuộn mặc định của hệ điều hành đè lên chữ của tab truyện.
+
+## Giới hạn
+
+- **Chưa làm theo Hermes:** màn Cài đặt vẫn là một trang, chưa có điều hướng dọc; onboarding và chọn
+  provider thuộc giai đoạn 2 ([Kết nối AI](../ai-connections/README.md)); UI chat thuộc giai đoạn 3
+  ([nghiên cứu chat](../proposals/hermes-chat-research.md)).
+- **Chỉ một skin**, chưa cho đổi accent.
+- **Code còn style cũ:** khoảng 400 kích thước `h-[…]` / `w-[…]` tùy ý; nhiều nút và ô nhập trong màn
+  feature vẫn tự style thay vì dùng component chung.
+- **Tooltip:** mới thay trên thanh trên.
 
 ---
 
-[Mục lục module](../README.md) · [Quyết định hiện hành](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/decisions.md)
+[Mục lục module](../README.md) · [Phân tích Hermes](hermes-comparison.md) ·
+[Phân tích Obsidian (lịch sử)](obsidian-comparison.md)

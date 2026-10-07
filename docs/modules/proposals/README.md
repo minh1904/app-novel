@@ -18,6 +18,7 @@ những chi tiết không được ghi tại đó là **đề xuất** cho OpenS
 | Dữ liệu nào phải lưu và điều kiện nào cho phép ghi? | [Dữ liệu và an toàn](data-and-safety.md) |
 | Antigravity thực sự cho thấy gì; mã Mira hiện làm gì? | [Bằng chứng và câu hỏi mở](evidence.md) |
 | Panel AI nên trình bày câu trả lời và ngữ cảnh ra sao? | [Nghiên cứu lại panel AI](chat-panel-research.md) |
+| Học gì từ UI chat của Hermes Desktop: hiển thị tin nhắn, ô soạn, chọn model, phiên? | [Học UI chat của Hermes Desktop](hermes-chat-research.md) |
 
 ## Ranh giới quyết định
 
