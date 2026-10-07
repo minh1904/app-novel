@@ -3,11 +3,18 @@ import type {
   ConnectionTestResult,
   ConnectionView,
   CreateConnectionInput,
+  EndpointProbeResult,
+  ProbeEndpointInput,
   ModelInfoView,
   UpdateConnectionInput
 } from '../../../shared/contracts/aiConnections'
 import type { IpcError, Result } from '../../../shared/contracts/result'
-import { messageOf, type EntryOutcome, type ModelEntryActions } from '../features/models/modelEntryActions'
+import type { AiPreferences, MainModel, ModelRef } from '../../../shared/contracts/aiPreferences'
+import {
+  messageOf,
+  type EntryOutcome,
+  type ModelEntryActions
+} from '../features/models/modelEntryActions'
 import { registerStoreReset } from './resetStores'
 
 export type ConnectionsLoad = 'loading' | 'ready' | 'failed'
@@ -42,16 +49,31 @@ export interface ConnectionState {
   notice: string | null
   tests: Record<string, TestState>
   entries: ModelEntryActions
+  /** Settings › Model; `null` until read. */
+  preferences: AiPreferences | null
 
   // Actions
   reload(): Promise<void>
   dismissNotice(): void
-  create(input: CreateConnectionInput): Promise<void>
+  /** The new connection, or `null` after a notice. */
+  create(input: CreateConnectionInput): Promise<ConnectionView | null>
+  /** A key pasted into a provider card; makes the connection from the preset when there is none. */
+  ensureWithKey(
+    providerId: string,
+    secret: string
+  ): Promise<{ ok: true; connection: ConnectionView } | { ok: false; message: string }>
+  probe(
+    input: ProbeEndpointInput
+  ): Promise<{ ok: true; value: EndpointProbeResult } | { ok: false; message: string }>
   update(id: string, patch: UpdateConnectionInput['patch']): Promise<void>
   remove(id: string): Promise<void>
   addKey(id: string, secret: string): Promise<boolean>
   removeKey(id: string, keyId: string): Promise<void>
   test(id: string): Promise<void>
+  loadPreferences(): Promise<void>
+  setMainModel(main: MainModel | null): Promise<boolean>
+  setFallbacks(fallbacks: ModelRef[]): Promise<boolean>
+  setOnboardingSkipped(skipped: boolean): Promise<void>
   reset(): void
 }
 
@@ -60,12 +82,13 @@ const initialValues = {
   connections: [] as ConnectionView[],
   loadError: null as string | null,
   notice: null as string | null,
-  tests: {} as Record<string, TestState>
+  tests: {} as Record<string, TestState>,
+  preferences: null as AiPreferences | null
 }
 
 let latestLoadTicket = 0
 
-export const useConnectionStore = create<ConnectionState>((set) => {
+export const useConnectionStore = create<ConnectionState>((set, get) => {
   const applyOne = (connection: ConnectionView): void => {
     set((current) => {
       const index = current.connections.findIndex((item) => item.id === connection.id)
@@ -107,7 +130,12 @@ export const useConnectionStore = create<ConnectionState>((set) => {
     add: (connectionId, items) => attempt(() => window.mira.ai.models.add(connectionId, items)),
     update: (entryId, patch) => attempt(() => window.mira.ai.models.update(entryId, patch)),
     duplicate: (entryId) => attempt(() => window.mira.ai.models.duplicate(entryId)),
-    remove: (entryId) => attempt(() => window.mira.ai.models.delete(entryId)),
+    // Main drops a deleted entry from the main model and the fallbacks; read them again.
+    remove: async (entryId) => {
+      const outcome = await attempt(() => window.mira.ai.models.delete(entryId))
+      if (outcome.ok) void get().loadPreferences()
+      return outcome
+    },
     reorder: (connectionId, ids) => attempt(() => window.mira.ai.models.reorder(connectionId, ids)),
     setDefault: (connectionId, entryId) =>
       attempt(() => window.mira.ai.update(connectionId, { defaultEntryId: entryId })),
@@ -117,6 +145,36 @@ export const useConnectionStore = create<ConnectionState>((set) => {
   return {
     ...initialValues,
     entries,
+
+    loadPreferences: async () => {
+      const result = await window.mira.ai.preferences.get()
+      if (result.ok) set({ preferences: result.value })
+    },
+
+    setMainModel: async (main) => {
+      const result = await window.mira.ai.preferences.setMain(main)
+      if (!result.ok) {
+        set({ notice: result.error.message })
+        return false
+      }
+      set({ preferences: result.value })
+      return true
+    },
+
+    setFallbacks: async (fallbacks) => {
+      const result = await window.mira.ai.preferences.setFallbacks(fallbacks)
+      if (!result.ok) {
+        set({ notice: result.error.message })
+        return false
+      }
+      set({ preferences: result.value })
+      return true
+    },
+
+    setOnboardingSkipped: async (skipped) => {
+      const result = await window.mira.ai.preferences.setOnboardingSkipped(skipped)
+      if (result.ok) set({ preferences: result.value })
+    },
 
     reload: async () => {
       const ticket = ++latestLoadTicket
@@ -145,9 +203,24 @@ export const useConnectionStore = create<ConnectionState>((set) => {
       const result = await window.mira.ai.create(input)
       if (result.ok) {
         applyOne(result.value)
-      } else {
-        set({ notice: result.error.message })
+        return result.value
       }
+      set({ notice: result.error.message })
+      return null
+    },
+
+    ensureWithKey: async (providerId, secret) => {
+      const result = await window.mira.ai.ensureWithKey({ providerId, secret })
+      if (!result.ok) return { ok: false, message: result.error.message }
+      applyOne(result.value)
+      return { ok: true, connection: result.value }
+    },
+
+    probe: async (input) => {
+      const result = await window.mira.ai.probe(input)
+      return result.ok
+        ? { ok: true, value: result.value }
+        : { ok: false, message: result.error.message }
     },
 
     update: async (id: string, patch: UpdateConnectionInput['patch']) => {
@@ -158,6 +231,7 @@ export const useConnectionStore = create<ConnectionState>((set) => {
       const result = await window.mira.ai.delete(id)
       if (result.ok) {
         set({ connections: result.value.connections })
+        void get().loadPreferences()
       } else {
         set({ notice: result.error.message })
       }

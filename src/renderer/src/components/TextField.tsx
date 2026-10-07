@@ -25,16 +25,11 @@ export function TextField({
       data-slot="text-field"
       className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}
     >
-      <label className="text-ui-xs font-semibold" htmlFor={inputId}>
+      <label className="text-ui-xs font-medium" htmlFor={inputId}>
         {label}
       </label>
       <input
-        className={[
-          'h-(--control-height) w-full rounded-control border bg-control px-3 text-ink outline-none placeholder:text-ink-muted focus:ring-2',
-          error
-            ? 'border-error focus:border-error focus:ring-error/25'
-            : 'border-line-strong focus:border-focus focus:ring-focus/25'
-        ].join(' ')}
+        className="input-chrome h-(--control-height) w-full rounded-control border px-2.5 text-ui-xs text-ink outline-none placeholder:text-ink-faint"
         id={inputId}
         aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
         aria-invalid={error ? true : undefined}

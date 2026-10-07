@@ -5,6 +5,7 @@ import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
 import type { ModelSelection } from '../models/ModelSelectionMenu'
 import { thinkingPatch, type ThinkingChoice } from '../models/modelSettingsForm'
+import { resolveModelChoice } from '../models/modelChoice'
 import { useAiChatStore } from '../../stores/aiChatStore'
 import { useConnectionStore } from '../../stores/connectionStore'
 import type { SourceLanguage } from '../../../../shared/contracts/library'
@@ -95,6 +96,12 @@ export interface AiChatController {
   /** The connection and entry in use, in the shape the model menu takes. */
   selection: ModelSelection | null
   selectModel(selection: ModelSelection): void
+  /** This chat's own pick differs from the main model of Settings (the pill's accent dot). */
+  overridesMain: boolean
+  /** "Dùng mặc định trong Cài đặt": drop this chat's own pick. */
+  useDefaultModel(): void
+  /** "Thêm model tùy chỉnh…": a new entry on a connection; `null` when it could not be added. */
+  addCustomModel(connectionId: string, modelId: string): Promise<ModelSelection | null>
   /** Picks the entry and writes the level into its settings, like any other setting. */
   setThinking(selection: ModelSelection, choice: ThinkingChoice): Promise<void>
   /** Reloads the connections; the panel lives as long as the chapter, so its copy goes stale. */
@@ -117,11 +124,6 @@ export interface AiChatController {
 
 const usableOf = (connections: ConnectionView[]): ConnectionView[] =>
   connections.filter((connection) => connection.enabled)
-
-/** The model entries a connection offers, in the order the person arranged them. */
-function modelsOf(connection: ConnectionView | null): ModelEntryView[] {
-  return connection ? connection.models : []
-}
 
 export function useAiChat(options: AiChatOptions): AiChatController {
   const { workId, chapterId, sourceLang, source, target, range, scope } = options
@@ -217,6 +219,29 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     setModelState(selection.entryId)
   }, [])
 
+  const useDefaultModel = useCallback(() => {
+    setConnectionId(null)
+    setModelState(null)
+  }, [])
+
+  const addCustomModel = useCallback(
+    async (connectionId: string, modelId: string): Promise<ModelSelection | null> => {
+      const store = useConnectionStore.getState()
+      const outcome = await store.entries.add(connectionId, [{ model: modelId }])
+      if (!outcome.ok) {
+        setModelNotice(outcome.message)
+        return null
+      }
+      const added = useConnectionStore
+        .getState()
+        .connections.find((item) => item.id === connectionId)
+        ?.models.filter((entry) => entry.model === modelId)
+        .at(-1)
+      return added ? { connectionId, entryId: added.id } : null
+    },
+    []
+  )
+
   const setThinking = useCallback(
     async (selection: ModelSelection, choice: ThinkingChoice): Promise<void> => {
       selectModel(selection)
@@ -232,19 +257,18 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     [selectModel]
   )
 
+  const main = useConnectionStore((state) => state.preferences?.main ?? null)
+  // What was picked for this chat, else the main model of Settings, else the first default (model-defaults).
+  const choice = useMemo(
+    () => resolveModelChoice(connections, { connectionId, entryId: model }, main),
+    [connections, connectionId, model, main]
+  )
   const usable = useMemo(() => usableOf(connections), [connections])
   const connection = useMemo(
-    () => usable.find((entry) => entry.id === connectionId) ?? usable[0] ?? null,
-    [usable, connectionId]
+    () => usable.find((entry) => entry.id === choice?.connectionId) ?? null,
+    [usable, choice]
   )
-  const models = useMemo(() => modelsOf(connection), [connection])
-  // The connection's default entry when nothing was picked, else the first one.
-  const chosenModel =
-    model !== null && models.some((entry) => entry.id === model)
-      ? model
-      : (models.find((entry) => entry.id === connection?.defaultEntryId)?.id ??
-        models[0]?.id ??
-        null)
+  const chosenModel = choice && connection ? choice.entryId : null
 
   const cancel = useCallback((requestId: string) => {
     void window.mira.ai.chat.cancel(requestId)
@@ -449,12 +473,15 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     usable,
     connection,
     model: chosenModel,
-    models,
+    models: connection?.models ?? [],
     selection:
       connection !== null && chosenModel !== null
         ? { connectionId: connection.id, entryId: chosenModel }
         : null,
     selectModel,
+    overridesMain: choice?.source === 'picked' && main !== null && main.entryId !== choice.entryId,
+    useDefaultModel,
+    addCustomModel,
     setThinking,
     refreshConnections,
     modelNotice,

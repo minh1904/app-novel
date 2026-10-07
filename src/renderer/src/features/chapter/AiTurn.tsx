@@ -97,8 +97,16 @@ function ProposalSummary({
         <span className="min-w-0 flex-1 text-ui-xs text-ink-muted">
           Đề xuất thay {removed} dòng, thêm {added} dòng
         </span>
-        {onShow && <Button size="sm" onClick={onShow}>Xem trong bản dịch</Button>}
-        <Button size="sm" variant={onShow ? 'outline' : 'default'} onClick={() => setOpen((value) => !value)}>
+        {onShow && (
+          <Button size="sm" onClick={onShow}>
+            Xem trong bản dịch
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant={onShow ? 'outline' : 'default'}
+          onClick={() => setOpen((value) => !value)}
+        >
           {open ? 'Thu gọn' : 'Xem thay đổi'}
         </Button>
       </div>
@@ -106,15 +114,27 @@ function ProposalSummary({
         <div className="mt-2 space-y-2">
           <div>
             <p className="text-ui-xs text-ink-muted">Chữ hiện tại lúc hỏi</p>
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">{before}</pre>
+            <pre className="selectable max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">
+              {before}
+            </pre>
           </div>
           <div>
             <p className="text-ui-xs text-ink-muted">Bản AI đề xuất</p>
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">{after}</pre>
+            <pre className="selectable max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">
+              {after}
+            </pre>
           </div>
           <div className="flex gap-1">
-            {onAccept && <Button size="sm" onClick={onAccept}>Áp dụng</Button>}
-            <Button size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(after)}>
+            {onAccept && (
+              <Button size="sm" onClick={onAccept}>
+                Áp dụng
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void navigator.clipboard.writeText(after)}
+            >
               Sao chép bản đề xuất
             </Button>
           </div>
@@ -131,6 +151,7 @@ export function AiTurn({
   targetChapterExists = true,
   onCancel,
   onRetry,
+  retryWith,
   onApply,
   onShowInEditor,
   onNavigateChapter
@@ -141,19 +162,25 @@ export function AiTurn({
   targetChapterExists?: boolean
   onCancel(requestId: string): void
   onRetry(question: string): void
+  /** The first fallback model of Settings, offered when the turn failed (spec `model-defaults`). */
+  retryWith?: { label: string; onClick(): void }
   onApply(turn: TurnView): void
   /** Opens the turn's proposal in the translation pane as a review. */
   onShowInEditor(turn: TurnView): void
   onNavigateChapter?(chapterId: string): void
 }): JSX.Element {
   const proposal = proposalOf(turn)
-  const explanation = proposal === null ? turn.answer :
-    turn.answer.slice(0, turn.answer.lastIndexOf('```', turn.answer.lastIndexOf('```') - 1)).trim()
+  const explanation =
+    proposal === null
+      ? turn.answer
+      : turn.answer
+          .slice(0, turn.answer.lastIndexOf('```', turn.answer.lastIndexOf('```') - 1))
+          .trim()
   const running = turn.status === 'sending' || turn.status === 'running'
 
   return (
     <article className="flex flex-col gap-2">
-      <p className="w-fit self-end rounded-panel bg-control px-2.5 py-1.5 text-ui-sm leading-normal text-ink">
+      <p className="selectable w-fit self-end rounded-panel bg-control px-2.5 py-1.5 text-ui-sm leading-normal text-ink">
         {turn.question}
       </p>
 
@@ -161,9 +188,23 @@ export function AiTurn({
 
       {/* What the model went and looked up for itself. Separate from "đã gửi kèm" because the two are
           different claims: one is what Mira chose to send, the other is what the model chose to read. */}
-      {turn.tools.length > 0 && (
+      {/* A fallback model answered: say which and why, apart from what the model read. */}
+      {turn.tools
+        .filter((step) => step.name === 'fallback')
+        .map((step, index) => (
+          <p
+            key={'fallback' + String(index)}
+            role="status"
+            className="flex items-center gap-1.5 text-ui-xs text-warning"
+          >
+            <RefreshIcon size={13} className="shrink-0" />
+            {step.detail}
+          </p>
+        ))}
+
+      {turn.tools.some((step) => step.name !== 'fallback') && (
         <ul className="ml-[7px] space-y-1 border-l border-line-strong pl-4">
-          {turn.tools.map((step, index) => (
+          {turn.tools.filter((step) => step.name !== 'fallback').map((step, index) => (
             <li key={step.name + String(index)} className="flex items-center gap-1.5">
               <BookIcon size={13} className="shrink-0 text-ink-muted" />
               <span className="text-ui-xs text-ink-muted">Đã đọc: {step.detail}</span>
@@ -175,10 +216,15 @@ export function AiTurn({
       {explanation !== '' && (
         <div className="space-y-1">
           <SafeMarkdown text={explanation} />
-          {proposal !== null && <Button size="sm" variant="ghost-muted"
-            onClick={() => void navigator.clipboard.writeText(explanation)}>
-            Sao chép lời giải thích
-          </Button>}
+          {proposal !== null && (
+            <Button
+              size="sm"
+              variant="ghost-muted"
+              onClick={() => void navigator.clipboard.writeText(explanation)}
+            >
+              Sao chép lời giải thích
+            </Button>
+          )}
         </div>
       )}
 
@@ -231,6 +277,12 @@ export function AiTurn({
             >
               <RefreshIcon size={14} />
               Hỏi lại
+            </Button>
+          )}
+          {retryWith && (
+            <Button variant="ghost-muted" size="sm" className="self-start" onClick={retryWith.onClick}>
+              <RefreshIcon size={14} />
+              Thử bằng {retryWith.label}
             </Button>
           )}
         </div>
@@ -286,11 +338,19 @@ export function AiTurn({
             <ProposalSummary
               before={turn.range.text}
               after={proposal}
-              onShow={turn.proposalId !== undefined && turn.proposalStatus === 'pending'
-                ? () => onShowInEditor(turn) : undefined}
-              onAccept={turn.proposalId !== undefined &&
-                (turn.proposalStatus === 'pending' || turn.proposalStatus === 'conflict' || turn.proposalStatus === 'stale')
-                  ? () => onApply(turn) : undefined}
+              onShow={
+                turn.proposalId !== undefined && turn.proposalStatus === 'pending'
+                  ? () => onShowInEditor(turn)
+                  : undefined
+              }
+              onAccept={
+                turn.proposalId !== undefined &&
+                (turn.proposalStatus === 'pending' ||
+                  turn.proposalStatus === 'conflict' ||
+                  turn.proposalStatus === 'stale')
+                  ? () => onApply(turn)
+                  : undefined
+              }
             />
           )}
         </>

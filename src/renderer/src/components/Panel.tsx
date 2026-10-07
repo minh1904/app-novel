@@ -11,14 +11,14 @@ export function Panel({ title, className, children, ...props }: PanelProps): JSX
       data-slot="panel"
       aria-label={title}
       className={[
-        'flex min-w-0 flex-col gap-4 rounded-panel border border-line bg-sidebar p-4',
+        'flex min-w-0 flex-col gap-3 rounded-panel border border-line bg-raised p-4',
         className
       ]
         .filter(Boolean)
         .join(' ')}
       {...props}
     >
-      {title && <h2 className="m-0 text-ui-xs font-semibold text-ink-muted">{title}</h2>}
+      {title && <h2 className="m-0 text-ui-xs font-medium text-ink-muted">{title}</h2>}
       {children}
     </section>
   )

@@ -57,7 +57,7 @@ export function Slider({
           {(_, values) => format(values[0] ?? value)}
         </BaseSlider.Value>
       </div>
-      <BaseSlider.Control className="flex h-7 w-full cursor-ew-resize items-center rounded-control border border-line bg-control outline-none focus-within:ring-2 focus-within:ring-focus/40 data-disabled:cursor-not-allowed">
+      <BaseSlider.Control className="input-chrome flex h-6 w-full cursor-ew-resize items-center rounded-control border outline-none data-disabled:cursor-not-allowed">
         <BaseSlider.Track className="relative h-full w-full">
           <BaseSlider.Indicator className="h-full rounded-control bg-ink/14" />
           <BaseSlider.Thumb className="block h-[15px] w-[3px] rounded-sm bg-ink outline-none" />

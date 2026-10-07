@@ -154,6 +154,16 @@ function version5(db: Db): void {
   }
 }
 
+/**
+ * Ollama gets its own provider id, so Settings › Kết nối AI can file it under "Trên máy" without sniffing
+ * the address (change `hermes-settings-modal`, design D4). Only connections that are still on the preset's
+ * own address are tagged: one the person pointed elsewhere is theirs to name.
+ */
+const version6 = `
+UPDATE ai_connection SET provider_id = 'ollama'
+WHERE provider_id IS NULL AND rtrim(base_url, '/') IN ('http://127.0.0.1:11434/v1', 'http://localhost:11434/v1');
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -185,6 +195,12 @@ export const librarySchema: SchemaSpec = {
     {
       version: 5,
       up: version5
+    },
+    {
+      version: 6,
+      up(db) {
+        db.exec(version6)
+      }
     }
   ]
 }

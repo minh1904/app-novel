@@ -62,6 +62,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
       Nhà cung cấp báo đã dùng {count(run.usage.inputTokens)} token vào và{' '}
       {count(run.usage.outputTokens)} token ra.
     </p>}
+    {run.fallbackNotice && <p role="status" className="m-0 text-ui-xs text-warning">{run.fallbackNotice}</p>}
     {run.keyNotice && <p role="status" className="m-0 text-ui-xs text-ink-muted">{run.keyNotice}</p>}
     {run.contextNotice && <p role="status" className="m-0 text-ui-xs leading-normal text-ink-muted">{run.contextNotice}</p>}
     {run.budgetNotice && <p role="status" className="m-0 text-ui-xs leading-normal text-ink-muted">{run.budgetNotice}</p>}
@@ -72,11 +73,17 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
     {run.refusals.length > 0 && <p role="alert" className="m-0 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal">
       {describeRefusals(run.refusals.map((item) => item.group))}
     </p>}
-    {run.failed.length > 0 && <div className="flex items-center gap-2 rounded-control border border-line bg-canvas px-3 py-2">
+    {run.failed.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-control border border-line bg-canvas px-3 py-2">
       <span className="text-ui-xs">{count(run.failed.length)} đoạn chưa dịch được. Đề xuất đã xong vẫn được giữ.</span>
-      <Button variant="outline" size="sm" className="ml-auto" onClick={() => void run.retryFailed()}>
-        Dịch lại phần lỗi
-      </Button>
+      <span className="ml-auto flex gap-2">
+        <Button variant="outline" size="sm" onClick={() => void run.retryFailed()}>
+          Dịch lại phần lỗi
+        </Button>
+        {/* Another model for the rest, only when asked: a chapter does not change voice on its own. */}
+        {run.continueTarget && <Button size="sm" onClick={run.continueWithFallback}>
+          Dịch tiếp bằng {run.continueTarget.label}
+        </Button>}
+      </span>
     </div>}
     <div className="flex justify-end"><Button onClick={onClose}>Xong</Button></div>
   </div>
@@ -85,6 +92,7 @@ function TranslateFlow({ workId, chapterId, onClose, onOpenSettings, onWritten }
     const { processed, proposed, total } = run.progress
     return <div className="flex flex-col gap-3">
       {notice}
+      {run.fallbackNotice && <p role="status" className="m-0 text-ui-xs text-warning">{run.fallbackNotice}</p>}
       <div role="progressbar" aria-label="Tiến độ dịch" aria-valuemin={0} aria-valuemax={total}
         aria-valuenow={processed} className="h-1.5 overflow-hidden rounded-full bg-control">
         <div className="h-full rounded-full bg-primary" style={{ width: (total ? Math.round(processed / total * 100) : 0) + '%' }} />

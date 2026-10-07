@@ -1,0 +1,127 @@
+import { describe, expect, it } from 'vitest'
+import { alternateBase, probeEndpoint } from './endpointProbe'
+
+type Route = (init: RequestInit | undefined) => Response | Promise<Response>
+
+/** A fetch that answers by URL; anything not listed is a 404. `network` throws like a refused socket. */
+function fakeFetch(routes: Record<string, Route | 'network'>): {
+  fetch: typeof fetch
+  calls: string[]
+} {
+  const calls: string[] = []
+  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input)
+    calls.push((init?.method ?? 'GET') + ' ' + url)
+    const route = routes[url]
+    if (route === 'network') throw new TypeError('fetch failed')
+    if (!route) return new Response('not found', { status: 404 })
+    return route(init)
+  }) as typeof fetch
+  return { fetch: fetchImpl, calls }
+}
+
+const json = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+
+describe('alternate base', () => {
+  it('adds /v1 to a bare host and removes it from one that has it', () => {
+    expect(alternateBase('http://127.0.0.1:8317')).toBe('http://127.0.0.1:8317/v1')
+    expect(alternateBase('http://127.0.0.1:8317/v1/')).toBe('http://127.0.0.1:8317')
+  })
+})
+
+describe('endpoint probe', () => {
+  it('finds the list under /v1 when the address was typed without it, and keeps that base', async () => {
+    const { fetch } = fakeFetch({
+      'http://127.0.0.1:8317/v1/models': () => json({ data: [{ id: 'gemini-2.5-flash' }] }),
+      'http://127.0.0.1:8317/v1/chat/completions': () => json({ error: 'bad model' }, 400)
+    })
+    const result = await probeEndpoint({ baseUrl: 'http://127.0.0.1:8317', fetchImpl: fetch })
+    expect(result).toMatchObject({
+      ok: true,
+      resolvedBaseUrl: 'http://127.0.0.1:8317/v1',
+      models: ['gemini-2.5-flash'],
+      routeChecked: true
+    })
+  })
+
+  it('reports a web page as a wrong address', async () => {
+    const page = (): Response =>
+      new Response('<!doctype html><html></html>', { headers: { 'content-type': 'text/html' } })
+    const { fetch } = fakeFetch({
+      'https://example.com/models': page,
+      'https://example.com/v1/models': page
+    })
+    const result = await probeEndpoint({ baseUrl: 'https://example.com', fetchImpl: fetch })
+    expect(result.ok).toBe(false)
+    expect(result.reachable).toBe(true)
+    expect(result.message).toContain('trang web')
+  })
+
+  it('stops at a rejected key without trying anything else', async () => {
+    const { fetch, calls } = fakeFetch({
+      'https://api.example.com/v1/models': () => json({ error: 'no' }, 401)
+    })
+    const result = await probeEndpoint({
+      baseUrl: 'https://api.example.com/v1',
+      apiKey: 'sk-bad',
+      fetchImpl: fetch
+    })
+    expect(result).toMatchObject({ ok: false, keyRejected: true })
+    expect(calls).toEqual(['GET https://api.example.com/v1/models'])
+  })
+
+  it('says the chat route is missing only on 404, 405 or 501', async () => {
+    const { fetch } = fakeFetch({
+      'https://api.example.com/v1/models': () => json({ data: [{ id: 'm' }] })
+    })
+    const result = await probeEndpoint({ baseUrl: 'https://api.example.com/v1', fetchImpl: fetch })
+    expect(result.ok).toBe(false)
+    expect(result.message).toContain('/chat/completions')
+  })
+
+  it('sends the key and a one-token request to the route', async () => {
+    let body: unknown = null
+    let auth: string | null = null
+    const { fetch } = fakeFetch({
+      'https://api.example.com/v1/models': () => json({ data: [{ id: 'm1' }, { id: 'm2' }] }),
+      'https://api.example.com/v1/chat/completions': (init) => {
+        body = JSON.parse(String(init?.body))
+        auth = new Headers(init?.headers).get('authorization')
+        return json({ choices: [] })
+      }
+    })
+    const result = await probeEndpoint({
+      baseUrl: 'https://api.example.com/v1',
+      apiKey: 'sk-ok',
+      model: 'm2',
+      fetchImpl: fetch
+    })
+    expect(result.ok).toBe(true)
+    expect(body).toMatchObject({ model: 'm2', max_tokens: 1 })
+    expect(auth).toBe('Bearer sk-ok')
+  })
+
+  it('cannot reach anything: unreachable, so the caller can still save with a warning', async () => {
+    const { fetch } = fakeFetch({
+      'http://127.0.0.1:11434/v1/models': 'network',
+      'http://127.0.0.1:11434/models': 'network'
+    })
+    const result = await probeEndpoint({ baseUrl: 'http://127.0.0.1:11434/v1', fetchImpl: fetch })
+    expect(result).toMatchObject({ ok: false, reachable: false })
+    expect(result.message).toContain('Không kết nối được')
+  })
+
+  it('reads model names from an Ollama-style or a Gemini-style list too', async () => {
+    const { fetch } = fakeFetch({
+      'https://g.example.com/v1beta/openai/models': () =>
+        json({ data: [{ id: 'models/gemini-2.5-pro' }] }),
+      'https://g.example.com/v1beta/openai/chat/completions': () => json({})
+    })
+    const result = await probeEndpoint({
+      baseUrl: 'https://g.example.com/v1beta/openai/',
+      fetchImpl: fetch
+    })
+    expect(result.models).toEqual(['gemini-2.5-pro'])
+  })
+})

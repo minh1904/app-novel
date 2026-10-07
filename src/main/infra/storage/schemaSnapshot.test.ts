@@ -59,7 +59,7 @@ describe('library index schema', () => {
   })
 
   it('has one fixture per migration and a stable application id', () => {
-    expect(librarySchema.migrations.map((m) => m.version)).toEqual([1, 2, 3, 4, 5])
+    expect(librarySchema.migrations.map((m) => m.version)).toEqual([1, 2, 3, 4, 5, 6])
     expect(LIBRARY_APPLICATION_ID).toBe(0x4d49524c)
   })
 })

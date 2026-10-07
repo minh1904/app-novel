@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, type JSX } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
 import { ArrowUpIcon } from '@solar-icons/react/linear/arrow-up'
 import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
@@ -11,6 +11,7 @@ import {
   type ChatMode
 } from '../../../../shared/contracts/aiChat'
 import { ModelSelectionMenu } from '../models/ModelSelectionMenu'
+import { openConnectionSettings } from '../settings/openConnectionSettings'
 import type { AiChatController, ChatSendSnapshot } from './useAiChat'
 
 /**
@@ -45,6 +46,19 @@ export function AiComposer({
   snapshot: ChatSendSnapshot
 }): JSX.Element {
   const [draft, setDraft] = useState('')
+  const [modelMenuOpen, setModelMenuOpen] = useState(false)
+
+  // Ctrl+Shift+M opens the model menu while the panel is open (Hermes's composer.modelPicker).
+  useEffect(() => {
+    function onKey(event: KeyboardEvent): void {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'm') {
+        event.preventDefault()
+        setModelMenuOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   const [confirmedTruncationKey, setConfirmedTruncationKey] = useState<string | null>(null)
   const field = useRef<HTMLTextAreaElement>(null)
   const context: ChatContextBlock[] = snapshot.context
@@ -65,7 +79,8 @@ export function AiComposer({
     [context]
   )
   const truncationKey = useMemo(
-    () => cutBlocks.map((block) => block.label + '\0' + block.detail + '\0' + block.text).join('\0'),
+    () =>
+      cutBlocks.map((block) => block.label + '\0' + block.detail + '\0' + block.text).join('\0'),
     [cutBlocks]
   )
   const truncated = truncationKey !== ''
@@ -157,6 +172,13 @@ export function AiComposer({
             onSelect={chat.selectModel}
             onSelectThinking={(selection, choice) => void chat.setThinking(selection, choice)}
             onOpen={chat.refreshConnections}
+            open={modelMenuOpen}
+            onOpenChange={setModelMenuOpen}
+            overridesMain={chat.overridesMain}
+            onUseDefault={chat.useDefaultModel}
+            onRefresh={chat.refreshConnections}
+            onAddCustom={chat.addCustomModel}
+            onOpenSettings={openConnectionSettings}
           />
 
           <span className="ml-auto flex shrink-0 items-center gap-0.5">

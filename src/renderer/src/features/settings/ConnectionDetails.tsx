@@ -1,0 +1,215 @@
+import { useState, type JSX } from 'react'
+import { TrashBinTrashIcon } from '@solar-icons/react/linear/trash-bin-trash'
+import {
+  CONNECTION_PRESETS,
+  SHARED_QUOTA_PROVIDERS,
+  type ConnectionView
+} from '../../../../shared/contracts/aiConnections'
+import { Badge } from '../../components/Badge'
+import { keyBadge } from './connectionStatus'
+import { Button } from '../../components/Button'
+import { SettingRow } from '../../components/Setting'
+import { Switch } from '../../components/Switch'
+import { TextField } from '../../components/TextField'
+import { useConnectionStore, emptyTest } from '../../stores/connectionStore'
+import { notify } from '../../stores/notificationStore'
+import { ModelEntries } from '../models/ModelEntries'
+
+/**
+ * Phần thân của một kết nối trong Cài đặt: bật/tắt, tên, địa chỉ, các khóa, các mục model và nút kiểm tra.
+ * Thẻ Khóa API, dòng Endpoint tùy chỉnh và mục Trên máy cùng dùng phần này.
+ */
+export function ConnectionDetails({
+  connection,
+  now,
+  showAddress = true
+}: {
+  connection: ConnectionView
+  now: number
+  /** Thẻ provider đã biết ẩn địa chỉ: người dùng hiếm khi cần đổi nó. */
+  showAddress?: boolean
+}): JSX.Element {
+  const store = useConnectionStore()
+  const test = store.tests[connection.id] ?? emptyTest
+  const [name, setName] = useState(connection.name)
+  const [baseUrl, setBaseUrl] = useState(connection.baseUrl)
+  const [secret, setSecret] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [probing, setProbing] = useState(false)
+
+  const preset = CONNECTION_PRESETS.find((item) => item.providerId === connection.providerId)
+  const sharedQuota =
+    connection.providerId !== null && SHARED_QUOTA_PROVIDERS.includes(connection.providerId)
+  const local = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(connection.baseUrl)
+  const keyError = test.error?.field === 'key' ? test.error.message : undefined
+
+  async function submitKey(): Promise<void> {
+    const value = secret.trim()
+    if (value === '' || adding) return
+    setAdding(true)
+    const okay = await store.addKey(connection.id, value)
+    setAdding(false)
+    if (okay) setSecret('')
+  }
+
+  /** Kiểm hai bước (design D5); đổi sang base URL đã giải khi khác địa chỉ đang lưu. */
+  async function check(): Promise<void> {
+    setProbing(true)
+    const result = await store.probe({ baseUrl: connection.baseUrl, connectionId: connection.id })
+    setProbing(false)
+    if (!result.ok) {
+      notify({ kind: 'error', title: 'Không kiểm tra được', message: result.message })
+      return
+    }
+    const probe = result.value
+    if (probe.ok && probe.resolvedBaseUrl && probe.resolvedBaseUrl !== connection.baseUrl) {
+      await store.update(connection.id, { baseUrl: probe.resolvedBaseUrl })
+      setBaseUrl(probe.resolvedBaseUrl)
+    }
+    if (probe.ok) {
+      notify({ kind: 'success', title: connection.name, message: probe.message })
+      await store.test(connection.id)
+    } else {
+      notify({
+        kind: probe.reachable ? 'warning' : 'error',
+        title: connection.name,
+        message: probe.message
+      })
+    }
+  }
+
+  return (
+    <div className="flex flex-col">
+      <SettingRow title="Bật kết nối" hint="Tắt thì kết nối không xuất hiện trong menu model.">
+        <Switch
+          checked={connection.enabled}
+          onCheckedChange={(checked) => void store.update(connection.id, { enabled: checked })}
+          aria-label={connection.enabled ? 'Tắt kết nối' : 'Bật kết nối'}
+        />
+      </SettingRow>
+
+      <SettingRow title="Tên kết nối">
+        <TextField
+          label="Tên kết nối"
+          className="w-full [&>label]:sr-only"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          onBlur={() =>
+            name.trim() !== connection.name &&
+            void store.update(connection.id, { name: name.trim() })
+          }
+        />
+      </SettingRow>
+
+      {showAddress && (
+        <SettingRow title="Địa chỉ (URL)" hint={preset?.hint}>
+          <TextField
+            label="Địa chỉ (URL)"
+            className="w-full font-mono [&>label]:sr-only"
+            value={baseUrl}
+            onChange={(event) => setBaseUrl(event.target.value)}
+            onBlur={() =>
+              baseUrl.trim() !== connection.baseUrl &&
+              void store.update(connection.id, { baseUrl: baseUrl.trim() })
+            }
+          />
+        </SettingRow>
+      )}
+
+      <SettingRow
+        wide
+        title="Khóa API"
+        hint={
+          connection.keys.length === 0
+            ? local
+              ? 'Chưa có khóa nào. Endpoint chạy trên máy bạn thường không cần khóa.'
+              : 'Chưa có khóa nào.'
+            : connection.keys.length > 1
+              ? 'Dùng cạn khóa trên rồi mới sang khóa dưới.' +
+                (sharedQuota
+                  ? ' Khóa cùng một project Google dùng chung hạn mức, nên khóa thứ hai nên lấy từ project khác.'
+                  : '')
+              : undefined
+        }
+        below={
+          <div className="flex flex-col gap-1.5">
+            {connection.keys.map((key) => {
+              const badge = keyBadge(key, now)
+              return (
+                <div
+                  key={key.id}
+                  className="flex flex-wrap items-center gap-2 rounded-control bg-control px-2.5 py-1"
+                >
+                  <span className="font-mono text-ui-xs">••••{key.tail}</span>
+                  <Badge tone={badge.tone}>{badge.label}</Badge>
+                  <Button
+                    variant="ghost-muted"
+                    size="icon"
+                    className="ml-auto"
+                    aria-label={'Xóa khóa …' + key.tail}
+                    onClick={() => void store.removeKey(connection.id, key.id)}
+                  >
+                    <TrashBinTrashIcon size={13} />
+                  </Button>
+                </div>
+              )
+            })}
+            <div className="flex items-start gap-2">
+              <TextField
+                label="Thêm khóa"
+                type="password"
+                className="min-w-0 flex-1 [&>label]:sr-only"
+                value={secret}
+                error={keyError}
+                placeholder="Dán khóa rồi nhấn Enter"
+                onChange={(event) => setSecret(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    void submitKey()
+                  }
+                }}
+              />
+              <Button
+                variant="outline"
+                loading={adding}
+                disabled={secret.trim() === ''}
+                onClick={() => void submitKey()}
+              >
+                Thêm
+              </Button>
+            </div>
+          </div>
+        }
+      />
+
+      <div className="py-3">
+        <ModelEntries
+          connection={connection}
+          test={test}
+          actions={store.entries}
+          onFetchModels={() => void store.test(connection.id)}
+        />
+      </div>
+
+      <SettingRow
+        title="Kiểm tra kết nối"
+        hint={
+          connection.checkedAt === null
+            ? 'Chưa kiểm tra lần nào.'
+            : 'Kiểm tra gần nhất: ' + new Date(connection.checkedAt).toLocaleString('vi-VN')
+        }
+      >
+        <Button variant="outline" loading={probing || test.running} onClick={() => void check()}>
+          Kiểm tra
+        </Button>
+      </SettingRow>
+
+      <SettingRow title="Xóa kết nối" hint="Xóa cả khóa và các mục model của kết nối này.">
+        <Button variant="destructive" onClick={() => void store.remove(connection.id)}>
+          Xóa
+        </Button>
+      </SettingRow>
+    </div>
+  )
+}

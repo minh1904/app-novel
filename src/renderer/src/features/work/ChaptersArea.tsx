@@ -387,7 +387,7 @@ function AddChapterRow({
 
   return (
     <form
-      className="sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-popover px-3 py-2"
+      className="sticky top-0 z-(--z-raised) flex items-center gap-2 border-b border-line bg-popover px-3 py-2"
       onSubmit={(event) => {
         event.preventDefault()
         void submit()

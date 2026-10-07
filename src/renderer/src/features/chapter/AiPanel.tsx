@@ -17,6 +17,7 @@ import { buildChatContext, rangeLabel, type ContextScope } from './chatContext'
 import { revealStep, type TurnView } from './chatTurns'
 import { useAiChat, type ChatEditor } from './useAiChat'
 import { useUiStore } from '../../stores/uiStore'
+import { useConnectionStore } from '../../stores/connectionStore'
 
 /**
  * Asking AI about the stretch being worked on. A real third column next to the two panes (it never
@@ -120,6 +121,20 @@ export function AiPanel({
     scope,
     // The send action belongs to a turn, not to the chapter or the panel.
   })
+
+  // The first fallback of Settings that is not the model in use: what "Thử bằng …" on a failed turn offers.
+  const fallbacks = useConnectionStore((state) => state.preferences?.fallbacks)
+  const retryTarget = ((): { selection: { connectionId: string; entryId: string }; label: string } | null => {
+    for (const ref of fallbacks ?? []) {
+      if (ref.entryId === chat.selection?.entryId) continue
+      const connection = chat.usable.find((item) => item.id === ref.connectionId)
+      const entry = connection?.models.find((item) => item.id === ref.entryId)
+      if (connection && entry) {
+        return { selection: ref, label: connection.name + ' · ' + entry.name }
+      }
+    }
+    return null
+  })()
 
   const reloadQueue = useCallback(async () => {
     const [listed, counts] = await Promise.all([
@@ -246,7 +261,7 @@ export function AiPanel({
         role="separator"
         aria-orientation="vertical"
         title="Kéo để đổi bề rộng"
-        className="absolute top-0 left-0 z-10 flex h-full w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-focus/30"
+        className="absolute top-0 left-0 z-(--z-raised) flex h-full w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-focus/30"
         onPointerDown={(event) => {
           event.preventDefault()
           const pointerId = event.pointerId
@@ -366,9 +381,9 @@ export function AiPanel({
                         {proposal.origin === 'chat' ? 'Chat' : 'Dịch chương'} · {partStatusLabel[part.status]}
                       </summary>
                       <p className="mt-2 text-ink-muted">Chữ trước</p>
-                      <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.beforeText}</pre>
+                      <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.beforeText}</pre>
                       <p className="mt-2 text-ink-muted">Bản đề xuất</p>
-                      <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.afterText}</pre>
+                      <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.afterText}</pre>
                       <div className="mt-2 flex gap-1">
                         {part.baseFrom !== null && part.baseTo !== null &&
                           <Button size="sm" variant="outline" onClick={() => showInEditor(part)}>
@@ -445,6 +460,17 @@ export function AiPanel({
               targetChapterExists={!isOtherChapter || other !== undefined}
               onCancel={chat.cancel}
               onRetry={(question) => void chat.send(question, turn.mode)}
+              retryWith={
+                turn.status === 'error' && retryTarget
+                  ? {
+                      label: retryTarget.label,
+                      onClick: () => {
+                        chat.selectModel(retryTarget.selection)
+                        void chat.send(turn.question, turn.mode)
+                      }
+                    }
+                  : undefined
+              }
               onApply={(applied) => void chat.apply(applied)}
               onShowInEditor={(shown) => {
                 const part = partOfTurn(shown)

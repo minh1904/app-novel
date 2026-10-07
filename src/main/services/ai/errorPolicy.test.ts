@@ -86,3 +86,18 @@ describe('describeRefusals', () => {
     expect(text).toContain('1 đoạn bị bộ lọc trích dẫn chặn (không phải vấn đề nội dung)')
   })
 })
+
+describe('fallback offer for a stopped translation (hermes-settings-modal 4.6)', () => {
+  it('marks failures another model could get past, and nothing else', async () => {
+    const { withPolicy } = await import('./errorPolicy')
+    const failure = (kind: Parameters<typeof withPolicy>[0]['kind']): boolean | undefined =>
+      withPolicy({ kind, message: 'x', recoverAt: null }).fallback
+    expect(failure('quota')).toBe(true)
+    expect(failure('rate_limited')).toBe(true)
+    expect(failure('timeout')).toBe(true)
+    expect(failure('auth')).toBe(false)
+    expect(failure('refused')).toBe(false)
+    expect(failure('invalid_request')).toBe(false)
+    expect(failure('cancelled')).toBe(false)
+  })
+})

@@ -2,16 +2,46 @@ import { create } from 'zustand'
 import type { WorkspaceState, WorkspaceTab } from '../../../shared/contracts/workspace'
 import type { LibrarySection } from '../features/library/LibrarySidebar'
 import type { LeaveGuardRegistry } from '../features/editor/leaveGuard'
+import {
+  DEFAULT_SETTINGS_LOCATION,
+  normalizeLocation,
+  type SettingsLocation
+} from '../features/settings/settingsNav'
 import { registerStoreReset } from './resetStores'
 
 export type Theme = 'light' | 'dark'
+/** What the person picked in Settings › Giao diện; `system` follows Windows. */
+export type ThemePreference = Theme | 'system'
+
+const THEME_KEY = 'mira.theme'
+
+/** A per-device convenience, so storage that throws or is empty means "follow the system". */
+function readThemePreference(): ThemePreference {
+  try {
+    const value = typeof localStorage === 'undefined' ? null : localStorage.getItem(THEME_KEY)
+    return value === 'light' || value === 'dark' || value === 'system' ? value : 'system'
+  } catch {
+    return 'system'
+  }
+}
+
+function writeThemePreference(preference: ThemePreference): void {
+  try {
+    localStorage.setItem(THEME_KEY, preference)
+  } catch {
+    // Not saved: the choice still holds until the app closes.
+  }
+}
+
+export function resolveTheme(preference: ThemePreference): Theme {
+  return preference === 'system' ? systemTheme() : preference
+}
 
 export type View =
   | { name: 'library'; section: LibrarySection }
   | { name: 'create' }
   | { name: 'work'; workId: string }
   | { name: 'chapter'; workId: string; chapterId: string }
-  | { name: 'settings' }
 
 function systemTheme(): Theme {
   if (typeof window !== 'undefined' && window.matchMedia) {
@@ -39,9 +69,13 @@ export interface UiState {
   activeWorkId: string | null
   workspaceReady: boolean
   workspaceNotice: string | null
-  beforeSettings: View | null
+  /** Where the Settings modal is open, or `null` when it is closed. It sits over the view, not in place of it. */
+  settings: SettingsLocation | null
+  /** The onboarding card was asked for (model menu "Thêm nhà cung cấp"); it also opens by itself when there is no connection. */
+  onboardingOpen: boolean
   sidebarOpen: boolean
   theme: Theme
+  themePreference: ThemePreference
   appVersion: string
   leaveGuardRegistry: LeaveGuardRegistry | null
 
@@ -52,11 +86,15 @@ export interface UiState {
   setWorkArea(workId: string, areaId: string): void
   restoreWorkspace(state: WorkspaceState, notices: string[]): void
   setWorkspaceNotice(notice: string | null): void
-  openSettings(): Promise<boolean>
-  closeSettings(): Promise<boolean>
+  openSettings(location?: SettingsLocation): void
+  closeSettings(): void
+  setOnboardingOpen(open: boolean): void
   toggleSidebar(): void
   setSidebarOpen(open: boolean): void
   setTheme(theme: Theme): void
+  setThemePreference(preference: ThemePreference): void
+  /** Follows a Windows light/dark switch while the preference is `system`. */
+  syncSystemTheme(): void
   toggleTheme(): void
   setAppVersion(version: string): void
   reset(): void
@@ -68,9 +106,11 @@ const initialValues = {
   activeWorkId: null as string | null,
   workspaceReady: false,
   workspaceNotice: null as string | null,
-  beforeSettings: null as View | null,
+  settings: null as SettingsLocation | null,
+  onboardingOpen: false,
   sidebarOpen: true,
   theme: 'light' as Theme,
+  themePreference: 'system' as ThemePreference,
   appVersion: '',
   leaveGuardRegistry: null as LeaveGuardRegistry | null
 }
@@ -101,9 +141,12 @@ function saveWorkspace(state: UiState): Promise<void> {
   return pendingSave
 }
 
+const startPreference = readThemePreference()
+
 export const useUiStore = create<UiState>((set, get) => ({
   ...initialValues,
-  theme: systemTheme(),
+  themePreference: startPreference,
+  theme: resolveTheme(startPreference),
 
   setLeaveGuardRegistry: (registry) => set({ leaveGuardRegistry: registry }),
 
@@ -163,17 +206,8 @@ export const useUiStore = create<UiState>((set, get) => ({
       (current.view.name === 'work' || current.view.name === 'chapter') &&
       current.view.workId === workId
     const fallback = wasVisible ? tabs[Math.min(index, tabs.length - 1)] : undefined
-    const beforeSettings =
-      current.beforeSettings &&
-      (current.beforeSettings.name === 'work' || current.beforeSettings.name === 'chapter') &&
-      current.beforeSettings.workId === workId
-        ? tabs[Math.min(index, tabs.length - 1)]
-          ? viewOf(tabs[Math.min(index, tabs.length - 1)]!)
-          : ({ name: 'library', section: 'all' } as View)
-        : current.beforeSettings
     set({
       tabs,
-      beforeSettings,
       activeWorkId:
         current.activeWorkId === workId
           ? (fallback?.workId ?? tabs[0]?.workId ?? null)
@@ -207,27 +241,31 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   setWorkspaceNotice: (workspaceNotice) => set({ workspaceNotice }),
 
-  openSettings: async () => {
-    const { view } = get()
-    if (view.name === 'settings') return true
-    set({ beforeSettings: view, view: { name: 'settings' } })
-    return true
-  },
-  closeSettings: async () => {
-    const { beforeSettings } = get()
-    set({ beforeSettings: null, view: beforeSettings ?? { name: 'library', section: 'all' } })
-    return true
-  },
+  openSettings: (location) =>
+    set({ settings: normalizeLocation(location ?? get().settings ?? DEFAULT_SETTINGS_LOCATION) }),
+  closeSettings: () => set({ settings: null }),
+  setOnboardingOpen: (onboardingOpen) => set({ onboardingOpen }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setTheme: (theme) => {
     applyThemeEffect(theme)
     set({ theme })
   },
-  toggleTheme: () => {
-    const theme: Theme = get().theme === 'dark' ? 'light' : 'dark'
+  setThemePreference: (themePreference) => {
+    writeThemePreference(themePreference)
+    const theme = resolveTheme(themePreference)
+    applyThemeEffect(theme)
+    set({ themePreference, theme })
+  },
+  syncSystemTheme: () => {
+    if (get().themePreference !== 'system') return
+    const theme = systemTheme()
+    if (theme === get().theme) return
     applyThemeEffect(theme)
     set({ theme })
+  },
+  toggleTheme: () => {
+    get().setThemePreference(get().theme === 'dark' ? 'light' : 'dark')
   },
   setAppVersion: (appVersion) => set({ appVersion }),
   reset: () => {

@@ -13,7 +13,10 @@ function parseSafeMarkdown(markdown: string): Block[] {
   let index = 0
   while (index < lines.length) {
     const line = lines[index]
-    if (!line.trim()) { index++; continue }
+    if (!line.trim()) {
+      index++
+      continue
+    }
     const fence = /^\s*```([^`]*)$/.exec(line)
     if (fence) {
       const code: string[] = []
@@ -55,9 +58,14 @@ function parseSafeMarkdown(markdown: string): Block[] {
       continue
     }
     const paragraph: string[] = []
-    while (index < lines.length && lines[index].trim() &&
-      !/^\s*```/.test(lines[index]) && !/^#{1,6}\s+/.test(lines[index]) &&
-      !/^\s*(?:[-*+]|\d+\.)\s+/.test(lines[index]) && !/^>\s?/.test(lines[index])) {
+    while (
+      index < lines.length &&
+      lines[index].trim() &&
+      !/^\s*```/.test(lines[index]) &&
+      !/^#{1,6}\s+/.test(lines[index]) &&
+      !/^\s*(?:[-*+]|\d+\.)\s+/.test(lines[index]) &&
+      !/^>\s?/.test(lines[index])
+    ) {
       paragraph.push(lines[index++])
     }
     if (paragraph.length === 0) paragraph.push(lines[index++])
@@ -70,13 +78,17 @@ function safeHref(raw: string): string | null {
   try {
     const url = new URL(raw)
     return url.protocol === 'https:' || url.protocol === 'http:' || url.protocol === 'mailto:'
-      ? url.href : null
-  } catch { return null }
+      ? url.href
+      : null
+  } catch {
+    return null
+  }
 }
 
 function inline(text: string): ReactNode[] {
   const result: ReactNode[] = []
-  const token = /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]+)\]\(([^)]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*/g
+  const token =
+    /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]+)\]\(([^)]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*/g
   let cursor = 0
   for (const match of text.matchAll(token)) {
     if (match.index > cursor) result.push(text.slice(cursor, match.index))
@@ -84,10 +96,27 @@ function inline(text: string): ReactNode[] {
     if (match[1] !== undefined) result.push(<span key={key}>[ảnh bị chặn: {match[1]}]</span>)
     else if (match[3] !== undefined) {
       const href = safeHref(match[4])
-      result.push(href
-        ? <a key={key} href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">{match[3]}</a>
-        : <span key={key}>{match[3]}</span>)
-    } else if (match[5] !== undefined) result.push(<code key={key} className="rounded bg-control px-1">{match[5]}</code>)
+      result.push(
+        href ? (
+          <a
+            key={key}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            {match[3]}
+          </a>
+        ) : (
+          <span key={key}>{match[3]}</span>
+        )
+      )
+    } else if (match[5] !== undefined)
+      result.push(
+        <code key={key} className="rounded bg-control px-1">
+          {match[5]}
+        </code>
+      )
     else if (match[6] !== undefined) result.push(<strong key={key}>{match[6]}</strong>)
     else if (match[7] !== undefined) result.push(<em key={key}>{match[7]}</em>)
     cursor = match.index + match[0].length
@@ -97,22 +126,56 @@ function inline(text: string): ReactNode[] {
 }
 
 export function SafeMarkdown({ text }: { text: string }): JSX.Element {
-  return <div className="space-y-2 text-ui-sm leading-normal text-ink">
-    {parseSafeMarkdown(text).map((block, index) => {
-      if (block.kind === 'code') return <pre key={index} className="overflow-x-auto rounded-control bg-canvas p-2 text-ui-xs whitespace-pre-wrap"><code>{block.text}</code></pre>
-      if (block.kind === 'heading') {
-        const content = inline(block.text)
-        if (block.level === 1) return <h4 key={index} className="text-ui-md font-semibold">{content}</h4>
-        return <h5 key={index} className="text-ui-sm font-semibold">{content}</h5>
-      }
-      if (block.kind === 'list') {
-        const Tag = block.ordered ? 'ol' : 'ul'
-        return <Tag key={index} className={block.ordered ? 'list-decimal pl-5' : 'list-disc pl-5'}>
-          {block.items.map((item, at) => <li key={at}>{inline(item)}</li>)}
-        </Tag>
-      }
-      if (block.kind === 'quote') return <blockquote key={index} className="border-l-2 border-line-strong pl-3 text-ink-muted">{inline(block.text)}</blockquote>
-      return <p key={index} className="whitespace-pre-wrap">{inline(block.text).map((node, at) => <Fragment key={at}>{node}</Fragment>)}</p>
-    })}
-  </div>
+  return (
+    <div className="selectable space-y-2 text-ui-sm leading-normal text-ink">
+      {parseSafeMarkdown(text).map((block, index) => {
+        if (block.kind === 'code')
+          return (
+            <pre
+              key={index}
+              className="overflow-x-auto rounded-control bg-canvas p-2 text-ui-xs whitespace-pre-wrap"
+            >
+              <code>{block.text}</code>
+            </pre>
+          )
+        if (block.kind === 'heading') {
+          const content = inline(block.text)
+          if (block.level === 1)
+            return (
+              <h4 key={index} className="text-ui-md font-semibold">
+                {content}
+              </h4>
+            )
+          return (
+            <h5 key={index} className="text-ui-sm font-semibold">
+              {content}
+            </h5>
+          )
+        }
+        if (block.kind === 'list') {
+          const Tag = block.ordered ? 'ol' : 'ul'
+          return (
+            <Tag key={index} className={block.ordered ? 'list-decimal pl-5' : 'list-disc pl-5'}>
+              {block.items.map((item, at) => (
+                <li key={at}>{inline(item)}</li>
+              ))}
+            </Tag>
+          )
+        }
+        if (block.kind === 'quote')
+          return (
+            <blockquote key={index} className="border-l-2 border-line-strong pl-3 text-ink-muted">
+              {inline(block.text)}
+            </blockquote>
+          )
+        return (
+          <p key={index} className="whitespace-pre-wrap">
+            {inline(block.text).map((node, at) => (
+              <Fragment key={at}>{node}</Fragment>
+            ))}
+          </p>
+        )
+      })}
+    </div>
+  )
 }

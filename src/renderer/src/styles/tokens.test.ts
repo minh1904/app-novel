@@ -44,6 +44,10 @@ describe('design tokens', () => {
     expect(offenders(/\bshadow-\[[^\]]+\]/g)).toEqual([])
   })
 
+  it('stacks surfaces on the z-index ladder, not numbers', () => {
+    expect(offenders(/(?<![\w-])z-(\d+|\[[^\]]+\])/g)).toEqual([])
+  })
+
   it('only reads custom properties that tokens.css defines', () => {
     const defined = new Set([...TOKENS.matchAll(/(--[\w-]+)\s*:/g)].map((match) => match[1]))
     const missing = files.flatMap(({ name, text }) =>
@@ -53,5 +57,25 @@ describe('design tokens', () => {
         .map((property) => name + ': ' + property)
     )
     expect(missing).toEqual([])
+  })
+})
+
+// docs/modules/design-system/hermes-comparison.md: the parts of Hermes's base layer Mira takes, and the
+// one it deliberately does not (story text and answers stay selectable).
+describe('base layer', () => {
+  it('keeps chrome text unselectable but lets story text and answers opt back in', () => {
+    expect(TOKENS).toMatch(/body \{[^}]*user-select: none;/)
+    expect(TOKENS).toMatch(/\.selectable\) \{\s*user-select: text;/)
+  })
+
+  it('has the hover-only scrollbar, the shared input frame and the glass fallback', () => {
+    expect(TOKENS).toContain('*:hover::-webkit-scrollbar-thumb')
+    expect(TOKENS).toContain('.input-chrome:focus-within')
+    expect(TOKENS).toContain('@media (prefers-reduced-transparency: reduce)')
+  })
+
+  it('takes the nous accents for both themes', () => {
+    expect(TOKENS).toMatch(/html\[data-theme='light'\] \{[^}]*--seed-accent: #0053fd;/)
+    expect(TOKENS).toMatch(/html\[data-theme='dark'\] \{[^}]*--seed-accent: #4a84fe;/)
   })
 })

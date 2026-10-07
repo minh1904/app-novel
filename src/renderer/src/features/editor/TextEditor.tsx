@@ -137,8 +137,13 @@ export interface TextEditorHandle {
    * Same staleness rules as `applyProposal` — a proposal whose anchor moved on is refused here too,
    * because showing a diff against text the question was never about is its own kind of wrong.
    */
-  reviewProposal(range: TargetRange, replacement: string,
-    onAccept: () => void, onDeny: () => void, label?: string): 'reviewing' | 'stale'
+  reviewProposal(
+    range: TargetRange,
+    replacement: string,
+    onAccept: () => void,
+    onDeny: () => void,
+    label?: string
+  ): 'reviewing' | 'stale'
   /** Drops an unfinished review, leaving whatever the translator has already accepted. */
   endReview(): void
 }
@@ -242,15 +247,24 @@ export function TextEditor({
           from = current.indexOf(range.text)
           to = from + range.text.length
         }
-        editor.dispatch(review.start({ from, to, before: range.text,
-          after: replacement, label, onAccept, onDeny }))
+        editor.dispatch(
+          review.start({
+            from,
+            to,
+            before: range.text,
+            after: replacement,
+            label,
+            onAccept,
+            onDeny
+          })
+        )
         editor.dispatch({ effects: EditorView.scrollIntoView(to) })
         return 'reviewing'
       },
       endReview: () => {
         const editor = view.current
         if (editor && review.isActive(editor.state)) editor.dispatch(review.stop())
-      },
+      }
     }),
     [save]
   )
@@ -264,6 +278,8 @@ export function TextEditor({
         extensions: [
           keymap.of(bindings),
           EditorView.lineWrapping,
+          // The page turns text selection off for the app chrome (tokens.css); story text keeps it.
+          EditorView.editorAttributes.of({ class: 'selectable' }),
           EditorState.allowMultipleSelections.of(false),
           EditorView.contentAttributes.of({
             lang,

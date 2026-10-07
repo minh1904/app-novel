@@ -428,7 +428,7 @@ function WorkTable({
       <div
         className={cx(
           columns,
-          'sticky top-0 z-10 h-7 border-b border-line bg-canvas px-2.5 text-ui-xs text-ink-muted'
+          'sticky top-0 z-(--z-raised) h-7 border-b border-line bg-canvas px-2.5 text-ui-xs text-ink-muted'
         )}
         aria-hidden="true"
       >

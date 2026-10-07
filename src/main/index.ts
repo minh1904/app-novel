@@ -1,17 +1,34 @@
 import {
   app,
   BrowserWindow,
+  shell,
   dialog,
   ipcMain,
   Menu,
   nativeTheme,
   type IpcMainInvokeEvent
 } from 'electron'
+import { release } from 'node:os'
 import { join } from 'node:path'
 import icon from '../../resources/icon.png?asset'
-import type { AppInfo } from '../shared/contracts/desktop-api'
+import { GLASS_QUERY_PARAM } from '../shared/contracts/appearance'
+import { isAllowedExternalLink } from '../shared/contracts/aiProviders'
+import type { AppInfo, ChromeTheme } from '../shared/contracts/desktop-api'
+import {
+  appearanceState,
+  isGlassSupported,
+  readAppearance,
+  windowSurfaceOptions
+} from './electron/appearance'
+import { createAppearanceHandlers } from './electron/appearanceIpc'
 import { registerLibraryHandlers } from './electron/registerIpc'
-import { CHROME_COLORS, OVERLAY_TITLE_BAR, TOP_BAR_HEIGHT } from './electron/titleBar'
+import {
+  BOOT_BACKGROUND,
+  CHROME_COLORS,
+  OVERLAY_TITLE_BAR,
+  TOP_BAR_HEIGHT
+} from './electron/titleBar'
+import { pinZoom } from './electron/zoom'
 import { LibraryStore } from './services/library/library'
 
 app.enableSandbox()
@@ -29,6 +46,18 @@ const MENU_IS_IN_THE_WINDOW = process.platform !== 'darwin'
 let mainWindow: BrowserWindow | null = null
 let library: LibraryStore | null = null
 
+/** Where the library and appearance.json live; `MIRA_DATA_DIR` points tests and the Lab elsewhere. */
+const dataDir = (): string => process.env.MIRA_DATA_DIR ?? app.getPath('userData')
+
+/** Acrylic needs Windows 11 build 22621; decided once, since the OS does not change under a running app. */
+const GLASS_SUPPORTED = isGlassSupported(process.platform, release())
+
+/**
+ * The theme the page last reported, so turning glass off restores the right solid colour. A new window
+ * starts in the system theme, as the page does (see useTheme).
+ */
+let chromeTheme: ChromeTheme = 'dark'
+
 /** Only the top frame of our own window may call the main process. */
 function isTrustedSender(event: IpcMainInvokeEvent): boolean {
   return (
@@ -39,6 +68,8 @@ function isTrustedSender(event: IpcMainInvokeEvent): boolean {
 }
 
 function createWindow(): void {
+  chromeTheme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
+  const glass = appearanceState(readAppearance(dataDir()), GLASS_SUPPORTED).glass
   const window = new BrowserWindow({
     width: 1320,
     height: 850,
@@ -48,13 +79,15 @@ function createWindow(): void {
     title: 'Mira',
     // The installed exe carries icon.ico, but `pnpm dev` runs electron.exe, whose icon would show.
     icon,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#262626' : '#f1f1f1',
+    // With glass on, Windows draws acrylic behind a clear window (Hermes does not use `transparent`,
+    // which would cost the window its resize border and shadow).
+    ...windowSurfaceOptions(glass, BOOT_BACKGROUND[chromeTheme]),
     // The page starts in the system theme (see useTheme), so the buttons start in it too and are
     // corrected through `app:chrome-theme` if the page then picks the other one.
     ...(OVERLAY_TITLE_BAR && {
       titleBarStyle: 'hidden' as const,
       titleBarOverlay: {
-        ...CHROME_COLORS[nativeTheme.shouldUseDarkColors ? 'dark' : 'light'],
+        ...CHROME_COLORS[chromeTheme],
         height: TOP_BAR_HEIGHT
       }
     }),
@@ -67,6 +100,7 @@ function createWindow(): void {
   })
 
   mainWindow = window
+  pinZoom(window.webContents)
   window.once('ready-to-show', () => window.show())
   window.on('closed', () => {
     if (mainWindow === window) mainWindow = null
@@ -100,10 +134,15 @@ function createWindow(): void {
     })
   }
 
+  // The page reads this before its first paint, so a window that opens with glass never shows a solid
+  // frame first (renderer index.html).
+  const query: Record<string, string> = glass ? { [GLASS_QUERY_PARAM]: '1' } : {}
   if (rendererUrl) {
-    void window.loadURL(rendererUrl)
+    const url = new URL(rendererUrl)
+    for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value)
+    void window.loadURL(url.toString())
   } else {
-    void window.loadFile(join(__dirname, '../renderer/index.html'))
+    void window.loadFile(join(__dirname, '../renderer/index.html'), { query })
   }
 }
 
@@ -111,7 +150,7 @@ app.whenReady().then(() => {
   if (MENU_IS_IN_THE_WINDOW) Menu.setApplicationMenu(null)
 
   try {
-    library = LibraryStore.open({ dataDir: process.env.MIRA_DATA_DIR ?? app.getPath('userData') })
+    library = LibraryStore.open({ dataDir: dataDir() })
   } catch (error) {
     // Refusing to start is safer than running without storage; the message says what to do.
     dialog.showErrorBox(
@@ -135,6 +174,13 @@ app.whenReady().then(() => {
     }
   })
 
+  // A provider's key page, opened in the browser. Only https links to listed hosts (aiProviders.ts).
+  ipcMain.handle('app:open-external', async (event, url: unknown): Promise<void> => {
+    if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender')
+    if (typeof url !== 'string' || !isAllowedExternalLink(url)) throw new Error('Link not allowed')
+    await shell.openExternal(url)
+  })
+
   ipcMain.handle('app:chrome-theme', (event, theme: unknown): void => {
     if (!isTrustedSender(event)) {
       throw new Error('Untrusted IPC sender')
@@ -142,8 +188,19 @@ app.whenReady().then(() => {
     if (theme !== 'light' && theme !== 'dark') {
       throw new Error('Unknown chrome theme')
     }
+    chromeTheme = theme
     if (OVERLAY_TITLE_BAR) mainWindow?.setTitleBarOverlay(CHROME_COLORS[theme])
   })
+
+  const appearance = createAppearanceHandlers<IpcMainInvokeEvent>({
+    dataDir: dataDir(),
+    supported: GLASS_SUPPORTED,
+    isTrusted: isTrustedSender,
+    getWindow: () => mainWindow,
+    solidBackground: () => BOOT_BACKGROUND[chromeTheme]
+  })
+  ipcMain.handle('app:appearance:get', (event) => appearance.get(event))
+  ipcMain.handle('app:appearance:set', (event, input: unknown) => appearance.set(event, input))
 
   createWindow()
 

@@ -337,7 +337,10 @@ const SentenceRow = memo(function SentenceRow({
   return (
     <li className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-x-4 border-b border-line px-3 py-3 last:border-b-0">
       <span className="pt-0.5 text-right text-ui-xs text-ink-muted">{number}</span>
-      <p lang={sourceLang} className="text-ui-sm leading-normal break-words whitespace-pre-wrap">
+      <p
+        lang={sourceLang}
+        className="selectable text-ui-sm leading-normal break-words whitespace-pre-wrap"
+      >
         {row.sourceText}
       </p>
       <div className="flex min-w-0 flex-col gap-1.5">

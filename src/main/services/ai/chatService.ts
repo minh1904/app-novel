@@ -20,6 +20,8 @@ import { costOfUsage } from './costEstimate'
 import { lookupModel } from '../../infra/providers/modelCatalog'
 import { ProviderError } from '../../infra/providers/types'
 import { describeProviderError, taskErrorPolicy } from './errorPolicy'
+import { fallbackChain, fallbackLine, shouldFallback } from './fallback'
+import type { ModelRef } from '../../../shared/contracts/aiPreferences'
 import { addUsage, toWireUsage, type Usage } from '../../infra/providers/usage'
 
 /**
@@ -46,6 +48,8 @@ export type ChatEmit = (chunk: ChatChunk) => void
  */
 export interface ChatConnections {
   translator(id: string, entryId: string): ConnectionTranslator
+  /** Settings › Model › Dự phòng; absent in tests that do not care, which means no fallbacks. */
+  preferences?(): { fallbacks: ModelRef[] }
 }
 
 export interface ChatServiceOptions {
@@ -66,6 +70,9 @@ export interface ChatServiceOptions {
         usage?: ChatUsage | null
         costUsd?: number | null
         finishReason?: ChatFinishReason | null
+        /** Set when a fallback answered: the model that really did. */
+        provider?: string | null
+        model?: string | null
       }
     ): void
     complete?(
@@ -198,10 +205,17 @@ export class ChatService {
   private async run(
     requestId: string,
     input: ChatSendInput,
-    session: ConnectionTranslator,
+    first: ConnectionTranslator,
     controller: AbortController,
     emit: ChatEmit
   ): Promise<void> {
+    let session = first
+    // The fallbacks of Settings, tried in order when a round fails before any text arrived (design D7 of
+    // change `hermes-settings-modal`). Built once per turn; an entry that cannot be called is passed over.
+    const chain = fallbackChain(
+      { connectionId: first.connection.id, entryId: first.entry.id },
+      this.options.connections.preferences?.().fallbacks ?? []
+    )
     const { now } = this.options
     let partial = false
     // Mỗi vòng đọc là một lời gọi có hóa đơn riêng, nên cộng dồn (`addUsage`) thay vì ghi đè: ghi đè
@@ -227,34 +241,60 @@ export class ChatService {
         const offer = tools !== null && round < MAX_TOOL_ROUNDS ? CHAT_TOOL_DEFINITIONS : undefined
         let calls: Array<{ id: string; name: string; arguments: string }> = []
 
-        for await (const event of session.provider.chat(messages, {
-          signal: controller.signal,
-          tools: offer
-        })) {
-          // Lượt đã bị dọn khỏi sổ (cửa sổ đóng) thì ngừng phát: emit vào một cửa sổ không còn đó là
-          // chỗ sinh ra lỗi "object has been destroyed" khó lần.
-          if (!this.running.has(requestId)) return
-          if (event.kind === 'delta') {
-            partial = true
-            answer += event.text
-            if (
-              this.options.records &&
-              (answer.length - persistedLength >= 1024 || now() - persistedAt >= 1000)
-            ) {
-              this.options.records.update(requestId, input.workId, {
-                answer,
-                status: 'running',
-                tools: toolSteps
-              })
-              persistedLength = answer.length
-              persistedAt = now()
+        for (;;) {
+          try {
+            for await (const event of session.provider.chat(messages, {
+              signal: controller.signal,
+              tools: offer
+            })) {
+              // Lượt đã bị dọn khỏi sổ (cửa sổ đóng) thì ngừng phát: emit vào một cửa sổ không còn đó là
+              // chỗ sinh ra lỗi "object has been destroyed" khó lần.
+              if (!this.running.has(requestId)) return
+              if (event.kind === 'delta') {
+                partial = true
+                answer += event.text
+                if (
+                  this.options.records &&
+                  (answer.length - persistedLength >= 1024 || now() - persistedAt >= 1000)
+                ) {
+                  this.options.records.update(requestId, input.workId, {
+                    answer,
+                    status: 'running',
+                    tools: toolSteps
+                  })
+                  persistedLength = answer.length
+                  persistedAt = now()
+                }
+                emit({ requestId, kind: 'delta', text: event.text })
+              } else {
+                // Mỗi vòng là một lần gọi có hóa đơn riêng, nên cộng dồn thay vì ghi đè.
+                usage = addUsage(usage, event.usage)
+                finishReason = event.finishReason === 'unknown' ? undefined : event.finishReason
+                if (event.kind === 'tool-calls') calls = event.calls
+              }
             }
-            emit({ requestId, kind: 'delta', text: event.text })
-          } else {
-            // Mỗi vòng là một lần gọi có hóa đơn riêng, nên cộng dồn thay vì ghi đè.
-            usage = addUsage(usage, event.usage)
-            finishReason = event.finishReason === 'unknown' ? undefined : event.finishReason
-            if (event.kind === 'tool-calls') calls = event.calls
+            break
+          } catch (error) {
+            // Never mid-answer: a reply that already streamed text is not swapped for another model's.
+            if (partial || controller.signal.aborted || !shouldFallback(error)) throw error
+            const next = this.nextFallback(chain)
+            if (!next) throw error
+            const line = fallbackLine(
+              session.connection.name + ' · ' + session.entry.name,
+              next.connection.name + ' · ' + next.entry.name,
+              error
+            )
+            session = next
+            if (!this.running.has(requestId)) return
+            emit({ requestId, kind: 'tool', name: 'fallback', detail: line })
+            toolSteps.push({ name: 'fallback', detail: line })
+            this.options.records?.update(requestId, input.workId, {
+              answer,
+              status: 'running',
+              tools: toolSteps,
+              provider: session.connection.providerId ?? null,
+              model: session.entry.model
+            })
           }
         }
 
@@ -348,6 +388,19 @@ export class ChatService {
     } finally {
       this.running.delete(requestId)
     }
+  }
+
+  /** The next fallback that can be called now; the ones that cannot (disabled, no key, deleted) are skipped. */
+  private nextFallback(chain: ModelRef[]): ConnectionTranslator | null {
+    while (chain.length > 0) {
+      const ref = chain.shift()!
+      try {
+        return this.options.connections.translator(ref.connectionId, ref.entryId)
+      } catch {
+        // Not callable right now; try the next one.
+      }
+    }
+    return null
   }
 
   private modelInfo(session: ConnectionTranslator): ReturnType<typeof lookupModel> {

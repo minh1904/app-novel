@@ -30,8 +30,8 @@ export function SearchField({
     <div
       data-slot="search-field"
       className={cx(
-        'relative flex min-w-0 items-center rounded-control border border-line bg-control text-ink focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/25',
-        small ? 'h-7' : 'h-(--control-height)',
+        'input-chrome relative flex min-w-0 items-center rounded-control border text-ink',
+        small ? 'h-6' : 'h-(--control-height)',
         className
       )}
     >
@@ -45,7 +45,7 @@ export function SearchField({
         type="search"
         aria-label={label}
         className={cx(
-          'h-full w-full min-w-0 bg-transparent text-ui-sm outline-none placeholder:text-ink-muted [&::-webkit-search-cancel-button]:hidden',
+          'h-full w-full min-w-0 bg-transparent text-ui-xs outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden',
           small ? 'pr-2 pl-7' : 'pr-2.5 pl-8'
         )}
         {...props}
@@ -53,7 +53,7 @@ export function SearchField({
       {shortcut && (
         <kbd
           className={cx(
-            'pointer-events-none rounded-item border border-line px-1.5 font-sans text-ui-xs whitespace-nowrap text-ink-faint',
+            'pointer-events-none rounded-item border border-line px-1.5 font-sans text-ui-2xs whitespace-nowrap text-ink-faint',
             small ? 'mr-1.5' : 'mr-2'
           )}
         >

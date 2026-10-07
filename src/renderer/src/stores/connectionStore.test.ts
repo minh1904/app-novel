@@ -29,6 +29,12 @@ describe('connectionStore', () => {
           addKey: vi.fn(),
           removeKey: vi.fn(),
           test: vi.fn(),
+          preferences: {
+            get: vi.fn().mockResolvedValue({
+              ok: true,
+              value: { main: null, fallbacks: [], onboardingSkipped: false }
+            })
+          },
           models: {
             add: vi.fn(),
             update: vi.fn(),

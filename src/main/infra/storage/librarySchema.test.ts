@@ -169,7 +169,7 @@ describe('library.db v4 → v5', () => {
       frozen_scope: 'day',
       freeze_strikes: 2
     })
-    expect(readPragmas(db).userVersion).toBe(5)
+    expect(readPragmas(db).userVersion).toBe(6)
     db.close()
   })
 
@@ -194,10 +194,10 @@ describe('library.db v4 → v5', () => {
     db.close()
   })
 
-  it('is complete from nothing: a new file has the v5 table and no rows', () => {
+  it('is complete from nothing: a new file has the latest tables and no rows', () => {
     const db = openDatabase(join(tempDir(), 'fresh.db'))
     migrate(db, librarySchema)
-    expect(readPragmas(db).userVersion).toBe(5)
+    expect(readPragmas(db).userVersion).toBe(6)
     expect(db.prepare('SELECT COUNT(*) AS n FROM ai_model').get<{ n: number }>()!.n).toBe(0)
     db.close()
   })
@@ -241,7 +241,39 @@ describe('library.db v4 → v5', () => {
     }
     expect(error).toBeInstanceOf(StorageError)
     expect((error as StorageError).code).toBe('unsupported_version')
-    expect(readPragmas(db).userVersion).toBe(5)
+    expect(readPragmas(db).userVersion).toBe(6)
+    db.close()
+  })
+})
+
+describe('library schema v6', () => {
+  it('files a connection on the Ollama preset address under the ollama provider, and nothing else', () => {
+    const db = openDatabase(join(tempDir(), 'v5.db'))
+    migrate(db, upTo(5))
+    const insert = db.prepare(
+      'INSERT INTO ai_connection (id, name, base_url, enabled, provider_id, ord, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, 1, 1)'
+    )
+    insert.run('ollama', 'Ollama', 'http://127.0.0.1:11434/v1/', null, 0)
+    insert.run('gateway', 'Gateway', 'http://127.0.0.1:8317/v1', null, 1)
+    insert.run('moved', 'Ollama khác', 'http://192.168.1.5:11434/v1', null, 2)
+    insert.run(
+      'gemini',
+      'Gemini',
+      'https://generativelanguage.googleapis.com/v1beta/openai/',
+      'google',
+      3
+    )
+
+    migrate(db, librarySchema)
+    const providers = db
+      .prepare('SELECT id, provider_id FROM ai_connection ORDER BY ord')
+      .all<{ id: string; provider_id: string | null }>()
+    expect(providers).toEqual([
+      { id: 'ollama', provider_id: 'ollama' },
+      { id: 'gateway', provider_id: null },
+      { id: 'moved', provider_id: null },
+      { id: 'gemini', provider_id: 'google' }
+    ])
     db.close()
   })
 })

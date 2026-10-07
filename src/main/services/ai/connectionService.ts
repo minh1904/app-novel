@@ -23,6 +23,7 @@ import {
   insertConnection,
   listConnections,
   patchConnection,
+  readKeyCiphers,
   removeKey,
   reorderModelEntries,
   updateModelEntry,
@@ -31,6 +32,21 @@ import {
   type ModelEntryInput
 } from '../../infra/storage/connections'
 import { StorageError } from '../../infra/storage/errors'
+import {
+  CONNECTION_PRESETS,
+  type EndpointProbeResult,
+  type EnsureWithKeyInput,
+  type ProbeEndpointInput
+} from '../../../shared/contracts/aiConnections'
+import { probeEndpoint } from './endpointProbe'
+import {
+  pruneAiPreferences,
+  readAiPreferences,
+  writeFallbacks,
+  writeMainModel,
+  writeOnboardingSkipped
+} from '../../infra/storage/aiPreferences'
+import type { AiPreferences, MainModel, ModelRef } from '../../../shared/contracts/aiPreferences'
 import type { SecretStore } from '../../infra/storage/secretStore'
 import type { Db } from '../../infra/storage/sqlite'
 import { resolveCompat } from '../../infra/providers/compat'
@@ -146,8 +162,31 @@ export class ConnectionService {
 
   delete(id: string): { connections: ConnectionView[] } {
     deleteConnection(this.options.db, id)
+    pruneAiPreferences(this.options.db)
     this.registry.forget(id)
     return this.list()
+  }
+
+  /** Settings › Model: the main model, the fallbacks, and whether onboarding was put off. */
+  preferences(): AiPreferences {
+    return readAiPreferences(this.options.db)
+  }
+
+  setMainModel(main: MainModel | null): AiPreferences {
+    if (main) findModelEntry(this.options.db, main.entryId)
+    writeMainModel(this.options.db, main)
+    return this.preferences()
+  }
+
+  setFallbacks(fallbacks: ModelRef[]): AiPreferences {
+    for (const ref of fallbacks) findModelEntry(this.options.db, ref.entryId)
+    writeFallbacks(this.options.db, fallbacks)
+    return this.preferences()
+  }
+
+  setOnboardingSkipped(skipped: boolean): AiPreferences {
+    writeOnboardingSkipped(this.options.db, skipped)
+    return this.preferences()
   }
 
   /** Lần duy nhất khóa đi vào; trả về view đã che. */
@@ -156,6 +195,46 @@ export class ConnectionService {
     getConnection(db, id)
     const sealed = await secrets.seal(secret)
     return toView(addKey(db, id, newId(), sealed, now()))
+  }
+
+  /**
+   * A key pasted into a provider card: the connection is made from the preset if there is none yet, then the
+   * key is added. One call, so a card never ends up with a connection and no key.
+   */
+  async ensureWithKey({ providerId, secret }: EnsureWithKeyInput): Promise<ConnectionView> {
+    const { db, now, newId } = this.options
+    const preset = CONNECTION_PRESETS.find((item) => item.providerId === providerId)
+    if (!preset)
+      throw new StorageError('validation', 'Nhà cung cấp chưa được hỗ trợ: ' + providerId)
+    const existing = listConnections(db).find((item) => item.providerId === providerId)
+    const connection =
+      existing ??
+      insertConnection(
+        db,
+        newId(),
+        { name: preset.label, baseUrl: preset.baseUrl, providerId },
+        now()
+      )
+    return this.addApiKey(connection.id, secret)
+  }
+
+  /**
+   * Checks an address with a key typed now or the first usable key of a connection (design D5 of change
+   * `hermes-settings-modal`). Saves nothing; the caller decides whether to keep `resolvedBaseUrl`.
+   */
+  async probe(input: ProbeEndpointInput): Promise<EndpointProbeResult> {
+    const { db, secrets, fetchImpl } = this.options
+    let apiKey = input.secret || undefined
+    if (!apiKey && input.connectionId) {
+      const usable = readKeyCiphers(db, input.connectionId).find((key) => key.state === 'ok')
+      if (usable) apiKey = (await secrets.open(usable.cipher)).value
+    }
+    return probeEndpoint({
+      baseUrl: input.baseUrl,
+      apiKey,
+      model: input.model,
+      fetchImpl: fetchImpl ?? fetch
+    })
   }
 
   removeApiKey(id: string, keyId: string): ConnectionView {
@@ -214,6 +293,7 @@ export class ConnectionService {
 
   deleteEntry(entryId: string): ConnectionView {
     const view = deleteModelEntry(this.options.db, entryId)
+    pruneAiPreferences(this.options.db)
     this.registry.forgetEntry(entryId)
     return toView(view)
   }

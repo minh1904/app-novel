@@ -113,7 +113,7 @@ export const CONNECTION_PRESETS: ConnectionPreset[] = [
     id: 'ollama',
     label: 'Ollama (máy này)',
     baseUrl: 'http://127.0.0.1:11434/v1',
-    providerId: null,
+    providerId: 'ollama',
     hint: 'Chạy trên máy bạn nên thường không cần khóa.'
   },
   {
@@ -183,6 +183,59 @@ export const addConnectionKeySchema = v.strictObject({
 })
 
 export const removeConnectionKeySchema = v.strictObject({ id: connectionId, keyId })
+
+/**
+ * The two-step check of an endpoint (change `hermes-settings-modal`, design D5). `resolvedBaseUrl` is the
+ * variant that listed models (with or without `/v1`), the one to keep.
+ */
+export interface EndpointProbeResult {
+  ok: boolean
+  /** `false` only when nothing answered at all; a wrong key or a web page is still "reachable". */
+  reachable: boolean
+  keyRejected: boolean
+  resolvedBaseUrl: string | null
+  models: string[]
+  /** Whether the one-token chat call was made and answered. */
+  routeChecked: boolean
+  /** One sentence for the person, in Vietnamese. */
+  message: string
+}
+
+/**
+ * Probe an address before or after saving it. The key is either typed now (`secret`, never stored by this
+ * call) or the first key of an existing connection.
+ */
+export const probeEndpointSchema = v.strictObject({
+  baseUrl,
+  secret: v.optional(
+    v.pipe(
+      v.string('Khóa API phải là chữ.'),
+      v.trim(),
+      v.maxLength(API_KEY_MAX, 'Khóa API quá dài.')
+    )
+  ),
+  connectionId: v.optional(connectionId),
+  model: v.optional(entryModelSchema)
+})
+export type ProbeEndpointInput = v.InferOutput<typeof probeEndpointSchema>
+
+/**
+ * Paste a key into a provider card that has no connection yet: the connection is created from the preset
+ * and the key added, in one call, so a card never ends up half-made.
+ */
+export const ensureWithKeySchema = v.strictObject({
+  providerId: v.pipe(
+    v.string('Nhà cung cấp phải là chữ.'),
+    v.maxLength(60, 'Tên nhà cung cấp quá dài.')
+  ),
+  secret: v.pipe(
+    v.string('Khóa API phải là chữ.'),
+    v.trim(),
+    v.minLength(1, 'Khóa API không được để trống.'),
+    v.maxLength(API_KEY_MAX, 'Khóa API quá dài.')
+  )
+})
+export type EnsureWithKeyInput = v.InferOutput<typeof ensureWithKeySchema>
 
 /** Thêm một hay nhiều mục model vào cuối danh sách của kết nối. Mỗi mục mới có cài đặt trống. */
 export const addModelEntriesSchema = v.strictObject({

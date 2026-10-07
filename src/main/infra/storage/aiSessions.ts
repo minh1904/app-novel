@@ -1,4 +1,10 @@
-import type { ChatContextBlock, ChatFinishReason, ChatMode, ChatRange, ChatUsage } from '../../../shared/contracts/aiChat'
+import type {
+  ChatContextBlock,
+  ChatFinishReason,
+  ChatMode,
+  ChatRange,
+  ChatUsage
+} from '../../../shared/contracts/aiChat'
 import { StorageError } from './errors'
 import type { Db } from './sqlite'
 
@@ -85,7 +91,7 @@ const turnOf = (row: TurnRow): StoredTurn => ({
   answer: row.answer,
   status: row.status,
   context: JSON.parse(row.context_json) as ChatContextBlock[],
-  range: row.target_range_json === null ? null : JSON.parse(row.target_range_json) as ChatRange,
+  range: row.target_range_json === null ? null : (JSON.parse(row.target_range_json) as ChatRange),
   tools: JSON.parse(row.tools_json) as StoredTurn['tools'],
   droppedTurns: row.dropped_turns,
   provider: row.provider,
@@ -99,7 +105,10 @@ const turnOf = (row: TurnRow): StoredTurn => ({
 
 export function createAiSession(db: Db, id: string, title: string, now: number): StoredSession {
   db.prepare('INSERT INTO ai_session (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)').run(
-    id, title, now, now
+    id,
+    title,
+    now,
+    now
   )
   return getAiSession(db, id)
 }
@@ -116,15 +125,20 @@ export function listAiSessions(
   limit: number,
   before?: { updatedAt: number; id: string }
 ): StoredSession[] {
-  return db.prepare(`SELECT * FROM ai_session
+  return db
+    .prepare(
+      `SELECT * FROM ai_session
     WHERE (? IS NULL OR updated_at < ? OR (updated_at = ? AND id < ?))
-    ORDER BY updated_at DESC, id DESC LIMIT ?`).all<SessionRow>(
+    ORDER BY updated_at DESC, id DESC LIMIT ?`
+    )
+    .all<SessionRow>(
       before?.updatedAt ?? null,
       before?.updatedAt ?? null,
       before?.updatedAt ?? null,
       before?.id ?? null,
       limit
-    ).map(sessionOf)
+    )
+    .map(sessionOf)
 }
 
 export interface StartTurnInput {
@@ -146,17 +160,29 @@ export function startAiTurn(db: Db, input: StartTurnInput): StoredTurn {
   const chapter = db.prepare('SELECT 1 AS found FROM chapter WHERE id = ?').get(input.chapterId)
   if (!chapter) throw new StorageError('not_found', 'Không tìm thấy chương.')
   db.transaction(() => {
-    db.prepare(`INSERT INTO ai_turn
+    db.prepare(
+      `INSERT INTO ai_turn
       (id, session_id, chapter_id, action, question, status, context_json, target_range_json, dropped_turns,
        provider, model, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, 'sending', ?, ?, ?, ?, ?, ?, ?)`).run(
-        input.id, input.sessionId, input.chapterId, input.action, input.question,
-        JSON.stringify(input.context), input.range ? JSON.stringify(input.range) : null,
-        input.droppedTurns, input.provider, input.model,
-        input.now, input.now
-      )
+      VALUES (?, ?, ?, ?, ?, 'sending', ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      input.id,
+      input.sessionId,
+      input.chapterId,
+      input.action,
+      input.question,
+      JSON.stringify(input.context),
+      input.range ? JSON.stringify(input.range) : null,
+      input.droppedTurns,
+      input.provider,
+      input.model,
+      input.now,
+      input.now
+    )
     db.prepare('UPDATE ai_session SET last_chapter_id = ?, updated_at = ? WHERE id = ?').run(
-      input.chapterId, input.now, input.sessionId
+      input.chapterId,
+      input.now,
+      input.sessionId
     )
   })
   return getAiTurn(db, input.id)
@@ -175,34 +201,61 @@ export function listAiTurns(
   before?: { createdAt: number; id: string }
 ): StoredTurn[] {
   getAiSession(db, sessionId)
-  return db.prepare(`SELECT * FROM ai_turn WHERE session_id = ?
+  return db
+    .prepare(
+      `SELECT * FROM ai_turn WHERE session_id = ?
     AND (? IS NULL OR created_at < ? OR (created_at = ? AND id < ?))
-    ORDER BY created_at DESC, id DESC LIMIT ?`).all<TurnRow>(
-      sessionId, before?.createdAt ?? null, before?.createdAt ?? null,
-      before?.createdAt ?? null, before?.id ?? null, limit
-    ).map(turnOf)
+    ORDER BY created_at DESC, id DESC LIMIT ?`
+    )
+    .all<TurnRow>(
+      sessionId,
+      before?.createdAt ?? null,
+      before?.createdAt ?? null,
+      before?.createdAt ?? null,
+      before?.id ?? null,
+      limit
+    )
+    .map(turnOf)
 }
 
 export function updateAiTurn(
   db: Db,
   id: string,
-  patch: Partial<Pick<StoredTurn, 'answer' | 'status' | 'tools' | 'usage' | 'costUsd' | 'finishReason'>>,
+  patch: Partial<
+    Pick<
+      StoredTurn,
+      'answer' | 'status' | 'tools' | 'usage' | 'costUsd' | 'finishReason' | 'provider' | 'model'
+    >
+  >,
   now: number
 ): StoredTurn {
   const previous = getAiTurn(db, id)
   const next = { ...previous, ...patch }
-  db.prepare(`UPDATE ai_turn SET answer = ?, status = ?, tools_json = ?, usage_json = ?,
-    cost_usd = ?, finish_reason = ?, updated_at = ? WHERE id = ?`).run(
-      next.answer, next.status, JSON.stringify(next.tools),
-      next.usage === null ? null : JSON.stringify(next.usage), next.costUsd,
-      next.finishReason, now, id
-    )
+  db.prepare(
+    `UPDATE ai_turn SET answer = ?, status = ?, tools_json = ?, usage_json = ?,
+    cost_usd = ?, finish_reason = ?, provider = ?, model = ?, updated_at = ? WHERE id = ?`
+  ).run(
+    next.answer,
+    next.status,
+    JSON.stringify(next.tools),
+    next.usage === null ? null : JSON.stringify(next.usage),
+    next.costUsd,
+    next.finishReason,
+    next.provider,
+    next.model,
+    now,
+    id
+  )
   db.prepare('UPDATE ai_session SET updated_at = ? WHERE id = ?').run(now, previous.sessionId)
   return getAiTurn(db, id)
 }
 
 /** Run once on startup, before requests are accepted. A partial answer remains readable. */
 export function interruptAiTurns(db: Db, now: number): number {
-  return db.prepare(`UPDATE ai_turn SET status = 'interrupted', updated_at = ?
-    WHERE status IN ('sending', 'running')`).run(now).changes
+  return db
+    .prepare(
+      `UPDATE ai_turn SET status = 'interrupted', updated_at = ?
+    WHERE status IN ('sending', 'running')`
+    )
+    .run(now).changes
 }

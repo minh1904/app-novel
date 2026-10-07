@@ -13,7 +13,7 @@ describe('uiStore', () => {
     const state = useUiStore.getState()
     expect(state.view).toEqual({ name: 'library', section: 'all' })
     expect(state.sidebarOpen).toBe(true)
-    expect(state.beforeSettings).toBeNull()
+    expect(state.settings).toBeNull()
   })
 
   it('navigates to next view directly when no leaveGuard is registered', async () => {
@@ -92,9 +92,9 @@ describe('uiStore', () => {
   it('returns to another open tab when closing the tab behind settings', async () => {
     await useUiStore.getState().navigate({ name: 'work', workId: 'one' })
     await useUiStore.getState().navigate({ name: 'work', workId: 'two' })
-    await useUiStore.getState().openSettings()
+    useUiStore.getState().openSettings()
     expect(await useUiStore.getState().closeTab('two')).toBe(true)
-    await useUiStore.getState().closeSettings()
+    useUiStore.getState().closeSettings()
     expect(useUiStore.getState().view).toEqual({ name: 'work', workId: 'one' })
   })
 
@@ -129,17 +129,39 @@ describe('uiStore', () => {
     expect(useUiStore.getState().tabs).toHaveLength(2)
   })
 
-  it('saves previous view on openSettings and restores it on closeSettings', async () => {
+  it('opens settings over the current view and leaves the view alone', async () => {
     const workView: View = { name: 'work', workId: 'w-123' }
     await useUiStore.getState().navigate(workView)
 
-    await useUiStore.getState().openSettings()
-    expect(useUiStore.getState().view).toEqual({ name: 'settings' })
-    expect(useUiStore.getState().beforeSettings).toEqual(workView)
-
-    await useUiStore.getState().closeSettings()
+    useUiStore.getState().openSettings()
+    expect(useUiStore.getState().settings).toEqual({ group: 'model', page: 'main' })
     expect(useUiStore.getState().view).toEqual(workView)
-    expect(useUiStore.getState().beforeSettings).toBeNull()
+
+    useUiStore.getState().closeSettings()
+    expect(useUiStore.getState().settings).toBeNull()
+    expect(useUiStore.getState().view).toEqual(workView)
+  })
+
+  it('opens settings at a deep link and falls back to the first page of an unknown one', () => {
+    useUiStore
+      .getState()
+      .openSettings({ group: 'connections', page: 'keys', key: 'provider:google' })
+    expect(useUiStore.getState().settings).toEqual({
+      group: 'connections',
+      page: 'keys',
+      key: 'provider:google'
+    })
+    useUiStore.getState().openSettings({ group: 'model', page: 'nope' })
+    expect(useUiStore.getState().settings).toEqual({ group: 'model', page: 'main' })
+  })
+
+  it('remembers an explicit theme and follows the system only when asked', () => {
+    useUiStore.getState().setThemePreference('dark')
+    expect(useUiStore.getState()).toMatchObject({ themePreference: 'dark', theme: 'dark' })
+    useUiStore.getState().syncSystemTheme()
+    expect(useUiStore.getState().theme).toBe('dark')
+    useUiStore.getState().setThemePreference('system')
+    expect(useUiStore.getState().themePreference).toBe('system')
   })
 
   it('toggles sidebar and theme', () => {

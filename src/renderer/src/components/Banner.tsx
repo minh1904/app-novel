@@ -17,8 +17,8 @@ export function Banner({ tone, children, action, onDismiss }: BannerProps): JSX.
     <div
       role={tone === 'error' ? 'alert' : 'status'}
       className={cx(
-        'flex items-start justify-between gap-3 rounded-control border px-3.5 py-2.5 text-ui-sm',
-        tone === 'error' ? 'border-error/40 bg-error/10' : 'border-success/40 bg-success/10'
+        'flex items-start justify-between gap-3 rounded-panel border px-3 py-2 text-ui-xs',
+        tone === 'error' ? 'border-error/30 bg-error/8' : 'border-success/30 bg-success/8'
       )}
     >
       <span className="min-w-0 break-words">{children}</span>

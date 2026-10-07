@@ -24,16 +24,11 @@ export function TextArea({
       data-slot="text-area"
       className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}
     >
-      <label className="text-ui-xs font-semibold" htmlFor={inputId}>
+      <label className="text-ui-xs font-medium" htmlFor={inputId}>
         {label}
       </label>
       <textarea
-        className={[
-          'min-h-[76px] w-full resize-y rounded-control border bg-control px-3 py-2 leading-normal text-ink outline-none placeholder:text-ink-muted focus:ring-2',
-          error
-            ? 'border-error focus:border-error focus:ring-error/25'
-            : 'border-line-strong focus:border-focus focus:ring-focus/25'
-        ].join(' ')}
+        className="input-chrome min-h-16 w-full resize-y rounded-control border px-2.5 py-1.5 text-ui-xs leading-normal text-ink outline-none placeholder:text-ink-faint"
         id={inputId}
         aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
         aria-invalid={error ? true : undefined}

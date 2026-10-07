@@ -107,6 +107,11 @@ export interface TranslateFailure {
    * (`errorPolicy.ts`); renderer làm theo, không tự xét theo `kind`.
    */
   haltsRun: boolean
+  /**
+   * Another model could get past this failure; the dialog then offers to continue the missing paragraphs
+   * with the first fallback of Settings. Set by main's policy, like `haltsRun`.
+   */
+  fallback?: boolean
 }
 
 /**

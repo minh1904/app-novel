@@ -17,7 +17,7 @@ export interface DialogProps {
 }
 
 const SIZES = {
-  default: 'w-[min(420px,calc(100vw-32px))]',
+  default: 'w-[min(512px,calc(100vw-32px))]',
   form: 'max-h-[calc(100vh-32px)] w-[min(540px,calc(100vw-32px))] overflow-y-auto',
   wide: 'max-h-[calc(100vh-32px)] w-[min(760px,calc(100vw-32px))] overflow-y-auto'
 } as const
@@ -34,13 +34,13 @@ export function Dialog({
   return (
     <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="fixed inset-0 bg-backdrop transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <BaseDialog.Backdrop className="fixed inset-0 z-(--z-backdrop) bg-backdrop backdrop-blur-[0.125rem] transition-opacity duration-(--duration-moderate) data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <BaseDialog.Popup
           finalFocus={finalFocus}
-          className={`fixed top-1/2 left-1/2 flex ${SIZES[size]} -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-panel border border-line-strong bg-canvas p-5 text-ink outline-none`}
+          className={`fixed top-1/2 left-1/2 z-(--z-modal) flex ${SIZES[size]} -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-panel border border-hairline bg-bubble p-4 text-ink shadow-overlay outline-none`}
         >
           <div className="flex flex-col gap-1">
-            <BaseDialog.Title className="text-ui-md font-semibold">{title}</BaseDialog.Title>
+            <BaseDialog.Title className="text-ui-sm font-semibold">{title}</BaseDialog.Title>
             {description && (
               <BaseDialog.Description className="text-ui-xs leading-normal text-ink-muted">
                 {description}

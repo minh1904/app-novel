@@ -3,6 +3,8 @@ import {
   addModelEntriesSchema,
   connectionRefSchema,
   createConnectionSchema,
+  ensureWithKeySchema,
+  probeEndpointSchema,
   modelEntryRefSchema,
   removeConnectionKeySchema,
   reorderModelEntriesSchema,
@@ -10,15 +12,30 @@ import {
   updateModelEntrySchema
 } from '../../../shared/contracts/aiConnections'
 import { translateBatchSchema, translatePlanSchema } from '../../../shared/contracts/aiTranslate'
-import { paragraphBatchSchema, paragraphFinalizeSchema, paragraphPlanSchema } from '../../../shared/contracts/aiTranslateProposals'
+import {
+  paragraphBatchSchema,
+  paragraphFinalizeSchema,
+  paragraphPlanSchema
+} from '../../../shared/contracts/aiTranslateProposals'
 import { CHANNELS } from '../../../shared/contracts/channels'
+import {
+  setFallbacksSchema,
+  setMainModelSchema,
+  setOnboardingSkippedSchema
+} from '../../../shared/contracts/aiPreferences'
 import { createAsyncHandler, createHandler } from '../handler'
-import { connectionsOf, paragraphTranslatorOf, translatorOf, type AreaHandlers, type HandlerDeps } from './deps'
+import {
+  connectionsOf,
+  paragraphTranslatorOf,
+  translatorOf,
+  type AreaHandlers,
+  type HandlerDeps
+} from './deps'
 
 /** Kết nối AI (khóa), mục model của chúng, và dịch chương bằng AI. */
 export function aiHandlers(
   deps: HandlerDeps
-): AreaHandlers<'ai:connections' | 'ai:models' | 'ai:translate'> {
+): AreaHandlers<'ai:connections' | 'ai:models' | 'ai:translate' | 'ai:preferences'> {
   return {
     [CHANNELS.aiConnectionsList]: createHandler(null, () => connectionsOf(deps).list()),
     [CHANNELS.aiConnectionsCreate]: createHandler(createConnectionSchema, (input) =>
@@ -32,6 +49,23 @@ export function aiHandlers(
     ),
     [CHANNELS.aiConnectionsTest]: createAsyncHandler(connectionRefSchema, ({ id }) =>
       connectionsOf(deps).test(id)
+    ),
+    [CHANNELS.aiConnectionsProbe]: createAsyncHandler(probeEndpointSchema, (input) =>
+      connectionsOf(deps).probe(input)
+    ),
+    [CHANNELS.aiPreferencesGet]: createHandler(null, () => connectionsOf(deps).preferences()),
+    [CHANNELS.aiPreferencesSetMain]: createHandler(setMainModelSchema, ({ main }) =>
+      connectionsOf(deps).setMainModel(main)
+    ),
+    [CHANNELS.aiPreferencesSetFallbacks]: createHandler(setFallbacksSchema, ({ fallbacks }) =>
+      connectionsOf(deps).setFallbacks(fallbacks)
+    ),
+    [CHANNELS.aiPreferencesSetOnboardingSkipped]: createHandler(
+      setOnboardingSkippedSchema,
+      ({ skipped }) => connectionsOf(deps).setOnboardingSkipped(skipped)
+    ),
+    [CHANNELS.aiConnectionsEnsureWithKey]: createAsyncHandler(ensureWithKeySchema, (input) =>
+      connectionsOf(deps).ensureWithKey(input)
     ),
     [CHANNELS.aiKeysAdd]: createAsyncHandler(addConnectionKeySchema, ({ id, secret }) =>
       connectionsOf(deps).addApiKey(id, secret)

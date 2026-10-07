@@ -25,26 +25,31 @@ export interface ErrorPolicy {
   retryable: boolean
   /** Connection check: which storage error code the failure becomes; `null` when it never reaches there. */
   probeCode: 'validation' | 'io' | null
+  /**
+   * Another model could get past it: the dialog offers "Dịch tiếp bằng …" with the first fallback of
+   * Settings (change `hermes-settings-modal`, task 4.6). The chapter is not switched on its own.
+   */
+  fallback: boolean
 }
 
 const TABLE: Record<PolicyKind, ErrorPolicy> = {
-  invalid_request: { haltsRun: true, retryable: false, probeCode: 'validation' },
-  auth: { haltsRun: true, retryable: false, probeCode: 'validation' },
-  quota: { haltsRun: true, retryable: true, probeCode: 'io' },
-  rate_limited: { haltsRun: true, retryable: true, probeCode: 'io' },
-  network: { haltsRun: false, retryable: true, probeCode: 'io' },
-  timeout: { haltsRun: false, retryable: true, probeCode: 'io' },
-  invalid_response: { haltsRun: false, retryable: true, probeCode: 'io' },
+  invalid_request: { haltsRun: true, retryable: false, probeCode: 'validation', fallback: false },
+  auth: { haltsRun: true, retryable: false, probeCode: 'validation', fallback: false },
+  quota: { haltsRun: true, retryable: true, probeCode: 'io', fallback: true },
+  rate_limited: { haltsRun: true, retryable: true, probeCode: 'io', fallback: true },
+  network: { haltsRun: false, retryable: true, probeCode: 'io', fallback: true },
+  timeout: { haltsRun: false, retryable: true, probeCode: 'io', fallback: true },
+  invalid_response: { haltsRun: false, retryable: true, probeCode: 'io', fallback: true },
   // The whole call blocked: retrying the same content is pointless, but other batches may pass.
-  refused: { haltsRun: false, retryable: false, probeCode: 'validation' },
+  refused: { haltsRun: false, retryable: false, probeCode: 'validation', fallback: false },
   // A few segments of a batch blocked: the rest of the chapter goes on.
-  refused_segments: { haltsRun: false, retryable: false, probeCode: null },
-  missing_segments: { haltsRun: false, retryable: true, probeCode: null },
-  conflict: { haltsRun: true, retryable: false, probeCode: null },
+  refused_segments: { haltsRun: false, retryable: false, probeCode: null, fallback: false },
+  missing_segments: { haltsRun: false, retryable: true, probeCode: null, fallback: false },
+  conflict: { haltsRun: true, retryable: false, probeCode: null, fallback: false },
   // The run's call budget is spent: the other batches keep their reserved main call, and a retry of the
   // failed segments is granted a fresh share, so neither stopping nor "no use retrying" is right.
-  budget_exhausted: { haltsRun: false, retryable: true, probeCode: null },
-  cancelled: { haltsRun: true, retryable: false, probeCode: null }
+  budget_exhausted: { haltsRun: false, retryable: true, probeCode: null, fallback: false },
+  cancelled: { haltsRun: true, retryable: false, probeCode: null, fallback: false }
 }
 
 /** The policy for one failure in one task. The table is the same for every task; the task picks its field. */
@@ -53,8 +58,11 @@ export function taskErrorPolicy(_task: ErrorTask, kind: PolicyKind): ErrorPolicy
 }
 
 /** A translation batch failure with main's decision on whether it stops the chapter's run. */
-export function withPolicy(core: Omit<TranslateFailure, 'haltsRun'>): TranslateFailure {
-  return { ...core, haltsRun: taskErrorPolicy('translate', core.kind).haltsRun }
+export function withPolicy(
+  core: Omit<TranslateFailure, 'haltsRun' | 'fallback'>
+): TranslateFailure {
+  const policy = taskErrorPolicy('translate', core.kind)
+  return { ...core, haltsRun: policy.haltsRun, fallback: policy.fallback }
 }
 
 function describeSent(sent: SentParameters): string[] {

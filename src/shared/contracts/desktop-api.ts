@@ -1,6 +1,9 @@
 import type {
   AddModelEntriesInput,
   ConnectionTestResult,
+  EndpointProbeResult,
+  EnsureWithKeyInput,
+  ProbeEndpointInput,
   ConnectionView,
   CreateConnectionInput,
   ModelEntryTestResult,
@@ -24,6 +27,8 @@ import type {
   ParagraphPlanInput,
   ParagraphTranslationPlan
 } from './aiTranslateProposals'
+import type { AppearanceState, SetAppearanceInput } from './appearance'
+import type { AiPreferences, MainModel, ModelRef } from './aiPreferences'
 import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
 import type { ExportChapterInput, ExportResult, ExportWorkInput } from './export'
@@ -219,6 +224,17 @@ export interface AiApi {
   delete(id: string): Promise<Result<{ connections: ConnectionView[] }>>
   /** Gọi `GET {base}/models`: xác nhận kết nối và lấy luôn danh sách model. */
   test(id: string): Promise<Result<ConnectionTestResult>>
+  /** Kiểm hai bước: `/models` (có hoặc không `/v1`) rồi một request chat 1 token. Không lưu gì. */
+  probe(input: ProbeEndpointInput): Promise<Result<EndpointProbeResult>>
+  /** Cài đặt › Model: model chính, dự phòng, và việc onboarding đã được để sau. */
+  preferences: {
+    get(): Promise<Result<AiPreferences>>
+    setMain(main: MainModel | null): Promise<Result<AiPreferences>>
+    setFallbacks(fallbacks: ModelRef[]): Promise<Result<AiPreferences>>
+    setOnboardingSkipped(skipped: boolean): Promise<Result<AiPreferences>>
+  }
+  /** Dán khóa vào thẻ provider: tạo kết nối từ preset nếu chưa có, rồi thêm khóa. */
+  ensureWithKey(input: EnsureWithKeyInput): Promise<Result<ConnectionView>>
   /** Lần duy nhất khóa đi từ giao diện vào; về sau chỉ nhận lại bốn ký tự cuối. */
   addKey(id: string, secret: string): Promise<Result<ConnectionView>>
   removeKey(id: string, keyId: string): Promise<Result<ConnectionView>>
@@ -345,11 +361,18 @@ export interface ExportApi {
 
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
+  /** Opens an https link in the browser; main only allows the hosts in `EXTERNAL_LINK_HOSTS`. */
+  openExternal(url: string): Promise<void>
   /**
    * Tells the window which colours its minimise/maximise/close buttons should wear. The OS draws
    * them over the page's own top bar, so they have to follow the page's theme to look like part of it.
    */
   setChromeTheme(theme: ChromeTheme): Promise<void>
+  /** Window glass (Windows acrylic). `set` applies at once and returns what the window now shows. */
+  appearance: {
+    get(): Promise<AppearanceState>
+    set(input: SetAppearanceInput): Promise<AppearanceState>
+  }
   works: WorksApi
   workspace: {
     load(): Promise<Result<WorkspaceLoad>>

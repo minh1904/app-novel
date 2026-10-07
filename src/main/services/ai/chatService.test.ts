@@ -839,3 +839,77 @@ describe('khối ngữ cảnh main đọc từ kho', () => {
     service.cancelAll()
   })
 })
+
+describe('ChatService fallbacks (hermes-settings-modal)', () => {
+  const FALLBACK_ID = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d'
+
+  /** Main entry answers with `primary`; the fallback entry with a working stream. */
+  function withFallback(primary: () => Response): ChatConnections & { asked: string[] } {
+    const asked: string[] = []
+    const make = (
+      entryId: string,
+      fetchImpl: typeof fetch,
+      model: string
+    ): ConnectionTranslator => ({
+      connection: connection({ name: entryId === FALLBACK_ID ? 'Dự phòng' : 'Gemini' }),
+      entry: { id: entryId, name: model, model, settings: {} },
+      settingsKey: 'k'.repeat(64),
+      provider: new OpenAiCompatibleProvider({
+        baseUrl: 'http://127.0.0.1:8317/v1',
+        model,
+        keys,
+        fetchImpl,
+        now: () => NOW,
+        retry: { maxRetries: 0 }
+      }),
+      lastKeyTail: () => '9f3a'
+    })
+    return {
+      asked,
+      translator(_id, entryId) {
+        asked.push(entryId)
+        return entryId === FALLBACK_ID
+          ? make(entryId, async () => sseResponse([delta('Từ dự phòng'), DONE]), 'deepseek-v4')
+          : make(entryId, async () => primary(), 'gemini-gone')
+      },
+      preferences: () => ({ fallbacks: [{ connectionId: CONNECTION_ID, entryId: FALLBACK_ID }] })
+    }
+  }
+
+  const gone = (): Response =>
+    new Response(JSON.stringify({ error: { message: 'model gemini-gone not found' } }), {
+      status: 404,
+      headers: { 'content-type': 'application/json' }
+    })
+
+  it('moves on to the fallback when the main model is gone, and says so on the turn', async () => {
+    const sink = collector()
+    const conns = withFallback(gone)
+    const chat = service(conns)
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+    expect(textOf(sink.chunks, requestId)).toBe('Từ dự phòng')
+    expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
+    const line = sink.chunks.find((c) => c.kind === 'tool' && c.name === 'fallback')
+    expect(line && line.kind === 'tool' ? line.detail : '').toMatch(
+      /^Đã chuyển sang Dự phòng · deepseek-v4 vì Gemini · gemini-gone model không tồn tại/
+    )
+    expect(conns.asked).toEqual([ENTRY_ID, FALLBACK_ID])
+  })
+
+  it('does not move on for a refused request', async () => {
+    const sink = collector()
+    const conns = withFallback(
+      () =>
+        new Response(JSON.stringify({ error: { message: 'bad parameter temperature' } }), {
+          status: 400,
+          headers: { 'content-type': 'application/json' }
+        })
+    )
+    const chat = service(conns)
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+    expect(endingsOf(sink.chunks, requestId)).toEqual(['error'])
+    expect(conns.asked).toEqual([ENTRY_ID])
+  })
+})

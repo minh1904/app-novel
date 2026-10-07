@@ -16,10 +16,14 @@ import {
   LeaveGuardScopeContext,
   useLeaveGuardRegistry
 } from './features/editor/leaveGuard'
-import { SettingsScreen } from './features/settings/SettingsScreen'
+import { SettingsModal } from './features/settings/SettingsModal'
+import { SETTINGS_PAGES } from './features/settings/settingsPages'
+import { Toaster } from './components/Toaster'
+import { Onboarding } from './features/onboarding/Onboarding'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 import { useUiStore, type View } from './stores/uiStore'
 import { useAiChatStore } from './stores/aiChatStore'
+import { useConnectionStore } from './stores/connectionStore'
 
 const RECENT_LIMIT = 4
 
@@ -35,6 +39,7 @@ export function App(): JSX.Element {
   const toggleTheme = useUiStore((state) => state.toggleTheme)
   const toggleSidebar = useUiStore((state) => state.toggleSidebar)
   const appVersion = useUiStore((state) => state.appVersion)
+  const settingsOpen = useUiStore((state) => state.settings !== null)
 
   useEffect(() => {
     useUiStore.getState().setLeaveGuardRegistry(registry)
@@ -57,10 +62,7 @@ export function App(): JSX.Element {
     void useUiStore.getState().navigate(next)
   }
   const openSettings = (): void => {
-    void useUiStore.getState().openSettings()
-  }
-  const closeSettings = (): void => {
-    void useUiStore.getState().closeSettings()
+    useUiStore.getState().openSettings()
   }
 
   const library = useLibrary()
@@ -98,6 +100,19 @@ export function App(): JSX.Element {
       current = false
     }
   }, [library.load, workspaceReady])
+
+  // Settings › Model decides which model new chats and translations start with; read it once at start.
+  useEffect(() => {
+    void useConnectionStore.getState().loadPreferences()
+  }, [])
+
+  // "Theo hệ thống" follows a Windows light/dark switch while the app runs.
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-color-scheme: dark)')
+    const follow = (): void => useUiStore.getState().syncSystemTheme()
+    query.addEventListener('change', follow)
+    return () => query.removeEventListener('change', follow)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -304,12 +319,6 @@ export function App(): JSX.Element {
       )
       break
     }
-    case 'settings': {
-      title = <span className="font-semibold">Cài đặt</span>
-      content = <SettingsScreen onBack={closeSettings} />
-      sidebar = null
-      break
-    }
   }
 
   const visibleWorkId = view.name === 'work' || view.name === 'chapter' ? view.workId : null
@@ -375,7 +384,7 @@ export function App(): JSX.Element {
         }}
         onOpenLibrary={() => showSection('all')}
         onOpenSettings={openSettings}
-        settingsOpen={view.name === 'settings'}
+        settingsOpen={settingsOpen}
       >
         {workspaceNotice && (
           <div
@@ -392,12 +401,15 @@ export function App(): JSX.Element {
           <p role="status" className="p-6 text-ui-sm text-ink-muted">
             Đang khôi phục phiên làm việc…
           </p>
-        ) : view.name === 'library' || view.name === 'create' || view.name === 'settings' ? (
+        ) : view.name === 'library' || view.name === 'create' ? (
           content
         ) : null}
         {tabPanes}
       </AppShell>
       {leaveDialog}
+      <SettingsModal pages={SETTINGS_PAGES} />
+      <Onboarding />
+      <Toaster />
     </LeaveGuardContext.Provider>
   )
 }

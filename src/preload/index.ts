@@ -11,6 +11,9 @@ import type { AiSessionView, AiTurnView } from '../shared/contracts/aiHistory'
 import type {
   AddModelEntriesInput,
   ConnectionTestResult,
+  EndpointProbeResult,
+  EnsureWithKeyInput,
+  ProbeEndpointInput,
   ConnectionView,
   CreateConnectionInput,
   ModelEntryTestResult,
@@ -25,6 +28,8 @@ import type {
   ParagraphPlanInput,
   ParagraphTranslationPlan
 } from '../shared/contracts/aiTranslateProposals'
+import type { AppearanceState, SetAppearanceInput } from '../shared/contracts/appearance'
+import type { AiPreferences, MainModel, ModelRef } from '../shared/contracts/aiPreferences'
 import type { BackupExported } from '../shared/contracts/backup'
 import type { ExportResult } from '../shared/contracts/export'
 import { CHANNELS, EVENT_CHANNELS } from '../shared/contracts/channels'
@@ -47,8 +52,14 @@ import type { AddressingComplianceReport } from '../shared/algorithms/addressing
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,
+  openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url) as Promise<void>,
   setChromeTheme: (theme: ChromeTheme) =>
     ipcRenderer.invoke('app:chrome-theme', theme) as Promise<void>,
+  appearance: {
+    get: () => ipcRenderer.invoke('app:appearance:get') as Promise<AppearanceState>,
+    set: (input: SetAppearanceInput) =>
+      ipcRenderer.invoke('app:appearance:set', input) as Promise<AppearanceState>
+  },
   workspace: {
     load: () => ipcRenderer.invoke(CHANNELS.workspaceLoad) as Promise<Result<WorkspaceLoad>>,
     save: (state: WorkspaceState) =>
@@ -175,6 +186,29 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke(CHANNELS.aiConnectionsTest, { id }) as Promise<
         Result<ConnectionTestResult>
       >,
+    preferences: {
+      get: () => ipcRenderer.invoke(CHANNELS.aiPreferencesGet) as Promise<Result<AiPreferences>>,
+      setMain: (main: MainModel | null) =>
+        ipcRenderer.invoke(CHANNELS.aiPreferencesSetMain, { main }) as Promise<
+          Result<AiPreferences>
+        >,
+      setFallbacks: (fallbacks: ModelRef[]) =>
+        ipcRenderer.invoke(CHANNELS.aiPreferencesSetFallbacks, { fallbacks }) as Promise<
+          Result<AiPreferences>
+        >,
+      setOnboardingSkipped: (skipped: boolean) =>
+        ipcRenderer.invoke(CHANNELS.aiPreferencesSetOnboardingSkipped, { skipped }) as Promise<
+          Result<AiPreferences>
+        >
+    },
+    probe: (input: ProbeEndpointInput) =>
+      ipcRenderer.invoke(CHANNELS.aiConnectionsProbe, input) as Promise<
+        Result<EndpointProbeResult>
+      >,
+    ensureWithKey: (input: EnsureWithKeyInput) =>
+      ipcRenderer.invoke(CHANNELS.aiConnectionsEnsureWithKey, input) as Promise<
+        Result<ConnectionView>
+      >,
     addKey: (id: string, secret: string) =>
       ipcRenderer.invoke(CHANNELS.aiKeysAdd, { id, secret }) as Promise<Result<ConnectionView>>,
     removeKey: (id: string, keyId: string) =>
@@ -261,9 +295,7 @@ const desktopApi: DesktopApi = {
     },
     chat: {
       send: (input: ChatSendInput) =>
-        ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<
-          Result<ChatStartResult>
-        >,
+        ipcRenderer.invoke(CHANNELS.aiChatSend, input) as Promise<Result<ChatStartResult>>,
       cancel: (requestId: string) =>
         ipcRenderer.invoke(CHANNELS.aiChatCancel, { requestId }) as Promise<Result<void>>,
       /**

@@ -97,3 +97,38 @@ describe('targetKey', () => {
     expect(targetKey('c', 'e')).toBe('c|e')
   })
 })
+
+describe('continue with a fallback (task 4.6 of hermes-settings-modal)', () => {
+  const targets = [
+    { connectionId: 'g', entryId: 'flash', label: 'Gemini · flash' },
+    { connectionId: 'd', entryId: 'v4', label: 'DeepSeek · v4' }
+  ]
+  const base = {
+    stopped: true,
+    failureAllowsFallback: true,
+    missing: 7,
+    fallbacks: [
+      { connectionId: 'g', entryId: 'flash' },
+      { connectionId: 'd', entryId: 'v4' }
+    ],
+    targets,
+    current: 'g|flash'
+  }
+
+  it('offers the first fallback that is not the model that failed', async () => {
+    const { continueTargetOf } = await import('./translateTargets')
+    expect(continueTargetOf(base)?.label).toBe('DeepSeek · v4')
+  })
+
+  it('offers nothing while running, for a failure another model cannot fix, or with nothing left', async () => {
+    const { continueTargetOf } = await import('./translateTargets')
+    expect(continueTargetOf({ ...base, stopped: false })).toBeNull()
+    expect(continueTargetOf({ ...base, failureAllowsFallback: false })).toBeNull()
+    expect(continueTargetOf({ ...base, missing: 0 })).toBeNull()
+  })
+
+  it('skips a fallback that can no longer translate', async () => {
+    const { continueTargetOf } = await import('./translateTargets')
+    expect(continueTargetOf({ ...base, targets: [targets[0]!] })).toBeNull()
+  })
+})

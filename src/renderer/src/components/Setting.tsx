@@ -1,9 +1,13 @@
 import type { JSX, ReactNode } from 'react'
+import { cx } from './cx'
 
 /**
- * One setting: what it is and what it does on the left, the control on the right, and an optional
- * line under both for a message about the control. Wraps under the text on a narrow dialog. The
- * name is 13px and the description 12px muted, as in Obsidian's settings rows.
+ * One setting, laid out like Hermes Desktop's `ListRow` (apps/desktop/src/app/settings/primitives.tsx): what
+ * it is and what it does on the left, the control in a 15–22rem column on the right. The row is a container
+ * query, so in a narrow pane the control drops under the description instead of squeezing it. Rows are
+ * separated by space, not lines.
+ *
+ * `wide` keeps the control on the title line and gives `below` the full width (a list, an editor).
  *
  * The hint is part of the row and not a tooltip: what a field does is the thing a person reads before
  * touching it, and a tooltip is not there for keyboard or touch.
@@ -12,23 +16,81 @@ export function SettingRow({
   title,
   hint,
   children,
-  below
+  below,
+  wide = false,
+  id
 }: {
   title: string
-  hint?: string
-  children: ReactNode
+  hint?: ReactNode
+  children?: ReactNode
   below?: ReactNode
+  wide?: boolean
+  /** The anchor a deep link scrolls to and highlights. */
+  id?: string
 }): JSX.Element {
   return (
-    <div className="flex flex-col gap-1.5 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <div className="flex min-w-[200px] flex-1 flex-col gap-1">
-          <span className="text-ui-sm leading-tight">{title}</span>
-          {hint && <span className="text-ui-xs leading-normal text-ink-muted">{hint}</span>}
+    <div data-slot="setting-row" data-setting-id={id} className="@container py-3">
+      <div
+        className={cx(
+          'grid gap-3',
+          wide
+            ? 'grid-cols-[minmax(0,1fr)_auto] items-start'
+            : '@2xl:grid-cols-[minmax(0,1fr)_minmax(15rem,22rem)] @2xl:items-center'
+        )}
+      >
+        <div className="flex min-w-0 flex-col">
+          <span className="text-ui-sm leading-tight font-medium text-ink">{title}</span>
+          {hint && <span className="mt-1 text-ui-xs leading-normal text-ink-muted">{hint}</span>}
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">{children}</div>
+        {children && (
+          <div className="flex flex-wrap items-center gap-2 @2xl:justify-end @2xl:justify-self-end">
+            {children}
+          </div>
+        )}
       </div>
-      {below}
+      {below && <div className="mt-2">{below}</div>}
     </div>
+  )
+}
+
+/** A heading over a group of rows: 13px medium, an optional icon, and room for a count or an action. */
+export function SectionHeading({
+  icon,
+  children,
+  aside
+}: {
+  icon?: ReactNode
+  children: ReactNode
+  aside?: ReactNode
+}): JSX.Element {
+  return (
+    <div className="mb-1 flex items-center gap-2 pt-2 text-ui-sm font-medium text-ink">
+      {icon && <span className="flex text-ink-muted">{icon}</span>}
+      <h3 className="m-0 text-ui-sm font-medium">{children}</h3>
+      {aside && <span className="ml-auto flex items-center gap-2">{aside}</span>}
+    </div>
+  )
+}
+
+export function SettingsSection({
+  title,
+  icon,
+  aside,
+  children
+}: {
+  title?: string
+  icon?: ReactNode
+  aside?: ReactNode
+  children: ReactNode
+}): JSX.Element {
+  return (
+    <section className="mb-6">
+      {title && (
+        <SectionHeading icon={icon} aside={aside}>
+          {title}
+        </SectionHeading>
+      )}
+      {children}
+    </section>
   )
 }

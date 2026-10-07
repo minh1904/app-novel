@@ -641,3 +641,152 @@ describe('model entries over IPC', () => {
     })
   })
 })
+
+describe('provider cards and endpoint probe', () => {
+  it('makes the connection from the preset on the first key, and reuses it on the second', async () => {
+    const handlers = setup()
+    const first = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsEnsureWithKey, {
+        providerId: 'openrouter',
+        secret: 'sk-or-aaaa1111'
+      })
+    )
+    expect(first).toMatchObject({ name: 'OpenRouter', providerId: 'openrouter' })
+    expect(first.keys.map((key) => key.tail)).toEqual(['1111'])
+
+    const second = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsEnsureWithKey, {
+        providerId: 'openrouter',
+        secret: 'sk-or-bbbb2222'
+      })
+    )
+    expect(second.id).toBe(first.id)
+    expect(second.keys.map((key) => key.tail)).toEqual(['1111', '2222'])
+  })
+
+  it('refuses a provider it has no preset for', async () => {
+    const result = await call(setup(), CHANNELS.aiConnectionsEnsureWithKey, {
+      providerId: 'nous',
+      secret: 'x'
+    })
+    expect(result.ok).toBe(false)
+  })
+
+  it('probes with the stored key of a connection and never returns it', async () => {
+    let auth: string | null = null
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+      auth = new Headers(init?.headers).get('authorization')
+      return String(input).endsWith('/models')
+        ? new Response(JSON.stringify({ data: [{ id: 'm' }] }), {
+            headers: { 'content-type': 'application/json' }
+          })
+        : new Response('{}')
+    }) as typeof fetch
+    const handlers = setup(fetchImpl)
+    const created = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, gatewayInput)
+    )
+    unwrap(await call(handlers, CHANNELS.aiKeysAdd, { id: created.id, secret: 'sk-gateway-9999' }))
+    const probe = unwrap(
+      await call<Record<string, unknown>>(handlers, CHANNELS.aiConnectionsProbe, {
+        baseUrl: created.baseUrl,
+        connectionId: created.id
+      })
+    )
+    expect(auth).toBe('Bearer sk-gateway-9999')
+    expect(probe).toMatchObject({ ok: true, models: ['m'] })
+    expect(JSON.stringify(probe)).not.toContain('sk-gateway')
+  })
+})
+
+describe('main model and fallbacks', () => {
+  async function withEntries(): Promise<{
+    handlers: ReturnType<typeof createLibraryHandlers>
+    connection: ConnectionView
+  }> {
+    const handlers = setup()
+    const created = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiConnectionsCreate, gatewayInput)
+    )
+    const connection = unwrap(
+      await call<ConnectionView>(handlers, CHANNELS.aiModelsAdd, {
+        connectionId: created.id,
+        items: [{ model: 'gemini-2.5-flash' }, { model: 'gemini-2.5-pro' }]
+      })
+    )
+    return { handlers, connection }
+  }
+
+  it('saves the main model and the fallbacks, and reads them back', async () => {
+    const { handlers, connection } = await withEntries()
+    const [flash, pro] = connection.models
+    unwrap(
+      await call(handlers, CHANNELS.aiPreferencesSetMain, {
+        main: { connectionId: connection.id, entryId: flash!.id, thinking: 'high' }
+      })
+    )
+    unwrap(
+      await call(handlers, CHANNELS.aiPreferencesSetFallbacks, {
+        fallbacks: [
+          { connectionId: connection.id, entryId: pro!.id },
+          { connectionId: connection.id, entryId: pro!.id }
+        ]
+      })
+    )
+    const prefs = unwrap(await call<Record<string, unknown>>(handlers, CHANNELS.aiPreferencesGet))
+    expect(prefs).toEqual({
+      main: { connectionId: connection.id, entryId: flash!.id, thinking: 'high' },
+      fallbacks: [{ connectionId: connection.id, entryId: pro!.id }],
+      onboardingSkipped: false
+    })
+  })
+
+  it('forgets an entry that is deleted, and everything of a deleted connection', async () => {
+    const { handlers, connection } = await withEntries()
+    const [flash, pro] = connection.models
+    unwrap(
+      await call(handlers, CHANNELS.aiPreferencesSetMain, {
+        main: { connectionId: connection.id, entryId: flash!.id }
+      })
+    )
+    unwrap(
+      await call(handlers, CHANNELS.aiPreferencesSetFallbacks, {
+        fallbacks: [{ connectionId: connection.id, entryId: pro!.id }]
+      })
+    )
+    unwrap(await call(handlers, CHANNELS.aiModelsDelete, { entryId: flash!.id }))
+    let prefs = unwrap(
+      await call<{ main: unknown; fallbacks: unknown[] }>(handlers, CHANNELS.aiPreferencesGet)
+    )
+    expect(prefs.main).toBeNull()
+    expect(prefs.fallbacks).toHaveLength(1)
+
+    unwrap(await call(handlers, CHANNELS.aiConnectionsDelete, { id: connection.id }))
+    prefs = unwrap(await call(handlers, CHANNELS.aiPreferencesGet))
+    expect(prefs.fallbacks).toEqual([])
+  })
+
+  it('refuses a main model that does not exist', async () => {
+    const result = await call(setup(), CHANNELS.aiPreferencesSetMain, {
+      main: {
+        connectionId: '00000000-0000-4000-8000-000000000099',
+        entryId: '00000000-0000-4000-8000-000000000098'
+      }
+    })
+    expect(result.ok).toBe(false)
+  })
+
+  it('remembers that onboarding was put off', async () => {
+    const handlers = setup()
+    const prefs = unwrap(
+      await call<{ onboardingSkipped: boolean }>(
+        handlers,
+        CHANNELS.aiPreferencesSetOnboardingSkipped,
+        {
+          skipped: true
+        }
+      )
+    )
+    expect(prefs.onboardingSkipped).toBe(true)
+  })
+})

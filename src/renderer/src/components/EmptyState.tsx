@@ -22,17 +22,14 @@ export function EmptyState({
   return (
     <div
       data-slot="empty-state"
-      className={cx(
-        'flex flex-col items-center gap-3 px-6 py-10 text-center',
-        className
-      )}
+      className={cx('flex flex-col items-center gap-3 px-6 py-10 text-center', className)}
     >
       {icon && (
-        <span className="flex size-9 items-center justify-center rounded-control bg-control text-ink-muted">
+        <span className="flex size-9 items-center justify-center rounded-icon bg-control text-ink-muted">
           {icon}
         </span>
       )}
-      <p className="m-0 text-ui-sm font-semibold">{title}</p>
+      <p className="m-0 text-ui-sm font-medium">{title}</p>
       <p className="m-0 max-w-[460px] text-ui-xs leading-normal text-ink-muted">{children}</p>
       {actions && (
         <span className="flex flex-wrap items-center justify-center gap-2">{actions}</span>

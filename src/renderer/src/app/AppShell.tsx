@@ -7,6 +7,8 @@ import { SunIcon } from '@solar-icons/react/linear/sun'
 import logoUrl from '../assets/logo.png'
 import { Button } from '../components/Button'
 import { cx } from '../components/cx'
+import { focusRing } from '../components/focusRing'
+import { Tip } from '../components/Tooltip'
 import { TopBarSlotContext } from './topBarSlot'
 import type { Theme } from './useTheme'
 
@@ -36,6 +38,9 @@ export interface AppShellProps {
  * past it is the buttons' width. Outside the overlay (a browser, a test) the variables do not
  * exist, the fallbacks make the sum zero, and the 10px minimum keeps the usual padding.
  */
+/** Hermes Desktop's title bar buttons: 24px, a 14px glyph, muted until hovered. */
+const BAR_ICON = 14
+
 const BAR_END_PADDING =
   'max(10px, calc(100% - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100%)))'
 
@@ -106,20 +111,21 @@ export function AppShell({
       {/* One bar for the whole window, over the sidebar too: it is the title bar, the app header and
           the place for each screen's own icons, so nothing sits in a second strip underneath. */}
       <header
-        className="window-drag flex h-(--header-height) shrink-0 items-center gap-2 border-b border-line bg-chrome pl-2"
+        className="window-drag flex h-(--header-height) shrink-0 items-center gap-1.5 border-b border-line bg-chrome pl-2"
         style={{ paddingRight: BAR_END_PADDING }}
       >
-        <Button
-          variant="ghost-muted"
-          size="icon"
-          aria-label={sidebarLabel}
-          aria-expanded={sidebarOpen}
-          aria-controls="app-sidebar"
-          title={sidebarLabel + ' (Ctrl+B)'}
-          onClick={onToggleSidebar}
-        >
-          <SidebarMinimalisticIcon size={16} />
-        </Button>
+        <Tip label={sidebarLabel + ' (Ctrl+B)'}>
+          <Button
+            variant="ghost-muted"
+            size="icon"
+            aria-label={sidebarLabel}
+            aria-expanded={sidebarOpen}
+            aria-controls="app-sidebar"
+            onClick={onToggleSidebar}
+          >
+            <SidebarMinimalisticIcon size={BAR_ICON} />
+          </Button>
+        </Tip>
         <span className="flex items-center gap-1.5">
           <img src={logoUrl} alt="" className="size-4 shrink-0" draggable={false} />
           <span className="text-ui-sm font-semibold">Mira</span>
@@ -134,44 +140,50 @@ export function AppShell({
               <div
                 key={tab.workId}
                 className={cx(
-                  'group flex h-8.5 max-w-50 shrink-0 items-center rounded-t-tab border text-ui-sm',
+                  'group flex h-7 max-w-50 shrink-0 items-center rounded-t-tab border text-ui-xs font-medium',
                   selectedWorkId === tab.workId
                     ? 'border-line border-b-canvas bg-canvas text-ink'
                     : 'border-transparent text-ink-muted hover:bg-hover hover:text-ink'
                 )}
               >
-                <button
-                  type="button"
-                  aria-current={selectedWorkId === tab.workId ? 'page' : undefined}
-                  title={tab.title}
-                  onClick={() => onSelectWorkTab?.(tab.workId)}
-                  className="min-w-0 flex-1 truncate px-3 py-1.5 text-left focus-visible:outline-2 focus-visible:outline-focus"
-                >
-                  {tab.title}
-                </button>
-                <button
-                  type="button"
-                  aria-label={'Đóng tab ' + tab.title}
-                  title={'Đóng ' + tab.title}
-                  onClick={() => onCloseWorkTab?.(tab.workId)}
-                  className="mr-1 flex size-5 shrink-0 items-center justify-center rounded-item text-ink-muted hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-focus"
-                >
-                  <CloseIcon size={14} />
-                </button>
+                <Tip label={tab.title}>
+                  <button
+                    type="button"
+                    aria-current={selectedWorkId === tab.workId ? 'page' : undefined}
+                    onClick={() => onSelectWorkTab?.(tab.workId)}
+                    className={cx('min-w-0 flex-1 truncate px-3 py-1 text-left', focusRing)}
+                  >
+                    {tab.title}
+                  </button>
+                </Tip>
+                <Tip label={'Đóng ' + tab.title}>
+                  <button
+                    type="button"
+                    aria-label={'Đóng tab ' + tab.title}
+                    onClick={() => onCloseWorkTab?.(tab.workId)}
+                    className={cx(
+                      'mr-1 flex size-5 shrink-0 items-center justify-center rounded-icon text-ink-muted hover:bg-control-hover hover:text-ink',
+                      focusRing
+                    )}
+                  >
+                    <CloseIcon size={12} />
+                  </button>
+                </Tip>
               </div>
             ))}
           </nav>
         )}
         {workTabs.length > 0 && (
-          <Button
-            variant="ghost-muted"
-            size="icon"
-            aria-label="Mở Thư viện"
-            title="Mở Thư viện"
-            onClick={onOpenLibrary}
-          >
-            +
-          </Button>
+          <Tip label="Mở Thư viện">
+            <Button
+              variant="ghost-muted"
+              size="icon"
+              aria-label="Mở Thư viện"
+              onClick={onOpenLibrary}
+            >
+              +
+            </Button>
+          </Tip>
         )}
         <div
           className={cx(
@@ -183,32 +195,35 @@ export function AppShell({
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <div ref={setSlot} className="flex items-center gap-1 empty:hidden" />
-          <Button
-            variant={settingsOpen ? 'secondary' : 'ghost-muted'}
-            size="icon"
-            aria-label="Cài đặt"
-            aria-current={settingsOpen ? 'page' : undefined}
-            title="Cài đặt"
-            onClick={onOpenSettings}
-          >
-            <SettingsIcon size={16} />
-          </Button>
-          <Button
-            variant="ghost-muted"
-            size="icon"
-            aria-label={theme === 'dark' ? 'Chuyển sang nền sáng' : 'Chuyển sang nền tối'}
-            title={theme === 'dark' ? 'Nền sáng' : 'Nền tối'}
-            onClick={onToggleTheme}
-          >
-            {theme === 'dark' ? <SunIcon size={16} /> : <MoonIcon size={16} />}
-          </Button>
+          <Tip label="Cài đặt">
+            <Button
+              variant={settingsOpen ? 'secondary' : 'ghost-muted'}
+              size="icon"
+              aria-label="Cài đặt"
+              aria-current={settingsOpen ? 'page' : undefined}
+              onClick={onOpenSettings}
+            >
+              <SettingsIcon size={BAR_ICON} />
+            </Button>
+          </Tip>
+          <Tip label={theme === 'dark' ? 'Nền sáng' : 'Nền tối'}>
+            <Button
+              variant="ghost-muted"
+              size="icon"
+              aria-label={theme === 'dark' ? 'Chuyển sang nền sáng' : 'Chuyển sang nền tối'}
+              onClick={onToggleTheme}
+            >
+              {theme === 'dark' ? <SunIcon size={BAR_ICON} /> : <MoonIcon size={BAR_ICON} />}
+            </Button>
+          </Tip>
         </div>
       </header>
 
       <div
         className={cx(
           'grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)]',
-          sidebarOpen ? 'grid-cols-[248px_minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)]'
+          // Hermes's default sidebar width (237px, its store/layout.ts).
+          sidebarOpen ? 'grid-cols-[237px_minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)]'
         )}
       >
         {sidebarOpen && (
@@ -219,7 +234,7 @@ export function AppShell({
           >
             <div className="flex min-h-0 flex-1 flex-col">{sidebar}</div>
             <div className="flex flex-col gap-2 px-3 pt-3 pb-3">
-              <span className="border-t border-line px-2.5 pt-3 text-ui-xs text-ink-muted">
+              <span className="border-t border-line px-2.5 pt-3 text-ui-xs text-ink-faint">
                 {appVersion ? 'Mira ' + appVersion : 'Mira'}
               </span>
             </div>

@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import { Tabs as BaseTabs } from '@base-ui/react/tabs'
+import { focusRing } from './focusRing'
 
 export function TabsRoot(props: BaseTabs.Root.Props): JSX.Element {
   return <BaseTabs.Root {...props} />
@@ -9,13 +10,13 @@ export function TabsRoot(props: BaseTabs.Root.Props): JSX.Element {
 export type TabsSize = 'sm' | 'default'
 
 const listSizes: Record<TabsSize, string> = {
-  sm: 'gap-[2px] p-[2px]',
+  sm: 'gap-0.5 p-0.5',
   default: 'gap-1 border-b border-line'
 }
 
 const tabSizes: Record<TabsSize, string> = {
-  sm: 'h-[22px] rounded-item px-2.5',
-  default: 'h-8 border-b-2 border-transparent px-3 data-active:border-focus'
+  sm: 'h-5 rounded-badge px-2.5 text-ui-2xs font-medium',
+  default: 'h-8 border-b-2 border-transparent px-3 text-ui-xs font-medium data-active:border-focus'
 }
 
 export function TabsList({
@@ -26,7 +27,12 @@ export function TabsList({
   return (
     <BaseTabs.List
       data-slot="tabs-list"
-      className={['inline-flex items-center', size === 'sm' ? 'rounded-tab bg-control' : '', listSizes[size], className]
+      className={[
+        'inline-flex items-center',
+        size === 'sm' ? 'rounded-tab bg-tertiary' : '',
+        listSizes[size],
+        className
+      ]
         .filter(Boolean)
         .join(' ')}
       {...props}
@@ -43,8 +49,9 @@ export function TabsTab({
     <BaseTabs.Tab
       data-slot="tabs-tab"
       className={[
-        'cursor-pointer bg-transparent text-ui-sm text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-active:text-ink',
-        size === 'sm' ? 'border-0 data-active:bg-selected' : '',
+        'cursor-pointer bg-transparent text-ink-muted outline-none transition-colors duration-(--duration-fast) hover:text-ink data-active:text-ink',
+        focusRing,
+        size === 'sm' ? 'border-0 data-active:bg-canvas data-active:shadow-popover' : '',
         tabSizes[size],
         className
       ]

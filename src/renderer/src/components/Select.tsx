@@ -3,6 +3,8 @@ import { Select as BaseSelect } from '@base-ui/react/select'
 import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
 import { CheckIcon } from '@solar-icons/react/linear/check'
 import { cx } from './cx'
+import { focusRing } from './focusRing'
+import { menuItemClass, menuSurfaceClass } from './Menu'
 
 export interface SelectOption<T extends string> {
   value: T
@@ -43,25 +45,31 @@ export function Select<T extends string>({
         data-slot="select"
         aria-label={label}
         className={cx(
-          'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line bg-control text-ui-sm text-ink outline-none hover:bg-control-hover focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-control-hover',
-          size === 'sm' ? 'h-7 gap-1.5 pr-2 pl-2.5' : 'h-(--control-height) pr-2.5 pl-3',
+          'input-chrome inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border text-ui-xs text-ink outline-none',
+          focusRing,
+          size === 'sm' ? 'h-6 gap-1.5 pr-1.5 pl-2' : 'h-(--control-height) pr-2 pl-2.5',
           className
         )}
       >
         {icon && <span className="text-ink-muted">{icon}</span>}
         <BaseSelect.Value className="whitespace-nowrap" />
         <BaseSelect.Icon className="ml-auto text-ink-muted">
-          <AltArrowDownIcon size={14} />
+          <AltArrowDownIcon size={12} />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
-        <BaseSelect.Positioner sideOffset={6} align="end" alignItemWithTrigger={false}>
-          <BaseSelect.Popup className="min-w-(--anchor-width) rounded-control border border-line-strong bg-popover p-1 text-ui-sm text-ink shadow-popover outline-none">
+        <BaseSelect.Positioner
+          className="z-(--z-modal-popover)"
+          sideOffset={6}
+          align="end"
+          alignItemWithTrigger={false}
+        >
+          <BaseSelect.Popup className={cx(menuSurfaceClass, 'min-w-(--anchor-width)')}>
             {options.map((option) => (
               <BaseSelect.Item
                 key={option.value}
                 value={option.value}
-                className="flex h-7 cursor-default items-center gap-2 rounded-item pr-3 pl-2 outline-none select-none data-highlighted:bg-hover"
+                className={cx(menuItemClass, 'pr-3')}
               >
                 <span className="flex size-3.5 items-center justify-center">
                   <BaseSelect.ItemIndicator>
