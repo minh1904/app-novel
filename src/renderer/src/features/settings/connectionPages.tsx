@@ -119,13 +119,6 @@ function KeyField({
   const [error, setError] = useState<string | undefined>()
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
 
-  if (card.support === 'soon')
-    return (
-      <Badge variant="outline" dot color="neutral">
-        Sắp có
-      </Badge>
-    )
-
   const keys = connection?.keys ?? []
   const shown = keys[0]
   const dirty = value.trim() !== ''
@@ -385,11 +378,7 @@ export function KeysPage(): JSX.Element {
               }
             >
               <div className="flex flex-col gap-3">
-                <p className="m-0 text-body-xs text-subtle">
-                  {card.description}{' '}
-                  {card.support === 'soon' &&
-                    'Cần transport riêng; sẽ có trong bản cập nhật kế tiếp.'}
-                </p>
+                <p className="m-0 text-body-xs text-subtle">{card.description}</p>
                 <LinkButton className="h-auto w-fit" onClick={() => openLink(card.keyUrl)}>
                   Lấy khóa ↗
                 </LinkButton>

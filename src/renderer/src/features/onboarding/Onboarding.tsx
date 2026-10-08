@@ -24,7 +24,6 @@ const GATEWAY = CONNECTION_PRESETS.find((preset) => preset.id === 'gateway')!
 const LOCALS = CONNECTION_PRESETS.filter(
   (preset) => preset.id === 'ollama' || preset.id === 'lmstudio'
 )
-const READY_CARDS = PROVIDER_CARDS.filter((card) => card.support === 'ready')
 
 function openLink(url: string): void {
   void window.mira.openExternal(url).catch(() => undefined)
@@ -93,7 +92,7 @@ function Picker({
         className="mt-2"
       >
         <div className="flex flex-col gap-1">
-          {READY_CARDS.map((card) => (
+          {PROVIDER_CARDS.map((card) => (
             <ProviderRow
               key={card.id}
               title={card.label}
@@ -135,7 +134,7 @@ function Picker({
             Để sau
           </LinkButton>
         )}
-        <Button onClick={() => dispatch({ type: 'pick_key', providerId: READY_CARDS[0]!.id })}>
+        <Button onClick={() => dispatch({ type: 'pick_key', providerId: PROVIDER_CARDS[0]!.id })}>
           Tôi có khóa API
         </Button>
       </div>
@@ -154,11 +153,11 @@ function KeyForm({
 }): JSX.Element {
   const connections = useConnectionStore((state) => state.connections)
   const [key, setKey] = useState('')
-  const card = READY_CARDS.find((item) => item.id === providerId) ?? READY_CARDS[0]!
+  const card = PROVIDER_CARDS.find((item) => item.id === providerId) ?? PROVIDER_CARDS[0]!
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-2">
-        {READY_CARDS.map((item) => {
+        {PROVIDER_CARDS.map((item) => {
           const selected = item.id === card.id
           const hasKey = connections.some(
             (connection) => connection.providerId === item.id && connection.keys.length > 0
@@ -384,7 +383,7 @@ export function Onboarding(): JSX.Element | null {
   }
 
   async function connectKey(providerId: string, key: string): Promise<void> {
-    const card = READY_CARDS.find((item) => item.id === providerId)
+    const card = PROVIDER_CARDS.find((item) => item.id === providerId)
     dispatch({ type: 'submit', label: card?.label ?? providerId })
     const result = await store.ensureWithKey(providerId, key)
     if (!result.ok) {
@@ -519,7 +518,7 @@ export function Onboarding(): JSX.Element | null {
                 Chọn nhà cung cấp khác
               </Button>
               <Button
-                onClick={() => dispatch({ type: 'pick_key', providerId: READY_CARDS[0]!.id })}
+                onClick={() => dispatch({ type: 'pick_key', providerId: PROVIDER_CARDS[0]!.id })}
               >
                 {state.form.step === 'account' ? 'Dùng khóa API' : 'Dùng khóa API khác'}
               </Button>

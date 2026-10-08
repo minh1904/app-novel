@@ -1,6 +1,5 @@
 import type { ConnectionKeyView, ConnectionView } from '../../../../shared/contracts/aiConnections'
 import type { BadgeColor } from '../../components/ui/Badge'
-import type { TestState } from '../../stores/connectionStore'
 
 /** Khoảng thời gian còn lại, nói bằng chữ người đọc được chứ không phải một mốc epoch. */
 function remaining(until: number, now: number): string {
@@ -26,26 +25,6 @@ export function connectionLive(connection: ConnectionView, now: number): boolean
   return connection.keys.some(
     (key) => key.state === 'ok' && (key.frozenUntil === null || key.frozenUntil <= now)
   )
-}
-
-/** Trạng thái của cả kết nối, suy từ trạng thái các khóa và lần kiểm tra gần nhất. */
-export function connectionBadge(
-  connection: ConnectionView,
-  test: TestState,
-  now: number
-): { tone: BadgeColor; label: string } {
-  if (!connection.enabled) return { tone: 'neutral', label: 'Đã tắt' }
-  if (test.running) return { tone: 'neutral', label: 'Đang kiểm tra…' }
-  if (test.error) return { tone: 'error', label: 'Không nối được' }
-  const live = connection.keys.filter(
-    (key) => key.state === 'ok' && (key.frozenUntil === null || key.frozenUntil <= now)
-  )
-  if (connection.keys.length > 0 && live.length === 0)
-    return { tone: 'error', label: 'Hết hạn mức' }
-  if (live.length < connection.keys.length)
-    return { tone: 'warning', label: 'Một khóa hết hạn mức' }
-  if (connection.checkedAt === null) return { tone: 'neutral', label: 'Chưa kiểm tra' }
-  return { tone: 'success', label: 'Đang chạy' }
 }
 
 /**

@@ -4,8 +4,6 @@
  * unchanged; this decides where each one is shown.
  */
 
-export type ProviderSupport = 'ready' | 'soon'
-
 export interface ProviderCard {
   /** The preset's `providerId`, which is also the price-catalog id. */
   id: string
@@ -13,8 +11,6 @@ export interface ProviderCard {
   description: string
   /** Where the person gets a key. */
   keyUrl: string
-  /** `soon` shows the card but takes no key yet (Anthropic needs its own transport). */
-  support: ProviderSupport
 }
 
 export const PROVIDER_CARDS: readonly ProviderCard[] = [
@@ -23,36 +19,31 @@ export const PROVIDER_CARDS: readonly ProviderCard[] = [
     label: 'Google Gemini',
     description:
       'Gemini qua endpoint tương thích OpenAI của Google. Mỗi project có hạn mức miễn phí riêng.',
-    keyUrl: 'https://aistudio.google.com/app/apikey',
-    support: 'ready'
+    keyUrl: 'https://aistudio.google.com/app/apikey'
   },
   {
     id: 'openrouter',
     label: 'OpenRouter',
     description: 'Một khóa cho hàng trăm model của nhiều hãng.',
-    keyUrl: 'https://openrouter.ai/keys',
-    support: 'ready'
+    keyUrl: 'https://openrouter.ai/keys'
   },
   {
     id: 'openai',
     label: 'OpenAI',
     description: 'Model GPT bằng khóa API của OpenAI Platform.',
-    keyUrl: 'https://platform.openai.com/api-keys',
-    support: 'ready'
+    keyUrl: 'https://platform.openai.com/api-keys'
   },
   {
     id: 'deepseek',
     label: 'DeepSeek',
     description: 'Model DeepSeek bằng khóa API của DeepSeek Platform.',
-    keyUrl: 'https://platform.deepseek.com/api_keys',
-    support: 'ready'
+    keyUrl: 'https://platform.deepseek.com/api_keys'
   },
   {
     id: 'anthropic',
     label: 'Anthropic',
     description: 'Claude bằng khóa API của Anthropic Console (không dùng gói Claude Pro/Max).',
-    keyUrl: 'https://console.anthropic.com/settings/keys',
-    support: 'ready'
+    keyUrl: 'https://console.anthropic.com/settings/keys'
   }
 ]
 

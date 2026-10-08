@@ -321,10 +321,6 @@ export function AccountsPage(): JSX.Element {
           description="Mira không đăng nhập bằng gói Claude Pro/Max. Dùng khóa API Anthropic hoặc gateway tự dựng."
         />
       </div>
-      <p className="mt-4 flex items-center gap-1.5 text-body-xs text-muted">
-        <CheckCircleIcon size={12} aria-hidden="true" />
-        {TERMS_NOTE}
-      </p>
     </SettingsSection>
   )
 }
