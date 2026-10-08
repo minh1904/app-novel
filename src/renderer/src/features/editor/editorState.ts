@@ -13,8 +13,8 @@ import {
   segFromRecord,
   type Edit,
   type Seg
-} from '../../../../shared/algorithms/segmentMap'
-import type { SegmentLanguage } from '../../../../shared/algorithms/segmenter'
+} from '../../../../shared/segmentation/segmentMap'
+import type { SegmentLanguage } from '../../../../shared/segmentation/segmenter'
 import type { SegmentRecord } from '../../../../shared/contracts/text'
 
 /**

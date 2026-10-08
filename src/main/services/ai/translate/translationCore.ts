@@ -6,8 +6,8 @@ import type {
   ModelCompletionResult,
   TranslationModelCaller
 } from '../../../../shared/contracts/translateCore'
-import { mapToTempIds, reconcileTempItems } from '../../../../shared/algorithms/translateReconcile'
-import { parseTranslationResponse } from '../../../../shared/algorithms/lenientParser'
+import { mapToTempIds, reconcileTempItems } from '../../../../shared/translation/translateReconcile'
+import { parseTranslationResponse } from '../../../../shared/translation/lenientParser'
 import {
   buildRepairRequest,
   buildTranslateRequest,
@@ -15,7 +15,7 @@ import {
 } from './translatePrompt'
 import { ProviderError } from '../../../infra/providers/types'
 import { addUsage } from '../../../infra/providers/usage'
-import { describeRefusals } from '../../../../shared/algorithms/refusalMessage'
+import { describeRefusals } from '../../../../shared/translation/refusalMessage'
 import { describeProviderError } from '../errorPolicy'
 import { CallBudget, LOCAL_EXTRA, type BudgetRound } from './callBudget'
 import { TRANSLATE_RESPONSE_FORMAT, type OutputMode, type UsedOutputMode } from './outputMode'

@@ -14,13 +14,13 @@ import {
   prepareImport,
   saveImport,
   type ImportPlan
-} from '../../../../shared/algorithms/rawImport'
+} from '../../../../shared/text/rawImport'
 import {
   ENCODINGS,
   describeChange,
   encodingLabel,
   type EncodingId
-} from '../../../../shared/algorithms/rawText'
+} from '../../../../shared/text/rawText'
 import type { TextRecord } from '../../../../shared/contracts/text'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'

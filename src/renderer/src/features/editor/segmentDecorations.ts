@@ -6,7 +6,7 @@ import {
   type DecorationSet,
   type ViewUpdate
 } from '@codemirror/view'
-import type { Seg } from '../../../../shared/algorithms/segmentMap'
+import type { Seg } from '../../../../shared/segmentation/segmentMap'
 import { savedField, segmentsField } from './editorState'
 
 /**

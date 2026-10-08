@@ -38,7 +38,7 @@ import type { BackupExported } from '../shared/contracts/backup'
 import type { ExportResult } from '../shared/contracts/export'
 import { CHANNELS, EVENT_CHANNELS } from '../shared/contracts/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/contracts/chapters'
-import type { AppInfo, ChromeTheme, DesktopApi } from '../shared/contracts/desktop-api'
+import type { AppInfo, ChromeTheme, DesktopApi } from '../shared/contracts/desktopApi'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from '../shared/contracts/library'
 import type { LinkRecord } from '../shared/contracts/links'
 import type { Result } from '../shared/contracts/result'
@@ -46,13 +46,13 @@ import type { WorkspaceLoad, WorkspaceState } from '../shared/contracts/workspac
 import type { RowSaved } from '../shared/contracts/rows'
 import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/text'
 import type { ContextEntryItem, ImportNamesResult } from '../shared/contracts/glossary'
-import type { GlossaryComplianceReport } from '../shared/algorithms/glossaryCompliance'
+import type { GlossaryComplianceReport } from '../shared/context/glossaryCompliance'
 import type {
   AddressingDyadItem,
   AddressingDyadResolved,
   CharacterItem
 } from '../shared/contracts/addressing'
-import type { AddressingComplianceReport } from '../shared/algorithms/addressingCompliance'
+import type { AddressingComplianceReport } from '../shared/context/addressingCompliance'
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,

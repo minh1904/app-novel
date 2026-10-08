@@ -14,7 +14,7 @@ import {
   type CopilotToken
 } from '../../infra/providers/accounts/copilot'
 import type { KeyExhausted, KeyLease, KeySource } from '../../infra/providers/gateway/keys'
-import type { Credential } from '../../infra/providers/transportShared'
+import type { Credential } from '../../infra/providers/transports/transportShared'
 import { ProviderError } from '../../infra/providers/types'
 import type { OAuthProvider } from '../../infra/storage/connections'
 import { StorageError } from '../../infra/storage/errors'

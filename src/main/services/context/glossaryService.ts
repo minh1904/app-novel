@@ -15,15 +15,15 @@ import {
   type ListContextOptions,
   type UpdateContextEntryParams
 } from '../../infra/storage/contextEntries'
-import { parseNamesText } from '../../../shared/algorithms/namesParser'
+import { parseNamesText } from '../../../shared/context/namesParser'
 import {
   matchContextEntries,
   type MatchedContextEntry
-} from '../../../shared/algorithms/contextMatching'
+} from '../../../shared/context/contextMatching'
 import {
   evaluateGlossaryCompliance,
   type GlossaryComplianceReport
-} from '../../../shared/algorithms/glossaryCompliance'
+} from '../../../shared/context/glossaryCompliance'
 import type { LibraryStore } from '../library/library'
 
 export class GlossaryService {

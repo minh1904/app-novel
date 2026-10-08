@@ -4,7 +4,7 @@ import type { RegisterPresetId } from '../../../../shared/contracts/addressingPr
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
 import { listCharacters } from '../../../infra/storage/addressingEntries'
 import type { LibraryStore } from '../../library/library'
-import { matchContextEntries } from '../../../../shared/algorithms/contextMatching'
+import { matchContextEntries } from '../../../../shared/context/contextMatching'
 import { suggestRegister } from './languageProfiles'
 import {
   buildTranslateRequest,

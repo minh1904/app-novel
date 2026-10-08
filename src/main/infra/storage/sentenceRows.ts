@@ -7,7 +7,7 @@ import {
   toSegmentInputs,
   type Edit,
   type Seg
-} from '../../../shared/algorithms/segmentMap'
+} from '../../../shared/segmentation/segmentMap'
 import type { TextRecord } from '../../../shared/contracts/text'
 import { StorageError } from './errors'
 import {

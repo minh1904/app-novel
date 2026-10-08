@@ -46,7 +46,7 @@ không đổi.)
   - `src/main/services/ai/translate/translatePrompt.ts`: thêm schema, và chỉ dẫn `<output>` theo chế độ.
   - `src/main/services/ai/translate/translationCore.ts`: thêm tùy chọn chế độ, cách rơi về, và ghi chế độ
     vào kết quả.
-  - `src/shared/algorithms/lenientParser.ts`: nhận dạng object.
+  - `src/shared/translation/lenientParser.ts`: nhận dạng object.
   - `src/shared/contracts/translateCore.ts`: thêm tùy chọn `responseFormat` cho `complete`.
   - `src/main/infra/providers/openAiCompatible.ts`, `openAiChatTransport.ts`: đưa `response_format` vào
     body.

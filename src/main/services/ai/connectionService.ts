@@ -59,7 +59,7 @@ import {
   describeThinkingCheck,
   modelCapability
 } from '../../infra/providers/modelCapability'
-import { sentParameters } from '../../infra/providers/openAiChatTransport'
+import { sentParameters } from '../../infra/providers/transports/openAiChatTransport'
 import {
   OpenAiCompatibleProvider,
   type KeySource,
@@ -68,8 +68,8 @@ import {
 import { ProviderError } from '../../infra/providers/types'
 import { describeProviderError, taskErrorPolicy } from './errorPolicy'
 import { toWireUsage } from '../../infra/providers/usage'
-import { createTransport } from '../../infra/providers/transportFactory'
-import { anthropicKeyProblem } from '../../infra/providers/anthropicTransport'
+import { createTransport } from '../../infra/providers/transports/transportFactory'
+import { anthropicKeyProblem } from '../../infra/providers/transports/anthropicTransport'
 import { CODEX_FALLBACK_MODELS } from '../../infra/providers/accounts/codex'
 import {
   COPILOT,

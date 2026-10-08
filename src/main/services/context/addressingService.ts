@@ -1,8 +1,8 @@
 import type {
   AddressingComplianceReport,
   ParagraphAddressingCheckItem
-} from '../../../shared/algorithms/addressingCompliance'
-import { evaluateAddressingCompliance } from '../../../shared/algorithms/addressingCompliance'
+} from '../../../shared/context/addressingCompliance'
+import { evaluateAddressingCompliance } from '../../../shared/context/addressingCompliance'
 import type {
   AddressingDyadItem,
   AddressingDyadResolved,

@@ -10,7 +10,7 @@ import {
 import { segmentsField } from '../../renderer/src/features/editor/editorState'
 import { CHANNELS } from '../../shared/contracts/channels'
 import type { Result } from '../../shared/contracts/result'
-import { segment } from '../../shared/algorithms/segmenter'
+import { segment } from '../../shared/segmentation/segmenter'
 import { TEXT_MAX_UNITS, type TextRecord } from '../../shared/contracts/text'
 import { LibraryStore } from '../services/library/library'
 import { createTempDirs } from '../testing/testing'

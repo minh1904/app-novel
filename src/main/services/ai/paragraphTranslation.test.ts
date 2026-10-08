@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { segment } from '../../../shared/algorithms/segmenter'
+import { segment } from '../../../shared/segmentation/segmenter'
 import { getProposal } from '../../infra/storage/aiProposals'
 import { SecretStore, type SecretCrypto } from '../../infra/storage/secretStore'
 import { createTempDirs } from '../../testing/testing'

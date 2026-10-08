@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { taskLimit, type ModelSettings } from '../../../shared/contracts/modelSettings'
-import type { ChatRequest } from './openAiChatTransport'
+import type { ChatRequest } from './transports/openAiChatTransport'
 
 /**
  * The one place where what a person set on a model entry becomes what a request carries (design D5 of

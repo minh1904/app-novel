@@ -128,11 +128,11 @@ Chưa chạy hết luồng onboarding tới bước "Bắt đầu", vì cần m�
 
 Trạng thái: **có trong mã và có test**, chỉ chạy với server giả. **Chưa thử với tài khoản thật** (task 7.2):
 đăng nhập Codex, dịch một lô, chat có tool; đăng nhập Copilot, chat với một model gpt-5 và một model Claude.
-Fixture SSE trong `src/main/infra/providers/__fixtures__/responses` và `anthropic` được soạn tay theo giao
+Fixture SSE trong `src/main/infra/providers/transports/__fixtures__/responses` và `anthropic` được soạn tay theo giao
 thức. Khi có bản ghi thật thì thay vào.
 
 **Ba transport, một dạng nội bộ**
-(`src/main/infra/providers/`)
+(`src/main/infra/providers/transports/`)
 
 - `transportShared.ts`: phần dùng chung gồm deadline, hủy, gộp header, chuyển lỗi, `Credential`,
   `CallOptions` và `ChatTransport`.

@@ -10,15 +10,15 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it } from 'vitest'
 import { loadFixtures } from './fixtures'
-import { extractParagraphs } from '../../src/shared/algorithms/fixtureCheck'
-import { alignParagraphs } from '../../src/shared/algorithms/paragraphAlign'
-import { checkJudgeFamily } from '../../src/shared/algorithms/modelFamily'
+import { extractParagraphs } from '../../src/measurement/fixtureCheck'
+import { alignParagraphs } from '../../src/shared/translation/paragraphAlign'
+import { checkJudgeFamily } from '../../src/measurement/modelFamily'
 import {
   parseJudgeResponse,
   evaluateTwoPassVerdicts,
   type JudgeOutput
-} from '../../src/shared/algorithms/judgeParser'
-import { assertNoSecret } from '../../src/shared/algorithms/secretGuard'
+} from '../../src/measurement/judgeParser'
+import { assertNoSecret } from '../../src/measurement/secretGuard'
 import { getWorkId } from '../../src/shared/contracts/fixture'
 
 const ROOT = process.cwd()

@@ -60,7 +60,7 @@ Hai lỗi của Mira làm thiệt hại lớn hơn cần thiết (sửa 2026-10-
 
 ## 3. Đã triển khai: chia nhỏ lô khi bị lọc
 
-- [`mapFinishReason`](../../../src/main/infra/providers/openAiChatTransport.ts) nhận mọi dạng
+- [`mapFinishReason`](../../../src/main/infra/providers/transports/openAiChatTransport.ts) nhận mọi dạng
   `content_filter…` là `filter`.
 - [`translationCore.ts`](../../../src/main/services/ai/translate/translationCore.ts): lượt chính bị lọc
   thì chia đôi và gửi lại từng nửa với cùng ngữ cảnh, tới khi khoanh được đoạn vẫn bị chặn khi đứng

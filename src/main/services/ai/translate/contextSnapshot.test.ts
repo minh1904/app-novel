@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { segment } from '../../../../shared/algorithms/segmenter'
+import { segment } from '../../../../shared/segmentation/segmenter'
 import { createCharacter, setDyad } from '../../../infra/storage/addressingEntries'
 import { createTempDirs } from '../../../testing/testing'
 import { GlossaryService } from '../../context/glossaryService'

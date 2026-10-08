@@ -8,7 +8,7 @@ import {
   buildChatBody,
   type ChatMessage,
   type ChatStreamEvent
-} from './openAiChatTransport'
+} from './transports/openAiChatTransport'
 import { OpenAiCompatibleProvider } from './openAiCompatible'
 import { ProviderError } from './types'
 

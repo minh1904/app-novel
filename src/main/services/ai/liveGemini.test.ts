@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ChatChunk } from '../../../shared/contracts/aiChat'
-import { segment } from '../../../shared/algorithms/segmenter'
+import { segment } from '../../../shared/segmentation/segmenter'
 import type { SecretCrypto } from '../../infra/storage/secretStore'
 import { createTempDirs } from '../../testing/testing'
 import { LibraryStore } from '../library/library'

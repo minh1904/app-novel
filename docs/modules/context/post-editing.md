@@ -55,7 +55,7 @@ Dịch (lượt chính)
 ### Kiểm bằng code (đề xuất)
 
 Dựa trên những gì model đã khai trong phản hồi (`speaker_to_listener`, `self_ref`, `addr_ref`, xem
-[hệ thống prompt](prompt-system.md)) và [`addressingCompliance.ts`](../../../src/shared/algorithms/addressingCompliance.ts):
+[hệ thống prompt](prompt-system.md)) và [`addressingCompliance.ts`](../../../src/shared/context/addressingCompliance.ts):
 
 | Phép kiểm | Bắt được | Có thể bắt nhầm khi |
 | --- | --- | --- |

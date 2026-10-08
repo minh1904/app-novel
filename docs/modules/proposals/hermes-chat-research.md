@@ -65,7 +65,7 @@ Hai điểm mã khác bản thiết kế:
 
 | Thành phần | File | Việc |
 | --- | --- | --- |
-| Panel | `src/renderer/src/features/chapter/AiPanel.tsx` | Nằm bên phải màn chương; chọn phiên đã lưu qua một menu |
+| Panel | `src/renderer/src/features/chapter/chat/AiPanel.tsx` | Nằm bên phải màn chương; chọn phiên đã lưu qua một menu |
 | Lượt chat | `AiTurn.tsx` | Hiển thị lượt gọi tool, danh sách ngữ cảnh đã gửi kèm, Sao chép / Hỏi lại |
 | Ô soạn | `AiComposer.tsx` | Chọn chế độ (`ask` / `edit` / `apply`), menu model; không gửi khi IME đang gõ dở |
 | Markdown | `SafeMarkdown.tsx` | Tự viết, chỉ hỗ trợ đoạn, tiêu đề, trích dẫn, code và danh sách |

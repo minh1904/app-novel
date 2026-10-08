@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { DesktopApi } from '../../shared/contracts/desktop-api'
+import type { DesktopApi } from '../../shared/contracts/desktopApi'
 
 declare global {
   interface Window {

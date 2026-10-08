@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeRefusals } from '../../../shared/algorithms/refusalMessage'
+import { describeRefusals } from '../../../shared/translation/refusalMessage'
 import { ProviderError } from '../../infra/providers/types'
 import {
   describeInvalidRequest,

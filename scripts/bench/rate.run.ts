@@ -13,8 +13,8 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { loadFixtures } from './fixtures'
-import { extractParagraphs } from '../../src/shared/algorithms/fixtureCheck'
-import { alignParagraphs } from '../../src/shared/algorithms/paragraphAlign'
+import { extractParagraphs } from '../../src/measurement/fixtureCheck'
+import { alignParagraphs } from '../../src/shared/translation/paragraphAlign'
 import {
   checkGlossaryCompliance,
   checkLengthOutliers,
@@ -22,9 +22,9 @@ import {
   checkResidualSourceChars,
   checkUnbalancedQuotes,
   evaluateAssertions
-} from '../../src/shared/algorithms/translationChecks'
-import { createPrng, computeCohenKappa, bootstrapWinRateCI } from '../../src/shared/algorithms/statistics'
-import { assertNoSecret } from '../../src/shared/algorithms/secretGuard'
+} from '../../src/shared/translation/translationChecks'
+import { createPrng, computeCohenKappa, bootstrapWinRateCI } from '../../src/measurement/statistics'
+import { assertNoSecret } from '../../src/measurement/secretGuard'
 import {
   getWorkId,
   normalizeAssertionRules,
@@ -33,7 +33,7 @@ import {
   type GlossaryEntry
 } from '../../src/shared/contracts/fixture'
 import type { SourceLanguage } from '../../src/shared/contracts/library'
-import type { Bead } from '../../src/shared/algorithms/paragraphAlign'
+import type { Bead } from '../../src/shared/translation/paragraphAlign'
 
 const ROOT = process.cwd()
 const RUNS = join(ROOT, 'fixtures', 'private', 'runs')

@@ -16,7 +16,10 @@ import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 //
 // Chỉ `electron/` và `index.ts` được import gói `electron`, nên mọi thứ còn lại chạy được trong Node
 // trần (test không cần dựng cửa sổ) và có thể chuyển sang tiến trình khác về sau. Thêm một tầng hay
-// một quy tắc là thêm một khối `boundary(...)` ở dưới; xem docs/handbook/engineering/architecture.md.
+// một quy tắc là thêm một khối `boundary(...)` ở dưới; sơ đồ thư mục ở README.md (Cấu trúc mã nguồn).
+//
+// `src/measurement` là mã của Bộ đo (scripts/bench, scripts/lab): app không import nó, nó chỉ dùng
+// shared/.
 const TESTS = ['**/*.test.ts', '**/*.test.tsx']
 /** Tiến trình con của `crash.test.ts`: không phải test nhưng là công cụ test, nên được miễn luật. */
 const NOT_ENFORCED = [...TESTS, '**/crash*.ts']
@@ -44,6 +47,10 @@ const NO_ELECTRON = [
   'Chỉ index.ts và main/electron/ được import electron. Mã khác phải chạy được không cần Electron.'
 ]
 const NO_RENDERER = [from('renderer'), 'Main không import từ src/renderer.']
+const NO_MEASUREMENT = [
+  from('measurement'),
+  'src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó.'
+]
 const NO_TESTING = [
   from('testing'),
   'main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó.'
@@ -64,7 +71,8 @@ const SHARED_PATTERNS = [
   ],
   [from('main'), 'shared/ không được import từ src/main.'],
   [from('renderer'), 'shared/ không được import từ src/renderer.'],
-  [from('preload'), 'shared/ không được import từ src/preload.']
+  [from('preload'), 'shared/ không được import từ src/preload.'],
+  NO_MEASUREMENT
 ]
 
 export default defineConfig(
@@ -108,9 +116,17 @@ export default defineConfig(
     patterns: [
       ...SHARED_PATTERNS,
       [
-        from('algorithms'),
-        'contracts/ chỉ có kiểu, schema và tên kênh; không import từ algorithms/ (algorithms/ được dùng contracts/, không ngược lại).'
+        '^\\.\\./',
+        'contracts/ chỉ có kiểu, schema và tên kênh; chỉ import trong contracts/ (các thư mục khác của shared/ được dùng contracts/, không ngược lại).'
       ]
+    ]
+  }),
+  boundary(['src/measurement/**/*.ts'], {
+    packages: SHARED_PACKAGES.slice(1),
+    patterns: [
+      [from('main'), 'measurement/ không import từ src/main.'],
+      [from('renderer'), 'measurement/ không import từ src/renderer.'],
+      [from('preload'), 'measurement/ không import từ src/preload.']
     ]
   }),
   boundary(['src/renderer/**/*.{ts,tsx}'], {
@@ -123,7 +139,8 @@ export default defineConfig(
     patterns: [
       ['^node:', 'Renderer chạy trong trình duyệt sandbox, không có module Node (node:*).'],
       [from('main'), 'Renderer không import từ src/main. Dùng kiểu và hợp đồng trong src/shared.'],
-      [from('preload'), 'Renderer không import từ src/preload. Dùng window.mira.']
+      [from('preload'), 'Renderer không import từ src/preload. Dùng window.mira.'],
+      NO_MEASUREMENT
     ]
   }),
   boundary(['src/preload/**/*.ts'], {
@@ -145,6 +162,7 @@ export default defineConfig(
         [from('ipc'), 'infra/ không import từ ipc/.'],
         [from('electron'), 'infra/ không import từ electron/.'],
         NO_RENDERER,
+        NO_MEASUREMENT,
         NO_TESTING
       ]
     },
@@ -158,6 +176,7 @@ export default defineConfig(
         [from('ipc'), 'services/ không import từ ipc/ (ipc gọi services, không ngược lại).'],
         [from('electron'), 'services/ không import từ electron/.'],
         NO_RENDERER,
+        NO_MEASUREMENT,
         NO_TESTING
       ]
     },
@@ -176,6 +195,7 @@ export default defineConfig(
           'services/library không import từ services/ai (dịch chương dùng LibraryStore, không ngược lại).'
         ],
         NO_RENDERER,
+        NO_MEASUREMENT,
         NO_TESTING
       ]
     },
@@ -191,6 +211,7 @@ export default defineConfig(
           'ipc/ không import từ electron/. Giữ handler thuần để test không cần dựng cửa sổ.'
         ],
         NO_RENDERER,
+        NO_MEASUREMENT,
         NO_TESTING
       ]
     },
@@ -199,7 +220,7 @@ export default defineConfig(
   boundary(
     ['src/main/electron/**/*.ts', 'src/main/index.ts'],
     {
-      patterns: [NO_RENDERER, NO_TESTING]
+      patterns: [NO_RENDERER, NO_MEASUREMENT, NO_TESTING]
     },
     NOT_ENFORCED
   ),

@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { CHANNELS } from '../../shared/contracts/channels'
-import type { TextApi } from '../../shared/contracts/desktop-api'
+import type { TextApi } from '../../shared/contracts/desktopApi'
 import {
   describeSaveFailure,
   prepareImport,
   saveImport,
   type ImportPlan
-} from '../../shared/algorithms/rawImport'
+} from '../../shared/text/rawImport'
 import type { Result } from '../../shared/contracts/result'
-import { segment } from '../../shared/algorithms/segmenter'
+import { segment } from '../../shared/segmentation/segmenter'
 import type { TextRecord } from '../../shared/contracts/text'
 import { LibraryStore } from '../services/library/library'
 import { createTempDirs } from '../testing/testing'

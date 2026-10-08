@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from 'react'
 import { SettingRow, SettingsSection } from '../../components/Setting'
-import type { AppInfo } from '../../../../shared/contracts/desktop-api'
+import type { AppInfo } from '../../../../shared/contracts/desktopApi'
 
 const PLATFORM: Record<string, string> = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }
 

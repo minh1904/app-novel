@@ -6,13 +6,13 @@ import { Limiter } from './gateway/limiter'
 import type { RatePacer } from './gateway/ratePacer'
 import type { RetryOptions } from './gateway/retryPolicy'
 import type { KeyLease, KeySource } from './gateway/keys'
-import type { CallOptions, ChatTransport } from './transportShared'
+import type { CallOptions, ChatTransport } from './transports/transportShared'
 import {
   OpenAiChatTransport,
   type ChatMessage,
   type ChatStreamEvent,
   type TransportTimeouts
-} from './openAiChatTransport'
+} from './transports/openAiChatTransport'
 import { reconcile } from './reconcile'
 import {
   ProviderError,
@@ -63,7 +63,7 @@ export {
   type ChatMessage,
   type ChatStreamEvent,
   type ToolCallFragment
-} from './openAiChatTransport'
+} from './transports/openAiChatTransport'
 export type { KeyExhausted, KeyLease, KeyOutcome, KeySource } from './gateway/keys'
 
 export const SYSTEM_PROMPT = [

@@ -8,7 +8,7 @@ contract, cách chạy và cách diễn giải nằm ở:
 - [Metric và judge](../docs/modules/measurement/metrics-and-judging.md)
 
 Schema được kiểm bằng `src/shared/contracts/fixture.ts` và
-`src/shared/algorithms/fixtureCheck.ts`. Trạng thái `draft/reviewed/approved` trong từng tệp là trạng
+`src/measurement/fixtureCheck.ts`. Trạng thái `draft/reviewed/approved` trong từng tệp là trạng
 thái oracle; việc qua schema không có nghĩa nội dung đã được người dịch xác minh.
 
 ## Hai thư mục

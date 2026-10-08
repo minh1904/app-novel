@@ -3,7 +3,7 @@ import { formatAsTxt } from './formatters/txtFormatter'
 import { formatAsMarkdown } from './formatters/markdownFormatter'
 import { formatAsDocxBuffer } from './formatters/docxFormatter'
 import { formatAsNovelHtml } from './formatters/pdfFormatter'
-import { decodeRaw, normalizeRaw } from '../../../shared/algorithms/rawText'
+import { decodeRaw, normalizeRaw } from '../../../shared/text/rawText'
 import type { ChapterExportItem, NovelMetadata } from './exportTypes'
 
 describe('Export Round-trip and Novel Fidelity', () => {

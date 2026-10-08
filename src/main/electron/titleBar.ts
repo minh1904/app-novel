@@ -1,4 +1,4 @@
-import type { ChromeTheme } from '../../shared/contracts/desktop-api'
+import type { ChromeTheme } from '../../shared/contracts/desktopApi'
 import { ZOOM_FACTOR } from './zoom'
 
 /**

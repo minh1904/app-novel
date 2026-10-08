@@ -12,15 +12,15 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { normalizeRaw } from '../../src/shared/algorithms/rawText'
-import { segment } from '../../src/shared/algorithms/segmenter'
+import { normalizeRaw } from '../../src/shared/text/rawText'
+import { segment } from '../../src/shared/segmentation/segmenter'
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
 import { TRANSLATE_PROMPT_VERSION } from '../../src/main/services/ai/translate/translatePrompt'
 import { LibraryStore } from '../../src/main/services/library/library'
 import { createServices } from '../../src/main/services/createServices'
 import { loadFixtures } from './fixtures'
-import { extractParagraphs } from '../../src/shared/algorithms/fixtureCheck'
-import { alignParagraphs } from '../../src/shared/algorithms/paragraphAlign'
+import { extractParagraphs } from '../../src/measurement/fixtureCheck'
+import { alignParagraphs } from '../../src/shared/translation/paragraphAlign'
 import {
   checkStructure,
   checkResidualSourceChars,
@@ -30,8 +30,8 @@ import {
   checkRepetitions,
   checkGlossaryCompliance,
   evaluateAssertions
-} from '../../src/shared/algorithms/translationChecks'
-import { assertNoSecret } from '../../src/shared/algorithms/secretGuard'
+} from '../../src/shared/translation/translationChecks'
+import { assertNoSecret } from '../../src/measurement/secretGuard'
 import { getWorkId, normalizeGlossaryEntries, normalizeAssertionRules } from '../../src/shared/contracts/fixture'
 
 const ROOT = process.cwd()

@@ -10,7 +10,7 @@ import {
   restoredSession,
   type Session,
   type TurnView
-} from '../features/chapter/chatTurns'
+} from '../features/chapter/chat/chatTurns'
 import { registerStoreReset } from './resetStores'
 
 export interface BeginTurnInput {

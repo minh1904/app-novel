@@ -1,5 +1,5 @@
 import type { StoredProposal, StoredProposalPart } from '../../infra/storage/aiProposals'
-import type { Edit } from '../../../shared/algorithms/segmentMap'
+import type { Edit } from '../../../shared/segmentation/segmentMap'
 
 export interface Candidate {
   proposal: StoredProposal

@@ -12,7 +12,7 @@ import {
 import { historyKeymap, insertNewline, standardKeymap } from '@codemirror/commands'
 import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
-import type { SegmentLanguage } from '../../../../shared/algorithms/segmenter'
+import type { SegmentLanguage } from '../../../../shared/segmentation/segmenter'
 import type { TextRecord } from '../../../../shared/contracts/text'
 import { Button } from '../../components/Button'
 import { Dialog } from '../../components/Dialog'

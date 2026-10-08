@@ -9,9 +9,9 @@ import { ChatService, MAX_TOOL_ROUNDS, type ChatConnections } from './chatServic
 import type { ConnectionTranslator } from './connectionService'
 import type { Generation } from '../../infra/providers/generation'
 import { OpenAiCompatibleProvider, type KeySource } from '../../infra/providers/openAiCompatible'
-import { createTransport } from '../../infra/providers/transportFactory'
+import { createTransport } from '../../infra/providers/transports/transportFactory'
 import { resolveCompat } from '../../infra/providers/compat'
-import type { ChatTransport } from '../../infra/providers/transportShared'
+import type { ChatTransport } from '../../infra/providers/transports/transportShared'
 
 /**
  * Vòng đời một lượt, chạy qua provider thật trên một endpoint giả.

@@ -7,7 +7,7 @@
  * Hàm thuần: không gọi mạng, không đọc tệp. Người gọi gửi `messages` qua kết nối của mình.
  */
 import { languageName } from './translate/languageProfiles'
-import { extractJsonArraySlice, sanitizeJsonString } from '../../../shared/algorithms/lenientParser'
+import { extractJsonArraySlice, sanitizeJsonString } from '../../../shared/translation/lenientParser'
 
 export const POLISH_PROMPT_VERSION = 'polish-v2'
 

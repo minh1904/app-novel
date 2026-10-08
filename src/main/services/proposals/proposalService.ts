@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { applyEdits, resegment, segFromRecord, toSegmentInputs } from '../../../shared/algorithms/segmentMap'
+import { applyEdits, resegment, segFromRecord, toSegmentInputs } from '../../../shared/segmentation/segmentMap'
 import {
   getProposal,
   insertTextSnapshot,

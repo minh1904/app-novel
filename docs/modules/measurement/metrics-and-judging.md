@@ -59,7 +59,7 @@ một hàm.
 
 Change OpenSpec `lab-completion-quality-report`; lý do ở
 [đối chiếu harness](../context/harness-review.md). Logic thuần ở
-[`labOutcomes.ts`](../../../src/shared/algorithms/labOutcomes.ts).
+[`labOutcomes.ts`](../../../src/measurement/labOutcomes.ts).
 
 **Kết cục từng đoạn.** Mỗi lần dịch của Lab ghi cho từng đoạn định dịch đúng một kết cục:
 `translated`, `refused` (kèm chữ gốc của nhà cung cấp, ví dụ `PROHIBITED_CONTENT`), `missing` (thiếu

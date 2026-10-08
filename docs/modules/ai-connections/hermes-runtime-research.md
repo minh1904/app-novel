@@ -118,7 +118,7 @@ bên. Các mục còn lại dựa trên đọc mã có ghi file:dòng nhưng ch�
 
 - **Hermes:** `agent/context_compressor.py` tóm tắt có cấu trúc, cập nhật dần, đánh dấu là "chỉ để tham
   khảo". `agent/micro_compaction.py` ghi rằng nén làm mất prompt cache nên mặc định tắt.
-- **Mira:** `renderer/src/features/chapter/chatTurns.ts` `historyFor` bỏ lượt cũ nhất khi vượt ngân sách.
+- **Mira:** `renderer/src/features/chapter/chat/chatTurns.ts` `historyFor` bỏ lượt cũ nhất khi vượt ngân sách.
 - **Đề xuất:** khi vượt ngân sách, tóm tắt "các quy ước đã thống nhất" (cách gọi, tên giữ nguyên) bằng
   model rẻ. Chỉ chạy khi thật sự vượt, để không phá cache.
 

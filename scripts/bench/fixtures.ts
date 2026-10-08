@@ -19,7 +19,7 @@ import {
   type LoadedWorkFixture,
   type ChapterFixtureData,
   type FixtureIssue
-} from '../../src/shared/algorithms/fixtureCheck'
+} from '../../src/measurement/fixtureCheck'
 
 export const FIXTURES_ROOT = path.resolve(__dirname, '../../fixtures')
 

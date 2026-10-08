@@ -8,8 +8,8 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { loadFixtures } from './fixtures'
-import { extractParagraphs } from '../../src/shared/algorithms/fixtureCheck'
-import { alignParagraphs } from '../../src/shared/algorithms/paragraphAlign'
+import { extractParagraphs } from '../../src/measurement/fixtureCheck'
+import { alignParagraphs } from '../../src/shared/translation/paragraphAlign'
 import {
   checkStructure,
   checkResidualSourceChars,
@@ -19,8 +19,8 @@ import {
   checkRepetitions,
   checkGlossaryCompliance,
   evaluateAssertions
-} from '../../src/shared/algorithms/translationChecks'
-import { assertNoSecret } from '../../src/shared/algorithms/secretGuard'
+} from '../../src/shared/translation/translationChecks'
+import { assertNoSecret } from '../../src/measurement/secretGuard'
 import { getWorkId, normalizeGlossaryEntries, normalizeAssertionRules } from '../../src/shared/contracts/fixture'
 
 const ROOT = process.cwd()

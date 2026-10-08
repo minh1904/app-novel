@@ -13,7 +13,7 @@ import { join } from 'node:path'
 import icon from '../../resources/icon.png?asset'
 import { GLASS_QUERY_PARAM } from '../shared/contracts/appearance'
 import { isAllowedExternalLink } from '../shared/contracts/aiProviders'
-import type { AppInfo, ChromeTheme } from '../shared/contracts/desktop-api'
+import type { AppInfo, ChromeTheme } from '../shared/contracts/desktopApi'
 import {
   appearanceState,
   isGlassSupported,

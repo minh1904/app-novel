@@ -1,5 +1,5 @@
 import type { ClassifiedError } from '../classifyError'
-import type { Credential } from '../transportShared'
+import type { Credential } from '../transports/transportShared'
 
 /**
  * What the gateway needs from wherever keys live. The provider knows nothing about a database; the

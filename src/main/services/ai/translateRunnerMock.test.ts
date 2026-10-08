@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest'
 import { LibraryStore } from '../library/library'
 import { createServices } from '../createServices'
 import type { SecretCrypto } from '../../infra/storage/secretStore'
-import { normalizeRaw } from '../../../shared/algorithms/rawText'
-import { segment } from '../../../shared/algorithms/segmenter'
-import { extractParagraphs } from '../../../shared/algorithms/fixtureCheck'
-import { alignParagraphs } from '../../../shared/algorithms/paragraphAlign'
+import { normalizeRaw } from '../../../shared/text/rawText'
+import { segment } from '../../../shared/segmentation/segmenter'
+import { extractParagraphs } from '../../../measurement/fixtureCheck'
+import { alignParagraphs } from '../../../shared/translation/paragraphAlign'
 import {
   checkStructure,
   checkResidualSourceChars
-} from '../../../shared/algorithms/translationChecks'
+} from '../../../shared/translation/translationChecks'
 
 const crypto: SecretCrypto = {
   isEncryptionAvailable: () => true,

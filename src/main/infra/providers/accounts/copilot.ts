@@ -1,4 +1,4 @@
-import type { CallOptions } from '../transportShared'
+import type { CallOptions } from '../transports/transportShared'
 import { ProviderError } from '../types'
 import { ReloginError, type DeviceCode, type PollOutcome } from './codex'
 

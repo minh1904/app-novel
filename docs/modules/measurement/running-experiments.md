@@ -92,7 +92,7 @@ của mỗi biến thể và chương, và số chấm xưng hô chỉ in ra con
 
 Hai loại tách nhau vì lần chạy sau ghi đè bản dịch của biến thể: lần đo chụp chất lượng tại lúc đo và
 trỏ về lần chạy theo `lab.json`. Logic nằm ở
-[`runRegistry.ts`](../../../src/shared/algorithms/runRegistry.ts).
+[`runRegistry.ts`](../../../src/measurement/runRegistry.ts).
 
 | Lệnh | Việc |
 | --- | --- |

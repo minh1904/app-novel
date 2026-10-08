@@ -3,7 +3,7 @@ import {
   type ModelCapabilityView,
   type ThinkingLevel
 } from '../../../shared/contracts/modelSettings'
-import { nearestThinkingLevel } from '../../../shared/algorithms/thinkingLevels'
+import { nearestThinkingLevel } from '../../../shared/models/thinkingLevels'
 import type { ModelInfo, ReasoningOption } from './modelCatalog'
 
 /**

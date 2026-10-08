@@ -9,8 +9,8 @@ export {
   paragraphAt,
   splitParagraphs,
   type ParagraphSpan
-} from '../../../shared/algorithms/paragraphSpans'
-import { paragraphAt, type ParagraphSpan } from '../../../shared/algorithms/paragraphSpans'
+} from '../../../shared/text/paragraphSpans'
+import { paragraphAt, type ParagraphSpan } from '../../../shared/text/paragraphSpans'
 
 /**
  * Where to read on from, as an opaque string the model copies back: chapter, side, paragraph (1-based),

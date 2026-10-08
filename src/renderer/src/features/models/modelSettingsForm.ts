@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { nearestThinkingLevel } from '../../../../shared/algorithms/thinkingLevels'
+import { nearestThinkingLevel } from '../../../../shared/models/thinkingLevels'
 import {
   modelSettingsPatchSchema,
   type ModelCapabilityView,

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { segment } from '../../../shared/algorithms/segmenter'
+import { segment } from '../../../shared/segmentation/segmenter'
 import type { ChapterItem } from '../../../shared/contracts/chapters'
 import type { LinkRecord } from '../../../shared/contracts/links'
 import type { TextRecord, TextSide } from '../../../shared/contracts/text'

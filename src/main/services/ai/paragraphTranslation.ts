@@ -13,7 +13,7 @@ import type {
   TranslateUsage
 } from '../../../shared/contracts/aiTranslate'
 import { taskLimit } from '../../../shared/contracts/modelSettings'
-import { planBatches } from '../../../shared/algorithms/translatePlanner'
+import { planBatches } from '../../../shared/translation/translatePlanner'
 import type { TranslationModelCaller } from '../../../shared/contracts/translateCore'
 import { createProposal, appendProposalParts, getProposal } from '../../infra/storage/aiProposals'
 import { StorageError } from '../../infra/storage/errors'

@@ -7,9 +7,9 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it } from 'vitest'
-import { evaluateE6Decision, type T0Metrics } from '../../src/shared/algorithms/decisionE6'
-import { assertNoSecret } from '../../src/shared/algorithms/secretGuard'
-import { benchChapters, type ParagraphOutcome } from '../../src/shared/algorithms/labOutcomes'
+import { evaluateE6Decision, type T0Metrics } from '../../src/measurement/decisionE6'
+import { assertNoSecret } from '../../src/measurement/secretGuard'
+import { benchChapters, type ParagraphOutcome } from '../../src/measurement/labOutcomes'
 
 const ROOT = process.cwd()
 const RUNS = join(ROOT, 'fixtures', 'private', 'runs')

@@ -28,7 +28,7 @@ import { createServices, type Services } from '../../src/main/services/createSer
 import { GlossaryService } from '../../src/main/services/context/glossaryService'
 import { AddressingService } from '../../src/main/services/context/addressingService'
 import type { CharacterGender } from '../../src/shared/contracts/addressing'
-import { addressingGaps, isPronounLike } from '../../src/shared/algorithms/addressingGaps'
+import { addressingGaps, isPronounLike } from '../../src/measurement/addressingGaps'
 import {
   buildAnalysisMessages,
   collectAddressingEvidence,
@@ -38,7 +38,7 @@ import { suggestRegister } from '../../src/main/services/ai/translate/languagePr
 import type { TranslationModelCaller } from '../../src/shared/contracts/translateCore'
 import type { SecretCrypto } from '../../src/main/infra/storage/secretStore'
 import { ParagraphTranslator, paragraphUnits } from '../../src/main/services/ai/paragraphTranslation'
-import { sanitizeJsonString } from '../../src/shared/algorithms/lenientParser'
+import { sanitizeJsonString } from '../../src/shared/translation/lenientParser'
 import { costOfUsage } from '../../src/main/services/ai/costEstimate'
 import { lookupModel } from '../../src/main/infra/providers/modelCatalog'
 import { getRunContext } from '../../src/main/infra/storage/translateRunContext'
@@ -58,18 +58,18 @@ import {
   repeatLabels,
   type ChapterOutcomes,
   type ParagraphOutcome
-} from '../../src/shared/algorithms/labOutcomes'
+} from '../../src/measurement/labOutcomes'
 import {
   checkThinkingLevel,
   describeThinkingCheck
 } from '../../src/main/infra/providers/modelCapability'
 import { formatAsNovelHtml } from '../../src/main/services/export/formatters/pdfFormatter'
-import { segment } from '../../src/shared/algorithms/segmenter'
+import { segment } from '../../src/shared/segmentation/segmenter'
 import { DESCRIPTION_MAX } from '../../src/shared/contracts/library'
 import { THINKING_LEVELS, type ThinkingLevel } from '../../src/shared/contracts/modelSettings'
 import type { ContextEntryItem } from '../../src/shared/contracts/glossary'
 import { TRANSLATE_PROMPT_VERSION } from '../../src/main/services/ai/translate/translatePrompt'
-import { nameConsistency, overallConsistency } from '../../src/shared/algorithms/nameConsistency'
+import { nameConsistency, overallConsistency } from '../../src/measurement/nameConsistency'
 import {
   buildClassifyMessages,
   buildSweepMessages,
@@ -97,7 +97,7 @@ import {
   type MeasurementRecord,
   type RunOutput,
   type RunRecord
-} from '../../src/shared/algorithms/runRegistry'
+} from '../../src/measurement/runRegistry'
 import {
   POLISH_PROMPT_VERSION,
   buildPolishMessages,

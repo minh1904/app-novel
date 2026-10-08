@@ -59,7 +59,12 @@ Sơ đồ là kiến trúc **đích**; mã đang chạy ở [hiện trạng](htt
 src/
   shared/              chạy ở mọi nơi; không node:, electron, react
     contracts/         kiểu, schema valibot, tên kênh IPC, DesktopApi, Result
-    algorithms/        hàm thuần trên văn bản (chuẩn hóa raw, chia câu để cắt lô)
+    text/              chuẩn hóa và nhập raw, vị trí đoạn
+    segmentation/      chia câu, bản đồ đoạn ↔ câu
+    context/           khớp và kiểm thuật ngữ, xưng hô
+    translation/       lập kế hoạch lô, đọc và đối chiếu kết quả dịch
+    models/            mức suy nghĩ theo model
+  measurement/         mã của Bộ đo, chỉ scripts/bench và scripts/lab dùng; app không import
   main/
     index.ts           gốc lắp ráp; cùng electron/ là nơi duy nhất import 'electron'
     electron/          safeStorage, đăng ký IPC
