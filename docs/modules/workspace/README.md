@@ -38,3 +38,9 @@ khai trong change này.
 
 - [Những gì nên đặt ở thanh bên](sidebar-research.md): thanh bên của LinguaGacha, Novelcrafter, CAT tool,
   Obsidian; kết luận 2026-10-08: không dùng rail điều hướng.
+- [Tính năng của đối thủ và cách lấp chỗ trống](competitor-features.md): tính năng trong từng màn của
+  LinguaGacha, AiNiee, GalTransl, công cụ Việt, app viết truyện và CAT tool; 15 tính năng xếp hạng và ba
+  cách lấp chỗ trống khi không có rail (đề xuất, chưa chốt).
+- [Tính năng toàn app cho thanh bên chung](app-level-features.md): mục cấp app của GalTransl, AiNiee,
+  Mihon, Novelcrafter, Notion, CAT tool; đề xuất thanh bên Trang chủ / Thư viện / Tác vụ / tài nguyên
+  dùng chung (đề xuất, chưa chốt).
