@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import {
+  chapterState,
   clampPage,
   displayTitle,
   filterChapters,
@@ -39,6 +40,18 @@ describe('displayTitle', () => {
   it('falls back to "Chương N" for an untitled chapter', () => {
     expect(displayTitle({ number: 12, title: '' })).toBe('Chương 12')
     expect(displayTitle({ number: 12, title: 'Mở đầu' })).toBe('Mở đầu')
+  })
+})
+
+describe('chapterState', () => {
+  it('is translated only when both texts exist', () => {
+    expect(chapterState({ hasSource: true, hasTarget: true })).toBe('translated')
+    expect(chapterState({ hasSource: true, hasTarget: false })).toBe('untranslated')
+  })
+
+  it('reads a chapter without a source as empty, even with a translation', () => {
+    expect(chapterState({ hasSource: false, hasTarget: false })).toBe('empty')
+    expect(chapterState({ hasSource: false, hasTarget: true })).toBe('empty')
   })
 })
 
