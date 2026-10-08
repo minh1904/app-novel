@@ -8,6 +8,7 @@ export const SETTINGS_GROUPS = [
     label: 'Model',
     pages: [
       { id: 'main', label: 'Model chính' },
+      { id: 'models', label: 'Danh sách model' },
       { id: 'fallbacks', label: 'Dự phòng' }
     ]
   },

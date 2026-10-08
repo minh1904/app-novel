@@ -20,6 +20,11 @@ export const STATIC_INDEX: SettingsIndexEntry[] = [
     location: { group: 'model', page: 'main', key: 'main-thinking' }
   },
   {
+    title: 'Danh sách model',
+    description: 'Các model hiện trong menu chọn model, mức suy luận và giới hạn của từng mục',
+    location: { group: 'model', page: 'models' }
+  },
+  {
     title: 'Model dự phòng',
     description: 'Thử lần lượt khi model chính hết hạn mức hoặc không dùng được',
     location: { group: 'model', page: 'fallbacks', key: 'fallbacks' }

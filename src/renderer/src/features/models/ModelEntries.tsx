@@ -67,13 +67,16 @@ export interface ModelEntriesProps {
   actions: ModelEntryActions
   /** Hỏi endpoint danh sách model (chính là "Kiểm tra kết nối"). */
   onFetchModels(): void
+  /** Dòng "Model dùng trong Mira"; tắt khi đã có tiêu đề kết nối ở trên. */
+  heading?: boolean
 }
 
 export function ModelEntries({
   connection,
   test,
   actions,
-  onFetchModels
+  onFetchModels,
+  heading = true
 }: ModelEntriesProps): JSX.Element {
   const entries = connection.models
   const [dialog, setDialog] = useState<EditDialog | null>(null)
@@ -129,12 +132,14 @@ export function ModelEntries({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline gap-2">
-        <p className="m-0 text-body-xs font-semibold">Model dùng trong Mira</p>
-        {entries.length > 0 && (
-          <span className="text-body-xs text-subtle">{entries.length} mục</span>
-        )}
-      </div>
+      {heading && (
+        <div className="flex flex-wrap items-baseline gap-2">
+          <p className="m-0 text-body-xs font-semibold">Model dùng trong Mira</p>
+          {entries.length > 0 && (
+            <span className="text-body-xs text-subtle">{entries.length} mục</span>
+          )}
+        </div>
+      )}
 
       {problem !== null && (
         <p role="alert" className="m-0 text-body-xs text-error">

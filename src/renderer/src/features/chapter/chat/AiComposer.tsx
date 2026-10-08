@@ -4,7 +4,7 @@ import { StopCircleIcon } from '@solar-icons/react/linear/stop-circle'
 import { CompactButton } from '../../../components/ui/CompactButton'
 import { ICON } from '../../../components/ui/icon'
 import { ModelSelectionMenu } from '../../models/ModelSelectionMenu'
-import { openConnectionSettings } from '../../settings/openConnectionSettings'
+import { openModelList } from '../../settings/openConnectionSettings'
 import { openRequestIds } from './chatTurns'
 import type { AiChatController } from './useAiChat'
 
@@ -91,7 +91,7 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
             onUseDefault={chat.useDefaultModel}
             onRefresh={chat.refreshConnections}
             onAddCustom={chat.addCustomModel}
-            onOpenSettings={openConnectionSettings}
+            onOpenSettings={openModelList}
           />
 
           {running.length > 0 ? (

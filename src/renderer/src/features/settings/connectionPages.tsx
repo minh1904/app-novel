@@ -396,12 +396,7 @@ export function KeysPage(): JSX.Element {
                     {own.length > 1 && (
                       <span className="pt-2 text-body-xs font-medium text-muted">{item.name}</span>
                     )}
-                    <ConnectionDetails
-                      connection={item}
-                      now={now}
-                      showAddress={false}
-                      keyInHead={item === connection}
-                    />
+                    <ConnectionDetails connection={item} now={now} showAddress={false} compact />
                   </div>
                 ))}
               </div>
