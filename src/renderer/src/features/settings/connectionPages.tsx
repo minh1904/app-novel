@@ -1,5 +1,6 @@
 import { useState, type JSX } from 'react'
 import { KeyIcon } from '@solar-icons/react/linear/key'
+import { TrashBinTrashIcon } from '@solar-icons/react/linear/trash-bin-trash'
 import { LinkIcon } from '@solar-icons/react/linear/link'
 import { MonitorIcon } from '@solar-icons/react/linear/monitor'
 import { CONNECTION_PRESETS, type ConnectionView } from '../../../../shared/contracts/aiConnections'
@@ -13,9 +14,10 @@ import { Badge } from '../../components/ui/Badge'
 import { Button, LinkButton } from '../../components/ui/Button'
 import { cn } from '../../lib/cn'
 import { ICON } from '../../components/ui/icon'
-import { SearchInput } from '../../components/ui/Input'
+import { Input, SearchInput } from '../../components/ui/Input'
+import { CompactButton } from '../../components/ui/CompactButton'
 import { ButtonGroup } from '../../components/ui/ButtonGroup'
-import { SettingRow, SettingsSection } from '../../components/ui/Setting'
+import { SettingsSection } from '../../components/ui/Setting'
 import { TextField } from '../../components/ui/Field'
 import { useConnectionStore } from '../../stores/connectionStore'
 import { notify } from '../../stores/notificationStore'
@@ -86,15 +88,28 @@ function StatusDot({ on }: { on: boolean }): JSX.Element {
   )
 }
 
-/** Ô khóa trên thẻ đóng: hiện `••••` như chữ thường, bấm thì thành ô dán; Enter lưu, Esc hủy. */
+// A resting key field reads as plain text: the frame keeps its size so nothing shifts when it gains
+// its chrome on focus or when the card opens.
+const KEY_BARE = 'border-transparent! bg-transparent! shadow-none! cursor-pointer text-muted'
+
+/**
+ * Ô khóa của thẻ provider, như `KeyField` của Hermes: khóa đã có hiện `••••` trong một ô chỉ đọc, bấm vào
+ * là sửa tại chỗ. Lưu chỉ hiện khi đã gõ, thùng rác khi có khóa; Enter lưu, Esc hủy mà không đóng Cài đặt.
+ * Khóa mới được thêm vào nhóm khóa của kết nối, không thay khóa cũ.
+ */
 function KeyField({
   card,
-  connection
+  connection,
+  expanded,
+  onExpand
 }: {
   card: ProviderCard
   connection: ConnectionView | undefined
+  expanded: boolean
+  onExpand(): void
 }): JSX.Element {
   const ensureWithKey = useConnectionStore((state) => state.ensureWithKey)
+  const removeKey = useConnectionStore((state) => state.removeKey)
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
   const [saving, setSaving] = useState(false)
@@ -107,8 +122,23 @@ function KeyField({
       </Badge>
     )
 
+  const keys = connection?.keys ?? []
+  const shown = keys[0]
+  const dirty = value.trim() !== ''
+
+  function startEdit(): void {
+    setEditing(true)
+    if (!expanded) onExpand()
+  }
+
+  function cancel(): void {
+    setEditing(false)
+    setValue('')
+    setError(undefined)
+  }
+
   async function save(): Promise<void> {
-    if (!value.trim() || saving) return
+    if (!dirty || saving) return
     setSaving(true)
     const result = await ensureWithKey(card.id, value.trim())
     setSaving(false)
@@ -116,53 +146,133 @@ function KeyField({
       setError(result.message)
       return
     }
-    setValue('')
-    setEditing(false)
-    setError(undefined)
+    cancel()
     notify({ kind: 'success', title: card.label, message: 'Đã lưu khóa.' })
   }
 
-  const keys = connection?.keys ?? []
-  if (!editing) {
+  if (shown && !editing) {
     return (
-      <Button
-        variant="ghost"
-        onClick={() => setEditing(true)}
-        className={cn('w-56 justify-start', keys.length > 0 && 'font-mono')}
-      >
-        {keys.length > 0
-          ? '••••' + keys[0]!.tail + (keys.length > 1 ? '  +' + (keys.length - 1) : '')
-          : 'Dán khóa ' + card.label}
-      </Button>
+      <Input
+        aria-label={'Khóa ' + card.label}
+        readOnly
+        className={cn(!expanded && KEY_BARE)}
+        inputClassName="cursor-pointer font-mono"
+        value={'••••' + shown.tail + (keys.length > 1 ? '  +' + (keys.length - 1) : '')}
+        onFocus={startEdit}
+      />
     )
   }
+
   return (
-    <div className="flex w-full max-w-(--container-sm) items-start gap-1.5">
-      <TextField
-        label={'Khóa ' + card.label}
-        type="password"
-        autoFocus
-        className="min-w-0 flex-1 [&>label]:sr-only"
-        placeholder={'Dán khóa ' + card.label}
-        value={value}
-        error={error}
-        onChange={(event) => setValue(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            void save()
-          } else if (event.key === 'Escape') {
-            event.preventDefault()
+    <div className="flex flex-col gap-3xs">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-xs">
+        <Input
+          aria-label={'Khóa ' + card.label}
+          aria-invalid={error ? true : undefined}
+          type="password"
+          autoFocus={editing}
+          className={cn(!editing && !expanded && KEY_BARE)}
+          placeholder={(shown ? 'Dán thêm khóa ' : 'Dán khóa ') + card.label}
+          value={value}
+          onFocus={() => !editing && startEdit()}
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && dirty) {
+              event.preventDefault()
+              void save()
+            } else if (event.key === 'Escape' && editing) {
+              event.preventDefault()
+              event.stopPropagation()
+              cancel()
+            }
+          }}
+        />
+        {editing && (shown || dirty) && (
+          <div className="flex items-center gap-3xs">
+            {shown && (
+              <CompactButton
+                aria-label={'Xóa khóa …' + shown.tail}
+                disabled={saving}
+                onClick={() => {
+                  void removeKey(connection!.id, shown.id)
+                  cancel()
+                }}
+                icon={<TrashBinTrashIcon size={14} />}
+              />
+            )}
+            {dirty && (
+              <Button variant="solid" loading={saving} onClick={() => void save()}>
+                Lưu
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      {error && (
+        <span role="alert" className="text-body-xs text-error">
+          {error}
+        </span>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Thẻ provider như `ProviderKeyRows` của Hermes: một lưới hai cột (tên | ô khóa) khớp cột control của các
+ * hàng cài đặt; bấm vào thẻ là mở, phần mở ra trải hết hai cột.
+ */
+function ProviderKeyCard({
+  id,
+  open,
+  onToggle,
+  head,
+  tag,
+  keyField,
+  children
+}: {
+  id: string
+  open: boolean
+  onToggle(): void
+  head: JSX.Element
+  tag?: JSX.Element
+  keyField: JSX.Element
+  children: JSX.Element
+}): JSX.Element {
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: the name button is the keyboard path; the card only widens the mouse target
+    <div
+      data-setting-id={id}
+      onClick={onToggle}
+      className={cn(
+        '@container cursor-pointer rounded-sm p-3 transition-colors duration-(--mira-duration-fast)',
+        open ? 'bg-muted ring-1 ring-(--mira-border-strong)' : 'hover:bg-hover'
+      )}
+    >
+      <div className="grid grid-cols-1 items-start gap-x-3 gap-y-1.5 @2xl:grid-cols-[minmax(0,1fr)_minmax(15rem,22rem)] @2xl:gap-y-3">
+        <ActionRow
+          expanded={open}
+          onClick={(event) => {
             event.stopPropagation()
-            setEditing(false)
-            setValue('')
-            setError(undefined)
-          }
-        }}
-      />
-      <Button variant="solid" loading={saving} disabled={!value.trim()} onClick={() => void save()}>
-        Lưu
-      </Button>
+            onToggle()
+          }}
+          className="h-8 min-w-0 px-0 py-0 hover:bg-transparent"
+          title={head}
+          tag={tag}
+        />
+        {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: stops a click in the field from toggling the card */}
+        <div className="min-w-0" onClick={(event) => event.stopPropagation()}>
+          {keyField}
+        </div>
+        {open && (
+          // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: stops a click in the body from closing the card
+          <div
+            className="min-w-0 cursor-auto @2xl:col-span-2"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {children}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -219,7 +329,7 @@ export function KeysPage(): JSX.Element {
           const connection = own[0]
           const id = 'provider:' + card.id
           return (
-            <ExpandableCard
+            <ProviderKeyCard
               key={card.id}
               id={id}
               open={open === id}
@@ -237,35 +347,39 @@ export function KeysPage(): JSX.Element {
                   </Badge>
                 ) : undefined
               }
-              right={<KeyField card={card} connection={connection} />}
+              keyField={
+                <KeyField
+                  card={card}
+                  connection={connection}
+                  expanded={open === id}
+                  onExpand={() => toggle(id)}
+                />
+              }
             >
-              <div className="flex flex-col">
-                <p className="m-0 pt-1 text-body-xs text-subtle">
+              <div className="flex flex-col gap-3">
+                <p className="m-0 text-body-xs text-subtle">
                   {card.description}{' '}
-                  <LinkButton className="h-auto" onClick={() => openLink(card.keyUrl)}>
-                    Lấy khóa ↗
-                  </LinkButton>
+                  {card.support === 'soon' &&
+                    'Cần transport riêng; sẽ có trong bản cập nhật kế tiếp.'}
                 </p>
-                {own.length > 0 ? (
-                  own.map((item) => (
-                    <div key={item.id} className="flex flex-col">
-                      {own.length > 1 && (
-                        <span className="pt-3 text-body-xs font-medium text-muted">
-                          {item.name}
-                        </span>
-                      )}
-                      <ConnectionDetails connection={item} now={now} showAddress={false} />
-                    </div>
-                  ))
-                ) : (
-                  <p className="m-0 py-3 text-body-xs text-muted">
-                    {card.support === 'soon'
-                      ? 'Cần transport riêng; sẽ có trong bản cập nhật kế tiếp.'
-                      : 'Chưa có kết nối. Dán khóa ở ô bên phải để tạo.'}
-                  </p>
-                )}
+                <LinkButton className="h-auto w-fit" onClick={() => openLink(card.keyUrl)}>
+                  Lấy khóa ↗
+                </LinkButton>
+                {own.map((item) => (
+                  <div key={item.id} className="flex flex-col border-t border-subtle pt-1">
+                    {own.length > 1 && (
+                      <span className="pt-2 text-body-xs font-medium text-muted">{item.name}</span>
+                    )}
+                    <ConnectionDetails
+                      connection={item}
+                      now={now}
+                      showAddress={false}
+                      keyInHead={item === connection}
+                    />
+                  </div>
+                ))}
               </div>
-            </ExpandableCard>
+            </ProviderKeyCard>
           )
         })}
       </div>
@@ -392,49 +506,46 @@ function AddEndpointForm(): JSX.Element {
   }
 
   return (
+    // Hermes' form: one bordered box of stacked, labelled fields, not setting rows; the mode switch
+    // needs the whole width for four options.
     <SettingsSection title="Thêm endpoint">
-      <div className="grid gap-x-3 @2xl:grid-cols-2">
-        <SettingRow title="Tên">
+      <div className="@container grid gap-3 rounded-sm border border-subtle p-3">
+        <div className="grid gap-3 @lg:grid-cols-2">
           <TextField
-            label="Tên endpoint"
-            className="w-full [&>label]:sr-only"
+            label="Tên"
             placeholder="Gateway của tôi"
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
-        </SettingRow>
-        <SettingRow title="Địa chỉ (URL)" hint="Ví dụ http://127.0.0.1:8317/v1">
           <TextField
-            label="Địa chỉ endpoint"
-            className="w-full font-mono [&>label]:sr-only"
+            label="Địa chỉ (URL)"
+            inputClassName="font-mono"
             placeholder="http://127.0.0.1:8317/v1"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
           />
-        </SettingRow>
-      </div>
-      <SettingRow
-        title="Chế độ API"
-        hint="Tự nhận chọn theo địa chỉ (api.anthropic.com hay đường dẫn /anthropic là Anthropic Messages); hầu hết gateway là Chat Completions. Kiểm tra thăm dò đúng route của chế độ đã chọn."
-      >
-        <ButtonGroup
-          label="Chế độ API"
-          value={mode}
-          options={API_MODES}
-          onChange={(value) => setMode(value)}
-        />
-      </SettingRow>
-      <SettingRow
-        title="Model mặc định"
-        hint={
-          models.length > 0
-            ? 'Dò được ' + models.length + ' model.'
-            : 'Bấm Kiểm tra để dò, hoặc gõ tay.'
-        }
-      >
+        </div>
+        <fieldset className="m-0 flex min-w-0 flex-col gap-xs border-0 p-0">
+          <legend className="mb-xs p-0 text-label-sm text-default">Chế độ API</legend>
+          <ButtonGroup
+            label="Chế độ API"
+            className="w-full overflow-x-auto [&>*]:flex-1"
+            value={mode}
+            options={API_MODES}
+            onChange={(value) => setMode(value)}
+          />
+          <span className="text-body-xs text-muted">
+            Tự nhận chọn theo địa chỉ; hầu hết gateway là Chat Completions.
+          </span>
+        </fieldset>
         <TextField
           label="Model mặc định"
-          className="w-full font-mono [&>label]:sr-only"
+          hint={
+            models.length > 0
+              ? 'Dò được ' + models.length + ' model.'
+              : 'Bấm Kiểm tra để dò, hoặc gõ tay.'
+          }
+          inputClassName="font-mono"
           list="endpoint-models"
           placeholder="gemini-2.5-flash"
           value={model}
@@ -445,38 +556,41 @@ function AddEndpointForm(): JSX.Element {
             <option key={id} value={id} />
           ))}
         </datalist>
-      </SettingRow>
-      <SettingRow title="Khóa API" hint="Để trống nếu endpoint không cần khóa.">
         <TextField
-          label="Khóa API của endpoint"
+          label="Khóa API"
           type="password"
-          className="w-full [&>label]:sr-only"
+          placeholder="Để trống nếu endpoint không cần khóa"
           value={secret}
           onChange={(event) => setSecret(event.target.value)}
         />
-      </SettingRow>
-      {message && (
-        <p
-          role={message.tone === 'error' ? 'alert' : 'status'}
-          className={cn(
-            'm-0 py-1 text-body-xs',
-            message.tone === 'ok'
-              ? 'text-success'
-              : message.tone === 'warn'
-                ? 'text-warning'
-                : 'text-error'
-          )}
-        >
-          {message.text}
-        </p>
-      )}
-      <div className="flex gap-2 pt-2">
-        <Button loading={checking} disabled={!url.trim()} onClick={() => void check()}>
-          Kiểm tra
-        </Button>
-        <Button variant="solid" loading={saving} disabled={!url.trim()} onClick={() => void save()}>
-          Lưu
-        </Button>
+        {message && (
+          <p
+            role={message.tone === 'error' ? 'alert' : 'status'}
+            className={cn(
+              'm-0 py-1 text-body-xs',
+              message.tone === 'ok'
+                ? 'text-success'
+                : message.tone === 'warn'
+                  ? 'text-warning'
+                  : 'text-error'
+            )}
+          >
+            {message.text}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <Button loading={checking} disabled={!url.trim()} onClick={() => void check()}>
+            Kiểm tra
+          </Button>
+          <Button
+            variant="solid"
+            loading={saving}
+            disabled={!url.trim()}
+            onClick={() => void save()}
+          >
+            Lưu
+          </Button>
+        </div>
       </div>
     </SettingsSection>
   )

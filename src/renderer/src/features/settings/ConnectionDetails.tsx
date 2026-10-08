@@ -23,12 +23,18 @@ import { ModelEntries } from '../models/ModelEntries'
 export function ConnectionDetails({
   connection,
   now,
-  showAddress = true
+  showAddress = true,
+  keyInHead = false
 }: {
   connection: ConnectionView
   now: number
   /** Thẻ provider đã biết ẩn địa chỉ: người dùng hiếm khi cần đổi nó. */
   showAddress?: boolean
+  /**
+   * Thẻ Khóa API đã có ô khóa ở hàng đầu (như Hermes): bỏ ô thêm khóa ở đây, và chỉ liệt kê khóa khi có
+   * từ hai khóa trở lên, để xem trạng thái và xóa từng khóa.
+   */
+  keyInHead?: boolean
 }): JSX.Element {
   const store = useConnectionStore()
   const test = store.tests[connection.id] ?? emptyTest
@@ -121,70 +127,74 @@ export function ConnectionDetails({
         </SettingRow>
       )}
 
-      <SettingRow
-        wide
-        title="Khóa API"
-        hint={
-          connection.keys.length === 0
-            ? local
-              ? 'Chưa có khóa nào. Endpoint chạy trên máy bạn thường không cần khóa.'
-              : 'Chưa có khóa nào.'
-            : connection.keys.length > 1
-              ? 'Dùng cạn khóa trên rồi mới sang khóa dưới.' +
-                (sharedQuota
-                  ? ' Khóa cùng một project Google dùng chung hạn mức, nên khóa thứ hai nên lấy từ project khác.'
-                  : '')
-              : undefined
-        }
-        below={
-          <div className="flex flex-col gap-1.5">
-            {connection.keys.map((key) => {
-              const badge = keyBadge(key, now)
-              return (
-                <div
-                  key={key.id}
-                  className="flex flex-wrap items-center gap-2 rounded-sm bg-muted px-2.5 py-1"
-                >
-                  <span className="font-mono text-body-xs">••••{key.tail}</span>
-                  <Badge variant="outline" dot color={badge.tone}>
-                    {badge.label}
-                  </Badge>
-                  <CompactButton
-                    className="ml-auto"
-                    aria-label={'Xóa khóa …' + key.tail}
-                    onClick={() => void store.removeKey(connection.id, key.id)}
-                    icon={<TrashBinTrashIcon size={14} />}
+      {(!keyInHead || connection.keys.length > 1) && (
+        <SettingRow
+          wide
+          title="Khóa API"
+          hint={
+            connection.keys.length === 0
+              ? local
+                ? 'Chưa có khóa nào. Endpoint chạy trên máy bạn thường không cần khóa.'
+                : 'Chưa có khóa nào.'
+              : connection.keys.length > 1
+                ? 'Dùng cạn khóa trên rồi mới sang khóa dưới.' +
+                  (sharedQuota
+                    ? ' Khóa cùng một project Google dùng chung hạn mức, nên khóa thứ hai nên lấy từ project khác.'
+                    : '')
+                : undefined
+          }
+          below={
+            <div className="flex flex-col gap-1.5">
+              {connection.keys.map((key) => {
+                const badge = keyBadge(key, now)
+                return (
+                  <div
+                    key={key.id}
+                    className="flex flex-wrap items-center gap-2 rounded-sm bg-muted px-2.5 py-1"
+                  >
+                    <span className="font-mono text-body-xs">••••{key.tail}</span>
+                    <Badge variant="outline" dot color={badge.tone}>
+                      {badge.label}
+                    </Badge>
+                    <CompactButton
+                      className="ml-auto"
+                      aria-label={'Xóa khóa …' + key.tail}
+                      onClick={() => void store.removeKey(connection.id, key.id)}
+                      icon={<TrashBinTrashIcon size={14} />}
+                    />
+                  </div>
+                )
+              })}
+              {!keyInHead && (
+                <div className="flex items-start gap-2">
+                  <TextField
+                    label="Thêm khóa"
+                    type="password"
+                    className="min-w-0 flex-1 [&>label]:sr-only"
+                    value={secret}
+                    error={keyError}
+                    placeholder="Dán khóa rồi nhấn Enter"
+                    onChange={(event) => setSecret(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        void submitKey()
+                      }
+                    }}
                   />
+                  <Button
+                    loading={adding}
+                    disabled={secret.trim() === ''}
+                    onClick={() => void submitKey()}
+                  >
+                    Thêm
+                  </Button>
                 </div>
-              )
-            })}
-            <div className="flex items-start gap-2">
-              <TextField
-                label="Thêm khóa"
-                type="password"
-                className="min-w-0 flex-1 [&>label]:sr-only"
-                value={secret}
-                error={keyError}
-                placeholder="Dán khóa rồi nhấn Enter"
-                onChange={(event) => setSecret(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    void submitKey()
-                  }
-                }}
-              />
-              <Button
-                loading={adding}
-                disabled={secret.trim() === ''}
-                onClick={() => void submitKey()}
-              >
-                Thêm
-              </Button>
+              )}
             </div>
-          </div>
-        }
-      />
+          }
+        />
+      )}
 
       <div className="py-3">
         <ModelEntries
