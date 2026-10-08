@@ -1,7 +1,8 @@
 # Kết nối AI
 
 Cập nhật: 2026-10-08 · Trạng thái: **Đã chốt hướng** (mục "Quyết định 2026-10-08"); phần giao diện **đã
-triển khai** (mục "Đã triển khai"), đăng nhập thuê bao chưa. Phần 1–2 là quan sát; phần 3–4 là đề xuất ngày 2026-10-07, đã bị quyết định mới thay ở các
+triển khai** (mục "Đã triển khai"); đăng nhập thuê bao và ba transport **có trong mã**, chưa thử với tài
+khoản thật (mục "Đã triển khai (change `subscription-providers`)"). Phần 1–2 là quan sát; phần 3–4 là đề xuất ngày 2026-10-07, đã bị quyết định mới thay ở các
 điểm ghi rõ. Chủ trì: chủ sản phẩm, kỹ thuật.
 
 ## Câu hỏi chương này trả lời
@@ -65,7 +66,8 @@ Trạng thái: **đã chạy trong working tree**, chưa commit. Phần 1 bên d
 
 **Khóa API**
 
-- Mỗi provider một thẻ: Gemini, OpenRouter, OpenAI, DeepSeek, Anthropic. Anthropic ghi "Sắp có".
+- Mỗi provider một thẻ: Gemini, OpenRouter, OpenAI, DeepSeek, Anthropic. Anthropic ghi "Sắp có" cho tới
+  change `subscription-providers`, nay đã dùng được.
 - Chấm trạng thái trên thẻ sáng khi có ít nhất một khóa dùng được.
 - Ô khóa hiện `••••` + 4 ký tự cuối; dán khóa vào thẻ chưa có kết nối thì Mira tạo kết nối từ preset
   (`ai:connections:ensure-with-key`).
@@ -121,6 +123,100 @@ Trạng thái: **đã chạy trong working tree**, chưa commit. Phần 1 bên d
 - Onboarding đến trạng thái lỗi, dùng một khóa Gemini giả.
 
 Chưa chạy hết luồng onboarding tới bước "Bắt đầu", vì cần một khóa thật.
+
+## Đã triển khai (change `subscription-providers`, 2026-10-08)
+
+Trạng thái: **có trong mã và có test**, chỉ chạy với server giả. **Chưa thử với tài khoản thật** (task 7.2):
+đăng nhập Codex, dịch một lô, chat có tool; đăng nhập Copilot, chat với một model gpt-5 và một model Claude.
+Fixture SSE trong `src/main/infra/providers/__fixtures__/responses` và `anthropic` được soạn tay theo giao
+thức. Khi có bản ghi thật thì thay vào.
+
+**Ba transport, một dạng nội bộ**
+(`src/main/infra/providers/`)
+
+- `transportShared.ts`: phần dùng chung gồm deadline, hủy, gộp header, chuyển lỗi, `Credential`,
+  `CallOptions` và `ChatTransport`.
+- `openAiChatTransport.ts`: Chat Completions như trước. Có thêm header theo kết nối (Copilot).
+- `responsesTransport.ts`: Responses API. System thành `instructions`. Tin nhắn và lời gọi tool thành các
+  mục có kiểu. `call_id` dài hơn 64 ký tự được rút gọn bằng hash. Ký hiệu `<|…|>` được thay. Phần chữ thuộc
+  phase `commentary` bị bỏ. Tool mở mà không có `.done` được chốt với `{}`.
+- `anthropicTransport.ts`: Anthropic Messages. Có `cache_control` ở system và tool cuối, `max_tokens` luôn
+  gửi. Mức suy luận đổi theo họ model:
+  - Claude 4.6 trở lên: `adaptive` kèm `output_config.effort`.
+  - Claude cũ hơn: ngân sách 4.000 / 8.000 / 16.000 / 32.000, `temperature: 1`, và `max_tokens` không dưới
+    ngân sách + 4.096.
+  - Haiku: không gửi gì.
+- `transportFactory.ts`: chọn transport cho mỗi lượt gọi.
+  - Codex luôn dùng Responses.
+  - Kết nối Anthropic luôn dùng Messages.
+  - Copilot dùng Responses cho `gpt-N` với N ≥ 5 (trừ `gpt-5-mini`), còn lại dùng Chat Completions.
+  - Endpoint tùy chỉnh theo chế độ người dùng chọn. "Tự nhận" chọn Messages khi host là `api.anthropic.com`
+    hoặc đường dẫn kết thúc bằng `/anthropic`.
+
+Lỗi 401 với tài khoản đăng nhập làm Mira lấy token mới rồi thử lại **một** lần. Copilot cũng thử lại một lần
+khi gặp `model_not_available_for_integrator` hoặc `model_not_supported`.
+
+**Tài khoản**
+(`src/main/infra/providers/accounts/`, `src/main/services/ai/accountCredentials.ts`, `accountLogins.ts`)
+
+- Đăng nhập bằng mã thiết bị, chạy hết ở main. Renderer hỏi trạng thái mỗi 2 giây. Lỗi mạng khi hỏi lại
+  được thử im lặng tối đa 6 lần liên tiếp. Mã Codex hết hạn sau 15 phút; mã Copilot theo GitHub, thêm 3
+  giây vào khoảng chờ GitHub cho.
+- Trình duyệt chỉ được mở tới `auth.openai.com` và `github.com`.
+- Token chỉ lưu dạng mã hóa bằng `safeStorage`, ở bảng `ai_oauth_token` (thư viện v7). Máy không mã hóa
+  được thì Mira từ chối lưu. Token không bao giờ về renderer.
+- Codex làm mới 120 giây trước `exp`; Copilot đổi lại token Copilot 120 giây trước khi hết hạn. Mỗi tài
+  khoản chỉ có một lần làm mới chạy cùng lúc; lời gọi đến sau đợi lần đang chạy. Refresh token mới được ghi
+  ngay.
+- Làm mới bị từ chối hẳn (`invalid_grant`, `refresh_token_reused`, 401/403; Copilot 401) thì kết nối chuyển
+  sang "Cần đăng nhập lại". Mọi lời gọi sau đó báo lỗi ngay, không gọi ra ngoài nữa. Lượt chat lỗi vì lý do
+  này có nút "Đăng nhập lại" mở thẳng thẻ. Hộp thoại dịch chỉ báo bằng lời.
+- Đăng nhập xong thì Mira tạo kết nối (tối đa một kết nối cho mỗi nhà cung cấp). Model của tài khoản được
+  thêm thành mục; không lấy được danh sách thì dùng danh sách dự phòng tĩnh. Sau đó hiện màn chọn model
+  chính.
+- Hủy giữa lúc đang lưu token thì không lưu gì: Mira kiểm lại trong chính giao dịch ghi token.
+
+**Hằng số và nguồn** (mã Hermes commit `bf871a5943`, đọc ngày 2026-10-08):
+
+| Mục | Giá trị | Nguồn Hermes |
+| --- | --- | --- |
+| Client ID Codex | `app_EMoamEEZ73f0CkXaXp7hrann` | `hermes_cli/auth_constants.py` |
+| Mã thiết bị Codex | `auth.openai.com/api/accounts/deviceauth/usercode`, `…/token` | `web_routers/oauth.py:219-295` |
+| Đổi và làm mới token Codex | `auth.openai.com/oauth/token` | `auth_codex.py:443-539` |
+| API Codex | `chatgpt.com/backend-api/codex` | `codex_headers.py` |
+| Hạn mức Codex | `chatgpt.com/backend-api/wham/usage` | `account_usage.py:316-493` |
+| Client ID Copilot | `Iv1.b507a08c87ecfe98`, scope `read:user` | `copilot_auth.py:27-34` |
+| Token Copilot | `api.github.com/copilot_internal/v2/token` | `copilot_auth.py:376-511` |
+| Header Copilot | `Editor-Version: vscode/1.104.1`, `Copilot-Integration-Id: vscode-chat` | `copilot_auth.py:502-511` |
+
+Mira tự xưng `originator: mira` và `User-Agent: Mira/<phiên bản>` ở mọi chỗ không bắt buộc giả danh. Riêng
+hai header Copilot ở trên là của VS Code: thiếu chúng thì Copilot trả 400.
+
+**Hạn mức:** thẻ Codex và nhóm Codex trong menu model có chip "Còn x % · đặt lại …". Chip chỉ hiện khi một
+cửa sổ còn dưới 20 % và chuyển màu cảnh báo dưới 10 %. Cửa sổ 18.000 giây là "Phiên", 604.800 giây là
+"Tuần". Main lưu đệm 5 phút.
+
+**Anthropic:** thẻ Khóa API › Anthropic đã dùng được. Khóa không bắt đầu bằng `sk-ant-api` bị từ chối.
+Token `sk-ant-oat…` được báo là token đăng nhập Claude, không phải khóa API.
+
+**Endpoint tùy chỉnh:** chọn được Tự nhận, Chat Completions, Responses hoặc Anthropic Messages. Nút Kiểm tra
+thăm dò đúng route của chế độ đó: `/chat/completions`, `/responses` hoặc `/v1/messages`.
+
+**Lỗi theo nhà cung cấp** (`classifyError.ts`):
+
+- Codex trả 429 `usage_limit_reached`: hết hạn mức, kèm mốc đặt lại nếu thân lỗi có.
+- Copilot trả 402, hoặc thông báo về premium request: hết hạn mức.
+- Anthropic `overloaded_error` (529): giới hạn tốc độ, thử lại được.
+
+**Rủi ro:**
+
+- `chatgpt.com/backend-api` và `copilot_internal` là API nội bộ, có thể đổi bất kỳ lúc nào. Mọi hằng số
+  nằm trong `accounts/codex.ts` và `accounts/copilot.ts`.
+- Rủi ro điều khoản đã ghi ở mục "Quyết định 2026-10-08". Thẻ đăng nhập có dòng cảnh báo.
+
+**Cách quay lại bản trước:** migration thư viện v7 chỉ thêm cột và bảng. Revert mã là đủ để app cũ chạy,
+nhưng app cũ sẽ thấy kết nối tài khoản như một kết nối khóa API không có khóa. Muốn sạch thì ngắt các tài
+khoản trước khi revert.
 
 ## 1. Mira hiện có gì (quan sát mã, 2026-10-07)
 
