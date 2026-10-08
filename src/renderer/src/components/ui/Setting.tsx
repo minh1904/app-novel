@@ -71,7 +71,7 @@ export function SectionHeading({
   )
 }
 
-/** A group of setting rows: a heading, then the rows divided by hairlines. */
+/** A group of setting rows: a heading, then the rows. Space parts them, not hairlines (Hermes' ListRow). */
 export function SettingsSection({
   title,
   icon,
@@ -90,7 +90,7 @@ export function SettingsSection({
           {title}
         </SectionHeading>
       )}
-      <div className={cn('divide-y divide-subtle')}>{children}</div>
+      <div>{children}</div>
     </section>
   )
 }
