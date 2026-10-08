@@ -1,6 +1,6 @@
 # Module Đề xuất và phiên AI
 
-Cập nhật: 2026-10-05 · Trạng thái: quyết định sản phẩm đã chốt; OpenSpec và mã đang triển khai.
+Cập nhật: 2026-10-08 · Trạng thái: quyết định sản phẩm đã chốt; OpenSpec và mã đang triển khai.
 Chủ trì: chủ sản phẩm và kỹ thuật. Câu hỏi: AI ghi, người duyệt và quay lại kết quả nhiều chương ra sao?
 
 ## Phạm vi
@@ -35,6 +35,15 @@ những chi tiết không được ghi tại đó là **đề xuất** cho OpenS
   trống và không đổi. Xem [kho](../../../src/main/infra/storage/aiProposals.ts),
   [service duyệt](../../../src/main/services/proposals/proposalService.ts),
   [dịch theo đoạn](../../../src/main/services/ai/paragraphTranslation.ts).
+- **Chat không chế độ (change `agentic-chat`, mã đã có ngày 2026-10-08):** ô soạn chỉ còn ô nhập,
+  menu model và nút gửi/dừng. Lượt gửi mang vị trí người dùng thay cho ngữ cảnh. Model đọc bằng
+  `get_current_chapter`, `read_segments`, `list_glossary`, `list_addressing` cùng các tool đọc cũ, và đề
+  xuất bằng `propose_edit`, `propose_translation`, `propose_glossary_term`. Đề xuất hiện thành thẻ dưới
+  lượt chat, trạng thái lấy từ hàng chờ. Kênh IPC cho renderer tự tạo đề xuất chat đã bị bỏ. Xem
+  [tool](../../../src/main/services/ai/chatTools.ts),
+  [đề xuất từ tool](../../../src/main/services/proposals/chatProposalService.ts) và
+  [quyết định mục 9](decisions.md). Chưa đo trên model thật; xem
+  [nghiên cứu Hermes](hermes-chat-research.md).
 
 Module 5 dựng đường duyệt và dữ liệu đề xuất. [Module 7 Tác vụ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ)
 chịu trách nhiệm chạy, tạm dừng và tiếp tục dịch nhiều chương sau khi app tắt. Module 5 cần có hàng

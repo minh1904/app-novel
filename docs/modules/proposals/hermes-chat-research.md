@@ -36,8 +36,28 @@ Chủ sản phẩm chốt:
   giờ ghi thẳng, đúng [quyết định về đề xuất](decisions.md).
 - **Hiển thị lượt gọi tool như Hermes:** gộp thành một dòng tóm tắt, bấm để mở chi tiết.
 
-Đặc tả sẽ nằm ở change OpenSpec `agentic-chat`. Các mục 3a–3d bên dưới vẫn là phạm vi UI của change đó.
+Đặc tả nằm ở change OpenSpec `agentic-chat`. Các mục 3a–3d bên dưới vẫn là phạm vi UI của change đó.
 Riêng các dòng về chế độ và phạm vi trong ô soạn không còn đúng.
+
+**Hiện trạng ngày 2026-10-08 (mã):** change `agentic-chat` đã có trong mã. Gồm ô soạn không chế độ,
+vị trí người dùng ở cuối system prompt, bảy tool đọc, ba tool ghi chỉ tạo đề xuất, trần 10 đề xuất mỗi
+lượt, dòng tóm tắt lượt gọi tool và thẻ đề xuất dưới lượt chat. Test chạy trên model giả và kho thật.
+**Chưa đo trên model thật:** bảng đo 5 câu hỏi mẫu (task 6.1 của change) còn trống cho tới khi chủ sản
+phẩm chạy với khóa thật.
+
+| Câu hỏi mẫu | Số vòng tool | Ký tự đọc | Số đề xuất | Đọc trước khi trả lời? |
+| --- | --- | --- | --- | --- |
+| "chương này nói gì" | chưa đo | chưa đo | chưa đo | chưa đo |
+| "đoạn đang chọn xưng hô đúng chưa" | chưa đo | chưa đo | chưa đo | chưa đo |
+| "dịch đoạn 3–5" | chưa đo | chưa đo | chưa đo | chưa đo |
+| "tìm chỗ dịch 魔王" | chưa đo | chưa đo | chưa đo | chưa đo |
+| "thêm thuật ngữ" | chưa đo | chưa đo | chưa đo | chưa đo |
+
+Hai điểm mã khác bản thiết kế:
+
+- Vị trí gửi đi không lặp `chapterId`, vì lượt đã có trường đó.
+- Khi bản dịch không trống, `propose_translation` đặt đoạn mới cạnh đoạn dịch liên kết gần nhất. Không
+  có đoạn liên kết nào gần đó thì mới rơi về "cần đặt vị trí" như đề xuất dịch chương.
 
 ## 1. Mira hiện có (quan sát mã, 2026-10-07)
 

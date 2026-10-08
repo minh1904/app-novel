@@ -1,7 +1,8 @@
 # Quyết định hiện hành — Đề xuất và phiên AI
 
-Ngày: 2026-10-05 · Trạng thái: **Đã chốt về hành vi sản phẩm**, đang triển khai; xem [tiến độ](README.md).
-Người quyết định: chủ sản phẩm, qua trao đổi ngày 2026-10-04–05.
+Ngày: 2026-10-05, bổ sung 2026-10-08 · Trạng thái: **Đã chốt về hành vi sản phẩm**, đang triển
+khai; xem [tiến độ](README.md).
+Người quyết định: chủ sản phẩm, qua trao đổi ngày 2026-10-04–05 và 2026-10-08.
 Câu hỏi: AI được ghi chữ khi nào, người dùng duyệt theo phạm vi nào và hội thoại sống bao lâu?
 
 ## Quyết định
@@ -43,6 +44,17 @@ Câu hỏi: AI được ghi chữ khi nào, người dùng duyệt theo phạm v
    vẫn liệt kê nhãn các khối ở “Đã gửi kèm”. Khi một khối bị cắt theo giới hạn ký tự, composer nói
    rõ và chặn gửi cho tới khi người dùng đồng ý, vì giờ không còn chỗ để xem phần bị cắt.
 
+9. **Chat không có chế độ, đề xuất chỉ sinh từ tool ghi** (quyết định ngày 2026-10-08, xem
+   [nghiên cứu Hermes](hermes-chat-research.md#quyết-định-2026-10-08-chat-thường-ai-tự-gọi-tool);
+   thay mục 6–8 **cho panel chat**). Ô soạn chỉ còn ô nhập, menu model và nút gửi/dừng. Lượt gửi
+   không kèm văn bản chương mà kèm vị trí người dùng (chương đang mở, đoạn con trỏ mỗi phía, khoảng
+   đoạn đang chọn). Model tự đọc bằng tool đọc và chỉ đổi được bản dịch qua tool ghi
+   (`propose_edit`, `propose_translation`, `propose_glossary_term`). Đề xuất từ chat **luôn ở chế độ
+   Duyệt trước**: chat không còn Áp dụng thẳng, và chữ trong câu trả lời, kể cả khối rào, không bao
+   giờ thành đề xuất. Mỗi lượt tạo tối đa 10 đề xuất, tính cả thuật ngữ. Thuật ngữ do AI đề xuất là
+   mục glossary ở trạng thái chờ duyệt, nguồn `ai`. Hộp thoại dịch chương vẫn giữ Duyệt trước / Áp
+   dụng thẳng như mục 1 và 6.
+
 ## Vì sao đổi
 
 Quy tắc pane trống của ADR-005 tự ghi mà không hỏi chính sách làm người dùng khó biết chữ đã vào
@@ -59,6 +71,9 @@ muốn đi hết luồng chọn Áp dụng thẳng. Cả hai giữ nguồn gốc
 - Mã MVP còn các đường cũ dùng hàng/segment để tương thích nội bộ, dù giao diện dịch chương đang
   chuyển sang đường đề xuất. OpenSpec, roadmap và tài liệu cũ phải phân biệt baseline và hành vi mới;
   tài liệu này không tự chứng minh một task đã nghiệm thu.
+- Từ mục 9, tác phẩm lưu lượt chat mới với `action = 'chat'` (schema tác phẩm v10). Bản app cũ đọc
+  lượt đó sẽ báo lỗi. Muốn quay về bản cũ thì phải khôi phục bản sao lưu tác phẩm có từ trước khi
+  nâng cấp, không chỉ cài lại app.
 - Schema và cơ chế neo đang được kiểm qua [OpenSpec](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/proposals/tasks.md);
   retention, đặt vị trí và UX diff còn mở. Xem [bằng chứng và câu hỏi mở](evidence.md).
 
