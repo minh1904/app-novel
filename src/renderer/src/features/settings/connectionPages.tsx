@@ -16,6 +16,7 @@ import { cn } from '../../lib/cn'
 import { ICON } from '../../components/ui/icon'
 import { Input, SearchInput } from '../../components/ui/Input'
 import { CompactButton } from '../../components/ui/CompactButton'
+import { ConfirmDialog, type ConfirmRequest } from '../../components/ui/ConfirmDialog'
 import { ButtonGroup } from '../../components/ui/ButtonGroup'
 import { SettingsSection } from '../../components/ui/Setting'
 import { TextField } from '../../components/ui/Field'
@@ -108,12 +109,13 @@ function KeyField({
   expanded: boolean
   onExpand(): void
 }): JSX.Element {
-  const ensureWithKey = useConnectionStore((state) => state.ensureWithKey)
+  const connectKey = useConnectionStore((state) => state.connectKey)
   const removeKey = useConnectionStore((state) => state.removeKey)
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | undefined>()
+  const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
 
   if (card.support === 'soon')
     return (
@@ -140,26 +142,44 @@ function KeyField({
   async function save(): Promise<void> {
     if (!dirty || saving) return
     setSaving(true)
-    const result = await ensureWithKey(card.id, value.trim())
+    const result = await connectKey(card.id, value.trim())
     setSaving(false)
     if (!result.ok) {
       setError(result.message)
       return
     }
     cancel()
-    notify({ kind: 'success', title: card.label, message: 'Đã lưu khóa.' })
+    const model = result.connection.models[0]?.name
+    notify(
+      result.warning
+        ? {
+            kind: 'warning',
+            title: card.label,
+            message: 'Đã lưu khóa, nhưng chưa kiểm được: ' + result.warning
+          }
+        : {
+            kind: 'success',
+            title: card.label,
+            message: model ? 'Đã kết nối; dùng được ' + model + '.' : 'Đã kết nối.'
+          }
+    )
   }
+
+  const confirmDialog = <ConfirmDialog request={confirm} onClose={() => setConfirm(null)} />
 
   if (shown && !editing) {
     return (
-      <Input
-        aria-label={'Khóa ' + card.label}
-        readOnly
-        className={cn(!expanded && KEY_BARE)}
-        inputClassName="cursor-pointer font-mono"
-        value={'••••' + shown.tail + (keys.length > 1 ? '  +' + (keys.length - 1) : '')}
-        onFocus={startEdit}
-      />
+      <>
+        <Input
+          aria-label={'Khóa ' + card.label}
+          readOnly
+          className={cn(!expanded && KEY_BARE)}
+          inputClassName="cursor-pointer font-mono"
+          value={'••••' + shown.tail + (keys.length > 1 ? '  +' + (keys.length - 1) : '')}
+          onFocus={startEdit}
+        />
+        {confirmDialog}
+      </>
     )
   }
 
@@ -194,8 +214,13 @@ function KeyField({
                 aria-label={'Xóa khóa …' + shown.tail}
                 disabled={saving}
                 onClick={() => {
-                  void removeKey(connection!.id, shown.id)
                   cancel()
+                  setConfirm({
+                    title: 'Xóa khóa …' + shown.tail + '?',
+                    description: 'Khóa bị xóa khỏi máy này; muốn dùng lại thì phải dán lại.',
+                    confirmLabel: 'Xóa khóa',
+                    onConfirm: () => void removeKey(connection!.id, shown.id)
+                  })
                 }}
                 icon={<TrashBinTrashIcon size={14} />}
               />
@@ -213,6 +238,7 @@ function KeyField({
           {error}
         </span>
       )}
+      {confirmDialog}
     </div>
   )
 }

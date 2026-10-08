@@ -5,6 +5,7 @@ import {
   type TestState,
   type ConnectionState
 } from '../../stores/connectionStore'
+import { notify } from '../../stores/notificationStore'
 
 export type { ConnectionsLoad, TestState }
 
@@ -18,6 +19,14 @@ export function useConnections(): ConnectionsController {
       void store.reload()
     }
   }, [store.load, store.reload])
+
+  // A failed rename, address change, switch or delete leaves its reason in `notice`; on a settings page
+  // that is a toast, as Hermes does, rather than nothing.
+  useEffect(() => {
+    if (store.notice === null) return
+    notify({ kind: 'error', title: 'Không lưu được thay đổi', message: store.notice })
+    store.dismissNotice()
+  }, [store.notice, store.dismissNotice])
 
   return store
 }

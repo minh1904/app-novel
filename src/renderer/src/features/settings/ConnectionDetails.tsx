@@ -9,6 +9,7 @@ import { Badge } from '../../components/ui/Badge'
 import { keyBadge } from './connectionStatus'
 import { Button } from '../../components/ui/Button'
 import { CompactButton } from '../../components/ui/CompactButton'
+import { ConfirmDialog, type ConfirmRequest } from '../../components/ui/ConfirmDialog'
 import { SettingRow } from '../../components/ui/Setting'
 import { Switch } from '../../components/ui/Switch'
 import { TextField } from '../../components/ui/Field'
@@ -43,6 +44,7 @@ export function ConnectionDetails({
   const [secret, setSecret] = useState('')
   const [adding, setAdding] = useState(false)
   const [probing, setProbing] = useState(false)
+  const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
 
   const preset = CONNECTION_PRESETS.find((item) => item.providerId === connection.providerId)
   const sharedQuota =
@@ -159,7 +161,14 @@ export function ConnectionDetails({
                     <CompactButton
                       className="ml-auto"
                       aria-label={'Xóa khóa …' + key.tail}
-                      onClick={() => void store.removeKey(connection.id, key.id)}
+                      onClick={() =>
+                        setConfirm({
+                          title: 'Xóa khóa …' + key.tail + '?',
+                          description: 'Khóa bị xóa khỏi máy này; muốn dùng lại thì phải dán lại.',
+                          confirmLabel: 'Xóa khóa',
+                          onConfirm: () => void store.removeKey(connection.id, key.id)
+                        })
+                      }
                       icon={<TrashBinTrashIcon size={14} />}
                     />
                   </div>
@@ -219,10 +228,23 @@ export function ConnectionDetails({
       </SettingRow>
 
       <SettingRow title="Xóa kết nối" hint="Xóa cả khóa và các mục model của kết nối này.">
-        <Button color="danger" variant="solid" onClick={() => void store.remove(connection.id)}>
+        <Button
+          color="danger"
+          variant="solid"
+          onClick={() =>
+            setConfirm({
+              title: 'Xóa ' + connection.name + '?',
+              description:
+                'Khóa và các mục model của kết nối này bị xóa. Model chính hay dự phòng trỏ tới nó cũng bị gỡ.',
+              confirmLabel: 'Xóa kết nối',
+              onConfirm: () => void store.remove(connection.id)
+            })
+          }
+        >
           Xóa
         </Button>
       </SettingRow>
+      <ConfirmDialog request={confirm} onClose={() => setConfirm(null)} />
     </div>
   )
 }

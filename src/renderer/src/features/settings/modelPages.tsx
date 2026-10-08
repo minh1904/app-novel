@@ -86,9 +86,28 @@ export function MainModelPage(): JSX.Element {
   async function activate(): Promise<void> {
     if (!connection || !key.trim()) return
     setActivating(true)
-    const ok = await store.addKey(connection.id, key.trim())
+    // A provider connection goes through the same check as the key card; a gateway only stores the key.
+    const outcome = connection.providerId
+      ? await store.connectKey(connection.providerId, key.trim())
+      : (await store.addKey(connection.id, key.trim()))
+        ? { ok: true as const }
+        : {
+            ok: false as const,
+            message:
+              useConnectionStore.getState().tests[connection.id]?.error?.message ??
+              'Không lưu được khóa.'
+          }
     setActivating(false)
-    if (ok) setKey('')
+    if (!outcome.ok) {
+      notify({
+        kind: 'error',
+        title: 'Chưa kích hoạt được ' + connection.name,
+        message: outcome.message
+      })
+      return
+    }
+    setKey('')
+    notify({ kind: 'success', title: connection.name, message: 'Đã kích hoạt.' })
   }
 
   async function setThinking(choice: ThinkingChoice): Promise<void> {

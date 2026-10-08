@@ -99,4 +99,58 @@ describe('connectionStore', () => {
 
     expect(useConnectionStore.getState().connections).toEqual([])
   })
+
+  it('connects a pasted key and adds the first listed model when the connection has none', async () => {
+    const google = { ...mockConnection, providerId: 'google', name: 'Google Gemini' }
+    const withModel = { ...google, models: [{ id: 'e-1', name: 'gemini-2.5-flash' }] }
+    window.mira.ai.ensureWithKey = vi.fn().mockResolvedValue({ ok: true, value: google })
+    window.mira.ai.test = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        connection: google,
+        catalogReadAt: '2026-10-01',
+        models: [{ id: 'gemini-2.5-flash' }],
+        listed: true
+      }
+    })
+    window.mira.ai.models.add = vi.fn().mockResolvedValue({ ok: true, value: withModel })
+
+    const outcome = await useConnectionStore.getState().connectKey('google', 'AIza-key-1234')
+
+    expect(window.mira.ai.models.add).toHaveBeenCalledWith('conn-1', [
+      { model: 'gemini-2.5-flash' }
+    ])
+    expect(outcome).toEqual({ ok: true, connection: withModel })
+  })
+
+  it('takes a key the provider rejects back out', async () => {
+    window.mira.ai.ensureWithKey = vi.fn().mockResolvedValue({ ok: true, value: mockConnection })
+    window.mira.ai.test = vi.fn().mockResolvedValue({
+      ok: false,
+      error: { code: 'provider', message: 'Khóa API bị từ chối.' }
+    })
+    window.mira.ai.removeKey = vi.fn().mockResolvedValue({
+      ok: true,
+      value: { ...mockConnection, keys: [] }
+    })
+
+    const outcome = await useConnectionStore.getState().connectKey('openai', 'sk-1234')
+
+    expect(window.mira.ai.removeKey).toHaveBeenCalledWith('conn-1', 'k-1')
+    expect(outcome).toEqual({ ok: false, message: 'Khóa API bị từ chối.' })
+  })
+
+  it('keeps a key whose check failed for another reason, with a warning', async () => {
+    window.mira.ai.ensureWithKey = vi.fn().mockResolvedValue({ ok: true, value: mockConnection })
+    window.mira.ai.test = vi.fn().mockResolvedValue({
+      ok: false,
+      error: { code: 'provider', message: 'Không nối được: timeout' }
+    })
+    window.mira.ai.removeKey = vi.fn()
+
+    const outcome = await useConnectionStore.getState().connectKey('openai', 'sk-1234')
+
+    expect(window.mira.ai.removeKey).not.toHaveBeenCalled()
+    expect(outcome).toMatchObject({ ok: true, warning: 'Không nối được: timeout' })
+  })
 })

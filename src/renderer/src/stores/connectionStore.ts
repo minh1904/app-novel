@@ -42,6 +42,10 @@ export const emptyTest: TestState = {
   error: null
 }
 
+export type ConnectKeyOutcome =
+  | { ok: true; connection: ConnectionView; warning?: string }
+  | { ok: false; message: string }
+
 export interface ConnectionState {
   load: ConnectionsLoad
   connections: ConnectionView[]
@@ -62,6 +66,12 @@ export interface ConnectionState {
     providerId: string,
     secret: string
   ): Promise<{ ok: true; connection: ConnectionView } | { ok: false; message: string }>
+  /**
+   * A pasted key that comes out usable, like Hermes' Activate: the key is saved and checked, a key the
+   * provider rejects is taken back out, and a connection with no model entry gets the first listed model.
+   * A check that fails for another reason (network, a timeout) keeps the key and says so in `warning`.
+   */
+  connectKey(providerId: string, secret: string): Promise<ConnectKeyOutcome>
   probe(
     input: ProbeEndpointInput
   ): Promise<{ ok: true; value: EndpointProbeResult } | { ok: false; message: string }>
@@ -214,6 +224,26 @@ export const useConnectionStore = create<ConnectionState>((set, get) => {
       if (!result.ok) return { ok: false, message: result.error.message }
       applyOne(result.value)
       return { ok: true, connection: result.value }
+    },
+
+    connectKey: async (providerId, secret) => {
+      const made = await get().ensureWithKey(providerId, secret)
+      if (!made.ok) return made
+      const id = made.connection.id
+      await get().test(id)
+      const test = get().tests[id] ?? emptyTest
+      const current = (): ConnectionView =>
+        get().connections.find((item) => item.id === id) ?? made.connection
+      if (test.error?.field === 'key') {
+        const added = current().keys.findLast((key) => key.tail === secret.trim().slice(-4))
+        if (added) await get().removeKey(id, added.id)
+        return { ok: false, message: test.error.message }
+      }
+      const first = test.models[0]?.id
+      if (current().models.length === 0 && first) await get().entries.add(id, [{ model: first }])
+      return test.error
+        ? { ok: true, connection: current(), warning: test.error.message }
+        : { ok: true, connection: current() }
     },
 
     probe: async (input) => {
