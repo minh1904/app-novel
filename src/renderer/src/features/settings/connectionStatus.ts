@@ -47,3 +47,13 @@ export function connectionBadge(
   if (connection.checkedAt === null) return { tone: 'neutral', label: 'Chưa kiểm tra' }
   return { tone: 'success', label: 'Đang chạy' }
 }
+
+/**
+ * The headline of a failure the person fixes in a key card, as Hermes' "X rejected your API key": a
+ * rejected key or a spent quota. `null` for anything a new key would not fix.
+ */
+export function keyProblem(error: { kind: string }): string | null {
+  if (error.kind === 'auth') return 'Nhà cung cấp từ chối khóa API.'
+  if (error.kind === 'quota') return 'Khóa API đã hết hạn mức.'
+  return null
+}

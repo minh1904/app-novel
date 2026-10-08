@@ -22,6 +22,7 @@ import { isOpenPart } from './proposalStatus'
 import { useAiChat, type ChatEditor } from './useAiChat'
 import { useUiStore } from '../../../stores/uiStore'
 import { useConnectionStore } from '../../../stores/connectionStore'
+import { openConnectionSettings } from '../../settings/openConnectionSettings'
 
 /**
  * Asking AI about the chapter. A real third column next to the two panes (it never covers the text):
@@ -504,6 +505,11 @@ export function AiPanel({
                         void chat.send(turn.question)
                       }
                     }
+                  : undefined
+              }
+              onFixKey={
+                chat.selection
+                  ? () => openConnectionSettings(chat.selection!.connectionId)
                   : undefined
               }
               onNavigateChapter={(targetId) => {

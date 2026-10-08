@@ -10,6 +10,7 @@ import { Disclosure } from '../../../components/ui/Disclosure'
 import { ICON } from '../../../components/ui/icon'
 import { cn } from '../../../lib/cn'
 import { useUiStore } from '../../../stores/uiStore'
+import { keyProblem } from '../../settings/connectionStatus'
 import type { TurnView } from './chatTurns'
 import { SafeMarkdown } from './SafeMarkdown'
 import { TermProposalCard, TextProposalCard, type ProposalActions } from './ProposalCard'
@@ -113,6 +114,7 @@ export function AiTurn({
   actions,
   onRetry,
   retryWith,
+  onFixKey,
   onNavigateChapter
 }: {
   turn: TurnView
@@ -127,6 +129,8 @@ export function AiTurn({
   onRetry(question: string): void
   /** The first fallback model of Settings, offered when the turn failed (spec `model-defaults`). */
   retryWith?: { label: string; onClick(): void }
+  /** Opens the key card of the connection the turn used; offered on a rejected key or a spent quota. */
+  onFixKey?: () => void
   onNavigateChapter?(chapterId: string): void
 }): JSX.Element {
   const running = turn.status === 'sending' || turn.status === 'running'
@@ -232,7 +236,12 @@ export function AiTurn({
         <div className="flex flex-col gap-1.5 rounded-lg border border-error/35 bg-error/7 px-3 py-2 text-body-xs leading-normal text-default">
           <p className="m-0 flex items-start gap-1.5">
             <DangerCircleIcon size={14} className="mt-px shrink-0 text-error" />
-            <span className="min-w-0">{turn.error.message}</span>
+            <span className="min-w-0">
+              {keyProblem(turn.error) && (
+                <span className="block font-medium">{keyProblem(turn.error)}</span>
+              )}
+              {turn.error.message}
+            </span>
           </p>
           {turn.error.recoverAt !== null && (
             <p className="m-0 text-subtle">
@@ -257,6 +266,11 @@ export function AiTurn({
                 }
               >
                 Đăng nhập lại
+              </Button>
+            )}
+            {onFixKey && !turn.error.account && keyProblem(turn.error) && (
+              <Button variant="solid" onClick={onFixKey}>
+                Cập nhật khóa
               </Button>
             )}
             {turn.error.retryable && (

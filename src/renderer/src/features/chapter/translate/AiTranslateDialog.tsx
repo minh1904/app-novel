@@ -9,6 +9,8 @@ import { Radio, RadioGroup } from '../../../components/ui/Checkbox'
 import { Dialog } from '../../../components/ui/Dialog'
 import { ICON } from '../../../components/ui/icon'
 import { ModelSelectionMenu } from '../../models/ModelSelectionMenu'
+import { keyProblem } from '../../settings/connectionStatus'
+import { openConnectionSettings } from '../../settings/openConnectionSettings'
 import { useParagraphTranslate } from './useParagraphTranslate'
 
 const count = (value: number): string => value.toLocaleString('vi')
@@ -123,12 +125,23 @@ function TranslateFlow({
           </p>
         )}
         {run.failure && !(run.failure.kind === 'refused' && run.refusals.length > 0) && (
-          <p
+          <div
             role="alert"
-            className="m-0 rounded-sm border border-error/40 bg-error/8 px-3 py-2 text-body-xs leading-normal"
+            className="flex flex-wrap items-center gap-2 rounded-sm border border-error/40 bg-error/8 px-3 py-2 text-body-xs leading-normal"
           >
-            {run.failure.message}
-          </p>
+            <span className="min-w-0 flex-1">
+              {keyProblem(run.failure) && (
+                <span className="block font-medium">{keyProblem(run.failure)}</span>
+              )}
+              {run.failure.message}
+            </span>
+            {/* A key problem is fixed in its card, as Hermes' "Update API key". */}
+            {keyProblem(run.failure) && run.selection && (
+              <Button onClick={() => openConnectionSettings(run.selection!.connectionId)}>
+                Cập nhật khóa
+              </Button>
+            )}
+          </div>
         )}
         {/* Counted over the whole run, not the last batch: the filter may block segments in several batches. */}
         {run.refusals.length > 0 && (
