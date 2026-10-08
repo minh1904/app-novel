@@ -77,8 +77,14 @@ app web, và ba component lệch nhau: nút sm 24 cạnh ô nhập sm 32, Button
 - **Thêm lớp phủ hover/chọn kiểu Obsidian** (`bg-hover` đen 4 %, `bg-selected` đen 6 %). Nhờ vậy hàng
   đang chọn đúng trên mọi nền; LMS dùng nền đặc.
 - **Header 40 px** như thanh tab của Obsidian; LMS dùng 56 px.
-- **Dòng chữ truyện 1,65.** Obsidian dùng 1,5, nhưng tiếng Việt chồng hai dấu (ệ, ẫ) nên cần dòng
-  rộng hơn.
+- **Chữ truyện theo editor của Obsidian** (2026-10-08, chủ sản phẩm yêu cầu; thay quyết định dòng
+  1,65 trước đó):
+  - font hệ thống (Segoe UI Variable trên Windows), không phải Inter;
+  - cỡ 16 px, dòng 1,5;
+  - heading 1,618 / 1,462 / 1,318 em (khoảng 26 / 23 / 21 px), H1 đậm 700, H2 và H3 đậm 600;
+  - câu truyện ở chế độ câu dùng cùng font và cỡ với editor (trước là 13 px).
+
+  Khung quanh editor (tiêu đề panel, thanh trạng thái, nút) vẫn dùng Inter và thang 12 / 13 px.
 
 **Giữ từ trước:**
 

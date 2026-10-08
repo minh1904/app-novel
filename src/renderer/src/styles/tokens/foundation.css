@@ -93,7 +93,10 @@
   /* Inter everywhere (bundled); Chinese and Japanese glyphs fall back to the system's CJK fonts. */
   --mira-font-ui:
     'Inter', 'Segoe UI', system-ui, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol', emoji;
-  --mira-font-editor: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  /* The story text reads in Obsidian's default font, the system one (Segoe UI Variable on Windows). */
+  --mira-font-editor:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', Roboto,
+    'Inter', 'Microsoft YaHei', 'Yu Gothic UI', sans-serif, 'Segoe UI Emoji', emoji;
   --mira-font-code: 'JetBrains Mono', 'Cascadia Code', 'Cascadia Mono', Consolas, monospace;
   --mira-font-ui-smaller: 12px;
   --mira-font-ui-small: 13px;
@@ -102,8 +105,8 @@
   --mira-font-text: 16px;
   --mira-line-height-normal: 1.5;
   --mira-line-height-tight: 1.3;
-  /* Obsidian reads at 1.5; Vietnamese stacks two marks on a vowel (ệ, ẫ) and needs a little more. */
-  --mira-line-height-text: 1.65;
+  /* Obsidian's editor line height (2026-10-08: the owner chose it over 1.65 for Vietnamese marks). */
+  --mira-line-height-text: 1.5;
   --mira-weight-regular: 400;
   --mira-weight-medium: 500;
   --mira-weight-semibold: 600;

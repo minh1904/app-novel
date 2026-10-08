@@ -153,9 +153,15 @@ const livePreviewTheme = EditorView.baseTheme({
     marginLeft: '2px',
     color: 'var(--mira-text-muted)'
   },
-  '.cm-livepreview-h1': { fontSize: '20px', fontWeight: '600', letterSpacing: '-0.02em' },
-  '.cm-livepreview-h2': { fontSize: '17px', fontWeight: '600' },
-  '.cm-livepreview-h3': { fontSize: '15px', fontWeight: '600' }
+  // Obsidian's heading scale, relative to the 16px text: 1.618 / 1.462 / 1.318 em.
+  '.cm-livepreview-h1': {
+    fontSize: '1.618em',
+    fontWeight: '700',
+    lineHeight: '1.2',
+    letterSpacing: '-0.015em'
+  },
+  '.cm-livepreview-h2': { fontSize: '1.462em', fontWeight: '600', lineHeight: '1.2' },
+  '.cm-livepreview-h3': { fontSize: '1.318em', fontWeight: '600', lineHeight: '1.3' }
 })
 
 export function livePreviewDecorations(): Extension {

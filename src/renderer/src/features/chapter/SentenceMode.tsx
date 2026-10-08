@@ -334,7 +334,7 @@ const SentenceRow = memo(function SentenceRow({
       <span className="pt-0.5 text-right text-body-xs text-subtle">{number}</span>
       <p
         lang={sourceLang}
-        className="selectable text-body-sm leading-normal break-words whitespace-pre-wrap"
+        className="selectable font-editor text-editor break-words whitespace-pre-wrap"
       >
         {row.sourceText}
       </p>
@@ -347,7 +347,7 @@ const SentenceRow = memo(function SentenceRow({
           aria-label={'Bản dịch hàng ' + number}
           aria-describedby={statusId}
           spellCheck={false}
-          className="w-full resize-none overflow-hidden rounded-sm border border-strong bg-transparent px-2.5 py-1.5 text-body-sm leading-normal outline-none focus:ring-2 focus:ring-focus/40"
+          className="w-full resize-none overflow-hidden rounded-sm border border-strong bg-transparent px-2.5 py-1.5 font-editor text-editor outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-focus"
           onFocus={() => onActive(row.index)}
           onChange={(event) => onDraft(row.sourceId, event.target.value)}
           onBlur={() => void onCommit(row.sourceId)}
