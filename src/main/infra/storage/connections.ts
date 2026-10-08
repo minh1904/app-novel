@@ -43,11 +43,31 @@ export interface ModelEntry {
   settings: ModelSettings
 }
 
+/** How a connection is reached: a pasted API key, or an account login. */
+export type AuthKind = 'api_key' | 'oauth'
+export type OAuthProvider = 'codex' | 'copilot'
+/** Which wire protocol a connection speaks; `auto` decides from the address (design D1). */
+export type ApiMode = 'auto' | 'chat_completions' | 'responses' | 'anthropic_messages'
+
+/** The login behind an account connection, as far as it may be shown: never a token. */
+export interface AccountView {
+  /** The email or login the provider gave, when it gave one. */
+  label: string | null
+  /** `relogin` once a refresh was refused for good. */
+  state: 'ok' | 'relogin'
+  expiresAt: number | null
+}
+
 export interface ConnectionView {
   id: string
   name: string
   baseUrl: string
   enabled: boolean
+  authKind: AuthKind
+  oauthProvider: OAuthProvider | null
+  apiMode: ApiMode
+  /** Only for an account connection. */
+  account: AccountView | null
   /** Id nhà cung cấp của preset, để tra bảng giá; `null` khi người dùng tự nhập URL. */
   providerId: string | null
   /** Id của **mục** mặc định (không phải tên model); `null` khi chưa chọn. */
@@ -63,6 +83,9 @@ export interface ConnectionInput {
   baseUrl: string
   providerId?: string | null
   enabled?: boolean
+  authKind?: AuthKind
+  oauthProvider?: OAuthProvider | null
+  apiMode?: ApiMode
 }
 
 export interface ConnectionPatch {
@@ -73,6 +96,7 @@ export interface ConnectionPatch {
   /** Phải là id một mục của chính kết nối này, hoặc `null`. */
   defaultEntryId?: string | null
   checkedAt?: number | null
+  apiMode?: ApiMode
 }
 
 /** Bản mã của một khóa; chỉ dùng trong main process. */
@@ -93,6 +117,18 @@ interface ConnectionRow {
   provider_id: string | null
   default_model: string | null
   checked_at: number | null
+  auth_kind: string
+  oauth_provider: string | null
+  api_mode: string
+  account_label: string | null
+  token_state: string | null
+  token_expires: number | null
+}
+
+function toApiMode(value: string): ApiMode {
+  return value === 'chat_completions' || value === 'responses' || value === 'anthropic_messages'
+    ? value
+    : 'auto'
 }
 
 interface KeyRow {
@@ -142,8 +178,11 @@ function nextOrd(db: Db, sql: string, ...params: string[]): number {
 export function listConnections(db: Db): ConnectionView[] {
   const rows = db
     .prepare(
-      'SELECT id, name, base_url, enabled, provider_id, default_model, checked_at' +
-        ' FROM ai_connection ORDER BY ord, created_at'
+      'SELECT c.id, c.name, c.base_url, c.enabled, c.provider_id, c.default_model, c.checked_at,' +
+        ' c.auth_kind, c.oauth_provider, c.api_mode, t.account_label, t.state AS token_state,' +
+        ' t.expires_at AS token_expires' +
+        ' FROM ai_connection c LEFT JOIN ai_oauth_token t ON t.connection_id = c.id' +
+        ' ORDER BY c.ord, c.created_at'
     )
     .all<ConnectionRow>()
   if (rows.length === 0) return []
@@ -166,6 +205,20 @@ export function listConnections(db: Db): ConnectionView[] {
     name: row.name,
     baseUrl: row.base_url,
     enabled: row.enabled !== 0,
+    authKind: row.auth_kind === 'oauth' ? 'oauth' : 'api_key',
+    oauthProvider:
+      row.oauth_provider === 'codex' || row.oauth_provider === 'copilot'
+        ? row.oauth_provider
+        : null,
+    apiMode: toApiMode(row.api_mode),
+    account:
+      row.auth_kind === 'oauth'
+        ? {
+            label: row.account_label,
+            state: row.token_state === 'relogin' ? 'relogin' : 'ok',
+            expiresAt: row.token_expires
+          }
+        : null,
     providerId: row.provider_id,
     defaultEntryId: row.default_model,
     checkedAt: row.checked_at,
@@ -202,8 +255,21 @@ export function insertConnection(
   const ord = nextOrd(db, 'SELECT MAX(ord) + 1 AS next FROM ai_connection')
   db.prepare(
     'INSERT INTO ai_connection (id, name, base_url, enabled, provider_id, default_model,' +
-      ' checked_at, ord, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?)'
-  ).run(id, name, baseUrl, input.enabled === false ? 0 : 1, input.providerId ?? null, ord, now, now)
+      ' checked_at, ord, created_at, updated_at, auth_kind, oauth_provider, api_mode)' +
+      ' VALUES (?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?)'
+  ).run(
+    id,
+    name,
+    baseUrl,
+    input.enabled === false ? 0 : 1,
+    input.providerId ?? null,
+    ord,
+    now,
+    now,
+    input.authKind ?? 'api_key',
+    input.oauthProvider ?? null,
+    input.apiMode ?? 'auto'
+  )
   return getConnection(db, id)
 }
 
@@ -233,7 +299,7 @@ export function patchConnection(
 
   db.prepare(
     'UPDATE ai_connection SET name = ?, base_url = ?, enabled = ?, provider_id = ?,' +
-      ' default_model = ?, checked_at = ?, updated_at = ? WHERE id = ?'
+      ' default_model = ?, checked_at = ?, api_mode = ?, updated_at = ? WHERE id = ?'
   ).run(
     name,
     baseUrl,
@@ -241,6 +307,7 @@ export function patchConnection(
     patch.providerId === undefined ? current.providerId : patch.providerId,
     defaultEntryId,
     patch.checkedAt === undefined ? current.checkedAt : patch.checkedAt,
+    patch.apiMode ?? current.apiMode,
     now,
     id
   )

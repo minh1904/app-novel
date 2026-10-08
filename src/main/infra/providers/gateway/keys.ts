@@ -1,4 +1,5 @@
 import type { ClassifiedError } from '../classifyError'
+import type { Credential } from '../transportShared'
 
 /**
  * What the gateway needs from wherever keys live. The provider knows nothing about a database; the
@@ -9,6 +10,10 @@ export interface KeyLease {
   /** `null` khi kết nối không có khóa — endpoint chạy trên máy người dùng. */
   id: string | null
   secret: string | null
+  /** Khi khóa là một tài khoản đăng nhập: thông tin định tuyến của nó (account id, API base…). */
+  credential?: Credential
+  /** Lấy token mới sau một 401; chỉ tài khoản đăng nhập có. */
+  refresh?: () => Promise<Credential | null>
 }
 
 export interface KeyExhausted {

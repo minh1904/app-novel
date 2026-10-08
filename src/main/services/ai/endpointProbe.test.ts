@@ -125,3 +125,60 @@ describe('endpoint probe', () => {
     expect(result.models).toEqual(['gemini-2.5-pro'])
   })
 })
+
+describe('endpoint probe by API mode (subscription-providers, 6.5)', () => {
+  it('checks /responses for a gateway set to Responses', async () => {
+    const { fetch, calls } = fakeFetch({
+      'http://127.0.0.1:8317/v1/models': () => json({ data: [{ id: 'gpt-5.5' }] }),
+      'http://127.0.0.1:8317/v1/responses': (init) => {
+        expect(JSON.parse(String(init?.body))).toMatchObject({ model: 'gpt-5.5', input: 'ping' })
+        return json({ error: { message: 'bad request' } }, 400)
+      }
+    })
+    const result = await probeEndpoint({
+      baseUrl: 'http://127.0.0.1:8317/v1',
+      apiMode: 'responses',
+      fetchImpl: fetch
+    })
+    expect(result).toMatchObject({ ok: true, routeChecked: true })
+    expect(calls).toContain('POST http://127.0.0.1:8317/v1/responses')
+  })
+
+  it('says a gateway that does not serve /responses does not', async () => {
+    const { fetch } = fakeFetch({
+      'http://127.0.0.1:8317/v1/models': () => json({ data: [{ id: 'gpt-5.5' }] })
+    })
+    const result = await probeEndpoint({
+      baseUrl: 'http://127.0.0.1:8317/v1',
+      apiMode: 'responses',
+      fetchImpl: fetch
+    })
+    expect(result).toMatchObject({ ok: false, routeChecked: true })
+    expect(result.message).toContain('/responses (HTTP 404)')
+  })
+
+  it('checks /v1/messages with Anthropic headers, and never doubles /v1', async () => {
+    const seen: Array<Record<string, string>> = []
+    const { fetch, calls } = fakeFetch({
+      'https://api.anthropic.com/v1/models': (init) => {
+        seen.push(init?.headers as Record<string, string>)
+        return json({ data: [{ id: 'claude-sonnet-4-6' }] })
+      },
+      'https://api.anthropic.com/v1/messages': () => json({ id: 'msg' })
+    })
+    const result = await probeEndpoint({
+      baseUrl: 'https://api.anthropic.com/v1',
+      apiKey: 'sk-ant-api03-x',
+      fetchImpl: fetch
+    })
+    expect(result).toMatchObject({ ok: true, resolvedBaseUrl: 'https://api.anthropic.com' })
+    expect(calls).toEqual([
+      'GET https://api.anthropic.com/v1/models',
+      'POST https://api.anthropic.com/v1/messages'
+    ])
+    expect(seen[0]).toMatchObject({
+      'x-api-key': 'sk-ant-api03-x',
+      'anthropic-version': '2023-06-01'
+    })
+  })
+})

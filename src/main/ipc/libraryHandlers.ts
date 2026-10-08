@@ -9,6 +9,7 @@ import type { AddressingService } from '../services/context/addressingService'
 import type { LibraryStore } from '../services/library/library'
 import { noChunkSink, type ChunkSink, type RawHandler } from './handler'
 import { noFilePicker, type FilePicker } from './filePicker'
+import { accountHandlers } from './handlers/accounts'
 import { addressingHandlers } from './handlers/addressing'
 import { aiHandlers } from './handlers/ai'
 import { backupHandlers } from './handlers/backup'
@@ -63,6 +64,7 @@ export function createLibraryHandlers(
     ...imagesHandlers(deps),
     ...backupHandlers(deps),
     ...aiHandlers(deps),
+    ...accountHandlers(deps),
     ...chatHandlers(deps),
     ...proposalHandlers(deps),
     ...sessionHandlers(deps),

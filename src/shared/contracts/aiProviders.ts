@@ -52,7 +52,7 @@ export const PROVIDER_CARDS: readonly ProviderCard[] = [
     label: 'Anthropic',
     description: 'Claude bằng khóa API của Anthropic Console (không dùng gói Claude Pro/Max).',
     keyUrl: 'https://console.anthropic.com/settings/keys',
-    support: 'soon'
+    support: 'ready'
   }
 ]
 

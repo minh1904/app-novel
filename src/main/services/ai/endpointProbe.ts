@@ -1,5 +1,7 @@
 import { normalizeBaseUrl } from '../../../shared/contracts/endpointUrl'
-import type { EndpointProbeResult } from '../../../shared/contracts/aiConnections'
+import type { ApiMode, EndpointProbeResult } from '../../../shared/contracts/aiConnections'
+import { anthropicBase, ANTHROPIC_VERSION } from '../../infra/providers/anthropicTransport'
+import { guessApiMode, type ResolvedApiMode } from '../../infra/providers/transportFactory'
 
 /**
  * Checks an OpenAI-compatible endpoint the way Hermes Desktop does before saving one
@@ -21,6 +23,23 @@ export interface ProbeOptions {
   model?: string
   fetchImpl: typeof fetch
   timeoutMs?: number
+  /**
+   * Which protocol to check (change `subscription-providers`, task 6.5): the route probed is
+   * `/chat/completions`, `/responses` or `/v1/messages`. `auto` decides from the address.
+   */
+  apiMode?: ApiMode
+}
+
+/** The route a mode serves, as the messages name it. */
+const ROUTE_NAME: Record<ResolvedApiMode, string> = {
+  chat_completions: '/chat/completions',
+  responses: '/responses',
+  anthropic_messages: '/v1/messages'
+}
+
+function modeOf(options: ProbeOptions, base: string): ResolvedApiMode {
+  const mode = options.apiMode ?? 'auto'
+  return mode === 'auto' ? guessApiMode(base) : mode
 }
 
 type ListOutcome =
@@ -39,8 +58,23 @@ function withTimeout(ms: number): { signal: AbortSignal; done(): void } {
   return { signal: controller.signal, done: () => clearTimeout(timer) }
 }
 
-function headers(apiKey: string | undefined): Record<string, string> {
+function headers(
+  apiKey: string | undefined,
+  mode: ResolvedApiMode = 'chat_completions'
+): Record<string, string> {
+  if (mode === 'anthropic_messages') {
+    return { 'anthropic-version': ANTHROPIC_VERSION, ...(apiKey ? { 'x-api-key': apiKey } : {}) }
+  }
   return apiKey ? { Authorization: 'Bearer ' + apiKey } : {}
+}
+
+/** A one-token request in the mode's own shape. */
+function routeBody(mode: ResolvedApiMode, model: string): Record<string, unknown> {
+  if (mode === 'responses') return { model, input: 'ping', max_output_tokens: 16, stream: false }
+  if (mode === 'anthropic_messages') {
+    return { model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }
+  }
+  return { model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1, stream: false }
 }
 
 /** `http://host` → `http://host/v1`, and `http://host/v1` → `http://host`; the one other place a list may live. */
@@ -56,11 +90,11 @@ export function alternateBase(baseUrl: string): string | null {
 async function listAt(base: string, options: ProbeOptions): Promise<ListOutcome> {
   const timer = withTimeout(options.timeoutMs ?? 10_000)
   try {
-    const response = await options.fetchImpl(base + '/models', {
-      method: 'GET',
-      headers: headers(options.apiKey),
-      signal: timer.signal
-    })
+    const mode = modeOf(options, base)
+    const response = await options.fetchImpl(
+      base + (mode === 'anthropic_messages' ? '/v1/models' : '/models'),
+      { method: 'GET', headers: headers(options.apiKey, mode), signal: timer.signal }
+    )
     if (response.status === 401 || response.status === 403) {
       return { kind: 'rejected', status: response.status }
     }
@@ -105,15 +139,11 @@ async function routeServed(
 ): Promise<{ served: boolean | null; status: number | null }> {
   const timer = withTimeout(options.timeoutMs ?? 15_000)
   try {
-    const response = await options.fetchImpl(base + '/chat/completions', {
+    const mode = modeOf(options, base)
+    const response = await options.fetchImpl(base + ROUTE_NAME[mode], {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers(options.apiKey) },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: 'ping' }],
-        max_tokens: 1,
-        stream: false
-      }),
+      headers: { 'Content-Type': 'application/json', ...headers(options.apiKey, mode) },
+      body: JSON.stringify(routeBody(mode, model)),
       signal: timer.signal
     })
     void response.body?.cancel().catch(() => undefined)
@@ -126,8 +156,14 @@ async function routeServed(
 }
 
 export async function probeEndpoint(options: ProbeOptions): Promise<EndpointProbeResult> {
-  const base = normalizeBaseUrl(options.baseUrl).replace(/\/+$/, '')
-  const candidates = [base, alternateBase(base)].filter((url): url is string => url !== null)
+  const normalized = normalizeBaseUrl(options.baseUrl).replace(/\/+$/, '')
+  const mode = modeOf(options, normalized)
+  // Anthropic's routes carry their own `/v1`, so its base is kept without one and has no alternative.
+  const base = mode === 'anthropic_messages' ? anthropicBase(normalized) : normalized
+  const candidates =
+    mode === 'anthropic_messages'
+      ? [base]
+      : [base, alternateBase(base)].filter((url): url is string => url !== null)
 
   let found: { base: string; ids: string[] } | null = null
   let first: ListOutcome | null = null
@@ -187,7 +223,7 @@ export async function probeEndpoint(options: ProbeOptions): Promise<EndpointProb
           resolvedBaseUrl: base,
           models: [],
           routeChecked: true,
-          message: 'Endpoint phục vụ API chat nhưng không liệt kê model.'
+          message: 'Endpoint phục vụ ' + ROUTE_NAME[mode] + ' nhưng không liệt kê model.'
         }
       }
     }
@@ -220,7 +256,11 @@ export async function probeEndpoint(options: ProbeOptions): Promise<EndpointProb
       models: found.ids,
       routeChecked: true,
       message:
-        'Endpoint liệt kê model nhưng không phục vụ /chat/completions (HTTP ' + route.status + ').'
+        'Endpoint liệt kê model nhưng không phục vụ ' +
+        ROUTE_NAME[mode] +
+        ' (HTTP ' +
+        route.status +
+        ').'
     }
   }
   return {

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { CHANNELS } from '../../shared/contracts/channels'
 import { createServices } from '../services/createServices'
@@ -51,7 +51,10 @@ export function registerLibraryHandlers(
   const { connections, translator, paragraphTranslator, chat } = createServices({
     library,
     crypto: electronSafeStorage,
-    fetch: electronFetch
+    fetch: electronFetch,
+    userAgent: 'Mira/' + app.getVersion(),
+    // The login service checks the host itself (auth.openai.com, github.com) before asking for this.
+    openExternal: (url) => shell.openExternal(url)
   })
   const exportService = new ExportService(library, electronExportFilePicker(), electronPdfPrinter())
   const handlers = guardHandlers(

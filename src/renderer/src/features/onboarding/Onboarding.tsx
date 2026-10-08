@@ -16,6 +16,8 @@ import { emptyTest, useConnectionStore } from '../../stores/connectionStore'
 import { useUiStore } from '../../stores/uiStore'
 import { ModelSelectionMenu } from '../models/ModelSelectionMenu'
 import { thinkingPatch } from '../models/modelSettingsForm'
+import { FlowPanel } from './AccountFlow'
+import { useAccountLogin } from './accountLogin'
 import { INITIAL_ONBOARDING, onboardingReducer, type OnboardingState } from './onboardingMachine'
 
 const GATEWAY = CONNECTION_PRESETS.find((preset) => preset.id === 'gateway')!
@@ -127,11 +129,19 @@ function Picker({
             />
           ))}
           <ProviderRow
-            disabled
-            title="ChatGPT / Codex · GitHub Copilot"
-            subtitle="Đăng nhập bằng gói thuê bao."
-            tag={<Badge tone="muted">Sắp có</Badge>}
+            title="ChatGPT / Codex"
+            subtitle="Đăng nhập bằng gói ChatGPT Plus/Pro; Mira mở trang xác minh của OpenAI."
+            onClick={() => dispatch({ type: 'pick_account', provider: 'codex' })}
           />
+          <ProviderRow
+            title="GitHub Copilot"
+            subtitle="Đăng nhập bằng gói Copilot; Mira mở trang xác minh của GitHub."
+            onClick={() => dispatch({ type: 'pick_account', provider: 'copilot' })}
+          />
+          <p className="m-0 px-3 text-ui-2xs text-ink-faint">
+            Đăng nhập dùng cách giống công cụ chính hãng; nhà cung cấp có thể đổi hoặc chặn cách
+            này.
+          </p>
         </div>
       )}
       <div className="mt-4 flex items-center justify-between gap-2">
@@ -266,7 +276,7 @@ function EndpointForm({
   )
 }
 
-function ConfirmModel({
+export function ConfirmModel({
   connectionId,
   onBegin
 }: {
@@ -340,6 +350,8 @@ export function Onboarding(): JSX.Element | null {
   const setManual = useUiStore((state) => state.setOnboardingOpen)
   const [dismissed, setDismissed] = useState(false)
   const [state, dispatch] = useReducer(onboardingReducer, INITIAL_ONBOARDING)
+  // The models of a new account were added by main; there is nothing more to do before choosing one.
+  useAccountLogin(state, dispatch, () => undefined)
 
   useEffect(() => {
     if (store.load === 'loading') void store.reload()
@@ -483,6 +495,9 @@ export function Onboarding(): JSX.Element | null {
             onConnect={(url, label, key) => void connectEndpoint(url, label, key)}
           />
         )}
+        {(state.step === 'starting' || state.step === 'polling') && (
+          <FlowPanel state={state} onCancel={() => dispatch({ type: 'back' })} />
+        )}
         {state.step === 'connecting' && (
           <p role="status" className="m-0 flex items-center gap-2 py-6 text-ui-sm text-ink-muted">
             <RefreshIcon size={14} className="animate-spin" />
@@ -500,7 +515,11 @@ export function Onboarding(): JSX.Element | null {
             <p className="m-0 flex items-start gap-2 text-ui-sm">
               <DangerCircleIcon size={16} className="mt-0.5 shrink-0 text-error" />
               <span>
-                Kết nối {state.label} chưa xong. {state.message}
+                {state.form.step === 'account'
+                  ? state.message.startsWith('Đăng nhập')
+                    ? state.message
+                    : 'Đăng nhập ' + state.label + ' chưa xong. ' + state.message
+                  : 'Kết nối ' + state.label + ' chưa xong. ' + state.message}
               </span>
             </p>
             {state.detail && (
@@ -517,7 +536,7 @@ export function Onboarding(): JSX.Element | null {
                 variant="outline"
                 onClick={() => dispatch({ type: 'pick_key', providerId: READY_CARDS[0]!.id })}
               >
-                Dùng khóa API khác
+                {state.form.step === 'account' ? 'Dùng khóa API' : 'Dùng khóa API khác'}
               </Button>
               <Button onClick={() => dispatch({ type: 'retry' })}>Thử lại</Button>
             </div>

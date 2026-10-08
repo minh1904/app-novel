@@ -102,6 +102,8 @@ export interface ChatError {
   retryable: boolean
   /** Mốc sớm nhất có khóa hồi phục, khi lỗi là hết hạn mức và biết được mốc đó. */
   recoverAt: number | null
+  /** Lỗi thuộc một tài khoản đăng nhập (cần đăng nhập lại): panel có nút mở thẳng thẻ đó. */
+  account?: 'codex' | 'copilot'
 }
 
 export type ChatUsage = TokenUsage

@@ -55,7 +55,11 @@ export function ConnectionDetails({
   /** Kiểm hai bước (design D5); đổi sang base URL đã giải khi khác địa chỉ đang lưu. */
   async function check(): Promise<void> {
     setProbing(true)
-    const result = await store.probe({ baseUrl: connection.baseUrl, connectionId: connection.id })
+    const result = await store.probe({
+      baseUrl: connection.baseUrl,
+      connectionId: connection.id,
+      apiMode: connection.apiMode
+    })
     setProbing(false)
     if (!result.ok) {
       notify({ kind: 'error', title: 'Không kiểm tra được', message: result.message })

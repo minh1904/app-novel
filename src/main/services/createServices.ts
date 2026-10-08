@@ -35,7 +35,9 @@ export interface Services {
 export function createServices({
   library,
   crypto,
-  fetch: fetchImpl
+  fetch: fetchImpl,
+  userAgent,
+  openExternal
 }: {
   library: LibraryStore
   crypto: SecretCrypto
@@ -44,13 +46,19 @@ export function createServices({
    * left out, the global `fetch` is used, which is what tests and any non-Electron caller want.
    */
   fetch?: typeof fetch
+  /** `Mira/<phiên bản>`, for the headers where Mira names itself. */
+  userAgent?: string
+  /** Opens a login's verification page; Electron passes `shell.openExternal`. */
+  openExternal?: (url: string) => Promise<void>
 }): Services {
   const connections = new ConnectionService({
     db: library.appDb,
     secrets: new SecretStore(crypto),
     now: () => library.appNow(),
     newId: () => library.newAppId(),
-    fetchImpl
+    fetchImpl,
+    userAgent,
+    openExternal
   })
   const translator = new ChapterTranslator({
     library,

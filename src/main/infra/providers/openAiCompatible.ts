@@ -5,7 +5,8 @@ import { Gateway, DEFAULT_CONCURRENCY, type GatewayOptions } from './gateway/gat
 import { Limiter } from './gateway/limiter'
 import type { RatePacer } from './gateway/ratePacer'
 import type { RetryOptions } from './gateway/retryPolicy'
-import type { KeySource } from './gateway/keys'
+import type { KeyLease, KeySource } from './gateway/keys'
+import type { CallOptions, ChatTransport } from './transportShared'
 import {
   OpenAiChatTransport,
   type ChatMessage,
@@ -118,6 +119,26 @@ export interface OpenAiCompatibleOptions {
   /** Tiêm vào để test; mặc định là `fetch` của Node. */
   fetchImpl?: typeof fetch
   now?: () => number
+  /**
+   * Cách nói chuyện với model (change `subscription-providers`): Responses, Anthropic Messages, hay Chat
+   * Completions có header của tài khoản. Thiếu thì là Chat Completions trên `baseUrl`, như trước.
+   */
+  transport?: ChatTransport
+}
+
+/** What one attempt sends besides the request: the lease's key, credential and refresh, and the round. */
+function callOf(
+  lease: KeyLease,
+  signal: AbortSignal | undefined,
+  extra: Partial<CallOptions> = {}
+): CallOptions {
+  return {
+    apiKey: lease.secret,
+    signal,
+    ...(lease.credential ? { credential: lease.credential } : {}),
+    ...(lease.refresh ? { refresh: lease.refresh } : {}),
+    ...extra
+  }
 }
 
 function estimateTokens(text: string): number {
@@ -178,18 +199,20 @@ export function parseItems(content: string): SegmentText[] {
 export class OpenAiCompatibleProvider implements TranslationProvider, TranslationModelCaller {
   readonly id = 'openai-compatible'
   private readonly now: () => number
-  private readonly transport: OpenAiChatTransport
+  private readonly transport: ChatTransport
   private readonly gateway: Gateway
 
   constructor(private readonly options: OpenAiCompatibleOptions) {
     this.now = options.now ?? Date.now
-    this.transport = new OpenAiChatTransport({
-      baseUrl: options.baseUrl,
-      compat: options.compat ?? resolveCompat(null),
-      fetchImpl: options.fetchImpl ?? fetch,
-      now: this.now,
-      timeouts: options.timeouts
-    })
+    this.transport =
+      options.transport ??
+      new OpenAiChatTransport({
+        baseUrl: options.baseUrl,
+        compat: options.compat ?? resolveCompat(null),
+        fetchImpl: options.fetchImpl ?? fetch,
+        now: this.now,
+        timeouts: options.timeouts
+      })
     this.gateway = new Gateway({
       keys: options.keys,
       limiter: options.limiter ?? new Limiter(DEFAULT_CONCURRENCY),
@@ -220,7 +243,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
   async listModels(signal?: AbortSignal): Promise<{ models: string[]; listed: boolean }> {
     try {
       const models = await this.gateway.call(
-        (lease) => this.transport.listModels({ apiKey: lease.secret, signal }),
+        (lease) => this.transport.listModels(callOf(lease, signal)),
         signal
       )
       return { models, listed: true }
@@ -336,14 +359,26 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
    */
   async *chat(
     messages: ChatMessage[],
-    { signal, tools }: TranslateOptions & { tools?: readonly unknown[] } = {}
+    {
+      signal,
+      tools,
+      turnRound,
+      sessionId
+    }: TranslateOptions & {
+      tools?: readonly unknown[]
+      turnRound?: number
+      sessionId?: string
+    } = {}
   ): AsyncGenerator<ChatStreamEvent> {
     this.guard()
     yield* this.gateway.stream(
       (lease) =>
         this.transport.stream(
           { model: this.options.model, messages, tools, ...this.options.generation },
-          { apiKey: lease.secret, signal }
+          callOf(lease, signal, {
+            ...(turnRound === undefined ? {} : { turnRound }),
+            ...(sessionId === undefined ? {} : { sessionId })
+          })
         ),
       signal,
       // Sự kiện kết thúc là dấu hiệu duy nhất cho thấy lượt xong êm.
@@ -371,7 +406,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
             messages: [{ role: 'user', content: PROBE_PROMPT }],
             ...this.options.generation
           },
-          { apiKey: lease.secret, signal }
+          callOf(lease, signal)
         ),
       signal
     )
@@ -398,7 +433,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
               ? { responseFormat: options.responseFormat }
               : {})
           },
-          { apiKey: lease.secret, signal: options?.signal }
+          callOf(lease, options?.signal)
         ),
       options?.signal,
       () => attempts++

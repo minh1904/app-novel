@@ -170,6 +170,33 @@ export function classifyHttpError(input: ClassifyInput): ClassifiedError {
     kind = 'quota'
   }
 
+  // Lỗi riêng của nhà cung cấp tài khoản và Anthropic (change `subscription-providers`, design D9).
+  const errorType = error && typeof error === 'object' ? error.type : undefined
+  const errorCode = error && typeof error === 'object' ? error.code : undefined
+  // Codex: gói ChatGPT đã dùng hết hạn mức của cửa sổ. Chờ tới mốc đặt lại mới gọi được, đổi khóa không giúp.
+  if (
+    status === 429 &&
+    (errorCode === 'usage_limit_reached' ||
+      errorType === 'usage_limit_reached' ||
+      /usage_limit_reached/.test(body))
+  ) {
+    kind = 'quota'
+    const resetsIn = error && typeof error === 'object' ? Number(error.resets_in_seconds) : NaN
+    const resetsAt = error && typeof error === 'object' ? Number(error.resets_at) : NaN
+    if (Number.isFinite(resetsIn) && resetsIn > 0) retryAfterMs = resetsIn * 1000
+    else if (Number.isFinite(resetsAt) && resetsAt * 1000 > now)
+      retryAfterMs = resetsAt * 1000 - now
+  }
+  // Copilot: hết lượt premium request của gói cũng là hết hạn mức, dù trạng thái có thể là 403 hay 429.
+  if (
+    /premium request|premium_request|quota_exceeded/i.test(message) &&
+    (status === 403 || status === 429)
+  ) {
+    kind = 'quota'
+  }
+  // Anthropic: máy chủ quá tải (529) là chuyện tạm thời của nhà cung cấp, đáng thử lại sau một lúc.
+  if (status === 529 || errorType === 'overloaded_error') kind = 'rate_limited'
+
   // Có thời gian chờ ngắn mà không có dấu hiệu theo ngày: đủ để gọi là theo phút.
   if (quotaScope === undefined && kind === 'rate_limited' && retryAfterMs !== undefined) {
     quotaScope = 'minute'

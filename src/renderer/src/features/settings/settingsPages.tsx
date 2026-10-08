@@ -1,6 +1,7 @@
 import { AboutPage } from './AboutPage'
 import { AppearancePanel } from './AppearancePanel'
-import { AccountsPage, EndpointsPage, KeysPage, LocalPage } from './connectionPages'
+import { EndpointsPage, KeysPage, LocalPage } from './connectionPages'
+import { AccountsPage } from './AccountsPage'
 import { FallbacksPage, MainModelPage } from './modelPages'
 import type { SettingsPages } from './SettingsModal'
 

@@ -1,3 +1,9 @@
+import type {
+  AccountProvider,
+  LoginStart,
+  LoginStatus,
+  UsageWindowView
+} from '../shared/contracts/aiAccounts'
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { ChatChunk, ChatSendInput, ChatStartResult } from '../shared/contracts/aiChat'
 import type {
@@ -211,6 +217,28 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke(CHANNELS.aiKeysAdd, { id, secret }) as Promise<Result<ConnectionView>>,
     removeKey: (id: string, keyId: string) =>
       ipcRenderer.invoke(CHANNELS.aiKeysRemove, { id, keyId }) as Promise<Result<ConnectionView>>,
+    accounts: {
+      start: (provider: AccountProvider) =>
+        ipcRenderer.invoke(CHANNELS.aiAccountsLoginStart, { provider }) as Promise<
+          Result<LoginStart>
+        >,
+      poll: (sessionId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiAccountsLoginPoll, { sessionId }) as Promise<
+          Result<LoginStatus>
+        >,
+      cancel: (sessionId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiAccountsLoginCancel, { sessionId }) as Promise<Result<void>>,
+      reopen: (sessionId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiAccountsLoginReopen, { sessionId }) as Promise<Result<void>>,
+      disconnect: (connectionId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiAccountsDisconnect, { connectionId }) as Promise<
+          Result<{ connections: ConnectionView[] }>
+        >,
+      usage: (connectionId: string) =>
+        ipcRenderer.invoke(CHANNELS.aiAccountsUsage, { connectionId }) as Promise<
+          Result<UsageWindowView[]>
+        >
+    },
     models: {
       add: (connectionId: string, items: AddModelEntriesInput['items']) =>
         ipcRenderer.invoke(CHANNELS.aiModelsAdd, { connectionId, items }) as Promise<

@@ -169,7 +169,7 @@ describe('library.db v4 → v5', () => {
       frozen_scope: 'day',
       freeze_strikes: 2
     })
-    expect(readPragmas(db).userVersion).toBe(6)
+    expect(readPragmas(db).userVersion).toBe(7)
     db.close()
   })
 
@@ -197,7 +197,7 @@ describe('library.db v4 → v5', () => {
   it('is complete from nothing: a new file has the latest tables and no rows', () => {
     const db = openDatabase(join(tempDir(), 'fresh.db'))
     migrate(db, librarySchema)
-    expect(readPragmas(db).userVersion).toBe(6)
+    expect(readPragmas(db).userVersion).toBe(7)
     expect(db.prepare('SELECT COUNT(*) AS n FROM ai_model').get<{ n: number }>()!.n).toBe(0)
     db.close()
   })
@@ -241,7 +241,7 @@ describe('library.db v4 → v5', () => {
     }
     expect(error).toBeInstanceOf(StorageError)
     expect((error as StorageError).code).toBe('unsupported_version')
-    expect(readPragmas(db).userVersion).toBe(6)
+    expect(readPragmas(db).userVersion).toBe(7)
     db.close()
   })
 })

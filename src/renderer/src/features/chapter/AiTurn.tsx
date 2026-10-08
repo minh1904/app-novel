@@ -11,6 +11,7 @@ import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import type { TurnView } from './chatTurns'
 import { SafeMarkdown } from './SafeMarkdown'
+import { useUiStore } from '../../stores/uiStore'
 import { TermProposalCard, TextProposalCard, type ProposalActions } from './ProposalCard'
 import { summarizeTools, toolCalls } from './toolSummary'
 
@@ -275,6 +276,21 @@ export function AiTurn({
             >
               <RefreshIcon size={14} />
               Hỏi lại
+            </Button>
+          )}
+          {turn.error.account && (
+            <Button
+              size="sm"
+              className="self-start"
+              onClick={() =>
+                useUiStore.getState().openSettings({
+                  group: 'connections',
+                  page: 'accounts',
+                  key: 'account:' + turn.error!.account
+                })
+              }
+            >
+              Đăng nhập lại
             </Button>
           )}
           {retryWith && (

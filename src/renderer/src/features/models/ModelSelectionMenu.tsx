@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type JSX } from 'react'
+import { AccountUsageChip } from '../settings/AccountsPage'
 import { Popover } from '@base-ui/react/popover'
 import { AddCircleIcon } from '@solar-icons/react/linear/add-circle'
 import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
@@ -374,6 +375,11 @@ export function ModelSelectionMenu({
                           />
                         )}
                         {row.label}
+                        {row.connectionId && (
+                          <AccountUsageChip
+                            connection={connections.find((item) => item.id === row.connectionId)}
+                          />
+                        )}
                       </button>
                     )
                   }

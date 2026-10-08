@@ -94,6 +94,8 @@ export interface ProviderErrorDetails {
   filter?: FilterReason
   /** For a request error: the generation parameters this call sent, so the message can name them. */
   sent?: SentParameters
+  /** The account login this error is about, so the panel can open its card ("Đăng nhập lại"). */
+  account?: 'codex' | 'copilot'
 }
 
 export type RequestProblem = 'too_large'
@@ -123,6 +125,7 @@ export class ProviderError extends Error {
   readonly requestProblem?: RequestProblem
   readonly filter?: FilterReason
   readonly sent?: SentParameters
+  readonly account?: 'codex' | 'copilot'
 
   constructor(kind: ProviderErrorKind, message: string, options: ProviderErrorDetails = {}) {
     super(message)
@@ -137,5 +140,6 @@ export class ProviderError extends Error {
     this.requestProblem = options.requestProblem
     this.filter = options.filter
     this.sent = options.sent
+    this.account = options.account
   }
 }

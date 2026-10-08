@@ -1,3 +1,4 @@
+import type { AccountProvider, LoginStart, LoginStatus, UsageWindowView } from './aiAccounts'
 import type {
   AddModelEntriesInput,
   ConnectionTestResult,
@@ -232,10 +233,21 @@ export interface AiApi {
   addKey(id: string, secret: string): Promise<Result<ConnectionView>>
   removeKey(id: string, keyId: string): Promise<Result<ConnectionView>>
   models: AiModelsApi
+  accounts: AiAccountsApi
   translate: AiTranslateApi
   chat: AiChatApi
   proposals: AiProposalsApi
   sessions: AiSessionsApi
+}
+
+/** Account logins (change `subscription-providers`). No token ever comes back on these. */
+export interface AiAccountsApi {
+  start(provider: AccountProvider): Promise<Result<LoginStart>>
+  poll(sessionId: string): Promise<Result<LoginStatus>>
+  cancel(sessionId: string): Promise<Result<void>>
+  reopen(sessionId: string): Promise<Result<void>>
+  disconnect(connectionId: string): Promise<Result<{ connections: ConnectionView[] }>>
+  usage(connectionId: string): Promise<Result<UsageWindowView[]>>
 }
 
 export interface GlossaryApi {

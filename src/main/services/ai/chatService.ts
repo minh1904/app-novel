@@ -118,7 +118,8 @@ function toChatError(error: unknown, now: number): ChatChunk & { kind: 'error' }
         message: describeProviderError(error),
         // Whether asking again can help is the chat policy's call (`errorPolicy.ts`), not the transport's.
         retryable: taskErrorPolicy('chat', error.kind).retryable,
-        recoverAt
+        recoverAt,
+        ...(error.account ? { account: error.account } : {})
       },
       partial: false
     }
@@ -242,7 +243,10 @@ export class ChatService {
           try {
             for await (const event of session.provider.chat(messages, {
               signal: controller.signal,
-              tools: offer
+              tools: offer,
+              // Round 0 is the person's own request; later rounds answer tool calls (Copilot bills them apart).
+              turnRound: round,
+              ...(input.sessionId ? { sessionId: input.sessionId } : {})
             })) {
               // Lượt đã bị dọn khỏi sổ (cửa sổ đóng) thì ngừng phát: emit vào một cửa sổ không còn đó là
               // chỗ sinh ra lỗi "object has been destroyed" khó lần.

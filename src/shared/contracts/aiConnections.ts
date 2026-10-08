@@ -33,11 +33,21 @@ export interface ConnectionKeyView {
   frozenScope: QuotaScope | null
 }
 
+/** Which wire protocol a connection speaks; `auto` decides from the address. */
+export const API_MODES = ['auto', 'chat_completions', 'responses', 'anthropic_messages'] as const
+export type ApiMode = (typeof API_MODES)[number]
+
 export interface ConnectionView {
   id: string
   name: string
   baseUrl: string
   enabled: boolean
+  /** A pasted API key, or an account login (change `subscription-providers`). */
+  authKind: 'api_key' | 'oauth'
+  oauthProvider: 'codex' | 'copilot' | null
+  apiMode: ApiMode
+  /** The login of an account connection: who, and whether it must be done again. Never a token. */
+  account: { label: string | null; state: 'ok' | 'relogin'; expiresAt: number | null } | null
   providerId: string | null
   /** Id của **mục** model mặc định (không phải tên model); `null` khi chưa chọn. */
   defaultEntryId: string | null
@@ -104,6 +114,13 @@ export const CONNECTION_PRESETS: ConnectionPreset[] = [
   },
   { id: 'openai', label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', providerId: 'openai' },
   {
+    id: 'anthropic',
+    label: 'Anthropic',
+    baseUrl: 'https://api.anthropic.com',
+    providerId: 'anthropic',
+    hint: 'Khóa API của Anthropic Console (sk-ant-api…), không phải gói Claude Pro/Max.'
+  },
+  {
     id: 'deepseek',
     label: 'DeepSeek',
     baseUrl: 'https://api.deepseek.com/v1',
@@ -155,7 +172,8 @@ const providerId = v.nullable(
 export const createConnectionSchema = v.strictObject({
   name,
   baseUrl,
-  providerId: v.optional(providerId, null)
+  providerId: v.optional(providerId, null),
+  apiMode: v.optional(v.picklist(API_MODES, 'Chế độ API không hợp lệ.'))
 })
 
 export const updateConnectionSchema = v.strictObject({
@@ -165,7 +183,8 @@ export const updateConnectionSchema = v.strictObject({
     baseUrl: v.optional(baseUrl),
     providerId: v.optional(providerId),
     enabled: v.optional(v.boolean('Giá trị bật/tắt không hợp lệ.')),
-    defaultEntryId: v.optional(v.nullable(idSchema))
+    defaultEntryId: v.optional(v.nullable(idSchema)),
+    apiMode: v.optional(v.picklist(API_MODES, 'Chế độ API không hợp lệ.'))
   })
 })
 
@@ -215,7 +234,8 @@ export const probeEndpointSchema = v.strictObject({
     )
   ),
   connectionId: v.optional(connectionId),
-  model: v.optional(entryModelSchema)
+  model: v.optional(entryModelSchema),
+  apiMode: v.optional(v.picklist(API_MODES, 'Chế độ API không hợp lệ.'))
 })
 export type ProbeEndpointInput = v.InferOutput<typeof probeEndpointSchema>
 

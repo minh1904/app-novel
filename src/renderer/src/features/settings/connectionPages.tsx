@@ -1,11 +1,9 @@
 import { useState, type JSX } from 'react'
 import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
 import { KeyIcon } from '@solar-icons/react/linear/key'
 import { LinkIcon } from '@solar-icons/react/linear/link'
 import { MonitorIcon } from '@solar-icons/react/linear/monitor'
-import { UserCircleIcon } from '@solar-icons/react/linear/user-circle'
 import { CONNECTION_PRESETS, type ConnectionView } from '../../../../shared/contracts/aiConnections'
 import {
   connectionSection,
@@ -343,7 +341,9 @@ export function EndpointsPage(): JSX.Element {
 
 const API_MODES = [
   { value: 'auto', label: 'Tự nhận' },
-  { value: 'chat_completions', label: 'Chat Completions' }
+  { value: 'chat_completions', label: 'Chat Completions' },
+  { value: 'responses', label: 'Responses' },
+  { value: 'anthropic_messages', label: 'Anthropic Messages' }
 ] as const
 
 /** Form thêm endpoint: Kiểm tra dò `/models` và route chat, tự điền model và base URL đã giải. */
@@ -367,7 +367,8 @@ function AddEndpointForm(): JSX.Element {
     const result = await store.probe({
       baseUrl: url.trim(),
       secret: secret.trim() || undefined,
-      model: model.trim() || undefined
+      model: model.trim() || undefined,
+      apiMode: mode
     })
     setChecking(false)
     if (!result.ok) {
@@ -388,7 +389,8 @@ function AddEndpointForm(): JSX.Element {
     const created = await store.create({
       name: name.trim() || new URL(url.trim()).host,
       baseUrl: url.trim(),
-      providerId: null
+      providerId: null,
+      apiMode: mode
     })
     if (created) {
       if (secret.trim()) await store.addKey(created.id, secret.trim())
@@ -428,7 +430,7 @@ function AddEndpointForm(): JSX.Element {
       </div>
       <SettingRow
         title="Chế độ API"
-        hint="Tự nhận chọn theo địa chỉ; hầu hết gateway là Chat Completions."
+        hint="Tự nhận chọn theo địa chỉ (api.anthropic.com hay đường dẫn /anthropic là Anthropic Messages); hầu hết gateway là Chat Completions. Kiểm tra thăm dò đúng route của chế độ đã chọn."
       >
         <SegmentedControl
           label="Chế độ API"
@@ -606,85 +608,6 @@ export function LocalPage(): JSX.Element {
           )
         })}
       </div>
-    </SettingsSection>
-  )
-}
-
-const ACCOUNT_CARDS = [
-  {
-    id: 'codex',
-    label: 'ChatGPT / Codex',
-    flow: 'Mở trang xác minh trên trình duyệt; Mira tự kết nối khi bạn nhập mã.'
-  },
-  {
-    id: 'copilot',
-    label: 'GitHub Copilot',
-    flow: 'Mở trang xác minh của GitHub; Mira tự kết nối khi bạn nhập mã.'
-  }
-] as const
-
-/** Cài đặt › Kết nối AI › Tài khoản. Đăng nhập thật đến cùng change `subscription-providers`. */
-export function AccountsPage(): JSX.Element {
-  const openSettings = useUiStore((state) => state.openSettings)
-  return (
-    <SettingsSection
-      title="Kết nối tài khoản"
-      icon={<UserCircleIcon size={16} />}
-      aside={
-        <Button
-          variant="text"
-          size="xs"
-          onClick={() => openSettings({ group: 'connections', page: 'keys' })}
-        >
-          Có khóa API?
-        </Button>
-      }
-    >
-      <p className="m-0 mb-2 text-ui-xs text-ink-muted">
-        Đăng nhập bằng gói thuê bao, không cần sao chép khóa.
-      </p>
-      <span className="mt-3 block px-0.5 text-ui-xs font-medium text-ink-faint">
-        Nhà cung cấp khác
-      </span>
-      <div className="mt-1 flex flex-col gap-1">
-        {ACCOUNT_CARDS.map((card) => (
-          <div
-            key={card.id}
-            data-setting-id={'account:' + card.id}
-            className="flex items-center justify-between gap-3 rounded-control px-3 py-2.5"
-          >
-            <span className="flex min-w-0 flex-col">
-              <span className="text-ui-sm font-semibold">{card.label}</span>
-              <span className="mt-1 text-ui-xs text-ink-muted">{card.flow}</span>
-            </span>
-            <Badge tone="muted">Sắp có</Badge>
-          </div>
-        ))}
-        <button
-          type="button"
-          data-setting-id="account:claude"
-          onClick={() =>
-            openSettings({ group: 'connections', page: 'keys', key: 'provider:anthropic' })
-          }
-          className={cx(
-            'flex items-center justify-between gap-3 rounded-control px-3 py-2.5 text-left hover:bg-hover',
-            focusRing
-          )}
-        >
-          <span className="flex min-w-0 flex-col">
-            <span className="text-ui-sm font-semibold">Claude</span>
-            <span className="mt-1 text-ui-xs text-ink-muted">
-              Mira không đăng nhập bằng gói Claude Pro/Max. Dùng khóa API Anthropic hoặc gateway tự
-              dựng.
-            </span>
-          </span>
-          <AltArrowRightIcon size={14} className="shrink-0 text-ink-faint" />
-        </button>
-      </div>
-      <p className="mt-4 flex items-center gap-1.5 text-ui-2xs text-ink-faint">
-        <CheckCircleIcon size={12} aria-hidden="true" />
-        Đăng nhập dùng cách giống công cụ chính hãng; nhà cung cấp có thể đổi hoặc chặn cách này.
-      </p>
     </SettingsSection>
   )
 }

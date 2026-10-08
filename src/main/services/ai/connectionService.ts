@@ -68,6 +68,18 @@ import {
 import { ProviderError } from '../../infra/providers/types'
 import { describeProviderError, taskErrorPolicy } from './errorPolicy'
 import { toWireUsage } from '../../infra/providers/usage'
+import { createTransport } from '../../infra/providers/transportFactory'
+import { anthropicKeyProblem } from '../../infra/providers/anthropicTransport'
+import { CODEX_FALLBACK_MODELS } from '../../infra/providers/accounts/codex'
+import {
+  COPILOT,
+  COPILOT_FALLBACK_MODELS,
+  copilotHeaders,
+  parseCopilotModels
+} from '../../infra/providers/accounts/copilot'
+import type { LoginStart, LoginStatus, UsageWindowView } from '../../../shared/contracts/aiAccounts'
+import { AccountCredentials } from './accountCredentials'
+import { AccountLogins } from './accountLogins'
 
 /**
  * Mọi thao tác với kết nối AI mà tầng IPC cần, gom một chỗ.
@@ -84,6 +96,12 @@ export interface ConnectionServiceOptions {
   fetchImpl?: typeof fetch
   /** Tiêm vào để test: để một lần thử lại không tốn thời gian thật. Mặc định là chính sách thật. */
   retry?: Pick<OpenAiCompatibleOptions, 'retry' | 'sleep' | 'random'>
+  /** `Mira/<phiên bản>`: tên Mira tự xưng ở mọi header không bắt buộc giả danh. */
+  userAgent?: string
+  /** Mở trang xác minh của một lần đăng nhập; main truyền `shell.openExternal`. */
+  openExternal?: (url: string) => Promise<void>
+  /** Giấc ngủ giữa hai lần hỏi lại khi đăng nhập; test truyền một giấc ngủ không tốn thời gian. */
+  loginSleep?: (ms: number) => Promise<void>
 }
 
 /** Lỗi của nhà cung cấp đi qua IPC như dữ liệu, giống mọi lỗi khác. */
@@ -143,8 +161,144 @@ export class ConnectionService {
    */
   private readonly registry: GatewayRegistry
 
+  /** Token của các kết nối tài khoản (change `subscription-providers`). */
+  readonly accounts: AccountCredentials
+  private readonly logins: AccountLogins
+
   constructor(private readonly options: ConnectionServiceOptions) {
     this.registry = new GatewayRegistry(options.now, DEFAULT_CONCURRENCY, options.retry?.sleep)
+    const fetchImpl = options.fetchImpl ?? fetch
+    this.accounts = new AccountCredentials({
+      db: options.db,
+      secrets: options.secrets,
+      fetchImpl,
+      now: options.now,
+      sleep: options.retry?.sleep
+    })
+    this.logins = new AccountLogins({
+      db: options.db,
+      secrets: options.secrets,
+      accounts: this.accounts,
+      fetchImpl,
+      now: options.now,
+      newId: options.newId,
+      openExternal: options.openExternal,
+      sleep: options.loginSleep,
+      onConnected: (connectionId) => this.syncAccountModels(connectionId)
+    })
+  }
+
+  private get userAgent(): string {
+    return this.options.userAgent ?? 'Mira'
+  }
+
+  /** Bắt đầu đăng nhập một tài khoản bằng mã thiết bị. */
+  startLogin(provider: 'codex' | 'copilot'): Promise<LoginStart> {
+    return this.logins.start(provider).catch((error: unknown) => toStorageError(error))
+  }
+
+  pollLogin(sessionId: string): LoginStatus {
+    return this.logins.poll(sessionId)
+  }
+
+  cancelLogin(sessionId: string): void {
+    this.logins.cancel(sessionId)
+  }
+
+  reopenLogin(sessionId: string): Promise<void> {
+    return this.logins.reopen(sessionId)
+  }
+
+  /** Hạn mức của tài khoản Codex; rỗng cho kết nối khác. */
+  async usage(connectionId: string): Promise<UsageWindowView[]> {
+    const connection = getConnection(this.options.db, connectionId)
+    if (connection.oauthProvider !== 'codex') return []
+    try {
+      return await this.accounts.codexUsage({ id: connection.id, oauthProvider: 'codex' })
+    } catch (error) {
+      return toStorageError(error)
+    }
+  }
+
+  /**
+   * Model của một tài khoản vừa đăng nhập, thêm thành mục (mỗi model một mục, bỏ qua model đã có). Không
+   * lấy được danh sách thì dùng danh sách dự phòng tĩnh, để kết nối mới không trống trơn.
+   */
+  async syncAccountModels(connectionId: string): Promise<void> {
+    const { db, newId } = this.options
+    const connection = getConnection(db, connectionId)
+    let ids: string[] = []
+    try {
+      ids = await this.listAccountModels(connection)
+    } catch {
+      ids = []
+    }
+    if (ids.length === 0) {
+      ids = connection.oauthProvider === 'codex' ? CODEX_FALLBACK_MODELS : COPILOT_FALLBACK_MODELS
+    }
+    const have = new Set(connection.models.map((entry) => entry.model))
+    db.transaction(() => {
+      for (const model of ids)
+        if (!have.has(model)) addModelEntry(db, connectionId, newId(), { model })
+    })
+  }
+
+  /** Danh sách model của một kết nối tài khoản, theo cách riêng của nhà cung cấp. */
+  private async listAccountModels(connection: StoredConnection): Promise<string[]> {
+    if (connection.oauthProvider === 'codex') {
+      const transport = createTransport(connection, '', this.transportDeps(connection.id))
+      const credential = await this.accounts.credential({
+        id: connection.id,
+        oauthProvider: 'codex'
+      })
+      return transport.listModels({
+        apiKey: credential.kind === 'oauth' ? credential.accessToken : null,
+        credential
+      })
+    }
+    const credential = await this.accounts.credential({
+      id: connection.id,
+      oauthProvider: 'copilot'
+    })
+    if (credential.kind !== 'oauth') return []
+    const fetchImpl = this.options.fetchImpl ?? fetch
+    const response = await fetchImpl((credential.apiBase ?? COPILOT.defaultApi) + '/models', {
+      headers: {
+        authorization: 'Bearer ' + credential.accessToken,
+        accept: 'application/json',
+        ...copilotHeaders({ apiKey: credential.accessToken }, this.userAgent)
+      }
+    })
+    if (!response.ok) return []
+    return parseCopilotModels(await response.json()).map((model) => model.id)
+  }
+
+  private transportDeps(connectionId: string): Parameters<typeof createTransport>[2] {
+    const stored = getConnection(this.options.db, connectionId)
+    return {
+      fetchImpl: this.options.fetchImpl ?? fetch,
+      now: this.options.now,
+      compat: resolveCompat(stored.providerId),
+      userAgent: this.userAgent,
+      cacheScope: connectionId
+    }
+  }
+
+  /** Nguồn khóa của một kết nối: khóa API từ kho, hoặc credential của tài khoản. */
+  private keysFor(
+    connection: StoredConnection,
+    scheduler?: Parameters<typeof createConnectionKeySource>[0]['scheduler']
+  ): KeySource {
+    if (connection.authKind === 'oauth' && connection.oauthProvider) {
+      return this.accounts.keySource({ id: connection.id, oauthProvider: connection.oauthProvider })
+    }
+    return createConnectionKeySource({
+      db: this.options.db,
+      connectionId: connection.id,
+      secrets: this.options.secrets,
+      now: this.options.now,
+      scheduler
+    })
   }
 
   list(): { connections: ConnectionView[] } {
@@ -164,6 +318,7 @@ export class ConnectionService {
     deleteConnection(this.options.db, id)
     pruneAiPreferences(this.options.db)
     this.registry.forget(id)
+    this.accounts.forget(id)
     return this.list()
   }
 
@@ -206,6 +361,11 @@ export class ConnectionService {
     const preset = CONNECTION_PRESETS.find((item) => item.providerId === providerId)
     if (!preset)
       throw new StorageError('validation', 'Nhà cung cấp chưa được hỗ trợ: ' + providerId)
+    // Một token đăng nhập Claude không phải khóa API: không lưu, và nói lấy khóa ở đâu.
+    if (providerId === 'anthropic') {
+      const problem = anthropicKeyProblem(secret)
+      if (problem !== null) throw new StorageError('validation', problem)
+    }
     const existing = listConnections(db).find((item) => item.providerId === providerId)
     const connection =
       existing ??
@@ -233,6 +393,7 @@ export class ConnectionService {
       baseUrl: input.baseUrl,
       apiKey,
       model: input.model,
+      apiMode: input.apiMode,
       fetchImpl: fetchImpl ?? fetch
     })
   }
@@ -325,7 +486,7 @@ export class ConnectionService {
    * hay một lô dịch dùng nguyên bộ đó, nên sửa cài đặt giữa chừng không trộn hai cấu hình vào một lượt.
    */
   translator(id: string, entryId: string): ConnectionTranslator {
-    const { db, secrets, now, fetchImpl } = this.options
+    const { db, now, fetchImpl } = this.options
     const stored = getConnection(db, id)
     if (!stored.enabled) {
       throw new StorageError('validation', 'Kết nối “' + stored.name + '” đang tắt.')
@@ -353,13 +514,7 @@ export class ConnectionService {
       concurrency: entry.settings.concurrencyLimit,
       rpm: entry.settings.rpmLimit
     })
-    const source = createConnectionKeySource({
-      db,
-      connectionId: id,
-      secrets,
-      now,
-      scheduler: runtime.scheduler
-    })
+    const source = this.keysFor(stored, runtime.scheduler)
     const keys: KeySource = {
       async acquire() {
         const lease = await source.acquire()
@@ -378,6 +533,7 @@ export class ConnectionService {
         model: entry.model,
         keys,
         compat: resolveCompat(connection.providerId),
+        transport: createTransport(stored, entry.model, this.transportDeps(id)),
         limiter: entryRuntime.limiter,
         pacer: entryRuntime.pacer,
         generation,
@@ -396,35 +552,42 @@ export class ConnectionService {
    * lấy từ bản chụp đi kèm; model không có trong bản chụp vẫn liệt kê, chỉ là không có giá.
    */
   async test(id: string): Promise<ConnectionTestResult> {
-    const { db, secrets, now, fetchImpl } = this.options
+    const { db, now, fetchImpl } = this.options
     const connection = getConnection(db, id)
-
-    const runtime = this.registry.runtimeFor(id)
-    // Liệt kê model không thuộc mục nào nên không có tên model, hàng chờ hay nhịp riêng.
-    const provider = new OpenAiCompatibleProvider({
-      baseUrl: connection.baseUrl,
-      model: '',
-      keys: createConnectionKeySource({
-        db,
-        connectionId: id,
-        secrets,
-        now,
-        scheduler: runtime.scheduler
-      }),
-      compat: resolveCompat(connection.providerId),
-      ...this.options.retry,
-      fetchImpl,
-      now
-    })
 
     let listed = false
     let ids: string[] = []
-    try {
-      const result = await provider.listModels()
-      ids = result.models
-      listed = result.listed
-    } catch (error) {
-      toStorageError(error)
+    if (connection.authKind === 'oauth') {
+      // Một tài khoản liệt kê model theo cách riêng; không lấy được thì danh sách dự phòng.
+      try {
+        ids = await this.listAccountModels(connection)
+        listed = ids.length > 0
+      } catch (error) {
+        toStorageError(error)
+      }
+      if (ids.length === 0) {
+        ids = connection.oauthProvider === 'codex' ? CODEX_FALLBACK_MODELS : COPILOT_FALLBACK_MODELS
+      }
+    } else {
+      const runtime = this.registry.runtimeFor(id)
+      // Liệt kê model không thuộc mục nào nên không có tên model, hàng chờ hay nhịp riêng.
+      const provider = new OpenAiCompatibleProvider({
+        baseUrl: connection.baseUrl,
+        model: '',
+        keys: this.keysFor(connection, runtime.scheduler),
+        compat: resolveCompat(connection.providerId),
+        transport: createTransport(connection, '', this.transportDeps(id)),
+        ...this.options.retry,
+        fetchImpl,
+        now
+      })
+      try {
+        const result = await provider.listModels()
+        ids = result.models
+        listed = result.listed
+      } catch (error) {
+        toStorageError(error)
+      }
     }
 
     const updated = toView(patchConnection(db, id, { checkedAt: now() }, now()))

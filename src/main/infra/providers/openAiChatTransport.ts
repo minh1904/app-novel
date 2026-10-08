@@ -1,13 +1,33 @@
-import { normalizeBaseUrl } from '../../../shared/contracts/endpointUrl'
-import { FORBIDDEN_BODY_FIELDS, FORBIDDEN_HEADERS } from '../../../shared/contracts/modelSettings'
-import { classifyHttpError, type ClassifiedError } from './classifyError'
+import { FORBIDDEN_BODY_FIELDS } from '../../../shared/contracts/modelSettings'
+import { classifyHttpError } from './classifyError'
 import { parseSseStream } from './chatStream'
 import type { Compat } from './compat'
 import { normalizeModelId } from './modelCatalog'
-import { redactSecrets } from './redact'
 import { readFilterReason, type FilterReason } from './filterReason'
 import { ProviderError, type SentParameters } from './types'
 import { normalizeUsage, type Usage } from './usage'
+import {
+  Attempt,
+  DEFAULT_TIMEOUTS,
+  baseFor,
+  buildHeaders,
+  errorMessage,
+  joinUrl,
+  sendWithRefresh,
+  toProviderError,
+  type CallOptions,
+  type ChatTransport,
+  type TransportTimeouts
+} from './transportShared'
+
+export {
+  DEFAULT_TIMEOUTS,
+  buildHeaders,
+  joinUrl,
+  toProviderError,
+  type CallOptions,
+  type TransportTimeouts
+} from './transportShared'
 
 /**
  * One call to an OpenAI-compatible `/chat/completions` endpoint, and nothing else.
@@ -109,22 +129,6 @@ export interface CompleteResult {
   status: number
 }
 
-/** How long a call may take before it is given up as `timeout`. */
-export interface TransportTimeouts {
-  /** A plain call: the whole of it. */
-  totalMs: number
-  /** A streamed call: from sending the request until the first event arrives. */
-  firstByteMs: number
-  /** A streamed call: how long it may then stay silent between two events. */
-  idleMs: number
-}
-
-export const DEFAULT_TIMEOUTS: TransportTimeouts = {
-  totalMs: 180_000,
-  firstByteMs: 60_000,
-  idleMs: 60_000
-}
-
 export interface TransportOptions {
   /** The base address; it is normalized here as well as when saved, so old connections still work. */
   baseUrl: string
@@ -132,18 +136,13 @@ export interface TransportOptions {
   fetchImpl: typeof fetch
   now: () => number
   timeouts?: Partial<TransportTimeouts>
-}
-
-/** What differs from call to call. */
-export interface CallOptions {
-  /** `null` for an endpoint on this machine that wants no key. */
-  apiKey: string | null
-  signal?: AbortSignal
-}
-
-/** Joins a path to a base without caring about a trailing slash or a pasted endpoint (see `normalizeBaseUrl`). */
-export function joinUrl(baseUrl: string, path: string): string {
-  return normalizeBaseUrl(baseUrl) + '/' + path.replace(/^\/+/, '')
+  /**
+   * Headers a provider needs on every call besides the key (Copilot's editor and initiator headers). Added
+   * under Mira's own, like a request's `extraHeaders`.
+   */
+  headers?: (call: CallOptions, request?: ChatRequest) => Record<string, string>
+  /** An error answer after which a fresh token is worth one more try (see `sendWithRefresh`). */
+  refreshWhen?: (status: number, body: string) => boolean
 }
 
 /** The request body. A field appears only when somebody set it. */
@@ -183,25 +182,6 @@ function withoutForbiddenFields(
     if (!(FORBIDDEN_BODY_FIELDS as readonly string[]).includes(name)) allowed[name] = value
   }
   return allowed
-}
-
-/**
- * The headers of one call: the caller's extras first, then Mira's own on top. Names are compared without
- * regard to case, because header names are not case sensitive: `Authorization` and `authorization` are
- * one header, and the extra one must not survive next to the real one.
- */
-export function buildHeaders(
-  own: Record<string, string>,
-  extra: Record<string, string> | undefined
-): Record<string, string> {
-  const ownNames = new Set(Object.keys(own).map((name) => name.toLowerCase()))
-  const merged: Record<string, string> = {}
-  for (const [name, value] of Object.entries(extra ?? {})) {
-    const lower = name.toLowerCase()
-    if ((FORBIDDEN_HEADERS as readonly string[]).includes(lower) || ownNames.has(lower)) continue
-    merged[name] = value
-  }
-  return { ...merged, ...own }
 }
 
 /** `finish_reason` of an OpenAI-compatible answer, in the app's words. Anything unrecognized is `unknown`. */
@@ -303,82 +283,6 @@ export function parseChatFrame(data: string): ChatFrame | null {
   return frame
 }
 
-/** A single deadline that can be re-armed; when it fires it aborts the call and remembers that it did. */
-class Deadline {
-  fired = false
-  private timer: ReturnType<typeof setTimeout> | null = null
-
-  constructor(private readonly onFire: () => void) {}
-
-  arm(ms: number): void {
-    this.clear()
-    this.timer = setTimeout(() => {
-      this.fired = true
-      this.onFire()
-    }, ms)
-  }
-
-  clear(): void {
-    if (this.timer !== null) clearTimeout(this.timer)
-    this.timer = null
-  }
-}
-
-/**
- * The cancellation of one call: the caller's signal and our own deadline, merged.
- *
- * Both end the call by aborting it, so the *reason* has to be recovered afterwards. **Cancel beats
- * timeout** when both are true: a person who pressed Cancel is told it was cancelled, not that the
- * provider was slow.
- */
-class Attempt {
-  readonly signal: AbortSignal
-  readonly deadline: Deadline
-  private readonly controller = new AbortController()
-  private readonly onAbort = (): void => this.controller.abort()
-
-  constructor(private readonly caller: AbortSignal | undefined) {
-    this.signal = this.controller.signal
-    this.deadline = new Deadline(() => this.controller.abort())
-    if (caller?.aborted) this.controller.abort()
-    else caller?.addEventListener('abort', this.onAbort, { once: true })
-  }
-
-  /** The error that matches why the call stopped, or `null` when it did not stop for either reason. */
-  interruption(): ProviderError | null {
-    if (this.caller?.aborted) return new ProviderError('cancelled', 'Yêu cầu đã bị hủy.')
-    if (this.deadline.fired) {
-      return new ProviderError('timeout', 'Nhà cung cấp không trả lời trong thời hạn cho phép.')
-    }
-    return null
-  }
-
-  /** Always called when the call is over: it frees the timer, the listener and a connection left open. */
-  finish(): void {
-    this.deadline.clear()
-    this.caller?.removeEventListener('abort', this.onAbort)
-    this.controller.abort()
-  }
-}
-
-function errorMessage(error: unknown, secret: string | null): string {
-  return redactSecrets(error instanceof Error ? error.message : String(error), [secret])
-}
-
-export function toProviderError(error: ClassifiedError, sent?: SentParameters): ProviderError {
-  return new ProviderError(error.kind, error.message, {
-    retryAfterMs: error.retryAfterMs,
-    status: error.status,
-    receivedAt: error.receivedAt,
-    quotaScope: error.quotaScope,
-    bodySnippet: error.bodySnippet,
-    requestProblem: error.requestProblem,
-    filter: error.filter,
-    // Only a request error needs them: they are what the person checks when the provider says "invalid".
-    sent: error.kind === 'invalid_request' ? sent : undefined
-  })
-}
-
 /** What a chat request sends, as far as it can be shown: no `extra_body` values, no headers. */
 export function sentParameters(request: ChatRequest): SentParameters {
   const sent: SentParameters = {
@@ -393,7 +297,7 @@ export function sentParameters(request: ChatRequest): SentParameters {
   return sent
 }
 
-export class OpenAiChatTransport {
+export class OpenAiChatTransport implements ChatTransport {
   private readonly timeouts: TransportTimeouts
 
   constructor(private readonly options: TransportOptions) {
@@ -401,11 +305,11 @@ export class OpenAiChatTransport {
   }
 
   /** The ids the endpoint lists under `GET /models` (a leading `models/` is dropped). Throws when it cannot. */
-  async listModels({ apiKey, signal }: CallOptions): Promise<string[]> {
-    const attempt = new Attempt(signal)
+  async listModels(call: CallOptions): Promise<string[]> {
+    const attempt = new Attempt(call.signal)
     attempt.deadline.arm(this.timeouts.totalMs)
     try {
-      const response = await this.send('models', { method: 'GET', apiKey }, attempt)
+      const { response, apiKey } = await this.send('models', { method: 'GET' }, attempt, call)
       if (!response.ok) throw await this.failure(response, apiKey, attempt)
       const body = (await this.readJson(response, attempt, apiKey)) as {
         data?: Array<{ id?: unknown }>
@@ -420,15 +324,17 @@ export class OpenAiChatTransport {
   }
 
   /** A plain call: one request, one answer. */
-  async complete(request: ChatRequest, { apiKey, signal }: CallOptions): Promise<CompleteResult> {
-    const attempt = new Attempt(signal)
+  async complete(request: ChatRequest, call: CallOptions): Promise<CompleteResult> {
+    const attempt = new Attempt(call.signal)
     attempt.deadline.arm(this.timeouts.totalMs)
     try {
       const body = JSON.stringify(buildChatBody(request, this.options.compat, false))
-      const response = await this.send(
+      const { response, apiKey } = await this.send(
         'chat/completions',
-        { method: 'POST', body, apiKey, extraHeaders: request.extraHeaders },
-        attempt
+        { method: 'POST', body, extraHeaders: request.extraHeaders },
+        attempt,
+        call,
+        request
       )
       if (!response.ok) throw await this.failure(response, apiKey, attempt, sentParameters(request))
 
@@ -473,18 +379,18 @@ export class OpenAiChatTransport {
    * Closing the generator early (the consumer stops reading) releases the connection: `finish()` runs in
    * the `finally`, and it aborts whatever is still open.
    */
-  async *stream(
-    request: ChatRequest,
-    { apiKey, signal }: CallOptions
-  ): AsyncGenerator<ChatStreamEvent> {
+  async *stream(request: ChatRequest, call: CallOptions): AsyncGenerator<ChatStreamEvent> {
+    const { signal } = call
     const attempt = new Attempt(signal)
     attempt.deadline.arm(this.timeouts.firstByteMs)
     try {
       const body = JSON.stringify(buildChatBody(request, this.options.compat, true))
-      const response = await this.send(
+      const { response, apiKey } = await this.send(
         'chat/completions',
-        { method: 'POST', body, apiKey, extraHeaders: request.extraHeaders },
-        attempt
+        { method: 'POST', body, extraHeaders: request.extraHeaders },
+        attempt,
+        call,
+        request
       )
       if (!response.ok) throw await this.failure(response, apiKey, attempt, sentParameters(request))
       if (response.body === null) {
@@ -568,37 +474,36 @@ export class OpenAiChatTransport {
     }
   }
 
-  /** One request. A failure to even get an answer is `network`, or `timeout`/`cancelled` when that is why. */
+  /**
+   * One request, and the key it was finally made with. A failure to even get an answer is `network`, or
+   * `timeout`/`cancelled` when that is why. A 401 on an account login fetches a fresh token and tries
+   * **once** more (design D3 of change `subscription-providers`).
+   */
   private async send(
     path: string,
-    init: {
-      method: string
-      body?: string
-      apiKey: string | null
-      extraHeaders?: Record<string, string>
-    },
-    attempt: Attempt
-  ): Promise<Response> {
-    const own: Record<string, string> = { accept: 'application/json' }
-    if (init.body !== undefined) own['content-type'] = 'application/json'
-    if (init.apiKey) own.authorization = 'Bearer ' + init.apiKey
-    const headers = buildHeaders(own, init.extraHeaders)
-
-    try {
-      return await this.options.fetchImpl(joinUrl(this.options.baseUrl, path), {
-        method: init.method,
-        headers,
-        body: init.body,
-        signal: attempt.signal
-      })
-    } catch (error) {
-      const stop = attempt.interruption()
-      if (stop !== null) throw stop
-      throw new ProviderError(
-        'network',
-        'Không nối được tới nhà cung cấp: ' + errorMessage(error, init.apiKey)
-      )
-    }
+    init: { method: string; body?: string; extraHeaders?: Record<string, string> },
+    attempt: Attempt,
+    call: CallOptions,
+    request?: ChatRequest
+  ): Promise<{ response: Response; apiKey: string | null }> {
+    return sendWithRefresh(
+      call,
+      attempt,
+      (current) => {
+        const own: Record<string, string> = { accept: 'application/json' }
+        if (init.body !== undefined) own['content-type'] = 'application/json'
+        if (current.apiKey) own.authorization = 'Bearer ' + current.apiKey
+        const provided = this.options.headers?.(current, request) ?? {}
+        const headers = buildHeaders(own, { ...init.extraHeaders, ...provided })
+        return this.options.fetchImpl(joinUrl(baseFor(this.options.baseUrl, current), path), {
+          method: init.method,
+          headers,
+          body: init.body,
+          signal: attempt.signal
+        })
+      },
+      this.options.refreshWhen
+    )
   }
 
   /**

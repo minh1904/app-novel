@@ -117,3 +117,46 @@ describe('a 4xx with evidence that the content was blocked', () => {
     expect(classify(429, { error: { message: 'SAFETY' } }).kind).toBe('rate_limited')
   })
 })
+
+describe('errors of account and Anthropic providers (subscription-providers, D9)', () => {
+  it('reads a Codex usage limit as quota, with the reset when the body gives one', () => {
+    const result = classify(429, {
+      error: {
+        type: 'usage_limit_reached',
+        message: 'The usage limit has been reached',
+        resets_in_seconds: 1800
+      }
+    })
+    expect(result).toMatchObject({ kind: 'quota', retryAfterMs: 1_800_000 })
+  })
+
+  it('reads an out-of-credit Copilot answer as quota', () => {
+    expect(classify(402, { error: { message: 'Payment required' } }).kind).toBe('quota')
+    expect(
+      classify(403, { error: { message: 'You have exceeded your premium request allowance' } }).kind
+    ).toBe('quota')
+  })
+
+  it('keeps a Copilot model the integration may not use a request error', () => {
+    expect(
+      classify(400, { error: { code: 'model_not_available_for_integrator', message: 'no' } }).kind
+    ).toBe('invalid_request')
+  })
+
+  it('makes an overloaded Anthropic a rate limit worth retrying', () => {
+    const result = classify(529, {
+      type: 'error',
+      error: { type: 'overloaded_error', message: 'Overloaded' }
+    })
+    expect(result.kind).toBe('rate_limited')
+  })
+
+  it('keeps an Anthropic invalid request a request error', () => {
+    expect(
+      classify(400, {
+        type: 'error',
+        error: { type: 'invalid_request_error', message: 'max_tokens: required' }
+      }).kind
+    ).toBe('invalid_request')
+  })
+})

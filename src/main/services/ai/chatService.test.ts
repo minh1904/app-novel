@@ -9,6 +9,9 @@ import { ChatService, MAX_TOOL_ROUNDS, type ChatConnections } from './chatServic
 import type { ConnectionTranslator } from './connectionService'
 import type { Generation } from '../../infra/providers/generation'
 import { OpenAiCompatibleProvider, type KeySource } from '../../infra/providers/openAiCompatible'
+import { createTransport } from '../../infra/providers/transportFactory'
+import { resolveCompat } from '../../infra/providers/compat'
+import type { ChatTransport } from '../../infra/providers/transportShared'
 
 /**
  * Vòng đời một lượt, chạy qua provider thật trên một endpoint giả.
@@ -75,6 +78,10 @@ function connection(patch: Partial<ConnectionView> = {}): ConnectionView {
     name: 'Gemini',
     baseUrl: 'http://127.0.0.1:8317/v1',
     enabled: true,
+    authKind: 'api_key',
+    oauthProvider: null,
+    apiMode: 'auto',
+    account: null,
     providerId: 'google',
     defaultEntryId: null,
     checkedAt: null,
@@ -94,6 +101,8 @@ function connections(
     model?: string
     /** Tham số sinh của mục, như `ConnectionService` dựng từ cài đặt của nó. */
     generation?: Generation
+    /** Cách nói chuyện với model, như `createTransport` chọn cho kết nối. */
+    transport?: ChatTransport
   } = {}
 ): ChatConnections & { calls: number; asked: string[] } {
   const holder = {
@@ -114,6 +123,7 @@ function connections(
           model,
           keys,
           generation: options.generation,
+          ...(options.transport ? { transport: options.transport } : {}),
           fetchImpl,
           now: () => NOW
         }),
@@ -924,6 +934,43 @@ describe('tool ghi và vị trí (agentic-chat)', () => {
     await sink.settled(requestId)
     expect(sent[0].content).toMatch(/Đang chọn đoạn 2–3 bản dịch\.\n<\/location>$/)
     expect(sent.at(-1)).toEqual({ role: 'user', content: 'Dịch tự nhiên hơn' })
+  })
+})
+
+describe('Copilot qua chat (subscription-providers, 4.3)', () => {
+  it('vòng đầu là của người dùng, các vòng trả lời tool là của agent', async () => {
+    const initiators: string[] = []
+    let round = 0
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      initiators.push((init.headers as Record<string, string>)['x-initiator'])
+      round += 1
+      if (round <= 2) {
+        return sseResponse([
+          toolFrame({
+            index: 0,
+            id: 'c' + round,
+            function: { name: 'list_chapters', arguments: '{}' }
+          }),
+          DONE
+        ])
+      }
+      return sseResponse([delta('xong'), DONE])
+    }) as typeof fetch
+    const transport = createTransport(
+      { baseUrl: '', providerId: null, oauthProvider: 'copilot', apiMode: 'auto' },
+      'claude-sonnet-4.6',
+      { fetchImpl, now: () => NOW, compat: resolveCompat(null), userAgent: 'Mira/test' }
+    )
+    const sink = collector()
+    const chat = new ChatService({
+      connections: connections(fetchImpl, { transport, model: 'claude-sonnet-4.6' }),
+      library: fakeLibrary(),
+      newId: () => 'r1',
+      now: () => NOW
+    })
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+    expect(initiators).toEqual(['user', 'agent', 'agent'])
   })
 })
 

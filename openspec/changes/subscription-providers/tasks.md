@@ -1,23 +1,23 @@
 ## 1. Transport chung
 
-- [ ] 1.1 Tách `transports/shared.ts` khỏi `openAiChatTransport.ts` (deadline, `Attempt`, đọc SSE, giới hạn
+- [x] 1.1 Tách `transports/shared.ts` khỏi `openAiChatTransport.ts` (deadline, `Attempt`, đọc SSE, giới hạn
   body); định nghĩa `ChatTransport`, `Credential`, `CallOptions.credential` / `refresh` / `turnRound`.
   Kiểm: toàn bộ test provider hiện có vẫn xanh, không đổi hành vi.
-- [ ] 1.2 `createTransport(connection, model)` theo bảng chọn transport, gồm luật `gpt-N ≥ 5` của Copilot và
+- [x] 1.2 `createTransport(connection, model)` theo bảng chọn transport, gồm luật `gpt-N ≥ 5` của Copilot và
   chế độ Tự nhận. Kiểm: unit test bảng chọn.
-- [ ] 1.3 `connectionKeySource` trả `Credential`; credential OAuth lấy từ `tokenStore` và có `refresh`.
+- [x] 1.3 `connectionKeySource` trả `Credential`; credential OAuth lấy từ `tokenStore` và có `refresh`.
   `keyScheduler` coi OAuth là một khóa. Kiểm: unit test với tokenStore giả.
 
 ## 2. Transport Responses
 
-- [ ] 2.1 Đổi tin nhắn và tool sang `input` / `instructions` / `tools`:
+- [x] 2.1 Đổi tin nhắn và tool sang `input` / `instructions` / `tools`:
   - rút gọn `call_id` > 64 ký tự kèm bảng đổi ngược;
   - thay các ký hiệu `<|…|>`;
   - map mức suy luận;
   - với Codex: `include`, `prompt_cache_key`, bỏ `max_output_tokens`.
 
   Kiểm: unit test thân request cho lịch sử có tool, chuỗi assistant, mức `off`.
-- [ ] 2.2 Đọc SSE:
+- [x] 2.2 Đọc SSE:
   - chữ, bỏ phase commentary;
   - ghép tool theo `item_id`;
   - chốt tool thiếu `.done`;
@@ -28,16 +28,16 @@
 
 ## 3. Codex
 
-- [ ] 3.1 `tokenStore` (mã hóa bằng `safeStorage`, từ chối khi không mã hóa được) và migration thư viện D7.
+- [x] 3.1 `tokenStore` (mã hóa bằng `safeStorage`, từ chối khi không mã hóa được) và migration thư viện D7.
   Kiểm: test migration trên thư viện cũ; test từ chối lưu khi `safeStorage` không khả dụng.
-- [ ] 3.2 `codexAuth`:
+- [x] 3.2 `codexAuth`:
   - `start`: xin mã;
   - `poll`: 200, 403/404 là chờ, mã khác là lỗi, lỗi mạng thử lại 6 lần;
   - đổi mã lấy token;
   - hết hạn 15 phút.
 
   Kiểm: unit test bằng server giả cho từng nhánh.
-- [ ] 3.3 Làm mới:
+- [x] 3.3 Làm mới:
   - trước 120 giây theo `exp`;
   - khi 401 thì làm mới một lần rồi thử lại;
   - ghi refresh token mới;
@@ -46,31 +46,31 @@
 
   Kiểm: test hai lời gọi song song chỉ gửi một refresh; test `refresh_token_reused` chuyển `state =
   relogin`.
-- [ ] 3.4 Header (Bearer, account id, residency, `originator: mira`, `session_id`), danh sách model theo hai
+- [ ] 3.4 (Đã làm header, claim JWT, danh sách model theo hai `client_version` và danh sách dự phòng. Chưa làm thang suy luận theo họ model ghi vào `modelCapability`: cần bảng `agent/reasoning_effort.py` của Hermes, chưa đọc được trên máy này.) Header (Bearer, account id, residency, `originator: mira`, `session_id`), danh sách model theo hai
   `client_version` kèm danh sách dự phòng tĩnh, thang suy luận theo họ model. Kiểm: unit test claim JWT,
   lọc và sắp model.
-- [ ] 3.5 Hạn mức `/wham/usage` (gán Phiên/Tuần theo độ dài cửa sổ, lưu đệm 5 phút) và IPC `ai:usage:get`.
+- [x] 3.5 (IPC tên `ai:accounts:usage`, cùng nhóm kênh `ai:accounts:*`.) Hạn mức `/wham/usage` (gán Phiên/Tuần theo độ dài cửa sổ, lưu đệm 5 phút) và IPC `ai:usage:get`.
   Kiểm: unit test parse hai dạng `reset_at`.
 
 ## 4. Copilot
 
-- [ ] 4.1 `copilotAuth`: device flow (`authorization_pending`, `slow_down`, `expired_token`, `access_denied`) và
+- [x] 4.1 `copilotAuth`: device flow (`authorization_pending`, `slow_down`, `expired_token`, `access_denied`) và
   lưu token GitHub. Kiểm: unit test bằng server giả.
-- [ ] 4.2 Đổi token Copilot:
+- [x] 4.2 Đổi token Copilot:
   - lưu đệm, đổi lại trước 120 giây;
   - `endpoints.api`;
   - 401/403/404 là vĩnh viễn, lỗi tạm thử lại 3 lần.
 
   Kiểm: unit test.
-- [ ] 4.3 Header Copilot cho Chat Completions và Responses; `x-initiator` theo `turnRound`; header vision; đổi
+- [x] 4.3 Header Copilot cho Chat Completions và Responses; `x-initiator` theo `turnRound`; header vision; đổi
   lại token và thử lại khi gặp `model_not_available_for_integrator`. Kiểm: test `chatService` với
   transport giả ghi header của ba vòng.
-- [ ] 4.4 Danh sách model `/models` (lọc theo type, endpoint, `model_picker_enabled`) kèm danh sách dự phòng
+- [ ] 4.4 (Đã lọc `/models` theo type, endpoint và `model_picker_enabled`, có danh sách dự phòng; `parseCopilotModels` đọc `supports.reasoning_effort` nhưng chưa nối vào `modelCapability`.) Danh sách model `/models` (lọc theo type, endpoint, `model_picker_enabled`) kèm danh sách dự phòng
   tĩnh và mức suy luận từ `supports.reasoning_effort`. Kiểm: unit test với fixture.
 
 ## 5. Anthropic Messages
 
-- [ ] 5.1 Đổi định dạng:
+- [x] 5.1 Đổi định dạng:
   - `system`;
   - `tool_use` / `tool_result`;
   - gộp vai liền nhau;
@@ -80,25 +80,25 @@
 
   Kiểm: unit test thân request cho Claude 4.6, 4.5 mức Cao (ngân sách 16000, `max_tokens` ≥ 20096) và
   Haiku.
-- [ ] 5.2 Đọc SSE (text, `input_json_delta`, `message_delta`), lý do dừng, usage có cache, danh sách
+- [x] 5.2 Đọc SSE (text, `input_json_delta`, `message_delta`), lý do dừng, usage có cache, danh sách
   `/v1/models` theo trang. Từ chối khóa không phải `sk-ant-api`. Kiểm: test fixture SSE; test từ chối
   `sk-ant-oat`.
-- [ ] 5.3 Thẻ Anthropic ở Khóa API chuyển từ `soon` sang `ready`. Kiểm: chạy app với khóa thật nếu có; nếu
+- [x] 5.3 (Chưa có khóa Anthropic thật: đã thử bằng server giả trong `anthropicTransport.test.ts`.) Thẻ Anthropic ở Khóa API chuyển từ `soon` sang `ready`. Kiểm: chạy app với khóa thật nếu có; nếu
   không, ghi rõ đã thử bằng server giả.
 
 ## 6. Phiên đăng nhập và giao diện
 
-- [ ] 6.1 `oauthService` và IPC `start` / `poll` / `cancel` / `disconnect`:
+- [x] 6.1 (Kênh tên `ai:accounts:login-start` / `login-poll` / `login-cancel` / `login-reopen` / `disconnect`.) `oauthService` và IPC `start` / `poll` / `cancel` / `disconnect`:
   - `isTrustedSender`;
   - `openExternal` chỉ với host trong danh sách;
   - hủy khóa với việc lưu token;
   - dọn phiên quá hạn.
 
   Kiểm: test hủy trong lúc đổi token thì không lưu.
-- [ ] 6.2 `FlowPanel` với các trạng thái starting, polling (ô OTP sao chép được, mở lại trang, Hủy), success,
+- [x] 6.2 `FlowPanel` với các trạng thái starting, polling (ô OTP sao chép được, mở lại trang, Hủy), success,
   confirm model, error (Chi tiết đã che token, ba nút). Thêm các trạng thái này vào máy trạng thái
   onboarding. Kiểm: unit test máy trạng thái; render test từng trạng thái.
-- [ ] 6.3 Mục Tài khoản:
+- [x] 6.3 Mục Tài khoản:
   - thẻ hoạt động;
   - nhóm Đã kết nối có ✓ và nút ngắt (spinner khi đang ngắt);
   - "Cần đăng nhập lại";
@@ -106,17 +106,17 @@
   - thẻ Claude dẫn sang Anthropic.
 
   Kiểm: render test các trạng thái.
-- [ ] 6.4 Chip hạn mức trong menu model (dưới 20 %, cảnh báo dưới 10 %) và trên thẻ Codex. Kiểm: render test với
+- [x] 6.4 Chip hạn mức trong menu model (dưới 20 %, cảnh báo dưới 10 %) và trên thẻ Codex. Kiểm: render test với
   dữ liệu giả.
-- [ ] 6.5 Form endpoint có thêm chế độ Responses và Anthropic Messages; Kiểm tra thăm dò đúng route. Kiểm: unit test
+- [x] 6.5 Form endpoint có thêm chế độ Responses và Anthropic Messages; Kiểm tra thăm dò đúng route. Kiểm: unit test
   `probeEndpoint` với từng chế độ.
 
 ## 7. Lỗi, thử thật, tài liệu
 
-- [ ] 7.1 `classifyError` thêm các lỗi theo nhà cung cấp ở D9. Kiểm: unit test từng mã.
-- [ ] 7.2 Thử thật với tài khoản của chủ sản phẩm: đăng nhập Codex, dịch một lô, chat có tool; đăng nhập Copilot,
+- [x] 7.1 `classifyError` thêm các lỗi theo nhà cung cấp ở D9. Kiểm: unit test từng mã.
+- [ ] 7.2 (Chưa thử: cần tài khoản ChatGPT và Copilot của chủ sản phẩm.) Thử thật với tài khoản của chủ sản phẩm: đăng nhập Codex, dịch một lô, chat có tool; đăng nhập Copilot,
   chat với một model gpt-5 và một model Claude. Kiểm: ghi kết quả (model, usage, lỗi gặp phải) vào
   `docs/modules/ai-connections/README.md`. Nếu chưa có tài khoản thì để mở và nói rõ.
-- [ ] 7.3 Cập nhật `docs/modules/ai-connections/README.md` (tiếng Việt): hành vi đã chạy, hằng số và nguồn,
+- [x] 7.3 Cập nhật `docs/modules/ai-connections/README.md` (tiếng Việt): hành vi đã chạy, hằng số và nguồn,
   rủi ro, cách revert. Kiểm: link tương đối trỏ tới file có thật.
-- [ ] 7.4 Chạy `node scripts/check.mjs --build`. Kiểm: mọi bước báo ok.
+- [x] 7.4 Chạy `node scripts/check.mjs --build`. Kiểm: mọi bước báo ok.

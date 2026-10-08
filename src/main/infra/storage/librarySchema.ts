@@ -164,6 +164,32 @@ UPDATE ai_connection SET provider_id = 'ollama'
 WHERE provider_id IS NULL AND rtrim(base_url, '/') IN ('http://127.0.0.1:11434/v1', 'http://localhost:11434/v1');
 `
 
+/**
+ * Account logins (change `subscription-providers`, design D7). A connection is reached with an API key or an
+ * account; an account's tokens live in their own table, sealed by `safeStorage` like keys, and there is at
+ * most one connection per account provider. `api_mode` says which wire protocol a connection speaks; the
+ * default `auto` keeps every existing connection on Chat Completions.
+ */
+const version7 = `
+ALTER TABLE ai_connection ADD COLUMN auth_kind TEXT NOT NULL DEFAULT 'api_key'
+  CHECK (auth_kind IN ('api_key', 'oauth'));
+ALTER TABLE ai_connection ADD COLUMN oauth_provider TEXT
+  CHECK (oauth_provider IN ('codex', 'copilot'));
+ALTER TABLE ai_connection ADD COLUMN api_mode TEXT NOT NULL DEFAULT 'auto'
+  CHECK (api_mode IN ('auto', 'chat_completions', 'responses', 'anthropic_messages'));
+CREATE UNIQUE INDEX ai_connection_oauth_provider ON ai_connection (oauth_provider)
+  WHERE oauth_provider IS NOT NULL;
+
+CREATE TABLE ai_oauth_token (
+  connection_id TEXT PRIMARY KEY REFERENCES ai_connection (id) ON DELETE CASCADE,
+  secret BLOB NOT NULL,
+  expires_at INTEGER,
+  account_label TEXT,
+  state TEXT NOT NULL DEFAULT 'ok' CHECK (state IN ('ok', 'relogin')),
+  updated_at INTEGER NOT NULL
+);
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -200,6 +226,12 @@ export const librarySchema: SchemaSpec = {
       version: 6,
       up(db) {
         db.exec(version6)
+      }
+    },
+    {
+      version: 7,
+      up(db) {
+        db.exec(version7)
       }
     }
   ]
