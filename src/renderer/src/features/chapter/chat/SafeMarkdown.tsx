@@ -103,7 +103,7 @@ function inline(text: string): ReactNode[] {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-info underline"
+            className="text-link underline"
           >
             {match[3]}
           </a>

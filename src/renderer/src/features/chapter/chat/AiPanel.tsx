@@ -325,7 +325,7 @@ export function AiPanel({
       </span>
 
       <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-default px-3">
-        <StarsIcon size={16} className="shrink-0 text-info" />
+        <StarsIcon size={16} className="shrink-0 text-subtle" />
         <h3 className="text-body-xs font-semibold">Hỏi AI</h3>
         <span className="min-w-0 truncate text-body-xs text-subtle">{chapterLabel}</span>
         <span className="ml-auto flex shrink-0 items-center gap-0.5">

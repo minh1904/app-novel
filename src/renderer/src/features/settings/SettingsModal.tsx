@@ -140,6 +140,8 @@ function SearchPill({
           <SearchInput
             ref={inputRef}
             autoFocus
+            // The field opens already focused inside its own popover, so a ring adds nothing.
+            className="outline-none!"
             label="Tìm trong cài đặt"
             placeholder="Tìm trong cài đặt"
             value={query}

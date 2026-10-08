@@ -123,12 +123,23 @@ nằm trên dialog.
 
 | Theme | Nền | Chữ | Subtle | Muted | Link | Chữ trên nút chính |
 | --- | --- | --- | --- | --- | --- | --- |
-| Sáng | `#ffffff` / `#fafafa` | 17,4 / 16,7 | 6,7 / 6,4 | 4,7 / 4,5 | 5,9 | 17,4 |
-| Tối | `#1a1a1a` / `#141414` | 16,0 / 16,9 | 6,9 / 7,3 | 5,0 / 5,3 | 10,4 | 16,0 |
+| Sáng | `#ffffff` / `#fafafa` | 17,4 / 16,7 | 6,7 / 6,4 | 4,7 / 4,5 | 21,0 | 17,4 |
+| Tối | `#1a1a1a` / `#141414` | 16,0 / 16,9 | 6,9 / 7,3 | 5,0 / 5,3 | 17,4 | 16,0 |
 
 Chữ trạng thái trên nền trắng: error 6,5, warning 5,2, success 5,0, accent 6,0.
 
 Viền ô nhập và track Switch: 3,0 trên nền sáng (`#949494`), 3,0 trên nền tối (`#666666`).
+
+**Tạm thời chỉ dùng đen, trắng, xám** (2026-10-08, chủ sản phẩm yêu cầu). Màu chỉ còn ở các trạng thái
+(success, info, warning, error, accent) và nút xoá. Cụ thể:
+
+- **Vòng focus** đổi từ xanh dương sang xám: `neutral-500` trên nền sáng (4,7:1), `neutral-450` trên
+  nền tối (5,0:1). Cả hai vẫn trên mức 3:1 mà dấu focus cần.
+- **Ô nhập giữ vòng focus xám** như mọi control. Đã thử bỏ vòng và chỉ đậm viền khi đang gõ, rồi
+  quay lại vòng (cùng ngày).
+- **Link** là chữ đậm nhất (đen / trắng) kèm gạch chân.
+- **Vùng chọn** (nền hàng chọn, bôi đen chữ truyện) là lớp phủ xám thay cho xanh và vàng highlight.
+- **Icon trang trí** không mượn màu trạng thái nữa: ngôi sao ở đầu panel AI đổi sang `text-subtle`.
 
 ## Khung cửa sổ
 

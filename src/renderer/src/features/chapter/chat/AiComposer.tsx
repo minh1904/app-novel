@@ -54,7 +54,7 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
   return (
     <div className="relative m-3 shrink-0">
       <form
-        className="flex flex-col rounded-lg border border-strong bg-muted p-1 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/25"
+        className="flex flex-col rounded-lg border border-strong bg-muted p-1 focus-within:outline-2 focus-within:outline-solid focus-within:outline-offset-1 focus-within:outline-focus"
         onSubmit={(event) => {
           event.preventDefault()
           submit()

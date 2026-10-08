@@ -62,7 +62,7 @@
   --mira-pink-500: #ec4899;
   --mira-pink-600: #be185d;
   --mira-pink-700: #9d174d;
-  /* Story-text selection: a highlighter yellow, as before; it never stands for a state. */
+  /* The old story-text highlighter; unused while Mira is greyscale (2026-10-08). */
   --mira-yellow-300: #ffd24a;
 
   /* radius: the IZONE LMS names on a desktop scale, about a quarter of a control's height or less

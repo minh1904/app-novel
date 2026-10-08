@@ -38,7 +38,8 @@ html[data-theme='light'] {
   --mira-text-placeholder: var(--mira-neutral-500);
   --mira-text-disabled: var(--mira-neutral-400);
   --mira-text-inverted: var(--mira-neutral-0);
-  --mira-text-link: var(--mira-sky-600);
+  /* Mira is greyscale for now (2026-10-08): a link is the strongest text and an underline. */
+  --mira-text-link: var(--mira-neutral-1000);
 
   /* ── Borders ── */
   --mira-border: var(--mira-neutral-200);
@@ -47,10 +48,11 @@ html[data-theme='light'] {
   --mira-border-input: var(--mira-neutral-350);
 
   /* ── Focus and selection ── */
-  --mira-ring: var(--mira-sky-500);
+  /* 4.7:1 on white, above the 3:1 a focus mark needs. */
+  --mira-ring: var(--mira-neutral-500);
   --mira-ring-error: var(--mira-red-500);
-  --mira-selection: color-mix(in srgb, var(--mira-sky-500) 22%, transparent);
-  --mira-text-selection: color-mix(in srgb, var(--mira-yellow-300) 50%, transparent);
+  --mira-selection: color-mix(in srgb, var(--mira-neutral-1000) 12%, transparent);
+  --mira-text-selection: color-mix(in srgb, var(--mira-neutral-1000) 16%, transparent);
   --mira-code-inline: color-mix(in srgb, var(--mira-neutral-1000) 5%, transparent);
 
   /* ── States ── */
@@ -98,17 +100,18 @@ html[data-theme='dark'] {
   --mira-text-placeholder: var(--mira-neutral-450);
   --mira-text-disabled: var(--mira-neutral-600);
   --mira-text-inverted: var(--mira-neutral-900);
-  --mira-text-link: var(--mira-sky-300);
+  --mira-text-link: var(--mira-neutral-0);
 
   --mira-border: var(--mira-neutral-800);
   --mira-border-subtle: var(--mira-neutral-850);
   --mira-border-strong: var(--mira-neutral-700);
   --mira-border-input: var(--mira-neutral-550);
 
-  --mira-ring: var(--mira-sky-300);
+  /* 5.0:1 on the dark surface. */
+  --mira-ring: var(--mira-neutral-450);
   --mira-ring-error: var(--mira-red-300);
-  --mira-selection: color-mix(in srgb, var(--mira-sky-300) 26%, transparent);
-  --mira-text-selection: color-mix(in srgb, var(--mira-yellow-300) 32%, transparent);
+  --mira-selection: color-mix(in srgb, var(--mira-neutral-0) 14%, transparent);
+  --mira-text-selection: color-mix(in srgb, var(--mira-neutral-0) 22%, transparent);
   --mira-code-inline: color-mix(in srgb, var(--mira-neutral-0) 7%, transparent);
 
   --mira-success-emphasis: var(--mira-green-300);
