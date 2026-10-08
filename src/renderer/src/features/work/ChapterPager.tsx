@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
-import { CompactButton } from '../../components/ui/CompactButton'
+import { Button } from '../../components/ui/Button'
 import { Select } from '../../components/ui/Select'
 import { PAGE_SIZES, pageCount, pageRange, pageWindow, type PageSize } from './chapterList'
 
@@ -55,7 +55,8 @@ export function ChapterPager({
         )}
         {pages > 1 && (
           <div className="flex items-center gap-1">
-            <CompactButton
+            <Button
+              variant="ghost"
               aria-label="Trang trước"
               disabled={page <= 1}
               onClick={() => onPage(page - 1)}
@@ -67,18 +68,20 @@ export function ChapterPager({
                   …
                 </span>
               ) : (
-                <CompactButton
+                <Button
                   key={entry}
                   variant={entry === page ? 'light' : 'ghost'}
-                  className="w-auto min-w-6 px-1.5 text-label-xs tabular-nums"
+                  className="tabular-nums"
                   aria-label={'Trang ' + entry}
                   aria-current={entry === page ? 'page' : undefined}
                   onClick={() => onPage(entry)}
-                  icon={entry}
-                />
+                >
+                  {entry}
+                </Button>
               )
             )}
-            <CompactButton
+            <Button
+              variant="ghost"
               aria-label="Trang sau"
               disabled={page >= pages}
               onClick={() => onPage(page + 1)}

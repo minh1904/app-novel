@@ -276,7 +276,7 @@ function ProviderKeyCard({
             event.stopPropagation()
             onToggle()
           }}
-          className="h-8 min-w-0 px-0 py-0 hover:bg-transparent"
+          className="min-w-0 hover:bg-transparent"
           title={head}
           tag={tag}
         />

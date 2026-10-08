@@ -1,4 +1,5 @@
 import { useEffect, useState, type JSX } from 'react'
+import { CopyIcon } from '@solar-icons/react/linear/copy'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
 import { Button, LinkButton } from '../../components/ui/Button'
 import { cn } from '../../lib/cn'
@@ -10,7 +11,7 @@ import { ACCOUNT_LABELS, type OnboardingState } from './onboardingMachine'
  * onboarding dialog and Settings › Tài khoản use both over the same state machine.
  */
 
-/** The device code as OTP boxes; a click copies it and flashes the accent for 1.5 s. */
+/** The device code as OTP boxes, and a button that copies it and marks the boxes for 1.5 s. */
 export function OtpCode({ code }: { code: string }): JSX.Element {
   const [copied, setCopied] = useState(false)
   useEffect(() => {
@@ -19,16 +20,8 @@ export function OtpCode({ code }: { code: string }): JSX.Element {
     return () => clearTimeout(timer)
   }, [copied])
   return (
-    <Button
-      variant="ghost"
-      aria-label={'Mã ' + code + ', bấm để sao chép'}
-      title="Bấm để sao chép"
-      onClick={() => {
-        void navigator.clipboard.writeText(code).then(() => setCopied(true))
-      }}
-      className="h-auto self-start p-1"
-    >
-      <span className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-sm">
+      <span className="selectable flex flex-wrap items-center gap-1.5" aria-label={'Mã ' + code}>
         {[...code].map((char, index) =>
           char === '-' ? (
             <span key={index} aria-hidden="true" className="px-0.5 text-body-lg text-muted">
@@ -49,11 +42,17 @@ export function OtpCode({ code }: { code: string }): JSX.Element {
             </span>
           )
         )}
-        <span className="ml-2 text-body-xs text-subtle" role="status">
-          {copied ? 'Đã chép' : ''}
-        </span>
       </span>
-    </Button>
+      <Button
+        variant="ghost"
+        leftIcon={<CopyIcon size={16} />}
+        onClick={() => {
+          void navigator.clipboard.writeText(code).then(() => setCopied(true))
+        }}
+      >
+        {copied ? 'Đã chép' : 'Sao chép mã'}
+      </Button>
+    </div>
   )
 }
 
