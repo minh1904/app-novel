@@ -179,9 +179,6 @@ export function ChapterWorkspace({
     return outcomes.every((outcome) => outcome.kind !== 'failed')
   }, [])
 
-  const dirty = sourceStatus.dirty || targetStatus.dirty
-  const saving = sourceStatus.state === 'saving' || targetStatus.state === 'saving'
-
   /** Saves whatever the current mode holds unsaved: the two texts, or the cells of the rows. */
   const saveCurrent = useCallback(
     (): Promise<boolean> =>
@@ -269,22 +266,9 @@ export function ChapterWorkspace({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Ask AI, focus, save and the chapter menu sit in the window's top bar, in the same row as the
+      {/* Ask AI, focus and the chapter menu sit in the window's top bar, in the same row as the
           window buttons. They still belong to this screen: the bar only gives them a place. */}
       <TopBarActions>
-        {mode === 'full' && (dirty || saving) && (
-          // Only while there is something to save: the status bar already says "Đã lưu", and a
-          // disabled button that does nothing is noise. First in the row, so the icons after it
-          // stay where they are when it appears.
-          <Button
-            variant="solid"
-            disabled={saving}
-            onClick={() => void saveAll()}
-            title="Lưu (Ctrl+S)"
-          >
-            Lưu
-          </Button>
-        )}
         {mode === 'full' && (
           <CompactButton
             aria-pressed={aiOpen}
