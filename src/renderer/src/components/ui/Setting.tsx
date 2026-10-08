@@ -39,8 +39,10 @@ export function SettingRow({
           <span className="text-label-sm text-default">{title}</span>
           {hint && <span className="text-body-xs text-muted">{hint}</span>}
         </div>
+        {/* The control box fills its column (no justify-self-end): a field takes its width from its
+            frame, never from its text, so a box sized to its content would shrink a field to nothing. */}
         {children && (
-          <div className="flex flex-wrap items-center gap-xs @2xl:justify-end @2xl:justify-self-end">
+          <div className="flex min-w-0 flex-wrap items-center gap-xs @2xl:justify-end">
             {children}
           </div>
         )}
