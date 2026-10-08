@@ -41,6 +41,7 @@ export function PickerTrigger({
         variant === 'field'
           ? cn(
               inputFrameVariants({ size: 'md' }),
+              'w-full',
               focusRing,
               'cursor-pointer gap-xs pr-xs data-popup-open:bg-(--mira-input-bg-hover)'
             )

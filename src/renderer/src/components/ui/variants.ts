@@ -192,7 +192,7 @@ export const badgeVariants = variants({
  */
 export const inputFrameVariants = variants({
   base: cn(
-    'flex w-full min-w-0 items-center gap-xs border border-(--mira-input-border) bg-(--mira-input-bg) text-(--mira-input-fg)',
+    'flex min-w-0 items-center gap-xs border border-(--mira-input-border) bg-(--mira-input-bg) text-(--mira-input-fg)',
     'transition-colors duration-(--mira-duration-fast) ease-standard hover:bg-(--mira-input-bg-hover)',
     'has-[[aria-invalid=true]]:border-error has-[:disabled]:cursor-not-allowed has-[:disabled]:bg-disabled has-[:disabled]:text-disabled',
     '[&_svg]:shrink-0 [&_svg]:text-muted',

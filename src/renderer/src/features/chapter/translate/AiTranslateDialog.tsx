@@ -245,7 +245,7 @@ function TranslateFlow({
               tự đoạn.
             </p>
           )}
-          <fieldset className="flex flex-col gap-1.5 rounded-sm border border-default px-3 py-2">
+          <fieldset className="flex min-w-0 flex-col gap-1.5 rounded-sm border border-default px-3 py-2">
             <legend className="px-1 text-body-xs font-semibold">Sau khi dịch</legend>
             <RadioGroup
               aria-label="Sau khi dịch"

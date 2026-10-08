@@ -3,8 +3,10 @@ import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalisti
 import { cn } from '../../lib/cn'
 import { inputFrameVariants } from './variants'
 
+// w-0: the field takes its width from the frame, never from the browser's 20-character default, which
+// would stop a narrow frame from shrinking and push a fieldset or a dialog wider than it is.
 export const inputElementClass =
-  'h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-placeholder disabled:cursor-not-allowed'
+  'h-full w-0 min-w-0 flex-1 bg-transparent outline-none placeholder:text-placeholder disabled:cursor-not-allowed'
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   size?: 'md' | 'sm'
@@ -17,6 +19,12 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   ref?: Ref<HTMLInputElement>
 }
 
+/**
+ * A frame fills its row unless the caller gives it a width: `cn` only joins classes, so `w-full` and a
+ * caller's `w-24` would both apply and the stylesheet order, not the caller, would decide.
+ */
+const SETS_WIDTH = /(^|\s)(w-|flex-1|basis-)/
+
 /** A one-line field without a label; put it in a Field, or give it an aria-label. */
 export function Input({
   size,
@@ -28,7 +36,14 @@ export function Input({
   ...props
 }: InputProps): JSX.Element {
   return (
-    <div data-slot="input" className={cn(inputFrameVariants({ size }), className)}>
+    <div
+      data-slot="input"
+      className={cn(
+        inputFrameVariants({ size }),
+        !SETS_WIDTH.test(className ?? '') && 'w-full',
+        className
+      )}
+    >
       {leftIcon}
       <input ref={ref} className={cn(inputElementClass, inputClassName)} {...props} />
       {rightSlot}
