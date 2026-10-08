@@ -18,7 +18,7 @@ export interface SelectProps<T extends string> {
   options: ReadonlyArray<SelectOption<T>>
   onChange(value: T): void
   icon?: ReactNode
-  /** md 36px · sm 32px (a toolbar). */
+  /** md 32px · sm 24px (a toolbar), the same scale as Button and Input. */
   size?: 'md' | 'sm'
   id?: string
   disabled?: boolean
@@ -51,10 +51,12 @@ export function Select<T extends string>({
         id={id}
         aria-label={label}
         className={cn(
-          'inline-flex shrink-0 items-center gap-xs rounded-md border border-(--mira-input-border) bg-(--mira-input-bg) text-body-sm text-(--mira-input-fg)',
+          'inline-flex shrink-0 items-center gap-xs border border-(--mira-input-border) bg-(--mira-input-bg) text-(--mira-input-fg)',
           'transition-colors duration-(--mira-duration-fast) ease-standard hover:bg-(--mira-input-bg-hover) data-popup-open:bg-(--mira-input-bg-hover)',
           'data-disabled:cursor-not-allowed data-disabled:bg-disabled data-disabled:text-disabled',
-          size === 'md' ? 'h-9 pr-xs pl-sm' : 'h-8 pr-2xs pl-xs',
+          size === 'md'
+            ? 'h-8 rounded-sm pr-xs pl-sm text-body-sm'
+            : 'h-6 rounded-xs pr-2xs pl-xs text-body-xs',
           focusRing,
           className
         )}
