@@ -32,7 +32,6 @@ import type {
   ParagraphPlanInput,
   ParagraphTranslationPlan
 } from '../shared/contracts/aiTranslateProposals'
-import type { AppearanceState, SetAppearanceInput } from '../shared/contracts/appearance'
 import type { AiPreferences, MainModel, ModelRef } from '../shared/contracts/aiPreferences'
 import type { BackupExported } from '../shared/contracts/backup'
 import type { ExportResult } from '../shared/contracts/export'
@@ -59,11 +58,6 @@ const desktopApi: DesktopApi = {
   openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url) as Promise<void>,
   setChromeTheme: (theme: ChromeTheme) =>
     ipcRenderer.invoke('app:chrome-theme', theme) as Promise<void>,
-  appearance: {
-    get: () => ipcRenderer.invoke('app:appearance:get') as Promise<AppearanceState>,
-    set: (input: SetAppearanceInput) =>
-      ipcRenderer.invoke('app:appearance:set', input) as Promise<AppearanceState>
-  },
   workspace: {
     load: () => ipcRenderer.invoke(CHANNELS.workspaceLoad) as Promise<Result<WorkspaceLoad>>,
     save: (state: WorkspaceState) =>

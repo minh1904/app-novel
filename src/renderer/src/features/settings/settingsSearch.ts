@@ -50,11 +50,6 @@ export const STATIC_INDEX: SettingsIndexEntry[] = [
     location: { group: 'appearance', page: 'general', key: 'theme' }
   },
   {
-    title: 'Hiệu ứng kính (acrylic)',
-    description: 'Sidebar trong mờ trên Windows 11',
-    location: { group: 'appearance', page: 'general', key: 'glass' }
-  },
-  {
     title: 'Phiên bản',
     description: 'Phiên bản Mira và nền tảng',
     location: { group: 'about', page: 'general', key: 'version' }

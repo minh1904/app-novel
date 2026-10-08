@@ -168,7 +168,7 @@ Làm theo khung Hermes, nhưng chỉ có những nhóm mà Mira có nội dung t
   | --- | --- |
   | **Model** | Model mặc định cho dịch và cho chat; mức suy luận |
   | **Kết nối AI** | Tài khoản (chỉ giao diện); Khóa API; Endpoint tùy chỉnh (gateway); Trên máy (Ollama, LM Studio) |
-  | **Giao diện** | Theme sáng/tối/hệ thống; kính; sau này là cỡ chữ |
+  | **Giao diện** | Theme sáng/tối/hệ thống; sau này là cỡ chữ (kính đã gỡ ngày 2026-10-08) |
   | **Về Mira** | Phiên bản |
 
   Không vẽ nhóm chưa có nội dung, giữ nguyên tắc của màn hiện tại.

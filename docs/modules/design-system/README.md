@@ -92,7 +92,6 @@ app web, và ba component lệch nhau: nút sm 24 cạnh ô nhập sm 32, Button
 - chữ truyện và câu trả lời AI chọn được, chữ của khung thì không;
 - icon Solar;
 - zoom 100 %;
-- kính acrylic mặc định tắt;
 - bỏ "Tác phẩm gần đây" và nút "Tạo tác phẩm" khỏi thanh bên.
 
 ## Tổ chức token
@@ -101,7 +100,7 @@ Mọi token nằm ở [`styles/`](../../../src/renderer/src/styles/):
 
 | File | Nội dung |
 | --- | --- |
-| [`index.css`](../../../src/renderer/src/styles/index.css) | Điểm vào: Tailwind, `theme.css`, font, lớp base, thanh cuộn, kính, vùng kéo cửa sổ |
+| [`index.css`](../../../src/renderer/src/styles/index.css) | Điểm vào: Tailwind, `theme.css`, font, lớp base, thanh cuộn, vùng kéo cửa sổ |
 | [`theme.css`](../../../src/renderer/src/styles/theme.css) | Nơi duy nhất biến token thành utility Tailwind |
 | [`strict.css`](../../../src/renderer/src/styles/strict.css) | Tắt màu, bo góc, cỡ chữ, bóng mặc định của Tailwind: `bg-red-500`, `rounded-2xl`, `text-sm` không sinh CSS |
 | [`tokens/foundation.css`](../../../src/renderer/src/styles/tokens/foundation.css) | Tầng 1, giá trị thô `--mira-*`: thang xám 0…1000, năm màu trạng thái, bo góc, khoảng cách, chữ, icon, bóng, chuyển động, lớp chồng, khung cửa sổ |
@@ -175,8 +174,8 @@ chia bằng viền mảnh.
   - Dừng ngay nếu người dùng kéo thanh cuộn hay bấm phím giữa chừng.
   - Cuộn bằng code (bám câu trả lời AI) vẫn tức thì.
 - **Cột danh sách** rộng 260 px, chỉ có ở màn Chương. Ctrl + B ẩn/hiện.
-- **Kính acrylic:** khi bật, nền trang trong suốt nhưng khung vẫn đặc, nên hiện chưa thấy kính (xem
-  Giới hạn).
+- **Không có kính acrylic** (gỡ ngày 2026-10-08, chủ sản phẩm quyết định sau khi thử bản làm theo
+  Hermes). Cửa sổ luôn nền đặc theo theme. Cài đặt › Giao diện chỉ còn Theme.
 
 ## Component
 
@@ -262,7 +261,6 @@ Ngày 2026-10-08:
 
 ## Giới hạn
 
-- **Kính acrylic không còn thấy:** khung và rail đều đặc. Cần quyết định có giữ tuỳ chọn kính không.
 - **Màn feature vẫn còn style viết tay.** Header phụ màn Chương 36 px, các bảng thư viện và khoảng 400
   kích thước `h-[…]` / `w-[…]` tùy ý chưa đổi sang component và khoảng cách có tên. Một số nút trong
   màn vẫn đậm `font-semibold` từ trước.

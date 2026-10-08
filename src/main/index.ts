@@ -8,19 +8,10 @@ import {
   nativeTheme,
   type IpcMainInvokeEvent
 } from 'electron'
-import { release } from 'node:os'
 import { join } from 'node:path'
 import icon from '../../resources/icon.png?asset'
-import { GLASS_QUERY_PARAM } from '../shared/contracts/appearance'
 import { isAllowedExternalLink } from '../shared/contracts/aiProviders'
 import type { AppInfo, ChromeTheme } from '../shared/contracts/desktopApi'
-import {
-  appearanceState,
-  isGlassSupported,
-  readAppearance,
-  windowSurfaceOptions
-} from './electron/appearance'
-import { createAppearanceHandlers } from './electron/appearanceIpc'
 import { registerLibraryHandlers } from './electron/registerIpc'
 import {
   BOOT_BACKGROUND,
@@ -49,15 +40,12 @@ const MENU_IS_IN_THE_WINDOW = process.platform !== 'darwin'
 let mainWindow: BrowserWindow | null = null
 let library: LibraryStore | null = null
 
-/** Where the library and appearance.json live; `MIRA_DATA_DIR` points tests and the Lab elsewhere. */
+/** Where the library lives; `MIRA_DATA_DIR` points tests and the Lab elsewhere. */
 const dataDir = (): string => process.env.MIRA_DATA_DIR ?? app.getPath('userData')
 
-/** Acrylic needs Windows 11 build 22621; decided once, since the OS does not change under a running app. */
-const GLASS_SUPPORTED = isGlassSupported(process.platform, release())
-
 /**
- * The theme the page last reported, so turning glass off restores the right solid colour. A new window
- * starts in the system theme, as the page does (see useTheme).
+ * The theme the page last reported, for the colour of the window buttons. A new window starts in the
+ * system theme, as the page does (see useTheme).
  */
 let chromeTheme: ChromeTheme = 'dark'
 
@@ -72,7 +60,6 @@ function isTrustedSender(event: IpcMainInvokeEvent): boolean {
 
 function createWindow(): void {
   chromeTheme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
-  const glass = appearanceState(readAppearance(dataDir()), GLASS_SUPPORTED).glass
   const window = new BrowserWindow({
     width: 1320,
     height: 850,
@@ -82,9 +69,7 @@ function createWindow(): void {
     title: 'Mira',
     // The installed exe carries icon.ico, but `pnpm dev` runs electron.exe, whose icon would show.
     icon,
-    // With glass on, Windows draws acrylic behind a clear window (Hermes does not use `transparent`,
-    // which would cost the window its resize border and shadow).
-    ...windowSurfaceOptions(glass, BOOT_BACKGROUND[chromeTheme]),
+    backgroundColor: BOOT_BACKGROUND[chromeTheme],
     // The page starts in the system theme (see useTheme), so the buttons start in it too and are
     // corrected through `app:chrome-theme` if the page then picks the other one.
     ...(OVERLAY_TITLE_BAR && {
@@ -137,15 +122,10 @@ function createWindow(): void {
     })
   }
 
-  // The page reads this before its first paint, so a window that opens with glass never shows a solid
-  // frame first (renderer index.html).
-  const query: Record<string, string> = glass ? { [GLASS_QUERY_PARAM]: '1' } : {}
   if (rendererUrl) {
-    const url = new URL(rendererUrl)
-    for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value)
-    void window.loadURL(url.toString())
+    void window.loadURL(rendererUrl)
   } else {
-    void window.loadFile(join(__dirname, '../renderer/index.html'), { query })
+    void window.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -194,16 +174,6 @@ app.whenReady().then(() => {
     chromeTheme = theme
     if (OVERLAY_TITLE_BAR) mainWindow?.setTitleBarOverlay(CHROME_COLORS[theme])
   })
-
-  const appearance = createAppearanceHandlers<IpcMainInvokeEvent>({
-    dataDir: dataDir(),
-    supported: GLASS_SUPPORTED,
-    isTrusted: isTrustedSender,
-    getWindow: () => mainWindow,
-    solidBackground: () => BOOT_BACKGROUND[chromeTheme]
-  })
-  ipcMain.handle('app:appearance:get', (event) => appearance.get(event))
-  ipcMain.handle('app:appearance:set', (event, input: unknown) => appearance.set(event, input))
 
   createWindow()
 

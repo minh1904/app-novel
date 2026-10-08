@@ -129,31 +129,6 @@
 }
 
 /*
- * Window glass. Main sets `data-glass` on <html> when Windows draws acrylic behind the page: the page
- * goes clear and the window colour turns translucent, so the material shows around the sheet. The
- * sheet stays opaque: story text is never read through glass.
- */
-html[data-glass] {
-  background-color: transparent;
-  --mira-glass-fill: 72%;
-}
-
-html[data-glass][data-theme='dark'] {
-  /* Windows' acrylic is light; the dark window needs more cover to stay dark. */
-  --mira-glass-fill: 88%;
-}
-
-html[data-glass] body {
-  background: color-mix(in srgb, var(--mira-bg) var(--mira-glass-fill), transparent);
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  html[data-glass] body {
-    background: var(--mira-bg);
-  }
-}
-
-/*
  * The header is also the window's title bar (Electron window controls overlay), so it is what you grab
  * to move the window. Everything pressable inside it opts out, so a new button needs no extra class.
  */

@@ -13,7 +13,7 @@ describe('settings search', () => {
 
   it('ignores Vietnamese marks and case', () => {
     expect(searchSettings('du phong').map((hit) => hit.title)).toContain('Model dự phòng')
-    expect(searchSettings('HIỆU ỨNG KÍNH')[0]?.title).toBe('Hiệu ứng kính (acrylic)')
+    expect(searchSettings('THEME')[0]?.title).toBe('Theme')
   })
 
   it('returns nothing for an empty query', () => {

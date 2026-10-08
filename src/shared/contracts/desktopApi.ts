@@ -22,7 +22,6 @@ import type {
   ParagraphPlanInput,
   ParagraphTranslationPlan
 } from './aiTranslateProposals'
-import type { AppearanceState, SetAppearanceInput } from './appearance'
 import type { AiPreferences, MainModel, ModelRef } from './aiPreferences'
 import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
@@ -373,11 +372,6 @@ export interface DesktopApi {
    * them over the page's own top bar, so they have to follow the page's theme to look like part of it.
    */
   setChromeTheme(theme: ChromeTheme): Promise<void>
-  /** Window glass (Windows acrylic). `set` applies at once and returns what the window now shows. */
-  appearance: {
-    get(): Promise<AppearanceState>
-    set(input: SetAppearanceInput): Promise<AppearanceState>
-  }
   works: WorksApi
   workspace: {
     load(): Promise<Result<WorkspaceLoad>>

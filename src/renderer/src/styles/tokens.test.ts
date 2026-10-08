@@ -181,9 +181,8 @@ describe('base layer', () => {
     expect(CSS).toMatch(/\.selectable\) \{\s*user-select: text;/)
   })
 
-  it('has the hover-only scrollbar and the glass fallback', () => {
+  it('has the hover-only scrollbar', () => {
     expect(CSS).toContain('*:hover::-webkit-scrollbar-thumb')
-    expect(CSS).toContain('@media (prefers-reduced-transparency: reduce)')
   })
 
   it('switches off Tailwind’s own colours, radii, type sizes and shadows', () => {
