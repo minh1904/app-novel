@@ -28,6 +28,14 @@ import {
 import { toggleBold, toggleItalic } from './formatCommands'
 import { imageEmbedDecorations, type ImageStore } from './imageEmbedDecorations'
 import { livePreviewDecorations } from './livePreviewDecorations'
+import {
+  caretParagraph,
+  linkParagraph,
+  paragraphLink,
+  scrollToAnchor,
+  topAnchor,
+  type ParagraphAnchor
+} from './paragraphLink'
 import { idleResegment } from './resegmenter'
 import { segmentDecorations } from './segmentDecorations'
 
@@ -146,6 +154,10 @@ export interface TextEditorHandle {
   ): 'reviewing' | 'stale'
   /** Drops an unfinished review, leaving whatever the translator has already accepted. */
   endReview(): void
+  /** Marks paragraph `index` as the one the other pane is on; null clears the mark. */
+  linkParagraph(index: number | null): void
+  /** Scrolls so the top of the pane is at `anchor`, the other pane's position. */
+  scrollToAnchor(anchor: ParagraphAnchor): void
 }
 
 export interface TextEditorProps {
@@ -171,6 +183,10 @@ export interface TextEditorProps {
   onTargetChange?(range: TargetRange): void
   /** The text changed, saved or not; also called once with the opened text. */
   onTextChange?(text: string): void
+  /** The caret moved into another paragraph, or onto a blank line (null). */
+  onParagraphChange?(index: number | null): void
+  /** The pane scrolled; the anchor is the paragraph at its top. */
+  onScroll?(anchor: ParagraphAnchor): void
   /** Every chunk of a review has been accepted or rejected, so the review is over. */
   handleRef?: Ref<TextEditorHandle>
 }
@@ -191,6 +207,8 @@ export function TextEditor({
   onStatusChange,
   onTargetChange,
   onTextChange,
+  onParagraphChange,
+  onScroll,
   handleRef
 }: TextEditorProps): JSX.Element {
   const host = useRef<HTMLDivElement>(null)
@@ -203,9 +221,25 @@ export function TextEditor({
   const [imageError, setImageError] = useState<string | null>(null)
   const hintId = useId()
   const [review] = useState(() => new ProposalReview())
-  const latest = useRef({ onSaved, onStatusChange, onTargetChange, onTextChange, readOnly })
+  const latest = useRef({
+    onSaved,
+    onStatusChange,
+    onTargetChange,
+    onTextChange,
+    onParagraphChange,
+    onScroll,
+    readOnly
+  })
   useEffect(() => {
-    latest.current = { onSaved, onStatusChange, onTargetChange, onTextChange, readOnly }
+    latest.current = {
+      onSaved,
+      onStatusChange,
+      onTargetChange,
+      onTextChange,
+      onParagraphChange,
+      onScroll,
+      readOnly
+    }
   })
 
   const status = useSyncExternalStore(
@@ -264,6 +298,12 @@ export function TextEditor({
       endReview: () => {
         const editor = view.current
         if (editor && review.isActive(editor.state)) editor.dispatch(review.stop())
+      },
+      linkParagraph: (index) => {
+        if (view.current) linkParagraph(view.current, index)
+      },
+      scrollToAnchor: (anchor) => {
+        if (view.current) scrollToAnchor(view.current, anchor)
       }
     }),
     [save]
@@ -304,8 +344,13 @@ export function TextEditor({
             // changes which paragraph a question is about without changing a character.
             if (update.selectionSet || update.docChanged) {
               latest.current.onTargetChange?.(targetRange(update.state))
+              const paragraph = caretParagraph(update.state)
+              if (paragraph !== caretParagraph(update.startState) || update.docChanged) {
+                latest.current.onParagraphChange?.(paragraph)
+              }
             }
           }),
+          paragraphLink(),
           segmentDecorations(),
           ...(livePreview
             ? [
@@ -325,12 +370,19 @@ export function TextEditor({
     const editor = new EditorView({ parent: host.current, state: makeState(record) })
     view.current = editor
     latest.current.onTextChange?.(editor.state.doc.toString())
+    const onScrolled = (): void => {
+      if (!latest.current.onScroll) return
+      const anchor = topAnchor(editor)
+      if (anchor) latest.current.onScroll(anchor)
+    }
+    editor.scrollDOM.addEventListener('scroll', onScrolled, { passive: true })
     const created = new EditorSession(editor, store, lang, makeState, record)
     sessionRef.current = created
     setSession(created)
     return () => {
       sessionRef.current = null
       view.current = null
+      editor.scrollDOM.removeEventListener('scroll', onScrolled)
       editor.destroy()
     }
   }, [])

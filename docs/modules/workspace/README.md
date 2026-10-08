@@ -44,3 +44,7 @@ khai trong change này.
 - [Tính năng toàn app cho thanh bên chung](app-level-features.md): mục cấp app của GalTransl, AiNiee,
   Mihon, Novelcrafter, Notion, CAT tool; đề xuất thanh bên Trang chủ / Thư viện / Tác vụ / tài nguyên
   dùng chung (đề xuất, chưa chốt).
+- [Bố cục hai pane ở màn dịch chương](chapter-panes.md): cách Crowdin, Immersive Translate, CAT tool đặt
+  bản gốc; đã làm thu gọn bản gốc, kéo chia bề rộng, cuộn cùng và làm sáng đoạn tương ứng.
+- [Xuất chương, xuất hàng loạt và chọn nhiều chương](export-and-bulk.md): khóa bản gốc gom vào menu
+  pane gốc, phạm vi và tiến độ khi xuất, chọn nhiều chương để xuất hoặc xóa.

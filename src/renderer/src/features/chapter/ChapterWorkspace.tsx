@@ -2,8 +2,14 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState, type JSX
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import { MaximizeSquareIcon } from '@solar-icons/react/linear/maximize-square'
+import { LockKeyholeMinimalisticIcon } from '@solar-icons/react/linear/lock-keyhole-minimalistic'
+import { LockKeyholeMinimalisticUnlockedIcon } from '@solar-icons/react/linear/lock-keyhole-minimalistic-unlocked'
 import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
+import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
 import { MinimizeSquareIcon } from '@solar-icons/react/linear/minimize-square'
+import { LinkMinimalistic2Icon } from '@solar-icons/react/linear/link-minimalistic-2'
+import { SidebarCloseIcon } from '@solar-icons/react/linear/sidebar-close'
+import { SidebarOpenIcon } from '@solar-icons/react/linear/sidebar-open'
 import { StarsIcon } from '@solar-icons/react/linear/stars'
 import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
 import { splitParagraphs } from '../../../../shared/text/paragraphSpans'
@@ -20,9 +26,11 @@ import { insertImageEmbed } from '../editor/imageEmbed'
 import type { ImageStore } from '../editor/imageEmbedDecorations'
 import { useConfirmLeave, useRegisterLeaveGuard } from '../editor/leaveGuard'
 import type { TargetRange } from '../editor/chatRange'
+import type { ParagraphAnchor } from '../editor/paragraphLink'
 import { TextEditor, type TextEditorHandle } from '../editor/TextEditor'
 import { ExportDialog } from '../export/ExportDialog'
 import { languages, type Work } from '../library/works'
+import { usePaneLayoutStore } from '../../stores/paneLayoutStore'
 import { useUiStore } from '../../stores/uiStore'
 import { headingTitle } from '../work/chapterList'
 import { contextArea } from '../work/workAreas'
@@ -31,9 +39,21 @@ import type { ChatEditor } from './chat/useAiChat'
 import { AiTranslateDialog } from './translate/AiTranslateDialog'
 import { ChapterStatusBar } from './ChapterStatusBar'
 import { EditorPane } from './EditorPane'
+import { PaneDivider } from './PaneDivider'
 import { SentenceMode, type SentenceModeHandle } from './SentenceMode'
 
 const IDLE: SessionStatus = { state: 'saved', message: null, dirty: false }
+
+/**
+ * Below this width a pane of prose reads badly. Opening the AI panel folds the source away when the
+ * two editors would otherwise drop under it, and brings it back when the panel closes.
+ */
+const MIN_EDITOR_WIDTH = 420
+
+type Side = 'source' | 'target'
+
+const SOURCE_SHORTCUT = 'Ctrl+\\'
+const TARGET_SHORTCUT = 'Ctrl+Shift+\\'
 
 /**
  * Tab "Từng câu" bị ẩn khỏi giao diện và sẽ bị gỡ cùng dữ liệu câu (ADR-005, nay chỉ còn trong lịch sử
@@ -66,6 +86,8 @@ export interface ChapterWorkspaceProps {
   focused: boolean
   onToggleFocus(): void
 }
+
+const otherSide = (side: Side): Side => (side === 'source' ? 'target' : 'source')
 
 /**
  * How far the chapter is, in the paragraphs the translator sees (ADR-005). The work, the languages and
@@ -112,6 +134,16 @@ export function ChapterWorkspace({
   const sentence = useRef<SentenceModeHandle>(null)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiWidth, setAiWidth] = useState(420)
+  const sourceCollapsed = usePaneLayoutStore((state) => state.sourceCollapsed)
+  const sourceRatio = usePaneLayoutStore((state) => state.sourceRatio)
+  const syncScroll = usePaneLayoutStore((state) => state.syncScroll)
+  // Folded for the AI panel only, so it is not remembered as the translator's own choice.
+  const [aiFolded, setAiFolded] = useState(false)
+  const sourceHidden = sourceCollapsed || aiFolded
+  // The AI panel reads and marks up the translation, so the translation stays open while it is.
+  const targetHidden = usePaneLayoutStore((state) => state.targetCollapsed) && !aiOpen
+  const panes = useRef<HTMLDivElement>(null)
+  const editors = useRef<HTMLDivElement>(null)
   const [exportOpen, setExportOpen] = useState(false)
   // Where the caret is in each pane, and which pane was touched last: the AI panel turns these into the
   // user's position (change `agentic-chat`), so "đoạn này" means the paragraph the caret is in.
@@ -125,6 +157,88 @@ export function ChapterWorkspace({
   const onTargetCaret = useCallback((range: TargetRange) => {
     setAiRange(range)
     setAiSide('target')
+  }, [])
+
+  /**
+   * The pane the translator last scrolled, clicked or typed in. Only that pane drives the other one,
+   * so the scroll it causes over there does not bounce back.
+   */
+  const driver = useRef<Side>('target')
+  const caretParagraphs = useRef<Record<Side, number | null>>({ source: null, target: null })
+  const editorOf = useCallback(
+    (side: Side): TextEditorHandle | null =>
+      side === 'source' ? sourceEditor.current : targetEditor.current,
+    []
+  )
+
+  /** The paragraph the caret is in shows in the other pane; the pane with the caret needs no mark. */
+  const showLink = useCallback(
+    (side: Side): void => {
+      editorOf(side)?.linkParagraph(null)
+      editorOf(otherSide(side))?.linkParagraph(caretParagraphs.current[side])
+    },
+    [editorOf]
+  )
+  const onSourceParagraph = useCallback(
+    (index: number | null) => {
+      caretParagraphs.current.source = index
+      showLink('source')
+    },
+    [showLink]
+  )
+  const onTargetParagraph = useCallback(
+    (index: number | null) => {
+      caretParagraphs.current.target = index
+      showLink('target')
+    },
+    [showLink]
+  )
+
+  const syncOn = useRef(false)
+  syncOn.current = syncScroll && !sourceHidden && !targetHidden
+  const onSourceScroll = useCallback(
+    (anchor: ParagraphAnchor) => {
+      if (syncOn.current && driver.current === 'source') editorOf('target')?.scrollToAnchor(anchor)
+    },
+    [editorOf]
+  )
+  const onTargetScroll = useCallback(
+    (anchor: ParagraphAnchor) => {
+      if (syncOn.current && driver.current === 'target') editorOf('source')?.scrollToAnchor(anchor)
+    },
+    [editorOf]
+  )
+  /** Handlers for a pane's wrapper: touching the pane in any way makes it the driver. */
+  const driveFrom = (side: Side) => {
+    const drive = (): void => {
+      driver.current = side
+    }
+    return {
+      onPointerDown: drive,
+      onWheel: drive,
+      onKeyDown: drive,
+      onFocus: () => {
+        drive()
+        showLink(side)
+      }
+    }
+  }
+
+  const toggleSource = useCallback((): void => {
+    foldedByHand = true
+    const layout = usePaneLayoutStore.getState()
+    if (layout.sourceCollapsed || aiFolded) {
+      setAiFolded(false)
+      layout.setSourceCollapsed(false)
+    } else {
+      layout.setSourceCollapsed(true)
+    }
+  }, [aiFolded])
+
+  const toggleTarget = useCallback((): void => {
+    foldedByHand = true
+    const layout = usePaneLayoutStore.getState()
+    layout.setTargetCollapsed(!layout.targetCollapsed)
   }, [])
   /**
    * The two panes as the AI panel sees them: stable objects whose methods reach into the refs when
@@ -231,6 +345,31 @@ export function ChapterWorkspace({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [mode, aiOpen, toggleAi, tabActive])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Measured when the panel opens or closes, not while it is dragged wider.
+  useEffect(() => {
+    if (!aiOpen) {
+      setAiFolded(false)
+      return
+    }
+    const width = panes.current?.clientWidth ?? 0
+    if (width - aiWidth < 2 * MIN_EDITOR_WIDTH) setAiFolded(true)
+  }, [aiOpen])
+
+  // Ctrl+\ (Cmd+\) folds the source pane away or brings it back; with Shift, the translation pane.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (!tabActive || event.defaultPrevented || mode !== 'full') return
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+      if (event.code !== 'Backslash') return
+      if (event.shiftKey && aiOpen) return
+      event.preventDefault()
+      if (event.shiftKey) toggleTarget()
+      else toggleSource()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [mode, tabActive, aiOpen, toggleSource, toggleTarget])
+
   useRegisterLeaveGuard({
     isDirty: () =>
       mode === 'sentence'
@@ -294,16 +433,6 @@ export function ChapterWorkspace({
           <MenuPopup>
             <MenuItem
               onClick={() => {
-                void confirmLeave({ reloadOnDiscard: true }).then((proceed) => {
-                  if (proceed) onReplaceSource()
-                })
-              }}
-            >
-              <DocumentAddIcon size={14} className="text-subtle" />
-              Thay bản gốc
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
                 translateOpener.current =
                   document.activeElement instanceof HTMLElement ? document.activeElement : null
                 // Bản dịch đang có chữ chưa lưu thì xử lý trước: AI ghi thẳng vào kho.
@@ -315,7 +444,14 @@ export function ChapterWorkspace({
               <StarsIcon size={14} className="text-subtle" />
               Dịch bằng AI
             </MenuItem>
-            <MenuItem onClick={() => setExportOpen(true)}>
+            <MenuItem
+              onClick={() => {
+                // Export reads the stored translation, so typing that has not autosaved yet goes first.
+                void (targetEditor.current?.save() ?? Promise.resolve()).finally(() =>
+                  setExportOpen(true)
+                )
+              }}
+            >
               <UploadMinimalisticIcon size={14} className="text-subtle" />
               Xuất chương…
             </MenuItem>
@@ -378,76 +514,202 @@ export function ChapterWorkspace({
           />
         </div>
       ) : (
-        <div
-          className={
-            aiOpen
-              ? 'grid min-h-0 flex-1 divide-x divide-default'
-              : 'grid min-h-0 flex-1 grid-cols-2 divide-x divide-default'
-          }
-          style={
-            aiOpen ? { gridTemplateColumns: `minmax(0,1fr) minmax(0,1fr) ${aiWidth}px` } : undefined
-          }
-        >
-          <EditorPane
-            title="Bản gốc"
-            subtitle={sourceLanguage.name}
-            status={sourceStatus}
-            lockLabel={unlocked ? 'Đang sửa' : 'Đã khóa, chỉ đọc'}
-            actions={
-              <Button onClick={() => setUnlocked((value) => !value)}>
-                {unlocked ? 'Khóa lại' : 'Sửa bản gốc'}
-              </Button>
-            }
-            notice={
-              unlocked ? (
-                <p
-                  role="note"
-                  className="rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 text-body-xs leading-normal"
-                >
-                  Bạn đang sửa bản gốc. Chỉ nên sửa lỗi chính tả hoặc sót chữ; bản dịch đã có không
-                  tự đổi theo.
-                </p>
-              ) : undefined
-            }
-          >
-            <TextEditor
-              key={sourceEpoch}
-              handleRef={sourceEditor}
-              record={source}
-              lang={work.sourceLanguage}
-              label="Bản gốc của chương"
-              store={sourceStore}
-              readOnly={!unlocked}
-              onSaved={onSourceSaved}
-              onStatusChange={setSourceStatus}
-              onTargetChange={onSourceCaret}
+        <div ref={panes} className="flex min-h-0 flex-1">
+          {sourceHidden && (
+            <FoldedPane
+              label="Bản gốc"
+              action={'Hiện bản gốc (' + SOURCE_SHORTCUT + ')'}
+              side="left"
+              onOpen={toggleSource}
             />
-          </EditorPane>
+          )}
+          <div ref={editors} className="flex min-h-0 min-w-0 flex-1">
+            <div
+              className={sourceHidden ? 'hidden' : 'flex min-h-0 min-w-0'}
+              style={{ flex: `${targetHidden ? 1 : sourceRatio} 1 0` }}
+              {...driveFrom('source')}
+            >
+              <EditorPane
+                title="Bản gốc"
+                subtitle={sourceLanguage.name}
+                status={sourceStatus}
+                lockLabel={unlocked ? 'Đang sửa' : 'Đã khóa, chỉ đọc'}
+                lockIcon={
+                  unlocked ? (
+                    <LockKeyholeMinimalisticUnlockedIcon
+                      size={14}
+                      aria-hidden="true"
+                      className="shrink-0 text-warning"
+                    />
+                  ) : (
+                    <LockKeyholeMinimalisticIcon
+                      size={14}
+                      aria-hidden="true"
+                      className="shrink-0 text-subtle"
+                    />
+                  )
+                }
+                actions={
+                  <>
+                    <CompactButton
+                      aria-pressed={syncScroll}
+                      aria-label="Cuộn cùng bản dịch"
+                      title={
+                        syncScroll
+                          ? 'Đang cuộn cùng bản dịch theo số đoạn. Bấm để cuộn riêng'
+                          : 'Cuộn cùng bản dịch theo số đoạn'
+                      }
+                      onClick={() => usePaneLayoutStore.getState().setSyncScroll(!syncScroll)}
+                      icon={<LinkMinimalistic2Icon size={16} />}
+                    />
+                    {/* Changing the source is rare and outside the translating work, so both ways
+                        to do it wait in this menu instead of sitting on the bar. */}
+                    <MenuRoot>
+                      <MenuTrigger
+                        render={
+                          <CompactButton
+                            aria-label="Thao tác với bản gốc"
+                            icon={<MenuDotsIcon size={16} />}
+                          />
+                        }
+                      />
+                      <MenuPopup align="end">
+                        <MenuItem onClick={() => setUnlocked((value) => !value)}>
+                          {unlocked ? (
+                            <LockKeyholeMinimalisticIcon size={14} className="text-subtle" />
+                          ) : (
+                            <PenNewSquareIcon size={14} className="text-subtle" />
+                          )}
+                          {unlocked ? 'Khóa lại bản gốc' : 'Sửa bản gốc'}
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            void confirmLeave({ reloadOnDiscard: true }).then((proceed) => {
+                              if (proceed) onReplaceSource()
+                            })
+                          }}
+                        >
+                          <DocumentAddIcon size={14} className="text-subtle" />
+                          Thay bản gốc…
+                        </MenuItem>
+                      </MenuPopup>
+                    </MenuRoot>
+                    <CompactButton
+                      aria-label={'Thu gọn bản gốc (' + SOURCE_SHORTCUT + ')'}
+                      title={'Thu gọn bản gốc (' + SOURCE_SHORTCUT + ')'}
+                      onClick={toggleSource}
+                      icon={<SidebarCloseIcon size={16} />}
+                    />
+                  </>
+                }
+                notice={
+                  unlocked ? (
+                    <div
+                      role="note"
+                      className="flex items-start gap-3 rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 text-body-xs leading-normal"
+                    >
+                      <p className="min-w-0 flex-1">
+                        Bạn đang sửa bản gốc. Chỉ nên sửa lỗi chính tả hoặc sót chữ; bản dịch đã có
+                        không tự đổi theo.
+                      </p>
+                      <Button className="shrink-0" onClick={() => setUnlocked(false)}>
+                        Khóa lại
+                      </Button>
+                    </div>
+                  ) : undefined
+                }
+              >
+                <TextEditor
+                  key={sourceEpoch}
+                  handleRef={sourceEditor}
+                  record={source}
+                  lang={work.sourceLanguage}
+                  label="Bản gốc của chương"
+                  store={sourceStore}
+                  readOnly={!unlocked}
+                  onSaved={onSourceSaved}
+                  onStatusChange={setSourceStatus}
+                  onTargetChange={onSourceCaret}
+                  onParagraphChange={onSourceParagraph}
+                  onScroll={onSourceScroll}
+                />
+              </EditorPane>
+            </div>
 
-          <EditorPane
-            title="Bản dịch"
-            subtitle="Tiếng Việt"
-            status={targetStatus}
-            actions={<Button onClick={() => setExportOpen(true)}>Xuất chương</Button>}
+            {!sourceHidden && !targetHidden && (
+              <PaneDivider
+                ratio={sourceRatio}
+                container={editors}
+                onRatioChange={usePaneLayoutStore.getState().setSourceRatio}
+              />
+            )}
+
+            <div
+              className={targetHidden ? 'hidden' : 'flex min-h-0 min-w-0'}
+              style={{ flex: `${sourceHidden ? 1 : 1 - sourceRatio} 1 0` }}
+              {...driveFrom('target')}
+            >
+              <EditorPane
+                title="Bản dịch"
+                subtitle="Tiếng Việt"
+                status={targetStatus}
+                actions={
+                  <CompactButton
+                    aria-label={'Thu gọn bản dịch (' + TARGET_SHORTCUT + ')'}
+                    title={
+                      aiOpen
+                        ? 'Hỏi AI đang dùng bản dịch; đóng Hỏi AI để thu gọn'
+                        : 'Thu gọn bản dịch (' + TARGET_SHORTCUT + ')'
+                    }
+                    disabled={aiOpen}
+                    onClick={toggleTarget}
+                    icon={<SidebarCloseIcon size={16} className="-scale-x-100" />}
+                  />
+                }
+              >
+                <TextEditor
+                  key={targetEpoch}
+                  handleRef={targetEditor}
+                  record={target}
+                  lang="vi"
+                  label="Bản dịch của chương"
+                  store={targetStore}
+                  livePreview
+                  images={imageStore}
+                  emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
+                  onSaved={onTargetSaved}
+                  onStatusChange={setTargetStatus}
+                  onTargetChange={onTargetCaret}
+                  onTextChange={setTranslation}
+                  onParagraphChange={onTargetParagraph}
+                  onScroll={onTargetScroll}
+                />
+              </EditorPane>
+            </div>
+            {/* Both folded: the space says so and offers both ways back, rather than sitting blank. */}
+            {sourceHidden && targetHidden && (
+              <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-3 bg-subtle px-6 text-center">
+                <p className="text-body-sm text-subtle">Bản gốc và bản dịch đang thu gọn.</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button onClick={toggleSource}>Hiện bản gốc</Button>
+                  <Button onClick={toggleTarget}>Hiện bản dịch</Button>
+                </div>
+              </div>
+            )}
+            {targetHidden && (
+              <FoldedPane
+                label="Bản dịch"
+                action={'Hiện bản dịch (' + TARGET_SHORTCUT + ')'}
+                side="right"
+                onOpen={toggleTarget}
+              />
+            )}
+          </div>
+
+          <div
+            className={aiOpen ? 'min-h-0 shrink-0 border-l border-default' : 'hidden'}
+            style={{ width: aiWidth }}
           >
-            <TextEditor
-              key={targetEpoch}
-              handleRef={targetEditor}
-              record={target}
-              lang="vi"
-              label="Bản dịch của chương"
-              store={targetStore}
-              livePreview
-              images={imageStore}
-              emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
-              onSaved={onTargetSaved}
-              onStatusChange={setTargetStatus}
-              onTargetChange={onTargetCaret}
-              onTextChange={setTranslation}
-            />
-          </EditorPane>
-
-          <div className={aiOpen ? 'min-h-0' : 'hidden'}>
             {tabActive && (
               <AiPanel
                 workId={work.id}
@@ -511,6 +773,70 @@ export function ChapterWorkspace({
         // The list may be behind the text on screen, so the pane says whether there is a translation.
         chapter={{ ...chapter, hasTarget: translation.trim() !== '' }}
       />
+    </div>
+  )
+}
+
+/**
+ * A pane folded to a 32px strip at the edge it sits on: its name written down the strip and one
+ * button to bring it back. The text stays mounted behind it, so nothing typed is lost.
+ */
+/**
+ * Set by a fold the person asked for, and read once by the strip that appears: a pane that opens the
+ * screen already folded must not take the focus.
+ */
+let foldedByHand = false
+
+function FoldedPane({
+  label,
+  action,
+  side,
+  onOpen
+}: {
+  label: string
+  /** The button's name, with its shortcut. */
+  action: string
+  side: 'left' | 'right'
+  onOpen(): void
+}): JSX.Element {
+  // Folding hides the pane that held the focus (its fold button, or the editor under Ctrl+), which
+  // drops keyboard focus to <body>. When that happened, the strip's open button takes it instead.
+  const strip = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!foldedByHand) return
+    foldedByHand = false
+    const frame = requestAnimationFrame(() => {
+      const active = document.activeElement
+      const lost =
+        active === null ||
+        active === document.body ||
+        (active instanceof HTMLElement && !active.checkVisibility())
+      if (lost) strip.current?.querySelector<HTMLElement>('button')?.focus()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  return (
+    <div
+      ref={strip}
+      className={
+        'flex w-8 shrink-0 flex-col items-center gap-2 border-default bg-surface py-3 ' +
+        (side === 'left' ? 'border-r' : 'border-l')
+      }
+    >
+      <CompactButton
+        aria-label={action}
+        title={action}
+        onClick={onOpen}
+        icon={
+          <SidebarOpenIcon size={16} className={side === 'right' ? '-scale-x-100' : undefined} />
+        }
+      />
+      <span
+        aria-hidden="true"
+        className="text-body-xs font-semibold text-subtle [writing-mode:vertical-rl]"
+      >
+        {label}
+      </span>
     </div>
   )
 }
