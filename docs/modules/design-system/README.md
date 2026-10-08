@@ -161,6 +161,15 @@ chia bằng viền mảnh.
   - không có logo, nút thu/mở danh sách hay breadcrumb (gỡ ngày 2026-10-08); cột danh sách vẫn thu/mở
     bằng Ctrl + B, và các màn tự có nút quay lại;
   - phải: nút riêng của màn, một vạch ngăn, rồi nút đổi theme và Cài đặt, sát ba nút cửa sổ.
+- **Cuộn mượt** (2026-10-08):
+  - Cờ `enable-smooth-scrolling` của Chromium ở main không đủ: trên Windows mỗi nấc chuột vẫn nhảy
+    khoảng 100 px gần như tức thì.
+  - [`app/smoothWheel.ts`](../../../src/renderer/src/app/smoothWheel.ts) tự cuộn khung gần con trỏ
+    nhất qua vài khung hình, khoảng 250 ms, không cần thư viện.
+  - Chỉ áp dụng cho chuột có nấc. Touchpad có quán tính riêng nên giữ nguyên.
+  - Tắt khi Windows bật giảm chuyển động, khi giữ Ctrl, khi cuộn ngang.
+  - Dừng ngay nếu người dùng kéo thanh cuộn hay bấm phím giữa chừng.
+  - Cuộn bằng code (bám câu trả lời AI) vẫn tức thì.
 - **Cột danh sách** rộng 260 px, chỉ có ở màn Chương. Ctrl + B ẩn/hiện.
 - **Kính acrylic:** khi bật, nền trang trong suốt nhưng khung vẫn đặc, nên hiện chưa thấy kính (xem
   Giới hạn).

@@ -33,6 +33,9 @@ import { pinZoom } from './electron/zoom'
 import { LibraryStore } from './services/library/library'
 
 app.enableSandbox()
+// Wheel and touchpad scrolling glides instead of jumping a step per notch, whatever the Windows
+// "smooth-scroll" setting says. Chromium reads switches before the app is ready, so this sits here.
+app.commandLine.appendSwitch('enable-smooth-scrolling')
 
 /**
  * No File/Edit/View menu bar: Mira is one window with its own chrome, and the default menu only
