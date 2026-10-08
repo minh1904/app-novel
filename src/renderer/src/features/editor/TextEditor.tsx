@@ -14,8 +14,8 @@ import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import type { SegmentLanguage } from '../../../../shared/segmentation/segmenter'
 import type { TextRecord } from '../../../../shared/contracts/text'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
 import { applyProposal, targetRange, type TargetRange, type TargetScope } from './chatRange'
 import { ProposalReview } from './proposalReview'
 import { createEditorState } from './editorState'
@@ -42,8 +42,8 @@ const theme = EditorView.theme({
   // No border or radius of its own: the pane is square and flush against the one next to it.
   '&': {
     height: '100%',
-    fontSize: 'var(--text-editor)',
-    color: 'var(--text-primary)',
+    fontSize: 'var(--mira-font-text)',
+    color: 'var(--mira-text)',
     backgroundColor: 'transparent'
   },
   // No ring on focus: the blinking caret is the focus signal here, same as a code editor's pane
@@ -52,17 +52,17 @@ const theme = EditorView.theme({
   // Scrolling stays enabled; only the visible track/thumb are suppressed, so the pane keeps its
   // flush edge instead of a bar fighting the border next to it.
   '.cm-scroller': {
-    fontFamily: 'var(--font-editor)',
-    lineHeight: '1.5',
+    fontFamily: 'var(--mira-font-editor)',
+    lineHeight: 'var(--mira-line-height-text)',
     overflow: 'auto',
     scrollbarWidth: 'none',
     msOverflowStyle: 'none'
   },
   '.cm-scroller::-webkit-scrollbar': { display: 'none' },
-  '.cm-content': { padding: '12px 0', caretColor: 'var(--text-primary)' },
+  '.cm-content': { padding: '12px 0', caretColor: 'var(--mira-text)' },
   '.cm-line': { padding: '0 8px' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'var(--text-selection)'
+    backgroundColor: 'var(--mira-text-selection)'
   }
 })
 
@@ -361,30 +361,24 @@ export function TextEditor({
       {status.state === 'conflict' && (
         <div
           role="alert"
-          className="flex flex-col gap-2 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 text-ui-xs leading-normal"
+          className="flex flex-col gap-2 rounded-sm border border-warning/40 bg-warning/10 px-3 py-2.5 text-body-xs leading-normal"
         >
           <strong className="font-semibold">Văn bản đã đổi ở nơi khác.</strong>
           <span>{status.message}</span>
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button variant="outline" onClick={copyMine}>
-              Sao chép văn bản của tôi
-            </Button>
-            <Button variant="outline" onClick={() => setConfirmReload(true)}>
-              Tải lại bản đã lưu
-            </Button>
+            <Button onClick={copyMine}>Sao chép văn bản của tôi</Button>
+            <Button onClick={() => setConfirmReload(true)}>Tải lại bản đã lưu</Button>
           </div>
         </div>
       )}
       {status.state === 'error' && (
         <div
           role="alert"
-          className="flex flex-col gap-2 rounded-control border border-error/40 bg-error/10 px-3 py-2.5 text-ui-xs leading-normal"
+          className="flex flex-col gap-2 rounded-sm border border-error/40 bg-error/10 px-3 py-2.5 text-body-xs leading-normal"
         >
           <span>{status.message}</span>
           <div>
-            <Button variant="outline" onClick={() => void save()}>
-              Thử lại
-            </Button>
+            <Button onClick={() => void save()}>Thử lại</Button>
           </div>
         </div>
       )}
@@ -392,12 +386,10 @@ export function TextEditor({
       {imageError && (
         <div
           role="alert"
-          className="flex items-center justify-between gap-2 rounded-control border border-error/40 bg-error/10 px-3 py-2 text-ui-xs leading-normal"
+          className="flex items-center justify-between gap-2 rounded-sm border border-error/40 bg-error/10 px-3 py-2 text-body-xs leading-normal"
         >
           <span>{imageError}</span>
-          <Button variant="outline" onClick={() => setImageError(null)}>
-            Đã hiểu
-          </Button>
+          <Button onClick={() => setImageError(null)}>Đã hiểu</Button>
         </div>
       )}
 
@@ -406,8 +398,8 @@ export function TextEditor({
         {showHint && (
           <p
             id={hintId}
-            className="pointer-events-none absolute top-3 right-4 left-2 leading-normal text-ink-muted"
-            style={{ fontFamily: 'var(--font-editor)', fontSize: 'var(--text-editor)' }}
+            className="pointer-events-none absolute top-3 right-4 left-2 leading-normal text-subtle"
+            style={{ fontFamily: 'var(--mira-font-editor)', fontSize: 'var(--mira-font-text)' }}
           >
             {emptyHint}
           </p>
@@ -421,10 +413,12 @@ export function TextEditor({
         description="Những chỗ bạn đã sửa mà chưa lưu sẽ bị bỏ. Bạn có thể bấm “Sao chép văn bản của tôi” trước để giữ lại."
       >
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setConfirmReload(false)}>
+          <Button variant="light" onClick={() => setConfirmReload(false)}>
             Hủy
           </Button>
-          <Button onClick={() => void reload()}>Tải lại bản đã lưu</Button>
+          <Button variant="solid" onClick={() => void reload()}>
+            Tải lại bản đã lưu
+          </Button>
         </div>
       </Dialog>
     </div>

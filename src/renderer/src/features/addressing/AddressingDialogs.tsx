@@ -6,12 +6,12 @@ import type {
   CharacterItem
 } from '../../../../shared/contracts/addressing'
 import type { ContextStatus } from '../../../../shared/contracts/glossary'
-import { Banner } from '../../components/Banner'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { Select, type SelectOption } from '../../components/Select'
-import { TextArea } from '../../components/TextArea'
-import { TextField } from '../../components/TextField'
+import { Alert } from '../../components/ui/Alert'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import { Select, type SelectOption } from '../../components/ui/Select'
+import { TextareaField } from '../../components/ui/Field'
+import { TextField } from '../../components/ui/Field'
 
 // -------------------------------------------------------------
 // Character Dialogs
@@ -44,7 +44,7 @@ export function EditCharacterDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      size="form"
+      size="md"
       title={isEditing ? 'Chỉnh sửa nhân vật' : 'Thêm nhân vật mới'}
       description={
         isEditing
@@ -132,9 +132,9 @@ function EditCharacterForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
-        <Banner tone="error" onDismiss={() => setError(null)}>
+        <Alert tone="error" onDismiss={() => setError(null)}>
           {error}
-        </Banner>
+        </Alert>
       )}
 
       <div className="grid grid-cols-2 gap-3">
@@ -184,7 +184,7 @@ function EditCharacterForm({
         onChange={(val) => setStatus(val as ContextStatus)}
       />
 
-      <TextArea
+      <TextareaField
         label="Ghi chú nhân vật"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
@@ -193,10 +193,10 @@ function EditCharacterForm({
       />
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+        <Button type="button" onClick={onClose} disabled={saving}>
           Hủy
         </Button>
-        <Button type="submit" disabled={saving}>
+        <Button variant="solid" type="submit" disabled={saving}>
           {saving ? 'Đang lưu...' : 'Lưu nhân vật'}
         </Button>
       </div>
@@ -241,15 +241,15 @@ export function DeleteCharacterDialog({
       description={`Bạn có chắc chắn muốn xóa nhân vật "${character?.target}" (${character?.source})? Mọi quan hệ xưng hô gắn với nhân vật này cũng sẽ bị xóa.`}
     >
       {error && (
-        <Banner tone="error" onDismiss={() => setError(null)}>
+        <Alert tone="error" onDismiss={() => setError(null)}>
           {error}
-        </Banner>
+        </Alert>
       )}
       <div className="flex justify-end gap-2 pt-2">
-        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={deleting}>
+        <Button onClick={() => onOpenChange(false)} disabled={deleting}>
           Hủy
         </Button>
-        <Button variant="destructive" onClick={handleConfirm} disabled={deleting}>
+        <Button color="danger" variant="solid" onClick={handleConfirm} disabled={deleting}>
           {deleting ? 'Đang xóa...' : 'Xóa nhân vật'}
         </Button>
       </div>
@@ -295,7 +295,7 @@ export function EditDyadDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      size="form"
+      size="md"
       title={isEditing ? 'Chỉnh sửa quan hệ xưng hô' : 'Thiết lập quan hệ xưng hô'}
       description={
         isEditing
@@ -407,9 +407,9 @@ function EditDyadForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
-        <Banner tone="error" onDismiss={() => setError(null)}>
+        <Alert tone="error" onDismiss={() => setError(null)}>
           {error}
-        </Banner>
+        </Alert>
       )}
 
       <div className="grid grid-cols-2 gap-3">
@@ -474,7 +474,7 @@ function EditDyadForm({
         onChange={(val) => setStatus(val as ContextStatus)}
       />
 
-      <TextArea
+      <TextareaField
         label="Ghi chú hoàn cảnh xưng hô"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
@@ -483,10 +483,10 @@ function EditDyadForm({
       />
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+        <Button type="button" onClick={onClose} disabled={saving}>
           Hủy
         </Button>
-        <Button type="submit" disabled={saving}>
+        <Button variant="solid" type="submit" disabled={saving}>
           {saving ? 'Đang lưu...' : 'Lưu quy ước'}
         </Button>
       </div>
@@ -537,15 +537,15 @@ export function DeleteDyadDialog({
       description={`Bạn có chắc chắn muốn xóa quy ước xưng hô từ "${srcName}" đến "${tgtName}" ("${dyad?.speakerPronoun}" - "${dyad?.recipientPronoun}")?`}
     >
       {error && (
-        <Banner tone="error" onDismiss={() => setError(null)}>
+        <Alert tone="error" onDismiss={() => setError(null)}>
           {error}
-        </Banner>
+        </Alert>
       )}
       <div className="flex justify-end gap-2 pt-2">
-        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={deleting}>
+        <Button onClick={() => onOpenChange(false)} disabled={deleting}>
           Hủy
         </Button>
-        <Button variant="destructive" onClick={handleConfirm} disabled={deleting}>
+        <Button color="danger" variant="solid" onClick={handleConfirm} disabled={deleting}>
           {deleting ? 'Đang xóa...' : 'Xóa quy ước'}
         </Button>
       </div>

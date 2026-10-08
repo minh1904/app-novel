@@ -11,9 +11,9 @@ import { AddIcon } from '@solar-icons/react/linear/add'
 import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { ImportIcon } from '@solar-icons/react/linear/import'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
-import { SearchField } from '../../components/SearchField'
+import { Button } from '../../components/ui/Button'
+import { cn } from '../../lib/cn'
+import { Input, SearchInput } from '../../components/ui/Input'
 import { backupWork, savedMessage } from './backup'
 import { ChapterPager } from './ChapterPager'
 import { DeleteChapterDialog, MoveChapterDialog } from './ChapterDialogs'
@@ -162,10 +162,10 @@ export function ChaptersArea({
   }
 
   const importButton = (
-    <Button variant="secondary" onClick={() => setImportOpen(true)}>
+    <Button variant="light" onClick={() => setImportOpen(true)}>
       <ImportIcon size={14} />
       {MOCK_FEATURES.importTxt.label}
-      <span className="ml-0.5 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
+      <span className="ml-0.5 rounded-sm bg-selected px-1.5 py-px text-body-xs text-default">
         {SOON_LABEL}
       </span>
     </Button>
@@ -178,12 +178,12 @@ export function ChaptersArea({
   return (
     <section aria-labelledby="chapters-heading" className="@container flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 id="chapters-heading" className="mr-auto text-ui-md font-semibold tracking-heading">
-          Chương <span className="font-normal text-ink-muted">({all.length})</span>
+        <h2 id="chapters-heading" className="mr-auto text-body-md font-semibold tracking-heading">
+          Chương <span className="font-normal text-subtle">({all.length})</span>
         </h2>
         {all.length > 0 && (
           <div className="flex min-w-[220px] flex-1 basis-[280px] flex-col gap-1 @min-[760px]:max-w-[360px]">
-            <SearchField
+            <SearchInput
               label="Tìm chương hoặc nhập số để nhảy tới"
               placeholder="Tìm chương hoặc nhập số…"
               value={query}
@@ -196,7 +196,7 @@ export function ChaptersArea({
               aria-describedby={searchError ? 'chapter-search-error' : undefined}
             />
             {searchError && (
-              <p id="chapter-search-error" role="alert" className="text-ui-xs text-error">
+              <p id="chapter-search-error" role="alert" className="text-body-xs text-error">
                 {searchError}
               </p>
             )}
@@ -207,6 +207,7 @@ export function ChaptersArea({
           <>
             {importButton}
             <Button
+              variant="solid"
               onClick={() => {
                 setAdding(true)
                 setAddKey((key) => key + 1)
@@ -226,27 +227,27 @@ export function ChaptersArea({
       {chapters.notice && (
         <div
           role="alert"
-          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-ui-xs"
+          className="flex items-start justify-between gap-3 rounded-sm border border-error/40 bg-error/8 px-3.5 py-2.5 text-body-xs"
         >
           <span>{chapters.notice}</span>
-          <Button variant="ghost-muted" size="sm" onClick={chapters.dismissNotice}>
+          <Button variant="ghost" onClick={chapters.dismissNotice}>
             Đóng
           </Button>
         </div>
       )}
 
       {chapters.load === 'loading' && (
-        <p role="status" className="py-6 text-ui-sm text-ink-muted">
+        <p role="status" className="py-6 text-body-sm text-subtle">
           Đang tải danh sách chương…
         </p>
       )}
 
       {chapters.load === 'failed' && (
         <div className="flex flex-col items-start gap-3 py-6">
-          <p role="alert" className="text-ui-sm">
+          <p role="alert" className="text-body-sm">
             Không tải được danh sách chương. {chapters.loadError}
           </p>
-          <Button variant="secondary" onClick={() => void chapters.reload()}>
+          <Button variant="light" onClick={() => void chapters.reload()}>
             Thử lại
           </Button>
         </div>
@@ -256,15 +257,16 @@ export function ChaptersArea({
         <>
           {addRow}
           {!adding && (
-            <div className="flex flex-col items-center gap-3 rounded-panel border border-dashed border-line-strong px-6 py-12 text-center">
-              <DocumentTextIcon size={28} className="text-ink-muted" />
-              <p className="text-ui-sm font-semibold">Chưa có chương nào</p>
-              <p className="max-w-[420px] text-ui-xs leading-normal text-ink-muted">
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-strong px-6 py-12 text-center">
+              <DocumentTextIcon size={24} className="text-subtle" />
+              <p className="text-body-sm font-semibold">Chưa có chương nào</p>
+              <p className="max-w-[420px] text-body-xs leading-normal text-subtle">
                 Thêm chương đầu tiên để bắt đầu. Văn bản gốc và bản dịch của mỗi chương sẽ nằm ở
                 đây.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button
+                  variant="solid"
                   onClick={() => {
                     setAdding(true)
                     setAddKey((key) => key + 1)
@@ -282,11 +284,11 @@ export function ChaptersArea({
 
       {chapters.load === 'ready' && all.length > 0 && (
         <>
-          <div className="overflow-hidden rounded-panel border border-line">
+          <div className="overflow-hidden rounded-lg border border-default">
             <div
-              className={cx(
+              className={cn(
                 CHAPTER_GRID,
-                'gap-x-2 border-b border-line bg-sidebar px-1 py-2 text-ui-xs font-medium text-ink-muted'
+                'gap-x-2 border-b border-default bg-subtle px-1 py-2 text-body-xs font-medium text-subtle'
               )}
               aria-hidden="true"
             >
@@ -298,11 +300,11 @@ export function ChaptersArea({
             {addRow}
             {visible.length === 0 ? (
               <div className="flex flex-col items-start gap-3 px-4 py-8">
-                <p role="status" className="text-ui-sm">
+                <p role="status" className="text-body-sm">
                   Không có chương nào khớp “{filterText}”.
                 </p>
                 <Button
-                  variant="secondary"
+                  variant="light"
                   onClick={() => {
                     setQuery('')
                     setPage(1)
@@ -386,19 +388,19 @@ function AddChapterRow({
 
   return (
     <form
-      className="sticky top-0 z-(--z-raised) flex items-center gap-2 border-b border-line bg-popover px-3 py-2"
+      className="sticky top-0 z-(--mira-z-sticky) flex items-center gap-2 border-b border-default bg-surface px-3 py-2"
       onSubmit={(event) => {
         event.preventDefault()
         void submit()
       }}
     >
-      <input
+      <Input
         autoFocus
         aria-label="Tên chương mới (để trống thì đặt là Chương số)"
         placeholder="Tên chương mới — Enter để thêm, Esc để đóng"
         value={title}
         maxLength={200}
-        className="h-[34px] min-w-0 flex-1 rounded-control border border-line-strong bg-canvas px-3 text-ui-sm outline-none placeholder:text-ink-muted focus:border-focus focus:ring-2 focus:ring-focus/25"
+        className="min-w-0 flex-1"
         onChange={(event) => setTitle(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
@@ -407,10 +409,10 @@ function AddChapterRow({
           }
         }}
       />
-      <Button type="submit" disabled={busy}>
+      <Button variant="solid" type="submit" disabled={busy}>
         Thêm
       </Button>
-      <Button variant="ghost-muted" onClick={onClose}>
+      <Button variant="ghost" onClick={onClose}>
         Xong
       </Button>
     </form>

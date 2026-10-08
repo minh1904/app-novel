@@ -373,6 +373,11 @@ export interface DesktopApi {
    * them over the page's own top bar, so they have to follow the page's theme to look like part of it.
    */
   setChromeTheme(theme: ChromeTheme): Promise<void>
+  /**
+   * Dims the window buttons while a dialog's backdrop darkens the page; the backdrop cannot reach
+   * them, since the OS draws them above the page.
+   */
+  setChromeDimmed(dimmed: boolean): Promise<void>
   /** Window glass (Windows acrylic). `set` applies at once and returns what the window now shows. */
   appearance: {
     get(): Promise<AppearanceState>

@@ -12,7 +12,7 @@ import {
 } from 'react'
 import type { Row, RowState } from '../../../../shared/contracts/rows'
 import type { TextRecord } from '../../../../shared/contracts/text'
-import { Button } from '../../components/Button'
+import { Button } from '../../components/ui/Button'
 import { clampPage, pageOfPosition, pageCount, slicePage } from '../work/chapterList'
 import { ChapterPager } from '../work/ChapterPager'
 import { SentenceFilterToolbarMock, SentenceSuggestionPanelMock } from './SentenceModeMocks'
@@ -28,7 +28,7 @@ const STATE_LABEL: Record<RowState, string> = {
 }
 
 const STATE_DOT: Record<RowState, string> = {
-  untranslated: 'bg-ink-muted',
+  untranslated: 'bg-neutral',
   ai: 'bg-info',
   reviewed: 'bg-success',
   check: 'bg-warning'
@@ -146,7 +146,7 @@ export function SentenceMode({
 
   if (rows.loading) {
     return (
-      <p role="status" className="px-1 pt-2 text-ui-sm text-ink-muted">
+      <p role="status" className="px-1 pt-2 text-body-sm text-subtle">
         Đang đọc các hàng…
       </p>
     )
@@ -154,11 +154,11 @@ export function SentenceMode({
   if (rows.loadError) {
     return (
       <div className="flex flex-col gap-2 pt-2">
-        <p role="alert" className="text-ui-sm text-ink-muted">
+        <p role="alert" className="text-body-sm text-subtle">
           {rows.loadError}
         </p>
         <div>
-          <Button variant="secondary" onClick={() => void rows.reload()}>
+          <Button variant="light" onClick={() => void rows.reload()}>
             Thử lại
           </Button>
         </div>
@@ -172,7 +172,7 @@ export function SentenceMode({
         <p
           role="status"
           aria-label="Số hàng theo trạng thái"
-          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-ui-xs text-ink-muted"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-body-xs text-subtle"
         >
           {(['untranslated', 'ai', 'check', 'reviewed'] as RowState[]).map((state) => (
             <span key={state} className="flex items-center gap-1.5">
@@ -181,7 +181,7 @@ export function SentenceMode({
             </span>
           ))}
         </p>
-        <Button variant="secondary" onClick={() => jumpFrom(active.current)}>
+        <Button variant="light" onClick={() => jumpFrom(active.current)}>
           Hàng cần xử lý kế tiếp
         </Button>
       </div>
@@ -189,45 +189,40 @@ export function SentenceMode({
       <SentenceFilterToolbarMock />
 
       {canPair && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line bg-control px-3 py-2 text-ui-xs leading-normal">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-default bg-muted px-3 py-2 text-body-xs leading-normal">
           <span>
             Có {unlinkedTargets.length.toLocaleString('vi')} câu dịch chưa ghép với hàng nào (viết ở
             mode Toàn văn). Ghép theo thứ tự chỉ là ước đoán, các hàng đó sẽ cần kiểm tra.
           </span>
-          <Button variant="outline" onClick={() => void rows.autoPair()}>
-            Ghép theo thứ tự
-          </Button>
+          <Button onClick={() => void rows.autoPair()}>Ghép theo thứ tự</Button>
         </div>
       )}
       {(message ?? rows.notice) && (
-        <p role="status" className="text-ui-xs text-ink-muted">
+        <p role="status" className="text-body-xs text-subtle">
           {message ?? rows.notice}
         </p>
       )}
       {conflict && (
         <div
           role="alert"
-          className="flex flex-col gap-2 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 text-ui-xs leading-normal"
+          className="flex flex-col gap-2 rounded-sm border border-warning/40 bg-warning/10 px-3 py-2.5 text-body-xs leading-normal"
         >
           <strong className="font-semibold">Chưa ghi được hàng này.</strong>
           <span>{conflict.message}</span>
           <div className="flex flex-wrap gap-2 pt-1">
             <Button
-              variant="outline"
               onClick={() =>
                 void navigator.clipboard.writeText([...rows.drafts.values()].join('\n'))
               }
             >
               Sao chép chữ tôi đang gõ
             </Button>
-            <Button variant="outline" onClick={() => void rows.reload()}>
-              Tải lại
-            </Button>
+            <Button onClick={() => void rows.reload()}>Tải lại</Button>
           </div>
         </div>
       )}
 
-      <ol className="min-h-0 flex-1 list-none overflow-y-auto rounded-panel border border-line">
+      <ol className="min-h-0 flex-1 list-none overflow-y-auto rounded-lg border border-default">
         {visible.map((row) => (
           <SentenceRow
             key={row.sourceId}
@@ -335,11 +330,11 @@ const SentenceRow = memo(function SentenceRow({
 
   const statusId = 'row-state-' + row.sourceId
   return (
-    <li className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-x-4 border-b border-line px-3 py-3 last:border-b-0">
-      <span className="pt-0.5 text-right text-ui-xs text-ink-muted">{number}</span>
+    <li className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-x-4 border-b border-default px-3 py-3 last:border-b-0">
+      <span className="pt-0.5 text-right text-body-xs text-subtle">{number}</span>
       <p
         lang={sourceLang}
-        className="selectable text-ui-sm leading-normal break-words whitespace-pre-wrap"
+        className="selectable text-body-sm leading-normal break-words whitespace-pre-wrap"
       >
         {row.sourceText}
       </p>
@@ -352,7 +347,7 @@ const SentenceRow = memo(function SentenceRow({
           aria-label={'Bản dịch hàng ' + number}
           aria-describedby={statusId}
           spellCheck={false}
-          className="w-full resize-none overflow-hidden rounded-control border border-line-strong bg-transparent px-2.5 py-1.5 text-ui-sm leading-normal outline-none focus:ring-2 focus:ring-focus/40"
+          className="w-full resize-none overflow-hidden rounded-sm border border-strong bg-transparent px-2.5 py-1.5 text-body-sm leading-normal outline-none focus:ring-2 focus:ring-focus/40"
           onFocus={() => onActive(row.index)}
           onChange={(event) => onDraft(row.sourceId, event.target.value)}
           onBlur={() => void onCommit(row.sourceId)}
@@ -361,18 +356,16 @@ const SentenceRow = memo(function SentenceRow({
         <p
           id={statusId}
           role="status"
-          className="flex items-center gap-1.5 text-ui-xs text-ink-muted"
+          className="flex items-center gap-1.5 text-body-xs text-subtle"
         >
           <span aria-hidden="true" className={'size-1.5 rounded-full ' + STATE_DOT[row.state]} />
           {saving ? 'Đang ghi…' : STATE_LABEL[row.state]}
           {draft !== undefined && !saving && ' · chưa ghi'}
         </p>
         {problem && problem.kind === 'error' && (
-          <div role="alert" className="flex flex-wrap items-center gap-2 text-ui-xs text-error">
+          <div role="alert" className="flex flex-wrap items-center gap-2 text-body-xs text-error">
             <span>{problem.message}</span>
-            <Button variant="outline" onClick={() => void onCommit(row.sourceId)}>
-              Thử lại
-            </Button>
+            <Button onClick={() => void onCommit(row.sourceId)}>Thử lại</Button>
           </div>
         )}
       </div>

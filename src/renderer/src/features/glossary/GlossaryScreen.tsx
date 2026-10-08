@@ -8,13 +8,23 @@ import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
 import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { ContextEntryItem, ContextStatus } from '../../../../shared/contracts/glossary'
-import { Badge } from '../../components/Badge'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
-import { EmptyState } from '../../components/EmptyState'
-import { SearchField } from '../../components/SearchField'
+import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
+import { cn } from '../../lib/cn'
+import { ButtonGroup } from '../../components/ui/ButtonGroup'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { ICON } from '../../components/ui/icon'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { SearchInput } from '../../components/ui/Input'
 import { DeleteGlossaryDialog, EditGlossaryDialog, ImportNamesDialog } from './GlossaryDialogs'
 import { useGlossary } from './useGlossary'
+
+const STATUS_FILTER_OPTIONS = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'approved', label: 'Đã duyệt' },
+  { value: 'pending', label: 'Chờ duyệt' },
+  { value: 'rejected', label: 'Từ chối' }
+] as const
 
 export interface GlossaryScreenProps {
   workId: string
@@ -79,7 +89,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
       {/* Header Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <SearchField
+          <SearchInput
             label="Tìm kiếm thuật ngữ"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -87,51 +97,33 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
             className="w-64"
           />
 
-          <div className="flex items-center rounded-control border border-line bg-canvas p-0.5 text-ui-xs">
-            {(
-              [
-                { value: 'all', label: 'Tất cả' },
-                { value: 'approved', label: 'Đã duyệt' },
-                { value: 'pending', label: 'Chờ duyệt' },
-                { value: 'rejected', label: 'Từ chối' }
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setStatusFilter(tab.value)}
-                className={cx(
-                  'rounded-item px-2.5 py-1 font-medium transition-colors cursor-pointer',
-                  statusFilter === tab.value
-                    ? 'bg-selected text-ink'
-                    : 'text-ink-muted hover:text-ink'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <ButtonGroup
+            label="Lọc theo trạng thái"
+            value={statusFilter}
+            options={STATUS_FILTER_OPTIONS}
+            onChange={setStatusFilter}
+          />
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-            <ImportIcon size={14} />
+          <Button leftIcon={<ImportIcon size={ICON.sm} />} onClick={() => setImportOpen(true)}>
             Nhập Names.txt
           </Button>
-          <Button variant="default" size="sm" onClick={() => setEditingEntry('new')}>
-            <AddIcon size={14} />
+          <Button
+            leftIcon={<AddIcon size={ICON.sm} />}
+            variant="solid"
+            onClick={() => setEditingEntry('new')}
+          >
             Thêm thuật ngữ
           </Button>
         </div>
       </div>
 
-      {error && (
-        <div className="rounded-control bg-error/10 p-3 text-ui-xs text-error">{error}</div>
-      )}
+      {error && <div className="rounded-sm bg-error/10 p-3 text-body-xs text-error">{error}</div>}
 
       {/* Main List */}
-      <div className="overflow-hidden rounded-panel border border-line bg-canvas">
-        <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center border-b border-line bg-sidebar px-3 py-2 text-ui-xs font-medium text-ink-muted">
+      <div className="overflow-hidden rounded-lg border border-default bg-surface">
+        <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center border-b border-default bg-subtle px-3 py-2 text-body-xs font-medium text-subtle">
           <span>Từ gốc / Biến thể</span>
           <span>Bản dịch đích</span>
           <span>Trạng thái</span>
@@ -141,7 +133,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-ui-xs text-ink-muted">
+          <div className="py-12 text-center text-body-xs text-subtle">
             Đang tải danh sách thuật ngữ...
           </div>
         ) : entries.length === 0 ? (
@@ -150,7 +142,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
             title={query ? 'Không tìm thấy thuật ngữ nào' : 'Chưa có thuật ngữ nào'}
             actions={
               !query ? (
-                <Button variant="secondary" size="sm" onClick={() => setEditingEntry('new')}>
+                <Button variant="light" onClick={() => setEditingEntry('new')}>
                   Thêm thuật ngữ đầu tiên
                 </Button>
               ) : undefined
@@ -161,25 +153,25 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
               : 'Thêm thuật ngữ hoặc nhập từ tệp Names.txt để AI tự động áp dụng khi dịch.'}
           </EmptyState>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-default">
             {entries.map((entry) => (
               <li
                 key={entry.id}
-                className={cx(
-                  'grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center px-3 py-2.5 text-ui-xs transition-colors hover:bg-hover',
+                className={cn(
+                  'grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center px-3 py-2.5 text-body-xs transition-colors hover:bg-hover',
                   entry.status === 'pending' && 'bg-warning/5',
                   entry.status === 'rejected' && 'opacity-60'
                 )}
               >
                 {/* Source & Aliases */}
                 <div className="flex flex-col items-start gap-1 pr-2">
-                  <span className="font-semibold text-ink">{entry.source}</span>
+                  <span className="font-semibold text-default">{entry.source}</span>
                   {entry.aliases.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {entry.aliases.map((alias) => (
                         <span
                           key={alias}
-                          className="rounded-item bg-sidebar px-1 py-px text-ui-xs text-ink-muted border border-line"
+                          className="rounded-sm bg-subtle px-1 py-px text-body-xs text-subtle border border-default"
                         >
                           {alias}
                         </span>
@@ -191,15 +183,15 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                 {/* Target & Forbidden */}
                 <div className="flex flex-col items-start gap-1 pr-2">
                   <span
-                    className={cx(
+                    className={cn(
                       'font-medium',
-                      entry.forbidden ? 'text-error line-through' : 'text-ink'
+                      entry.forbidden ? 'text-error line-through' : 'text-default'
                     )}
                   >
                     {entry.target}
                   </span>
                   {entry.forbidden && (
-                    <span className="rounded-item bg-error/10 px-1 py-px text-ui-xs font-semibold text-error">
+                    <span className="rounded-sm bg-error/10 px-1 py-px text-body-xs font-semibold text-error">
                       Cấm dùng
                     </span>
                   )}
@@ -207,16 +199,28 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
 
                 {/* Status */}
                 <div>
-                  {entry.status === 'approved' && <Badge tone="success">Đã duyệt</Badge>}
-                  {entry.status === 'pending' && <Badge tone="warning">Chờ duyệt</Badge>}
-                  {entry.status === 'rejected' && <Badge tone="muted">Từ chối</Badge>}
+                  {entry.status === 'approved' && (
+                    <Badge variant="outline" dot color="success">
+                      Đã duyệt
+                    </Badge>
+                  )}
+                  {entry.status === 'pending' && (
+                    <Badge variant="outline" dot color="warning">
+                      Chờ duyệt
+                    </Badge>
+                  )}
+                  {entry.status === 'rejected' && (
+                    <Badge variant="outline" dot color="neutral">
+                      Từ chối
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Scope */}
-                <span className="text-ui-xs text-ink-muted">{formatChapterScope(entry)}</span>
+                <span className="text-body-xs text-subtle">{formatChapterScope(entry)}</span>
 
                 {/* Notes */}
-                <span className="truncate pr-2 text-ui-xs text-ink-muted" title={entry.notes ?? ''}>
+                <span className="truncate pr-2 text-body-xs text-subtle" title={entry.notes ?? ''}>
                   {entry.notes || '—'}
                 </span>
 
@@ -224,50 +228,44 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                 <div className="flex items-center justify-end gap-1">
                   {entry.status === 'pending' && (
                     <>
-                      <button
-                        type="button"
-                        onClick={() => handleQuickStatus(entry, 'approved')}
-                        className="rounded p-1 text-success hover:bg-success/15 cursor-pointer"
+                      <CompactButton
+                        tone="success"
+                        icon={<CheckIcon size={ICON.sm} />}
+                        aria-label="Duyệt mục này"
                         title="Duyệt mục này"
-                      >
-                        <CheckIcon size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleQuickStatus(entry, 'rejected')}
-                        className="rounded p-1 text-error hover:bg-error/15 cursor-pointer"
+                        onClick={() => handleQuickStatus(entry, 'approved')}
+                      />
+                      <CompactButton
+                        tone="danger"
+                        icon={<CloseCircleIcon size={ICON.sm} />}
+                        aria-label="Từ chối mục này"
                         title="Từ chối mục này"
-                      >
-                        <CloseCircleIcon size={14} />
-                      </button>
+                        onClick={() => handleQuickStatus(entry, 'rejected')}
+                      />
                     </>
                   )}
                   {entry.status === 'rejected' && (
-                    <button
-                      type="button"
-                      onClick={() => handleQuickStatus(entry, 'approved')}
-                      className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink cursor-pointer"
+                    <CompactButton
+                      tone="success"
+                      icon={<CheckIcon size={ICON.sm} />}
+                      aria-label="Phục hồi (Duyệt lại)"
                       title="Phục hồi (Duyệt lại)"
-                    >
-                      <CheckIcon size={14} />
-                    </button>
+                      onClick={() => handleQuickStatus(entry, 'approved')}
+                    />
                   )}
-                  <button
-                    type="button"
-                    onClick={() => setEditingEntry(entry)}
-                    className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink cursor-pointer"
+                  <CompactButton
+                    icon={<PenNewSquareIcon size={ICON.sm} />}
+                    aria-label="Chỉnh sửa"
                     title="Chỉnh sửa"
-                  >
-                    <PenNewSquareIcon size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeletingEntry(entry)}
-                    className="rounded p-1 text-ink-muted hover:bg-error/15 hover:text-error cursor-pointer"
+                    onClick={() => setEditingEntry(entry)}
+                  />
+                  <CompactButton
+                    tone="danger"
+                    icon={<TrashBinMinimalisticIcon size={ICON.sm} />}
+                    aria-label="Xóa thuật ngữ"
                     title="Xóa thuật ngữ"
-                  >
-                    <TrashBinMinimalisticIcon size={14} />
-                  </button>
+                    onClick={() => setDeletingEntry(entry)}
+                  />
                 </div>
               </li>
             ))}

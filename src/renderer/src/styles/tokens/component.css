@@ -1,0 +1,50 @@
+/*
+ * Tier 3: component. Only the component named in each token reads it, through Tailwind's variable
+ * syntax (bg-(--mira-button-neutral-solid-bg)); a screen never does. Values point at the semantic tier;
+ * both live on <html>, so they follow the theme without a block of their own.
+ */
+:root {
+  /* Button: colour neutral | danger × style solid | outline | light | ghost. Mira has no brand
+     colour; its primary action is the inverted neutral, as in the Acme shot. */
+  --mira-button-neutral-solid-bg: var(--mira-bg-inverted);
+  --mira-button-neutral-solid-bg-hover: var(--mira-bg-inverted-hover);
+  --mira-button-neutral-solid-fg: var(--mira-text-inverted);
+  --mira-button-neutral-light-bg: var(--mira-bg-muted);
+  --mira-button-neutral-light-bg-hover: var(--mira-bg-selected);
+  --mira-button-neutral-fg: var(--mira-text);
+  --mira-button-neutral-fg-muted: var(--mira-text-subtle);
+  --mira-button-neutral-border: var(--mira-border);
+  --mira-button-neutral-border-hover: var(--mira-border-strong);
+  --mira-button-neutral-bg-hover: var(--mira-bg-hover);
+  --mira-button-danger-solid-bg: var(--mira-red-600);
+  --mira-button-danger-solid-bg-hover: var(--mira-red-700);
+  --mira-button-danger-solid-fg: var(--mira-neutral-0);
+  --mira-button-danger-fg: var(--mira-error);
+  --mira-button-danger-light-bg: var(--mira-error-subtle);
+  --mira-button-danger-light-bg-hover: var(--mira-error-muted);
+  --mira-button-danger-border: var(--mira-error-muted);
+  --mira-button-bg-disabled: var(--mira-bg-disabled);
+  --mira-button-fg-disabled: var(--mira-text-disabled);
+
+  /* Input, select trigger, textarea */
+  --mira-input-bg: var(--mira-bg-surface);
+  --mira-input-bg-hover: var(--mira-bg-subtle);
+  --mira-input-border: var(--mira-border-input);
+  --mira-input-fg: var(--mira-text);
+
+  /* Navigation: rows of a list column, open tabs in a bar */
+  --mira-nav-fg: var(--mira-text-subtle);
+  --mira-nav-fg-active: var(--mira-text);
+  --mira-nav-bg-hover: var(--mira-bg-hover);
+  --mira-nav-bg-active: var(--mira-bg-selected);
+
+  /* Switch */
+  --mira-switch-track: var(--mira-border-input);
+  --mira-switch-track-on: var(--mira-bg-inverted);
+  --mira-switch-thumb: var(--mira-neutral-0);
+  --mira-switch-thumb-on: var(--mira-text-inverted);
+
+  /* Tooltip: colours inverted */
+  --mira-tooltip-bg: var(--mira-bg-inverted);
+  --mira-tooltip-fg: var(--mira-text-inverted);
+}

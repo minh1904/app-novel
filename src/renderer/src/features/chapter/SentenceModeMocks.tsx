@@ -1,7 +1,8 @@
 import type { JSX } from 'react'
 import { FilterIcon } from '@solar-icons/react/linear/filter'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
-import { Button } from '../../components/Button'
+import { Button } from '../../components/ui/Button'
+import { ICON } from '../../components/ui/icon'
+import { SearchInput } from '../../components/ui/Input'
 import { MOCK_FEATURES, SOON_LABEL } from '../work/mockFeatures'
 
 /**
@@ -14,45 +15,26 @@ export function SentenceFilterToolbarMock(): JSX.Element {
     <div
       role="group"
       aria-label={MOCK_FEATURES.sentenceModeToolbar.label + ' (' + SOON_LABEL + ')'}
-      className="flex flex-wrap items-center gap-1.5 rounded-control border border-line bg-control/50 px-2.5 py-1.5"
+      className="flex flex-wrap items-center gap-1.5 rounded-sm border border-default bg-muted/50 px-2.5 py-1.5"
     >
-      <label className="flex h-6 min-w-[120px] flex-1 items-center gap-1.5 rounded-control border border-line-strong px-2">
-        <MinimalisticMagnifierIcon
-          size={13}
-          className="shrink-0 text-ink-muted"
-          aria-hidden="true"
-        />
-        <input
-          disabled
-          placeholder="Tìm trong bản gốc…"
-          aria-label="Tìm trong bản gốc"
-          className="min-w-0 flex-1 bg-transparent text-ui-xs outline-none placeholder:text-ink-muted"
-        />
-      </label>
-      <label className="flex h-6 min-w-[120px] flex-1 items-center gap-1.5 rounded-control border border-line-strong px-2">
-        <MinimalisticMagnifierIcon
-          size={13}
-          className="shrink-0 text-ink-muted"
-          aria-hidden="true"
-        />
-        <input
-          disabled
-          placeholder="Tìm trong bản dịch…"
-          aria-label="Tìm trong bản dịch"
-          className="min-w-0 flex-1 bg-transparent text-ui-xs outline-none placeholder:text-ink-muted"
-        />
-      </label>
-      <Button variant="outline" size="sm" disabled>
-        <FilterIcon size={13} />
+      <SearchInput
+        disabled
+        label="Tìm trong bản gốc"
+        placeholder="Tìm trong bản gốc…"
+        className="min-w-[120px] flex-1"
+      />
+      <SearchInput
+        disabled
+        label="Tìm trong bản dịch"
+        placeholder="Tìm trong bản dịch…"
+        className="min-w-[120px] flex-1"
+      />
+      <Button disabled leftIcon={<FilterIcon size={ICON.sm} aria-hidden="true" />}>
         Mọi trạng thái
       </Button>
-      <Button variant="outline" size="sm" disabled>
-        Gộp
-      </Button>
-      <Button variant="outline" size="sm" disabled>
-        Tách
-      </Button>
-      <span className="ml-auto shrink-0 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
+      <Button disabled>Gộp</Button>
+      <Button disabled>Tách</Button>
+      <span className="ml-auto shrink-0 rounded-sm bg-selected px-1.5 py-px text-body-xs text-default">
         {SOON_LABEL}
       </span>
     </div>
@@ -75,33 +57,31 @@ export function SentenceSuggestionPanelMock(): JSX.Element {
   return (
     <div
       aria-label={MOCK_FEATURES.sentenceModeSidePanels.label + ' (' + SOON_LABEL + ')'}
-      className="flex h-[150px] shrink-0 flex-col gap-2 rounded-panel border border-line bg-sidebar p-2.5"
+      className="flex h-[150px] shrink-0 flex-col gap-2 rounded-lg border border-default bg-subtle p-2.5"
     >
-      <div className="flex items-center gap-3 text-ui-xs">
-        <span className="rounded-control bg-selected px-2 py-0.5 text-ink">
-          Gợi ý <span className="text-ink-muted">(1)</span>
+      <div className="flex items-center gap-3 text-body-xs">
+        <span className="rounded-sm bg-selected px-2 py-0.5 text-default">
+          Gợi ý <span className="text-subtle">(1)</span>
         </span>
-        <span aria-disabled="true" className="text-ink-muted">
+        <span aria-disabled="true" className="text-subtle">
           Thuật ngữ <span className="opacity-60">(3)</span>
         </span>
-        <span aria-disabled="true" className="text-ink-muted">
+        <span aria-disabled="true" className="text-subtle">
           Lịch sử
         </span>
-        <span aria-disabled="true" className="text-ink-muted">
+        <span aria-disabled="true" className="text-subtle">
           QA <span className="opacity-60">(2)</span>
         </span>
-        <span className="ml-auto shrink-0 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
+        <span className="ml-auto shrink-0 rounded-sm bg-selected px-1.5 py-px text-body-xs text-default">
           {SOON_LABEL}
         </span>
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-3 overflow-y-auto rounded-control border border-line p-2.5 text-ui-xs">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-3 overflow-y-auto rounded-sm border border-default p-2.5 text-body-xs">
         <p lang="en">{SUGGESTION.source}</p>
         <p lang="vi">{SUGGESTION.target}</p>
         <span className="flex items-center gap-2">
-          <Button size="xs" variant="outline" disabled>
-            Chèn
-          </Button>
-          <span className="text-ui-xs text-success">{SUGGESTION.match}</span>
+          <Button disabled>Chèn</Button>
+          <span className="text-body-xs text-success">{SUGGESTION.match}</span>
         </span>
       </div>
     </div>

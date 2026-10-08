@@ -7,8 +7,9 @@ import type { WorkArea } from './workArea'
 
 /**
  * The areas of the work detail screen, in the fixed order of the work-area-navigation change.
- * Chapters is real. The other three are pictures marked "Sắp có" so the finished layout can be
- * seen; each has a row in delivery/backlog.md and becomes real by dropping `soon` and swapping its
+ * Chapters is real, and so is Context: its glossary and addressing tabs read and write the work, and
+ * only Văn phong inside it is still a picture. Sources and Jobs are pictures marked "Sắp có" so the
+ * finished layout can be seen; each has a row in delivery/backlog.md and becomes real by dropping `soon` and swapping its
  * `render` for the real screen.
  */
 export const chaptersArea: WorkArea = {
@@ -20,7 +21,6 @@ export const chaptersArea: WorkArea = {
 export const contextArea: WorkArea = {
   id: MOCK_FEATURES.contextArea.id,
   label: MOCK_FEATURES.contextArea.label,
-  soon: true,
   render: (props) => <ContextAreaMock workId={props.workId} />
 }
 

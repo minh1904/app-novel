@@ -1,5 +1,4 @@
 import { useCallback, useReducer, useState, type JSX } from 'react'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
 import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
@@ -12,11 +11,13 @@ import {
   type UsageWindowView
 } from '../../../../shared/contracts/aiAccounts'
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
-import { Dialog } from '../../components/Dialog'
-import { focusRing } from '../../components/focusRing'
-import { SettingsSection } from '../../components/Setting'
+import { ActionRow } from '../../components/ui/ActionRow'
+import { Button, LinkButton } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { cn } from '../../lib/cn'
+import { Dialog } from '../../components/ui/Dialog'
+import { Disclosure } from '../../components/ui/Disclosure'
+import { SettingsSection } from '../../components/ui/Setting'
 import { useConnectionStore } from '../../stores/connectionStore'
 import { notify } from '../../stores/notificationStore'
 import { useUiStore } from '../../stores/uiStore'
@@ -70,9 +71,9 @@ export function UsageChip({ windows }: { windows: UsageWindowView[] }): JSX.Elem
   const warn = chip.remainingPercent < USAGE_WARN_BELOW
   return (
     <span
-      className={cx(
-        'inline-flex h-5 items-center rounded-control px-1.5 text-ui-2xs',
-        warn ? 'bg-warning/15 text-warning' : 'bg-control text-ink-muted'
+      className={cn(
+        'inline-flex h-5 items-center rounded-sm px-1.5 text-body-xs',
+        warn ? 'bg-warning/15 text-warning' : 'bg-muted text-subtle'
       )}
     >
       {(chip.kind === 'week' ? 'Tuần: ' : chip.kind === 'session' ? 'Phiên: ' : '') +
@@ -127,48 +128,47 @@ export function ConnectedCard({
   return (
     <div
       data-setting-id={'account:' + provider}
-      className="flex items-center justify-between gap-3 rounded-control bg-control px-3 py-2.5"
+      className="flex items-center justify-between gap-3 rounded-sm bg-muted px-3 py-2.5"
     >
       <span className="flex min-w-0 flex-col">
-        <span className="flex items-center gap-2 text-ui-sm font-semibold">
+        <span className="flex items-center gap-2 text-body-sm font-semibold">
           {label}
           {relogin ? (
-            <span className="inline-flex items-center gap-1 text-ui-xs font-normal text-error">
+            <span className="inline-flex items-center gap-1 text-body-xs font-normal text-error">
               <DangerCircleIcon size={12} aria-hidden="true" />
               Cần đăng nhập lại
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-ui-xs font-normal text-success">
+            <span className="inline-flex items-center gap-1 text-body-xs font-normal text-success">
               <CheckCircleIcon size={12} aria-hidden="true" />
               Đã kết nối
             </span>
           )}
           <UsageChip windows={windows} />
         </span>
-        <span className="mt-1 truncate text-ui-xs text-ink-muted">
+        <span className="mt-1 truncate text-body-xs text-subtle">
           {connection.account?.label ?? 'Tài khoản đã đăng nhập'} · {connection.models.length} model
         </span>
       </span>
       <span className="flex shrink-0 items-center gap-1">
         {relogin && (
-          <Button size="sm" onClick={onRelogin}>
+          <Button variant="solid" onClick={onRelogin}>
             Đăng nhập lại
           </Button>
         )}
-        <Button
-          variant="ghost-muted"
-          size="icon"
+        <CompactButton
           aria-label={'Ngắt ' + label}
           title={'Ngắt ' + label}
           disabled={removing}
           onClick={() => setConfirming(true)}
-        >
-          {removing ? (
-            <RefreshIcon size={14} className="motion-safe:animate-spin" />
-          ) : (
-            <TrashBinTrashIcon size={14} />
-          )}
-        </Button>
+          icon={
+            removing ? (
+              <RefreshIcon size={14} className="motion-safe:animate-spin" />
+            ) : (
+              <TrashBinTrashIcon size={14} />
+            )
+          }
+        />
       </span>
       <Dialog
         open={confirming}
@@ -177,10 +177,10 @@ export function ConnectedCard({
         description="Token đăng nhập bị xóa khỏi máy này. Model chính hay dự phòng trỏ tới tài khoản này cũng bị gỡ."
       >
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="ghost-muted" onClick={() => setConfirming(false)}>
+          <Button variant="ghost" onClick={() => setConfirming(false)}>
             Giữ
           </Button>
-          <Button variant="destructive" onClick={() => void disconnect()}>
+          <Button color="danger" variant="solid" onClick={() => void disconnect()}>
             Ngắt
           </Button>
         </div>
@@ -194,6 +194,7 @@ export function AccountsPage(): JSX.Element {
   const openSettings = useUiStore((state) => state.openSettings)
   const connections = useConnectionStore((state) => state.connections)
   const [flow, dispatch] = useReducer(onboardingReducer, INITIAL_ONBOARDING)
+  const [detailOpen, setDetailOpen] = useState(false)
   const onConnected = useCallback((connectionId: string) => {
     const name = useConnectionStore
       .getState()
@@ -212,26 +213,25 @@ export function AccountsPage(): JSX.Element {
       title="Kết nối tài khoản"
       icon={<UserCircleIcon size={16} />}
       aside={
-        <Button
-          variant="text"
-          size="xs"
+        <LinkButton
+          color="neutral"
           onClick={() => openSettings({ group: 'connections', page: 'keys' })}
         >
           Có khóa API?
-        </Button>
+        </LinkButton>
       }
     >
-      <p className="m-0 mb-2 text-ui-xs text-ink-muted">
+      <p className="m-0 mb-2 text-body-xs text-subtle">
         Đăng nhập bằng gói thuê bao, không cần sao chép khóa.
       </p>
 
       {(flow.step === 'starting' || flow.step === 'polling') && (
-        <div className="rounded-panel border border-line-strong p-3">
+        <div className="rounded-lg border border-strong p-3">
           <FlowPanel state={flow} onCancel={() => dispatch({ type: 'back' })} />
         </div>
       )}
       {flow.step === 'confirm_model' && (
-        <div className="rounded-panel border border-line-strong p-3">
+        <div className="rounded-lg border border-strong p-3">
           <ConfirmModel
             connectionId={flow.connectionId}
             onBegin={(entryId) => {
@@ -246,9 +246,9 @@ export function AccountsPage(): JSX.Element {
       {flow.step === 'error' && (
         <div
           role="alert"
-          className="flex flex-col gap-2 rounded-panel border border-error/40 bg-error/5 p-3"
+          className="flex flex-col gap-2 rounded-lg border border-error/40 bg-error/5 p-3"
         >
-          <p className="m-0 flex items-start gap-2 text-ui-sm">
+          <p className="m-0 flex items-start gap-2 text-body-sm">
             <DangerCircleIcon size={16} className="mt-0.5 shrink-0 text-error" />
             <span>
               {flow.message.startsWith('Đăng nhập')
@@ -257,31 +257,29 @@ export function AccountsPage(): JSX.Element {
             </span>
           </p>
           {flow.detail && (
-            <details className="text-ui-xs text-ink-muted">
-              <summary className="cursor-pointer">Chi tiết</summary>
-              <pre className="selectable mt-1 whitespace-pre-wrap">{flow.detail}</pre>
-            </details>
+            <Disclosure label="Chi tiết" open={detailOpen} onOpenChange={setDetailOpen}>
+              <pre className="selectable mt-1 whitespace-pre-wrap text-body-xs text-subtle">
+                {flow.detail}
+              </pre>
+            </Disclosure>
           )}
           <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="ghost-muted" onClick={() => dispatch({ type: 'back' })}>
+            <Button variant="ghost" onClick={() => dispatch({ type: 'back' })}>
               Chọn nhà cung cấp khác
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => openSettings({ group: 'connections', page: 'keys' })}
-            >
+            <Button onClick={() => openSettings({ group: 'connections', page: 'keys' })}>
               Dùng khóa API
             </Button>
-            <Button onClick={() => dispatch({ type: 'retry' })}>Thử lại</Button>
+            <Button variant="solid" onClick={() => dispatch({ type: 'retry' })}>
+              Thử lại
+            </Button>
           </div>
         </div>
       )}
 
       {connected.length > 0 && (
         <>
-          <span className="mt-3 block px-0.5 text-ui-xs font-medium text-ink-faint">
-            Đã kết nối
-          </span>
+          <span className="mt-3 block px-0.5 text-body-xs font-medium text-muted">Đã kết nối</span>
           <div className="mt-1 flex flex-col gap-1">
             {connected.map((card) => (
               <ConnectedCard
@@ -295,52 +293,35 @@ export function AccountsPage(): JSX.Element {
         </>
       )}
 
-      <span className="mt-3 block px-0.5 text-ui-xs font-medium text-ink-faint">
+      <span className="mt-3 block px-0.5 text-body-xs font-medium text-muted">
         Nhà cung cấp khác
       </span>
       <div className="mt-1 flex flex-col gap-1">
         {others.map((card) => (
-          <button
+          <ActionRow
             key={card.id}
-            type="button"
             data-setting-id={'account:' + card.id}
             disabled={flow.step === 'starting' || flow.step === 'polling'}
             onClick={() => dispatch({ type: 'pick_account', provider: card.id })}
-            className={cx(
-              'flex items-center justify-between gap-3 rounded-control px-3 py-2.5 text-left hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50',
-              focusRing
-            )}
-          >
-            <span className="flex min-w-0 flex-col">
-              <span className="text-ui-sm font-semibold">{ACCOUNT_LABELS[card.id]}</span>
-              <span className="mt-1 text-ui-xs text-ink-muted">{card.flow}</span>
-              <span className="mt-0.5 text-ui-2xs text-ink-faint">{TERMS_NOTE}</span>
-            </span>
-            <AltArrowRightIcon size={14} className="shrink-0 text-ink-faint" />
-          </button>
+            title={ACCOUNT_LABELS[card.id]}
+            description={
+              <>
+                <span className="block">{card.flow}</span>
+                <span className="mt-0.5 block text-muted">{TERMS_NOTE}</span>
+              </>
+            }
+          />
         ))}
-        <button
-          type="button"
+        <ActionRow
           data-setting-id="account:claude"
           onClick={() =>
             openSettings({ group: 'connections', page: 'keys', key: 'provider:anthropic' })
           }
-          className={cx(
-            'flex items-center justify-between gap-3 rounded-control px-3 py-2.5 text-left hover:bg-hover',
-            focusRing
-          )}
-        >
-          <span className="flex min-w-0 flex-col">
-            <span className="text-ui-sm font-semibold">Claude</span>
-            <span className="mt-1 text-ui-xs text-ink-muted">
-              Mira không đăng nhập bằng gói Claude Pro/Max. Dùng khóa API Anthropic hoặc gateway tự
-              dựng.
-            </span>
-          </span>
-          <AltArrowRightIcon size={14} className="shrink-0 text-ink-faint" />
-        </button>
+          title="Claude"
+          description="Mira không đăng nhập bằng gói Claude Pro/Max. Dùng khóa API Anthropic hoặc gateway tự dựng."
+        />
       </div>
-      <p className="mt-4 flex items-center gap-1.5 text-ui-2xs text-ink-faint">
+      <p className="mt-4 flex items-center gap-1.5 text-body-xs text-muted">
         <CheckCircleIcon size={12} aria-hidden="true" />
         {TERMS_NOTE}
       </p>

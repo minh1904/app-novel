@@ -1,7 +1,10 @@
 import { useEffect, useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import type { WorkSummary } from '../../../../shared/contracts/library'
-import { cx } from '../../components/cx'
+import { Badge } from '../../components/ui/Badge'
+import { ICON } from '../../components/ui/icon'
+import { NavItem } from '../../components/ui/NavItem'
+import { cn } from '../../lib/cn'
 import { displayTitle } from '../work/chapterList'
 import { useChapters } from '../work/useChapters'
 
@@ -52,20 +55,19 @@ export function ChapterNavSidebar({
 
   return (
     <>
-      <div className="flex h-(--header-height) shrink-0 items-center px-2.5">
-        <button
-          type="button"
-          className="flex min-w-0 items-center gap-1 rounded-control px-1.5 py-1 text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
+      <div className="flex h-(--mira-header-height) shrink-0 items-center px-2.5">
+        <NavItem
+          strong
           onClick={onBackToWork}
           title="Về tác phẩm"
+          leading={<AltArrowLeftIcon size={ICON.sm} aria-hidden="true" />}
         >
-          <AltArrowLeftIcon size={14} className="shrink-0" />
-          <span className="truncate text-ui-sm font-semibold text-ink">{workTitle}</span>
-        </button>
+          {workTitle}
+        </NavItem>
       </div>
       <nav aria-label="Danh sách chương" className="min-h-0 flex-1 overflow-y-auto p-1.5">
         {load === 'loading' ? (
-          <p role="status" className="px-2 py-1.5 text-ui-xs text-ink-muted">
+          <p role="status" className="px-2 py-1.5 text-body-xs text-subtle">
             Đang tải…
           </p>
         ) : (
@@ -76,7 +78,7 @@ export function ChapterNavSidebar({
                 ? 'bg-success'
                 : chapter.hasSource
                   ? 'bg-warning'
-                  : 'bg-ink-muted/40'
+                  : 'bg-neutral/40'
             const dotLabel =
               chapter.hasSource && chapter.hasTarget
                 ? 'Đã dịch'
@@ -85,33 +87,31 @@ export function ChapterNavSidebar({
                   : 'Chưa có bản gốc'
             const pending = pendingCounts[chapter.id] ?? 0
             return (
-              <button
+              <NavItem
                 key={chapter.id}
-                type="button"
-                aria-current={active ? 'page' : undefined}
-                className={cx(
-                  'flex w-full items-center gap-2 rounded-item px-2 py-1 text-left text-ui-sm outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
-                  active ? 'bg-active text-ink' : 'text-ink-muted hover:bg-hover hover:text-ink'
-                )}
+                active={active}
                 onClick={() => onOpenChapter(chapter.id)}
-              >
-                <span
-                  aria-hidden="true"
-                  title={dotLabel}
-                  className={cx('size-1.5 shrink-0 rounded-full', dotClass)}
-                />
-                <span className="truncate">
-                  {chapter.number}. {displayTitle(chapter)}
-                </span>
-                {pending > 0 && (
+                leading={
                   <span
-                    title={`${pending} đề xuất chờ duyệt`}
-                    className="ml-auto shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-ui-xs font-medium text-warning tabular-nums"
-                  >
-                    {pending}
-                  </span>
-                )}
-              </button>
+                    aria-hidden="true"
+                    title={dotLabel}
+                    className={cn('size-1.5 shrink-0 rounded-full', dotClass)}
+                  />
+                }
+                trailing={
+                  pending > 0 && (
+                    <Badge
+                      color="warning"
+                      className="tabular-nums"
+                      title={`${pending} đề xuất chờ duyệt`}
+                    >
+                      {pending}
+                    </Badge>
+                  )
+                }
+              >
+                {chapter.number}. {displayTitle(chapter)}
+              </NavItem>
             )
           })
         )}

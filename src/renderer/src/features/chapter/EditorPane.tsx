@@ -36,23 +36,24 @@ export function EditorPane({
   notice?: ReactNode
   children: ReactNode
 }): JSX.Element {
+  // "Đã lưu" is said once, in the chapter's status bar. A pane speaks up only when its own side is
+  // not saved, so the reader can tell which of the two still needs it.
   const saved = status.state === 'saved'
+  const parts = [lockLabel, saved ? undefined : STATE_LABEL[status.state]].filter(Boolean)
   return (
-    <section aria-label={title} className="flex min-h-0 min-w-0 flex-col gap-2 bg-canvas p-3">
+    <section aria-label={title} className="flex min-h-0 min-w-0 flex-col gap-2 bg-surface p-3">
       <div className="flex min-h-6 min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-baseline gap-2">
-          <h3 className="shrink-0 text-ui-sm font-semibold">{title}</h3>
-          <p className="truncate text-ui-xs text-ink-muted">{subtitle}</p>
+          <h3 className="shrink-0 text-body-sm font-semibold">{title}</h3>
+          <p className="truncate text-body-xs text-subtle">{subtitle}</p>
           <p
             role="status"
-            className="flex shrink-0 items-center gap-1 text-ui-xs whitespace-nowrap text-ink-muted"
+            className="flex shrink-0 items-center gap-1 text-body-xs whitespace-nowrap text-subtle"
           >
-            <span
-              aria-hidden="true"
-              className={'size-1.5 shrink-0 rounded-full ' + (saved ? 'bg-success' : 'bg-warning')}
-            />
-            {lockLabel ? lockLabel + ' · ' : ''}
-            {STATE_LABEL[status.state]}
+            {!saved && (
+              <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
+            )}
+            {parts.join(' · ')}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">{actions}</div>

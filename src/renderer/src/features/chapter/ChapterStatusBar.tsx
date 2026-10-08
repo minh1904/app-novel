@@ -1,5 +1,6 @@
 import { useEffect, useState, type JSX } from 'react'
-import { cx } from '../../components/cx'
+import { LinkButton } from '../../components/ui/Button'
+import { cn } from '../../lib/cn'
 import type { SessionStatus } from '../editor/editorSession'
 import { combinedSaveLabel, textStats } from './chapterStats'
 
@@ -51,16 +52,16 @@ export function ChapterStatusBar({
   return (
     <footer
       aria-label="Trạng thái chương"
-      className="flex h-6 shrink-0 items-center justify-end gap-1 border-t border-line bg-sidebar px-2 text-ui-xs text-ink-muted tabular-nums"
+      className="flex h-6 shrink-0 items-center justify-end gap-1 border-t border-default bg-subtle px-2 text-body-xs text-subtle tabular-nums"
     >
       {pending > 0 && (
-        <button
-          type="button"
+        <LinkButton
+          color="warning"
           onClick={onOpenProposals}
-          className="cursor-pointer rounded-item px-1 py-0.5 text-warning outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus/40"
+          leftIcon={<span aria-hidden="true" className="size-1.5 rounded-full bg-warning" />}
         >
           {pending.toLocaleString('vi')} đề xuất chờ duyệt
-        </button>
+        </LinkButton>
       )}
       <span className="px-1 py-0.5">
         Bản dịch: {words.toLocaleString('vi')} chữ · {characters.toLocaleString('vi')} ký tự
@@ -68,7 +69,7 @@ export function ChapterStatusBar({
       <span role="status" className="flex items-center gap-1.5 px-1 py-0.5">
         <span
           aria-hidden="true"
-          className={cx('size-1.5 rounded-full', save.safe ? 'bg-success' : 'bg-warning')}
+          className={cn('size-1.5 rounded-full', save.safe ? 'bg-success' : 'bg-warning')}
         />
         {save.label}
       </span>

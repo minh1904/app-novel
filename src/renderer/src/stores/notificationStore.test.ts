@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ToastStacks } from '../components/Toaster'
+import { ToastStacks } from '../components/ui/Toast'
 import { resetAllStores } from './resetStores'
 import {
   notify,

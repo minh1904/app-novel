@@ -148,10 +148,10 @@ const livePreviewTheme = EditorView.baseTheme({
   '.cm-livepreview-italic': { fontStyle: 'italic' },
   '.cm-livepreview-strikethrough': { textDecoration: 'line-through' },
   '.cm-livepreview-quote': {
-    borderLeft: '2px solid var(--text-muted)',
+    borderLeft: '2px solid var(--mira-text-muted)',
     paddingLeft: '8px',
     marginLeft: '2px',
-    color: 'var(--text-muted)'
+    color: 'var(--mira-text-muted)'
   },
   '.cm-livepreview-h1': { fontSize: '20px', fontWeight: '600', letterSpacing: '-0.02em' },
   '.cm-livepreview-h2': { fontSize: '17px', fontWeight: '600' },

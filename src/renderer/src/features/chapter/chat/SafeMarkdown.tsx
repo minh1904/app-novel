@@ -103,7 +103,7 @@ function inline(text: string): ReactNode[] {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline"
+            className="text-info underline"
           >
             {match[3]}
           </a>
@@ -113,7 +113,7 @@ function inline(text: string): ReactNode[] {
       )
     } else if (match[5] !== undefined)
       result.push(
-        <code key={key} className="rounded bg-control px-1">
+        <code key={key} className="rounded bg-muted px-1">
           {match[5]}
         </code>
       )
@@ -127,13 +127,13 @@ function inline(text: string): ReactNode[] {
 
 export function SafeMarkdown({ text }: { text: string }): JSX.Element {
   return (
-    <div className="selectable space-y-2 text-ui-sm leading-normal text-ink">
+    <div className="selectable space-y-2 text-body-sm leading-normal text-default">
       {parseSafeMarkdown(text).map((block, index) => {
         if (block.kind === 'code')
           return (
             <pre
               key={index}
-              className="overflow-x-auto rounded-control bg-canvas p-2 text-ui-xs whitespace-pre-wrap"
+              className="overflow-x-auto rounded-sm bg-surface p-2 text-body-xs whitespace-pre-wrap"
             >
               <code>{block.text}</code>
             </pre>
@@ -142,12 +142,12 @@ export function SafeMarkdown({ text }: { text: string }): JSX.Element {
           const content = inline(block.text)
           if (block.level === 1)
             return (
-              <h4 key={index} className="text-ui-md font-semibold">
+              <h4 key={index} className="text-body-md font-semibold">
                 {content}
               </h4>
             )
           return (
-            <h5 key={index} className="text-ui-sm font-semibold">
+            <h5 key={index} className="text-body-sm font-semibold">
               {content}
             </h5>
           )
@@ -164,7 +164,7 @@ export function SafeMarkdown({ text }: { text: string }): JSX.Element {
         }
         if (block.kind === 'quote')
           return (
-            <blockquote key={index} className="border-l-2 border-line-strong pl-3 text-ink-muted">
+            <blockquote key={index} className="border-l-2 border-strong pl-3 text-subtle">
               {inline(block.text)}
             </blockquote>
           )

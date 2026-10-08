@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
-import { TooltipProvider } from './components/Tooltip'
+import { TooltipProvider } from './components/ui/Tooltip'
 import { applyThemeEffect, useUiStore } from './stores/uiStore'
-import './styles/tokens.css'
+import './styles/index.css'
 
 // The theme the person chose in Settings (or the system's), before the first render; it also tells main
 // which colour the window buttons should wear.

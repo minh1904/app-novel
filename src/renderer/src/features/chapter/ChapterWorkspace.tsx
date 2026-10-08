@@ -6,13 +6,15 @@ import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
 import { MinimizeSquareIcon } from '@solar-icons/react/linear/minimize-square'
 import { StarsIcon } from '@solar-icons/react/linear/stars'
 import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
+import { splitParagraphs } from '../../../../shared/text/paragraphSpans'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { TextRecord } from '../../../../shared/contracts/text'
 import { TopBarActions } from '../../app/TopBarActions'
 import { WorkTabActiveContext } from '../../app/topBarSlot'
-import { Button } from '../../components/Button'
-import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
-import { TabsList, TabsRoot, TabsTab } from '../../components/Tabs'
+import { Button, LinkButton } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/ui/DropdownMenu'
+import { TabsList, TabsRoot, TabsTab } from '../../components/ui/Tabs'
 import type { SessionStatus, TextStore } from '../editor/editorSession'
 import { insertImageEmbed } from '../editor/imageEmbed'
 import type { ImageStore } from '../editor/imageEmbedDecorations'
@@ -21,8 +23,9 @@ import type { TargetRange } from '../editor/chatRange'
 import { TextEditor, type TextEditorHandle } from '../editor/TextEditor'
 import { ExportDialog } from '../export/ExportDialog'
 import { languages, type Work } from '../library/works'
+import { useUiStore } from '../../stores/uiStore'
 import { headingTitle } from '../work/chapterList'
-import { SOON_LABEL } from '../work/mockFeatures'
+import { contextArea } from '../work/workAreas'
 import { AiPanel } from './chat/AiPanel'
 import type { ChatEditor } from './chat/useAiChat'
 import { AiTranslateDialog } from './translate/AiTranslateDialog'
@@ -64,11 +67,16 @@ export interface ChapterWorkspaceProps {
   onToggleFocus(): void
 }
 
-const figures = (record: TextRecord): string =>
-  record.segments.length.toLocaleString('vi') +
-  ' segment · ' +
-  record.content.length.toLocaleString('vi') +
-  ' ký tự'
+/**
+ * How far the chapter is, in the paragraphs the translator sees (ADR-005). The work, the languages and
+ * the character counts are left to the breadcrumb, the pane headers and the status bar.
+ */
+const paragraphFigures = (source: TextRecord, target: TextRecord): string => {
+  const sourceCount = splitParagraphs(source.content).length.toLocaleString('vi')
+  if (target.content.trim() === '') return sourceCount + ' đoạn gốc, chưa dịch'
+  const targetCount = splitParagraphs(target.content).length.toLocaleString('vi')
+  return sourceCount + ' đoạn gốc · ' + targetCount + ' đoạn dịch'
+}
 
 /**
  * The full-text mode of a chapter: the source on the left, the translation on the right, each one
@@ -264,47 +272,41 @@ export function ChapterWorkspace({
       {/* Ask AI, focus, save and the chapter menu sit in the window's top bar, in the same row as the
           window buttons. They still belong to this screen: the bar only gives them a place. */}
       <TopBarActions>
-        {mode === 'full' && (
+        {mode === 'full' && (dirty || saving) && (
+          // Only while there is something to save: the status bar already says "Đã lưu", and a
+          // disabled button that does nothing is noise. First in the row, so the icons after it
+          // stay where they are when it appears.
           <Button
-            variant="ghost-muted"
-            size="icon"
-            aria-pressed={aiOpen}
-            aria-label="Hỏi AI (Ctrl+K)"
-            title="Hỏi AI (Ctrl+K)"
-            onClick={toggleAi}
-          >
-            <StarsIcon size={16} />
-          </Button>
-        )}
-        <Button
-          variant="ghost-muted"
-          size="icon"
-          aria-pressed={focused}
-          aria-label={focusLabel}
-          title={focusLabel}
-          onClick={onToggleFocus}
-        >
-          {focused ? <MaximizeSquareIcon size={16} /> : <MinimizeSquareIcon size={16} />}
-        </Button>
-        {mode === 'full' && (
-          // Quiet while there is nothing to save, solid once there is: in a bar of icons a solid
-          // button that does nothing is the loudest thing in it.
-          <Button
-            variant={dirty ? 'default' : 'secondary'}
-            disabled={saving || !dirty}
+            variant="solid"
+            disabled={saving}
             onClick={() => void saveAll()}
             title="Lưu (Ctrl+S)"
           >
             Lưu
           </Button>
         )}
+        {mode === 'full' && (
+          <CompactButton
+            aria-pressed={aiOpen}
+            aria-label="Hỏi AI (Ctrl+K)"
+            title="Hỏi AI (Ctrl+K)"
+            onClick={toggleAi}
+            icon={<StarsIcon size={16} />}
+          />
+        )}
+        <CompactButton
+          aria-pressed={focused}
+          aria-label={focusLabel}
+          title={focusLabel}
+          onClick={onToggleFocus}
+          icon={focused ? <MaximizeSquareIcon size={16} /> : <MinimizeSquareIcon size={16} />}
+        />
         <MenuRoot>
           <MenuTrigger
-            aria-label="Thêm thao tác chương"
-            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
-          >
-            <MenuDotsIcon size={16} />
-          </MenuTrigger>
+            render={
+              <CompactButton aria-label="Thêm thao tác chương" icon={<MenuDotsIcon size={16} />} />
+            }
+          />
           <MenuPopup>
             <MenuItem
               onClick={() => {
@@ -313,7 +315,7 @@ export function ChapterWorkspace({
                 })
               }}
             >
-              <DocumentAddIcon size={14} className="text-ink-muted" />
+              <DocumentAddIcon size={14} className="text-subtle" />
               Thay bản gốc
             </MenuItem>
             <MenuItem
@@ -326,15 +328,15 @@ export function ChapterWorkspace({
                 })
               }}
             >
-              <StarsIcon size={14} className="text-ink-muted" />
+              <StarsIcon size={14} className="text-subtle" />
               Dịch bằng AI
             </MenuItem>
             <MenuItem onClick={() => setExportOpen(true)}>
-              <UploadMinimalisticIcon size={14} className="text-ink-muted" />
+              <UploadMinimalisticIcon size={14} className="text-subtle" />
               Xuất chương…
             </MenuItem>
             <MenuItem onClick={onBackToWork}>
-              <AltArrowLeftIcon size={14} className="text-ink-muted" />
+              <AltArrowLeftIcon size={14} className="text-subtle" />
               Về tác phẩm
             </MenuItem>
           </MenuPopup>
@@ -342,13 +344,10 @@ export function ChapterWorkspace({
       </TopBarActions>
 
       {/* Which chapter, then the mode and the context the translator reads while working. One row, so the panes keep the height. */}
-      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-line bg-canvas px-2.5">
-        <h2 className="min-w-0 flex-1 truncate text-ui-sm font-semibold">
+      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-default bg-surface px-2.5">
+        <h2 className="min-w-0 flex-1 truncate text-body-sm font-semibold">
           {headingTitle(chapter)}{' '}
-          <span className="font-normal text-ink-muted">
-            · {work.title} · {sourceLanguage.short} → Việt · gốc {figures(source)}
-            {target.content !== '' && ' · dịch ' + figures(target)}
-          </span>
+          <span className="font-normal text-subtle">· {paragraphFigures(source, target)}</span>
         </h2>
         {SENTENCE_MODE_ENABLED && (
           <>
@@ -357,11 +356,11 @@ export function ChapterWorkspace({
               aria-label="Chế độ soạn thảo"
               onValueChange={(value) => void switchMode(value as 'full' | 'sentence')}
             >
-              <TabsList size="sm">
-                <TabsTab size="sm" value="full">
+              <TabsList variant="pill">
+                <TabsTab variant="pill" value="full">
                   Toàn văn
                 </TabsTab>
-                <TabsTab size="sm" value="sentence">
+                <TabsTab variant="pill" value="sentence">
                   Từng câu
                 </TabsTab>
               </TabsList>
@@ -369,21 +368,17 @@ export function ChapterWorkspace({
             <span className="h-4 w-px shrink-0 bg-line" aria-hidden="true" />
           </>
         )}
-        {/* One badge for the group, not one per label: the row has to fit in 36px. */}
-        <div
-          role="group"
-          aria-label={'Ngữ cảnh dịch (' + SOON_LABEL + ')'}
-          className="flex min-w-0 items-center gap-2.5 overflow-hidden text-ui-xs text-ink-muted"
+        {/* Glossary and addressing live in the work's Ngữ cảnh area; this opens it there. */}
+        <LinkButton
+          color="neutral"
+          className="shrink-0"
+          onClick={() => {
+            useUiStore.getState().setWorkArea(work.id, contextArea.id)
+            onBackToWork()
+          }}
         >
-          {['Thuật ngữ', 'Xưng hô', 'Văn phong'].map((label) => (
-            <span key={label} aria-disabled="true" className="whitespace-nowrap">
-              {label}
-            </span>
-          ))}
-          <span className="shrink-0 rounded-item bg-selected px-1.5 py-px text-ui-xs text-ink">
-            {SOON_LABEL}
-          </span>
-        </div>
+          Thuật ngữ · Xưng hô
+        </LinkButton>
       </div>
 
       {mode === 'sentence' ? (
@@ -402,8 +397,8 @@ export function ChapterWorkspace({
         <div
           className={
             aiOpen
-              ? 'grid min-h-0 flex-1 divide-x divide-line'
-              : 'grid min-h-0 flex-1 grid-cols-2 divide-x divide-line'
+              ? 'grid min-h-0 flex-1 divide-x divide-default'
+              : 'grid min-h-0 flex-1 grid-cols-2 divide-x divide-default'
           }
           style={
             aiOpen ? { gridTemplateColumns: `minmax(0,1fr) minmax(0,1fr) ${aiWidth}px` } : undefined
@@ -415,7 +410,7 @@ export function ChapterWorkspace({
             status={sourceStatus}
             lockLabel={unlocked ? 'Đang sửa' : 'Đã khóa, chỉ đọc'}
             actions={
-              <Button variant="outline" size="sm" onClick={() => setUnlocked((value) => !value)}>
+              <Button onClick={() => setUnlocked((value) => !value)}>
                 {unlocked ? 'Khóa lại' : 'Sửa bản gốc'}
               </Button>
             }
@@ -423,7 +418,7 @@ export function ChapterWorkspace({
               unlocked ? (
                 <p
                   role="note"
-                  className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-ui-xs leading-normal"
+                  className="rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 text-body-xs leading-normal"
                 >
                   Bạn đang sửa bản gốc. Chỉ nên sửa lỗi chính tả hoặc sót chữ; bản dịch đã có không
                   tự đổi theo.
@@ -449,11 +444,7 @@ export function ChapterWorkspace({
             title="Bản dịch"
             subtitle="Tiếng Việt"
             status={targetStatus}
-            actions={
-              <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
-                Xuất chương
-              </Button>
-            }
+            actions={<Button onClick={() => setExportOpen(true)}>Xuất chương</Button>}
           >
             <TextEditor
               key={targetEpoch}

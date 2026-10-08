@@ -1,0 +1,181 @@
+@import 'tailwindcss';
+@import './theme.css';
+
+/* Inter 4.1, SIL OFL 1.1 (assets/fonts/Inter-OFL.txt): the one face for the interface and the story text.
+   Variable, so every weight comes from one file. Bundled because the CSP allows no font CDN. */
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/InterVariable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/InterVariable-Italic.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* JetBrains Mono 2.304, SIL OFL 1.1 (assets/fonts/OFL.txt). Bundled because the CSP allows no font CDN. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/JetBrainsMono-Italic.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@layer base {
+  body {
+    @apply bg-default font-sans text-body-sm text-default antialiased;
+    /* Chrome text is not selectable; story text and answers opt back in (.selectable). */
+    user-select: none;
+  }
+
+  :is(input, textarea, [contenteditable='true'], .selectable) {
+    user-select: text;
+  }
+
+  ::selection {
+    background: var(--mira-selection);
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Tailwind 4 drops the pointer cursor on buttons; put it back on everything pressable. */
+  button:not(:disabled):not([data-disabled]),
+  [role='button']:not([aria-disabled='true']):not([data-disabled]),
+  [role='tab']:not([aria-disabled='true']):not([data-disabled]),
+  [role='option']:not([aria-disabled='true']):not([data-disabled]),
+  [role^='menuitem']:not([aria-disabled='true']):not([data-disabled]),
+  label:has(input:not(:disabled)) {
+    cursor: pointer;
+  }
+
+  /* Spinners and pulses keep running: they say something is still working. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      transition-duration: 0s !important;
+    }
+  }
+}
+
+@layer components {
+  /* Scrollbars show only while the pointer is over the scroller, and never change size. */
+  *::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  *::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 9999rem;
+    background-clip: padding-box;
+  }
+
+  *:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--mira-text) 18%, transparent);
+  }
+
+  *:hover::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--mira-text) 36%, transparent);
+    background-clip: padding-box;
+  }
+}
+
+/* Widens the hit area by 4px above and below without changing how the control looks. */
+@utility touch-target {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block: calc(var(--spacing-2xs) * -1);
+  }
+}
+
+/*
+ * Window glass. Main sets `data-glass` on <html> when Windows draws acrylic behind the page: the page
+ * goes clear and the window colour turns translucent, so the material shows around the sheet. The
+ * sheet stays opaque: story text is never read through glass.
+ */
+html[data-glass] {
+  background-color: transparent;
+  --mira-glass-fill: 72%;
+}
+
+html[data-glass][data-theme='dark'] {
+  /* Windows' acrylic is light; the dark window needs more cover to stay dark. */
+  --mira-glass-fill: 88%;
+}
+
+html[data-glass] body {
+  background: color-mix(in srgb, var(--mira-bg) var(--mira-glass-fill), transparent);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-glass] body {
+    background: var(--mira-bg);
+  }
+}
+
+/*
+ * The header is also the window's title bar (Electron window controls overlay), so it is what you grab
+ * to move the window. Everything pressable inside it opts out, so a new button needs no extra class.
+ */
+.window-drag {
+  -webkit-app-region: drag;
+}
+
+.window-drag :is(button, a, input, select, textarea, [role='button'], [role='menuitem']) {
+  -webkit-app-region: no-drag;
+}
+
+/* A settings row a deep link or a search result points at lights up for a moment. */
+@keyframes setting-highlight {
+  from {
+    background-color: var(--mira-info-muted);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.setting-highlight {
+  border-radius: var(--mira-radius-sm);
+  animation: setting-highlight 1.6s ease-out;
+}

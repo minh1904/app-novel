@@ -3,11 +3,16 @@ import { Dialog as BaseDialog } from '@base-ui/react/dialog'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { CloseIcon } from '@solar-icons/react/linear/close'
 import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
-import { focusRing } from '../../components/focusRing'
-import { menuItemClass, menuSurfaceClass } from '../../components/Menu'
-import { Select } from '../../components/Select'
+import { Button } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { cn } from '../../lib/cn'
+import { menuSurfaceClass } from '../../components/ui/DropdownMenu'
+import { ICON } from '../../components/ui/icon'
+import { SearchInput } from '../../components/ui/Input'
+import { ListOption } from '../../components/ui/ListOption'
+import { NavItem } from '../../components/ui/NavItem'
+import { Select } from '../../components/ui/Select'
+import { useDimChrome } from '../../app/useDimChrome'
 import { useUiStore } from '../../stores/uiStore'
 import {
   breadcrumbOf,
@@ -40,42 +45,26 @@ function Nav({
         const active = group.id === location.group
         return (
           <div key={group.id} className="flex flex-col gap-0.5">
-            <button
-              type="button"
+            <NavItem
+              strong
+              active={active}
+              // A group with pages is not itself a page: only a one-page group is the current page.
               aria-current={active && group.pages.length === 1 ? 'page' : undefined}
               onClick={() => onGo({ group: group.id, page: group.pages[0].id })}
-              className={cx(
-                'flex h-7 w-full items-center rounded-item border px-2 text-left text-ui-sm font-medium transition-colors duration-(--duration-fast)',
-                active
-                  ? 'border-line bg-tertiary text-ink'
-                  : 'border-transparent text-ink-muted hover:bg-control-hover hover:text-ink',
-                focusRing
-              )}
             >
               {group.label}
-            </button>
+            </NavItem>
             {active && group.pages.length > 1 && (
               <div className="ml-3.5 flex flex-col gap-0.5 pl-1.5">
-                {group.pages.map((page) => {
-                  const current = page.id === location.page
-                  return (
-                    <button
-                      key={page.id}
-                      type="button"
-                      aria-current={current ? 'page' : undefined}
-                      onClick={() => onGo({ group: group.id, page: page.id })}
-                      className={cx(
-                        'flex h-7 w-full items-center rounded-item px-2 text-left text-ui-sm transition-colors duration-(--duration-fast)',
-                        current
-                          ? 'bg-control-hover font-medium text-ink'
-                          : 'text-ink-faint hover:bg-control-hover hover:text-ink',
-                        focusRing
-                      )}
-                    >
-                      {page.label}
-                    </button>
-                  )
-                })}
+                {group.pages.map((page) => (
+                  <NavItem
+                    key={page.id}
+                    active={page.id === location.page}
+                    onClick={() => onGo({ group: group.id, page: page.id })}
+                  >
+                    {page.label}
+                  </NavItem>
+                ))}
               </div>
             )}
           </div>
@@ -102,7 +91,6 @@ function NavDropdown({
   return (
     <Select
       label="Mục cài đặt"
-      size="sm"
       value={pageKey(location)}
       options={options}
       onChange={(value) => {
@@ -116,11 +104,11 @@ function NavDropdown({
 function Breadcrumb({ location }: { location: SettingsLocation }): JSX.Element {
   const parts = breadcrumbOf(location)
   return (
-    <div className="mb-3 flex items-center gap-1 text-ui-xs text-ink-faint">
+    <div className="mb-3 flex items-center gap-1 text-body-xs text-muted">
       {parts.map((part, index) => (
         <span key={part} className="flex items-center gap-1">
-          {index > 0 && <AltArrowRightIcon size={11} aria-hidden="true" />}
-          <span className={index === parts.length - 1 ? 'text-ink' : undefined}>{part}</span>
+          {index > 0 && <AltArrowRightIcon size={12} aria-hidden="true" />}
+          <span className={index === parts.length - 1 ? 'text-default' : undefined}>{part}</span>
         </span>
       ))}
     </div>
@@ -146,41 +134,37 @@ function SearchPill({
   const hits = searchSettings(query)
   const [cursor, setCursor] = useState(0)
   return (
-    <div className="absolute -top-3.5 left-1/2 z-(--z-raised) w-72 -translate-x-1/2">
+    <div className="absolute -top-4 left-1/2 z-(--mira-z-sticky) w-72 -translate-x-1/2">
       {open ? (
-        <div className={cx(menuSurfaceClass, 'flex flex-col gap-1')}>
-          <label className="flex h-6 items-center gap-1.5 px-2 text-ink-faint">
-            <MinimalisticMagnifierIcon size={12} aria-hidden="true" />
-            <input
-              ref={inputRef}
-              autoFocus
-              aria-label="Tìm trong cài đặt"
-              placeholder="Tìm trong cài đặt"
-              value={query}
-              onChange={(event) => {
-                onQuery(event.target.value)
-                setCursor(0)
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault()
-                  setCursor((at) => Math.min(at + 1, hits.length - 1))
-                } else if (event.key === 'ArrowUp') {
-                  event.preventDefault()
-                  setCursor((at) => Math.max(at - 1, 0))
-                } else if (event.key === 'Enter' && hits[cursor]) {
-                  event.preventDefault()
-                  onPick(hits[cursor])
-                } else if (event.key === 'Escape') {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  onOpen(false)
-                }
-              }}
-              onBlur={() => setTimeout(() => onOpen(false), 120)}
-              className="min-w-0 flex-1 bg-transparent text-ui-xs text-ink outline-none placeholder:text-ink-faint"
-            />
-          </label>
+        <div className={cn(menuSurfaceClass, 'flex flex-col gap-1')}>
+          <SearchInput
+            ref={inputRef}
+            autoFocus
+            label="Tìm trong cài đặt"
+            placeholder="Tìm trong cài đặt"
+            value={query}
+            onChange={(event) => {
+              onQuery(event.target.value)
+              setCursor(0)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                setCursor((at) => Math.min(at + 1, hits.length - 1))
+              } else if (event.key === 'ArrowUp') {
+                event.preventDefault()
+                setCursor((at) => Math.max(at - 1, 0))
+              } else if (event.key === 'Enter' && hits[cursor]) {
+                event.preventDefault()
+                onPick(hits[cursor])
+              } else if (event.key === 'Escape') {
+                event.preventDefault()
+                event.stopPropagation()
+                onOpen(false)
+              }
+            }}
+            onBlur={() => setTimeout(() => onOpen(false), 120)}
+          />
           {query.trim() && (
             <div
               role="listbox"
@@ -188,41 +172,32 @@ function SearchPill({
               className="flex max-h-72 flex-col overflow-y-auto"
             >
               {hits.length === 0 && (
-                <span className="px-2 py-1 text-ui-xs text-ink-faint">Không có mục nào khớp</span>
+                <span className="px-2 py-1 text-body-xs text-muted">Không có mục nào khớp</span>
               )}
               {hits.map((hit, index) => (
-                <button
+                <ListOption
                   key={hit.title + hit.location.key}
-                  type="button"
-                  role="option"
-                  aria-selected={index === cursor}
+                  multiline
+                  selected={index === cursor}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => onPick(hit)}
-                  className={cx(
-                    menuItemClass,
-                    'h-auto flex-col items-start gap-0 py-1 text-left',
-                    index === cursor && 'bg-active'
-                  )}
                 >
-                  <span className="text-ui-xs text-ink">{hit.title}</span>
-                  <span className="truncate text-ui-2xs text-ink-faint">{hit.description}</span>
-                </button>
+                  <span className="text-body-xs text-default">{hit.title}</span>
+                  <span className="truncate text-body-xs text-muted">{hit.description}</span>
+                </ListOption>
               ))}
             </div>
           )}
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => onOpen(true)}
-          className={cx(
-            'mx-auto flex h-6 items-center gap-1.5 rounded-full border border-line-strong bg-canvas px-2.5 text-ui-xs text-ink-faint shadow-popover',
-            focusRing
-          )}
-        >
-          <MinimalisticMagnifierIcon size={12} aria-hidden="true" />
-          Tìm trong cài đặt
-        </button>
+        <div className="flex justify-center">
+          <Button
+            onClick={() => onOpen(true)}
+            leftIcon={<MinimalisticMagnifierIcon size={ICON.sm} aria-hidden="true" />}
+          >
+            Tìm trong cài đặt
+          </Button>
+        </div>
       )}
     </div>
   )
@@ -241,6 +216,7 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
   const [searching, setSearching] = useState(false)
   const searchInput = useRef<HTMLInputElement | null>(null)
   const content = useRef<HTMLDivElement | null>(null)
+  useDimChrome(location !== null)
 
   // A deep link's key: scroll its row into view and light it for a moment.
   const key = location?.key
@@ -279,7 +255,7 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
       }}
     >
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="fixed inset-0 z-(--z-backdrop) bg-backdrop backdrop-blur-[0.125rem] transition-opacity duration-(--duration-moderate) data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <BaseDialog.Backdrop className="fixed inset-0 z-(--mira-z-backdrop) bg-backdrop backdrop-blur-[0.125rem] transition-opacity duration-(--mira-duration-base) data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <BaseDialog.Popup
           aria-label="Cài đặt"
           initialFocus={content}
@@ -300,7 +276,7 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
               event.preventDefault()
             }
           }}
-          className="fixed inset-x-[clamp(1rem,4vw,3rem)] top-[calc(var(--header-height)+0.875rem)] bottom-4 z-(--z-modal) mx-auto flex max-w-[75rem] flex-col rounded-panel border border-line-strong bg-canvas text-ink shadow-overlay outline-none"
+          className="fixed inset-x-[clamp(1rem,4vw,3rem)] top-[calc(var(--mira-header-height)+0.875rem)] bottom-4 z-(--mira-z-modal) mx-auto flex max-w-[75rem] flex-col rounded-lg border border-strong bg-surface text-default shadow-lg outline-none"
         >
           {group && location && (
             <>
@@ -321,19 +297,16 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
               />
               <BaseDialog.Close
                 render={
-                  <Button
-                    variant="ghost-muted"
-                    size="icon"
+                  <CompactButton
                     aria-label="Đóng cài đặt"
-                    className="absolute top-2 right-2 z-(--z-raised)"
-                  >
-                    <CloseIcon size={14} />
-                  </Button>
+                    className="absolute top-2 right-2 z-(--mira-z-sticky)"
+                    icon={<CloseIcon size={ICON.sm} />}
+                  />
                 }
               />
               <div className="@container flex min-h-0 flex-1">
                 <div className="grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1fr)] @[47.5rem]:grid-cols-[13rem_minmax(0,1fr)]">
-                  <aside className="hidden min-h-0 overflow-y-auto rounded-l-panel bg-sidebar @[47.5rem]:block">
+                  <aside className="hidden min-h-0 overflow-y-auto rounded-l-lg bg-subtle @[47.5rem]:block">
                     <Nav location={location} onGo={go} />
                   </aside>
                   <div ref={content} tabIndex={-1} className="min-h-0 overflow-y-auto outline-none">

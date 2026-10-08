@@ -1,11 +1,11 @@
 import type { Input, WebContents } from 'electron'
 
 /**
- * The page runs at 90%, as Hermes Desktop does (its electron/zoom.ts). The type scale in tokens.css is
- * written before this zoom, so the 13px body shows at about 11.7px; the chapter editor's size is raised
- * to make up for it (docs/modules/design-system/hermes-comparison.md).
+ * The page runs at 100%: the type scale in tokens.css is the size on screen
+ * (docs/modules/design-system/README.md). It is still pinned, because the window buttons are drawn
+ * at a height computed from it.
  */
-export const ZOOM_FACTOR = 0.9
+export const ZOOM_FACTOR = 1
 
 /**
  * Ctrl/Cmd with `=`, `+`, `-` or `0`: the browser's zoom keys. Mira keeps one zoom, because the window

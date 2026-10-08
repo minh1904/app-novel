@@ -8,9 +8,15 @@ import { PlayIcon } from '@solar-icons/react/linear/play'
 import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
 import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
 import { AddIcon } from '@solar-icons/react/linear/add'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
-import { MenuItem, MenuPopup, MenuRoot, MenuSeparator, MenuTrigger } from '../../components/Menu'
+import { Button, LinkButton } from '../../components/ui/Button'
+import { cn } from '../../lib/cn'
+import {
+  MenuItem,
+  MenuPopup,
+  MenuRoot,
+  MenuSeparator,
+  MenuTrigger
+} from '../../components/ui/DropdownMenu'
 import { formatFullDate, formatUpdated } from '../library/format'
 import { WorkCover } from '../library/WorkCover'
 import { languages, statusLabels, type Work } from '../library/works'
@@ -54,26 +60,26 @@ export function WorkHeader({
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-col gap-1">
-            <h2 className="text-ui-lg leading-tight font-semibold break-words">{work.title}</h2>
+            <h2 className="text-body-lg leading-tight font-semibold break-words">{work.title}</h2>
             {work.originalTitle && (
-              <p lang={work.sourceLanguage} className="text-ui-sm text-ink-muted break-words">
+              <p lang={work.sourceLanguage} className="text-body-sm text-subtle break-words">
                 {work.originalTitle}
               </p>
             )}
-            {byline && <p className="text-ui-sm break-words">{byline}</p>}
+            {byline && <p className="text-body-sm break-words">{byline}</p>}
           </div>
 
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-ui-xs text-ink-muted">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body-xs text-subtle">
             <span
-              className={cx(
-                'rounded-control px-2 py-0.5 font-medium',
-                work.status === 'in-progress' ? 'bg-selected text-ink' : 'bg-control text-ink'
+              className={cn(
+                'rounded-sm px-2 py-0.5 font-medium',
+                work.status === 'in-progress' ? 'bg-selected text-default' : 'bg-muted text-default'
               )}
             >
               {statusLabels[work.status]}
             </span>
             {work.archived && (
-              <span className="rounded-control bg-control px-2 py-0.5 font-medium text-ink">
+              <span className="rounded-sm bg-muted px-2 py-0.5 font-medium text-default">
                 Đã lưu trữ
               </span>
             )}
@@ -90,23 +96,21 @@ export function WorkHeader({
             <div className="flex max-w-[68ch] flex-col items-start gap-1">
               <p
                 id="work-description"
-                className={cx(
-                  'text-ui-sm leading-normal whitespace-pre-line',
+                className={cn(
+                  'text-body-sm leading-normal whitespace-pre-line',
                   long && !expanded && 'line-clamp-3'
                 )}
               >
                 {work.description}
               </p>
               {long && (
-                <Button
-                  variant="link"
-                  size="sm"
+                <LinkButton
                   aria-expanded={expanded}
                   aria-controls="work-description"
                   onClick={() => setExpanded((open) => !open)}
                 >
                   {expanded ? 'Thu gọn' : 'Xem thêm'}
-                </Button>
+                </LinkButton>
               )}
             </div>
           )}
@@ -114,6 +118,7 @@ export function WorkHeader({
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {work.lastChapter ? (
               <Button
+                variant="solid"
                 onClick={actions.onContinue}
                 title={'Tiếp tục chương ' + work.lastChapter.number}
               >
@@ -122,23 +127,23 @@ export function WorkHeader({
                 <span className="font-normal opacity-70">· Chương {work.lastChapter.number}</span>
               </Button>
             ) : (
-              <Button onClick={actions.onAddChapter}>
+              <Button variant="solid" onClick={actions.onAddChapter}>
                 <AddIcon size={14} />
                 Thêm chương
               </Button>
             )}
-            <Button variant="outline" onClick={actions.onEdit}>
+            <Button onClick={actions.onEdit}>
               <PenNewSquareIcon size={14} />
               Sửa thông tin
             </Button>
-            <Button variant="outline" onClick={actions.onExport}>
+            <Button onClick={actions.onExport}>
               <UploadMinimalisticIcon size={14} />
               Xuất tác phẩm…
             </Button>
             <MenuRoot>
               <MenuTrigger
                 aria-label="Thao tác khác với tác phẩm"
-                className="inline-flex size-[34px] cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
+                className="inline-flex size-[34px] cursor-pointer items-center justify-center rounded-sm text-subtle outline-none hover:bg-hover hover:text-default focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-default"
               >
                 <MenuDotsIcon size={16} />
               </MenuTrigger>

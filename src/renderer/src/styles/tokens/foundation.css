@@ -1,0 +1,153 @@
+/*
+ * Tier 1: foundation. Raw values only; nothing on a screen reads these directly. The semantic tier
+ * (semantic.css) picks from them per theme, and the component tier (component.css) picks from the
+ * semantic tier. Organised as in the IZONE LMS design system (docs/modules/design-system/README.md).
+ *
+ * Neutrals and state colours follow the Acme reference shot: white surfaces, a near-white window,
+ * hairline greys, and vivid green / sky / orange / red / pink for meaning only.
+ */
+:root {
+  /* colour: neutral */
+  --mira-neutral-0: #ffffff;
+  --mira-neutral-25: #fcfcfc;
+  --mira-neutral-50: #fafafa;
+  --mira-neutral-100: #f5f5f5;
+  --mira-neutral-150: #f0f0f0;
+  --mira-neutral-200: #ebebeb;
+  --mira-neutral-300: #dedede;
+  /* 3.0:1 on white: the edge of a field or a switch track, which WCAG 1.4.11 needs at 3:1. */
+  --mira-neutral-350: #949494;
+  --mira-neutral-400: #a3a3a3;
+  /* 4.9:1 on the dark surface, where 500 is too dim for meta text. */
+  --mira-neutral-450: #8a8a8a;
+  --mira-neutral-500: #737373;
+  /* 3.0:1 on the dark surface: the dark-theme edge of a field or a switch track. */
+  --mira-neutral-550: #666666;
+  --mira-neutral-600: #5c5c5c;
+  --mira-neutral-700: #404040;
+  --mira-neutral-800: #262626;
+  --mira-neutral-850: #1f1f1f;
+  --mira-neutral-900: #1a1a1a;
+  --mira-neutral-950: #141414;
+  --mira-neutral-1000: #000000;
+
+  /* colour: states (50 · 100 · 300 · 500 · 600 · 700) */
+  --mira-green-50: #f0fdf4;
+  --mira-green-100: #dcfce7;
+  --mira-green-300: #4ade80;
+  --mira-green-500: #16a34a;
+  --mira-green-600: #15803d;
+  --mira-green-700: #166534;
+  --mira-sky-50: #f0f9ff;
+  --mira-sky-100: #e0f2fe;
+  --mira-sky-300: #7dd3fc;
+  --mira-sky-500: #0ea5e9;
+  --mira-sky-600: #0369a1;
+  --mira-sky-700: #075985;
+  --mira-orange-50: #fff7ed;
+  --mira-orange-100: #ffedd5;
+  --mira-orange-300: #fdba74;
+  --mira-orange-500: #f97316;
+  --mira-orange-600: #c2410c;
+  --mira-orange-700: #9a3412;
+  --mira-red-50: #fef2f2;
+  --mira-red-100: #fee2e2;
+  --mira-red-300: #fca5a5;
+  --mira-red-500: #ef4444;
+  --mira-red-600: #b91c1c;
+  --mira-red-700: #991b1b;
+  --mira-pink-50: #fdf2f8;
+  --mira-pink-100: #fce7f3;
+  --mira-pink-300: #f9a8d4;
+  --mira-pink-500: #ec4899;
+  --mira-pink-600: #be185d;
+  --mira-pink-700: #9d174d;
+  /* Story-text selection: a highlighter yellow, as before; it never stands for a state. */
+  --mira-yellow-300: #ffd24a;
+
+  /* radius: the IZONE LMS names on a desktop scale, about a quarter of a control's height or less
+     (sm 24 → xs 4 · md 32 → sm 6 · lg 40 → md 8); cards lg 12, dialogs xl 16. A rounded box inside
+     another takes the outer radius minus the gap between them. */
+  --mira-radius-none: 0;
+  --mira-radius-xs: 0.25rem;
+  --mira-radius-sm: 0.375rem;
+  --mira-radius-md: 0.5rem;
+  --mira-radius-lg: 0.75rem;
+  --mira-radius-xl: 1rem;
+  --mira-radius-full: 9999px;
+
+  /* spacing (IZONE LMS scale): p-md, gap-xs… Tailwind's numeric scale stays available. */
+  --mira-space-none: 0;
+  --mira-space-3xs: 0.125rem;
+  --mira-space-2xs: 0.25rem;
+  --mira-space-xs: 0.5rem;
+  --mira-space-sm: 0.75rem;
+  --mira-space-md: 1rem;
+  --mira-space-lg: 1.25rem;
+  --mira-space-xl: 1.5rem;
+  --mira-space-2xl: 2rem;
+  --mira-space-3xl: 2.5rem;
+  --mira-space-4xl: 3rem;
+
+  /* typography (Obsidian 1.13: four interface sizes, one reading size, two line heights) */
+  /* Inter everywhere (bundled); Chinese and Japanese glyphs fall back to the system's CJK fonts. */
+  --mira-font-ui:
+    'Inter', 'Segoe UI', system-ui, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol', emoji;
+  --mira-font-editor: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --mira-font-code: 'JetBrains Mono', 'Cascadia Code', 'Cascadia Mono', Consolas, monospace;
+  --mira-font-ui-smaller: 12px;
+  --mira-font-ui-small: 13px;
+  --mira-font-ui-medium: 15px;
+  --mira-font-ui-large: 20px;
+  --mira-font-text: 16px;
+  --mira-line-height-normal: 1.5;
+  --mira-line-height-tight: 1.3;
+  /* Obsidian reads at 1.5; Vietnamese stacks two marks on a vowel (ệ, ẫ) and needs a little more. */
+  --mira-line-height-text: 1.65;
+  --mira-weight-regular: 400;
+  --mira-weight-medium: 500;
+  --mira-weight-semibold: 600;
+
+  /* icon sizes (Obsidian: xs 14 · s 16 · m 18; 12 for a close mark in a tab, 24 for an empty state).
+     Solar icons take a pixel size, so components read the same scale from components/ui/icon.ts. */
+  --mira-icon-2xs: 12px;
+  --mira-icon-xs: 14px;
+  --mira-icon-sm: 16px;
+  --mira-icon-md: 18px;
+  --mira-icon-lg: 24px;
+
+  /* shadow (IZONE LMS custom shadows) */
+  --mira-shadow-xs:
+    0 1px 2px 0 rgb(10 10 10 / 0.04), 0 2px 4px 0 rgb(10 10 10 / 0.03),
+    0 4px 8px -2px rgb(10 10 10 / 0.04);
+  --mira-shadow-sm:
+    0 1px 3px -1.5px rgb(10 10 10 / 0.16), 0 5px 5px -2.5px rgb(10 10 10 / 0.08),
+    0 12px 6px -6px rgb(10 10 10 / 0.02), 0 16px 8px -8px rgb(10 10 10 / 0.01);
+  --mira-shadow-md:
+    0 48px 48px -24px rgb(10 10 10 / 0.04), 0 24px 24px -12px rgb(10 10 10 / 0.04),
+    0 12px 12px -6px rgb(10 10 10 / 0.04), 0 6px 6px -3px rgb(10 10 10 / 0.04);
+  --mira-shadow-lg:
+    0 96px 96px -32px rgb(10 10 10 / 0.06), 0 48px 48px -24px rgb(10 10 10 / 0.06),
+    0 24px 24px -12px rgb(10 10 10 / 0.06), 0 12px 12px -6px rgb(10 10 10 / 0.06);
+
+  /* motion */
+  --mira-duration-fast: 120ms;
+  --mira-duration-base: 200ms;
+  --mira-duration-slow: 300ms;
+  --mira-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --mira-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --mira-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* z-index: sticky < backdrop < modal < dropdown < toast < tooltip */
+  --mira-z-sticky: 100;
+  --mira-z-backdrop: 1000;
+  --mira-z-modal: 1100;
+  --mira-z-dropdown: 1200;
+  --mira-z-toast: 1300;
+  --mira-z-tooltip: 1400;
+
+  /* window chrome */
+  /* Obsidian's tab bar is 40px. */
+  --mira-header-height: 40px;
+  --mira-sidebar-width: 260px;
+}

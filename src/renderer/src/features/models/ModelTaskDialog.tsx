@@ -1,7 +1,7 @@
 import { useState, type JSX, type RefObject } from 'react'
 import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
-import { Dialog } from '../../components/Dialog'
-import { TextField } from '../../components/TextField'
+import { Dialog } from '../../components/ui/Dialog'
+import { TextField } from '../../components/ui/Field'
 import type { ModelEntryActions } from './modelEntryActions'
 import {
   TASK_FIELDS,
@@ -108,7 +108,7 @@ export function ModelTaskDialog({
             entry.name +
             '”. Sửa đồng thời hay RPM giữa lúc đang dịch có hiệu lực ở lô kế tiếp; các số còn lại buộc lập kế hoạch dịch lại.'
       }
-      size="form"
+      size="md"
       finalFocus={finalFocus}
     >
       {entry !== null && <TaskForm key={entry.id} entry={entry} actions={actions} />}

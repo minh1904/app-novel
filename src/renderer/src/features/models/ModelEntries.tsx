@@ -2,11 +2,18 @@ import { useRef, useState, type JSX } from 'react'
 import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
-import { Badge } from '../../components/Badge'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { MenuItem, MenuPopup, MenuRoot, MenuSeparator, MenuTrigger } from '../../components/Menu'
-import { TextField } from '../../components/TextField'
+import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { Dialog } from '../../components/ui/Dialog'
+import {
+  MenuItem,
+  MenuPopup,
+  MenuRoot,
+  MenuSeparator,
+  MenuTrigger
+} from '../../components/ui/DropdownMenu'
+import { TextField } from '../../components/ui/Field'
 import type { TestState } from '../settings/useConnections'
 import { ModelAdvancedDialog } from './ModelAdvancedDialog'
 import { ModelBasicDialog } from './ModelBasicDialog'
@@ -39,9 +46,15 @@ function EntryBadges({
 }): JSX.Element {
   return (
     <>
-      {isDefault && <Badge tone="muted">Mặc định</Badge>}
+      {isDefault && (
+        <Badge variant="outline" dot color="neutral">
+          Mặc định
+        </Badge>
+      )}
       {entry.settings.thinking !== undefined && (
-        <Badge tone="muted">Suy luận: {thinkingLabelOf(entry.settings.thinking)}</Badge>
+        <Badge variant="outline" dot color="neutral">
+          Suy luận: {thinkingLabelOf(entry.settings.thinking)}
+        </Badge>
       )}
     </>
   )
@@ -117,20 +130,20 @@ export function ModelEntries({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-2">
-        <p className="m-0 text-ui-xs font-semibold">Model dùng trong Mira</p>
+        <p className="m-0 text-body-xs font-semibold">Model dùng trong Mira</p>
         {entries.length > 0 && (
-          <span className="text-ui-xs text-ink-muted">{entries.length} mục</span>
+          <span className="text-body-xs text-subtle">{entries.length} mục</span>
         )}
       </div>
 
       {problem !== null && (
-        <p role="alert" className="m-0 text-ui-xs text-error">
+        <p role="alert" className="m-0 text-body-xs text-error">
           {problem}
         </p>
       )}
 
       {entries.length === 0 ? (
-        <p className="m-0 text-ui-xs leading-normal text-ink-muted">
+        <p className="m-0 text-body-xs leading-normal text-subtle">
           Chưa có mục model nào. Thêm một model để dịch và chat bằng kết nối này.
         </p>
       ) : (
@@ -142,17 +155,19 @@ export function ModelEntries({
             return (
               <li
                 key={entry.id}
-                className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line py-2 last:border-b-0"
+                className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-default py-2 last:border-b-0"
               >
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-ui-sm font-semibold break-all">{entry.name}</span>
+                    <span className="text-body-sm font-semibold break-all">{entry.name}</span>
                     <EntryBadges entry={entry} isDefault={isDefault} />
                     {info?.status === 'deprecated' && (
-                      <Badge tone="warning">Nhà cung cấp đã khai tử</Badge>
+                      <Badge variant="outline" dot color="warning">
+                        Nhà cung cấp đã khai tử
+                      </Badge>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-ui-xs text-ink-muted">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-body-xs text-subtle">
                     {/* The model is shown once: as the name when the entry still carries it, and here only when
                         the person gave the entry a name of their own. */}
                     {entry.name !== entry.model && (
@@ -166,16 +181,13 @@ export function ModelEntries({
                 <MenuRoot>
                   <MenuTrigger
                     render={
-                      <Button
-                        variant="ghost-muted"
-                        size="icon"
+                      <CompactButton
                         aria-label={'Tùy chọn của “' + entry.name + '”'}
                         onClick={(event) => {
                           returnFocus.current = event.currentTarget
                         }}
-                      >
-                        <MenuDotsIcon size={16} />
-                      </Button>
+                        icon={<MenuDotsIcon size={16} />}
+                      />
                     }
                   />
                   <MenuPopup>
@@ -210,7 +222,7 @@ export function ModelEntries({
                       Sao chép
                     </MenuItem>
                     <MenuSeparator />
-                    <MenuItem tone="destructive" onClick={() => setRemoving(entry)}>
+                    <MenuItem tone="danger" onClick={() => setRemoving(entry)}>
                       Xóa
                     </MenuItem>
                   </MenuPopup>
@@ -242,17 +254,10 @@ export function ModelEntries({
             }
           }}
         />
-        <Button
-          variant="outline"
-          size="lg"
-          disabled={typed.trim() === ''}
-          onClick={() => void addTyped()}
-        >
+        <Button disabled={typed.trim() === ''} onClick={() => void addTyped()}>
           Thêm
         </Button>
         <Button
-          variant="outline"
-          size="lg"
           onClick={(event) => {
             returnFocus.current = event.currentTarget
             setSelector({ mode: 'add' })
@@ -331,11 +336,12 @@ export function ModelEntries({
         finalFocus={returnFocus}
       >
         <div className="flex justify-end gap-2">
-          <Button variant="ghost-muted" onClick={() => setRemoving(null)}>
+          <Button variant="ghost" onClick={() => setRemoving(null)}>
             Hủy bỏ
           </Button>
           <Button
-            variant="destructive"
+            color="danger"
+            variant="solid"
             onClick={() => {
               const target = removing
               setRemoving(null)

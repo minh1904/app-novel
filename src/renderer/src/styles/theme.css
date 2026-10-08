@@ -1,0 +1,168 @@
+/*
+ * Mira design system: the one place tokens become Tailwind utilities.
+ * Organised as in the IZONE LMS system (docs/modules/design-system/README.md):
+ *   strict.css             switches off Tailwind's own colours, radii, type sizes and shadows
+ *   tokens/foundation.css  tier 1, raw values: --mira-neutral-500, --mira-radius-md, --mira-space-md…
+ *   tokens/semantic.css    tier 2, per theme: --mira-bg-surface, --mira-text-subtle, --mira-error-subtle…
+ *   tokens/component.css   tier 3, read only inside a component: --mira-button-neutral-solid-bg…
+ *
+ * One namespace per property, so a name says where it can go:
+ *   bg-default · bg-surface · bg-subtle · bg-muted · bg-hover · bg-selected · bg-inverted · bg-backdrop
+ *   text-default · text-emphasis · text-subtle · text-muted · text-faint · text-link · text-inverted
+ *   border-default · border-subtle · border-strong · border-input
+ *   state colours on every property: text-error, bg-success-subtle, border-warning-muted, bg-info/10
+ *   type: text-body-xs…lg, text-label-xs…md, text-title, text-heading (size + line height + weight)
+ *   rounded-xs…xl · shadow-xs…lg · p-md / gap-xs (named spacing) · z-(--mira-z-modal)
+ */
+
+@import './strict.css';
+@import './tokens/foundation.css';
+@import './tokens/semantic.css';
+@import './tokens/component.css';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme inline {
+  --font-sans: var(--mira-font-ui);
+  --font-mono: var(--mira-font-code);
+  --font-editor: var(--mira-font-editor);
+
+  /* ── Colours shared by every property (text-, bg-, border-, fill-, ring-) ── */
+  --color-white: var(--mira-neutral-0);
+  --color-black: var(--mira-neutral-1000);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-focus: var(--mira-ring);
+  /* A neutral for dots and icons that state "nothing yet" (not started, untranslated). */
+  --color-neutral: var(--mira-text-muted);
+  --color-success-emphasis: var(--mira-success-emphasis);
+  --color-success: var(--mira-success);
+  --color-success-muted: var(--mira-success-muted);
+  --color-success-subtle: var(--mira-success-subtle);
+  --color-info-emphasis: var(--mira-info-emphasis);
+  --color-info: var(--mira-info);
+  --color-info-muted: var(--mira-info-muted);
+  --color-info-subtle: var(--mira-info-subtle);
+  --color-warning-emphasis: var(--mira-warning-emphasis);
+  --color-warning: var(--mira-warning);
+  --color-warning-muted: var(--mira-warning-muted);
+  --color-warning-subtle: var(--mira-warning-subtle);
+  --color-error-emphasis: var(--mira-error-emphasis);
+  --color-error: var(--mira-error);
+  --color-error-muted: var(--mira-error-muted);
+  --color-error-subtle: var(--mira-error-subtle);
+  --color-accent-emphasis: var(--mira-accent-emphasis);
+  --color-accent: var(--mira-accent);
+  --color-accent-muted: var(--mira-accent-muted);
+  --color-accent-subtle: var(--mira-accent-subtle);
+
+  /* ── bg-* ── */
+  --background-color-default: var(--mira-bg);
+  --background-color-surface: var(--mira-bg-surface);
+  --background-color-subtle: var(--mira-bg-subtle);
+  --background-color-muted: var(--mira-bg-muted);
+  --background-color-hover: var(--mira-bg-hover);
+  --background-color-selected: var(--mira-bg-selected);
+  --background-color-inverted: var(--mira-bg-inverted);
+  --background-color-inverted-hover: var(--mira-bg-inverted-hover);
+  --background-color-disabled: var(--mira-bg-disabled);
+  --background-color-backdrop: var(--mira-bg-backdrop);
+  --background-color-code: var(--mira-code-inline);
+  /* A 1px rule drawn as a box (a vertical separator in a bar). */
+  --background-color-line: var(--mira-border);
+  --background-color-line-strong: var(--mira-border-strong);
+
+  /* ── text-* ── */
+  --text-color-default: var(--mira-text);
+  --text-color-emphasis: var(--mira-text-emphasis);
+  --text-color-subtle: var(--mira-text-subtle);
+  --text-color-muted: var(--mira-text-muted);
+  --text-color-faint: var(--mira-text-faint);
+  --text-color-placeholder: var(--mira-text-placeholder);
+  --text-color-disabled: var(--mira-text-disabled);
+  --text-color-inverted: var(--mira-text-inverted);
+  --text-color-link: var(--mira-text-link);
+  --placeholder-color-default: var(--mira-text-placeholder);
+
+  /* ── border-* / divide-* ── */
+  --border-color-default: var(--mira-border);
+  --border-color-subtle: var(--mira-border-subtle);
+  --border-color-strong: var(--mira-border-strong);
+  --border-color-input: var(--mira-border-input);
+  --divide-color-default: var(--mira-border);
+  --divide-color-subtle: var(--mira-border-subtle);
+
+  /* ── focus ── */
+  --ring-color-focus: var(--mira-ring);
+  --ring-color-error: var(--mira-ring-error);
+  --outline-color-focus: var(--mira-ring);
+  --outline-color-error: var(--mira-ring-error);
+
+  /* ── radius ── */
+  --radius-none: var(--mira-radius-none);
+  --radius-xs: var(--mira-radius-xs);
+  --radius-sm: var(--mira-radius-sm);
+  --radius-md: var(--mira-radius-md);
+  --radius-lg: var(--mira-radius-lg);
+  --radius-xl: var(--mira-radius-xl);
+  --radius-full: var(--mira-radius-full);
+
+  /* ── shadow ── */
+  --shadow-xs: var(--mira-shadow-xs);
+  --shadow-sm: var(--mira-shadow-sm);
+  --shadow-md: var(--mira-shadow-md);
+  --shadow-lg: var(--mira-shadow-lg);
+
+  /* ── named spacing (p-md, gap-xl…); Tailwind's numeric scale p-4 = 16px still works.
+     These names win over container widths: max-w-sm is 12px. Widths use max-w-(--container-md). ── */
+  --spacing-none: var(--mira-space-none);
+  --spacing-3xs: var(--mira-space-3xs);
+  --spacing-2xs: var(--mira-space-2xs);
+  --spacing-xs: var(--mira-space-xs);
+  --spacing-sm: var(--mira-space-sm);
+  --spacing-md: var(--mira-space-md);
+  --spacing-lg: var(--mira-space-lg);
+  --spacing-xl: var(--mira-space-xl);
+  --spacing-2xl: var(--mira-space-2xl);
+  --spacing-3xl: var(--mira-space-3xl);
+  --spacing-4xl: var(--mira-space-4xl);
+
+  /* ── type styles (Obsidian sizes): each sets size and line height; labels and headings set weight ── */
+  --text-body-xs: var(--mira-font-ui-smaller);
+  --text-body-xs--line-height: var(--mira-line-height-normal);
+  --text-body-sm: var(--mira-font-ui-small);
+  --text-body-sm--line-height: var(--mira-line-height-normal);
+  --text-body-md: var(--mira-font-ui-medium);
+  --text-body-md--line-height: var(--mira-line-height-normal);
+  --text-body-lg: var(--mira-font-text);
+  --text-body-lg--line-height: var(--mira-line-height-normal);
+  --text-label-xs: var(--mira-font-ui-smaller);
+  --text-label-xs--line-height: var(--mira-line-height-tight);
+  --text-label-xs--font-weight: var(--mira-weight-medium);
+  --text-label-sm: var(--mira-font-ui-small);
+  --text-label-sm--line-height: var(--mira-line-height-tight);
+  --text-label-sm--font-weight: var(--mira-weight-medium);
+  --text-label-md: var(--mira-font-ui-medium);
+  --text-label-md--line-height: var(--mira-line-height-tight);
+  --text-label-md--font-weight: var(--mira-weight-medium);
+  --text-heading: var(--mira-font-ui-medium);
+  --text-heading--line-height: var(--mira-line-height-tight);
+  --text-heading--font-weight: var(--mira-weight-semibold);
+  --text-title: var(--mira-font-ui-large);
+  --text-title--line-height: var(--mira-line-height-tight);
+  --text-title--font-weight: var(--mira-weight-semibold);
+  /* Inter sets loose at 20px; a title closes up a little. */
+  --text-title--letter-spacing: -0.015em;
+  --text-editor: var(--mira-font-text);
+  --text-editor--line-height: var(--mira-line-height-text);
+
+  --leading-normal: var(--mira-line-height-normal);
+  --leading-tight: var(--mira-line-height-tight);
+  --leading-text: var(--mira-line-height-text);
+  --tracking-heading: -0.015em;
+
+  /* ── motion ── */
+  --ease-enter: var(--mira-ease-enter);
+  --ease-exit: var(--mira-ease-exit);
+  --ease-standard: var(--mira-ease-standard);
+}

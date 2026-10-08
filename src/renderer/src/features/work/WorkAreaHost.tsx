@@ -7,8 +7,8 @@ import {
   type JSX,
   type ReactNode
 } from 'react'
-import { Button } from '../../components/Button'
-import { TabsList, TabsPanel, TabsRoot, TabsTab } from '../../components/Tabs'
+import { Button } from '../../components/ui/Button'
+import { TabsList, TabsPanel, TabsRoot, TabsTab } from '../../components/ui/Tabs'
 import { SOON_LABEL } from './mockFeatures'
 import type { WorkArea, WorkAreaProps } from './workArea'
 
@@ -27,11 +27,11 @@ class AreaBoundary extends Component<{ label: string; children: ReactNode }, { f
   render(): ReactNode {
     if (!this.state.failed) return this.props.children
     return (
-      <div role="alert" className="flex flex-col items-start gap-3 py-8 text-ui-sm">
+      <div role="alert" className="flex flex-col items-start gap-3 py-8 text-body-sm">
         <p>
           Không hiển thị được khu vực “{this.props.label}”. Tác phẩm và dữ liệu không bị ảnh hưởng.
         </p>
-        <Button variant="secondary" onClick={() => this.setState({ failed: false })}>
+        <Button variant="light" onClick={() => this.setState({ failed: false })}>
           Thử lại
         </Button>
       </div>
@@ -91,7 +91,7 @@ export function WorkAreaHost({
           <TabsTab key={area.id} value={area.id} className="shrink-0">
             {area.label}
             {area.soon && (
-              <span className="ml-1.5 rounded-item bg-selected px-1 py-px text-ui-xs text-ink">
+              <span className="ml-1.5 rounded-sm bg-selected px-1 py-px text-body-xs text-default">
                 {SOON_LABEL}
               </span>
             )}

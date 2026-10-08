@@ -9,8 +9,18 @@ import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
 import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
 import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
-import { cx } from '../../components/cx'
-import { MenuItem, MenuPopup, MenuRoot, MenuSeparator, MenuTrigger } from '../../components/Menu'
+import { cn } from '../../lib/cn'
+import { LinkButton } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { ICON } from '../../components/ui/icon'
+import { Input } from '../../components/ui/Input'
+import {
+  MenuItem,
+  MenuPopup,
+  MenuRoot,
+  MenuSeparator,
+  MenuTrigger
+} from '../../components/ui/DropdownMenu'
 import { formatFullDate, formatUpdatedParts } from '../library/format'
 import { displayTitle } from './chapterList'
 
@@ -48,25 +58,22 @@ export const ChapterRow = memo(function ChapterRow({
   return (
     <li
       data-chapter-id={chapter.id}
-      className={cx(
+      className={cn(
         CHAPTER_GRID,
-        'items-center gap-x-2 border-b border-line px-1 py-1 transition-colors last:border-b-0',
-        highlighted ? 'bg-active' : 'hover:bg-hover'
+        'items-center gap-x-2 border-b border-default px-1 py-1 transition-colors last:border-b-0',
+        highlighted ? 'bg-selected' : 'hover:bg-hover'
       )}
     >
-      <span className="pl-2 text-ui-xs text-ink-muted">{chapter.number}</span>
+      <span className="pl-2 text-body-xs text-subtle">{chapter.number}</span>
 
       {editing ? (
         <RenameInput chapter={chapter} actions={actions} />
       ) : (
-        <button
-          type="button"
+        <LinkButton
+          color="neutral"
           data-title-button
           title={label}
-          className={cx(
-            'min-w-0 cursor-pointer truncate rounded-control px-2 py-1.5 text-left text-ui-sm outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
-            chapter.title === '' && 'text-ink-muted'
-          )}
+          className="min-w-0 max-w-full justify-self-start"
           onClick={() => actions.open(chapter)}
           onKeyDown={(event) => {
             if (event.key === 'F2') {
@@ -75,12 +82,14 @@ export const ChapterRow = memo(function ChapterRow({
             }
           }}
         >
-          {label}
-        </button>
+          <span className={cn('min-w-0 truncate', chapter.title === '' && 'text-muted')}>
+            {label}
+          </span>
+        </LinkButton>
       )}
 
       <time
-        className="hidden text-ui-xs text-ink-muted @min-[560px]:block"
+        className="hidden text-body-xs text-subtle @min-[560px]:block"
         dateTime={updatedAt.toISOString()}
         title={formatFullDate(updatedAt)}
       >
@@ -89,11 +98,13 @@ export const ChapterRow = memo(function ChapterRow({
 
       <MenuRoot>
         <MenuTrigger
-          aria-label={'Thao tác với ' + label}
-          className="inline-flex size-7 cursor-pointer items-center justify-center rounded-control text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 data-popup-open:bg-selected data-popup-open:text-ink"
-        >
-          <MenuDotsIcon size={16} />
-        </MenuTrigger>
+          render={
+            <CompactButton
+              aria-label={'Thao tác với ' + label}
+              icon={<MenuDotsIcon size={ICON.sm} />}
+            />
+          }
+        />
         <MenuPopup>
           <MenuItem onClick={() => actions.open(chapter)}>
             <FolderOpenIcon size={14} />
@@ -134,7 +145,7 @@ export const ChapterRow = memo(function ChapterRow({
             Chuyển tới vị trí…
           </MenuItem>
           <MenuSeparator />
-          <MenuItem tone="destructive" onClick={() => actions.askDelete(chapter)}>
+          <MenuItem tone="danger" onClick={() => actions.askDelete(chapter)}>
             <TrashBinMinimalisticIcon size={14} />
             Xóa chương…
           </MenuItem>
@@ -156,13 +167,13 @@ function RenameInput({
   const cancelled = useRef(false)
 
   return (
-    <input
+    <Input
       autoFocus
       aria-label={'Tên chương ' + chapter.number}
       defaultValue={chapter.title}
       placeholder={'Chương ' + chapter.number}
       maxLength={200}
-      className="h-[30px] min-w-0 rounded-control border border-focus bg-canvas px-2 text-ui-sm outline-none ring-2 ring-focus/25 placeholder:text-ink-muted"
+      className="min-w-0"
       onFocus={(event) => event.target.select()}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {

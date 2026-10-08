@@ -11,7 +11,7 @@ describe('uiStore', () => {
 
   it('initializes with default values', () => {
     const state = useUiStore.getState()
-    expect(state.view).toEqual({ name: 'library', section: 'all' })
+    expect(state.view).toEqual({ name: 'library' })
     expect(state.sidebarOpen).toBe(true)
     expect(state.settings).toBeNull()
   })

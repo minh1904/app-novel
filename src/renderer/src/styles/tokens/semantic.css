@@ -1,0 +1,134 @@
+/*
+ * Tier 2: semantic. What a colour is for, per theme; every value points at the foundation tier.
+ * Screens reach these only through the Tailwind names in theme.css (bg-surface, text-subtle,
+ * border-default…). States come in four steps, as in the IZONE LMS system:
+ * {state}-emphasis (text on a light fill) · {state} (text, icon, dot) · {state}-muted · {state}-subtle.
+ *
+ * Contrast, light / dark, on the surface: text 17.4 / 16.0, subtle 6.7 / 6.9, muted 4.7 / 5.0.
+ */
+:root,
+html[data-theme='light'] {
+  color-scheme: light;
+
+  /* ── Backgrounds ── */
+  /* The window behind the work area; also the quiet second tone (Acme #fafafa). */
+  --mira-bg: var(--mira-neutral-50);
+  /* The sheet, cards, bars, popovers. */
+  --mira-bg-surface: var(--mira-neutral-0);
+  /* A second tone inside the sheet: table heads, side panels. */
+  --mira-bg-subtle: var(--mira-neutral-25);
+  /* Fills that are not surfaces: chips, tracks, a user's chat bubble. */
+  --mira-bg-muted: var(--mira-neutral-100);
+  /* Row states are overlays, so they work on any background (Obsidian's modifier-hover). */
+  --mira-bg-hover: color-mix(in srgb, var(--mira-neutral-1000) 4%, transparent);
+  --mira-bg-selected: color-mix(in srgb, var(--mira-neutral-1000) 6%, transparent);
+  --mira-bg-inverted: var(--mira-neutral-900);
+  --mira-bg-inverted-hover: var(--mira-neutral-700);
+  --mira-bg-disabled: var(--mira-neutral-150);
+  --mira-bg-backdrop: color-mix(in srgb, var(--mira-neutral-1000) 32%, transparent);
+
+  /* ── Text ── */
+  --mira-text: var(--mira-neutral-900);
+  --mira-text-emphasis: var(--mira-neutral-1000);
+  --mira-text-subtle: var(--mira-neutral-600);
+  /* Meta, timestamps, counts: still readable (≥ 4.5:1). */
+  --mira-text-muted: var(--mira-neutral-500);
+  /* Decoration only: separators drawn as text, shortcut hints. Never for text people must read. */
+  --mira-text-faint: var(--mira-neutral-400);
+  --mira-text-placeholder: var(--mira-neutral-500);
+  --mira-text-disabled: var(--mira-neutral-400);
+  --mira-text-inverted: var(--mira-neutral-0);
+  --mira-text-link: var(--mira-sky-600);
+
+  /* ── Borders ── */
+  --mira-border: var(--mira-neutral-200);
+  --mira-border-subtle: var(--mira-neutral-150);
+  --mira-border-strong: var(--mira-neutral-300);
+  --mira-border-input: var(--mira-neutral-350);
+
+  /* ── Focus and selection ── */
+  --mira-ring: var(--mira-sky-500);
+  --mira-ring-error: var(--mira-red-500);
+  --mira-selection: color-mix(in srgb, var(--mira-sky-500) 22%, transparent);
+  --mira-text-selection: color-mix(in srgb, var(--mira-yellow-300) 50%, transparent);
+  --mira-code-inline: color-mix(in srgb, var(--mira-neutral-1000) 5%, transparent);
+
+  /* ── States ── */
+  --mira-success-emphasis: var(--mira-green-700);
+  --mira-success: var(--mira-green-600);
+  --mira-success-muted: var(--mira-green-100);
+  --mira-success-subtle: var(--mira-green-50);
+  --mira-info-emphasis: var(--mira-sky-700);
+  --mira-info: var(--mira-sky-600);
+  --mira-info-muted: var(--mira-sky-100);
+  --mira-info-subtle: var(--mira-sky-50);
+  --mira-warning-emphasis: var(--mira-orange-700);
+  --mira-warning: var(--mira-orange-600);
+  --mira-warning-muted: var(--mira-orange-100);
+  --mira-warning-subtle: var(--mira-orange-50);
+  --mira-error-emphasis: var(--mira-red-700);
+  --mira-error: var(--mira-red-600);
+  --mira-error-muted: var(--mira-red-100);
+  --mira-error-subtle: var(--mira-red-50);
+  --mira-accent-emphasis: var(--mira-pink-700);
+  --mira-accent: var(--mira-pink-600);
+  --mira-accent-muted: var(--mira-pink-100);
+  --mira-accent-subtle: var(--mira-pink-50);
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --mira-bg: var(--mira-neutral-950);
+  --mira-bg-surface: var(--mira-neutral-900);
+  --mira-bg-subtle: var(--mira-neutral-850);
+  --mira-bg-muted: var(--mira-neutral-800);
+  --mira-bg-hover: color-mix(in srgb, var(--mira-neutral-0) 5%, transparent);
+  --mira-bg-selected: color-mix(in srgb, var(--mira-neutral-0) 8%, transparent);
+  --mira-bg-inverted: var(--mira-neutral-100);
+  --mira-bg-inverted-hover: var(--mira-neutral-300);
+  --mira-bg-disabled: var(--mira-neutral-800);
+  --mira-bg-backdrop: color-mix(in srgb, var(--mira-neutral-1000) 56%, transparent);
+
+  --mira-text: var(--mira-neutral-100);
+  --mira-text-emphasis: var(--mira-neutral-0);
+  --mira-text-subtle: var(--mira-neutral-400);
+  --mira-text-muted: var(--mira-neutral-450);
+  --mira-text-faint: var(--mira-neutral-600);
+  --mira-text-placeholder: var(--mira-neutral-450);
+  --mira-text-disabled: var(--mira-neutral-600);
+  --mira-text-inverted: var(--mira-neutral-900);
+  --mira-text-link: var(--mira-sky-300);
+
+  --mira-border: var(--mira-neutral-800);
+  --mira-border-subtle: var(--mira-neutral-850);
+  --mira-border-strong: var(--mira-neutral-700);
+  --mira-border-input: var(--mira-neutral-550);
+
+  --mira-ring: var(--mira-sky-300);
+  --mira-ring-error: var(--mira-red-300);
+  --mira-selection: color-mix(in srgb, var(--mira-sky-300) 26%, transparent);
+  --mira-text-selection: color-mix(in srgb, var(--mira-yellow-300) 32%, transparent);
+  --mira-code-inline: color-mix(in srgb, var(--mira-neutral-0) 7%, transparent);
+
+  --mira-success-emphasis: var(--mira-green-300);
+  --mira-success: var(--mira-green-300);
+  --mira-success-muted: color-mix(in srgb, var(--mira-green-500) 24%, transparent);
+  --mira-success-subtle: color-mix(in srgb, var(--mira-green-500) 12%, transparent);
+  --mira-info-emphasis: var(--mira-sky-300);
+  --mira-info: var(--mira-sky-300);
+  --mira-info-muted: color-mix(in srgb, var(--mira-sky-500) 24%, transparent);
+  --mira-info-subtle: color-mix(in srgb, var(--mira-sky-500) 12%, transparent);
+  --mira-warning-emphasis: var(--mira-orange-300);
+  --mira-warning: var(--mira-orange-300);
+  --mira-warning-muted: color-mix(in srgb, var(--mira-orange-500) 24%, transparent);
+  --mira-warning-subtle: color-mix(in srgb, var(--mira-orange-500) 12%, transparent);
+  --mira-error-emphasis: var(--mira-red-300);
+  --mira-error: var(--mira-red-300);
+  --mira-error-muted: color-mix(in srgb, var(--mira-red-500) 24%, transparent);
+  --mira-error-subtle: color-mix(in srgb, var(--mira-red-500) 12%, transparent);
+  --mira-accent-emphasis: var(--mira-pink-300);
+  --mira-accent: var(--mira-pink-300);
+  --mira-accent-muted: color-mix(in srgb, var(--mira-pink-500) 24%, transparent);
+  --mira-accent-subtle: color-mix(in srgb, var(--mira-pink-500) 12%, transparent);
+}

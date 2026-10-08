@@ -5,11 +5,11 @@ import type {
   ExportParagraphSpacing,
   ExportWorkMode
 } from '../../../../shared/contracts/export'
-import { Banner } from '../../components/Banner'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { Select, type SelectOption } from '../../components/Select'
-import { Switch } from '../../components/Switch'
+import { Alert } from '../../components/ui/Alert'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import { Select, type SelectOption } from '../../components/ui/Select'
+import { Switch } from '../../components/ui/Switch'
 
 export interface ExportDialogProps {
   open: boolean
@@ -137,20 +137,20 @@ export function ExportDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      size="form"
+      size="md"
       title={dialogTitle}
       description="Xuất bản dịch tiểu thuyết theo chuẩn format ebook để lưu trữ, đọc hoặc nộp bản thảo."
     >
       <div className="flex flex-col gap-4 py-2">
         {error && (
-          <Banner tone="error" onDismiss={() => setError(null)}>
+          <Alert tone="error" onDismiss={() => setError(null)}>
             {error}
-          </Banner>
+          </Alert>
         )}
         {successMsg && (
-          <Banner tone="success" onDismiss={() => setSuccessMsg(null)}>
+          <Alert tone="success" onDismiss={() => setSuccessMsg(null)}>
             {successMsg}
-          </Banner>
+          </Alert>
         )}
 
         <div className="flex flex-col gap-1.5">
@@ -193,23 +193,23 @@ export function ExportDialog({
           />
         </div>
 
-        <div className="mt-2 flex flex-col gap-3 rounded-lg border border-border-subtle p-3">
+        <div className="mt-2 flex flex-col gap-3 rounded-lg border border-default p-3">
           <div className="flex items-center justify-between">
-            <span className="text-ui-sm text-ink">Bao gồm tên sách và tác giả</span>
+            <span className="text-body-sm text-default">Bao gồm tên sách và tác giả</span>
             <Switch checked={includeTitle} onCheckedChange={setIncludeTitle} />
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-ui-sm text-ink">Bao gồm lời giới thiệu tác phẩm</span>
+            <span className="text-body-sm text-default">Bao gồm lời giới thiệu tác phẩm</span>
             <Switch checked={includeDescription} onCheckedChange={setIncludeDescription} />
           </div>
         </div>
 
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={isExporting}>
+          <Button variant="light" onClick={() => onOpenChange(false)} disabled={isExporting}>
             Đóng
           </Button>
-          <Button variant="default" onClick={() => void handleExport()} disabled={isExporting}>
+          <Button variant="solid" onClick={() => void handleExport()} disabled={isExporting}>
             {isExporting ? 'Đang xuất…' : 'Xuất tệp'}
           </Button>
         </div>

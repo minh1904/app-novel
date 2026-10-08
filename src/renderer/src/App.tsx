@@ -1,14 +1,10 @@
-import { Fragment, useEffect, useMemo, type JSX } from 'react'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
+import { useEffect, type JSX } from 'react'
 import { AppShell } from './app/AppShell'
 import { WorkTabActiveContext } from './app/topBarSlot'
-import { Button } from './components/Button'
+import { Button, LinkButton } from './components/ui/Button'
+import { EmptyState } from './components/ui/EmptyState'
 import { CreateWorkScreen } from './features/library/CreateWorkScreen'
-import { LibraryNotices } from './features/library/LibraryNotices'
-import { LibraryScreen } from './features/library/LibraryScreen'
-import { LibrarySidebar, type LibrarySection } from './features/library/LibrarySidebar'
 import { useLibrary } from './features/library/useLibrary'
-import { byUpdated, type Work } from './features/library/works'
 import { ChapterNavSidebar } from './features/chapter/ChapterNavSidebar'
 import { ChapterScreen } from './features/chapter/ChapterScreen'
 import {
@@ -18,14 +14,12 @@ import {
 } from './features/editor/leaveGuard'
 import { SettingsModal } from './features/settings/SettingsModal'
 import { SETTINGS_PAGES } from './features/settings/settingsPages'
-import { Toaster } from './components/Toaster'
+import { Toaster } from './components/ui/Toast'
 import { Onboarding } from './features/onboarding/Onboarding'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
 import { useUiStore, type View } from './stores/uiStore'
 import { useAiChatStore } from './stores/aiChatStore'
 import { useConnectionStore } from './stores/connectionStore'
-
-const RECENT_LIMIT = 4
 
 export function App(): JSX.Element {
   const { registry, dialog: leaveDialog } = useLeaveGuardRegistry()
@@ -38,7 +32,6 @@ export function App(): JSX.Element {
   const theme = useUiStore((state) => state.theme)
   const toggleTheme = useUiStore((state) => state.toggleTheme)
   const toggleSidebar = useUiStore((state) => state.toggleSidebar)
-  const appVersion = useUiStore((state) => state.appVersion)
   const settingsOpen = useUiStore((state) => state.settings !== null)
 
   useEffect(() => {
@@ -124,163 +117,65 @@ export function App(): JSX.Element {
     }
   }, [])
 
-  const recentWorks = useMemo(
-    () =>
-      works
-        .filter((work) => !work.archived)
-        .sort(byUpdated)
-        .slice(0, RECENT_LIMIT),
-    [works]
-  )
-
-  const showSection = (section: LibrarySection): void => {
-    go({ name: 'library', section })
+  const showLibrary = (): void => {
+    go({ name: 'library' })
     // The detail screen already hands changes to the library; this also catches anything missed.
     void library.reload()
   }
-  const openWorkId = (workId: string): void => {
-    const state = useUiStore.getState()
-    if (state.tabs.some((tab) => tab.workId === workId)) state.activateTab(workId)
-    else go({ name: 'work', workId })
-  }
-  const openWork = (work: Work): void => openWorkId(work.id)
   const openChapterView = (workId: string, chapterId: string): void =>
     go({ name: 'chapter', workId, chapterId })
-  /** Records the chapter as the one being worked on, then shows it; without one, shows the work. */
-  const continueWork = (work: Work): void => {
-    const chapter = work.lastChapter
-    if (!chapter) {
-      openWork(work)
-      return
-    }
-    void window.mira.chapters.open(work.id, chapter.id).then((result) => {
-      if (result.ok) {
-        library.applyWork(result.value.work)
-        openChapterView(work.id, chapter.id)
-      } else {
-        library.reportNotice('Không mở được chương ' + chapter.number + ': ' + result.error.message)
-      }
-    })
-  }
-  const createWork = (): void => go({ name: 'create' })
 
-  const libraryActions = {
-    onCreateWork: createWork,
-    onOpenExisting: () => void library.restore(),
-    onBackup: (work: Work) => void library.backup(work),
-    onOpenWork: openWork,
-    onContinueWork: continueWork,
-    onSelectSection: showSection,
-    onRenameWork: (work: Work, title: string) => void library.update(work, { title }),
-    onSetPaused: (work: Work, paused: boolean) =>
-      void library.update(work, { status: paused ? 'paused' : 'in-progress' }),
-    onSetArchived: (work: Work, archived: boolean) => void library.update(work, { archived }),
-    onSetCover: (work: Work, file: File | null) => void library.setCover(work, file)
-  }
-
-  const crumbLink = (label: string, onClick: () => void): JSX.Element => (
-    <button
-      type="button"
-      className="-my-1 max-w-[40%] shrink-0 cursor-pointer truncate rounded-control py-1 text-ink-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40"
-      onClick={onClick}
-    >
-      {label}
-    </button>
-  )
-
-  /** "Thư viện › ancestors… › current": ancestors are links, the last item is the page heading. */
-  const crumb = (
-    label: string,
-    ancestors: Array<{ label: string; onClick(): void }> = []
-  ): JSX.Element => (
-    <nav aria-label="Vị trí hiện tại" className="flex min-w-0 items-center gap-2">
-      {[{ label: 'Thư viện', onClick: () => showSection('all') }, ...ancestors].map((item) => (
-        <Fragment key={item.label}>
-          {crumbLink(item.label, item.onClick)}
-          <AltArrowRightIcon size={12} className="shrink-0 text-ink-muted" />
-        </Fragment>
-      ))}
-      <h1 className="truncate font-semibold">{label}</h1>
-    </nav>
-  )
-
-  let title: JSX.Element = <h1 className="font-semibold">Thư viện</h1>
   let content: JSX.Element = <div />
-  let sidebar: JSX.Element | null = (
-    <LibrarySidebar
-      activeSection={view.name === 'library' ? view.section : undefined}
-      onSelectSection={showSection}
-      recentWorks={recentWorks}
-      hasWorks={works.length > 0}
-      onOpenWork={openWork}
-      onCreateWork={createWork}
-    />
-  )
+  // Only the chapter screen has a second column (its chapter list).
+  let sidebar: JSX.Element | null = null
 
   switch (view.name) {
     case 'library':
-      title = <h1 className="font-semibold">Thư viện</h1>
       if (library.load === 'loading') {
         content = (
-          <p role="status" className="px-6 pt-8 text-ui-sm text-ink-muted">
+          <p role="status" className="px-6 pt-8 text-body-sm text-subtle">
             Đang mở thư viện…
           </p>
         )
       } else if (library.load === 'failed') {
         content = (
           <div className="mx-auto flex max-w-[560px] flex-col gap-3 px-6 pt-12">
-            <h2 className="text-ui-lg font-semibold tracking-heading">Không mở được thư viện</h2>
-            <p role="alert" className="text-ui-sm leading-normal text-ink-muted">
+            <h2 className="text-body-lg font-semibold tracking-heading">Không mở được thư viện</h2>
+            <p role="alert" className="text-body-sm leading-normal text-subtle">
               {library.loadError}
             </p>
             <div>
-              <Button variant="secondary" onClick={() => void library.reload()}>
+              <Button variant="light" onClick={() => void library.reload()}>
                 Thử lại
               </Button>
             </div>
           </div>
         )
       } else {
+        // The library screen is being rebuilt (docs/modules/design-system/README.md); until then the
+        // view only says so. The data behind it (useLibrary) stays.
         content = (
-          <LibraryScreen
-            section={view.section}
-            works={works}
-            notices={
-              <LibraryNotices
-                problems={library.problems}
-                notice={library.notice}
-                onDismissNotice={library.dismissNotice}
-                success={library.success}
-                onDismissSuccess={library.dismissSuccess}
-                onOpenWork={(workId) => {
-                  library.dismissSuccess()
-                  openWorkId(workId)
-                }}
-              />
-            }
-            {...libraryActions}
-          />
+          <EmptyState title="Thư viện đang được dựng lại">
+            Giao diện thư viện tạm gỡ để dựng lại theo hệ thiết kế mới.
+          </EmptyState>
         )
       }
       break
     case 'create':
-      title = crumb('Tạo tác phẩm')
       content = (
         <CreateWorkScreen
           onSubmit={library.create}
-          onCreated={() => showSection('all')}
-          onCancel={() => showSection('all')}
+          onCreated={showLibrary}
+          onCancel={showLibrary}
         />
       )
       break
     case 'work': {
-      const work = works.find((item) => item.id === view.workId)
-      title = crumb(work?.title ?? 'Tác phẩm')
       content = (
         <WorkDetailScreen
           key={view.workId}
           workId={view.workId}
-          onBackToLibrary={() => showSection('all')}
+          onBackToLibrary={showLibrary}
           onOpenChapter={openChapterView}
           onWorkChanged={library.applyWork}
         />
@@ -289,11 +184,7 @@ export function App(): JSX.Element {
     }
     case 'chapter': {
       const work = works.find((item) => item.id === view.workId)
-      const last = work?.lastChapter?.id === view.chapterId ? work.lastChapter : undefined
       const backToWork = (): void => go({ name: 'work', workId: view.workId })
-      title = crumb(last ? 'Chương ' + last.number : 'Chương', [
-        { label: work?.title ?? 'Tác phẩm', onClick: backToWork }
-      ])
       content = (
         <ChapterScreen
           key={view.chapterId}
@@ -341,7 +232,7 @@ export function App(): JSX.Element {
                 workId={tab.workId}
                 areaId={tab.areaId}
                 onAreaChange={(areaId) => useUiStore.getState().setWorkArea(tab.workId, areaId)}
-                onBackToLibrary={() => showSection('all')}
+                onBackToLibrary={showLibrary}
                 onOpenChapter={openChapterView}
                 onWorkChanged={library.applyWork}
               />
@@ -371,34 +262,25 @@ export function App(): JSX.Element {
         onToggleSidebar={toggleSidebar}
         theme={theme}
         onToggleTheme={toggleTheme}
-        appVersion={appVersion}
-        title={title}
-        workTabs={tabs.map((tab) => ({
-          workId: tab.workId,
-          title: works.find((work) => work.id === tab.workId)?.title ?? 'Tác phẩm'
-        }))}
-        selectedWorkId={visibleWorkId}
-        onSelectWorkTab={(workId) => useUiStore.getState().activateTab(workId)}
-        onCloseWorkTab={(workId) => {
-          void useUiStore.getState().closeTab(workId)
-        }}
-        onOpenLibrary={() => showSection('all')}
         onOpenSettings={openSettings}
         settingsOpen={settingsOpen}
       >
         {workspaceNotice && (
           <div
             role="alert"
-            className="flex items-center justify-between gap-3 border-b border-line px-4 py-2 text-ui-xs text-ink-muted"
+            className="flex items-center justify-between gap-3 border-b border-default px-4 py-2 text-body-xs text-subtle"
           >
             <span>{workspaceNotice}</span>
-            <button type="button" onClick={() => useUiStore.getState().setWorkspaceNotice(null)}>
+            <LinkButton
+              color="neutral"
+              onClick={() => useUiStore.getState().setWorkspaceNotice(null)}
+            >
               Đóng
-            </button>
+            </LinkButton>
           </div>
         )}
         {!workspaceReady && library.load === 'ready' ? (
-          <p role="status" className="p-6 text-ui-sm text-ink-muted">
+          <p role="status" className="p-6 text-body-sm text-subtle">
             Đang khôi phục phiên làm việc…
           </p>
         ) : view.name === 'library' || view.name === 'create' ? (

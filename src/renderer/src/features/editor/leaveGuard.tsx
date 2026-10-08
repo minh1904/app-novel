@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type JSX } from 'react'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
 
 /**
  * Leaving a screen that holds unsaved typing. The screen registers what it can do (is it dirty,
@@ -108,13 +108,13 @@ export function useLeaveGuardRegistry(): { registry: LeaveGuardRegistry; dialog:
       description="Bạn đã sửa văn bản của chương này nhưng chưa lưu. Bạn muốn làm gì?"
     >
       <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="secondary" disabled={saving} onClick={() => answer(false)}>
+        <Button variant="light" disabled={saving} onClick={() => answer(false)}>
           Ở lại
         </Button>
-        <Button variant="destructive" disabled={saving} onClick={() => void drop()}>
+        <Button color="danger" variant="solid" disabled={saving} onClick={() => void drop()}>
           Bỏ thay đổi
         </Button>
-        <Button disabled={saving} onClick={() => void saveAndGo()}>
+        <Button variant="solid" disabled={saving} onClick={() => void saveAndGo()}>
           {saving ? 'Đang lưu…' : 'Lưu rồi tiếp tục'}
         </Button>
       </div>

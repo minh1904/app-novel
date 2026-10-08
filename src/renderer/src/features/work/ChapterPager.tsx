@@ -1,8 +1,8 @@
 import type { JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
-import { Button } from '../../components/Button'
-import { Select } from '../../components/Select'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { Select } from '../../components/ui/Select'
 import { PAGE_SIZES, pageCount, pageRange, pageWindow, type PageSize } from './chapterList'
 
 /** Range, page buttons and page size under the chapter list. Every control is a real button. */
@@ -32,7 +32,7 @@ export function ChapterPager({
       aria-label={'Phân trang ' + unit}
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-3"
     >
-      <p role="status" className="text-ui-xs text-ink-muted">
+      <p role="status" className="text-body-xs text-subtle">
         {total === 0 ? 'Không có ' + unit : `${from}–${to} trong ${total} ${unit}`}
       </p>
 
@@ -49,42 +49,35 @@ export function ChapterPager({
           />
         )}
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost-muted"
-            size="icon"
+          <CompactButton
             aria-label="Trang trước"
             disabled={page <= 1}
             onClick={() => onPage(page - 1)}
-          >
-            <AltArrowLeftIcon size={15} />
-          </Button>
+            icon={<AltArrowLeftIcon size={16} />}
+          />
           {pageWindow(page, pages).map((entry, index) =>
             entry === null ? (
-              <span key={'gap-' + index} aria-hidden="true" className="px-1 text-ink-muted">
+              <span key={'gap-' + index} aria-hidden="true" className="px-1 text-subtle">
                 …
               </span>
             ) : (
-              <Button
+              <CompactButton
                 key={entry}
-                variant={entry === page ? 'secondary' : 'ghost-muted'}
-                size="icon"
+                variant={entry === page ? 'light' : 'ghost'}
+                className="w-auto min-w-6 px-1.5 text-label-xs tabular-nums"
                 aria-label={'Trang ' + entry}
                 aria-current={entry === page ? 'page' : undefined}
                 onClick={() => onPage(entry)}
-              >
-                {entry}
-              </Button>
+                icon={entry}
+              />
             )
           )}
-          <Button
-            variant="ghost-muted"
-            size="icon"
+          <CompactButton
             aria-label="Trang sau"
             disabled={page >= pages}
             onClick={() => onPage(page + 1)}
-          >
-            <AltArrowRightIcon size={15} />
-          </Button>
+            icon={<AltArrowRightIcon size={16} />}
+          />
         </div>
       </div>
     </nav>

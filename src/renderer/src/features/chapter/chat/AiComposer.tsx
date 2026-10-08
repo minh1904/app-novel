@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react'
 import { ArrowUpIcon } from '@solar-icons/react/linear/arrow-up'
 import { StopCircleIcon } from '@solar-icons/react/linear/stop-circle'
+import { CompactButton } from '../../../components/ui/CompactButton'
+import { ICON } from '../../../components/ui/icon'
 import { ModelSelectionMenu } from '../../models/ModelSelectionMenu'
 import { openConnectionSettings } from '../../settings/openConnectionSettings'
 import { openRequestIds } from './chatTurns'
@@ -52,7 +54,7 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
   return (
     <div className="relative m-3 shrink-0">
       <form
-        className="flex flex-col rounded-panel border border-line-strong bg-control p-1 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/25"
+        className="flex flex-col rounded-lg border border-strong bg-muted p-1 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/25"
         onSubmit={(event) => {
           event.preventDefault()
           submit()
@@ -71,7 +73,7 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
             event.preventDefault()
             submit()
           }}
-          className="max-h-40 min-h-6 w-full resize-none bg-transparent px-1.5 text-ui-sm leading-normal text-ink outline-none placeholder:text-ink-muted"
+          className="max-h-40 min-h-6 w-full resize-none bg-transparent px-1.5 text-body-sm leading-normal text-default outline-none placeholder:text-subtle"
           placeholder="Hỏi về chương này, nhờ dịch hay sửa đoạn đang chọn…"
         />
 
@@ -93,25 +95,25 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
           />
 
           {running.length > 0 ? (
-            <button
-              type="button"
+            <CompactButton
+              variant="outline"
               aria-label="Dừng"
               title="Dừng câu trả lời đang chạy"
               onClick={() => running.forEach((requestId) => chat.cancel(requestId))}
-              className="ml-auto inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control border border-line-strong text-ink-muted hover:bg-hover hover:text-ink"
-            >
-              <StopCircleIcon size={14} />
-            </button>
+              className="ml-auto"
+              icon={<StopCircleIcon size={ICON.sm} aria-hidden="true" />}
+            />
           ) : (
-            <button
+            <CompactButton
               type="submit"
+              variant="dark"
+              round
               disabled={!ready}
               aria-label="Gửi"
               title={ready ? 'Gửi (Enter)' : 'Cần câu hỏi và một model'}
-              className="ml-auto inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control bg-primary text-primary-foreground disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <ArrowUpIcon size={14} />
-            </button>
+              className="ml-auto"
+              icon={<ArrowUpIcon size={ICON.sm} aria-hidden="true" />}
+            />
           )}
         </div>
       </form>

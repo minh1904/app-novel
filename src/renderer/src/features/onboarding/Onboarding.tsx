@@ -1,17 +1,18 @@
 import { useEffect, useReducer, useState, type JSX } from 'react'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { CheckIcon } from '@solar-icons/react/linear/check'
 import { CloseIcon } from '@solar-icons/react/linear/close'
 import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
 import { CONNECTION_PRESETS } from '../../../../shared/contracts/aiConnections'
 import { PROVIDER_CARDS } from '../../../../shared/contracts/aiProviders'
-import { Badge } from '../../components/Badge'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
-import { focusRing } from '../../components/focusRing'
-import { TextField } from '../../components/TextField'
+import { useDimChrome } from '../../app/useDimChrome'
+import { ActionRow } from '../../components/ui/ActionRow'
+import { Badge } from '../../components/ui/Badge'
+import { Button, LinkButton } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { Disclosure } from '../../components/ui/Disclosure'
+import { TextField } from '../../components/ui/Field'
+import { ICON } from '../../components/ui/icon'
 import { emptyTest, useConnectionStore } from '../../stores/connectionStore'
 import { useUiStore } from '../../stores/uiStore'
 import { ModelSelectionMenu } from '../models/ModelSelectionMenu'
@@ -47,27 +48,14 @@ function ProviderRow({
   onClick?(): void
 }): JSX.Element {
   return (
-    <button
-      type="button"
+    <ActionRow
+      title={title}
+      tag={tag}
+      description={subtitle}
+      featured={featured}
       disabled={disabled}
       onClick={onClick}
-      className={cx(
-        'group flex w-full items-center justify-between gap-3 rounded-control px-3 py-2.5 text-left disabled:cursor-default',
-        featured
-          ? 'bg-primary/6 hover:bg-primary/10'
-          : 'hover:bg-control-hover disabled:hover:bg-transparent',
-        focusRing
-      )}
-    >
-      <span className="flex min-w-0 flex-col">
-        <span className="flex items-center gap-2 text-ui-sm font-semibold">
-          {title}
-          {tag}
-        </span>
-        <span className="mt-1 text-ui-xs leading-normal text-ink-muted">{subtitle}</span>
-      </span>
-      {!disabled && <AltArrowRightIcon size={14} className="shrink-0 text-ink-faint" />}
-    </button>
+    />
   )
 }
 
@@ -87,28 +75,24 @@ function Picker({
       <ProviderRow
         featured
         title="Gateway tự dựng"
-        tag={<Badge tone="success">Khuyên dùng</Badge>}
+        tag={
+          <Badge variant="outline" dot color="success">
+            Khuyên dùng
+          </Badge>
+        }
         subtitle="Gateway chạy trên máy bạn (ví dụ CLIProxyAPI) gom nhiều tài khoản về một địa chỉ tương thích OpenAI."
         onClick={() =>
           dispatch({ type: 'pick_endpoint', baseUrl: GATEWAY.baseUrl, label: GATEWAY.label })
         }
       />
-      <button
-        type="button"
-        aria-expanded={state.showAll}
-        onClick={() => dispatch({ type: 'toggle_all' })}
-        className={cx(
-          'mt-2 flex items-center gap-1 self-start text-ui-xs font-medium text-ink-muted hover:text-ink',
-          focusRing
-        )}
+      <Disclosure
+        label="Nhà cung cấp khác"
+        open={state.showAll}
+        onOpenChange={(open) => {
+          if (open !== state.showAll) dispatch({ type: 'toggle_all' })
+        }}
+        className="mt-2"
       >
-        Nhà cung cấp khác
-        <AltArrowDownIcon
-          size={12}
-          className={cx('transition-transform', state.showAll && 'rotate-180')}
-        />
-      </button>
-      {state.showAll && (
         <div className="flex flex-col gap-1">
           {READY_CARDS.map((card) => (
             <ProviderRow
@@ -138,24 +122,21 @@ function Picker({
             subtitle="Đăng nhập bằng gói Copilot; Mira mở trang xác minh của GitHub."
             onClick={() => dispatch({ type: 'pick_account', provider: 'copilot' })}
           />
-          <p className="m-0 px-3 text-ui-2xs text-ink-faint">
+          <p className="m-0 px-3 text-body-xs text-muted">
             Đăng nhập dùng cách giống công cụ chính hãng; nhà cung cấp có thể đổi hoặc chặn cách
             này.
           </p>
         </div>
-      )}
+      </Disclosure>
       <div className="mt-4 flex items-center justify-between gap-2">
         {manual ? (
           <span />
         ) : (
-          <Button variant="text" onClick={onSkip}>
+          <LinkButton color="neutral" onClick={onSkip}>
             Để sau
-          </Button>
+          </LinkButton>
         )}
-        <Button
-          variant="outline"
-          onClick={() => dispatch({ type: 'pick_key', providerId: READY_CARDS[0]!.id })}
-        >
+        <Button onClick={() => dispatch({ type: 'pick_key', providerId: READY_CARDS[0]!.id })}>
           Tôi có khóa API
         </Button>
       </div>
@@ -184,30 +165,28 @@ function KeyForm({
             (connection) => connection.providerId === item.id && connection.keys.length > 0
           )
           return (
-            <button
+            <Button
               key={item.id}
-              type="button"
+              variant={selected ? 'light' : 'outline'}
               aria-pressed={selected}
+              className="justify-between"
               onClick={() => dispatch({ type: 'pick_key', providerId: item.id })}
-              className={cx(
-                'flex items-center justify-between rounded-panel border px-3 py-2 text-left text-ui-sm',
-                selected
-                  ? 'border-primary bg-primary/6 ring-2 ring-primary/20'
-                  : 'border-line hover:bg-hover',
-                focusRing
-              )}
+              rightIcon={
+                hasKey ? (
+                  <CheckIcon size={ICON.sm} aria-hidden="true" className="text-success" />
+                ) : undefined
+              }
             >
               {item.label}
-              {hasKey && <CheckIcon size={13} className="text-success" />}
-            </button>
+            </Button>
           )
         })}
       </div>
-      <p className="m-0 text-ui-xs leading-normal text-ink-muted">
+      <p className="m-0 text-body-xs leading-normal text-subtle">
         {card.description}{' '}
-        <Button variant="link" size="xs" className="h-auto" onClick={() => openLink(card.keyUrl)}>
+        <LinkButton className="h-auto" onClick={() => openLink(card.keyUrl)}>
           Lấy khóa ↗
-        </Button>
+        </LinkButton>
       </p>
       <TextField
         label={'Khóa API ' + card.label}
@@ -224,10 +203,14 @@ function KeyForm({
         }}
       />
       <div className="flex justify-between gap-2">
-        <Button variant="ghost-muted" onClick={() => dispatch({ type: 'back' })}>
+        <Button variant="ghost" onClick={() => dispatch({ type: 'back' })}>
           Quay lại
         </Button>
-        <Button disabled={!key.trim()} onClick={() => onConnect(card.id, key.trim())}>
+        <Button
+          variant="solid"
+          disabled={!key.trim()}
+          onClick={() => onConnect(card.id, key.trim())}
+        >
           Kết nối
         </Button>
       </div>
@@ -265,10 +248,14 @@ function EndpointForm({
         onChange={(event) => setKey(event.target.value)}
       />
       <div className="flex justify-between gap-2">
-        <Button variant="ghost-muted" onClick={() => dispatch({ type: 'back' })}>
+        <Button variant="ghost" onClick={() => dispatch({ type: 'back' })}>
           Quay lại
         </Button>
-        <Button disabled={!url.trim()} onClick={() => onConnect(url.trim(), label, key.trim())}>
+        <Button
+          variant="solid"
+          disabled={!url.trim()}
+          onClick={() => onConnect(url.trim(), label, key.trim())}
+        >
           Kết nối
         </Button>
       </div>
@@ -289,7 +276,7 @@ export function ConfirmModel({
   const test = useConnectionStore((state) => state.tests[connectionId] ?? emptyTest)
   const setThinking = useConnectionStore((state) => state.entries.update)
   const [entryId, setEntryId] = useState<string | null>(null)
-  if (!connection) return <p className="m-0 text-ui-sm text-ink-muted">Đang tải…</p>
+  if (!connection) return <p className="m-0 text-body-sm text-subtle">Đang tải…</p>
   const entry =
     connection.models.find((item) => item.id === entryId) ??
     connection.models.find((item) => item.id === connection.defaultEntryId) ??
@@ -297,22 +284,22 @@ export function ConfirmModel({
   const price = entry ? test.models.find((model) => model.id === entry.model) : undefined
   return (
     <div className="flex flex-col items-center gap-4 py-4 text-center">
-      <span className="flex items-center gap-2 text-ui-lg font-semibold">
+      <span className="flex items-center gap-2 text-body-lg font-semibold">
         <CheckIcon size={18} className="text-success" />
         Đã kết nối {connection.name}
       </span>
-      <span className="text-ui-2xs font-medium tracking-wide text-ink-faint uppercase">
+      <span className="text-body-xs font-medium tracking-wide text-muted uppercase">
         Model mặc định
       </span>
       {entry ? (
         <>
-          <span className="font-mono text-ui-md">{entry.name}</span>
+          <span className="font-mono text-body-md">{entry.name}</span>
           {price?.inputCost !== undefined && price.outputCost !== undefined ? (
-            <span className="text-ui-xs text-ink-muted">
+            <span className="text-body-xs text-subtle">
               ${price.inputCost} / ${price.outputCost} mỗi triệu token (vào / ra)
             </span>
           ) : (
-            <span className="text-ui-xs text-ink-faint">Chưa có giá tham khảo cho model này.</span>
+            <span className="text-body-xs text-muted">Chưa có giá tham khảo cho model này.</span>
           )}
           <ModelSelectionMenu
             variant="field"
@@ -325,12 +312,12 @@ export function ConfirmModel({
               void setThinking(selection.entryId, { settings: thinkingPatch(choice) })
             }}
           />
-          <Button size="lg" onClick={() => onBegin(entry.id)}>
+          <Button variant="solid" onClick={() => onBegin(entry.id)}>
             Bắt đầu
           </Button>
         </>
       ) : (
-        <p className="m-0 text-ui-xs text-ink-muted">
+        <p className="m-0 text-body-xs text-subtle">
           Kết nối không liệt kê model nào. Thêm một mục model trong Cài đặt rồi chọn làm model
           chính.
         </p>
@@ -349,6 +336,7 @@ export function Onboarding(): JSX.Element | null {
   const manual = useUiStore((state) => state.onboardingOpen)
   const setManual = useUiStore((state) => state.setOnboardingOpen)
   const [dismissed, setDismissed] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
   const [state, dispatch] = useReducer(onboardingReducer, INITIAL_ONBOARDING)
   // The models of a new account were added by main; there is nothing more to do before choosing one.
   useAccountLogin(state, dispatch, () => undefined)
@@ -365,7 +353,9 @@ export function Onboarding(): JSX.Element | null {
     store.connections.length === 0 &&
     !dismissed
   // Once a flow has started it stays until it ends, even though connecting makes the library non-empty.
-  if (!manual && !auto && state.step === 'idle') return null
+  const visible = manual || auto || state.step !== 'idle'
+  useDimChrome(visible)
+  if (!visible) return null
 
   function close(): void {
     setManual(false)
@@ -443,28 +433,25 @@ export function Onboarding(): JSX.Element | null {
   }
 
   return (
-    <div className="fixed inset-0 z-(--z-over-modal) flex items-center justify-center bg-backdrop p-6 backdrop-blur-[0.125rem]">
+    <div className="fixed inset-0 z-(--mira-z-toast) flex items-center justify-center bg-backdrop p-6 backdrop-blur-[0.125rem]">
       <section
         role="dialog"
         aria-modal="true"
         aria-label="Kết nối nhà cung cấp AI"
-        className="relative flex max-h-full w-full max-w-[45rem] flex-col gap-4 overflow-y-auto rounded-panel border border-line-strong bg-canvas p-6 text-ink shadow-overlay"
+        className="relative flex max-h-full w-full max-w-[45rem] flex-col gap-4 overflow-y-auto rounded-lg border border-strong bg-surface p-6 text-default shadow-lg"
       >
         {(manual || state.step !== 'idle') && (
-          <Button
-            variant="ghost-muted"
-            size="icon"
+          <CompactButton
             aria-label="Đóng"
             className="absolute top-3 right-3"
             onClick={close}
-          >
-            <CloseIcon size={14} />
-          </Button>
+            icon={<CloseIcon size={14} />}
+          />
         )}
         {state.step !== 'confirm_model' && (
           <header className="flex flex-col gap-1 pr-8">
-            <h2 className="m-0 text-ui-lg font-semibold">Kết nối một nhà cung cấp AI</h2>
-            <p className="m-0 text-ui-sm text-ink-muted">
+            <h2 className="m-0 text-body-lg font-semibold">Kết nối một nhà cung cấp AI</h2>
+            <p className="m-0 text-body-sm text-subtle">
               Cần một kết nối để dịch và chat bằng AI. Phần lớn chỉ mất một lần dán khóa.
             </p>
           </header>
@@ -499,7 +486,7 @@ export function Onboarding(): JSX.Element | null {
           <FlowPanel state={state} onCancel={() => dispatch({ type: 'back' })} />
         )}
         {state.step === 'connecting' && (
-          <p role="status" className="m-0 flex items-center gap-2 py-6 text-ui-sm text-ink-muted">
+          <p role="status" className="m-0 flex items-center gap-2 py-6 text-body-sm text-subtle">
             <RefreshIcon size={14} className="animate-spin" />
             Đang kết nối {state.label}…
           </p>
@@ -512,7 +499,7 @@ export function Onboarding(): JSX.Element | null {
         )}
         {state.step === 'error' && (
           <div role="alert" className="flex flex-col gap-3">
-            <p className="m-0 flex items-start gap-2 text-ui-sm">
+            <p className="m-0 flex items-start gap-2 text-body-sm">
               <DangerCircleIcon size={16} className="mt-0.5 shrink-0 text-error" />
               <span>
                 {state.form.step === 'account'
@@ -523,22 +510,24 @@ export function Onboarding(): JSX.Element | null {
               </span>
             </p>
             {state.detail && (
-              <details className="text-ui-xs text-ink-muted">
-                <summary className="cursor-pointer">Chi tiết</summary>
-                <pre className="selectable mt-1 whitespace-pre-wrap">{state.detail}</pre>
-              </details>
+              <Disclosure label="Chi tiết" open={detailOpen} onOpenChange={setDetailOpen}>
+                <pre className="selectable mt-1 whitespace-pre-wrap text-body-xs text-subtle">
+                  {state.detail}
+                </pre>
+              </Disclosure>
             )}
             <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="ghost-muted" onClick={() => dispatch({ type: 'back' })}>
+              <Button variant="ghost" onClick={() => dispatch({ type: 'back' })}>
                 Chọn nhà cung cấp khác
               </Button>
               <Button
-                variant="outline"
                 onClick={() => dispatch({ type: 'pick_key', providerId: READY_CARDS[0]!.id })}
               >
                 {state.form.step === 'account' ? 'Dùng khóa API' : 'Dùng khóa API khác'}
               </Button>
-              <Button onClick={() => dispatch({ type: 'retry' })}>Thử lại</Button>
+              <Button variant="solid" onClick={() => dispatch({ type: 'retry' })}>
+                Thử lại
+              </Button>
             </div>
           </div>
         )}

@@ -1,8 +1,8 @@
 import { useEffect, useState, type JSX } from 'react'
 import type { AppearanceState } from '../../../../shared/contracts/appearance'
-import { SegmentedControl } from '../../components/SegmentedControl'
-import { SettingRow, SettingsSection } from '../../components/Setting'
-import { Switch } from '../../components/Switch'
+import { ButtonGroup } from '../../components/ui/ButtonGroup'
+import { SettingRow, SettingsSection } from '../../components/ui/Setting'
+import { Switch } from '../../components/ui/Switch'
 import { useUiStore, type ThemePreference } from '../../stores/uiStore'
 import { applyGlass } from './glass'
 
@@ -21,7 +21,7 @@ function ThemeRow(): JSX.Element {
       title="Theme"
       hint="Theo hệ thống thì Mira đổi theo chế độ sáng/tối của Windows."
     >
-      <SegmentedControl
+      <ButtonGroup
         label="Theme"
         value={preference}
         options={THEME_OPTIONS}
@@ -51,7 +51,7 @@ export function AppearanceSettings({
         hint="Sidebar trong mờ, thấy được màn hình phía sau; vùng soạn thảo vẫn đặc để dễ đọc. Tắt nếu máy chạy chậm."
         below={
           state && !supported ? (
-            <span className="text-ui-xs text-ink-muted">
+            <span className="text-body-xs text-subtle">
               Cần Windows 11 bản 22H2 (build 22621) trở lên; máy này chưa hỗ trợ.
             </span>
           ) : undefined

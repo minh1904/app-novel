@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { AccountUsageChip } from '../settings/AccountsPage'
 import { Popover } from '@base-ui/react/popover'
 import { AddCircleIcon } from '@solar-icons/react/linear/add-circle'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { CheckIcon } from '@solar-icons/react/linear/check'
 import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
@@ -13,10 +12,16 @@ import { StarIcon } from '@solar-icons/react/linear/star'
 import { StarIcon as StarFilledIcon } from '@solar-icons/react/bold/star'
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
 import { THINKING_LEVELS, type ModelEntryView } from '../../../../shared/contracts/modelSettings'
-import { cx } from '../../components/cx'
-import { focusRing } from '../../components/focusRing'
-import { menuItemClass, menuSurfaceClass } from '../../components/Menu'
-import { Switch } from '../../components/Switch'
+import { cn } from '../../lib/cn'
+import { Button } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { Disclosure } from '../../components/ui/Disclosure'
+import { menuItemClass, menuSurfaceClass } from '../../components/ui/DropdownMenu'
+import { ICON } from '../../components/ui/icon'
+import { Input } from '../../components/ui/Input'
+import { ListOption } from '../../components/ui/ListOption'
+import { PickerTrigger } from '../../components/ui/PickerTrigger'
+import { Switch } from '../../components/ui/Switch'
 import {
   buildMenuRows,
   favoriteKey,
@@ -105,12 +110,8 @@ function usePersistentSet(key: string): [Set<string>, (item: string) => void] {
   return [items, toggle]
 }
 
-const TRIGGER: Record<NonNullable<ModelSelectionMenuProps['variant']>, string> = {
-  compact:
-    'inline-flex h-6 max-w-[260px] shrink-0 cursor-pointer items-center gap-1 rounded-control px-1.5 text-ui-xs whitespace-nowrap text-ink-muted outline-none hover:bg-control-hover hover:text-ink data-popup-open:bg-control-hover data-popup-open:text-ink disabled:cursor-not-allowed disabled:opacity-50',
-  field:
-    'input-chrome inline-flex h-(--control-height) w-full cursor-pointer items-center gap-2 rounded-control border pr-2 pl-2.5 text-ui-xs text-ink outline-none disabled:cursor-not-allowed disabled:opacity-50'
-}
+/** A footer action of the menu: a ghost button laid out as a full-width row. */
+const FOOTER_ACTION = 'w-full justify-start'
 
 /** "Tùy chọn: Suy luận" and "Mức", for one entry. */
 export function ThinkingPanel({
@@ -129,10 +130,10 @@ export function ThinkingPanel({
     <div className="flex w-48 flex-col">
       {canTurnOff && (
         <>
-          <span className="px-2 pt-1 pb-0.5 text-ui-2xs font-medium text-ink-faint uppercase">
+          <span className="px-2 pt-1 pb-0.5 text-body-xs font-medium text-muted uppercase">
             Tùy chọn
           </span>
-          <label className={cx(menuItemClass, 'justify-between')}>
+          <label className={cn(menuItemClass, 'justify-between')}>
             Suy luận
             <Switch
               aria-label="Suy luận"
@@ -143,26 +144,28 @@ export function ThinkingPanel({
           <div className="-mx-1 my-1 h-px bg-line" />
         </>
       )}
-      <span className="px-2 pt-1 pb-0.5 text-ui-2xs font-medium text-ink-faint uppercase">Mức</span>
-      {levels.map((level) => (
-        <button
-          key={level}
-          type="button"
-          className={cx(menuItemClass, 'justify-between hover:bg-active')}
-          onClick={() => onChoose(level)}
+      <span className="px-2 pt-1 pb-0.5 text-body-xs font-medium text-muted uppercase">Mức</span>
+      <div role="listbox" aria-label="Mức suy luận" className="flex flex-col">
+        {levels.map((level) => (
+          <ListOption
+            key={level}
+            selected={current === level}
+            className="justify-between"
+            onClick={() => onChoose(level)}
+          >
+            {THINKING_LABELS[level]}
+            {current === level && <CheckIcon size={ICON.xs} />}
+          </ListOption>
+        ))}
+        <ListOption
+          selected={current === 'default'}
+          className="justify-between"
+          onClick={() => onChoose('default')}
         >
-          {THINKING_LABELS[level]}
-          {current === level && <CheckIcon size={13} />}
-        </button>
-      ))}
-      <button
-        type="button"
-        className={cx(menuItemClass, 'justify-between hover:bg-active')}
-        onClick={() => onChoose('default')}
-      >
-        {DEFAULT_THINKING_LABEL}
-        {current === 'default' && <CheckIcon size={13} />}
-      </button>
+          {DEFAULT_THINKING_LABEL}
+          {current === 'default' && <CheckIcon size={ICON.xs} />}
+        </ListOption>
+      </div>
     </div>
   )
 }
@@ -290,57 +293,51 @@ export function ModelSelectionMenu({
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger
-        className={cx(TRIGGER[variant], focusRing)}
         disabled={disabled}
         aria-label={label + ': ' + text}
         title={chosenConnection ? chosenConnection.name + ' · ' + text : label}
-      >
-        <span className={cx('min-w-0 flex-1 truncate', variant === 'field' && 'text-left')}>
-          {text}
-        </span>
-        {tag && (
-          <span className="shrink-0 rounded-badge bg-tertiary px-1 text-ui-2xs leading-tight text-ink-muted">
-            {tag}
-          </span>
-        )}
-        {overridesMain && (
-          <span
-            aria-label="Khác model chính"
-            className="size-1.5 shrink-0 rounded-full bg-primary"
+        render={
+          <PickerTrigger
+            variant={variant === 'field' ? 'field' : 'ghost'}
+            value={text}
+            tag={tag}
+            mark={
+              overridesMain && (
+                <span
+                  role="img"
+                  aria-label="Khác model chính"
+                  className="size-1.5 shrink-0 rounded-full bg-inverted"
+                />
+              )
+            }
           />
-        )}
-        <AltArrowDownIcon
-          size={variant === 'field' ? 14 : 12}
-          className="shrink-0 text-ink-muted"
-        />
-      </Popover.Trigger>
+        }
+      />
       <Popover.Portal>
         <Popover.Positioner
-          className="z-(--z-modal-popover)"
+          className="z-(--mira-z-dropdown)"
           side={variant === 'compact' ? 'top' : 'bottom'}
           align="start"
           sideOffset={6}
         >
           <Popover.Popup
             initialFocus={input}
-            className={cx(menuSurfaceClass, 'flex w-80 flex-col')}
+            className={cn(menuSurfaceClass, 'flex w-80 flex-col')}
           >
-            <label className="flex h-7 items-center gap-1.5 border-b border-line px-2 pb-1 text-ink-faint">
-              <MinimalisticMagnifierIcon size={12} aria-hidden="true" />
-              <input
-                ref={input}
-                role="combobox"
-                aria-expanded="true"
-                aria-controls="model-menu-list"
-                aria-activedescendant={activeRow ? 'model-row-' + activeRow.id : undefined}
-                aria-label={adding ? 'Id model mới' : 'Tìm model'}
-                placeholder={adding ? 'Gõ id model, ví dụ openai/gpt-5.5' : 'Tìm model'}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={onKeyDown}
-                className="min-w-0 flex-1 bg-transparent text-ui-xs text-ink outline-none placeholder:text-ink-faint"
-              />
-            </label>
+            <Input
+              ref={input}
+              role="combobox"
+              aria-expanded="true"
+              aria-controls="model-menu-list"
+              aria-activedescendant={activeRow ? 'model-row-' + activeRow.id : undefined}
+              aria-label={adding ? 'Id model mới' : 'Tìm model'}
+              placeholder={adding ? 'Gõ id model, ví dụ openai/gpt-5.5' : 'Tìm model'}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={onKeyDown}
+              leftIcon={<MinimalisticMagnifierIcon size={ICON.sm} aria-hidden="true" />}
+              className="mb-1"
+            />
 
             {!adding && (
               <div
@@ -350,37 +347,42 @@ export function ModelSelectionMenu({
                 className="max-h-80 overflow-y-auto py-1"
               >
                 {rows.length === 0 && (
-                  <span className="block px-2 py-1.5 text-ui-xs text-ink-faint">
+                  <span className="block px-2 py-1.5 text-body-xs text-muted">
                     {withEntries.length === 0 ? 'Chưa có model nào.' : 'Không có model nào khớp.'}
                   </span>
                 )}
                 {rows.map((row, index) => {
                   if (row.type === 'header') {
+                    const connectionId = row.connectionId
                     return (
-                      <button
+                      // Pressing a header must not take focus from the search field.
+                      // biome-ignore lint/a11y/noStaticElementInteractions: only keeps focus in place.
+                      <div
                         key={row.id}
-                        type="button"
-                        tabIndex={-1}
+                        className="px-2 pt-1.5 pb-0.5"
                         onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => row.connectionId && toggleCollapsed(row.connectionId)}
-                        className="flex w-full items-center gap-1 px-2 pt-1.5 pb-0.5 text-left text-ui-2xs font-medium text-ink-faint"
                       >
-                        {row.connectionId && (
-                          <AltArrowRightIcon
-                            size={10}
-                            className={cx(
-                              'transition-transform duration-(--duration-fast)',
-                              !row.collapsed && 'rotate-90'
-                            )}
+                        {connectionId ? (
+                          <Disclosure
+                            open={!row.collapsed}
+                            onOpenChange={() => toggleCollapsed(connectionId)}
+                            tabIndex={-1}
+                            className="font-medium"
+                            label={
+                              <span className="flex items-center gap-1">
+                                {row.label}
+                                <AccountUsageChip
+                                  connection={connections.find((item) => item.id === connectionId)}
+                                />
+                              </span>
+                            }
                           />
+                        ) : (
+                          <span className="block text-body-xs font-medium text-muted">
+                            {row.label}
+                          </span>
                         )}
-                        {row.label}
-                        {row.connectionId && (
-                          <AccountUsageChip
-                            connection={connections.find((item) => item.id === row.connectionId)}
-                          />
-                        )}
-                      </button>
+                      </div>
                     )
                   }
                   const isSelected =
@@ -394,63 +396,71 @@ export function ModelSelectionMenu({
                       open={flyout === row.id}
                       onOpenChange={(next) => setFlyout(next ? row.id : null)}
                     >
+                      {/* The option spans the row; the star and the levels trigger sit over its ends,
+                          so no button nests in another. Pressing any of them keeps focus in the search. */}
+                      {/* biome-ignore lint/a11y/noStaticElementInteractions: hover moves the cursor only. */}
                       <div
-                        id={'model-row-' + row.id}
-                        role="option"
-                        aria-selected={index === active}
+                        className="relative"
                         ref={(element) => {
                           if (element) rowRefs.current.set(row.id, element)
                           else rowRefs.current.delete(row.id)
                         }}
                         onMouseEnter={() => setActiveId(row.id)}
                         onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => choose(row)}
-                        className={cx(
-                          menuItemClass,
-                          'cursor-pointer gap-1.5',
-                          index === active && 'bg-active'
-                        )}
                       >
-                        <button
-                          type="button"
+                        <ListOption
+                          id={'model-row-' + row.id}
+                          tabIndex={-1}
+                          selected={index === active}
+                          onClick={() => choose(row)}
+                          className="pr-8 pl-8"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-default">
+                            {row.entry.name}
+                          </span>
+                          {level && (
+                            <span className="shrink-0 rounded-xs border border-default px-1 text-body-xs leading-tight text-subtle">
+                              {THINKING_TAGS[level]}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <CheckIcon size={ICON.xs} className="shrink-0 text-default" />
+                          )}
+                        </ListOption>
+                        <CompactButton
                           tabIndex={-1}
                           aria-label={row.favorite ? 'Bỏ yêu thích' : 'Yêu thích'}
-                          onClick={(event) => {
-                            event.stopPropagation()
+                          onClick={() =>
                             toggleFavorite(favoriteKey(row.connection.id, row.entry.id))
-                          }}
-                          className="flex shrink-0 text-ink-faint hover:text-ink"
-                        >
-                          {row.favorite ? (
-                            <StarFilledIcon size={13} className="text-warning" />
-                          ) : (
-                            <StarIcon size={13} />
-                          )}
-                        </button>
-                        <span className="min-w-0 flex-1 truncate text-ink">{row.entry.name}</span>
-                        {level && (
-                          <span className="shrink-0 rounded-badge border border-line px-1 text-ui-2xs leading-tight text-ink-muted">
-                            {THINKING_TAGS[level]}
-                          </span>
-                        )}
-                        {isSelected && <CheckIcon size={13} className="shrink-0 text-ink" />}
+                          }
+                          className="absolute top-1 left-1"
+                          icon={
+                            row.favorite ? (
+                              <StarFilledIcon size={ICON.sm} className="text-warning" />
+                            ) : (
+                              <StarIcon size={ICON.sm} />
+                            )
+                          }
+                        />
                         <Popover.Trigger
                           openOnHover
                           delay={120}
-                          tabIndex={-1}
-                          aria-label={'Suy luận của ' + row.entry.name}
-                          onClick={(event) => event.stopPropagation()}
-                          className="flex shrink-0 text-ink-faint hover:text-ink"
                           disabled={
                             !hasLevels && !row.entry.capability.thinkingLevels.includes('off')
                           }
-                        >
-                          <AltArrowRightIcon size={12} />
-                        </Popover.Trigger>
+                          render={
+                            <CompactButton
+                              tabIndex={-1}
+                              aria-label={'Suy luận của ' + row.entry.name}
+                              className="absolute top-1 right-1"
+                              icon={<AltArrowRightIcon size={ICON.sm} />}
+                            />
+                          }
+                        />
                       </div>
                       <Popover.Portal>
                         <Popover.Positioner
-                          className="z-(--z-modal-popover)"
+                          className="z-(--mira-z-dropdown)"
                           // The chat pill sits at the right edge of the window: open the levels to the left there.
                           side={variant === 'compact' ? 'left' : 'right'}
                           align="start"
@@ -473,57 +483,58 @@ export function ModelSelectionMenu({
             <div className="-mx-1 my-1 h-px bg-line" />
             <div className="flex flex-col">
               {adding ? (
-                <button
-                  type="button"
-                  className={cx(menuItemClass, 'hover:bg-active')}
+                <Button
+                  variant="ghost"
+                  className={FOOTER_ACTION}
+                  leftIcon={<AddCircleIcon size={ICON.sm} />}
                   onClick={() => void addCustom()}
                 >
-                  <AddCircleIcon size={13} />
                   Thêm {query.trim() ? '“' + query.trim() + '”' : 'model'}
-                </button>
+                </Button>
               ) : (
                 <>
                   {overridesMain && onUseDefault && (
-                    <button
-                      type="button"
-                      className={cx(menuItemClass, 'text-ink-muted hover:bg-active hover:text-ink')}
+                    <Button
+                      variant="ghost"
+                      className={FOOTER_ACTION}
+                      leftIcon={<RestartIcon size={ICON.sm} />}
                       onClick={() => {
                         onUseDefault()
                         setOpen(false)
                       }}
                     >
-                      <RestartIcon size={13} />
                       Dùng mặc định trong Cài đặt
-                    </button>
+                    </Button>
                   )}
                   {onRefresh && (
-                    <button
-                      type="button"
-                      className={cx(menuItemClass, 'text-ink-muted hover:bg-active hover:text-ink')}
+                    <Button
+                      variant="ghost"
+                      className={FOOTER_ACTION}
+                      leftIcon={<RefreshIcon size={ICON.sm} />}
                       onClick={onRefresh}
                     >
-                      <RefreshIcon size={13} />
                       Tải lại model
-                    </button>
+                    </Button>
                   )}
                   {onAddCustom && withEntries.length > 0 && (
-                    <button
-                      type="button"
-                      className={cx(menuItemClass, 'text-ink-muted hover:bg-active hover:text-ink')}
+                    <Button
+                      variant="ghost"
+                      className={FOOTER_ACTION}
+                      leftIcon={<AddCircleIcon size={ICON.sm} />}
                       onClick={() => {
                         setAdding(true)
                         setQuery('')
                         input.current?.focus()
                       }}
                     >
-                      <AddCircleIcon size={13} />
                       Thêm model tùy chỉnh…
-                    </button>
+                    </Button>
                   )}
                   {onOpenSettings && (
-                    <button
-                      type="button"
-                      className={cx(menuItemClass, 'text-ink-muted hover:bg-active hover:text-ink')}
+                    <Button
+                      variant="ghost"
+                      className={FOOTER_ACTION}
+                      leftIcon={<SettingsIcon size={ICON.sm} />}
                       onClick={() => {
                         setOpen(false)
                         onOpenSettings(
@@ -531,9 +542,8 @@ export function ModelSelectionMenu({
                         )
                       }}
                     >
-                      <SettingsIcon size={13} />
                       {withEntries.length > 0 ? 'Sửa danh sách model…' : 'Thêm nhà cung cấp'}
-                    </button>
+                    </Button>
                   )}
                 </>
               )}

@@ -5,10 +5,10 @@ import {
   type SourceLanguage
 } from '../../../../shared/contracts/library'
 import type { Result } from '../../../../shared/contracts/result'
-import { Button } from '../../components/Button'
-import { Select } from '../../components/Select'
-import { TextArea } from '../../components/TextArea'
-import { TextField } from '../../components/TextField'
+import { Button } from '../../components/ui/Button'
+import { Select } from '../../components/ui/Select'
+import { TextareaField } from '../../components/ui/Field'
+import { TextField } from '../../components/ui/Field'
 import { CoverPicker } from '../library/CoverPicker'
 import { languages } from '../library/works'
 import { emptyWorkForm, type WorkFormValues } from './workFormValues'
@@ -133,7 +133,7 @@ export function WorkForm({
   const languageField =
     mode === 'create' ? (
       <div className="flex flex-col gap-[7px]">
-        <span className="text-ui-xs font-semibold">Ngôn ngữ gốc</span>
+        <span className="text-body-xs font-semibold">Ngôn ngữ gốc</span>
         <Select<SourceLanguage>
           label="Ngôn ngữ gốc"
           value={values.sourceLang}
@@ -141,7 +141,7 @@ export function WorkForm({
           onChange={(lang) => set('sourceLang', lang)}
           className="w-full"
         />
-        <span className="text-ui-xs text-ink-muted">Ngôn ngữ đích luôn là tiếng Việt.</span>
+        <span className="text-body-xs text-subtle">Ngôn ngữ đích luôn là tiếng Việt.</span>
       </div>
     ) : (
       <TextField
@@ -180,7 +180,7 @@ export function WorkForm({
         onChange={(event) => set('genre', event.target.value)}
       />
 
-      <TextArea
+      <TextareaField
         label="Mô tả (tùy chọn)"
         value={values.description}
         maxLength={DESCRIPTION_MAX}
@@ -191,7 +191,7 @@ export function WorkForm({
   )
 
   const errorLine = (formError || fieldErrors.cover) && (
-    <p role="alert" className="text-ui-xs text-error">
+    <p role="alert" className="text-body-xs text-error">
       {formError ?? fieldErrors.cover}
     </p>
   )
@@ -213,7 +213,7 @@ export function WorkForm({
       <form className="flex h-full min-h-0 flex-col" noValidate onSubmit={onSteppedSubmit}>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex max-w-[560px] flex-col gap-4 px-5 py-6">
-            <ol className="flex items-center gap-2 text-ui-xs" aria-label="Các bước tạo tác phẩm">
+            <ol className="flex items-center gap-2 text-body-xs" aria-label="Các bước tạo tác phẩm">
               {(
                 [
                   [1, 'Bắt buộc'],
@@ -226,16 +226,14 @@ export function WorkForm({
                     aria-current={step === number ? 'step' : undefined}
                     className={
                       'flex items-center gap-1.5 ' +
-                      (step === number ? 'font-semibold' : 'text-ink-muted')
+                      (step === number ? 'font-semibold' : 'text-subtle')
                     }
                   >
                     <span
                       aria-hidden="true"
                       className={
-                        'grid size-5 place-items-center rounded-full text-ui-xs ' +
-                        (step === number
-                          ? 'bg-primary text-primary-foreground'
-                          : 'border border-line-strong')
+                        'grid size-5 place-items-center rounded-full text-body-xs ' +
+                        (step === number ? 'bg-inverted text-inverted' : 'border border-strong')
                       }
                     >
                       {number}
@@ -247,10 +245,10 @@ export function WorkForm({
             </ol>
 
             <div className="flex flex-col gap-1">
-              <h2 className="text-ui-md font-semibold">
+              <h2 className="text-body-md font-semibold">
                 {onStepOne ? 'Tác phẩm này tên gì?' : 'Thêm thông tin cho tác phẩm'}
               </h2>
-              <p className="text-ui-xs leading-normal text-ink-muted">
+              <p className="text-body-xs leading-normal text-subtle">
                 {onStepOne
                   ? 'Hai thứ này không đổi được dễ dàng về sau; phần còn lại thêm lúc nào cũng được.'
                   : 'Mọi thứ ở bước này đều bỏ trống được, và sửa lại sau lúc nào cũng được.'}
@@ -261,7 +259,7 @@ export function WorkForm({
               <>
                 {titleField}
                 {languageField}
-                <p className="text-ui-xs text-ink-muted">
+                <p className="text-body-xs text-subtle">
                   Bước sau: ảnh bìa, tên gốc, tác giả, thể loại, mô tả — bỏ qua được.
                 </p>
               </>
@@ -277,33 +275,33 @@ export function WorkForm({
           </div>
         </div>
 
-        <div className="flex h-[48px] shrink-0 items-center justify-end gap-2 border-t border-line bg-chrome px-3">
+        <div className="flex h-[48px] shrink-0 items-center justify-end gap-2 border-t border-default bg-surface px-3">
           {submitting && (
-            <p role="status" className="mr-auto text-ui-xs text-ink-muted">
+            <p role="status" className="mr-auto text-body-xs text-subtle">
               {busyLabel}
             </p>
           )}
           {onStepOne ? (
             <>
-              <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+              <Button variant="light" onClick={onCancel} disabled={submitting}>
                 Hủy
               </Button>
-              <Button variant="outline" disabled={submitting} onClick={() => void submit()}>
+              <Button disabled={submitting} onClick={() => void submit()}>
                 Tạo và bỏ qua phần còn lại
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button variant="solid" type="submit" disabled={submitting}>
                 Tiếp tục
               </Button>
             </>
           ) : (
             <>
-              <Button variant="secondary" onClick={() => setStep(1)} disabled={submitting}>
+              <Button variant="light" onClick={() => setStep(1)} disabled={submitting}>
                 Quay lại
               </Button>
-              <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+              <Button variant="light" onClick={onCancel} disabled={submitting}>
                 Hủy
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button variant="solid" type="submit" disabled={submitting}>
                 {submitting ? busyLabel : submitLabel}
               </Button>
             </>
@@ -329,11 +327,11 @@ export function WorkForm({
 
       {footerNote}
 
-      <div className="flex justify-end gap-2 border-t border-line pt-5">
-        <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+      <div className="flex justify-end gap-2 border-t border-default pt-5">
+        <Button variant="light" onClick={onCancel} disabled={submitting}>
           Hủy
         </Button>
-        <Button type="submit" disabled={submitting}>
+        <Button variant="solid" type="submit" disabled={submitting}>
           {submitting ? busyLabel : submitLabel}
         </Button>
       </div>

@@ -8,9 +8,12 @@ import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
 import type { SourceLanguage } from '../../../../../shared/contracts/library'
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import type { ProposalQueueItem } from '../../../../../shared/contracts/aiProposals'
-import { Button } from '../../../components/Button'
-import { cx } from '../../../components/cx'
-import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../../components/Menu'
+import { Button, LinkButton } from '../../../components/ui/Button'
+import { ButtonGroup, type ButtonGroupOption } from '../../../components/ui/ButtonGroup'
+import { CompactButton } from '../../../components/ui/CompactButton'
+import { Disclosure } from '../../../components/ui/Disclosure'
+import { ICON } from '../../../components/ui/icon'
+import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../../components/ui/DropdownMenu'
 import { AiComposer } from './AiComposer'
 import { AiTurn } from './AiTurn'
 import { buildLocation, type PaneCaret } from './chatLocation'
@@ -29,6 +32,11 @@ import { useConnectionStore } from '../../../stores/connectionStore'
  * accepts it, and an accepted one is one undoable step.
  */
 const MIN_WIDTH = 320
+type QueueFilter = 'all' | 'session'
+const QUEUE_FILTERS: ReadonlyArray<ButtonGroupOption<QueueFilter>> = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'session', label: 'Phiên này' }
+]
 const MAX_WIDTH = 720
 
 export function AiPanel({
@@ -68,7 +76,7 @@ export function AiPanel({
   onOpenSettings(): void
 }): JSX.Element {
   const [queueOpen, setQueueOpen] = useState(false)
-  const [queueFilter, setQueueFilter] = useState<'all' | 'session'>('all')
+  const [queueFilter, setQueueFilter] = useState<QueueFilter>('all')
   const [queue, setQueue] = useState<ProposalQueueItem[]>([])
   const [pendingCount, setPendingCount] = useState(0)
   const [undoAvailable, setUndoAvailable] = useState(false)
@@ -285,13 +293,13 @@ export function AiPanel({
   }
 
   return (
-    <section aria-label="Hỏi AI" className="relative flex h-full min-h-0 flex-col bg-sidebar">
+    <section aria-label="Hỏi AI" className="relative flex h-full min-h-0 flex-col bg-subtle">
       {/* Drag handle for the panel width: the pane is to the right, so dragging left widens it. */}
       <span
         role="separator"
         aria-orientation="vertical"
         title="Kéo để đổi bề rộng"
-        className="absolute top-0 left-0 z-(--z-raised) flex h-full w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-focus/30"
+        className="absolute top-0 left-0 z-(--mira-z-sticky) flex h-full w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-focus/30"
         onPointerDown={(event) => {
           event.preventDefault()
           const pointerId = event.pointerId
@@ -316,19 +324,24 @@ export function AiPanel({
         <span aria-hidden="true" className="h-6 w-px bg-line-strong" />
       </span>
 
-      <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-3">
+      <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-default px-3">
         <StarsIcon size={16} className="shrink-0 text-info" />
-        <h3 className="text-ui-xs font-semibold">Hỏi AI</h3>
-        <span className="min-w-0 truncate text-ui-xs text-ink-muted">{chapterLabel}</span>
+        <h3 className="text-body-xs font-semibold">Hỏi AI</h3>
+        <span className="min-w-0 truncate text-body-xs text-subtle">{chapterLabel}</span>
         <span className="ml-auto flex shrink-0 items-center gap-0.5">
           {chat.sessions.length > 0 && (
             <MenuRoot>
               <MenuTrigger
-                className="inline-flex h-7 items-center gap-1 rounded-control px-1.5 text-ui-xs text-ink-muted hover:bg-hover"
-                aria-label="Mở lịch sử hội thoại"
-              >
-                Lịch sử <AltArrowDownIcon size={12} />
-              </MenuTrigger>
+                render={
+                  <Button
+                    variant="ghost"
+                    aria-label="Mở lịch sử hội thoại"
+                    rightIcon={<AltArrowDownIcon size={ICON.sm} aria-hidden="true" />}
+                  >
+                    Lịch sử
+                  </Button>
+                }
+              />
               <MenuPopup align="end">
                 {chat.sessions.map((saved) => (
                   <MenuItem key={saved.id} onClick={() => chat.selectSession(saved.id)}>
@@ -339,72 +352,43 @@ export function AiPanel({
               </MenuPopup>
             </MenuRoot>
           )}
-          <Button
-            variant="ghost-muted"
-            size="icon"
+          <CompactButton
             aria-label="Hội thoại mới"
             title="Hội thoại mới"
             disabled={chat.session.turns.length === 0}
             onClick={chat.newConversation}
-          >
-            <PenNewRoundIcon size={16} />
-          </Button>
-          <Button
-            variant="ghost-muted"
-            size="icon"
+            icon={<PenNewRoundIcon size={16} />}
+          />
+          <CompactButton
             aria-label="Đóng (Esc)"
             title="Đóng (Esc)"
             onClick={onClose}
-          >
-            <CloseIcon size={16} />
-          </Button>
+            icon={<CloseIcon size={16} />}
+          />
         </span>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 py-3">
         {pendingCount > 0 && (
-          <div className="rounded-panel border border-line-strong bg-canvas p-2">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                className="text-ui-xs font-medium text-ink"
-                aria-expanded={queueOpen}
-                onClick={() => setQueueOpen((value) => !value)}
-              >
-                Đề xuất chờ · {chapterLabel} ({pendingCount}) {queueOpen ? '▴' : '▾'}
-              </button>
-              {queueOpen && (
-                <div className="flex items-center gap-1 text-ui-xs">
-                  <button
-                    type="button"
-                    className={cx(
-                      'rounded-control px-1.5 py-0.5',
-                      queueFilter === 'all'
-                        ? 'bg-control font-semibold text-ink'
-                        : 'text-ink-muted hover:text-ink'
-                    )}
-                    onClick={() => setQueueFilter('all')}
-                  >
-                    Tất cả
-                  </button>
-                  <button
-                    type="button"
-                    className={cx(
-                      'rounded-control px-1.5 py-0.5',
-                      queueFilter === 'session'
-                        ? 'bg-control font-semibold text-ink'
-                        : 'text-ink-muted hover:text-ink'
-                    )}
-                    onClick={() => setQueueFilter('session')}
-                  >
-                    Phiên này
-                  </button>
-                </div>
-              )}
-            </div>
-            {queueOpen && (
+          <div className="rounded-lg border border-strong bg-surface p-2">
+            <Disclosure
+              label={`Đề xuất chờ · ${chapterLabel} (${pendingCount})`}
+              open={queueOpen}
+              onOpenChange={setQueueOpen}
+              className="font-medium text-default"
+              trailing={
+                queueOpen && (
+                  <ButtonGroup
+                    label="Lọc đề xuất"
+                    value={queueFilter}
+                    options={QUEUE_FILTERS}
+                    onChange={(value) => setQueueFilter(value)}
+                  />
+                )
+              }
+            >
               <div className="mt-2 space-y-2">
-                <Button size="sm" onClick={() => void acceptAll()}>
+                <Button variant="solid" onClick={() => void acceptAll()}>
                   Áp dụng tất cả {pendingCount} phần của {chapterLabel}
                 </Button>
                 {(() => {
@@ -417,7 +401,7 @@ export function AiPanel({
                   )
                   if (parts.length === 0) {
                     return (
-                      <p className="text-ui-xs text-ink-muted">
+                      <p className="text-body-xs text-subtle">
                         Không có đề xuất nào thuộc phiên này.
                       </p>
                     )
@@ -441,26 +425,21 @@ export function AiPanel({
                   ))
                 })()}
               </div>
-            )}
+            </Disclosure>
           </div>
         )}
         {queueNotice && (
-          <p role="status" className="text-ui-xs text-ink-muted">
+          <p role="status" className="text-body-xs text-subtle">
             {queueNotice}
           </p>
         )}
         {undoAvailable && (
-          <Button
-            variant="ghost-muted"
-            size="sm"
-            className="self-start"
-            onClick={() => void undo()}
-          >
+          <Button variant="ghost" className="self-start" onClick={() => void undo()}>
             Hoàn tác lượt duyệt gần nhất
           </Button>
         )}
         {chat.loadError !== null && (
-          <p className="rounded-control border border-error/40 bg-error/5 px-2 py-1.5 text-ui-xs leading-normal">
+          <p className="rounded-sm border border-error/40 bg-error/5 px-2 py-1.5 text-body-xs leading-normal">
             Không đọc được danh sách kết nối: {chat.loadError}
           </p>
         )}
@@ -468,36 +447,34 @@ export function AiPanel({
         {chat.modelNotice !== null && (
           <p
             role="alert"
-            className="flex items-start justify-between gap-2 rounded-control border border-error/40 bg-error/5 px-2 py-1.5 text-ui-xs leading-normal"
+            className="flex items-start justify-between gap-2 rounded-sm border border-error/40 bg-error/5 px-2 py-1.5 text-body-xs leading-normal"
           >
             <span className="min-w-0 break-words">
               Không đổi được mức suy luận: {chat.modelNotice}
             </span>
-            <button
-              type="button"
-              className="shrink-0 cursor-pointer text-ink-muted underline hover:text-ink"
-              onClick={chat.dismissModelNotice}
-            >
+            <LinkButton color="neutral" className="shrink-0" onClick={chat.dismissModelNotice}>
               Đóng
-            </button>
+            </LinkButton>
           </p>
         )}
 
         {chat.loadError === null && chat.usable.length === 0 && (
-          <div className="flex flex-col items-start gap-2 rounded-panel border border-line bg-canvas p-3">
-            <p className="text-ui-xs leading-normal text-ink-muted">
+          <div className="flex flex-col items-start gap-2 rounded-lg border border-default bg-surface p-3">
+            <p className="text-body-xs leading-normal text-subtle">
               Chưa có kết nối AI nào đang bật, nên chưa gửi được câu hỏi nào. Khai một kết nối và
               dán khóa trong Cài đặt, rồi quay lại đây.
             </p>
-            <Button variant="outline" size="sm" onClick={onOpenSettings}>
-              <SettingsIcon size={14} />
+            <Button
+              onClick={onOpenSettings}
+              leftIcon={<SettingsIcon size={ICON.sm} aria-hidden="true" />}
+            >
               Mở Cài đặt
             </Button>
           </div>
         )}
 
         {chat.session.dropped > 0 && (
-          <p className="text-ui-xs leading-normal text-ink-muted">
+          <p className="text-body-xs leading-normal text-subtle">
             Hội thoại đã dài: {chat.session.dropped} lượt cũ nhất không được gửi kèm lượt vừa rồi.
           </p>
         )}

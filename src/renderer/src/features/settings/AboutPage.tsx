@@ -1,5 +1,5 @@
 import { useEffect, useState, type JSX } from 'react'
-import { SettingRow, SettingsSection } from '../../components/Setting'
+import { SettingRow, SettingsSection } from '../../components/ui/Setting'
 import type { AppInfo } from '../../../../shared/contracts/desktopApi'
 
 const PLATFORM: Record<string, string> = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }
@@ -22,7 +22,7 @@ export function AboutPage(): JSX.Element {
   return (
     <SettingsSection>
       <SettingRow id="version" title="Mira" hint="Không gian dịch truyện, chạy trên máy bạn.">
-        <span className="font-mono text-ui-xs text-ink-muted">
+        <span className="font-mono text-body-xs text-subtle">
           {info ? info.version + ' · ' + (PLATFORM[info.platform] ?? info.platform) : '…'}
         </span>
       </SettingRow>

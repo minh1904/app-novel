@@ -1,6 +1,4 @@
 import { useState, type JSX } from 'react'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
 import { KeyIcon } from '@solar-icons/react/linear/key'
 import { LinkIcon } from '@solar-icons/react/linear/link'
 import { MonitorIcon } from '@solar-icons/react/linear/monitor'
@@ -10,14 +8,15 @@ import {
   PROVIDER_CARDS,
   type ProviderCard
 } from '../../../../shared/contracts/aiProviders'
-import { Badge } from '../../components/Badge'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
-import { focusRing } from '../../components/focusRing'
-import { SearchField } from '../../components/SearchField'
-import { SegmentedControl } from '../../components/SegmentedControl'
-import { SettingRow, SettingsSection } from '../../components/Setting'
-import { TextField } from '../../components/TextField'
+import { ActionRow } from '../../components/ui/ActionRow'
+import { Badge } from '../../components/ui/Badge'
+import { Button, LinkButton } from '../../components/ui/Button'
+import { cn } from '../../lib/cn'
+import { ICON } from '../../components/ui/icon'
+import { SearchInput } from '../../components/ui/Input'
+import { ButtonGroup } from '../../components/ui/ButtonGroup'
+import { SettingRow, SettingsSection } from '../../components/ui/Setting'
+import { TextField } from '../../components/ui/Field'
 import { useConnectionStore } from '../../stores/connectionStore'
 import { notify } from '../../stores/notificationStore'
 import { useUiStore } from '../../stores/uiStore'
@@ -40,6 +39,8 @@ function ExpandableCard({
   open,
   onToggle,
   head,
+  description,
+  tag,
   right,
   children
 }: {
@@ -47,34 +48,28 @@ function ExpandableCard({
   open: boolean
   onToggle(): void
   head: JSX.Element
+  description?: JSX.Element
+  tag?: JSX.Element
   right?: JSX.Element
   children: JSX.Element
 }): JSX.Element {
   return (
     <div
       data-setting-id={id}
-      className={cx(
-        'rounded-control transition-colors duration-(--duration-fast)',
-        open ? 'bg-control ring-1 ring-line-strong' : 'hover:bg-hover'
+      className={cn(
+        'rounded-sm transition-colors duration-(--mira-duration-fast)',
+        open ? 'bg-muted ring-1 ring-(--mira-border-strong)' : 'hover:bg-hover'
       )}
     >
-      <div className="flex min-h-11 items-center gap-2 px-3">
-        <button
-          type="button"
-          aria-expanded={open}
+      <div className="flex min-h-11 items-center gap-2 pr-3">
+        <ActionRow
+          expanded={open}
           onClick={onToggle}
-          className={cx('flex min-w-0 flex-1 items-center gap-2 py-2 text-left', focusRing)}
-        >
-          {head}
-          <AltArrowDownIcon
-            size={12}
-            className={cx(
-              'shrink-0 text-ink-faint transition-transform duration-(--duration-fast)',
-              open && 'rotate-180'
-            )}
-            aria-hidden="true"
-          />
-        </button>
+          className="min-w-0 flex-1"
+          title={head}
+          description={description}
+          tag={tag}
+        />
         {right}
       </div>
       {open && <div className="px-3 pb-3">{children}</div>}
@@ -86,7 +81,7 @@ function StatusDot({ on }: { on: boolean }): JSX.Element {
   return (
     <span
       aria-hidden="true"
-      className={cx('size-2 shrink-0 rounded-full', on ? 'bg-primary' : 'bg-line-strong')}
+      className={cn('size-2 shrink-0 rounded-full', on ? 'bg-inverted' : 'bg-line-strong')}
     />
   )
 }
@@ -105,7 +100,12 @@ function KeyField({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | undefined>()
 
-  if (card.support === 'soon') return <Badge tone="muted">Sắp có</Badge>
+  if (card.support === 'soon')
+    return (
+      <Badge variant="outline" dot color="neutral">
+        Sắp có
+      </Badge>
+    )
 
   async function save(): Promise<void> {
     if (!value.trim() || saving) return
@@ -125,24 +125,19 @@ function KeyField({
   const keys = connection?.keys ?? []
   if (!editing) {
     return (
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={() => setEditing(true)}
-        className={cx(
-          'flex h-(--control-height) w-56 items-center rounded-control px-2.5 text-left text-ui-xs',
-          keys.length > 0 ? 'font-mono text-ink' : 'text-ink-faint',
-          'hover:bg-control-hover',
-          focusRing
-        )}
+        className={cn('w-56 justify-start', keys.length > 0 && 'font-mono')}
       >
         {keys.length > 0
           ? '••••' + keys[0]!.tail + (keys.length > 1 ? '  +' + (keys.length - 1) : '')
           : 'Dán khóa ' + card.label}
-      </button>
+      </Button>
     )
   }
   return (
-    <div className="flex w-full max-w-sm items-start gap-1.5">
+    <div className="flex w-full max-w-(--container-sm) items-start gap-1.5">
       <TextField
         label={'Khóa ' + card.label}
         type="password"
@@ -165,7 +160,7 @@ function KeyField({
           }
         }}
       />
-      <Button loading={saving} disabled={!value.trim()} onClick={() => void save()}>
+      <Button variant="solid" loading={saving} disabled={!value.trim()} onClick={() => void save()}>
         Lưu
       </Button>
     </div>
@@ -198,30 +193,19 @@ export function KeysPage(): JSX.Element {
 
   return (
     <SettingsSection title="Khóa API" icon={<KeyIcon size={16} />}>
-      <p className="m-0 mb-2 text-ui-xs text-ink-muted">
+      <p className="m-0 mb-2 text-body-xs text-subtle">
         Dán khóa của nhà cung cấp; Mira tự tạo kết nối. Khóa được mã hóa trên máy và không bao giờ
         hiện lại đầy đủ.
       </p>
-      <button
-        type="button"
+      <ActionRow
+        className="mb-2"
         onClick={() => openSettings({ group: 'connections', page: 'endpoints' })}
-        className={cx(
-          'mb-2 flex w-full items-center gap-2 rounded-control px-3 py-2.5 text-left hover:bg-hover',
-          focusRing
-        )}
-      >
-        <LinkIcon size={16} className="shrink-0 text-ink-muted" />
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-ui-sm font-medium">Endpoint tùy chỉnh</span>
-          <span className="text-ui-xs text-ink-muted">
-            Gateway tự dựng hay bất kỳ URL tương thích OpenAI nào.
-          </span>
-        </span>
-        <AltArrowRightIcon size={14} className="text-ink-faint" />
-      </button>
-      <SearchField
+        leading={<LinkIcon size={ICON.sm} aria-hidden="true" />}
+        title="Endpoint tùy chỉnh"
+        description="Gateway tự dựng hay bất kỳ URL tương thích OpenAI nào."
+      />
+      <SearchInput
         label="Tìm nhà cung cấp"
-        size="sm"
         placeholder="Tìm nhà cung cấp…"
         className="mb-2"
         value={query}
@@ -243,29 +227,30 @@ export function KeysPage(): JSX.Element {
               head={
                 <>
                   <StatusDot on={own.some((item) => connectionLive(item, now))} />
-                  <span className="truncate text-ui-sm font-medium">{card.label}</span>
-                  {own.length > 1 && <Badge tone="muted">{own.length} kết nối</Badge>}
+                  <span className="truncate">{card.label}</span>
                 </>
+              }
+              tag={
+                own.length > 1 ? (
+                  <Badge variant="outline" dot color="neutral">
+                    {own.length} kết nối
+                  </Badge>
+                ) : undefined
               }
               right={<KeyField card={card} connection={connection} />}
             >
               <div className="flex flex-col">
-                <p className="m-0 pt-1 text-ui-xs text-ink-muted">
+                <p className="m-0 pt-1 text-body-xs text-subtle">
                   {card.description}{' '}
-                  <Button
-                    variant="link"
-                    size="xs"
-                    className="h-auto"
-                    onClick={() => openLink(card.keyUrl)}
-                  >
+                  <LinkButton className="h-auto" onClick={() => openLink(card.keyUrl)}>
                     Lấy khóa ↗
-                  </Button>
+                  </LinkButton>
                 </p>
                 {own.length > 0 ? (
                   own.map((item) => (
                     <div key={item.id} className="flex flex-col">
                       {own.length > 1 && (
-                        <span className="pt-3 text-ui-xs font-medium text-ink-faint">
+                        <span className="pt-3 text-body-xs font-medium text-muted">
                           {item.name}
                         </span>
                       )}
@@ -273,7 +258,7 @@ export function KeysPage(): JSX.Element {
                     </div>
                   ))
                 ) : (
-                  <p className="m-0 py-3 text-ui-xs text-ink-faint">
+                  <p className="m-0 py-3 text-body-xs text-muted">
                     {card.support === 'soon'
                       ? 'Cần transport riêng; sẽ có trong bản cập nhật kế tiếp.'
                       : 'Chưa có kết nối. Dán khóa ở ô bên phải để tạo.'}
@@ -300,10 +285,14 @@ export function EndpointsPage(): JSX.Element {
       <SettingsSection
         title="Endpoint tùy chỉnh"
         icon={<LinkIcon size={16} />}
-        aside={<Badge tone="muted">{endpoints.length}</Badge>}
+        aside={
+          <Badge variant="outline" dot color="neutral">
+            {endpoints.length}
+          </Badge>
+        }
       >
         {endpoints.length === 0 && (
-          <p className="m-0 py-2 text-ui-xs text-ink-muted">
+          <p className="m-0 py-2 text-body-xs text-subtle">
             Chưa có endpoint nào. Thêm một endpoint tương thích OpenAI ở dưới.
           </p>
         )}
@@ -319,14 +308,10 @@ export function EndpointsPage(): JSX.Element {
                 head={
                   <>
                     <StatusDot on={connectionLive(connection, now)} />
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate text-ui-sm font-medium">{connection.name}</span>
-                      <span className="truncate font-mono text-ui-2xs text-ink-faint">
-                        {connection.baseUrl}
-                      </span>
-                    </span>
+                    <span className="truncate">{connection.name}</span>
                   </>
                 }
+                description={<span className="font-mono">{connection.baseUrl}</span>}
               >
                 <ConnectionDetails connection={connection} now={now} />
               </ExpandableCard>
@@ -432,7 +417,7 @@ function AddEndpointForm(): JSX.Element {
         title="Chế độ API"
         hint="Tự nhận chọn theo địa chỉ (api.anthropic.com hay đường dẫn /anthropic là Anthropic Messages); hầu hết gateway là Chat Completions. Kiểm tra thăm dò đúng route của chế độ đã chọn."
       >
-        <SegmentedControl
+        <ButtonGroup
           label="Chế độ API"
           value={mode}
           options={API_MODES}
@@ -473,8 +458,8 @@ function AddEndpointForm(): JSX.Element {
       {message && (
         <p
           role={message.tone === 'error' ? 'alert' : 'status'}
-          className={cx(
-            'm-0 py-1 text-ui-xs',
+          className={cn(
+            'm-0 py-1 text-body-xs',
             message.tone === 'ok'
               ? 'text-success'
               : message.tone === 'warn'
@@ -486,15 +471,10 @@ function AddEndpointForm(): JSX.Element {
         </p>
       )}
       <div className="flex gap-2 pt-2">
-        <Button
-          variant="outline"
-          loading={checking}
-          disabled={!url.trim()}
-          onClick={() => void check()}
-        >
+        <Button loading={checking} disabled={!url.trim()} onClick={() => void check()}>
           Kiểm tra
         </Button>
-        <Button loading={saving} disabled={!url.trim()} onClick={() => void save()}>
+        <Button variant="solid" loading={saving} disabled={!url.trim()} onClick={() => void save()}>
           Lưu
         </Button>
       </div>
@@ -553,7 +533,7 @@ export function LocalPage(): JSX.Element {
 
   return (
     <SettingsSection title="Trên máy" icon={<MonitorIcon size={16} />}>
-      <p className="m-0 mb-2 text-ui-xs text-ink-muted">
+      <p className="m-0 mb-2 text-body-xs text-subtle">
         Model chạy ngay trên máy bạn; không cần khóa và không gửi gì ra ngoài.
       </p>
       <div className="flex flex-col gap-1">
@@ -570,21 +550,12 @@ export function LocalPage(): JSX.Element {
               head={
                 <>
                   <StatusDot on={connection ? connectionLive(connection, now) : false} />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-ui-sm font-medium">{preset.label}</span>
-                    <span className="truncate font-mono text-ui-2xs text-ink-faint">
-                      {preset.baseUrl}
-                    </span>
-                  </span>
+                  <span className="truncate">{preset.label}</span>
                 </>
               }
+              description={<span className="font-mono">{preset.baseUrl}</span>}
               right={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  loading={busy === presetId}
-                  onClick={() => void check(presetId)}
-                >
+                <Button loading={busy === presetId} onClick={() => void check(presetId)}>
                   Kiểm tra
                 </Button>
               }
@@ -592,16 +563,11 @@ export function LocalPage(): JSX.Element {
               {connection ? (
                 <ConnectionDetails connection={connection} now={now} />
               ) : (
-                <p className="m-0 py-2 text-ui-xs text-ink-muted">
+                <p className="m-0 py-2 text-body-xs text-subtle">
                   {preset.hint}{' '}
-                  <Button
-                    variant="link"
-                    size="xs"
-                    className="h-auto"
-                    onClick={() => openLink(LOCAL_LINKS[presetId]!)}
-                  >
+                  <LinkButton className="h-auto" onClick={() => openLink(LOCAL_LINKS[presetId]!)}>
                     Tải về ↗
-                  </Button>
+                  </LinkButton>
                 </p>
               )}
             </ExpandableCard>

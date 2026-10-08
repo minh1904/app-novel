@@ -1,9 +1,9 @@
 import { useState, type JSX, type RefObject } from 'react'
 import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
-import { Dialog } from '../../components/Dialog'
-import { Slider } from '../../components/Slider'
-import { Switch } from '../../components/Switch'
-import { TextArea } from '../../components/TextArea'
+import { Dialog } from '../../components/ui/Dialog'
+import { Slider } from '../../components/ui/Slider'
+import { Switch } from '../../components/ui/Switch'
+import { TextareaField } from '../../components/ui/Field'
 import type { ModelEntryActions } from './modelEntryActions'
 import {
   ADVANCED_HINTS,
@@ -55,7 +55,7 @@ function SliderSetting({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0">
+    <div className="flex flex-col gap-2 border-b border-default py-3 first:pt-0 last:border-b-0 last:pb-0">
       <div className="flex items-center gap-2.5">
         <Switch
           checked={saved.enabled && !locked}
@@ -63,9 +63,9 @@ function SliderSetting({
           aria-label={'Gửi ' + copy.title}
           onCheckedChange={(checked) => void save(checked, value)}
         />
-        <span className="text-ui-xs font-semibold">{copy.title}</span>
+        <span className="text-body-xs font-semibold">{copy.title}</span>
       </div>
-      <p className="m-0 text-ui-xs leading-normal text-ink-muted">
+      <p className="m-0 text-body-xs leading-normal text-subtle">
         {locked ? disabledReason : copy.hint}
       </p>
       <div className={saved.enabled && !locked ? undefined : 'opacity-60'}>
@@ -83,7 +83,7 @@ function SliderSetting({
         />
       </div>
       {error !== undefined && (
-        <span role="alert" className="text-ui-xs text-error">
+        <span role="alert" className="text-body-xs text-error">
           {error}
         </span>
       )}
@@ -120,16 +120,16 @@ function JsonSetting({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0">
+    <div className="flex flex-col gap-2 border-b border-default py-3 first:pt-0 last:border-b-0 last:pb-0">
       <div className="flex items-center gap-2.5">
         <Switch
           checked={saved.enabled}
           aria-label={'Gửi ' + copy.title}
           onCheckedChange={(checked) => void save(checked)}
         />
-        <span className="text-ui-xs font-semibold">{copy.title}</span>
+        <span className="text-body-xs font-semibold">{copy.title}</span>
       </div>
-      <TextArea
+      <TextareaField
         label={copy.title}
         hint={copy.hint}
         error={error}
@@ -137,7 +137,7 @@ function JsonSetting({
         spellCheck={false}
         placeholder="{}"
         rows={4}
-        className="[&>label]:sr-only [&_textarea]:font-mono [&_textarea]:text-ui-xs"
+        className="[&>label]:sr-only [&_textarea]:font-mono [&_textarea]:text-body-xs"
         onChange={(event) => {
           setText(event.target.value)
           setError(undefined)
@@ -202,7 +202,7 @@ export function ModelAdvancedDialog({
             entry.name +
             '”. Chỉ tham số có công tắc bật mới được gửi; tắt thì giá trị vẫn được giữ.'
       }
-      size="form"
+      size="md"
       finalFocus={finalFocus}
     >
       {entry !== null && <AdvancedForm key={entry.id} entry={entry} actions={actions} />}

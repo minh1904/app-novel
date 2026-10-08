@@ -1,5 +1,5 @@
 import type { ConnectionKeyView, ConnectionView } from '../../../../shared/contracts/aiConnections'
-import type { BadgeTone } from '../../components/Badge'
+import type { BadgeColor } from '../../components/ui/Badge'
 import type { TestState } from '../../stores/connectionStore'
 
 /** Khoảng thời gian còn lại, nói bằng chữ người đọc được chứ không phải một mốc epoch. */
@@ -10,7 +10,7 @@ function remaining(until: number, now: number): string {
   return Math.round(minutes / 60) + ' giờ'
 }
 
-export function keyBadge(key: ConnectionKeyView, now: number): { tone: BadgeTone; label: string } {
+export function keyBadge(key: ConnectionKeyView, now: number): { tone: BadgeColor; label: string } {
   if (key.state === 'invalid') return { tone: 'error', label: 'Khóa sai' }
   if (key.frozenUntil !== null && key.frozenUntil > now) {
     const scope = key.frozenScope === 'day' ? 'Hết hạn mức hôm nay' : 'Hết hạn mức'
@@ -33,9 +33,9 @@ export function connectionBadge(
   connection: ConnectionView,
   test: TestState,
   now: number
-): { tone: BadgeTone; label: string } {
-  if (!connection.enabled) return { tone: 'muted', label: 'Đã tắt' }
-  if (test.running) return { tone: 'muted', label: 'Đang kiểm tra…' }
+): { tone: BadgeColor; label: string } {
+  if (!connection.enabled) return { tone: 'neutral', label: 'Đã tắt' }
+  if (test.running) return { tone: 'neutral', label: 'Đang kiểm tra…' }
   if (test.error) return { tone: 'error', label: 'Không nối được' }
   const live = connection.keys.filter(
     (key) => key.state === 'ok' && (key.frozenUntil === null || key.frozenUntil <= now)
@@ -44,6 +44,6 @@ export function connectionBadge(
     return { tone: 'error', label: 'Hết hạn mức' }
   if (live.length < connection.keys.length)
     return { tone: 'warning', label: 'Một khóa hết hạn mức' }
-  if (connection.checkedAt === null) return { tone: 'muted', label: 'Chưa kiểm tra' }
+  if (connection.checkedAt === null) return { tone: 'neutral', label: 'Chưa kiểm tra' }
   return { tone: 'success', label: 'Đang chạy' }
 }

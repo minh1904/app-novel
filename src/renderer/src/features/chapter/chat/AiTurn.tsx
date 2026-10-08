@@ -1,12 +1,14 @@
-import { useEffect, useId, useRef, useState, type JSX, type ReactNode } from 'react'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
+import { useEffect, useRef, useState, type JSX } from 'react'
 import { CopyIcon } from '@solar-icons/react/linear/copy'
 import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
 import { StopCircleIcon } from '@solar-icons/react/linear/stop-circle'
 import type { ProposalQueueItem } from '../../../../../shared/contracts/aiProposals'
-import { Button } from '../../../components/Button'
-import { cx } from '../../../components/cx'
+import { Button } from '../../../components/ui/Button'
+import { CompactButton } from '../../../components/ui/CompactButton'
+import { Disclosure } from '../../../components/ui/Disclosure'
+import { ICON } from '../../../components/ui/icon'
+import { cn } from '../../../lib/cn'
 import { useUiStore } from '../../../stores/uiStore'
 import type { TurnView } from './chatTurns'
 import { SafeMarkdown } from './SafeMarkdown'
@@ -20,51 +22,6 @@ import { thoughtSeconds, turnTime } from './turnTime'
  * tools — then the answer as plain text, and a footer with the time and a few icons. Nothing about what
  * was attached or selected: the model reads that for itself.
  */
-
-/** A quiet row that opens: the "Thought" and tool lines of Hermes (`ScaffoldRow`). */
-function ScaffoldRow({
-  label,
-  open,
-  onToggle,
-  pending,
-  children
-}: {
-  label: string
-  open: boolean
-  onToggle(): void
-  pending: boolean
-  children?: ReactNode
-}): JSX.Element {
-  const bodyId = useId()
-  return (
-    <div className="text-ui-2xs text-ink-faint">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={bodyId}
-        onClick={onToggle}
-        className="flex w-full min-w-0 cursor-pointer items-center gap-1 text-left outline-none hover:text-ink-muted focus-visible:text-ink-muted"
-      >
-        <span className={cx('min-w-0 truncate', pending && 'motion-safe:animate-pulse')}>
-          {label}
-        </span>
-        <AltArrowDownIcon
-          size={10}
-          aria-hidden="true"
-          className={cx(
-            'shrink-0 opacity-70 transition-transform duration-(--duration-fast)',
-            !open && '-rotate-90'
-          )}
-        />
-      </button>
-      {open && children && (
-        <div id={bodyId} className="mt-0.5">
-          {children}
-        </div>
-      )}
-    </div>
-  )
-}
 
 /**
  * What the model thought. While it thinks, the text shows as a live preview that follows new tokens (as
@@ -92,17 +49,17 @@ function Thought({ turn, running }: { turn: TurnView; running: boolean }): JSX.E
       ? 'Đã suy nghĩ'
       : 'Đã suy nghĩ ' + seconds + ' giây'
   return (
-    <ScaffoldRow label={label} open={open} pending={pending} onToggle={() => setUserOpen(!open)}>
+    <Disclosure label={label} open={open} pending={pending} onOpenChange={setUserOpen}>
       <div
         ref={scroller}
-        className={cx(
-          'selectable overflow-auto whitespace-pre-wrap wrap-anywhere leading-relaxed',
+        className={cn(
+          'selectable overflow-auto whitespace-pre-wrap wrap-anywhere text-body-xs leading-relaxed text-muted',
           pending && userOpen === null && 'max-h-40'
         )}
       >
         {turn.reasoning}
       </div>
-    </ScaffoldRow>
+    </Disclosure>
   )
 }
 
@@ -114,45 +71,23 @@ function ToolRow({ turn, running }: { turn: TurnView; running: boolean }): JSX.E
   const last = calls[calls.length - 1]
   const pending = running && turn.answer === ''
   return (
-    <ScaffoldRow
+    <Disclosure
       label={pending ? last.detail : summarizeTools(turn.tools)}
       open={open}
       pending={pending}
-      onToggle={() => setOpen((value) => !value)}
+      onOpenChange={setOpen}
     >
-      <ul className="m-0 list-none space-y-0.5 p-0">
+      <ul className="m-0 list-none space-y-0.5 p-0 text-body-xs text-muted">
         {calls.map((step, index) => (
           <li key={step.name + String(index)} className="flex items-start gap-1.5">
             {step.status === 'error' && (
-              <DangerCircleIcon size={11} className="mt-px shrink-0 text-error" aria-label="Lỗi" />
+              <DangerCircleIcon size={12} className="mt-px shrink-0 text-error" aria-label="Lỗi" />
             )}
             <span className="wrap-anywhere">{step.detail}</span>
           </li>
         ))}
       </ul>
-    </ScaffoldRow>
-  )
-}
-
-function IconButton({
-  label,
-  onClick,
-  children
-}: {
-  label: string
-  onClick(): void
-  children: ReactNode
-}): JSX.Element {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-faint hover:bg-hover hover:text-ink"
-    >
-      {children}
-    </button>
+    </Disclosure>
   )
 }
 
@@ -203,11 +138,11 @@ export function AiTurn({
 
   return (
     <article className="flex flex-col gap-1.5">
-      <div className="group/question relative rounded-panel border border-line bg-control/50 px-3 py-2">
-        <p className="selectable m-0 whitespace-pre-wrap wrap-anywhere text-ui-sm leading-normal text-ink">
+      <div className="group/question relative rounded-lg border border-default bg-muted/50 px-3 py-2">
+        <p className="selectable m-0 whitespace-pre-wrap wrap-anywhere text-body-sm leading-normal text-default">
           {turn.question}
         </p>
-        <span className="pointer-events-none absolute top-2 right-3 text-ui-2xs text-ink-faint opacity-0 transition-opacity group-hover/question:opacity-100">
+        <span className="pointer-events-none absolute top-2 right-3 text-body-xs text-muted opacity-0 transition-opacity group-hover/question:opacity-100">
           {turnTime(turn.createdAt)}
         </span>
       </div>
@@ -219,7 +154,7 @@ export function AiTurn({
           <p
             key={'fallback' + String(index)}
             role="status"
-            className="m-0 text-ui-2xs text-warning"
+            className="m-0 text-body-xs text-warning"
           >
             {step.detail}
           </p>
@@ -229,7 +164,7 @@ export function AiTurn({
       <ToolRow turn={turn} running={running} />
 
       {waiting && (
-        <p className="m-0 text-ui-2xs text-ink-faint motion-safe:animate-pulse">Đang suy nghĩ</p>
+        <p className="m-0 text-body-xs text-muted motion-safe:animate-pulse">Đang suy nghĩ</p>
       )}
 
       {turn.answer !== '' && <SafeMarkdown text={turn.answer} />}
@@ -245,17 +180,15 @@ export function AiTurn({
               return (
                 <div
                   key={key}
-                  className="flex flex-col gap-1.5 rounded-panel border border-line p-2 text-ui-xs"
+                  className="flex flex-col gap-1.5 rounded-lg border border-default p-2 text-body-xs"
                 >
                   {targetChapterExists ? (
                     <>
-                      <p className="m-0 text-ink-muted">
+                      <p className="m-0 text-subtle">
                         {proposal.label} · thuộc <strong>{chapterLabel ?? 'chương khác'}</strong>.
                       </p>
                       {onNavigateChapter && (
                         <Button
-                          size="sm"
-                          variant="outline"
                           className="self-start"
                           onClick={() => onNavigateChapter(proposal.chapterId)}
                         >
@@ -282,27 +215,27 @@ export function AiTurn({
       )}
 
       {turn.status === 'cancelled' && (
-        <p className="m-0 flex items-center gap-1 text-ui-2xs text-ink-faint">
+        <p className="m-0 flex items-center gap-1 text-body-xs text-muted">
           <StopCircleIcon size={12} aria-hidden="true" />
           Đã dừng
         </p>
       )}
 
       {turn.status === 'interrupted' && (
-        <p className="m-0 flex items-center gap-1 text-ui-2xs text-ink-faint">
+        <p className="m-0 flex items-center gap-1 text-body-xs text-muted">
           <StopCircleIcon size={12} aria-hidden="true" />
           Bị ngắt khi app đóng
         </p>
       )}
 
       {turn.status === 'error' && turn.error !== null && (
-        <div className="flex flex-col gap-1.5 rounded-panel border border-error/35 bg-error/7 px-3 py-2 text-ui-xs leading-normal text-ink">
+        <div className="flex flex-col gap-1.5 rounded-lg border border-error/35 bg-error/7 px-3 py-2 text-body-xs leading-normal text-default">
           <p className="m-0 flex items-start gap-1.5">
             <DangerCircleIcon size={14} className="mt-px shrink-0 text-error" />
             <span className="min-w-0">{turn.error.message}</span>
           </p>
           {turn.error.recoverAt !== null && (
-            <p className="m-0 text-ink-muted">
+            <p className="m-0 text-subtle">
               Hạn mức hồi phục khoảng{' '}
               {new Date(turn.error.recoverAt).toLocaleTimeString('vi-VN', {
                 hour: '2-digit',
@@ -314,7 +247,7 @@ export function AiTurn({
           <div className="flex flex-wrap gap-1">
             {turn.error.account && (
               <Button
-                size="sm"
+                variant="solid"
                 onClick={() =>
                   useUiStore.getState().openSettings({
                     group: 'connections',
@@ -327,12 +260,12 @@ export function AiTurn({
               </Button>
             )}
             {turn.error.retryable && (
-              <Button variant="ghost-muted" size="sm" onClick={() => onRetry(turn.question)}>
+              <Button variant="ghost" onClick={() => onRetry(turn.question)}>
                 Hỏi lại
               </Button>
             )}
             {retryWith && (
-              <Button variant="ghost-muted" size="sm" onClick={retryWith.onClick}>
+              <Button variant="ghost" onClick={retryWith.onClick}>
                 Thử bằng {retryWith.label}
               </Button>
             )}
@@ -341,19 +274,22 @@ export function AiTurn({
       )}
 
       {turn.status === 'done' && (
-        <div className="flex items-center justify-end gap-1.5 text-ui-2xs text-ink-faint">
+        <div className="flex items-center justify-end gap-1.5 text-body-xs text-muted">
           <span title={usageLine(turn) + (turn.keyTail !== null ? ' · khóa …' + turn.keyTail : '')}>
             {turnTime(turn.finishedAt ?? turn.createdAt)}
           </span>
-          <IconButton
-            label="Sao chép"
+          <CompactButton
+            aria-label="Sao chép"
+            title="Sao chép"
             onClick={() => void navigator.clipboard.writeText(turn.answer)}
-          >
-            <CopyIcon size={12} />
-          </IconButton>
-          <IconButton label="Hỏi lại" onClick={() => onRetry(turn.question)}>
-            <RefreshIcon size={12} />
-          </IconButton>
+            icon={<CopyIcon size={ICON.sm} aria-hidden="true" />}
+          />
+          <CompactButton
+            aria-label="Hỏi lại"
+            title="Hỏi lại"
+            onClick={() => onRetry(turn.question)}
+            icon={<RefreshIcon size={ICON.sm} aria-hidden="true" />}
+          />
         </div>
       )}
     </article>

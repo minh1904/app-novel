@@ -6,10 +6,10 @@ import { PlayIcon } from '@solar-icons/react/linear/play'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
 import type { ModelEntryTestResult } from '../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { Select } from '../../components/Select'
-import { TextField } from '../../components/TextField'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import { Select } from '../../components/ui/Select'
+import { TextField } from '../../components/ui/Field'
 import { messageOf, type ModelEntryActions } from './modelEntryActions'
 import {
   DEFAULT_THINKING_HINT,
@@ -19,7 +19,7 @@ import {
   thinkingPatch,
   type ThinkingChoice
 } from './modelSettingsForm'
-import { SettingRow } from '../../components/Setting'
+import { SettingRow } from '../../components/ui/Setting'
 
 /**
  * Hộp thoại **Cơ bản** của một mục model: tên hiển thị, tên model thật (với ba nút Nhập / Lấy / Kiểm tra)
@@ -38,7 +38,7 @@ function Result({
     return (
       <p
         role="status"
-        className="m-0 flex flex-wrap items-center gap-1.5 text-ui-xs leading-normal text-success"
+        className="m-0 flex flex-wrap items-center gap-1.5 text-body-xs leading-normal text-success"
       >
         <CheckCircleIcon size={14} className="shrink-0" />
         <span>
@@ -50,7 +50,7 @@ function Result({
   return (
     <p
       role="alert"
-      className="m-0 flex items-start gap-1.5 rounded-control border border-error/40 bg-error/8 px-3 py-2 text-ui-xs leading-normal"
+      className="m-0 flex items-start gap-1.5 rounded-sm border border-error/40 bg-error/8 px-3 py-2 text-body-xs leading-normal"
     >
       <CloseCircleIcon size={14} className="mt-[2px] shrink-0 text-error" />
       <span className="min-w-0 break-words">
@@ -149,10 +149,10 @@ function ModelNameForm({
         }}
       />
       <div className="flex justify-end gap-2">
-        <Button variant="ghost-muted" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           Hủy bỏ
         </Button>
-        <Button disabled={saving} onClick={() => void save()}>
+        <Button variant="solid" disabled={saving} onClick={() => void save()}>
           Lưu
         </Button>
       </div>
@@ -242,27 +242,27 @@ function BasicForm({
         hint="Tên model thật gửi cho nhà cung cấp."
         below={
           <>
-            <p className="m-0 font-mono text-ui-sm break-all" aria-label="Tên model hiện tại">
+            <p className="m-0 font-mono text-body-sm break-all" aria-label="Tên model hiện tại">
               {entry.model}
             </p>
             {shown !== null && <Result result={shown} />}
-            <p className="m-0 text-ui-xs leading-normal text-ink-muted">
+            <p className="m-0 text-body-xs leading-normal text-subtle">
               “Kiểm tra” gửi một yêu cầu rất nhỏ bằng cài đặt đã lưu của mục này, nên tốn một ít
               token.
             </p>
           </>
         }
       >
-        <Button variant="outline" size="sm" onClick={() => setTyping(true)}>
-          <PenIcon size={13} />
+        <Button onClick={() => setTyping(true)}>
+          <PenIcon size={14} />
           Nhập
         </Button>
-        <Button variant="outline" size="sm" onClick={onPickModel}>
-          <RefreshIcon size={13} />
+        <Button onClick={onPickModel}>
+          <RefreshIcon size={14} />
           Lấy
         </Button>
-        <Button variant="outline" size="sm" disabled={testing} onClick={() => void runTest()}>
-          <PlayIcon size={13} />
+        <Button disabled={testing} onClick={() => void runTest()}>
+          <PlayIcon size={14} />
           {testing ? 'Đang kiểm tra…' : 'Kiểm tra'}
         </Button>
       </SettingRow>
@@ -276,11 +276,11 @@ function BasicForm({
         }
         below={
           thinkingError !== undefined ? (
-            <span role="alert" className="text-ui-xs text-error">
+            <span role="alert" className="text-body-xs text-error">
               {thinkingError}
             </span>
           ) : staleThinking !== null ? (
-            <span role="alert" className="text-ui-xs text-error">
+            <span role="alert" className="text-body-xs text-error">
               {staleThinking}
             </span>
           ) : undefined
@@ -330,7 +330,7 @@ export function ModelBasicDialog({
       onOpenChange={onOpenChange}
       title="Cơ bản"
       description={entry === null ? undefined : 'Cài đặt của “' + entry.name + '”.'}
-      size="form"
+      size="md"
       finalFocus={finalFocus}
     >
       {entry !== null && (

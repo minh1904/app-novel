@@ -1,8 +1,9 @@
 import { useRef, useState, type JSX } from 'react'
 import { GalleryAddIcon } from '@solar-icons/react/linear/gallery-add'
 import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
+import { Button } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { DropZone } from '../../components/ui/DropZone'
 import { CoverImageError, fileToCoverDataUrl } from './coverImage'
 
 /**
@@ -21,7 +22,6 @@ export function CoverPicker({
 }): JSX.Element {
   const input = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
-  const [dragging, setDragging] = useState(false)
   const [busy, setBusy] = useState(false)
 
   async function accept(file: File | undefined): Promise<void> {
@@ -39,55 +39,38 @@ export function CoverPicker({
 
   return (
     <div className="flex w-[168px] flex-col gap-2.5">
-      <span className="text-ui-xs font-semibold">Ảnh bìa (tùy chọn)</span>
-      <button
-        type="button"
+      <span className="text-body-xs font-semibold">Ảnh bìa (tùy chọn)</span>
+      <DropZone
         disabled={disabled || busy}
         aria-label={value ? 'Đổi ảnh bìa' : 'Tải ảnh bìa lên'}
-        onClick={() => input.current?.click()}
-        onDragOver={(event) => {
-          event.preventDefault()
-          setDragging(true)
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault()
-          setDragging(false)
-          void accept(event.dataTransfer.files[0])
-        }}
-        className={cx(
-          'relative flex aspect-[2/3] w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-control border text-center outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:cursor-default disabled:opacity-60',
-          value
-            ? 'border-line-strong'
-            : 'border-dashed border-line-strong bg-control/40 hover:bg-hover',
-          dragging && 'border-focus bg-control'
-        )}
+        onBrowse={() => input.current?.click()}
+        onDrop={(files) => void accept(files[0])}
+        filled={Boolean(value)}
+        className="aspect-2/3 w-full"
       >
         {value ? (
           <img src={value} alt="Xem trước ảnh bìa" className="size-full object-cover" />
         ) : (
           <>
-            <GalleryAddIcon size={26} className="text-ink-muted" />
-            <span className="px-3 text-ui-xs leading-tight text-ink-muted">
+            <GalleryAddIcon size={24} className="text-subtle" />
+            <span className="px-3 text-body-xs leading-tight text-subtle">
               {busy ? 'Đang xử lý…' : 'Bấm để chọn hoặc kéo ảnh vào đây'}
             </span>
           </>
         )}
-      </button>
+      </DropZone>
 
       {value && (
         <div className="flex gap-1.5">
           <Button
-            variant="secondary"
+            variant="light"
             className="flex-1"
             disabled={disabled || busy}
             onClick={() => input.current?.click()}
           >
             Đổi ảnh
           </Button>
-          <Button
-            variant="ghost-muted"
-            size="icon"
+          <CompactButton
             aria-label="Gỡ ảnh bìa"
             title="Gỡ ảnh bìa"
             disabled={disabled || busy}
@@ -95,18 +78,17 @@ export function CoverPicker({
               setError(null)
               onChange(null)
             }}
-          >
-            <TrashBinMinimalisticIcon size={15} />
-          </Button>
+            icon={<TrashBinMinimalisticIcon size={16} />}
+          />
         </div>
       )}
 
       {error ? (
-        <p role="alert" className="text-ui-xs leading-tight text-error">
+        <p role="alert" className="text-body-xs leading-tight text-error">
           {error}
         </p>
       ) : (
-        <p className="text-ui-xs leading-tight text-ink-muted">
+        <p className="text-body-xs leading-tight text-subtle">
           JPEG, PNG hoặc WebP. Ảnh được thu nhỏ khi lưu.
         </p>
       )}

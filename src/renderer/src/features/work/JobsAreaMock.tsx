@@ -3,8 +3,8 @@ import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
 import { DangerTriangleIcon } from '@solar-icons/react/linear/danger-triangle'
 import { HistoryIcon } from '@solar-icons/react/linear/history'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
-import { Button } from '../../components/Button'
-import { cx } from '../../components/cx'
+import { Button } from '../../components/ui/Button'
+import { cn } from '../../lib/cn'
 import { SOON_LABEL } from './mockFeatures'
 
 type JobStatus = 'running' | 'error' | 'done'
@@ -74,29 +74,29 @@ export function JobsAreaMock(): JSX.Element {
   return (
     <section
       aria-labelledby="jobs-heading"
-      className="@container flex flex-col gap-4 rounded-panel border border-line p-5"
+      className="@container flex flex-col gap-4 rounded-lg border border-default p-5"
     >
       <div className="flex flex-col gap-1">
-        <h2 id="jobs-heading" className="flex items-center gap-2 text-ui-md font-semibold">
+        <h2 id="jobs-heading" className="flex items-center gap-2 text-body-md font-semibold">
           Tác vụ dịch
-          <span className="rounded-item bg-selected px-1.5 py-px text-ui-xs font-normal text-ink-muted">
+          <span className="rounded-sm bg-selected px-1.5 py-px text-body-xs font-normal text-subtle">
             {SOON_LABEL}
           </span>
         </h2>
-        <p className="max-w-[60ch] text-ui-xs leading-normal text-ink-muted">
+        <p className="max-w-[60ch] text-body-xs leading-normal text-subtle">
           Theo dõi các lượt AI dịch của tác phẩm: đang chạy, lỗi cần chạy lại, và lịch sử chi phí.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-panel border border-line">
+      <div className="overflow-hidden rounded-lg border border-default">
         <div
-          className={cx(
+          className={cn(
             jobGrid,
-            'border-b border-line bg-sidebar px-3 py-2 text-ui-xs font-medium text-ink-muted'
+            'border-b border-default bg-subtle px-3 py-2 text-body-xs font-medium text-subtle'
           )}
         >
           <span>Chương</span>
-          <span className={cx('text-right', hideBelow620)}>Chi phí</span>
+          <span className={cn('text-right', hideBelow620)}>Chi phí</span>
           <span className={hideBelow620}>Thời gian</span>
           <span />
         </div>
@@ -106,16 +106,16 @@ export function JobsAreaMock(): JSX.Element {
             return (
               <li
                 key={index}
-                className={cx(
+                className={cn(
                   jobGrid,
-                  'border-b border-line px-3 py-2.5 text-ui-sm last:border-b-0'
+                  'border-b border-default px-3 py-2.5 text-body-sm last:border-b-0'
                 )}
               >
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
-                      className={cx(
-                        'flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-ui-xs font-semibold whitespace-nowrap',
+                      className={cn(
+                        'flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-body-xs font-semibold whitespace-nowrap',
                         meta.tone
                       )}
                     >
@@ -124,9 +124,9 @@ export function JobsAreaMock(): JSX.Element {
                     </span>
                     <span className="truncate font-medium">{job.chapter}</span>
                   </div>
-                  <span className="truncate text-ui-xs text-ink-muted">{job.provider}</span>
+                  <span className="truncate text-body-xs text-subtle">{job.provider}</span>
                   {job.status === 'running' && job.progress !== undefined && (
-                    <div className="h-1 w-full max-w-[220px] overflow-hidden rounded-full bg-control">
+                    <div className="h-1 w-full max-w-[220px] overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full rounded-full bg-info"
                         style={{ width: job.progress + '%' }}
@@ -134,14 +134,10 @@ export function JobsAreaMock(): JSX.Element {
                     </div>
                   )}
                 </div>
-                <span className={cx('text-right text-ink-muted', hideBelow620)}>{job.cost}</span>
-                <span className={cx('truncate text-ink-muted', hideBelow620)}>{job.time}</span>
+                <span className={cn('text-right text-subtle', hideBelow620)}>{job.cost}</span>
+                <span className={cn('truncate text-subtle', hideBelow620)}>{job.time}</span>
                 <span className="flex justify-end">
-                  {job.status === 'error' && (
-                    <Button variant="outline" size="xs" disabled>
-                      Chạy lại
-                    </Button>
-                  )}
+                  {job.status === 'error' && <Button disabled>Chạy lại</Button>}
                 </span>
               </li>
             )
@@ -149,12 +145,12 @@ export function JobsAreaMock(): JSX.Element {
         </ul>
       </div>
 
-      <Button variant="ghost-muted" size="sm" disabled className="w-fit">
-        <HistoryIcon size={13} />
+      <Button variant="ghost" disabled className="w-fit">
+        <HistoryIcon size={14} />
         Xem toàn bộ lịch sử
       </Button>
 
-      <p className="text-ui-xs text-ink-muted">
+      <p className="text-body-xs text-subtle">
         Bản minh họa: khu vực này chưa hoạt động và không thay đổi tác phẩm của bạn.
       </p>
     </section>

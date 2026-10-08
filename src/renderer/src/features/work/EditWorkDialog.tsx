@@ -1,7 +1,7 @@
 import { useEffect, useState, type JSX } from 'react'
 import type { WorkPatch } from '../../../../shared/contracts/library'
 import type { Result } from '../../../../shared/contracts/result'
-import { Dialog } from '../../components/Dialog'
+import { Dialog } from '../../components/ui/Dialog'
 import type { Work } from '../library/works'
 import { WorkForm } from './WorkForm'
 import { buildPatch, type WorkFormValues } from './workFormValues'
@@ -39,7 +39,7 @@ export function EditWorkDialog({
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
-      size="wide"
+      size="lg"
       title="Sửa thông tin tác phẩm"
       description="Thông tin và ảnh bìa được lưu cùng lúc. Ngôn ngữ gốc không đổi được."
     >
@@ -82,14 +82,14 @@ function EditBody({
 
   if (loadError) {
     return (
-      <p role="alert" className="text-ui-xs text-error">
+      <p role="alert" className="text-body-xs text-error">
         Không đọc được ảnh bìa hiện tại: {loadError}
       </p>
     )
   }
   if (!initial) {
     return (
-      <p role="status" className="py-8 text-center text-ui-xs text-ink-muted">
+      <p role="status" className="py-8 text-center text-body-xs text-subtle">
         Đang mở thông tin…
       </p>
     )

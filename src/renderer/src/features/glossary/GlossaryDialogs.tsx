@@ -5,13 +5,13 @@ import type {
   ContextStatus,
   ImportNamesResult
 } from '../../../../shared/contracts/glossary'
-import { Banner } from '../../components/Banner'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { Select, type SelectOption } from '../../components/Select'
-import { Switch } from '../../components/Switch'
-import { TextArea } from '../../components/TextArea'
-import { TextField } from '../../components/TextField'
+import { Alert } from '../../components/ui/Alert'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import { Select, type SelectOption } from '../../components/ui/Select'
+import { Switch } from '../../components/ui/Switch'
+import { TextareaField } from '../../components/ui/Field'
+import { TextField } from '../../components/ui/Field'
 
 interface EditGlossaryDialogProps {
   open: boolean
@@ -43,7 +43,7 @@ export function EditGlossaryDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      size="form"
+      size="md"
       title={isEditing ? 'Chỉnh sửa thuật ngữ' : 'Thêm thuật ngữ mới'}
       description={
         isEditing
@@ -140,11 +140,11 @@ function EditGlossaryForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-ui-xs">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-body-xs">
       {error && (
-        <Banner tone="error" onDismiss={() => setError(null)}>
+        <Alert tone="error" onDismiss={() => setError(null)}>
           {error}
-        </Banner>
+        </Alert>
       )}
 
       <div className="grid grid-cols-2 gap-3">
@@ -172,7 +172,7 @@ function EditGlossaryForm({
 
       <div className="grid grid-cols-2 gap-3 items-end">
         <div className="flex flex-col gap-1.5">
-          <label className="font-medium text-ink">Trạng thái duyệt</label>
+          <label className="font-medium text-default">Trạng thái duyệt</label>
           <Select
             label="Trạng thái"
             value={status}
@@ -183,7 +183,7 @@ function EditGlossaryForm({
 
         <div className="flex items-center gap-2 pb-2">
           <Switch id="forbidden-switch" checked={forbidden} onCheckedChange={setForbidden} />
-          <label htmlFor="forbidden-switch" className="cursor-pointer font-medium text-ink">
+          <label htmlFor="forbidden-switch" className="cursor-pointer font-medium text-default">
             Thuật ngữ bị cấm (Cảnh báo khi dùng)
           </label>
         </div>
@@ -191,7 +191,7 @@ function EditGlossaryForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="font-medium text-ink">Hiệu lực từ chương</label>
+          <label className="font-medium text-default">Hiệu lực từ chương</label>
           <Select
             label="Từ chương"
             value={fromChapterId}
@@ -201,7 +201,7 @@ function EditGlossaryForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="font-medium text-ink">Đến hết chương</label>
+          <label className="font-medium text-default">Đến hết chương</label>
           <Select
             label="Đến chương"
             value={toChapterId}
@@ -211,7 +211,7 @@ function EditGlossaryForm({
         </div>
       </div>
 
-      <TextArea
+      <TextareaField
         label="Ghi chú ngữ cảnh (Tùy chọn)"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
@@ -223,7 +223,7 @@ function EditGlossaryForm({
         <Button variant="ghost" type="button" onClick={onClose} disabled={saving}>
           Hủy
         </Button>
-        <Button variant="default" type="submit" disabled={saving}>
+        <Button variant="solid" type="submit" disabled={saving}>
           {saving ? 'Đang lưu...' : entry ? 'Cập nhật' : 'Tạo thuật ngữ'}
         </Button>
       </div>
@@ -290,19 +290,19 @@ export function ImportNamesDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      size="form"
+      size="md"
       title="Nhập thuật ngữ từ tệp Names.txt"
       description="Định dạng chuẩn: Từ_gốc=Từ_dịch (mỗi dòng một cặp). Bỏ qua các dòng chú thích bắt đầu bằng # hoặc //."
     >
-      <div className="flex flex-col gap-4 text-ui-xs">
+      <div className="flex flex-col gap-4 text-body-xs">
         {error && (
-          <Banner tone="error" onDismiss={() => setError(null)}>
+          <Alert tone="error" onDismiss={() => setError(null)}>
             {error}
-          </Banner>
+          </Alert>
         )}
 
         {result && (
-          <Banner
+          <Alert
             tone={result.importedCount > 0 ? 'success' : 'error'}
             onDismiss={() => setResult(null)}
           >
@@ -312,7 +312,7 @@ export function ImportNamesDialog({
                 {result.skippedCount > 0 && ` Bỏ qua ${result.skippedCount} dòng.`}
               </p>
               {result.skippedReasons.length > 0 && (
-                <div className="max-h-36 overflow-y-auto pt-1 text-ui-xs text-ink-muted">
+                <div className="max-h-36 overflow-y-auto pt-1 text-body-xs text-subtle">
                   <ul className="list-disc pl-4 space-y-0.5">
                     {result.skippedReasons.slice(0, 50).map((s, idx) => (
                       <li key={idx}>
@@ -326,18 +326,18 @@ export function ImportNamesDialog({
                 </div>
               )}
             </div>
-          </Banner>
+          </Alert>
         )}
 
         <div className="flex items-center gap-3">
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-control border border-line-strong bg-canvas px-3 py-1.5 text-ui-xs font-medium text-ink hover:bg-hover">
+          <label className="inline-flex cursor-pointer items-center justify-center rounded-sm border border-strong bg-surface px-3 py-1.5 text-body-xs font-medium text-default hover:bg-hover">
             <span>Chọn tệp .txt từ máy</span>
             <input type="file" accept=".txt" className="hidden" onChange={handleFileChange} />
           </label>
-          <span className="text-ui-xs text-ink-muted">Hoặc dán trực tiếp vào khung dưới:</span>
+          <span className="text-body-xs text-subtle">Hoặc dán trực tiếp vào khung dưới:</span>
         </div>
 
-        <TextArea
+        <TextareaField
           label="Nội dung Names.txt"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -351,7 +351,7 @@ export function ImportNamesDialog({
           </Button>
           {!result && (
             <Button
-              variant="default"
+              variant="solid"
               onClick={handleStartImport}
               disabled={importing || !content.trim()}
             >
@@ -400,14 +400,14 @@ export function DeleteGlossaryDialog({
       title="Xác nhận xóa thuật ngữ"
       description="Mục này sẽ bị xóa hoàn toàn khỏi cơ sở dữ liệu tác phẩm và không thể khôi phục."
     >
-      <div className="flex flex-col gap-4 text-ui-xs">
+      <div className="flex flex-col gap-4 text-body-xs">
         {error && (
-          <Banner tone="error" onDismiss={() => setError(null)}>
+          <Alert tone="error" onDismiss={() => setError(null)}>
             {error}
-          </Banner>
+          </Alert>
         )}
 
-        <p className="text-ink">
+        <p className="text-default">
           Bạn có chắc chắn muốn xóa thuật ngữ{' '}
           <strong className="font-semibold text-error">{entry?.source}</strong> ({entry?.target})?
         </p>
@@ -416,7 +416,7 @@ export function DeleteGlossaryDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={deleting}>
             Hủy
           </Button>
-          <Button variant="destructive" onClick={handleConfirm} disabled={deleting}>
+          <Button color="danger" variant="solid" onClick={handleConfirm} disabled={deleting}>
             {deleting ? 'Đang xóa...' : 'Xóa thuật ngữ'}
           </Button>
         </div>

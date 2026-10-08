@@ -22,10 +22,10 @@ import {
   type EncodingId
 } from '../../../../shared/text/rawText'
 import type { TextRecord } from '../../../../shared/contracts/text'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { Select } from '../../components/Select'
-import { TextArea } from '../../components/TextArea'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import { Select } from '../../components/ui/Select'
+import { TextareaField } from '../../components/ui/Field'
 import { backupWork, savedMessage } from '../work/backup'
 
 const FIRST_SAMPLES = 3
@@ -69,7 +69,7 @@ export function ImportDialog(props: ImportDialogProps): JSX.Element {
         // A save in flight cannot be taken back, so the dialog stays until it answers.
         if (!saving) onOpenChange(next)
       }}
-      size="wide"
+      size="lg"
       finalFocus={props.finalFocus}
       title={props.replacing ? 'Thay bản gốc của chương' : 'Nhập bản gốc cho chương'}
       description="Văn bản được đọc ngay trên máy bạn và chưa lưu gì cho tới khi bạn xác nhận ở bước xem trước."
@@ -204,7 +204,7 @@ function ImportBody({
         onDrop={onDrop}
       >
         {hidden}
-        <TextArea
+        <TextareaField
           label="Dán văn bản"
           value={pasted}
           autoFocus
@@ -225,25 +225,25 @@ function ImportBody({
         />
         <div
           className={
-            'flex flex-wrap items-center gap-3 rounded-control border border-dashed px-3 py-3 text-ui-xs ' +
-            (dragging ? 'border-focus bg-control' : 'border-line-strong')
+            'flex flex-wrap items-center gap-3 rounded-sm border border-dashed px-3 py-3 text-body-xs ' +
+            (dragging ? 'border-focus bg-muted' : 'border-strong')
           }
         >
-          <span className="text-ink-muted">hoặc kéo tệp .txt / .md vào đây,</span>
-          <Button variant="secondary" onClick={() => picker.current?.click()}>
+          <span className="text-subtle">hoặc kéo tệp .txt / .md vào đây,</span>
+          <Button variant="light" onClick={() => picker.current?.click()}>
             Chọn tệp…
           </Button>
         </div>
         {inputError && (
-          <p role="alert" className="text-ui-xs text-error">
+          <p role="alert" className="text-body-xs text-error">
             {inputError}
           </p>
         )}
-        <div className="flex justify-end gap-2 border-t border-line pt-4">
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-end gap-2 border-t border-default pt-4">
+          <Button variant="light" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
-          <Button onClick={previewPasted} disabled={pasted.trim() === ''}>
+          <Button variant="solid" onClick={previewPasted} disabled={pasted.trim() === ''}>
             Xem trước
           </Button>
         </div>
@@ -255,11 +255,11 @@ function ImportBody({
     return (
       <div className="flex flex-col gap-4">
         {hidden}
-        <p role="alert" className="text-ui-xs text-error">
+        <p role="alert" className="text-body-xs text-error">
           {prepared.message}
         </p>
-        <div className="flex justify-end gap-2 border-t border-line pt-4">
-          <Button variant="secondary" onClick={() => setStep('input')}>
+        <div className="flex justify-end gap-2 border-t border-default pt-4">
+          <Button variant="light" onClick={() => setStep('input')}>
             Quay lại
           </Button>
         </div>
@@ -271,18 +271,18 @@ function ImportBody({
   const sampleItems = sampleOf(plan.segments.length)
 
   return (
-    <div className="flex flex-col gap-4 text-ui-xs">
+    <div className="flex flex-col gap-4 text-body-xs">
       {hidden}
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
         {plan.fileName && (
           <>
-            <dt className="text-ink-muted">Tệp</dt>
+            <dt className="text-subtle">Tệp</dt>
             <dd className="break-words">{plan.fileName}</dd>
           </>
         )}
         {plan.encoding && (
           <>
-            <dt className="text-ink-muted">Bảng mã</dt>
+            <dt className="text-subtle">Bảng mã</dt>
             <dd className="flex flex-wrap items-center gap-2">
               <Select<EncodingId>
                 label="Bảng mã"
@@ -290,18 +290,18 @@ function ImportBody({
                 options={ENCODINGS.map((item) => ({ value: item.id, label: item.label }))}
                 onChange={setEncoding}
               />
-              <span className="text-ink-muted">
+              <span className="text-subtle">
                 {REASONS[plan.encoding.reason]} · {encodingLabel(plan.encoding.id)}
               </span>
             </dd>
           </>
         )}
-        <dt className="text-ink-muted">Kích thước</dt>
+        <dt className="text-subtle">Kích thước</dt>
         <dd>
           {plan.text.length.toLocaleString('vi')} ký tự ·{' '}
           {plan.segments.length.toLocaleString('vi')} segment
         </dd>
-        <dt className="text-ink-muted">Chuẩn hóa</dt>
+        <dt className="text-subtle">Chuẩn hóa</dt>
         <dd>
           {plan.changes.length === 0 ? (
             'Văn bản được giữ nguyên, không đổi gì.'
@@ -319,24 +319,24 @@ function ImportBody({
         <p
           key={warning}
           role="note"
-          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 leading-normal"
+          className="rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 leading-normal"
         >
           {warning}
         </p>
       ))}
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-ui-xs font-semibold">Xem trước các segment</span>
+        <span className="text-body-xs font-semibold">Xem trước các segment</span>
         <ol
           lang={sourceLang}
-          className="flex flex-col divide-y divide-line rounded-control border border-line text-ui-sm"
+          className="flex flex-col divide-y divide-default rounded-sm border border-default text-body-sm"
         >
           {sampleItems.map((item) =>
             item.kind === 'gap' ? (
               <li
                 key={'gap-' + item.after}
                 aria-hidden="true"
-                className="px-3 py-1 text-center text-ink-muted"
+                className="px-3 py-1 text-center text-subtle"
               >
                 … {item.count} segment ở giữa …
               </li>
@@ -345,11 +345,11 @@ function ImportBody({
                 key={item.index}
                 className="grid grid-cols-[32px_minmax(0,1fr)] gap-2 px-3 py-1.5"
               >
-                <span className="text-ink-muted">{item.index + 1}</span>
+                <span className="text-subtle">{item.index + 1}</span>
                 <span className="break-words whitespace-pre-wrap">
                   {plan.text.slice(plan.segments[item.index].start, plan.segments[item.index].end)}
                   {plan.longSegments.includes(item.index) && (
-                    <span className="ml-2 rounded-item bg-warning/20 px-1.5 text-ui-xs">
+                    <span className="ml-2 rounded-sm bg-warning/20 px-1.5 text-body-xs">
                       dài bất thường
                     </span>
                   )}
@@ -363,7 +363,7 @@ function ImportBody({
       {replacing && (
         <div
           role="note"
-          className="flex flex-col gap-1.5 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 leading-normal"
+          className="flex flex-col gap-1.5 rounded-sm border border-warning/40 bg-warning/10 px-3 py-2.5 leading-normal"
         >
           <strong className="font-semibold">Bản gốc hiện có sẽ bị thay.</strong>
           <span>
@@ -376,7 +376,6 @@ function ImportBody({
           {hasTarget && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <Button
-                variant="outline"
                 onClick={() =>
                   void backupWork(workId).then((outcome) =>
                     setBackupNote(
@@ -392,7 +391,7 @@ function ImportBody({
                 Sao lưu trước…
               </Button>
               {backupNote && (
-                <span role="status" className="break-words text-ink-muted">
+                <span role="status" className="break-words text-subtle">
                   {backupNote}
                 </span>
               )}
@@ -410,14 +409,19 @@ function ImportBody({
         {saving ? 'Đang lưu…' : ''}
       </p>
 
-      <div className="flex justify-end gap-2 border-t border-line pt-4">
-        <Button variant="secondary" disabled={saving} onClick={() => setStep('input')}>
+      <div className="flex justify-end gap-2 border-t border-default pt-4">
+        <Button variant="light" disabled={saving} onClick={() => setStep('input')}>
           Quay lại
         </Button>
-        <Button variant="secondary" disabled={saving} onClick={() => onOpenChange(false)}>
+        <Button variant="light" disabled={saving} onClick={() => onOpenChange(false)}>
           Hủy
         </Button>
-        <Button ref={confirmButton} disabled={saving} onClick={() => void confirm(plan)}>
+        <Button
+          variant="solid"
+          ref={confirmButton}
+          disabled={saving}
+          onClick={() => void confirm(plan)}
+        >
           {saving ? 'Đang lưu…' : replacing ? 'Thay bản gốc' : 'Nhập vào chương'}
         </Button>
       </div>

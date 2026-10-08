@@ -1,8 +1,8 @@
 import { useState, type JSX } from 'react'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { TextField } from '../../components/TextField'
+import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
+import { TextField } from '../../components/ui/Field'
 import { displayTitle, lossNote } from './chapterList'
 
 /** Asks for a position from 1 to the number of chapters and says why when the answer is not one. */
@@ -69,8 +69,8 @@ function MoveForm({
         onClose()
       }}
     >
-      <p className="text-ui-xs text-ink-muted">
-        Đang chuyển <strong className="font-semibold text-ink">{displayTitle(chapter)}</strong>{' '}
+      <p className="text-body-xs text-subtle">
+        Đang chuyển <strong className="font-semibold text-default">{displayTitle(chapter)}</strong>{' '}
         (hiện ở vị trí {chapter.number}).
       </p>
       <TextField
@@ -86,10 +86,12 @@ function MoveForm({
         }}
       />
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="light" onClick={onClose}>
           Hủy
         </Button>
-        <Button type="submit">Chuyển</Button>
+        <Button variant="solid" type="submit">
+          Chuyển
+        </Button>
       </div>
     </form>
   )
@@ -157,27 +159,26 @@ function DeleteBody({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-ui-xs leading-normal">
+      <p className="text-body-xs leading-normal">
         <strong className="font-semibold">{describeChapter(chapter)}</strong> sẽ bị xóa khỏi tác
         phẩm, các chương sau nó đổi số thứ tự. Việc này không hoàn tác được.
       </p>
       {note && (
         <p
           role="note"
-          className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-ui-xs leading-normal"
+          className="rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 text-body-xs leading-normal"
         >
           <strong className="font-semibold">{note}</strong> Nên sao lưu tác phẩm trước khi xóa.
         </p>
       )}
       {backupMessage && (
-        <p role="status" className="text-ui-xs leading-normal break-words text-ink-muted">
+        <p role="status" className="text-body-xs leading-normal break-words text-subtle">
           {backupMessage}
         </p>
       )}
       <div className="flex justify-end gap-2">
         {note && onBackup && (
           <Button
-            variant="outline"
             className="mr-auto"
             disabled={backingUp}
             onClick={() => {
@@ -191,11 +192,12 @@ function DeleteBody({
             {backingUp ? 'Đang sao lưu…' : 'Sao lưu trước…'}
           </Button>
         )}
-        <Button variant="secondary" onClick={onClose} autoFocus>
+        <Button variant="light" onClick={onClose} autoFocus>
           Hủy
         </Button>
         <Button
-          variant="destructive"
+          color="danger"
+          variant="solid"
           disabled={backingUp}
           onClick={() => {
             onDelete(chapter)

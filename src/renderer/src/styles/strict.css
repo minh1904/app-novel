@@ -1,0 +1,11 @@
+/*
+ * Mira tokens only: switch off Tailwind's default colours, radii, type sizes and shadows, so `bg-red-500`,
+ * `rounded-2xl` or `text-sm` do nothing. Imported before tokens/*: `initial` clears every variable of the
+ * namespace declared before it.
+ */
+@theme {
+  --color-*: initial;
+  --radius-*: initial;
+  --text-*: initial;
+  --shadow-*: initial;
+}

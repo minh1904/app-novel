@@ -1,8 +1,8 @@
 import { useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import type { WorkSummary } from '../../../../shared/contracts/library'
-import { Banner } from '../../components/Banner'
-import { Button } from '../../components/Button'
+import { Alert } from '../../components/ui/Alert'
+import { Button } from '../../components/ui/Button'
 import { backupWork, savedMessage } from './backup'
 import { EditWorkDialog } from './EditWorkDialog'
 import { useWorkDetail } from './useWorkDetail'
@@ -44,7 +44,7 @@ export function WorkDetailScreen({
 
   if (detail.load === 'loading') {
     return (
-      <p role="status" className="px-6 pt-8 text-ui-sm text-ink-muted">
+      <p role="status" className="px-6 pt-8 text-body-sm text-subtle">
         Đang mở tác phẩm…
       </p>
     )
@@ -53,16 +53,16 @@ export function WorkDetailScreen({
   if (detail.load === 'failed' || !work) {
     return (
       <div className="mx-auto flex max-w-[560px] flex-col gap-3 px-6 pt-12">
-        <h2 className="text-ui-lg font-semibold tracking-heading">Không mở được tác phẩm</h2>
-        <p role="alert" className="text-ui-sm leading-normal text-ink-muted">
+        <h2 className="text-body-lg font-semibold tracking-heading">Không mở được tác phẩm</h2>
+        <p role="alert" className="text-body-sm leading-normal text-subtle">
           {detail.loadError}
         </p>
         <div className="flex gap-2">
-          <Button onClick={onBackToLibrary}>
+          <Button variant="solid" onClick={onBackToLibrary}>
             <AltArrowLeftIcon size={14} />
             Về thư viện
           </Button>
-          <Button variant="secondary" onClick={() => void detail.reload()}>
+          <Button variant="light" onClick={() => void detail.reload()}>
             Thử lại
           </Button>
         </div>
@@ -96,17 +96,17 @@ export function WorkDetailScreen({
   return (
     <div className="mx-auto flex max-w-[960px] flex-col gap-5 px-6 py-6">
       {saved && (
-        <Banner tone="success" onDismiss={() => setSaved(null)}>
+        <Alert tone="success" onDismiss={() => setSaved(null)}>
           {saved}
-        </Banner>
+        </Alert>
       )}
       {detail.notice && (
         <div
           role="alert"
-          className="flex items-start justify-between gap-3 rounded-control border border-error/40 bg-error/8 px-3.5 py-2.5 text-ui-xs"
+          className="flex items-start justify-between gap-3 rounded-sm border border-error/40 bg-error/8 px-3.5 py-2.5 text-body-xs"
         >
           <span>{detail.notice}</span>
-          <Button variant="ghost-muted" size="sm" onClick={detail.dismissNotice}>
+          <Button variant="ghost" onClick={detail.dismissNotice}>
             Đóng
           </Button>
         </div>

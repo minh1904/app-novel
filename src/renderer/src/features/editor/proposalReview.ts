@@ -18,7 +18,7 @@ class PreviewWidget extends WidgetType {
 
   override toDOM(): HTMLElement {
     const box = document.createElement('div')
-    box.className = 'm-2 rounded-control border border-line-strong bg-canvas p-2 text-ui-xs'
+    box.className = 'm-2 rounded-sm border border-strong bg-surface p-2 text-body-xs'
     box.setAttribute('role', 'group')
     box.setAttribute('aria-label', this.preview.label)
     const title = document.createElement('p')
@@ -27,24 +27,24 @@ class PreviewWidget extends WidgetType {
     box.append(title)
     if (this.preview.before) {
       const before = document.createElement('pre')
-      before.className = 'max-h-24 overflow-auto whitespace-pre-wrap text-ink-muted'
+      before.className = 'max-h-24 overflow-auto whitespace-pre-wrap text-subtle'
       before.textContent = 'Chữ hiện tại: ' + this.preview.before
       box.append(before)
     }
     const after = document.createElement('pre')
-    after.className = 'max-h-40 overflow-auto whitespace-pre-wrap text-ink'
+    after.className = 'max-h-40 overflow-auto whitespace-pre-wrap text-default'
     after.textContent = this.preview.after
     box.append(after)
     const actions = document.createElement('div')
     actions.className = 'mt-2 flex gap-2'
     const accept = document.createElement('button')
     accept.type = 'button'
-    accept.className = 'rounded-control bg-primary px-2 py-1 text-primary-foreground'
+    accept.className = 'rounded-sm bg-inverted px-2 py-1 text-inverted'
     accept.textContent = 'Áp dụng'
     accept.addEventListener('click', () => this.preview.onAccept())
     const deny = document.createElement('button')
     deny.type = 'button'
-    deny.className = 'rounded-control border border-line px-2 py-1'
+    deny.className = 'rounded-sm border border-default px-2 py-1'
     deny.textContent = 'Bỏ'
     deny.addEventListener('click', () => this.preview.onDeny())
     actions.append(accept, deny)

@@ -6,8 +6,8 @@ import type {
   ProposalQueueItem
 } from '../../../../../shared/contracts/aiProposals'
 import type { ContextStatus } from '../../../../../shared/contracts/glossary'
-import { Button } from '../../../components/Button'
-import { cx } from '../../../components/cx'
+import { Button, LinkButton } from '../../../components/ui/Button'
+import { cn } from '../../../lib/cn'
 import { isOpenPart, PART_STATUS_LABEL, proposalStatus } from './proposalStatus'
 
 /**
@@ -17,9 +17,9 @@ import { isOpenPart, PART_STATUS_LABEL, proposalStatus } from './proposalStatus'
  */
 
 const TONE: Record<ProposalPartStatus, string> = {
-  pending: 'text-ink-muted',
+  pending: 'text-subtle',
   applied: 'text-success',
-  rejected: 'text-ink-muted',
+  rejected: 'text-subtle',
   conflict: 'text-error',
   stale: 'text-warning',
   'needs-placement': 'text-warning'
@@ -53,35 +53,35 @@ export function ProposalCard({
   const [open, setOpen] = useState(false)
   const label = statusLabel ?? (status === null ? 'Đang tải…' : PART_STATUS_LABEL[status])
   return (
-    <div className="rounded-panel border border-line-strong bg-canvas p-2 text-ui-xs">
+    <div className="rounded-lg border border-strong bg-surface p-2 text-body-xs">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="min-w-0 flex-1 truncate text-ink">{title}</span>
-        <span className={cx('shrink-0', status === null ? 'text-ink-muted' : TONE[status])}>
+        <span className="min-w-0 flex-1 truncate text-default">{title}</span>
+        <span className={cn('shrink-0', status === null ? 'text-subtle' : TONE[status])}>
           {label}
         </span>
       </div>
-      {note && <p className="mt-1 text-ink-muted">{note}</p>}
-      <button
-        type="button"
+      {note && <p className="mt-1 text-subtle">{note}</p>}
+      <LinkButton
+        color="neutral"
         aria-expanded={open}
-        className="mt-1 cursor-pointer text-ink-muted underline hover:text-ink"
+        className="mt-1"
         onClick={() => setOpen((value) => !value)}
       >
         {open ? 'Thu gọn' : 'Xem trước và sau'}
-      </button>
+      </LinkButton>
       {open && (
         <div className="mt-2 space-y-2">
           {before !== '' && (
             <div>
-              <p className="text-ink-muted">Trước</p>
-              <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-ink">
+              <p className="text-subtle">Trước</p>
+              <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-default">
                 {before}
               </pre>
             </div>
           )}
           <div>
-            <p className="text-ink-muted">Sau</p>
-            <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-ink">
+            <p className="text-subtle">Sau</p>
+            <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-default">
               {after}
             </pre>
           </div>
@@ -89,21 +89,13 @@ export function ProposalCard({
       )}
       {(onAccept || onDeny || onShow) && (
         <div className="mt-2 flex flex-wrap gap-1">
-          {onShow && (
-            <Button size="sm" variant="outline" onClick={onShow}>
-              Xem trong bản dịch
-            </Button>
-          )}
+          {onShow && <Button onClick={onShow}>Xem trong bản dịch</Button>}
           {onAccept && (
-            <Button size="sm" disabled={acceptDisabled} onClick={onAccept}>
+            <Button variant="solid" disabled={acceptDisabled} onClick={onAccept}>
               Chấp nhận
             </Button>
           )}
-          {onDeny && (
-            <Button size="sm" variant="outline" onClick={onDeny}>
-              Bỏ
-            </Button>
-          )}
+          {onDeny && <Button onClick={onDeny}>Bỏ</Button>}
         </div>
       )}
     </div>

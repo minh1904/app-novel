@@ -5,12 +5,13 @@ import {
   SHARED_QUOTA_PROVIDERS,
   type ConnectionView
 } from '../../../../shared/contracts/aiConnections'
-import { Badge } from '../../components/Badge'
+import { Badge } from '../../components/ui/Badge'
 import { keyBadge } from './connectionStatus'
-import { Button } from '../../components/Button'
-import { SettingRow } from '../../components/Setting'
-import { Switch } from '../../components/Switch'
-import { TextField } from '../../components/TextField'
+import { Button } from '../../components/ui/Button'
+import { CompactButton } from '../../components/ui/CompactButton'
+import { SettingRow } from '../../components/ui/Setting'
+import { Switch } from '../../components/ui/Switch'
+import { TextField } from '../../components/ui/Field'
 import { useConnectionStore, emptyTest } from '../../stores/connectionStore'
 import { notify } from '../../stores/notificationStore'
 import { ModelEntries } from '../models/ModelEntries'
@@ -142,19 +143,18 @@ export function ConnectionDetails({
               return (
                 <div
                   key={key.id}
-                  className="flex flex-wrap items-center gap-2 rounded-control bg-control px-2.5 py-1"
+                  className="flex flex-wrap items-center gap-2 rounded-sm bg-muted px-2.5 py-1"
                 >
-                  <span className="font-mono text-ui-xs">••••{key.tail}</span>
-                  <Badge tone={badge.tone}>{badge.label}</Badge>
-                  <Button
-                    variant="ghost-muted"
-                    size="icon"
+                  <span className="font-mono text-body-xs">••••{key.tail}</span>
+                  <Badge variant="outline" dot color={badge.tone}>
+                    {badge.label}
+                  </Badge>
+                  <CompactButton
                     className="ml-auto"
                     aria-label={'Xóa khóa …' + key.tail}
                     onClick={() => void store.removeKey(connection.id, key.id)}
-                  >
-                    <TrashBinTrashIcon size={13} />
-                  </Button>
+                    icon={<TrashBinTrashIcon size={14} />}
+                  />
                 </div>
               )
             })}
@@ -175,7 +175,6 @@ export function ConnectionDetails({
                 }}
               />
               <Button
-                variant="outline"
                 loading={adding}
                 disabled={secret.trim() === ''}
                 onClick={() => void submitKey()}
@@ -204,13 +203,13 @@ export function ConnectionDetails({
             : 'Kiểm tra gần nhất: ' + new Date(connection.checkedAt).toLocaleString('vi-VN')
         }
       >
-        <Button variant="outline" loading={probing || test.running} onClick={() => void check()}>
+        <Button loading={probing || test.running} onClick={() => void check()}>
           Kiểm tra
         </Button>
       </SettingRow>
 
       <SettingRow title="Xóa kết nối" hint="Xóa cả khóa và các mục model của kết nối này.">
-        <Button variant="destructive" onClick={() => void store.remove(connection.id)}>
+        <Button color="danger" variant="solid" onClick={() => void store.remove(connection.id)}>
           Xóa
         </Button>
       </SettingRow>

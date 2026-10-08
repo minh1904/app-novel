@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState, type JSX, type RefObject } from 'react'
+import { useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
 import type { ModelInfoView } from '../../../../shared/contracts/aiConnections'
-import { Badge } from '../../components/Badge'
-import { Button } from '../../components/Button'
-import { Dialog } from '../../components/Dialog'
-import { SearchField } from '../../components/SearchField'
+import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
+import { Checkbox, Radio, RadioGroup } from '../../components/ui/Checkbox'
+import { Dialog } from '../../components/ui/Dialog'
+import { cn } from '../../lib/cn'
+import { SearchInput } from '../../components/ui/Input'
 import { contextOf, filterModels, priceOf } from './modelInfoText'
 
 /**
@@ -38,6 +40,43 @@ export interface ModelSelectorDialogProps {
   /** Trả lời `null` khi xong; một câu khi lỗi, hiện ngay trong hộp thoại. */
   onConfirm(models: string[]): Promise<string | null>
   finalFocus?: RefObject<HTMLElement | null>
+}
+
+const LIST =
+  'flex max-h-[320px] flex-col gap-0 overflow-y-auto rounded-sm border border-default bg-surface'
+
+/** The fetched models: one radio group (`one`) or a group of checkboxes (`many`). */
+function ModelList({
+  mode,
+  value,
+  onPick,
+  children
+}: {
+  mode: 'one' | 'many'
+  value: string | null
+  onPick(id: string): void
+  children: ReactNode
+}): JSX.Element {
+  if (mode === 'many') {
+    return (
+      <fieldset aria-label="Model lấy được" className={cn(LIST, 'm-0 min-w-0 p-0')}>
+        {children}
+      </fieldset>
+    )
+  }
+  return (
+    <RadioGroup
+      name="model-to-pick"
+      aria-label="Model lấy được"
+      value={value}
+      onValueChange={(next) => {
+        if (typeof next === 'string') onPick(next)
+      }}
+      className={LIST}
+    >
+      {children}
+    </RadioGroup>
+  )
 }
 
 function Body({
@@ -104,7 +143,7 @@ function Body({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <SearchField
+        <SearchInput
           label="Lọc model"
           placeholder="Lọc model…"
           className="min-w-[200px] flex-1"
@@ -112,73 +151,82 @@ function Body({
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
         />
-        <Button variant="outline" size="lg" disabled={running} onClick={onFetch}>
-          <RefreshIcon size={14} className={running ? 'animate-spin' : undefined} />
+        <Button
+          disabled={running}
+          onClick={onFetch}
+          leftIcon={<RefreshIcon size={16} className={running ? 'animate-spin' : undefined} />}
+        >
           {models.length === 0 ? 'Lấy danh sách' : 'Lấy lại'}
         </Button>
       </div>
 
       {error !== null && (
-        <p role="alert" className="m-0 text-ui-xs leading-normal text-error">
+        <p role="alert" className="m-0 text-body-xs leading-normal text-error">
           {error}
         </p>
       )}
 
       {empty !== null ? (
-        <p role="status" className="m-0 py-6 text-center text-ui-xs leading-normal text-ink-muted">
+        <p role="status" className="m-0 py-6 text-center text-body-xs leading-normal text-subtle">
           {empty}
         </p>
       ) : (
         models.length > 0 && (
           <>
-            <p className="m-0 text-ui-xs text-ink-muted" aria-live="polite">
+            <p className="m-0 text-body-xs text-subtle" aria-live="polite">
               {query.trim() === ''
                 ? models.length + ' model'
                 : shown.length + ' / ' + models.length + ' model'}
             </p>
             {shown.length === 0 ? (
-              <p role="status" className="m-0 py-6 text-center text-ui-xs text-ink-muted">
+              <p role="status" className="m-0 py-6 text-center text-body-xs text-subtle">
                 Không có model nào khớp “{query.trim()}”.
               </p>
             ) : (
-              <ul
-                className="m-0 flex max-h-[320px] list-none flex-col overflow-y-auto rounded-control border border-line bg-canvas p-0"
-                aria-label="Model lấy được"
-              >
+              <ModelList mode={mode} value={chosen[0] ?? null} onPick={(id) => toggle(id, true)}>
                 {shown.map((model) => {
                   const have = existing.get(model.id) ?? 0
                   const context = contextOf(model)
-                  return (
-                    <li key={model.id} className="border-b border-line last:border-b-0">
-                      <label className="flex cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-1 px-2.5 py-2 hover:bg-hover">
-                        <input
-                          type={mode === 'one' ? 'radio' : 'checkbox'}
-                          name="model-to-pick"
-                          className="size-4 shrink-0"
-                          checked={chosen.includes(model.id)}
-                          onChange={(event) => toggle(model.id, event.target.checked)}
-                        />
-                        <span className="font-mono text-ui-xs break-all">{model.id}</span>
-                        {have > 0 && (
-                          <Badge tone="muted">
-                            {have === 1 ? 'Đã có' : 'Đã có ' + have + ' mục'}
-                          </Badge>
-                        )}
-                        {model.status === 'deprecated' && (
-                          <Badge tone="warning">Nhà cung cấp đã khai tử</Badge>
-                        )}
-                        <span className="ml-auto flex shrink-0 items-center gap-3 text-ui-xs text-ink-muted">
-                          {context !== null && <span>{context}</span>}
-                          <span>{priceOf(model)}</span>
-                        </span>
-                      </label>
-                    </li>
+                  const row =
+                    'flex w-full cursor-pointer flex-wrap gap-x-2.5 gap-y-1 border-b border-default px-2.5 py-2 last:border-b-0 hover:bg-hover'
+                  const details = (
+                    <>
+                      <span className="font-mono text-body-xs break-all">{model.id}</span>
+                      {have > 0 && (
+                        <Badge variant="outline" dot color="neutral">
+                          {have === 1 ? 'Đã có' : 'Đã có ' + have + ' mục'}
+                        </Badge>
+                      )}
+                      {model.status === 'deprecated' && (
+                        <Badge variant="outline" dot color="warning">
+                          Nhà cung cấp đã khai tử
+                        </Badge>
+                      )}
+                      <span className="ml-auto flex shrink-0 items-center gap-3 text-body-xs text-subtle">
+                        {context !== null && <span>{context}</span>}
+                        <span>{priceOf(model)}</span>
+                      </span>
+                    </>
+                  )
+                  return mode === 'one' ? (
+                    <Radio key={model.id} value={model.id} className={row}>
+                      {details}
+                    </Radio>
+                  ) : (
+                    <Checkbox
+                      key={model.id}
+                      checked={chosen.includes(model.id)}
+                      onCheckedChange={(checked) => toggle(model.id, checked)}
+                      className={row}
+                    >
+                      {details}
+                    </Checkbox>
                   )
                 })}
-              </ul>
+              </ModelList>
             )}
             {catalogReadAt !== null && (
-              <p className="m-0 text-ui-xs text-ink-muted">
+              <p className="m-0 text-body-xs text-subtle">
                 Giá tham khảo, bảng dữ liệu cập nhật {catalogReadAt}.
               </p>
             )}
@@ -187,16 +235,20 @@ function Body({
       )}
 
       {problem !== null && (
-        <p role="alert" className="m-0 text-ui-xs text-error">
+        <p role="alert" className="m-0 text-body-xs text-error">
           {problem}
         </p>
       )}
 
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button variant="ghost-muted" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           Hủy bỏ
         </Button>
-        <Button disabled={chosen.length === 0 || saving} onClick={() => void confirm()}>
+        <Button
+          variant="solid"
+          disabled={chosen.length === 0 || saving}
+          onClick={() => void confirm()}
+        >
           {mode === 'one'
             ? 'Dùng model này'
             : chosen.length <= 1
@@ -220,7 +272,7 @@ export function ModelSelectorDialog(props: ModelSelectorDialogProps): JSX.Elemen
           ? 'Chọn tên model thật từ danh sách endpoint báo.'
           : 'Tích các model muốn dùng; mỗi model thành một mục với cài đặt trống. Thêm lại một model đã có cũng được, để có nhiều cấu hình cho cùng một model.'
       }
-      size="form"
+      size="md"
       finalFocus={finalFocus}
     >
       {open && <Body {...props} onClose={() => onOpenChange(false)} />}

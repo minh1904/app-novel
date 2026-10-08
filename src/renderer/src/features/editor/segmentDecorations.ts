@@ -14,6 +14,9 @@ import { savedField, segmentsField } from './editorState'
  * inserted into a line (no widgets): an element next to the caret is a known way to disturb an
  * input method, so segments are marked by background classes on the text only — no line-number
  * gutter, to keep the pane for prose rather than code.
+ *
+ * The background shows only under the pointer. Tinting every other segment all the time read as
+ * stray highlighting across the whole chapter, with nothing on screen to say what it meant.
  */
 
 /** Index of the first segment that starts at or after `offset`, or segs.length. */
@@ -89,12 +92,12 @@ const segmentMarks = ViewPlugin.fromClass(
 
 export const segmentTheme = EditorView.baseTheme({
   '.cm-segment': { borderRadius: '3px' },
-  '.cm-segment-odd': {
-    backgroundColor: 'color-mix(in srgb, var(--text-primary) 6%, transparent)'
+  '.cm-segment:hover': {
+    backgroundColor: 'color-mix(in srgb, var(--mira-text) 6%, transparent)'
   },
   '.cm-segment-edited': {
     textDecoration: 'underline dotted',
-    textDecorationColor: 'var(--status-info)',
+    textDecorationColor: 'var(--mira-info)',
     textUnderlineOffset: '4px'
   }
 })

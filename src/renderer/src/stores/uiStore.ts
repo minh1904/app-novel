@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import type { WorkspaceState, WorkspaceTab } from '../../../shared/contracts/workspace'
-import type { LibrarySection } from '../features/library/LibrarySidebar'
 import type { LeaveGuardRegistry } from '../features/editor/leaveGuard'
 import {
   DEFAULT_SETTINGS_LOCATION,
@@ -38,7 +37,7 @@ export function resolveTheme(preference: ThemePreference): Theme {
 }
 
 export type View =
-  | { name: 'library'; section: LibrarySection }
+  | { name: 'library' }
   | { name: 'create' }
   | { name: 'work'; workId: string }
   | { name: 'chapter'; workId: string; chapterId: string }
@@ -101,7 +100,7 @@ export interface UiState {
 }
 
 const initialValues = {
-  view: { name: 'library', section: 'all' } as View,
+  view: { name: 'library' } as View,
   tabs: [] as WorkspaceTab[],
   activeWorkId: null as string | null,
   workspaceReady: false,
@@ -212,11 +211,7 @@ export const useUiStore = create<UiState>((set, get) => ({
         current.activeWorkId === workId
           ? (fallback?.workId ?? tabs[0]?.workId ?? null)
           : current.activeWorkId,
-      view: wasVisible
-        ? fallback
-          ? viewOf(fallback)
-          : { name: 'library', section: 'all' }
-        : current.view
+      view: wasVisible ? (fallback ? viewOf(fallback) : { name: 'library' }) : current.view
     })
     await saveWorkspace(get())
     return true
@@ -234,7 +229,7 @@ export const useUiStore = create<UiState>((set, get) => ({
     set({
       tabs: state.tabs,
       activeWorkId: selected?.workId ?? null,
-      view: selected ? viewOf(selected) : { name: 'library', section: 'all' },
+      view: selected ? viewOf(selected) : { name: 'library' },
       workspaceReady: true,
       workspaceNotice: notices.join(' ') || null
     })
