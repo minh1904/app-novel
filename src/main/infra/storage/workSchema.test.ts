@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 10, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 11, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -151,7 +151,7 @@ describe('work schema', () => {
 
     // Upgrade through the current schema.
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(10)
+    expect(readPragmas(db).userVersion).toBe(11)
 
     // Data preserved
     const row = db.prepare('SELECT title FROM work WHERE id = ?').get<{ title: string }>('w1')
@@ -193,7 +193,7 @@ describe('work schema', () => {
       INSERT INTO provenance (segment_id, origin, at) VALUES ('s', 'human', 1);
     `)
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(10)
+    expect(readPragmas(db).userVersion).toBe(11)
     expect(
       db
         .prepare("SELECT content, rev FROM chapter_text WHERE chapter_id = 'c' AND side = 'target'")
@@ -260,7 +260,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(10)
+    expect(readPragmas(db).userVersion).toBe(11)
     expect(db.prepare('SELECT id, action, answer FROM ai_turn ORDER BY created_at').all()).toEqual([
       { id: 't-ask', action: 'ask', answer: 'Đáp' },
       { id: 't-edit', action: 'edit', answer: 'Bản sửa' },
@@ -359,7 +359,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(10)
+    expect(readPragmas(db).userVersion).toBe(11)
     expect(
       db.prepare('SELECT id, action, answer, target_range_json, location_json FROM ai_turn').all()
     ).toEqual([
@@ -408,7 +408,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(10)
+    expect(readPragmas(db).userVersion).toBe(11)
     db.exec(`
       INSERT INTO translate_run_context (run_key, chapter_id, snapshot_json, snapshot_hash, created_at)
       VALUES ('translate:r', 'c', '{}', 'h', 1);

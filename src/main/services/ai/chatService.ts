@@ -65,6 +65,8 @@ export interface ChatServiceOptions {
       workId: string,
       patch: {
         answer: string
+        /** What the model thought so far; absent leaves the stored reasoning as it is. */
+        reasoning?: string
         status: 'running' | 'done' | 'error' | 'cancelled'
         tools: ChatToolStep[]
         usage?: ChatUsage | null
@@ -210,6 +212,7 @@ export class ChatService {
     // Vì sao vòng **cuối** dừng — vòng trả lời thật, không phải vòng đọc công cụ trước đó.
     let finishReason: ChatFinishReason | undefined
     let answer = ''
+    let reasoning = ''
     const toolSteps: ChatToolStep[] = []
     let persistedLength = 0
     let persistedAt = now()
@@ -251,7 +254,12 @@ export class ChatService {
               // Lượt đã bị dọn khỏi sổ (cửa sổ đóng) thì ngừng phát: emit vào một cửa sổ không còn đó là
               // chỗ sinh ra lỗi "object has been destroyed" khó lần.
               if (!this.running.has(requestId)) return
-              if (event.kind === 'delta') {
+              if (event.kind === 'reasoning') {
+                // Thinking already reached the screen: like text, it may not be swapped for another model's.
+                partial = true
+                reasoning += event.text
+                emit({ requestId, kind: 'reasoning', text: event.text })
+              } else if (event.kind === 'delta') {
                 partial = true
                 answer += event.text
                 if (
@@ -260,6 +268,7 @@ export class ChatService {
                 ) {
                   this.options.records.update(requestId, input.workId, {
                     answer,
+                    reasoning,
                     status: 'running',
                     tools: toolSteps
                   })
@@ -350,6 +359,7 @@ export class ChatService {
       const usd = usage === null ? null : costOfUsage(usage, this.modelInfo(session))
       this.options.records?.update(requestId, input.workId, {
         answer,
+        reasoning,
         status: 'done',
         tools: toolSteps,
         usage: wireUsage,
@@ -370,6 +380,7 @@ export class ChatService {
       try {
         this.options.records?.update(requestId, input.workId, {
           answer,
+          reasoning,
           status: chunk.error.kind === 'cancelled' ? 'cancelled' : 'error',
           tools: toolSteps
         })

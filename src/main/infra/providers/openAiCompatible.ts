@@ -382,7 +382,7 @@ export class OpenAiCompatibleProvider implements TranslationProvider, Translatio
         ),
       signal,
       // Sự kiện kết thúc là dấu hiệu duy nhất cho thấy lượt xong êm.
-      (event) => event.kind !== 'delta'
+      (event) => event.kind === 'done' || event.kind === 'tool-calls'
     )
   }
 

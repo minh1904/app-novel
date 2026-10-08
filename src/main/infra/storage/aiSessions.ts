@@ -33,6 +33,7 @@ export interface StoredTurn {
   action: ChatAction
   question: string
   answer: string
+  reasoning: string
   status: StoredTurnStatus
   context: ChatContextBlock[]
   range: ChatRange | null
@@ -63,6 +64,7 @@ interface TurnRow {
   action: ChatAction
   question: string
   answer: string
+  reasoning: string
   status: StoredTurnStatus
   context_json: string
   target_range_json: string | null
@@ -93,6 +95,7 @@ const turnOf = (row: TurnRow): StoredTurn => ({
   action: row.action,
   question: row.question,
   answer: row.answer,
+  reasoning: row.reasoning,
   status: row.status,
   context: JSON.parse(row.context_json) as ChatContextBlock[],
   range: row.target_range_json === null ? null : (JSON.parse(row.target_range_json) as ChatRange),
@@ -232,7 +235,15 @@ export function updateAiTurn(
   patch: Partial<
     Pick<
       StoredTurn,
-      'answer' | 'status' | 'tools' | 'usage' | 'costUsd' | 'finishReason' | 'provider' | 'model'
+      | 'answer'
+      | 'reasoning'
+      | 'status'
+      | 'tools'
+      | 'usage'
+      | 'costUsd'
+      | 'finishReason'
+      | 'provider'
+      | 'model'
     >
   >,
   now: number
@@ -240,10 +251,11 @@ export function updateAiTurn(
   const previous = getAiTurn(db, id)
   const next = { ...previous, ...patch }
   db.prepare(
-    `UPDATE ai_turn SET answer = ?, status = ?, tools_json = ?, usage_json = ?,
+    `UPDATE ai_turn SET answer = ?, reasoning = ?, status = ?, tools_json = ?, usage_json = ?,
     cost_usd = ?, finish_reason = ?, provider = ?, model = ?, updated_at = ? WHERE id = ?`
   ).run(
     next.answer,
+    next.reasoning,
     next.status,
     JSON.stringify(next.tools),
     next.usage === null ? null : JSON.stringify(next.usage),

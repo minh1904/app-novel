@@ -262,6 +262,12 @@ export async function* readAnthropicEvents(
         const delta = (payload.delta ?? {}) as Record<string, unknown>
         if (delta.type === 'text_delta' && typeof delta.text === 'string' && delta.text !== '') {
           yield { kind: 'delta', text: delta.text }
+        } else if (
+          delta.type === 'thinking_delta' &&
+          typeof delta.thinking === 'string' &&
+          delta.thinking !== ''
+        ) {
+          yield { kind: 'reasoning', text: delta.thinking }
         } else if (delta.type === 'input_json_delta' && typeof delta.partial_json === 'string') {
           const block = blocks.get(index)
           if (block) block.json += delta.partial_json
@@ -374,7 +380,7 @@ export class AnthropicMessagesTransport implements ChatTransport {
     let result: CompleteResult = { text: '', finishReason: 'unknown', usage: null, status: 200 }
     for await (const event of this.stream(request, call)) {
       if (event.kind === 'delta') text += event.text
-      else {
+      else if (event.kind !== 'reasoning') {
         result = {
           text,
           finishReason: event.finishReason,

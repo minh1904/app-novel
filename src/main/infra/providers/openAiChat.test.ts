@@ -117,6 +117,7 @@ describe('parseChatFrame', () => {
   it('đọc phần chữ của một khung', () => {
     expect(parseChatFrame(JSON.stringify({ choices: [{ delta: { content: 'xin' } }] }))).toEqual({
       text: 'xin',
+      reasoning: '',
       usage: null,
       toolCalls: []
     })
@@ -126,6 +127,7 @@ describe('parseChatFrame', () => {
     expect(parseChatFrame(JSON.stringify({ choices: [{ delta: { role: 'assistant' } }] }))).toEqual(
       {
         text: '',
+        reasoning: '',
         usage: null,
         toolCalls: []
       }
@@ -445,5 +447,16 @@ describe('chat through the gateway (change `ai-gateway`)', () => {
     expect(error).toBeNull()
     expect(textOf(events)).toBe('ổn')
     expect(seen).toEqual(['Bearer KEY-ONE', 'Bearer KEY-TWO'])
+  })
+})
+
+describe('reasoning in a frame', () => {
+  it('reads reasoning_content (DeepSeek, gateways) and reasoning (OpenRouter) apart from the answer', () => {
+    expect(
+      parseChatFrame(JSON.stringify({ choices: [{ delta: { reasoning_content: 'Người dùng muốn…' } }] }))
+    ).toMatchObject({ text: '', reasoning: 'Người dùng muốn…' })
+    expect(
+      parseChatFrame(JSON.stringify({ choices: [{ delta: { reasoning: 'Suy nghĩ', content: 'Đáp' } }] }))
+    ).toMatchObject({ text: 'Đáp', reasoning: 'Suy nghĩ' })
   })
 })

@@ -171,7 +171,13 @@ function collector(): {
       chunks.push(chunk)
       // `tool` is a progress report, not an ending: a turn that read something is still going, and
       // treating it as the end makes every tool test stop waiting one round early.
-      if (chunk.kind === 'delta' || chunk.kind === 'tool' || chunk.kind === 'proposal') return
+      if (
+        chunk.kind === 'delta' ||
+        chunk.kind === 'tool' ||
+        chunk.kind === 'proposal' ||
+        chunk.kind === 'reasoning'
+      )
+        return
       for (const entry of waiting.splice(0)) {
         if (entry.requestId === chunk.requestId) entry.resolve()
         else waiting.push(entry)
@@ -183,7 +189,8 @@ function collector(): {
           c.requestId === requestId &&
           c.kind !== 'delta' &&
           c.kind !== 'tool' &&
-          c.kind !== 'proposal'
+          c.kind !== 'proposal' &&
+          c.kind !== 'reasoning'
       )
       if (already) return Promise.resolve()
       return new Promise((resolve) => waiting.push({ requestId, resolve }))
@@ -204,7 +211,8 @@ const endingsOf = (chunks: ChatChunk[], requestId: string): string[] =>
         c.requestId === requestId &&
         c.kind !== 'delta' &&
         c.kind !== 'tool' &&
-        c.kind !== 'proposal'
+        c.kind !== 'proposal' &&
+        c.kind !== 'reasoning'
     )
     .map((c) => c.kind)
 
@@ -971,6 +979,39 @@ describe('Copilot qua chat (subscription-providers, 4.3)', () => {
     const requestId = chat.start(input(), sink.emit)
     await sink.settled(requestId)
     expect(initiators).toEqual(['user', 'agent', 'agent'])
+  })
+})
+
+describe('suy luận của model', () => {
+  it('gửi phần suy luận lên panel tách khỏi câu trả lời, và lưu cùng lượt', async () => {
+    const reasoning = (text: string): string =>
+      'data: ' + JSON.stringify({ choices: [{ delta: { reasoning_content: text } }] }) + '\n\n'
+    const sink = collector()
+    const updates: Array<{ status: string; reasoning?: string; answer: string }> = []
+    const chat = new ChatService({
+      connections: connections((async () =>
+        sseResponse([
+          reasoning('Người dùng '),
+          reasoning('chào.'),
+          delta('Chào bạn!'),
+          DONE
+        ])) as typeof fetch),
+      records: { start: () => 's1', update: (_id, _work, patch) => updates.push(patch) },
+      newId: () => 'r1',
+      now: () => NOW
+    })
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+    expect(sink.chunks.filter((chunk) => chunk.kind === 'reasoning')).toEqual([
+      { requestId, kind: 'reasoning', text: 'Người dùng ' },
+      { requestId, kind: 'reasoning', text: 'chào.' }
+    ])
+    expect(textOf(sink.chunks, requestId)).toBe('Chào bạn!')
+    expect(updates.at(-1)).toMatchObject({
+      status: 'done',
+      reasoning: 'Người dùng chào.',
+      answer: 'Chào bạn!'
+    })
   })
 })
 

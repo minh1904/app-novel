@@ -272,6 +272,13 @@ export async function* readResponsesEvents(
       if (typeof payload.delta === 'string' && payload.delta !== '') {
         yield { kind: 'delta', text: payload.delta }
       }
+    } else if (
+      type === 'response.reasoning_summary_text.delta' ||
+      type === 'response.reasoning_text.delta'
+    ) {
+      if (typeof payload.delta === 'string' && payload.delta !== '') {
+        yield { kind: 'reasoning', text: payload.delta }
+      }
     } else if (type === 'response.function_call_arguments.delta') {
       const call = calls.get(String(payload.item_id))
       if (call && !call.done && typeof payload.delta === 'string') call.arguments += payload.delta
@@ -388,7 +395,9 @@ export class ResponsesTransport implements ChatTransport {
     let result: CompleteResult = { text: '', finishReason: 'unknown', usage: null, status: 200 }
     for await (const event of this.stream(request, call)) {
       if (event.kind === 'delta') text += event.text
-      else result = { text, finishReason: event.finishReason, usage: event.usage, status: 200 }
+      else if (event.kind !== 'reasoning') {
+        result = { text, finishReason: event.finishReason, usage: event.usage, status: 200 }
+      }
     }
     return { ...result, text }
   }

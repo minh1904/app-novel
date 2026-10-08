@@ -13,7 +13,7 @@ import { cx } from '../../components/cx'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
 import { AiComposer } from './AiComposer'
 import { AiTurn } from './AiTurn'
-import { buildLocation, locationLabel, type PaneCaret } from './chatLocation'
+import { buildLocation, type PaneCaret } from './chatLocation'
 import { ProposalCard, type ProposalActions } from './ProposalCard'
 import { isOpenPart } from './proposalStatus'
 import { useAiChat, type ChatEditor } from './useAiChat'
@@ -319,9 +319,7 @@ export function AiPanel({
       <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-3">
         <StarsIcon size={16} className="shrink-0 text-info" />
         <h3 className="text-ui-xs font-semibold">Hỏi AI</h3>
-        <span className="min-w-0 truncate text-ui-xs text-ink-muted">
-          {chapterLabel} · {locationLabel(location)}
-        </span>
+        <span className="min-w-0 truncate text-ui-xs text-ink-muted">{chapterLabel}</span>
         <span className="ml-auto flex shrink-0 items-center gap-0.5">
           {chat.sessions.length > 0 && (
             <MenuRoot>
@@ -519,7 +517,6 @@ export function AiPanel({
               targetChapterExists={!isOtherChapter || other !== undefined}
               queueItem={queueItem}
               actions={actions}
-              onCancel={chat.cancel}
               onRetry={(question) => void chat.send(question)}
               retryWith={
                 turn.status === 'error' && retryTarget
@@ -541,10 +538,6 @@ export function AiPanel({
           )
         })}
       </div>
-
-      <p className="shrink-0 px-3 text-ui-xs leading-normal text-ink-muted">
-        Hội thoại được lưu trong tác phẩm; đóng panel vẫn có thể mở lại từ Lịch sử.
-      </p>
 
       <AiComposer chat={chat} />
     </section>

@@ -226,6 +226,27 @@ describe('tool calls and proposals', () => {
   })
 })
 
+describe('what the model thought, and when', () => {
+  it('appends reasoning apart from the answer and keeps the turn running', () => {
+    let session = applyChunk(started(), { requestId: 'r1', kind: 'reasoning', text: 'Người dùng ' })
+    session = applyChunk(session, { requestId: 'r1', kind: 'reasoning', text: 'chào.' })
+    session = applyChunk(session, delta('r1', 'Chào bạn!'))
+    expect(turnOf(session, 'r1')).toMatchObject({
+      status: 'running',
+      reasoning: 'Người dùng chào.',
+      answer: 'Chào bạn!'
+    })
+  })
+
+  it('records when the turn started and when it ended', () => {
+    const begun = beginTurn(emptySession, { localId: 'L', question: 'Hỏi' }, 1000)
+    let session = attachRequestId(begun, 'L', 'r')
+    expect(session.turns[0]).toMatchObject({ createdAt: 1000, finishedAt: null })
+    session = applyChunk(session, done('r'), 5000)
+    expect(session.turns[0].finishedAt).toBe(5000)
+  })
+})
+
 describe('a restored session', () => {
   const view = (patch: Partial<AiTurnView>): AiTurnView => ({
     id: 't',
@@ -234,6 +255,7 @@ describe('a restored session', () => {
     action: 'chat',
     question: 'Hỏi',
     answer: 'Đáp',
+    reasoning: '',
     status: 'done',
     context: [],
     range: null,

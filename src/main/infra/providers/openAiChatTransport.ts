@@ -81,6 +81,11 @@ export type FinishReason = 'stop' | 'length' | 'tool_calls' | 'filter' | 'unknow
  */
 export type ChatStreamEvent =
   | { kind: 'delta'; text: string }
+  /**
+   * The model thinking out loud before it answers (`reasoning_content`, a Responses reasoning summary,
+   * Anthropic `thinking`). Shown as "Thought", never part of the answer.
+   */
+  | { kind: 'reasoning'; text: string }
   | {
       kind: 'tool-calls'
       calls: AssembledToolCall[]
@@ -215,6 +220,8 @@ export interface ToolCallFragment {
 export interface ChatFrame {
   /** The new text of this frame; empty is normal (the opening frame carries only the role). */
   text: string
+  /** New reasoning text of this frame (`reasoning_content` or `reasoning`), empty when none. */
+  reasoning: string
   usage: Usage | null
   /** The tool-call fragments of this frame, if any. */
   toolCalls: ToolCallFragment[]
@@ -263,19 +270,33 @@ export function parseChatFrame(data: string): ChatFrame | null {
     error?: unknown
     usage?: unknown
     choices?: Array<{
-      delta?: { content?: unknown; tool_calls?: unknown }
+      delta?: {
+        content?: unknown
+        tool_calls?: unknown
+        reasoning_content?: unknown
+        reasoning?: unknown
+      }
       finish_reason?: unknown
     }>
   }
 
   if (payload.error !== null && typeof payload.error === 'object') {
-    return { text: '', usage: null, toolCalls: [], error: payload.error as Record<string, unknown> }
+    return {
+      text: '',
+      reasoning: '',
+      usage: null,
+      toolCalls: [],
+      error: payload.error as Record<string, unknown>
+    }
   }
 
   const choice = payload.choices?.[0]
   const content = choice?.delta?.content
+  // DeepSeek and most gateways send `reasoning_content`; OpenRouter sends `reasoning`.
+  const thinking = choice?.delta?.reasoning_content ?? choice?.delta?.reasoning
   const frame: ChatFrame = {
     text: typeof content === 'string' ? content : '',
+    reasoning: typeof thinking === 'string' ? thinking : '',
     usage: normalizeUsage(payload.usage),
     toolCalls: readToolFragments(choice?.delta?.tool_calls)
   }
@@ -440,6 +461,7 @@ export class OpenAiChatTransport implements ChatTransport {
               arguments: current.arguments + (fragment.arguments ?? '')
             })
           }
+          if (frame.reasoning !== '') yield { kind: 'reasoning', text: frame.reasoning }
           if (frame.text !== '') yield { kind: 'delta', text: frame.text }
         }
       } catch (error) {

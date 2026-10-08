@@ -401,6 +401,11 @@ DROP TABLE proposal_turn_link;
 `)
 }
 
+/** What the model thought before answering, shown as "Thought" like Hermes (empty for older turns). */
+const version11 = `
+ALTER TABLE ai_turn ADD COLUMN reasoning TEXT NOT NULL DEFAULT '';
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -463,6 +468,12 @@ export const workSchema: SchemaSpec = {
       version: 10,
       up(db) {
         migrateAgenticChat(db)
+      }
+    },
+    {
+      version: 11,
+      up(db) {
+        db.exec(version11)
       }
     }
   ]

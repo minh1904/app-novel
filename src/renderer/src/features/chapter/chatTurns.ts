@@ -42,6 +42,12 @@ export interface TurnView {
   /** `chat` for a turn without a mode; an old turn keeps the mode it was sent with. */
   mode: ChatAction
   answer: string
+  /** What the model thought before answering, shown as "Thought"; empty when it said nothing of it. */
+  reasoning: string
+  /** When the question was sent (ms epoch). */
+  createdAt: number
+  /** When the turn ended; `null` while it runs. */
+  finishedAt: number | null
   status: TurnStatus
   error: ChatError | null
   usage: ChatUsage | null
@@ -78,6 +84,9 @@ export function restoredSession(turns: AiTurnView[]): Session {
       chapterId: turn.chapterId ?? undefined,
       mode: turn.action,
       answer: turn.answer,
+      reasoning: turn.reasoning,
+      createdAt: turn.createdAt,
+      finishedAt: turn.status === 'sending' || turn.status === 'running' ? null : turn.updatedAt,
       status: turn.status,
       error: null,
       usage: turn.usage,
@@ -98,7 +107,8 @@ const isOpen = (turn: TurnView): boolean => turn.status === 'sending' || turn.st
 
 export function beginTurn(
   session: Session,
-  turn: { localId: string; question: string; chapterId?: string; location?: ChatLocation }
+  turn: { localId: string; question: string; chapterId?: string; location?: ChatLocation },
+  now: number = Date.now()
 ): Session {
   return {
     ...session,
@@ -109,6 +119,9 @@ export function beginTurn(
         mode: 'chat',
         requestId: null,
         answer: '',
+        reasoning: '',
+        createdAt: now,
+        finishedAt: null,
         tools: [],
         proposals: [],
         context: [],
@@ -134,11 +147,21 @@ export function attachRequestId(session: Session, localId: string, requestId: st
 }
 
 /** The send call itself failed, so no chunk will ever arrive for this turn. */
-export function failTurn(session: Session, localId: string, error: ChatError): Session {
+export function failTurn(
+  session: Session,
+  localId: string,
+  error: ChatError,
+  now: number = Date.now()
+): Session {
   return mapTurn(
     session,
     (turn) => turn.localId === localId && isOpen(turn),
-    (turn) => ({ ...turn, status: error.kind === 'cancelled' ? 'cancelled' : 'error', error })
+    (turn) => ({
+      ...turn,
+      status: error.kind === 'cancelled' ? 'cancelled' : 'error',
+      error,
+      finishedAt: now
+    })
   )
 }
 
@@ -150,9 +173,16 @@ export function failTurn(session: Session, localId: string, error: ChatError): S
  * already ended is dropped rather than applied — main guarantees it will not send one, and this side
  * does not rely on that guarantee holding.
  */
-export function applyChunk(session: Session, chunk: ChatChunk): Session {
+export function applyChunk(session: Session, chunk: ChatChunk, now: number = Date.now()): Session {
   const matches = (turn: TurnView): boolean => turn.requestId === chunk.requestId && isOpen(turn)
 
+  if (chunk.kind === 'reasoning') {
+    return mapTurn(session, matches, (turn) => ({
+      ...turn,
+      status: 'running',
+      reasoning: turn.reasoning + chunk.text
+    }))
+  }
   if (chunk.kind === 'delta') {
     return mapTurn(session, matches, (turn) => ({
       ...turn,
@@ -186,6 +216,7 @@ export function applyChunk(session: Session, chunk: ChatChunk): Session {
     return mapTurn(session, matches, (turn) => ({
       ...turn,
       status: 'done',
+      finishedAt: now,
       usage: chunk.usage,
       usd: chunk.usd,
       keyTail: chunk.keyTail,
@@ -197,7 +228,8 @@ export function applyChunk(session: Session, chunk: ChatChunk): Session {
     // Cancelling is a decision, not a failure: it reads differently and offers "ask again", not a
     // retry of something that broke.
     status: chunk.error.kind === 'cancelled' ? 'cancelled' : 'error',
-    error: chunk.error
+    error: chunk.error,
+    finishedAt: now
   }))
 }
 

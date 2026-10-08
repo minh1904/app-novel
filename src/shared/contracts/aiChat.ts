@@ -151,6 +151,8 @@ export interface ChatToolStep {
  */
 export type ChatChunk =
   | { requestId: string; kind: 'delta'; text: string }
+  /** What the model thought before answering; shown as "Thought", never part of the answer. */
+  | { requestId: string; kind: 'reasoning'; text: string }
   /**
    * Model vừa gọi một tool. Chỉ để panel nói rõ đã làm gì — `detail` là một dòng mô tả phạm vi,
    * **không bao giờ** là nội dung đã đọc.
