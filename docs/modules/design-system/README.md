@@ -173,6 +173,23 @@ thêm được dependency bằng pnpm toàn cục.
 | `Select`, `Switch` (36 × 20), `Slider`, `TabsRoot`… | Tabs có kiểu `line` (gạch chân) và `pill` (track xám) |
 | `Card`, `EmptyState`, `Spinner` | `Card` thay `Panel` |
 | `SettingRow`, `SectionHeading`, `SettingsSection` | Dòng cài đặt kiểu Obsidian: tên, mô tả, control bên phải |
+| `NavItem` | Hàng 32 px của cột danh sách hoặc điều hướng (chương, trang cài đặt). Hàng đang mở có lớp phủ chọn và `aria-current`; có `leading`, `trailing`, `strong` |
+| `ActionRow` | Lựa chọn dẫn tới bước khác: tiêu đề, mô tả, nhãn, mũi tên; cả hàng bấm được (chọn nhà cung cấp, chọn tài khoản) |
+| `Disclosure` | Dòng chữ mờ mở ra chi tiết: model đã nghĩ gì, đã gọi công cụ nào, một nhóm model |
+| `Checkbox`, `RadioGroup`, `Radio` | Ô 16 px viền `border-input`, tô màu chính khi bật; cả nhãn bấm được |
+| `ListOption` | Một lựa chọn trong danh sách do ô nhập tự điều khiển (combobox, kết quả tìm kiếm), `role="option"` |
+| `PickerTrigger` | Nút mở một bộ chọn tự dựng (menu model): giá trị cắt bớt, nhãn phụ, mũi tên; kiểu `field` (khung ô nhập) hoặc `ghost` (trong thanh) |
+| `DropZone` | Ô viền đứt để kéo thả hoặc bấm chọn file, sáng lên khi kéo file qua (ảnh bìa) |
+
+**Quy tắc (2026-10-08, chủ sản phẩm yêu cầu, giống LMS v3):**
+
+- Màn feature không tự viết control. Mọi nút, ô nhập, lựa chọn đều lấy từ `components/ui/`.
+- Khi chưa có component phù hợp, thêm component chung vào đó, không style tại chỗ.
+- Mọi control dùng cỡ mặc định `md`. Màn không truyền `size="sm"` hay `size="lg"`; hai cỡ này chỉ
+  còn để component chung dùng bên trong.
+- Ngoại lệ:
+  - `<input type="file">` ẩn;
+  - textarea là mặt viết của một trình soạn có khung riêng (ô chat, chế độ câu).
 
 Các màn feature được chuyển bằng codemod:
 
@@ -188,7 +205,9 @@ Các màn feature được chuyển bằng codemod:
   (`text-sm`), hoặc dùng icon ngoài thang 12/14/16/18/24;
 - một màn viết số z-index, dùng lại tên cũ (`bg-canvas`, `text-ink`, `rounded-control`…), đọc biến
   CSS chưa định nghĩa, hoặc đọc token tầng component ngoài `components/ui`;
-- tầng semantic có mã màu thô, đọc biến ngoài tầng foundation, hoặc thiếu token ở một trong hai theme.
+- tầng semantic có mã màu thô, đọc biến ngoài tầng foundation, hoặc thiếu token ở một trong hai theme;
+- một màn viết `<button>`, `<input>`, `<textarea>`, `<select>` (trừ ngoại lệ ở trên), hoặc truyền
+  `size="sm"` / `size="lg"` cho một control.
 
 [`components.test.ts`](../../../src/renderer/src/components/ui/components.test.ts) kiểm:
 
