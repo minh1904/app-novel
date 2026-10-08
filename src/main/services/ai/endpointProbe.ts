@@ -1,7 +1,13 @@
 import { normalizeBaseUrl } from '../../../shared/contracts/endpointUrl'
 import type { ApiMode, EndpointProbeResult } from '../../../shared/contracts/aiConnections'
-import { anthropicBase, ANTHROPIC_VERSION } from '../../infra/providers/transports/anthropicTransport'
-import { guessApiMode, type ResolvedApiMode } from '../../infra/providers/transports/transportFactory'
+import {
+  anthropicBase,
+  ANTHROPIC_VERSION
+} from '../../infra/providers/transports/anthropicTransport'
+import {
+  guessApiMode,
+  type ResolvedApiMode
+} from '../../infra/providers/transports/transportFactory'
 
 /**
  * Checks an OpenAI-compatible endpoint the way Hermes Desktop does before saving one

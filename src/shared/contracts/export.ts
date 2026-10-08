@@ -45,11 +45,16 @@ export interface ExportResult {
 }
 
 export const exportFormatSchema = v.picklist(EXPORT_FORMATS, 'Định dạng xuất không hợp lệ.')
-export const exportPageSizeSchema = v.optional(v.picklist(EXPORT_PAGE_SIZES, 'Khổ trang không hợp lệ.'))
+export const exportPageSizeSchema = v.optional(
+  v.picklist(EXPORT_PAGE_SIZES, 'Khổ trang không hợp lệ.')
+)
 export const exportParagraphSpacingSchema = v.optional(
   v.picklist(EXPORT_PARAGRAPH_SPACINGS, 'Kiểu cách đoạn không hợp lệ.')
 )
-export const exportWorkModeSchema = v.picklist(EXPORT_WORK_MODES, 'Chế độ xuất tác phẩm không hợp lệ.')
+export const exportWorkModeSchema = v.picklist(
+  EXPORT_WORK_MODES,
+  'Chế độ xuất tác phẩm không hợp lệ.'
+)
 
 export const exportOptionsSchema = v.optional(
   v.object({
@@ -70,7 +75,9 @@ export const exportChapterSchema = v.object({
 
 export const exportWorkSchema = v.object({
   workId: idSchema,
-  chapterIds: v.optional(v.array(v.pipe(v.string('ID chương phải là chuỗi.'), v.uuid('ID chương không hợp lệ.')))),
+  chapterIds: v.optional(
+    v.array(v.pipe(v.string('ID chương phải là chuỗi.'), v.uuid('ID chương không hợp lệ.')))
+  ),
   format: exportFormatSchema,
   mode: exportWorkModeSchema,
   options: exportOptionsSchema

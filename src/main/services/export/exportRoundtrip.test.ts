@@ -35,10 +35,18 @@ describe('Export Round-trip and Novel Fidelity', () => {
     const normalized = normalizeRaw(decoded.text)
 
     // 3. Verify all paragraphs exist intact with original punctuation and quotes
-    expect(normalized.text).toContain('Hứa Thất An từ từ mở mắt, phát hiện bốn phía tối đen như mực.')
-    expect(normalized.text).toContain('«Ngươi đã tỉnh?» — Một giọng nói trầm thấp vang lên từ trong góc tối.')
-    expect(normalized.text).toContain('“Đây là nơi nào?” Hắn thầm nghĩ trong lòng, cảm giác cả người đau nhức khôn nguôi…')
-    expect(normalized.text).toContain('Kho báu triều đình bị đánh cắp, thuế ngân mười vạn lượng không cánh mà bay!')
+    expect(normalized.text).toContain(
+      'Hứa Thất An từ từ mở mắt, phát hiện bốn phía tối đen như mực.'
+    )
+    expect(normalized.text).toContain(
+      '«Ngươi đã tỉnh?» — Một giọng nói trầm thấp vang lên từ trong góc tối.'
+    )
+    expect(normalized.text).toContain(
+      '“Đây là nơi nào?” Hắn thầm nghĩ trong lòng, cảm giác cả người đau nhức khôn nguôi…'
+    )
+    expect(normalized.text).toContain(
+      'Kho báu triều đình bị đánh cắp, thuế ngân mười vạn lượng không cánh mà bay!'
+    )
   })
 
   it('preserves markdown headers and paragraphs on MD export', () => {
@@ -49,16 +57,21 @@ describe('Export Round-trip and Novel Fidelity', () => {
     const normalized = normalizeRaw(decoded.text)
 
     expect(normalized.text).toContain('## Chương 1: Nhập mộng kinh hồn')
-    expect(normalized.text).toContain('«Ngươi đã tỉnh?» — Một giọng nói trầm thấp vang lên từ trong góc tối.')
+    expect(normalized.text).toContain(
+      '«Ngươi đã tỉnh?» — Một giọng nói trầm thấp vang lên từ trong góc tối.'
+    )
   })
 
   it('creates valid DOCX buffer with novel sections and page breaks', async () => {
-    const docxBuffer = await formatAsDocxBuffer(novel, [complexChapter, {
-      id: 'ch-02',
-      number: 2,
-      title: 'Phá án',
-      content: 'Chương thứ hai tiếp nối.'
-    }])
+    const docxBuffer = await formatAsDocxBuffer(novel, [
+      complexChapter,
+      {
+        id: 'ch-02',
+        number: 2,
+        title: 'Phá án',
+        content: 'Chương thứ hai tiếp nối.'
+      }
+    ])
 
     expect(docxBuffer).toBeInstanceOf(Buffer)
     expect(docxBuffer.length).toBeGreaterThan(3000)
@@ -67,12 +80,19 @@ describe('Export Round-trip and Novel Fidelity', () => {
   })
 
   it('creates valid PDF HTML template with CSS @page and chapter break-before', () => {
-    const html = formatAsNovelHtml(novel, [complexChapter, {
-      id: 'ch-02',
-      number: 2,
-      title: 'Phá án',
-      content: 'Chương thứ hai tiếp nối.'
-    }], { pageSize: 'A5', paragraphSpacing: 'indent' })
+    const html = formatAsNovelHtml(
+      novel,
+      [
+        complexChapter,
+        {
+          id: 'ch-02',
+          number: 2,
+          title: 'Phá án',
+          content: 'Chương thứ hai tiếp nối.'
+        }
+      ],
+      { pageSize: 'A5', paragraphSpacing: 'indent' }
+    )
 
     expect(html).toContain('size: A5;')
     expect(html).toContain('break-before: page;')

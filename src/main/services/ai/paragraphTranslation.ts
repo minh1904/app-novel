@@ -35,11 +35,7 @@ import { buildTranslateRequest, PREVIOUS_PARAGRAPHS } from './translate/translat
 import { chooseOutputMode } from './translate/outputMode'
 import { modelCapability } from '../../infra/providers/modelCapability'
 import { buildGeneration } from '../../infra/providers/generation'
-import {
-  parseSnapshot,
-  promptFromSnapshot,
-  takeContextSnapshot
-} from './translate/contextSnapshot'
+import { parseSnapshot, promptFromSnapshot, takeContextSnapshot } from './translate/contextSnapshot'
 import { acceptProposalParts, textHash } from '../proposals/proposalService'
 
 interface ParagraphUnit extends SegmentText {
@@ -245,8 +241,9 @@ export class ParagraphTranslator {
     }
     const done = new Set(prior?.parts.map((part) => part.batchKey) ?? [])
     const units = requested.filter((unit) => !done.has(`${key}:${unit.id}`))
-    const budget = this.budgetFor(input.runId, () =>
-      batchesOf(all, translator.entry.settings.inputTokenLimit, work.sourceLang).length
+    const budget = this.budgetFor(
+      input.runId,
+      () => batchesOf(all, translator.entry.settings.inputTokenLimit, work.sourceLang).length
     )
     // Thử lại phần lỗi do người dùng bấm: lượt được thêm một phần ngân sách cho lô thử lại đó.
     if (input.retry === true) budget.grant(1, defaultExtra(1))
@@ -381,7 +378,9 @@ export class ParagraphTranslator {
         structure,
         // Đủ để dựng lại request lượt chính từ bản chụp (`rebuildTranslateRequest`).
         snapshot: { runKey: key, hash: stored.snapshotHash },
-        characters: snapshot.characters.map((character) => `${character.source} → ${character.target}`),
+        characters: snapshot.characters.map(
+          (character) => `${character.source} → ${character.target}`
+        ),
         previous,
         register: snapshot.register,
         // Lời gọi của riêng lô này, theo vòng, và số request HTTP thật đằng sau chúng.

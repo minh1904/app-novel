@@ -453,10 +453,14 @@ describe('chat through the gateway (change `ai-gateway`)', () => {
 describe('reasoning in a frame', () => {
   it('reads reasoning_content (DeepSeek, gateways) and reasoning (OpenRouter) apart from the answer', () => {
     expect(
-      parseChatFrame(JSON.stringify({ choices: [{ delta: { reasoning_content: 'Người dùng muốn…' } }] }))
+      parseChatFrame(
+        JSON.stringify({ choices: [{ delta: { reasoning_content: 'Người dùng muốn…' } }] })
+      )
     ).toMatchObject({ text: '', reasoning: 'Người dùng muốn…' })
     expect(
-      parseChatFrame(JSON.stringify({ choices: [{ delta: { reasoning: 'Suy nghĩ', content: 'Đáp' } }] }))
+      parseChatFrame(
+        JSON.stringify({ choices: [{ delta: { reasoning: 'Suy nghĩ', content: 'Đáp' } }] })
+      )
     ).toMatchObject({ text: 'Đáp', reasoning: 'Suy nghĩ' })
   })
 })

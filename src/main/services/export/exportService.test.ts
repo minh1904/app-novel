@@ -18,9 +18,7 @@ describe('ExportService', () => {
         title: 'Bộ Truyện Tuyệt Vời',
         author: 'Tác Giả A'
       }),
-      listChapters: vi.fn().mockReturnValue([
-        { id: 'c1', number: 1, title: 'Khởi đầu' }
-      ]),
+      listChapters: vi.fn().mockReturnValue([{ id: 'c1', number: 1, title: 'Khởi đầu' }]),
       readText: vi.fn().mockReturnValue({
         content: 'Nội dung dịch chương 1.'
       })

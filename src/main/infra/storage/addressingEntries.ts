@@ -153,7 +153,10 @@ function validateChapters(
   }
 
   if (fromPos !== null && toPos !== null && fromPos > toPos) {
-    throw new StorageError('validation', 'Chương bắt đầu phải đứng trước hoặc bằng chương kết thúc.')
+    throw new StorageError(
+      'validation',
+      'Chương bắt đầu phải đứng trước hoặc bằng chương kết thúc.'
+    )
   }
 }
 
@@ -168,7 +171,7 @@ export function listCharacters(
     query?: string
   } = {}
 ): CharacterItem[] {
-  let sql = 'SELECT * FROM context_entry WHERE kind = \'character\''
+  let sql = "SELECT * FROM context_entry WHERE kind = 'character'"
   const params: SqlValue[] = []
 
   if (options.status) {
@@ -193,7 +196,9 @@ export function listCharacters(
   const ids = rows.map((r) => r.id)
   const placeholders = ids.map(() => '?').join(',')
   const aliasRows = db
-    .prepare(`SELECT entry_id, form FROM context_alias WHERE entry_id IN (${placeholders}) ORDER BY form ASC`)
+    .prepare(
+      `SELECT entry_id, form FROM context_alias WHERE entry_id IN (${placeholders}) ORDER BY form ASC`
+    )
     .all<AliasRow>(...ids)
 
   const aliasMap = new Map<string, string[]>()
@@ -208,7 +213,7 @@ export function listCharacters(
 
 export function getCharacter(db: Db, characterId: string): CharacterItem | null {
   const row = db
-    .prepare('SELECT * FROM context_entry WHERE id = ? AND kind = \'character\'')
+    .prepare("SELECT * FROM context_entry WHERE id = ? AND kind = 'character'")
     .get<ContextEntryRow>(characterId)
   if (!row) return null
 
@@ -244,7 +249,7 @@ export function createCharacter(
   }
 
   const existing = db
-    .prepare('SELECT id FROM context_entry WHERE kind = \'character\' AND lower(source) = lower(?)')
+    .prepare("SELECT id FROM context_entry WHERE kind = 'character' AND lower(source) = lower(?)")
     .get<{ id: string }>(trimmedSource)
   if (existing) {
     throw new StorageError('conflict', `Nhân vật với tên gốc "${trimmedSource}" đã tồn tại.`)
@@ -267,18 +272,14 @@ export function createCharacter(
         id, kind, source, target, status, origin, forbidden,
         from_chapter_id, to_chapter_id, notes, created_at, updated_at
       ) VALUES (?, 'character', ?, ?, ?, 'user', 0, NULL, NULL, ?, ?, ?)
-    `).run(
-      id,
-      trimmedSource,
-      trimmedTarget,
-      params.status ?? 'approved',
-      notesJson,
-      now,
-      now
-    )
+    `).run(id, trimmedSource, trimmedTarget, params.status ?? 'approved', notesJson, now, now)
 
     for (const alias of aliases) {
-      db.prepare('INSERT INTO context_alias (entry_id, form, created_at) VALUES (?, ?, ?)').run(id, alias, now)
+      db.prepare('INSERT INTO context_alias (entry_id, form, created_at) VALUES (?, ?, ?)').run(
+        id,
+        alias,
+        now
+      )
     }
 
     touchWork(db, now)
@@ -318,7 +319,9 @@ export function updateCharacter(
 
   if (nextSource.toLowerCase() !== current.source.toLowerCase()) {
     const existing = db
-      .prepare('SELECT id FROM context_entry WHERE kind = \'character\' AND lower(source) = lower(?) AND id != ?')
+      .prepare(
+        "SELECT id FROM context_entry WHERE kind = 'character' AND lower(source) = lower(?) AND id != ?"
+      )
       .get<{ id: string }>(nextSource, characterId)
     if (existing) {
       throw new StorageError('conflict', `Nhân vật với tên gốc "${nextSource}" đã tồn tại.`)
@@ -341,20 +344,17 @@ export function updateCharacter(
       UPDATE context_entry
       SET source = ?, target = ?, status = ?, notes = ?, updated_at = ?
       WHERE id = ? AND kind = 'character'
-    `).run(
-      nextSource,
-      nextTarget,
-      params.status ?? current.status,
-      notesJson,
-      now,
-      characterId
-    )
+    `).run(nextSource, nextTarget, params.status ?? current.status, notesJson, now, characterId)
 
     if (params.aliases !== undefined) {
       db.prepare('DELETE FROM context_alias WHERE entry_id = ?').run(characterId)
       const cleanAliases = params.aliases.map((a) => a.trim()).filter(Boolean)
       for (const a of cleanAliases) {
-        db.prepare('INSERT INTO context_alias (entry_id, form, created_at) VALUES (?, ?, ?)').run(characterId, a, now)
+        db.prepare('INSERT INTO context_alias (entry_id, form, created_at) VALUES (?, ?, ?)').run(
+          characterId,
+          a,
+          now
+        )
       }
     }
 
@@ -374,9 +374,12 @@ export function deleteCharacter(db: Db, characterId: string, now: number = Date.
     // Delete aliases
     db.prepare('DELETE FROM context_alias WHERE entry_id = ?').run(characterId)
     // Delete dyads referencing this character
-    db.prepare('DELETE FROM context_entry WHERE kind = \'dyad\' AND (source = ? OR target = ?)').run(characterId, characterId)
+    db.prepare("DELETE FROM context_entry WHERE kind = 'dyad' AND (source = ? OR target = ?)").run(
+      characterId,
+      characterId
+    )
     // Delete character entry
-    db.prepare('DELETE FROM context_entry WHERE id = ? AND kind = \'character\'').run(characterId)
+    db.prepare("DELETE FROM context_entry WHERE id = ? AND kind = 'character'").run(characterId)
 
     touchWork(db, now)
   })
@@ -404,7 +407,7 @@ export function listDyads(
     targetChapterPos = chap.position
   }
 
-  let sql = 'SELECT * FROM context_entry WHERE kind = \'dyad\''
+  let sql = "SELECT * FROM context_entry WHERE kind = 'dyad'"
   const params: SqlValue[] = []
 
   if (options.status) {
@@ -426,11 +429,15 @@ export function listDyads(
     let toPos = Infinity
 
     if (dyad.fromChapterId) {
-      const f = db.prepare('SELECT position FROM chapter WHERE id = ?').get<{ position: number }>(dyad.fromChapterId)
+      const f = db
+        .prepare('SELECT position FROM chapter WHERE id = ?')
+        .get<{ position: number }>(dyad.fromChapterId)
       if (f) fromPos = f.position
     }
     if (dyad.toChapterId) {
-      const t = db.prepare('SELECT position FROM chapter WHERE id = ?').get<{ position: number }>(dyad.toChapterId)
+      const t = db
+        .prepare('SELECT position FROM chapter WHERE id = ?')
+        .get<{ position: number }>(dyad.toChapterId)
       if (t) toPos = t.position
     }
 
@@ -440,7 +447,7 @@ export function listDyads(
 
 export function getDyad(db: Db, dyadId: string): AddressingDyadItem | null {
   const row = db
-    .prepare('SELECT * FROM context_entry WHERE id = ? AND kind = \'dyad\'')
+    .prepare("SELECT * FROM context_entry WHERE id = ? AND kind = 'dyad'")
     .get<ContextEntryRow>(dyadId)
   if (!row) return null
   return toDyadItem(row)
@@ -517,17 +524,19 @@ export function setDyad(
     )
   } else {
     // Check if a dyad already exists with same direction and exact same chapter scope
-    const existingRow = db.prepare(`
+    const existingRow = db
+      .prepare(`
       SELECT id FROM context_entry
       WHERE kind = 'dyad' AND source = ? AND target = ? AND
             COALESCE(from_chapter_id, '') = COALESCE(?, '') AND
             COALESCE(to_chapter_id, '') = COALESCE(?, '')
-    `).get<{ id: string }>(
-      sourceCharacterId,
-      targetCharacterId,
-      params.fromChapterId ?? '',
-      params.toChapterId ?? ''
-    )
+    `)
+      .get<{ id: string }>(
+        sourceCharacterId,
+        targetCharacterId,
+        params.fromChapterId ?? '',
+        params.toChapterId ?? ''
+      )
 
     if (existingRow) {
       id = existingRow.id
@@ -567,14 +576,11 @@ export function deleteDyad(db: Db, dyadId: string, now: number = Date.now()): vo
     throw new StorageError('not_found', 'Không tìm thấy quan hệ xưng hô.')
   }
 
-  db.prepare('DELETE FROM context_entry WHERE id = ? AND kind = \'dyad\'').run(dyadId)
+  db.prepare("DELETE FROM context_entry WHERE id = ? AND kind = 'dyad'").run(dyadId)
   touchWork(db, now)
 }
 
-export function getEffectiveDyadsForChapter(
-  db: Db,
-  chapterId: string
-): AddressingDyadResolved[] {
+export function getEffectiveDyadsForChapter(db: Db, chapterId: string): AddressingDyadResolved[] {
   const dyads = listDyads(db, { chapterId, status: 'approved' })
   if (dyads.length === 0) return []
 

@@ -52,8 +52,10 @@ export interface E6Result {
 export function evaluateE6Decision(metrics: ComparisonMetrics): E6Result {
   const { baselineT0, candidateT0, winRateCI, humanWinRateCI, nonTieCount } = metrics
 
-  const baseStruct = baselineT0.omissions + baselineT0.additions + baselineT0.merges + baselineT0.splits
-  const candStruct = candidateT0.omissions + candidateT0.additions + candidateT0.merges + candidateT0.splits
+  const baseStruct =
+    baselineT0.omissions + baselineT0.additions + baselineT0.merges + baselineT0.splits
+  const candStruct =
+    candidateT0.omissions + candidateT0.additions + candidateT0.merges + candidateT0.splits
   const glossDiff = candidateT0.strictGlossaryRate - baselineT0.strictGlossaryRate
 
   // T0 worsened if structural issues increased or strict glossary dropped by more than 1.0%

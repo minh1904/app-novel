@@ -412,7 +412,9 @@ describe('connections never ride along with a work', () => {
           .all<{ name: string }>()
           .map((row) => row.name)
         // A backup or a shared work file is this file; a key in it would leave the machine.
-        expect(tables.filter((name) => ['ai_connection', 'ai_key', 'ai_model'].includes(name))).toEqual([])
+        expect(
+          tables.filter((name) => ['ai_connection', 'ai_key', 'ai_model'].includes(name))
+        ).toEqual([])
       } finally {
         workDb.close()
       }

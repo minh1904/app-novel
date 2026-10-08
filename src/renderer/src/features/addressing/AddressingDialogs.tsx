@@ -513,8 +513,8 @@ export function DeleteDyadDialog({
   const [error, setError] = useState<string | null>(null)
 
   const charMap = new Map(characters.map((c) => [c.id, c]))
-  const srcName = dyad ? charMap.get(dyad.sourceCharacterId)?.target ?? '?' : '?'
-  const tgtName = dyad ? charMap.get(dyad.targetCharacterId)?.target ?? '?' : '?'
+  const srcName = dyad ? (charMap.get(dyad.sourceCharacterId)?.target ?? '?') : '?'
+  const tgtName = dyad ? (charMap.get(dyad.targetCharacterId)?.target ?? '?') : '?'
 
   const handleConfirm = async (): Promise<void> => {
     setDeleting(true)

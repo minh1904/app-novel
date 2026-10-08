@@ -153,10 +153,7 @@ export function evaluateAddressingCompliance(
       for (const quote of quotes) {
         // 1. Check for inconsistent self-pronouns within the same quote
         const usedSelfPronouns = COMMON_SELF_PRONOUNS.filter((p) => containsPronoun(quote, p))
-        if (
-          usedSelfPronouns.includes(expectedSpeaker) &&
-          usedSelfPronouns.length > 1
-        ) {
+        if (usedSelfPronouns.includes(expectedSpeaker) && usedSelfPronouns.length > 1) {
           const conflicting = usedSelfPronouns.filter((p) => p !== expectedSpeaker)
           for (const conf of conflicting) {
             issues.push({
@@ -173,10 +170,7 @@ export function evaluateAddressingCompliance(
         }
 
         // 2. Check unexpected self-pronoun
-        if (
-          !containsPronoun(quote, expectedSpeaker) &&
-          usedSelfPronouns.length > 0
-        ) {
+        if (!containsPronoun(quote, expectedSpeaker) && usedSelfPronouns.length > 0) {
           for (const actual of usedSelfPronouns) {
             issues.push({
               paragraphIndex,
@@ -195,10 +189,7 @@ export function evaluateAddressingCompliance(
         const usedRecipientPronouns = COMMON_RECIPIENT_PRONOUNS.filter((p) =>
           containsPronoun(quote, p)
         )
-        if (
-          !containsPronoun(quote, expectedRecipient) &&
-          usedRecipientPronouns.length > 0
-        ) {
+        if (!containsPronoun(quote, expectedRecipient) && usedRecipientPronouns.length > 0) {
           // Avoid reporting if the recipient pronoun is already accounted for as expected self-pronoun
           const unexpected = usedRecipientPronouns.filter((p) => p !== expectedSpeaker)
           for (const actual of unexpected) {

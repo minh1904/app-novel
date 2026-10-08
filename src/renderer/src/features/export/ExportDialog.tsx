@@ -201,10 +201,7 @@ export function ExportDialog({
 
           <div className="flex items-center justify-between">
             <span className="text-ui-sm text-ink">Bao gồm lời giới thiệu tác phẩm</span>
-            <Switch
-              checked={includeDescription}
-              onCheckedChange={setIncludeDescription}
-            />
+            <Switch checked={includeDescription} onCheckedChange={setIncludeDescription} />
           </div>
         </div>
 

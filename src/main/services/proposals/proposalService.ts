@@ -1,5 +1,10 @@
 import { createHash } from 'node:crypto'
-import { applyEdits, resegment, segFromRecord, toSegmentInputs } from '../../../shared/segmentation/segmentMap'
+import {
+  applyEdits,
+  resegment,
+  segFromRecord,
+  toSegmentInputs
+} from '../../../shared/segmentation/segmentMap'
 import {
   getProposal,
   insertTextSnapshot,
@@ -38,7 +43,8 @@ interface CheckpointPayload {
 function candidatesFor(db: Db, chapterId: string, partIds: string[]): Candidate[] {
   const result: Candidate[] = []
   for (const id of [...new Set(partIds)]) {
-    const row = db.prepare(`SELECT p.id AS proposal_id FROM proposal_part pp
+    const row = db
+      .prepare(`SELECT p.id AS proposal_id FROM proposal_part pp
       JOIN proposal p ON p.id = pp.proposal_id WHERE pp.id = ? AND p.chapter_id = ?`)
       .get<{ proposal_id: string }>(id, chapterId)
     if (!row) throw new StorageError('not_found', 'Phần đề xuất không thuộc chương đang duyệt.')
@@ -62,11 +68,24 @@ export interface AcceptInput {
 /** One transaction is the only write path for manual and automatic acceptance. */
 export function acceptProposalParts(db: Db, input: AcceptInput): AcceptResult {
   return db.transaction(() => {
-    const old = db.prepare('SELECT chapter_id, kind, part_ids_json, actor, result_json FROM proposal_accept_command WHERE command_id = ?')
-      .get<{ chapter_id: string; kind: 'parts' | 'all'; part_ids_json: string; actor: AcceptInput['actor']; result_json: string }>(input.commandId)
+    const old = db
+      .prepare(
+        'SELECT chapter_id, kind, part_ids_json, actor, result_json FROM proposal_accept_command WHERE command_id = ?'
+      )
+      .get<{
+        chapter_id: string
+        kind: 'parts' | 'all'
+        part_ids_json: string
+        actor: AcceptInput['actor']
+        result_json: string
+      }>(input.commandId)
     if (old) {
-      if (old.chapter_id !== input.chapterId || old.actor !== input.actor || old.kind !== (input.kind ?? 'parts') ||
-        old.part_ids_json !== JSON.stringify([...new Set(input.partIds)])) {
+      if (
+        old.chapter_id !== input.chapterId ||
+        old.actor !== input.actor ||
+        old.kind !== (input.kind ?? 'parts') ||
+        old.part_ids_json !== JSON.stringify([...new Set(input.partIds)])
+      ) {
         throw new StorageError('validation', 'ID lệnh duyệt đã được dùng cho yêu cầu khác.')
       }
       return JSON.parse(old.result_json) as AcceptResult
@@ -82,24 +101,39 @@ export function acceptProposalParts(db: Db, input: AcceptInput): AcceptResult {
     const before: BeforeDecision[] = candidates
       .filter(({ part }) => plan.accepted.includes(part.id))
       .map(({ part }) => ({
-        partId: part.id, status: part.status, actor: part.decisionActor, reason: part.reason
+        partId: part.id,
+        status: part.status,
+        actor: part.decisionActor,
+        reason: part.reason
       }))
 
     let saved = target
     if (plan.accepted.length > 0) {
       const moved = applyEdits(target.segments.map(segFromRecord), plan.edits)
       const segments = toSegmentInputs(resegment(plan.content, moved, 'vi'))
-      saved = saveText(db, {
-        chapterId: input.chapterId, side: 'target', content: plan.content,
-        expectedRev: target.rev, segments
-      }, input.now, input.newId)
+      saved = saveText(
+        db,
+        {
+          chapterId: input.chapterId,
+          side: 'target',
+          content: plan.content,
+          expectedRev: target.rev,
+          segments
+        },
+        input.now,
+        input.newId
+      )
       for (const id of plan.accepted) {
         setProposalPartDecision(db, id, 'applied', input.actor, null, input.now)
       }
     }
     for (const skipped of plan.skipped) {
-      const status = skipped.reason === 'needs-placement' ? 'needs-placement'
-        : skipped.reason === 'source-changed' ? 'stale' : 'conflict'
+      const status =
+        skipped.reason === 'needs-placement'
+          ? 'needs-placement'
+          : skipped.reason === 'source-changed'
+            ? 'stale'
+            : 'conflict'
       setProposalPartDecision(db, skipped.partId, status, null, skipped.reason, input.now)
     }
     const result: AcceptResult = {
@@ -112,38 +146,56 @@ export function acceptProposalParts(db: Db, input: AcceptInput): AcceptResult {
     }
     if (plan.accepted.length > 0) {
       insertTextSnapshot(db, {
-        id: input.newId(), commandId: input.commandId, chapterId: input.chapterId,
-        beforeRev: target.rev, afterRev: saved.rev, beforeContent: target.content,
+        id: input.newId(),
+        commandId: input.commandId,
+        chapterId: input.chapterId,
+        beforeRev: target.rev,
+        afterRev: saved.rev,
+        beforeContent: target.content,
         decisions: { before, result } satisfies CheckpointPayload,
-        actor: input.actor, createdAt: input.now
+        actor: input.actor,
+        createdAt: input.now
       })
     }
     db.prepare(`INSERT INTO proposal_accept_command
       (command_id, chapter_id, kind, part_ids_json, actor, result_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-        input.commandId, input.chapterId, input.kind ?? 'parts', JSON.stringify([...new Set(input.partIds)]),
-        input.actor, JSON.stringify(result), input.now
-      )
+      input.commandId,
+      input.chapterId,
+      input.kind ?? 'parts',
+      JSON.stringify([...new Set(input.partIds)]),
+      input.actor,
+      JSON.stringify(result),
+      input.now
+    )
     return result
   })
 }
 
-export function acceptAllChapterParts(
-  db: Db,
-  input: Omit<AcceptInput, 'partIds'>
-): AcceptResult {
+export function acceptAllChapterParts(db: Db, input: Omit<AcceptInput, 'partIds'>): AcceptResult {
   return db.transaction(() => {
-    const old = db.prepare('SELECT chapter_id, kind, actor, result_json FROM proposal_accept_command WHERE command_id = ?')
-      .get<{ chapter_id: string; kind: 'parts' | 'all'; actor: AcceptInput['actor']; result_json: string }>(input.commandId)
+    const old = db
+      .prepare(
+        'SELECT chapter_id, kind, actor, result_json FROM proposal_accept_command WHERE command_id = ?'
+      )
+      .get<{
+        chapter_id: string
+        kind: 'parts' | 'all'
+        actor: AcceptInput['actor']
+        result_json: string
+      }>(input.commandId)
     if (old) {
       if (old.chapter_id !== input.chapterId || old.actor !== input.actor || old.kind !== 'all') {
         throw new StorageError('validation', 'ID lệnh duyệt đã được dùng cho yêu cầu khác.')
       }
       return JSON.parse(old.result_json) as AcceptResult
     }
-    const ids = db.prepare(`SELECT pp.id FROM proposal_part pp JOIN proposal p ON p.id = pp.proposal_id
+    const ids = db
+      .prepare(`SELECT pp.id FROM proposal_part pp JOIN proposal p ON p.id = pp.proposal_id
       WHERE p.chapter_id = ? AND pp.status IN ('pending', 'conflict', 'stale', 'needs-placement')
-      ORDER BY p.created_at, p.id, pp.ordinal`).all<{ id: string }>(input.chapterId).map((row) => row.id)
+      ORDER BY p.created_at, p.id, pp.ordinal`)
+      .all<{ id: string }>(input.chapterId)
+      .map((row) => row.id)
     return acceptProposalParts(db, { ...input, partIds: ids, kind: 'all' })
   })
 }
@@ -169,18 +221,36 @@ export function undoLatestAccept(
     }
     const current = readText(db, chapterId, 'target')
     if (current.rev !== snapshot.afterRev) {
-      throw new StorageError('conflict', 'Bản dịch đã đổi sau lượt duyệt; không thể hoàn tác tự động.')
+      throw new StorageError(
+        'conflict',
+        'Bản dịch đã đổi sau lượt duyệt; không thể hoàn tác tự động.'
+      )
     }
     const moved = applyEdits(current.segments.map(segFromRecord), [
       { from: 0, to: current.content.length, insert: snapshot.beforeContent }
     ])
-    const saved = saveText(db, {
-      chapterId, side: 'target', content: snapshot.beforeContent, expectedRev: current.rev,
-      segments: toSegmentInputs(resegment(snapshot.beforeContent, moved, 'vi'))
-    }, now, newId)
+    const saved = saveText(
+      db,
+      {
+        chapterId,
+        side: 'target',
+        content: snapshot.beforeContent,
+        expectedRev: current.rev,
+        segments: toSegmentInputs(resegment(snapshot.beforeContent, moved, 'vi'))
+      },
+      now,
+      newId
+    )
     const payload = snapshot.decisions as CheckpointPayload
     for (const decision of payload.before) {
-      setProposalPartDecision(db, decision.partId, decision.status, decision.actor, decision.reason, now)
+      setProposalPartDecision(
+        db,
+        decision.partId,
+        decision.status,
+        decision.actor,
+        decision.reason,
+        now
+      )
     }
     db.prepare('UPDATE text_snapshot SET undone_at = ? WHERE id = ?').run(now, snapshot.id)
     return { content: saved.content, rev: saved.rev, commandId: snapshot.commandId }

@@ -8,7 +8,13 @@ export interface Candidate {
 
 export interface PlannedPart {
   partId: string
-  reason: 'source-changed' | 'target-changed' | 'ambiguous' | 'overlap' | 'needs-placement' | 'invalid-base'
+  reason:
+    | 'source-changed'
+    | 'target-changed'
+    | 'ambiguous'
+    | 'overlap'
+    | 'needs-placement'
+    | 'invalid-base'
 }
 
 export interface ProposalPlan {
@@ -28,8 +34,14 @@ function allOccurrences(haystack: string, needle: string): number[] {
   return places
 }
 
-function paragraphBoundaryPreserved(base: string, from: number, to: number,
-  current: string, at: number, length: number): boolean {
+function paragraphBoundaryPreserved(
+  base: string,
+  from: number,
+  to: number,
+  current: string,
+  at: number,
+  length: number
+): boolean {
   const leftWasBreak = from > 0 && base[from - 1] === '\n'
   const rightWasBreak = to < base.length && base[to] === '\n'
   const leftStillBreak = at === 0 || current[at - 1] === '\n'
@@ -60,8 +72,13 @@ export function planProposalParts(
 
   for (const candidate of candidates) {
     const { proposal, part } = candidate
-    if (part.status !== 'pending' && part.status !== 'conflict' &&
-      part.status !== 'stale' && part.status !== 'needs-placement') continue
+    if (
+      part.status !== 'pending' &&
+      part.status !== 'conflict' &&
+      part.status !== 'stale' &&
+      part.status !== 'needs-placement'
+    )
+      continue
     if (proposal.sourceHash !== current.sourceHash) {
       skipped.push({ partId: part.id, reason: 'source-changed' })
       continue
@@ -79,12 +96,15 @@ export function planProposalParts(
     }
 
     if (part.beforeText === '') {
-      const applied = (proposal.parts ?? []).filter((item) => item.status === 'applied').sort((a, b) =>
-        (a.sourceOrder ?? a.ordinal) - (b.sourceOrder ?? b.ordinal)
-      )
+      const applied = (proposal.parts ?? [])
+        .filter((item) => item.status === 'applied')
+        .sort((a, b) => (a.sourceOrder ?? a.ordinal) - (b.sourceOrder ?? b.ordinal))
       const expectedCurrent = applied.map((item) => item.afterText).join('\n\n')
-      if (proposal.targetBaseContent !== '' || current.content !== expectedCurrent ||
-        (strictBase && (applied.length > 0 || current.rev !== proposal.targetBaseRev))) {
+      if (
+        proposal.targetBaseContent !== '' ||
+        current.content !== expectedCurrent ||
+        (strictBase && (applied.length > 0 || current.rev !== proposal.targetBaseRev))
+      ) {
         skipped.push({ partId: part.id, reason: 'target-changed' })
         continue
       }
@@ -94,7 +114,10 @@ export function planProposalParts(
       continue
     }
 
-    if (strictBase && (current.rev !== proposal.targetBaseRev || current.content !== proposal.targetBaseContent)) {
+    if (
+      strictBase &&
+      (current.rev !== proposal.targetBaseRev || current.content !== proposal.targetBaseContent)
+    ) {
       skipped.push({ partId: part.id, reason: 'target-changed' })
       continue
     }
@@ -104,11 +127,22 @@ export function planProposalParts(
     }
     const occurrences = allOccurrences(current.content, part.beforeText)
     if (occurrences.length !== 1) {
-      skipped.push({ partId: part.id, reason: occurrences.length === 0 ? 'target-changed' : 'ambiguous' })
+      skipped.push({
+        partId: part.id,
+        reason: occurrences.length === 0 ? 'target-changed' : 'ambiguous'
+      })
       continue
     }
-    if (!paragraphBoundaryPreserved(proposal.targetBaseContent, part.baseFrom, part.baseTo,
-      current.content, occurrences[0], part.beforeText.length)) {
+    if (
+      !paragraphBoundaryPreserved(
+        proposal.targetBaseContent,
+        part.baseFrom,
+        part.baseTo,
+        current.content,
+        occurrences[0],
+        part.beforeText.length
+      )
+    ) {
       skipped.push({ partId: part.id, reason: 'target-changed' })
       continue
     }
@@ -116,12 +150,13 @@ export function planProposalParts(
   }
 
   if (blankGroups.size > 0) {
-    const groups = [...blankGroups.values()].sort((a, b) =>
-      a[0].proposal.createdAt - b[0].proposal.createdAt ||
-      a[0].proposal.id.localeCompare(b[0].proposal.id)
+    const groups = [...blankGroups.values()].sort(
+      (a, b) =>
+        a[0].proposal.createdAt - b[0].proposal.createdAt ||
+        a[0].proposal.id.localeCompare(b[0].proposal.id)
     )
-    const chosen = groups[0].sort((a, b) =>
-      (a.part.sourceOrder ?? a.part.ordinal) - (b.part.sourceOrder ?? b.part.ordinal)
+    const chosen = groups[0].sort(
+      (a, b) => (a.part.sourceOrder ?? a.part.ordinal) - (b.part.sourceOrder ?? b.part.ordinal)
     )
     spans.push({ candidate: chosen[0], from: 0, to: current.content.length })
     for (const other of groups.slice(1).flat()) {
@@ -130,7 +165,8 @@ export function planProposalParts(
     const applied = (chosen[0].proposal.parts ?? []).filter((item) => item.status === 'applied')
     const joined = [...applied, ...chosen.map((item) => item.part)]
       .sort((a, b) => (a.sourceOrder ?? a.ordinal) - (b.sourceOrder ?? b.ordinal))
-      .map((item) => item.afterText).join('\n\n')
+      .map((item) => item.afterText)
+      .join('\n\n')
     const synthetic = spans[spans.length - 1]
     synthetic.candidate = {
       ...synthetic.candidate,

@@ -46,10 +46,7 @@ export const WorkFixtureSchema = v.pipe(
     modifications: v.optional(v.array(v.string())),
     chapters: v.array(v.string(), 'chapters phải là danh sách chuỗi số chương')
   }),
-  v.check(
-    (work) => Boolean(work.slug || work.id),
-    'Tác phẩm phải có trường slug hoặc id.'
-  )
+  v.check((work) => Boolean(work.slug || work.id), 'Tác phẩm phải có trường slug hoặc id.')
 )
 
 export type WorkFixture = v.InferOutput<typeof WorkFixtureSchema>

@@ -56,12 +56,17 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
 
   const formatChapterScope = (entry: ContextEntryItem): string => {
     if (!entry.fromChapterId && !entry.toChapterId) return 'Toàn bộ truyện'
-    const from = entry.fromChapterId ? `C.${chapterMap.get(entry.fromChapterId)?.number ?? '?'}` : 'Đầu'
+    const from = entry.fromChapterId
+      ? `C.${chapterMap.get(entry.fromChapterId)?.number ?? '?'}`
+      : 'Đầu'
     const to = entry.toChapterId ? `C.${chapterMap.get(entry.toChapterId)?.number ?? '?'}` : 'Cuối'
     return `${from} → ${to}`
   }
 
-  const handleQuickStatus = async (entry: ContextEntryItem, nextStatus: ContextStatus): Promise<void> => {
+  const handleQuickStatus = async (
+    entry: ContextEntryItem,
+    nextStatus: ContextStatus
+  ): Promise<void> => {
     try {
       await updateEntry(entry.id, { status: nextStatus })
     } catch (err) {
@@ -121,9 +126,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
       </div>
 
       {error && (
-        <div className="rounded-control bg-error/10 p-3 text-ui-xs text-error">
-          {error}
-        </div>
+        <div className="rounded-control bg-error/10 p-3 text-ui-xs text-error">{error}</div>
       )}
 
       {/* Main List */}
@@ -187,7 +190,12 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
 
                 {/* Target & Forbidden */}
                 <div className="flex flex-col items-start gap-1 pr-2">
-                  <span className={cx('font-medium', entry.forbidden ? 'text-error line-through' : 'text-ink')}>
+                  <span
+                    className={cx(
+                      'font-medium',
+                      entry.forbidden ? 'text-error line-through' : 'text-ink'
+                    )}
+                  >
                     {entry.target}
                   </span>
                   {entry.forbidden && (
@@ -199,21 +207,13 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
 
                 {/* Status */}
                 <div>
-                  {entry.status === 'approved' && (
-                    <Badge tone="success">Đã duyệt</Badge>
-                  )}
-                  {entry.status === 'pending' && (
-                    <Badge tone="warning">Chờ duyệt</Badge>
-                  )}
-                  {entry.status === 'rejected' && (
-                    <Badge tone="muted">Từ chối</Badge>
-                  )}
+                  {entry.status === 'approved' && <Badge tone="success">Đã duyệt</Badge>}
+                  {entry.status === 'pending' && <Badge tone="warning">Chờ duyệt</Badge>}
+                  {entry.status === 'rejected' && <Badge tone="muted">Từ chối</Badge>}
                 </div>
 
                 {/* Scope */}
-                <span className="text-ui-xs text-ink-muted">
-                  {formatChapterScope(entry)}
-                </span>
+                <span className="text-ui-xs text-ink-muted">{formatChapterScope(entry)}</span>
 
                 {/* Notes */}
                 <span className="truncate pr-2 text-ui-xs text-ink-muted" title={entry.notes ?? ''}>
@@ -292,11 +292,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
         }}
       />
 
-      <ImportNamesDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onImport={importNames}
-      />
+      <ImportNamesDialog open={importOpen} onOpenChange={setImportOpen} onImport={importNames} />
 
       <DeleteGlossaryDialog
         open={deletingEntry !== null}

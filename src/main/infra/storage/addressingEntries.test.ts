@@ -87,15 +87,19 @@ describe('addressingEntries storage', () => {
     const db = createTestDb()
     createCharacter(db, { source: '韩立', target: 'Hàn Lập' })
 
-    expect(() =>
-      createCharacter(db, { source: '韩立', target: 'Hàn Lập 2' })
-    ).toThrowError(StorageError)
+    expect(() => createCharacter(db, { source: '韩立', target: 'Hàn Lập 2' })).toThrowError(
+      StorageError
+    )
   })
 
   it('thao tác thiết lập, truy vấn và xóa quan hệ xưng hô (dyad)', () => {
     const db = createTestDb()
     const charA = createCharacter(db, { source: '韩立', target: 'Hàn Lập', gender: 'male' })
-    const charB = createCharacter(db, { source: '南宫婉', target: 'Nam Cung Uyển', gender: 'female' })
+    const charB = createCharacter(db, {
+      source: '南宫婉',
+      target: 'Nam Cung Uyển',
+      gender: 'female'
+    })
 
     // 1. Set dyad A -> B
     const dyadAB = setDyad(db, {

@@ -44,7 +44,9 @@ export const termNotesSchema = v.pipe(
 
 const workId = idSchema
 const entryId = v.pipe(v.string('ID mục phải là chữ.'), v.uuid('ID mục không hợp lệ.'))
-const chapterIdNullable = v.nullish(v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.')))
+const chapterIdNullable = v.nullish(
+  v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.'))
+)
 
 export const listGlossarySchema = v.strictObject({
   workId,
@@ -112,4 +114,3 @@ export interface GlossaryComplianceReport {
   issues: GlossaryComplianceIssue[]
   hasIssues: boolean
 }
-

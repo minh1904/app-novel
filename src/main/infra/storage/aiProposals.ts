@@ -2,7 +2,13 @@ import { StorageError } from './errors'
 import type { Db } from './sqlite'
 
 export type ProposalPolicy = 'review' | 'auto'
-export type ProposalPartStatus = 'pending' | 'applied' | 'rejected' | 'conflict' | 'stale' | 'needs-placement'
+export type ProposalPartStatus =
+  | 'pending'
+  | 'applied'
+  | 'rejected'
+  | 'conflict'
+  | 'stale'
+  | 'needs-placement'
 
 export interface StoredProposalPart {
   id: string
@@ -118,8 +124,10 @@ function proposalOf(db: Db, row: ProposalRow): StoredProposal {
     runKey: row.run_key,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    parts: db.prepare('SELECT * FROM proposal_part WHERE proposal_id = ? ORDER BY ordinal')
-      .all<PartRow>(row.id).map(partOf)
+    parts: db
+      .prepare('SELECT * FROM proposal_part WHERE proposal_id = ? ORDER BY ordinal')
+      .all<PartRow>(row.id)
+      .map(partOf)
   }
 }
 
@@ -162,15 +170,18 @@ export interface CreateProposalInput {
 
 export function createProposal(db: Db, input: CreateProposalInput): StoredProposal {
   if (input.runKey) {
-    const existing = db.prepare('SELECT id FROM proposal WHERE run_key = ?')
+    const existing = db
+      .prepare('SELECT id FROM proposal WHERE run_key = ?')
       .get<{ id: string }>(input.runKey)
     if (existing) return getProposal(db, existing.id)
   }
-  if (input.parts.length === 0) throw new StorageError('validation', 'Đề xuất phải có ít nhất một phần.')
+  if (input.parts.length === 0)
+    throw new StorageError('validation', 'Đề xuất phải có ít nhất một phần.')
   const chapter = db.prepare('SELECT 1 AS found FROM chapter WHERE id = ?').get(input.chapterId)
   if (!chapter) throw new StorageError('not_found', 'Không tìm thấy chương.')
   if (input.turnId) {
-    const turn = db.prepare('SELECT session_id, chapter_id FROM ai_turn WHERE id = ?')
+    const turn = db
+      .prepare('SELECT session_id, chapter_id FROM ai_turn WHERE id = ?')
       .get<{ session_id: string; chapter_id: string | null }>(input.turnId)
     if (!turn || turn.chapter_id !== input.chapterId || turn.session_id !== input.sessionId) {
       throw new StorageError('validation', 'Lượt AI không thuộc phiên và chương của đề xuất.')
@@ -181,13 +192,25 @@ export function createProposal(db: Db, input: CreateProposalInput): StoredPropos
       source_rev, source_hash, target_base_rev, target_base_content, context_json, context_hash,
       provider, model, usage_json, run_key, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        input.id, input.chapterId, input.sessionId ?? null, input.turnId ?? null,
-        input.origin, input.policy, input.sourceRev, input.sourceHash, input.targetBaseRev,
-        input.targetBaseContent, JSON.stringify(input.context ?? []), input.contextHash ?? null,
-        input.provider ?? null, input.model ?? null,
-        input.usage == null ? null : JSON.stringify(input.usage), input.runKey ?? null,
-        input.now, input.now
-      )
+      input.id,
+      input.chapterId,
+      input.sessionId ?? null,
+      input.turnId ?? null,
+      input.origin,
+      input.policy,
+      input.sourceRev,
+      input.sourceHash,
+      input.targetBaseRev,
+      input.targetBaseContent,
+      JSON.stringify(input.context ?? []),
+      input.contextHash ?? null,
+      input.provider ?? null,
+      input.model ?? null,
+      input.usage == null ? null : JSON.stringify(input.usage),
+      input.runKey ?? null,
+      input.now,
+      input.now
+    )
     const insertPart = db.prepare(`INSERT INTO proposal_part
       (id, proposal_id, ordinal, base_from, base_to, before_text, after_text,
        source_order, source_text, status, batch_key)
@@ -197,9 +220,17 @@ export function createProposal(db: Db, input: CreateProposalInput): StoredPropos
         throw new StorageError('validation', 'Vùng neo đề xuất không hợp lệ.')
       }
       insertPart.run(
-        part.id, input.id, ordinal, part.baseFrom, part.baseTo, part.beforeText,
-        part.afterText, part.sourceOrder ?? null, part.sourceText ?? null,
-        part.status ?? 'pending', part.batchKey ?? null
+        part.id,
+        input.id,
+        ordinal,
+        part.baseFrom,
+        part.baseTo,
+        part.beforeText,
+        part.afterText,
+        part.sourceOrder ?? null,
+        part.sourceText ?? null,
+        part.status ?? 'pending',
+        part.batchKey ?? null
       )
     })
   })
@@ -221,13 +252,27 @@ export function appendProposalParts(
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     let ordinal = proposal.parts.length
     for (const part of parts) {
-      if (part.batchKey && db.prepare('SELECT 1 FROM proposal_part WHERE batch_key = ?').get(part.batchKey)) continue
+      if (
+        part.batchKey &&
+        db.prepare('SELECT 1 FROM proposal_part WHERE batch_key = ?').get(part.batchKey)
+      )
+        continue
       if ((part.baseFrom === null) !== (part.baseTo === null)) {
         throw new StorageError('validation', 'Vùng neo đề xuất không hợp lệ.')
       }
-      insert.run(part.id, proposalId, ordinal++, part.baseFrom, part.baseTo,
-        part.beforeText, part.afterText, part.sourceOrder ?? null,
-        part.sourceText ?? null, part.status ?? 'pending', part.batchKey ?? null)
+      insert.run(
+        part.id,
+        proposalId,
+        ordinal++,
+        part.baseFrom,
+        part.baseTo,
+        part.beforeText,
+        part.afterText,
+        part.sourceOrder ?? null,
+        part.sourceText ?? null,
+        part.status ?? 'pending',
+        part.batchKey ?? null
+      )
     }
     db.prepare('UPDATE proposal SET updated_at = ? WHERE id = ?').run(now, proposalId)
     return getProposal(db, proposalId)
@@ -235,15 +280,21 @@ export function appendProposalParts(
 }
 
 export function listChapterProposals(db: Db, chapterId: string, limit: number): StoredProposal[] {
-  return db.prepare('SELECT * FROM proposal WHERE chapter_id = ? ORDER BY created_at DESC, id DESC LIMIT ?')
-    .all<ProposalRow>(chapterId, limit).map((row) => proposalOf(db, row))
+  return db
+    .prepare(
+      'SELECT * FROM proposal WHERE chapter_id = ? ORDER BY created_at DESC, id DESC LIMIT ?'
+    )
+    .all<ProposalRow>(chapterId, limit)
+    .map((row) => proposalOf(db, row))
 }
 
 export function pendingCountByChapter(db: Db): Array<{ chapterId: string; count: number }> {
-  return db.prepare(`SELECT p.chapter_id AS chapterId, count(*) AS count
+  return db
+    .prepare(`SELECT p.chapter_id AS chapterId, count(*) AS count
     FROM proposal_part pp JOIN proposal p ON p.id = pp.proposal_id
     WHERE pp.status IN ('pending', 'conflict', 'stale', 'needs-placement')
-    GROUP BY p.chapter_id`).all<{ chapterId: string; count: number }>()
+    GROUP BY p.chapter_id`)
+    .all<{ chapterId: string; count: number }>()
 }
 
 export function setProposalPartDecision(
@@ -302,13 +353,17 @@ const snapshotOf = (row: SnapshotRow): StoredTextSnapshot => ({
 })
 
 export function getTextSnapshotByCommand(db: Db, commandId: string): StoredTextSnapshot | null {
-  const row = db.prepare('SELECT * FROM text_snapshot WHERE command_id = ?')
+  const row = db
+    .prepare('SELECT * FROM text_snapshot WHERE command_id = ?')
     .get<SnapshotRow>(commandId)
   return row ? snapshotOf(row) : null
 }
 
 export function latestTextSnapshot(db: Db, chapterId: string): StoredTextSnapshot | null {
-  const row = db.prepare('SELECT * FROM text_snapshot WHERE chapter_id = ? ORDER BY created_at DESC, id DESC LIMIT 1')
+  const row = db
+    .prepare(
+      'SELECT * FROM text_snapshot WHERE chapter_id = ? ORDER BY created_at DESC, id DESC LIMIT 1'
+    )
     .get<SnapshotRow>(chapterId)
   return row ? snapshotOf(row) : null
 }
@@ -317,8 +372,14 @@ export function insertTextSnapshot(db: Db, snapshot: Omit<StoredTextSnapshot, 'u
   db.prepare(`INSERT INTO text_snapshot (id, command_id, chapter_id, before_rev, after_rev,
     before_content, decisions_json, actor, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-      snapshot.id, snapshot.commandId, snapshot.chapterId, snapshot.beforeRev,
-      snapshot.afterRev, snapshot.beforeContent, JSON.stringify(snapshot.decisions),
-      snapshot.actor, snapshot.createdAt
-    )
+    snapshot.id,
+    snapshot.commandId,
+    snapshot.chapterId,
+    snapshot.beforeRev,
+    snapshot.afterRev,
+    snapshot.beforeContent,
+    JSON.stringify(snapshot.decisions),
+    snapshot.actor,
+    snapshot.createdAt
+  )
 }

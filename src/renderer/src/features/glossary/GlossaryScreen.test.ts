@@ -14,8 +14,24 @@ describe('GlossaryScreen component', () => {
           ok: true,
           value: {
             chapters: [
-              { id: 'c1', number: 1, title: 'Chương 1', hasSource: true, hasTarget: true, createdAt: 1, updatedAt: 1 },
-              { id: 'c2', number: 2, title: 'Chương 2', hasSource: true, hasTarget: false, createdAt: 1, updatedAt: 1 }
+              {
+                id: 'c1',
+                number: 1,
+                title: 'Chương 1',
+                hasSource: true,
+                hasTarget: true,
+                createdAt: 1,
+                updatedAt: 1
+              },
+              {
+                id: 'c2',
+                number: 2,
+                title: 'Chương 2',
+                hasSource: true,
+                hasTarget: false,
+                createdAt: 1,
+                updatedAt: 1
+              }
             ]
           }
         })

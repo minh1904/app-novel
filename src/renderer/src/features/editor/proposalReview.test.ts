@@ -4,8 +4,13 @@ import { ProposalReview } from './proposalReview'
 
 describe('proposal preview decoration', () => {
   const preview = {
-    from: 4, to: 7, before: 'Hai', after: 'Mới', label: 'Đề xuất đoạn 2',
-    onAccept: () => {}, onDeny: () => {}
+    from: 4,
+    to: 7,
+    before: 'Hai',
+    after: 'Mới',
+    label: 'Đề xuất đoạn 2',
+    onAccept: () => {},
+    onDeny: () => {}
   }
 
   it('opens and closes without changing the canonical text or undo history', () => {

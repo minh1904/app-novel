@@ -79,16 +79,14 @@ function validateChapters(
   }
 
   if (fromPos !== null && toPos !== null && fromPos > toPos) {
-    throw new StorageError('validation', 'Chương bắt đầu phải đứng trước hoặc bằng chương kết thúc.')
+    throw new StorageError(
+      'validation',
+      'Chương bắt đầu phải đứng trước hoặc bằng chương kết thúc.'
+    )
   }
 }
 
-function checkUniqueness(
-  db: Db,
-  source: string,
-  aliases: string[],
-  excludeEntryId?: string
-): void {
+function checkUniqueness(db: Db, source: string, aliases: string[], excludeEntryId?: string): void {
   const trimmedSource = source.trim()
   const trimmedAliases = aliases.map((a) => a.trim())
 
@@ -106,10 +104,7 @@ function checkUniqueness(
   for (const alias of trimmedAliases) {
     const lower = alias.toLowerCase()
     if (aliasSet.has(lower)) {
-      throw new StorageError(
-        'conflict',
-        `Dạng viết khác bị trùng lặp trong danh sách: "${alias}"`
-      )
+      throw new StorageError('conflict', `Dạng viết khác bị trùng lặp trong danh sách: "${alias}"`)
     }
     aliasSet.add(lower)
   }
@@ -127,10 +122,7 @@ function checkUniqueness(
       .get<{ source: string }>(candidate, ...(excludeEntryId ? [excludeEntryId] : []))
 
     if (existingEntry) {
-      throw new StorageError(
-        'conflict',
-        `Thuật ngữ "${candidate}" đã tồn tại trong từ điển.`
-      )
+      throw new StorageError('conflict', `Thuật ngữ "${candidate}" đã tồn tại trong từ điển.`)
     }
 
     // Check if exists as context_alias form
@@ -159,7 +151,10 @@ export function getContextEntry(db: Db, id: string): ContextEntryItem | null {
     .prepare('SELECT form FROM context_alias WHERE entry_id = ? ORDER BY form ASC')
     .all<{ form: string }>(id)
 
-  return toItem(row, aliasRows.map((a) => a.form))
+  return toItem(
+    row,
+    aliasRows.map((a) => a.form)
+  )
 }
 
 export interface ListContextOptions {
@@ -169,10 +164,7 @@ export interface ListContextOptions {
   chapterId?: string
 }
 
-export function listContextEntries(
-  db: Db,
-  options: ListContextOptions = {}
-): ContextEntryItem[] {
+export function listContextEntries(db: Db, options: ListContextOptions = {}): ContextEntryItem[] {
   const conditions: string[] = []
   const params: (string | number)[] = []
 
@@ -192,14 +184,10 @@ export function listContextEntries(
       .get<{ position: number }>(options.chapterId)
     if (!targetChap) throw new StorageError('not_found', 'Không tìm thấy chương.')
 
-    conditions.push(
-      '(e.from_chapter_id IS NULL OR fc.position IS NULL OR fc.position <= ?)'
-    )
+    conditions.push('(e.from_chapter_id IS NULL OR fc.position IS NULL OR fc.position <= ?)')
     params.push(targetChap.position)
 
-    conditions.push(
-      '(e.to_chapter_id IS NULL OR tc.position IS NULL OR tc.position >= ?)'
-    )
+    conditions.push('(e.to_chapter_id IS NULL OR tc.position IS NULL OR tc.position >= ?)')
     params.push(targetChap.position)
   }
 
@@ -298,10 +286,7 @@ export interface CreateContextEntryParams {
   now?: number
 }
 
-export function createContextEntry(
-  db: Db,
-  params: CreateContextEntryParams
-): ContextEntryItem {
+export function createContextEntry(db: Db, params: CreateContextEntryParams): ContextEntryItem {
   return db.transaction(() => {
     const id = params.id ?? randomUUID()
     const kind = params.kind ?? 'term'
@@ -404,8 +389,7 @@ export function updateContextEntry(
       params.fromChapterId !== undefined ? params.fromChapterId : current.fromChapterId
     const nextToChapterId =
       params.toChapterId !== undefined ? params.toChapterId : current.toChapterId
-    const nextNotes =
-      params.notes !== undefined ? (params.notes?.trim() || null) : current.notes
+    const nextNotes = params.notes !== undefined ? params.notes?.trim() || null : current.notes
     const nextAliases =
       params.aliases !== undefined
         ? params.aliases
@@ -476,9 +460,7 @@ export function updateContextEntry(
 
 export function deleteContextEntry(db: Db, id: string, now?: number): void {
   db.transaction(() => {
-    const existing = db
-      .prepare('SELECT id FROM context_entry WHERE id = ?')
-      .get<{ id: string }>(id)
+    const existing = db.prepare('SELECT id FROM context_entry WHERE id = ?').get<{ id: string }>(id)
     if (!existing) {
       throw new StorageError('not_found', 'Không tìm thấy mục thuật ngữ.')
     }

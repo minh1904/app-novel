@@ -51,12 +51,7 @@ export function glossaryHandlers(deps: HandlerDeps): AreaHandlers<'glossary'> {
         targetText: v.string()
       }),
       (input) =>
-        glossary.checkCompliance(
-          input.workId,
-          input.chapterId,
-          input.sourceText,
-          input.targetText
-        )
+        glossary.checkCompliance(input.workId, input.chapterId, input.sourceText, input.targetText)
     )
   }
 }

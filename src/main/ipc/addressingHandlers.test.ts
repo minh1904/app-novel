@@ -30,7 +30,8 @@ function setup(): Setup {
 }
 
 const value = <T>(result: Result<T>): T => {
-  if (!result.ok) throw new Error('expected ok, got ' + result.error.code + ': ' + result.error.message)
+  if (!result.ok)
+    throw new Error('expected ok, got ' + result.error.code + ': ' + result.error.message)
   return result.value
 }
 

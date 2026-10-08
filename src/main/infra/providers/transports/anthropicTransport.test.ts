@@ -257,7 +257,10 @@ describe('reading the stream', () => {
 describe('thinking in the stream', () => {
   it('gives thinking as reasoning, apart from the answer text', async () => {
     const events = await collect(
-      transport(fixture('text.sse')).stream({ model: 'claude-sonnet-4-6', messages: HISTORY }, { apiKey: 'k' })
+      transport(fixture('text.sse')).stream(
+        { model: 'claude-sonnet-4-6', messages: HISTORY },
+        { apiKey: 'k' }
+      )
     )
     expect(events.filter((event) => event.kind === 'reasoning')).toEqual([
       { kind: 'reasoning', text: 'Người dùng muốn...' }

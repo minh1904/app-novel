@@ -1,4 +1,7 @@
-import type { ProposalPartStatus, ProposalPartView } from '../../../../../shared/contracts/aiProposals'
+import type {
+  ProposalPartStatus,
+  ProposalPartView
+} from '../../../../../shared/contracts/aiProposals'
 
 /** What a proposal's status is called, in the queue and under a chat turn alike. */
 export const PART_STATUS_LABEL: Record<ProposalPartStatus, string> = {

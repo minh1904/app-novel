@@ -120,11 +120,7 @@ export function containsWord(text: string, word: string): boolean {
 /**
  * R3: Structural counts from alignment beads
  */
-export function checkStructure(
-  srcCount: number,
-  tgtCount: number,
-  beads: Bead[]
-): StructuralScore {
+export function checkStructure(srcCount: number, tgtCount: number, beads: Bead[]): StructuralScore {
   const beadCounts: Record<string, number> = {
     '1-1': 0,
     '1-0': 0,
@@ -365,7 +361,10 @@ export function checkRepetitions(tgtParas: string[]): RepetitionIssue[] {
     if (words.length >= 16) {
       const gramCounts = new Map<string, number>()
       for (let w = 0; w <= words.length - 4; w++) {
-        const gram = words.slice(w, w + 4).join(' ').toLowerCase()
+        const gram = words
+          .slice(w, w + 4)
+          .join(' ')
+          .toLowerCase()
         const count = (gramCounts.get(gram) || 0) + 1
         gramCounts.set(gram, count)
         if (count >= 4) {
@@ -595,9 +594,7 @@ export function evaluateAssertions(
     }
 
     if (rule.mustContainAny && rule.mustContainAny.length > 0) {
-      const anyHit = rule.mustContainAny.some((item) =>
-        normTgt.includes(normalizeVietnamese(item))
-      )
+      const anyHit = rule.mustContainAny.some((item) => normTgt.includes(normalizeVietnamese(item)))
       if (!anyHit) {
         pass = false
         failReasons.push(`Không chứa bất kỳ chuỗi nào trong: [${rule.mustContainAny.join(', ')}]`)

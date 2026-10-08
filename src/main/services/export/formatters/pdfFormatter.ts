@@ -157,11 +157,7 @@ export function formatAsNovelHtml(
     .chapter-body p {
       text-align: justify;
       hyphens: auto;
-      ${
-        indent
-          ? 'text-indent: 1.8em; margin-bottom: 0;'
-          : 'text-indent: 0; margin-bottom: 0.85em;'
-      }
+      ${indent ? 'text-indent: 1.8em; margin-bottom: 0;' : 'text-indent: 0; margin-bottom: 0.85em;'}
     }
   </style>
 </head>

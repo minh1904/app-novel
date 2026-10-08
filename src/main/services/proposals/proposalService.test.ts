@@ -32,18 +32,44 @@ function fresh(): Db {
   return db
 }
 
-function add(db: Db, id = 'p', chapterId = 'c1', base = 'Một\nHai', before = 'Hai', after = 'Mới'): void {
+function add(
+  db: Db,
+  id = 'p',
+  chapterId = 'c1',
+  base = 'Một\nHai',
+  before = 'Hai',
+  after = 'Mới'
+): void {
   const from = base.indexOf(before)
   createProposal(db, {
-    id, chapterId, origin: 'chat', policy: 'review', sourceRev: 1,
+    id,
+    chapterId,
+    origin: 'chat',
+    policy: 'review',
+    sourceRev: 1,
     sourceHash: textHash(chapterId === 'c1' ? '原文' : '別文'),
-    targetBaseRev: 1, targetBaseContent: base, now: 2,
-    parts: [{ id: id + '-part', baseFrom: from, baseTo: from + before.length, beforeText: before, afterText: after }]
+    targetBaseRev: 1,
+    targetBaseContent: base,
+    now: 2,
+    parts: [
+      {
+        id: id + '-part',
+        baseFrom: from,
+        baseTo: from + before.length,
+        beforeText: before,
+        afterText: after
+      }
+    ]
   })
 }
 
 const command = (partIds: string[], actor: 'user' | 'auto' = 'user'): AcceptInput => ({
-  chapterId: 'c1', partIds, commandId: 'command', actor, now: 3, newId
+  chapterId: 'c1',
+  partIds,
+  commandId: 'command',
+  actor,
+  now: 3,
+  newId
 })
 
 describe('proposal acceptance', () => {
@@ -62,15 +88,22 @@ describe('proposal acceptance', () => {
   it('direct apply leaves a changed target and source for review', () => {
     const db = fresh()
     add(db)
-    db.exec("UPDATE chapter_text SET content = 'Đã sửa', rev = 2, size = 6 WHERE chapter_id = 'c1' AND side = 'target'")
+    db.exec(
+      "UPDATE chapter_text SET content = 'Đã sửa', rev = 2, size = 6 WHERE chapter_id = 'c1' AND side = 'target'"
+    )
     const targetChanged = acceptProposalParts(db, command(['p-part'], 'auto'))
     expect(targetChanged.accepted).toEqual([])
     expect(targetChanged.skipped[0].reason).toBe('target-changed')
     expect(readText(db, 'c1', 'target').content).toBe('Đã sửa')
 
     add(db, 'p2')
-    db.exec("UPDATE chapter_text SET content = '源文', rev = 2, size = 2 WHERE chapter_id = 'c1' AND side = 'source'")
-    const sourceChanged = acceptProposalParts(db, { ...command(['p2-part'], 'auto'), commandId: 'source-command' })
+    db.exec(
+      "UPDATE chapter_text SET content = '源文', rev = 2, size = 2 WHERE chapter_id = 'c1' AND side = 'source'"
+    )
+    const sourceChanged = acceptProposalParts(db, {
+      ...command(['p2-part'], 'auto'),
+      commandId: 'source-command'
+    })
     expect(sourceChanged.accepted).toEqual([])
     expect(sourceChanged.skipped[0].reason).toBe('source-changed')
     db.close()
@@ -79,12 +112,18 @@ describe('proposal acceptance', () => {
   it('remembers a skipped command even if the document changes before IPC retry', () => {
     const db = fresh()
     add(db)
-    db.exec("UPDATE chapter_text SET content = 'Đã sửa', rev = 2, size = 6 WHERE chapter_id = 'c1' AND side = 'target'")
+    db.exec(
+      "UPDATE chapter_text SET content = 'Đã sửa', rev = 2, size = 6 WHERE chapter_id = 'c1' AND side = 'target'"
+    )
     const first = acceptProposalParts(db, { ...command(['p-part'], 'auto'), commandId: 'skipped' })
     expect(first).toMatchObject({ accepted: [], rev: 2, content: 'Đã sửa' })
     expect(first.skipped[0].reason).toBe('target-changed')
-    db.exec("UPDATE chapter_text SET content = 'Một\nHai', rev = 3, size = 7 WHERE chapter_id = 'c1' AND side = 'target'")
-    expect(acceptProposalParts(db, { ...command(['p-part'], 'auto'), commandId: 'skipped' })).toEqual(first)
+    db.exec(
+      "UPDATE chapter_text SET content = 'Một\nHai', rev = 3, size = 7 WHERE chapter_id = 'c1' AND side = 'target'"
+    )
+    expect(
+      acceptProposalParts(db, { ...command(['p-part'], 'auto'), commandId: 'skipped' })
+    ).toEqual(first)
     expect(readText(db, 'c1', 'target').rev).toBe(3)
     expect(latestTextSnapshot(db, 'c1')).toBeNull()
     expect(() => acceptProposalParts(db, { ...command([]), commandId: 'skipped' })).toThrow()
@@ -96,18 +135,33 @@ describe('proposal acceptance', () => {
     add(db)
     add(db, 'other', 'c2', 'Khác', 'Khác', 'Mới')
     createProposal(db, {
-      id: 'conflict', chapterId: 'c1', origin: 'chat', policy: 'review',
-      sourceRev: 1, sourceHash: textHash('原文'), targetBaseRev: 1,
-      targetBaseContent: 'Một\nHai', now: 2,
-      parts: [{ id: 'conflict-part', baseFrom: 4, baseTo: 7, beforeText: 'Hai', afterText: 'Xung đột' }]
+      id: 'conflict',
+      chapterId: 'c1',
+      origin: 'chat',
+      policy: 'review',
+      sourceRev: 1,
+      sourceHash: textHash('原文'),
+      targetBaseRev: 1,
+      targetBaseContent: 'Một\nHai',
+      now: 2,
+      parts: [
+        { id: 'conflict-part', baseFrom: 4, baseTo: 7, beforeText: 'Hai', afterText: 'Xung đột' }
+      ]
     })
-    const result = acceptAllChapterParts(db, { chapterId: 'c1', commandId: 'all', actor: 'user', now: 3, newId })
+    const result = acceptAllChapterParts(db, {
+      chapterId: 'c1',
+      commandId: 'all',
+      actor: 'user',
+      now: 3,
+      newId
+    })
     expect(result.accepted).toEqual([])
     expect(result.skipped).toHaveLength(2)
     expect(readText(db, 'c2', 'target').content).toBe('Khác')
     expect(getProposal(db, 'other').parts[0].status).toBe('pending')
-    expect(acceptAllChapterParts(db, { chapterId: 'c1', commandId: 'all', actor: 'user', now: 4, newId }))
-      .toEqual(result)
+    expect(
+      acceptAllChapterParts(db, { chapterId: 'c1', commandId: 'all', actor: 'user', now: 4, newId })
+    ).toEqual(result)
     db.close()
   })
 
@@ -117,7 +171,11 @@ describe('proposal acceptance', () => {
     add(db, 'changed', 'c1', 'Cũ\nHai', 'Cũ', 'Sai')
     add(db, 'other', 'c2', 'Khác', 'Khác', 'Đổi')
     const result = acceptAllChapterParts(db, {
-      chapterId: 'c1', commandId: 'mixed-all', actor: 'user', now: 3, newId
+      chapterId: 'c1',
+      commandId: 'mixed-all',
+      actor: 'user',
+      now: 3,
+      newId
     })
     expect(result.accepted).toEqual(['valid-part'])
     expect(result.skipped).toEqual([{ partId: 'changed-part', reason: 'target-changed' }])
@@ -146,17 +204,24 @@ describe('proposal acceptance', () => {
     const db = fresh()
     add(db)
     acceptProposalParts(db, command(['p-part']))
-    db.exec("UPDATE chapter_text SET content = 'Tay sửa', rev = 3, size = 7 WHERE chapter_id = 'c1' AND side = 'target'")
+    db.exec(
+      "UPDATE chapter_text SET content = 'Tay sửa', rev = 3, size = 7 WHERE chapter_id = 'c1' AND side = 'target'"
+    )
     expect(() => undoLatestAccept(db, 'c1', 5, newId)).toThrow()
     expect(readText(db, 'c1', 'target').content).toBe('Tay sửa')
     db.close()
 
     const rollback = fresh()
     add(rollback)
-    expect(() => acceptProposalParts(rollback, {
-      ...command(['p-part']), commandId: 'fail',
-      newId: () => { throw new Error('simulated crash before commit') }
-    })).toThrow()
+    expect(() =>
+      acceptProposalParts(rollback, {
+        ...command(['p-part']),
+        commandId: 'fail',
+        newId: () => {
+          throw new Error('simulated crash before commit')
+        }
+      })
+    ).toThrow()
     expect(readText(rollback, 'c1', 'target')).toMatchObject({ content: 'Một\nHai', rev: 1 })
     expect(getProposal(rollback, 'p').parts[0].status).toBe('pending')
     rollback.close()
@@ -165,8 +230,9 @@ describe('proposal acceptance', () => {
     add(receiptFailure)
     receiptFailure.exec(`CREATE TRIGGER reject_receipt BEFORE INSERT ON proposal_accept_command
       BEGIN SELECT RAISE(ABORT, 'simulated crash before commit'); END`)
-    expect(() => acceptProposalParts(receiptFailure, { ...command(['p-part']), commandId: 'receipt-fail' }))
-      .toThrow()
+    expect(() =>
+      acceptProposalParts(receiptFailure, { ...command(['p-part']), commandId: 'receipt-fail' })
+    ).toThrow()
     expect(readText(receiptFailure, 'c1', 'target')).toMatchObject({ content: 'Một\nHai', rev: 1 })
     expect(getProposal(receiptFailure, 'p').parts[0].status).toBe('pending')
     expect(latestTextSnapshot(receiptFailure, 'c1')).toBeNull()

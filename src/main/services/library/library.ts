@@ -369,10 +369,7 @@ export class LibraryStore {
     return this.files.withWork(workId, (db) => getEffectiveGlossary(db, chapterId, options))
   }
 
-  getEffectiveAddressing(
-    workId: string,
-    chapterId: string
-  ): AddressingDyadResolved[] {
+  getEffectiveAddressing(workId: string, chapterId: string): AddressingDyadResolved[] {
     return this.files.withWork(workId, (db) => getEffectiveDyadsForChapter(db, chapterId))
   }
 

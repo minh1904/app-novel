@@ -81,10 +81,7 @@ export const characterNameSchema = v.pipe(
   v.maxLength(CHARACTER_NAME_MAX, `Tên nhân vật tối đa ${CHARACTER_NAME_MAX} ký tự.`)
 )
 
-export const characterGenderSchema = v.picklist(
-  CHARACTER_GENDERS,
-  'Giới tính không hợp lệ.'
-)
+export const characterGenderSchema = v.picklist(CHARACTER_GENDERS, 'Giới tính không hợp lệ.')
 
 export const pronounSchema = v.pipe(
   v.string('Đại từ phải là chuỗi ký tự.'),
@@ -94,9 +91,17 @@ export const pronounSchema = v.pipe(
 )
 
 const workId = idSchema
-const characterId = v.pipe(v.string('ID nhân vật phải là chữ.'), v.uuid('ID nhân vật không hợp lệ.'))
-const dyadId = v.pipe(v.string('ID cặp xưng hô phải là chữ.'), v.uuid('ID cặp xưng hô không hợp lệ.'))
-const chapterIdNullable = v.nullish(v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.')))
+const characterId = v.pipe(
+  v.string('ID nhân vật phải là chữ.'),
+  v.uuid('ID nhân vật không hợp lệ.')
+)
+const dyadId = v.pipe(
+  v.string('ID cặp xưng hô phải là chữ.'),
+  v.uuid('ID cặp xưng hô không hợp lệ.')
+)
+const chapterIdNullable = v.nullish(
+  v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.'))
+)
 
 export const listCharactersSchema = v.strictObject({
   workId,

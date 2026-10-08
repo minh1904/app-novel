@@ -18,11 +18,7 @@ function escapeRegex(str: string): string {
 
 export function isCJK(lang: string): boolean {
   const normalized = lang.toLowerCase()
-  return (
-    normalized.startsWith('zh') ||
-    normalized.startsWith('ja') ||
-    normalized === 'cjk'
-  )
+  return normalized.startsWith('zh') || normalized.startsWith('ja') || normalized === 'cjk'
 }
 
 /**

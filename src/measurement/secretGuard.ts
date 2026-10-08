@@ -4,11 +4,7 @@
  * Pure function with no Node/DOM dependencies.
  */
 
-const KEY_PATTERNS = [
-  /AIza[0-9A-Za-z-_]{30,}/,
-  /sk-[0-9A-Za-z-_]{20,}/,
-  /Bearer\s+[A-Za-z0-9-_.]+/
-]
+const KEY_PATTERNS = [/AIza[0-9A-Za-z-_]{30,}/, /sk-[0-9A-Za-z-_]{20,}/, /Bearer\s+[A-Za-z0-9-_.]+/]
 
 export function assertNoSecret(text: string, knownKeys: string[] = []): void {
   for (const key of knownKeys) {

@@ -52,9 +52,7 @@ describe('contextMatching', () => {
   })
 
   it('matches CJK terms via alias', () => {
-    const entries = [
-      makeEntry('韩立', 'Hàn Lập', ['韩天尊', '厉飞雨'])
-    ]
+    const entries = [makeEntry('韩立', 'Hàn Lập', ['韩天尊', '厉飞雨'])]
 
     const text = '厉飞雨冷笑一声，转身离去。'
     const matched = matchContextEntries(text, entries, 'zh-Hans')
@@ -88,11 +86,7 @@ describe('contextMatching', () => {
   })
 
   it('respects maxMatches option', () => {
-    const entries = [
-      makeEntry('Term1', 'T1'),
-      makeEntry('Term2', 'T2'),
-      makeEntry('Term3', 'T3')
-    ]
+    const entries = [makeEntry('Term1', 'T1'), makeEntry('Term2', 'T2'), makeEntry('Term3', 'T3')]
 
     const text = 'Term1 Term2 Term3'
     const matched = matchContextEntries(text, entries, 'en', { maxMatches: 2 })

@@ -83,11 +83,7 @@ describe('translationChecks', () => {
     })
 
     it('detects mismatched curly, corner, and guillemet quotes', () => {
-      const tgt = [
-        '“Ngoặc cong mở không đóng',
-        '「Ngoặc vuông mở',
-        '«Ngoặc Pháp mở'
-      ]
+      const tgt = ['“Ngoặc cong mở không đóng', '「Ngoặc vuông mở', '«Ngoặc Pháp mở']
       const issues = checkUnbalancedQuotes(tgt)
       expect(issues).toHaveLength(3)
     })
@@ -169,9 +165,7 @@ describe('translationChecks', () => {
       const src = ['わたくしをおば様と呼ぶ']
       const tgt = ['cô bé dìu tôi đi'] // contains "dìu", not "dì"
       const beads: Bead[] = [{ type: '1-1', srcIdx: [0], tgtIdx: [0] }]
-      const glossary: GlossaryEntry[] = [
-        { src: 'おば様', tgt: 'mợ', forbidden: ['dì'] }
-      ]
+      const glossary: GlossaryEntry[] = [{ src: 'おば様', tgt: 'mợ', forbidden: ['dì'] }]
 
       const res = checkGlossaryCompliance(src, tgt, beads, glossary)
       expect(res.forbiddenHits).toBe(0)

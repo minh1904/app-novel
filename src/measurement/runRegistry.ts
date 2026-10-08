@@ -474,7 +474,12 @@ const METRICS: Array<{
   ratio: boolean
   value: (s: VariantSnapshot) => number | null
 }> = [
-  { key: 'mismatched', higherIsBetter: false, ratio: false, value: (s) => s.structure?.value.mismatched ?? null },
+  {
+    key: 'mismatched',
+    higherIsBetter: false,
+    ratio: false,
+    value: (s) => s.structure?.value.mismatched ?? null
+  },
   {
     key: 'missingParagraphs',
     higherIsBetter: false,
@@ -618,7 +623,9 @@ export function historyMarkdown(
   for (const ncode of codes) {
     lines.push('', `## ${titles[ncode] ? `${titles[ncode]} (${ncode})` : ncode}`, '')
     const measuredRuns = new Set(
-      measurements.filter((m) => m.ncode === ncode).flatMap((m) => m.runIds.map((id) => `${m.variant}\u0000${id}`))
+      measurements
+        .filter((m) => m.ncode === ncode)
+        .flatMap((m) => m.runIds.map((id) => `${m.variant}\u0000${id}`))
     )
     const broken = runs
       .filter((run) => run.ncode === ncode)

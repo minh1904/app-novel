@@ -173,7 +173,13 @@ describe('runRegistry', () => {
     const row = (start: string): Comparison['rows'][number] | undefined =>
       result.rows.find((r) => r.metric.startsWith(start))
     // One run a side: numbers are shown, but nothing is called better.
-    expect(row('Đoạn thiếu')).toMatchObject({ a: '2', b: '0', better: null, verdict: 'too_few', tier: 'gate' })
+    expect(row('Đoạn thiếu')).toMatchObject({
+      a: '2',
+      b: '0',
+      better: null,
+      verdict: 'too_few',
+      tier: 'gate'
+    })
     expect(row('Cờ glossary')).toMatchObject({ a: '80%', b: '90%', better: null, tier: 'flag' })
     expect(row('Cờ glossary')?.metric).toContain('chưa đủ lần lặp')
     expect(row('Cờ xưng hô lệch')).toMatchObject({ a: '30%', b: '10%', better: null })
@@ -259,7 +265,9 @@ describe('runRegistry', () => {
       '2026-10-07T16:00:00.000Z'
     )
     expect(text).toContain('Lần chạy hỏng (không vào bảng so sánh chính):')
-    expect(text).toContain('| v5-nothink+lite35 | gemini-2.5-flash | off | mọi lời gọi lỗi HTTP (2/2) | $0.000 |')
+    expect(text).toContain(
+      '| v5-nothink+lite35 | gemini-2.5-flash | off | mọi lời gọi lỗi HTTP (2/2) | $0.000 |'
+    )
     expect(text).not.toMatch(/^\| v5-nothink\+lite35 \| gemini-2\.5-flash \| off \| translate-v5/m)
   })
 
@@ -273,14 +281,20 @@ describe('runRegistry', () => {
     const counts = { translated: 9, refused: 1, missing: 0, request_error: 0, not_run: 0 }
     const record = summarizeRun(
       [call()],
-      { ...meta, contexts: { '2': 'b', '1': 'a' }, outcomes: { file: 'n1-base.outcomes.jsonl', counts } },
+      {
+        ...meta,
+        contexts: { '2': 'b', '1': 'a' },
+        outcomes: { file: 'n1-base.outcomes.jsonl', counts }
+      },
       hash,
       'translate-v5'
     )
     expect(record.schema).toBe(2)
     expect(record.outcomes).toEqual({ file: 'n1-base.outcomes.jsonl', counts })
     expect(record.contextHash).toBe(combinedContextHash({ '1': 'a', '2': 'b' }, hash))
-    const old = parseRegistry<RunRecord>(JSON.stringify({ ...record, schema: 1, outcomes: undefined }))[0]
+    const old = parseRegistry<RunRecord>(
+      JSON.stringify({ ...record, schema: 1, outcomes: undefined })
+    )[0]
     expect(completionCells(old.outcomes?.counts ?? null)[0]).toBe('không có kết cục từng đoạn')
     expect(completionCells(counts)[0]).toBe('9/10 (90%)')
   })
@@ -295,14 +309,19 @@ describe('runRegistry', () => {
 
 describe('contextDifferences', () => {
   it('names the chapters whose context snapshot differs between two runs', () => {
-    expect(contextDifferences({ '1': 'a', '2': 'b', '3': 'c' }, { '1': 'a', '2': 'x', '3': 'c' })).toEqual({
+    expect(
+      contextDifferences({ '1': 'a', '2': 'b', '3': 'c' }, { '1': 'a', '2': 'x', '3': 'c' })
+    ).toEqual({
       differ: [2],
       unknown: []
     })
   })
 
   it('cannot tell for a chapter only one run recorded, nor for runs from before snapshots', () => {
-    expect(contextDifferences({ '1': 'a', '2': 'b' }, { '1': 'a' })).toEqual({ differ: [], unknown: [2] })
+    expect(contextDifferences({ '1': 'a', '2': 'b' }, { '1': 'a' })).toEqual({
+      differ: [],
+      unknown: [2]
+    })
     expect(contextDifferences(undefined, undefined)).toEqual({ differ: [], unknown: [] })
   })
 })

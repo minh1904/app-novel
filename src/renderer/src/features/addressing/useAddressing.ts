@@ -89,7 +89,11 @@ export function useAddressing({ workId }: UseAddressingOptions): UseAddressingRe
         setCharacters(charsRes.value.characters)
         setDyads(dyadsRes.value.dyads)
       } else {
-        const errMsg = !charsRes.ok ? charsRes.error.message : !dyadsRes.ok ? dyadsRes.error.message : 'Lỗi tải dữ liệu'
+        const errMsg = !charsRes.ok
+          ? charsRes.error.message
+          : !dyadsRes.ok
+            ? dyadsRes.error.message
+            : 'Lỗi tải dữ liệu'
         setError(errMsg)
       }
     } catch (err) {

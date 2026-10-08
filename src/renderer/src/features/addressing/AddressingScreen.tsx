@@ -7,10 +7,7 @@ import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-mi
 import { UsersGroupRoundedIcon } from '@solar-icons/react/linear/users-group-rounded'
 import { UserRoundedIcon } from '@solar-icons/react/linear/user-rounded'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
-import type {
-  AddressingDyadItem,
-  CharacterItem
-} from '../../../../shared/contracts/addressing'
+import type { AddressingDyadItem, CharacterItem } from '../../../../shared/contracts/addressing'
 import type { ContextStatus } from '../../../../shared/contracts/glossary'
 import { Badge } from '../../components/Badge'
 import { Button } from '../../components/Button'
@@ -75,12 +72,17 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
 
   const formatChapterScope = (dyad: AddressingDyadItem): string => {
     if (!dyad.fromChapterId && !dyad.toChapterId) return 'Toàn bộ truyện'
-    const from = dyad.fromChapterId ? `C.${chapterMap.get(dyad.fromChapterId)?.number ?? '?'}` : 'Đầu'
+    const from = dyad.fromChapterId
+      ? `C.${chapterMap.get(dyad.fromChapterId)?.number ?? '?'}`
+      : 'Đầu'
     const to = dyad.toChapterId ? `C.${chapterMap.get(dyad.toChapterId)?.number ?? '?'}` : 'Cuối'
     return `${from} → ${to}`
   }
 
-  const handleQuickDyadStatus = async (dyad: AddressingDyadItem, nextStatus: ContextStatus): Promise<void> => {
+  const handleQuickDyadStatus = async (
+    dyad: AddressingDyadItem,
+    nextStatus: ContextStatus
+  ): Promise<void> => {
     try {
       await setDyad({
         dyadId: dyad.id,
@@ -156,11 +158,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setEditingCharacter('new')}
-          >
+          <Button variant="outline" size="sm" onClick={() => setEditingCharacter('new')}>
             <AddIcon size={14} />
             Thêm nhân vật
           </Button>
@@ -225,7 +223,9 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
           </div>
 
           {loading ? (
-            <div className="py-12 text-center text-ui-xs text-ink-muted">Đang tải ma trận xưng hô...</div>
+            <div className="py-12 text-center text-ui-xs text-ink-muted">
+              Đang tải ma trận xưng hô...
+            </div>
           ) : dyads.length === 0 ? (
             <div className="p-4">
               <EmptyState
@@ -280,7 +280,8 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                     {/* Pronouns */}
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium text-ink">
-                        &ldquo;{dyad.speakerPronoun}&rdquo; &ndash; &ldquo;{dyad.recipientPronoun}&rdquo;
+                        &ldquo;{dyad.speakerPronoun}&rdquo; &ndash; &ldquo;{dyad.recipientPronoun}
+                        &rdquo;
                       </span>
                       {dyad.formality && (
                         <span className="text-ui-xs text-ink-muted">
@@ -295,9 +296,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                     </div>
 
                     {/* Scope */}
-                    <span className="text-ui-xs text-ink-muted">
-                      {formatChapterScope(dyad)}
-                    </span>
+                    <span className="text-ui-xs text-ink-muted">{formatChapterScope(dyad)}</span>
 
                     {/* Status */}
                     <div>
@@ -366,7 +365,9 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
           </div>
 
           {loading ? (
-            <div className="py-12 text-center text-ui-xs text-ink-muted">Đang tải danh sách nhân vật...</div>
+            <div className="py-12 text-center text-ui-xs text-ink-muted">
+              Đang tải danh sách nhân vật...
+            </div>
           ) : characters.length === 0 ? (
             <div className="p-4">
               <EmptyState

@@ -38,10 +38,7 @@ export function formatAsMarkdown(
   // Chapters
   for (let i = 0; i < chapters.length; i++) {
     const ch = chapters[i]
-    const content = ch.content
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
-      .trim()
+    const content = ch.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim()
 
     parts.push(`${formatChapterHeading(ch)}\n\n${content}`)
   }

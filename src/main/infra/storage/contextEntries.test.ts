@@ -74,14 +74,14 @@ describe('contextEntries storage', () => {
     })
 
     // Same source
-    expect(() =>
-      createContextEntry(db, { source: '筑基', target: 'Trúc cơ khác' })
-    ).toThrowError(StorageError)
+    expect(() => createContextEntry(db, { source: '筑基', target: 'Trúc cơ khác' })).toThrowError(
+      StorageError
+    )
 
     // Source matching existing alias
-    expect(() =>
-      createContextEntry(db, { source: 'Trúc Cơ Kỳ', target: 'Khác' })
-    ).toThrowError(StorageError)
+    expect(() => createContextEntry(db, { source: 'Trúc Cơ Kỳ', target: 'Khác' })).toThrowError(
+      StorageError
+    )
 
     // Alias matching existing source
     expect(() =>

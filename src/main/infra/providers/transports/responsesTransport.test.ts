@@ -314,7 +314,9 @@ describe('reasoning summary', () => {
       'data: {"type":"response.reasoning_summary_text.delta","item_id":"rs_1","delta":"Đang nghĩ"}\n\n' +
       'data: {"type":"response.output_text.delta","item_id":"msg_1","delta":"Đáp"}\n\n' +
       'data: {"type":"response.completed","response":{"status":"completed"}}\n\n'
-    const events = await collect(transport(body).stream({ model: 'm', messages: HISTORY }, { apiKey: 't' }))
+    const events = await collect(
+      transport(body).stream({ model: 'm', messages: HISTORY }, { apiKey: 't' })
+    )
     expect(events.slice(0, 2)).toEqual([
       { kind: 'reasoning', text: 'Đang nghĩ' },
       { kind: 'delta', text: 'Đáp' }

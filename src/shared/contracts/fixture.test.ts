@@ -130,9 +130,7 @@ describe('fixture contracts', () => {
     it('validates pronouns file with pairs and narration', () => {
       const pronouns = {
         status: 'approved',
-        narration: [
-          { chapters: ['01'], pov: 'first', self: 'tôi' }
-        ],
+        narration: [{ chapters: ['01'], pov: 'first', self: 'tôi' }],
         pairs: [
           {
             speaker: 'Tổ sư',

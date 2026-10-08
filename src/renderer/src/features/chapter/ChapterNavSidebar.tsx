@@ -40,7 +40,9 @@ export function ChapterNavSidebar({
       }
     }
     void loadCounts()
-    const refresh = (): void => { void loadCounts() }
+    const refresh = (): void => {
+      void loadCounts()
+    }
     window.addEventListener('mira:proposals-changed', refresh)
     return () => {
       active = false
@@ -89,9 +91,7 @@ export function ChapterNavSidebar({
                 aria-current={active ? 'page' : undefined}
                 className={cx(
                   'flex w-full items-center gap-2 rounded-item px-2 py-1 text-left text-ui-sm outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
-                  active
-                    ? 'bg-active text-ink'
-                    : 'text-ink-muted hover:bg-hover hover:text-ink'
+                  active ? 'bg-active text-ink' : 'text-ink-muted hover:bg-hover hover:text-ink'
                 )}
                 onClick={() => onOpenChapter(chapter.id)}
               >

@@ -1,12 +1,4 @@
-import {
-  AlignmentType,
-  Document,
-  HeadingLevel,
-  Packer,
-  PageBreak,
-  Paragraph,
-  TextRun
-} from 'docx'
+import { AlignmentType, Document, HeadingLevel, Packer, PageBreak, Paragraph, TextRun } from 'docx'
 import type { ChapterExportItem, NovelExportOptions, NovelMetadata } from '../exportTypes'
 
 function formatChapterTitle(chapter: ChapterExportItem): string {

@@ -43,7 +43,8 @@ function setup(): SetupContext {
 }
 
 const value = <T>(result: Result<T>): T => {
-  if (!result.ok) throw new Error('expected ok, got ' + result.error.code + ': ' + result.error.message)
+  if (!result.ok)
+    throw new Error('expected ok, got ' + result.error.code + ': ' + result.error.message)
   return result.value
 }
 
@@ -152,15 +153,12 @@ describe('glossary IPC handlers', () => {
     expect(importVal.skippedCount).toBe(0)
 
     // Check compliance
-    const complianceRes = await call<GlossaryComplianceReport>(
-      CHANNELS.glossaryCheckCompliance,
-      {
-        workId,
-        chapterId,
-        sourceText: '韩立成功突破到了筑基期。',
-        targetText: 'Hàn Lập đã đột phá thành công cảnh giới mới.' // thiếu Trúc Cơ
-      }
-    )
+    const complianceRes = await call<GlossaryComplianceReport>(CHANNELS.glossaryCheckCompliance, {
+      workId,
+      chapterId,
+      sourceText: '韩立成功突破到了筑基期。',
+      targetText: 'Hàn Lập đã đột phá thành công cảnh giới mới.' // thiếu Trúc Cơ
+    })
     expect(complianceRes.ok).toBe(true)
     const report = value(complianceRes)
     expect(report.hasIssues).toBe(true)
@@ -171,10 +169,7 @@ describe('glossary IPC handlers', () => {
     const { handlers, workId } = setup()
     const guarded = guardHandlers(handlers, () => false)
 
-    const res = (await guarded[CHANNELS.glossaryList](
-      {} as never,
-      { workId }
-    )) as Result<unknown>
+    const res = (await guarded[CHANNELS.glossaryList]({} as never, { workId })) as Result<unknown>
     expect(codeOf(res)).toBe('untrusted_sender')
   })
 })

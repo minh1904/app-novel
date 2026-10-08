@@ -12,7 +12,9 @@ export interface ProposalPreview {
 }
 
 class PreviewWidget extends WidgetType {
-  constructor(private readonly preview: ProposalPreview) { super() }
+  constructor(private readonly preview: ProposalPreview) {
+    super()
+  }
 
   override toDOM(): HTMLElement {
     const box = document.createElement('div')
@@ -50,16 +52,22 @@ class PreviewWidget extends WidgetType {
     return box
   }
 
-  override ignoreEvent(): boolean { return true }
+  override ignoreEvent(): boolean {
+    return true
+  }
 }
 
 function decorations(preview: ProposalPreview | null): DecorationSet {
   if (!preview) return Decoration.none
-  const marks = preview.from < preview.to
-    ? [Decoration.mark({ class: 'rounded bg-warning/20' }).range(preview.from, preview.to)]
-    : []
-  marks.push(Decoration.widget({ widget: new PreviewWidget(preview), side: 1, block: true })
-    .range(preview.to))
+  const marks =
+    preview.from < preview.to
+      ? [Decoration.mark({ class: 'rounded bg-warning/20' }).range(preview.from, preview.to)]
+      : []
+  marks.push(
+    Decoration.widget({ widget: new PreviewWidget(preview), side: 1, block: true }).range(
+      preview.to
+    )
+  )
   return Decoration.set(marks, true)
 }
 
@@ -76,12 +84,16 @@ export class ProposalReview {
     provide: (field) => EditorView.decorations.from(field, decorations)
   })
 
-  extension(): Extension { return this.field }
+  extension(): Extension {
+    return this.field
+  }
   start(preview: ProposalPreview): { effects: StateEffect<ProposalPreview | null> } {
     return { effects: this.set.of(preview) }
   }
   stop(): { effects: StateEffect<ProposalPreview | null> } {
     return { effects: this.set.of(null) }
   }
-  isActive(state: EditorState): boolean { return state.field(this.field) !== null }
+  isActive(state: EditorState): boolean {
+    return state.field(this.field) !== null
+  }
 }

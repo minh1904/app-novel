@@ -182,11 +182,7 @@ function EditGlossaryForm({
         </div>
 
         <div className="flex items-center gap-2 pb-2">
-          <Switch
-            id="forbidden-switch"
-            checked={forbidden}
-            onCheckedChange={setForbidden}
-          />
+          <Switch id="forbidden-switch" checked={forbidden} onCheckedChange={setForbidden} />
           <label htmlFor="forbidden-switch" className="cursor-pointer font-medium text-ink">
             Thuật ngữ bị cấm (Cảnh báo khi dùng)
           </label>
@@ -336,12 +332,7 @@ export function ImportNamesDialog({
         <div className="flex items-center gap-3">
           <label className="inline-flex cursor-pointer items-center justify-center rounded-control border border-line-strong bg-canvas px-3 py-1.5 text-ui-xs font-medium text-ink hover:bg-hover">
             <span>Chọn tệp .txt từ máy</span>
-            <input
-              type="file"
-              accept=".txt"
-              className="hidden"
-              onChange={handleFileChange}
-            />
+            <input type="file" accept=".txt" className="hidden" onChange={handleFileChange} />
           </label>
           <span className="text-ui-xs text-ink-muted">Hoặc dán trực tiếp vào khung dưới:</span>
         </div>
@@ -422,18 +413,10 @@ export function DeleteGlossaryDialog({
         </p>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={deleting}
-          >
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={deleting}>
             Hủy
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleConfirm}
-            disabled={deleting}
-          >
+          <Button variant="destructive" onClick={handleConfirm} disabled={deleting}>
             {deleting ? 'Đang xóa...' : 'Xóa thuật ngữ'}
           </Button>
         </div>

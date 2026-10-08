@@ -76,9 +76,7 @@ describe('addressingCompliance — Thuật toán kiểm tra tuân thủ xưng h�
   })
 
   it('phát hiện đại từ tự xưng bất thường ngoài ma trận (unexpected_pronoun)', () => {
-    const paragraphs = [
-      'Hàn Lập nhìn Nam Cung Uyển: "Tôi không thể giúp cô việc này."'
-    ]
+    const paragraphs = ['Hàn Lập nhìn Nam Cung Uyển: "Tôi không thể giúp cô việc này."']
 
     const report = evaluateAddressingCompliance(paragraphs, [activeDyadAB])
     expect(report.hasIssues).toBe(true)
@@ -86,9 +84,7 @@ describe('addressingCompliance — Thuật toán kiểm tra tuân thủ xưng h�
   })
 
   it('phát hiện sự không nhất quán giữa hai đại từ tự xưng trong cùng câu (inconsistent_pair)', () => {
-    const paragraphs = [
-      'Hàn Lập vội nói: "Ta đã nói rồi, tôi không hề biết chuyện đó!"'
-    ]
+    const paragraphs = ['Hàn Lập vội nói: "Ta đã nói rồi, tôi không hề biết chuyện đó!"']
 
     const report = evaluateAddressingCompliance(paragraphs, [activeDyadAB])
     expect(report.hasIssues).toBe(true)
@@ -103,9 +99,7 @@ describe('addressingCompliance — Thuật toán kiểm tra tuân thủ xưng h�
       recipientPronoun: 'muội'
     }
 
-    const paragraphs = [
-      'Hàn Lập nói: "Tôi đi đây."'
-    ]
+    const paragraphs = ['Hàn Lập nói: "Tôi đi đây."']
 
     const report = evaluateAddressingCompliance(paragraphs, [pendingDyad])
     expect(report.hasIssues).toBe(false)

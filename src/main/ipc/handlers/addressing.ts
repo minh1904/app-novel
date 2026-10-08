@@ -85,8 +85,7 @@ export function addressingHandlers(deps: HandlerDeps): AreaHandlers<'addressing'
           ])
         )
       }),
-      (input) =>
-        addressing.evaluateCompliance(input.workId, input.chapterId, input.paragraphs)
+      (input) => addressing.evaluateCompliance(input.workId, input.chapterId, input.paragraphs)
     )
   }
 }

@@ -54,9 +54,7 @@ export function WorkHeader({
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-col gap-1">
-            <h2 className="text-ui-lg leading-tight font-semibold break-words">
-              {work.title}
-            </h2>
+            <h2 className="text-ui-lg leading-tight font-semibold break-words">{work.title}</h2>
             {work.originalTitle && (
               <p lang={work.sourceLanguage} className="text-ui-sm text-ink-muted break-words">
                 {work.originalTitle}
