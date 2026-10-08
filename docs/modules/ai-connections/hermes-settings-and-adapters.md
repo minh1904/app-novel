@@ -146,6 +146,10 @@ lưu nhưng có cảnh báo.
 
 ## 3. Mira đã có gì (quan sát mã, 2026-10-08)
 
+> **Đã cũ một phần** (2026-10-09). Mira nay đã có thăm dò route và lưu base URL đã giải, có chuỗi dự phòng,
+> và có transport Anthropic Messages và Responses. Flow giao diện xem ở
+> [Rà flow Kết nối AI so với Hermes](hermes-ux-flow-review.md).
+
 | Hermes | Mira hiện tại |
 | --- | --- |
 | `ProviderProfile` khai bằng dữ liệu | `compat.ts`: bảng khác biệt theo `providerId` (`maxTokensField`, `streamUsage`), cùng tinh thần "dữ liệu, không dò URL" (design D10 của `ai-gateway`). Preset ở `aiConnections.ts`. |

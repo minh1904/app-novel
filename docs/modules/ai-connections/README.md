@@ -218,6 +218,19 @@ thăm dò đúng route của chế độ đó: `/chat/completions`, `/responses`
 nhưng app cũ sẽ thấy kết nối tài khoản như một kết nối khóa API không có khóa. Muốn sạch thì ngắt các tài
 khoản trước khi revert.
 
+## Đã triển khai (rà flow theo Hermes, 2026-10-09)
+
+Chi tiết và lý do ở [Rà flow Kết nối AI so với Hermes](hermes-ux-flow-review.md), mục "Trạng thái triển
+khai".
+
+- **Dán khóa:** dán khóa ở thẻ provider hay ở ô Kích hoạt là dùng được ngay.
+- **Danh sách model:** chuyển sang trang Model › Danh sách model.
+- **Thẻ provider:** chỉ còn khóa và một hàng thao tác.
+- **Endpoint tùy chỉnh:** thành danh sách cùng một form sửa.
+- **Thẻ lỗi:** có nút "Cập nhật khóa".
+- **Xóa:** xóa khóa và xóa kết nối đều hỏi xác nhận.
+- **Lỗi khi lưu:** hiện thành toast.
+
 ## 1. Mira hiện có gì (quan sát mã, 2026-10-07)
 
 **Kết nối:**
@@ -335,6 +348,9 @@ quyết định:
 
 ## 3. Đề xuất cho Mira
 
+> **Đã cũ.** Quyết định 2026-10-08 ở đầu chương thay mục này: ADR-004 không còn hiệu lực, và trang Tài
+> khoản đã có luồng đăng nhập thật.
+
 **Quyết định của chủ sản phẩm, 2026-10-07.** Dựng giao diện theo Hermes trước. Phần nào Mira đã có
 backend thì bấm được; phần chưa có backend chỉ hiện giao diện. ADR-004 vẫn còn hiệu lực: change này
 **không** thêm luồng OAuth.
@@ -357,6 +373,8 @@ backend thì bấm được; phần chưa có backend chỉ hiện giao diện. 
 - **Lưu token dạng không mã hóa như Hermes.** Mira giữ `safeStorage`.
 
 ## 4. Câu hỏi còn mở
+
+> **Đã cũ.** Quyết định 2026-10-08 ở đầu chương đã trả lời cả hai câu hỏi dưới đây.
 
 1. **Thẻ subscription.** Có hiện thẻ "Chưa hỗ trợ" cho ChatGPT/Codex, Claude, GitHub Copilot không?
    - Hiện thì sát Hermes, nhưng trông như một lời hứa sẽ làm.

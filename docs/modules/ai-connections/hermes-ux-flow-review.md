@@ -108,6 +108,22 @@ khối đó. Màn nhìn rối chủ yếu vì vậy.
    `SettingsSection` không kẻ đường, như `ListRow` của Hermes. Cập nhật mục 3–4 của README và bảng ở mục 3
    của [chương Hermes](hermes-settings-and-adapters.md), vì cả hai đã cũ.
 
+## Trạng thái triển khai (2026-10-09)
+
+| Mục | Trạng thái |
+| --- | --- |
+| 1. Thẻ provider chỉ lo khóa | **Đã làm.** Mở thẻ ra còn: mô tả, "Lấy khóa ↗", danh sách khóa (khi có từ hai khóa), dòng "Danh sách model ›", và một hàng gồm bật/tắt, Kiểm tra, Xóa kết nối. Khác đề xuất: không dùng menu "…", vì một hàng ba thao tác đã đủ gọn và mỗi thao tác chỉ cần một lần bấm. |
+| 2. Danh sách model rời khỏi thẻ | **Đã làm.** Có trang Model › Danh sách model. Lệnh "Sửa danh sách model…" mở thẳng phần của kết nối đang chọn. Kết nối tài khoản cũng có danh sách model ở đây. |
+| 3. Lưu khóa là dùng được ngay | **Đã làm** bằng `connectKey`: kiểm khóa, gỡ khóa bị từ chối, thêm model đầu tiên dò được. Lỗi mạng thì vẫn giữ khóa và hiện cảnh báo. Khác đề xuất: không tự đặt Model chính, vì khi chưa đặt, Mira đã tự dùng mục mặc định của kết nối bật đầu tiên. Onboarding vẫn giữ luồng riêng, gỡ khóa với mọi lỗi. |
+| 4. Thiếu kết nối thì đi một đường | **Chưa làm.** Phải sửa chuỗi prop `onOpenSettings` từ `App.tsx` xuống khung chat và hộp thoại Dịch, mà một session khác đang sửa dở `App.tsx`. Làm sau khi phần đó đã vào main. |
+| 5. Thẻ lỗi có lối sửa | **Đã làm** trong chat và hộp thoại Dịch, cho lỗi `auth` và `quota`. Lỗi `auth` lúc chạy vẫn hiện câu gốc của nhà cung cấp dưới dòng tiêu đề tiếng Việt. |
+| 6. Endpoint theo Hermes | **Đã làm**, trừ nút "Dùng": Mira không có "endpoint đang dùng"; model chính chọn ở trang Model. |
+| 7. Mức suy luận còn hai chỗ | **Đổi:** vẫn giữ ô này trong hộp thoại Cơ bản. Hộp thoại đó giờ là chỗ sửa từng model của trang Danh sách model, giống submenu chỉnh model của Hermes, và chỉ nó báo khi mức đã lưu không còn hợp lệ. Màn xác nhận của Onboarding chỉ chỉnh qua menu, như đề xuất. |
+| 8. Phản hồi đồng nhất | **Đã làm:** `notice` hiện thành toast trên các trang Cài đặt; xóa khóa, xóa kết nối và xóa endpoint đều hỏi xác nhận. |
+| 9. Dọn dẹp | **Đã làm:** bỏ ghi chú điều khoản lặp lại, bỏ trạng thái `soon` và `connectionBadge`, bỏ đường kẻ giữa các hàng, đánh dấu các mục cũ của README và chương Hermes. |
+
+Chưa kiểm bằng mắt trên app chạy thật. Mới chỉ qua typecheck, test và Biome.
+
 ## 4. Không lấy (đã chốt)
 
 - **Model phụ theo từng việc (Auxiliary):** Mira chưa có việc phụ nào cần model riêng.
