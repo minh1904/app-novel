@@ -5,7 +5,11 @@ import { CompactButton } from '../../components/ui/CompactButton'
 import { Select } from '../../components/ui/Select'
 import { PAGE_SIZES, pageCount, pageRange, pageWindow, type PageSize } from './chapterList'
 
-/** Range, page buttons and page size under the chapter list. Every control is a real button. */
+/**
+ * Range, page buttons and page size under the chapter list. Every control is a real button. A list
+ * that fits on one page keeps only the range: the buttons would have nowhere to go, and the size
+ * only matters once the list is longer than the smallest page.
+ */
 export function ChapterPager({
   page,
   pageSize,
@@ -26,6 +30,7 @@ export function ChapterPager({
 }): JSX.Element {
   const pages = pageCount(total, pageSize)
   const { from, to } = pageRange(page, total, pageSize)
+  const showSize = onPageSize !== undefined && total > PAGE_SIZES[0]
 
   return (
     <nav
@@ -37,7 +42,7 @@ export function ChapterPager({
       </p>
 
       <div className="flex items-center gap-3">
-        {onPageSize && (
+        {showSize && (
           <Select<string>
             label={'Số ' + unit + ' mỗi trang'}
             value={String(pageSize)}
@@ -45,40 +50,42 @@ export function ChapterPager({
               value: String(size),
               label: size + ' ' + unit + '/trang'
             }))}
-            onChange={(value) => onPageSize(Number(value) as PageSize)}
+            onChange={(value) => onPageSize?.(Number(value) as PageSize)}
           />
         )}
-        <div className="flex items-center gap-1">
-          <CompactButton
-            aria-label="Trang trước"
-            disabled={page <= 1}
-            onClick={() => onPage(page - 1)}
-            icon={<AltArrowLeftIcon size={16} />}
-          />
-          {pageWindow(page, pages).map((entry, index) =>
-            entry === null ? (
-              <span key={'gap-' + index} aria-hidden="true" className="px-1 text-subtle">
-                …
-              </span>
-            ) : (
-              <CompactButton
-                key={entry}
-                variant={entry === page ? 'light' : 'ghost'}
-                className="w-auto min-w-6 px-1.5 text-label-xs tabular-nums"
-                aria-label={'Trang ' + entry}
-                aria-current={entry === page ? 'page' : undefined}
-                onClick={() => onPage(entry)}
-                icon={entry}
-              />
-            )
-          )}
-          <CompactButton
-            aria-label="Trang sau"
-            disabled={page >= pages}
-            onClick={() => onPage(page + 1)}
-            icon={<AltArrowRightIcon size={16} />}
-          />
-        </div>
+        {pages > 1 && (
+          <div className="flex items-center gap-1">
+            <CompactButton
+              aria-label="Trang trước"
+              disabled={page <= 1}
+              onClick={() => onPage(page - 1)}
+              icon={<AltArrowLeftIcon size={16} />}
+            />
+            {pageWindow(page, pages).map((entry, index) =>
+              entry === null ? (
+                <span key={'gap-' + index} aria-hidden="true" className="px-1 text-subtle">
+                  …
+                </span>
+              ) : (
+                <CompactButton
+                  key={entry}
+                  variant={entry === page ? 'light' : 'ghost'}
+                  className="w-auto min-w-6 px-1.5 text-label-xs tabular-nums"
+                  aria-label={'Trang ' + entry}
+                  aria-current={entry === page ? 'page' : undefined}
+                  onClick={() => onPage(entry)}
+                  icon={entry}
+                />
+              )
+            )}
+            <CompactButton
+              aria-label="Trang sau"
+              disabled={page >= pages}
+              onClick={() => onPage(page + 1)}
+              icon={<AltArrowRightIcon size={16} />}
+            />
+          </div>
+        )}
       </div>
     </nav>
   )
