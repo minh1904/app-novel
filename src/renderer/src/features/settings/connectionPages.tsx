@@ -20,11 +20,13 @@ import { ConfirmDialog, type ConfirmRequest } from '../../components/ui/ConfirmD
 import { ButtonGroup } from '../../components/ui/ButtonGroup'
 import { SettingsSection } from '../../components/ui/Setting'
 import { TextField } from '../../components/ui/Field'
+import { Switch } from '../../components/ui/Switch'
 import { useConnectionStore } from '../../stores/connectionStore'
 import { notify } from '../../stores/notificationStore'
 import { useUiStore } from '../../stores/uiStore'
 import { useConnections } from './useConnections'
 import { ConnectionDetails } from './ConnectionDetails'
+import { openModelList } from './openConnectionSettings'
 import { connectionLive } from './connectionStatus'
 
 function useNow(): number {
@@ -408,12 +410,15 @@ export function KeysPage(): JSX.Element {
   )
 }
 
-/** Cài đặt › Kết nối AI › Endpoint tùy chỉnh. */
+/** Cài đặt › Kết nối AI › Endpoint tùy chỉnh: a short list as in Hermes; a row loads into the form below. */
 export function EndpointsPage(): JSX.Element {
   const { connections } = useConnections()
+  const store = useConnectionStore()
   const now = useNow()
-  const [open, toggle] = useOpenCard('endpoint:')
+  const [selected, select] = useOpenCard('endpoint:')
+  const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
   const endpoints = connections.filter((item) => connectionSection(item) === 'endpoints')
+  const editing = endpoints.find((item) => 'endpoint:' + item.id === selected) ?? null
 
   return (
     <>
@@ -426,35 +431,79 @@ export function EndpointsPage(): JSX.Element {
           </Badge>
         }
       >
-        {endpoints.length === 0 && (
+        {endpoints.length === 0 ? (
           <p className="m-0 py-2 text-body-xs text-subtle">
             Chưa có endpoint nào. Thêm một endpoint tương thích OpenAI ở dưới.
           </p>
-        )}
-        <div className="flex flex-col gap-1">
-          {endpoints.map((connection) => {
-            const id = 'endpoint:' + connection.id
-            return (
-              <ExpandableCard
+        ) : (
+          <ul className="m-0 list-none divide-y divide-subtle rounded-sm border border-subtle p-0">
+            {endpoints.map((connection) => (
+              <li
                 key={connection.id}
-                id={id}
-                open={open === id}
-                onToggle={() => toggle(id)}
-                head={
-                  <>
-                    <StatusDot on={connectionLive(connection, now)} />
-                    <span className="truncate">{connection.name}</span>
-                  </>
-                }
-                description={<span className="font-mono">{connection.baseUrl}</span>}
+                data-setting-id={'endpoint:' + connection.id}
+                className={cn(
+                  'flex items-center gap-xs py-xs pr-xs',
+                  editing?.id === connection.id && 'bg-muted'
+                )}
               >
-                <ConnectionDetails connection={connection} now={now} />
-              </ExpandableCard>
-            )
-          })}
-        </div>
+                <ActionRow
+                  noChevron
+                  className="min-w-0 flex-1"
+                  onClick={() => select('endpoint:' + connection.id)}
+                  title={
+                    <>
+                      <StatusDot on={connectionLive(connection, now)} />
+                      <span className="truncate">{connection.name}</span>
+                    </>
+                  }
+                  tag={
+                    connection.enabled ? undefined : (
+                      <Badge variant="outline" dot color="neutral">
+                        Đã tắt
+                      </Badge>
+                    )
+                  }
+                  description={
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate font-mono">{connection.baseUrl}</span>
+                      <span>
+                        {connection.models.length} model
+                        {connection.keys[0] ? ' · ••••' + connection.keys[0].tail : ''}
+                      </span>
+                    </span>
+                  }
+                />
+                <Switch
+                  checked={connection.enabled}
+                  onCheckedChange={(checked) =>
+                    void store.update(connection.id, { enabled: checked })
+                  }
+                  aria-label={(connection.enabled ? 'Tắt ' : 'Bật ') + connection.name}
+                />
+                <CompactButton
+                  aria-label={'Xóa ' + connection.name}
+                  icon={<TrashBinTrashIcon size={14} />}
+                  onClick={() =>
+                    setConfirm({
+                      title: 'Xóa ' + connection.name + '?',
+                      description:
+                        'Khóa và các mục model của endpoint này bị xóa. Model chính hay dự phòng trỏ tới nó cũng bị gỡ.',
+                      confirmLabel: 'Xóa endpoint',
+                      onConfirm: () => void store.remove(connection.id)
+                    })
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </SettingsSection>
-      <AddEndpointForm />
+      <EndpointForm
+        key={editing?.id ?? 'new'}
+        editing={editing}
+        onNew={() => editing && select('endpoint:' + editing.id)}
+      />
+      <ConfirmDialog request={confirm} onClose={() => setConfirm(null)} />
     </>
   )
 }
@@ -466,12 +515,22 @@ const API_MODES = [
   { value: 'anthropic_messages', label: 'Anthropic Messages' }
 ] as const
 
-/** Form thêm endpoint: Kiểm tra dò `/models` và route chat, tự điền model và base URL đã giải. */
-function AddEndpointForm(): JSX.Element {
+/**
+ * The endpoint form, as Hermes': empty to add one, filled with a listed endpoint to edit it (the API mode
+ * too). Kiểm tra probes `/models` and the chat route, then fills the model and the resolved base URL.
+ */
+function EndpointForm({
+  editing,
+  onNew
+}: {
+  editing: ConnectionView | null
+  /** Leave the endpoint being edited for an empty form. */
+  onNew(): void
+}): JSX.Element {
   const store = useConnectionStore()
-  const [name, setName] = useState('')
-  const [url, setUrl] = useState('')
-  const [mode, setMode] = useState<(typeof API_MODES)[number]['value']>('auto')
+  const [name, setName] = useState(editing?.name ?? '')
+  const [url, setUrl] = useState(editing?.baseUrl ?? '')
+  const [mode, setMode] = useState<ConnectionView['apiMode']>(editing?.apiMode ?? 'auto')
   const [model, setModel] = useState('')
   const [secret, setSecret] = useState('')
   const [models, setModels] = useState<string[]>([])
@@ -480,6 +539,8 @@ function AddEndpointForm(): JSX.Element {
   const [message, setMessage] = useState<{ tone: 'ok' | 'warn' | 'error'; text: string } | null>(
     null
   )
+  // Hermes asks for a model before saving a new endpoint: one without an entry never shows in the menu.
+  const canSave = url.trim() !== '' && (editing !== null || model.trim() !== '')
 
   async function check(): Promise<boolean> {
     if (!url.trim()) return false
@@ -487,6 +548,7 @@ function AddEndpointForm(): JSX.Element {
     const result = await store.probe({
       baseUrl: url.trim(),
       secret: secret.trim() || undefined,
+      ...(editing && !secret.trim() ? { connectionId: editing.id } : {}),
       model: model.trim() || undefined,
       apiMode: mode
     })
@@ -498,14 +560,23 @@ function AddEndpointForm(): JSX.Element {
     const probe = result.value
     setModels(probe.models)
     if (probe.resolvedBaseUrl) setUrl(probe.resolvedBaseUrl)
-    if (!model.trim() && probe.models[0]) setModel(probe.models[0])
+    if (!editing && !model.trim() && probe.models[0]) setModel(probe.models[0])
     setMessage({ tone: probe.ok ? 'ok' : probe.reachable ? 'warn' : 'error', text: probe.message })
     return probe.ok
   }
 
   async function save(): Promise<void> {
-    if (!url.trim()) return
+    if (!canSave) return
     setSaving(true)
+    if (editing) {
+      const label = name.trim() || editing.name
+      await store.update(editing.id, { name: label, baseUrl: url.trim(), apiMode: mode })
+      if (secret.trim()) await store.addKey(editing.id, secret.trim())
+      setSecret('')
+      notify({ kind: 'success', title: 'Đã lưu endpoint', message: label })
+      setSaving(false)
+      return
+    }
     const created = await store.create({
       name: name.trim() || new URL(url.trim()).host,
       baseUrl: url.trim(),
@@ -514,7 +585,7 @@ function AddEndpointForm(): JSX.Element {
     })
     if (created) {
       if (secret.trim()) await store.addKey(created.id, secret.trim())
-      if (model.trim()) await store.entries.add(created.id, [{ model: model.trim() }])
+      await store.entries.add(created.id, [{ model: model.trim() }])
       notify({ kind: 'success', title: 'Đã thêm endpoint', message: created.name })
       setName('')
       setUrl('')
@@ -526,10 +597,12 @@ function AddEndpointForm(): JSX.Element {
     setSaving(false)
   }
 
+  const currentKey = editing?.keys[0]
+
   return (
     // Hermes' form: one bordered box of stacked, labelled fields, not setting rows; the mode switch
     // needs the whole width for four options.
-    <SettingsSection title="Thêm endpoint">
+    <SettingsSection title={editing ? 'Sửa ' + editing.name : 'Thêm endpoint'}>
       <div className="@container grid gap-3 rounded-sm border border-subtle p-3">
         <div className="grid gap-3 @lg:grid-cols-2">
           <TextField
@@ -559,28 +632,46 @@ function AddEndpointForm(): JSX.Element {
             Tự nhận chọn theo địa chỉ; hầu hết gateway là Chat Completions.
           </span>
         </fieldset>
-        <TextField
-          label="Model mặc định"
-          hint={
-            models.length > 0
-              ? 'Dò được ' + models.length + ' model.'
-              : 'Bấm Kiểm tra để dò, hoặc gõ tay.'
-          }
-          inputClassName="font-mono"
-          list="endpoint-models"
-          placeholder="gemini-2.5-flash"
-          value={model}
-          onChange={(event) => setModel(event.target.value)}
-        />
-        <datalist id="endpoint-models">
-          {models.map((id) => (
-            <option key={id} value={id} />
-          ))}
-        </datalist>
+        {editing ? (
+          <p className="m-0 text-body-xs text-subtle">
+            {editing.models.length} model trong menu chọn model.{' '}
+            <LinkButton className="h-auto" onClick={() => openModelList(editing.id)}>
+              Danh sách model ›
+            </LinkButton>
+          </p>
+        ) : (
+          <>
+            <TextField
+              label="Model mặc định"
+              hint={
+                models.length > 0
+                  ? 'Dò được ' + models.length + ' model.'
+                  : 'Bấm Kiểm tra để dò, hoặc gõ tay.'
+              }
+              inputClassName="font-mono"
+              list="endpoint-models"
+              placeholder="gemini-2.5-flash"
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+            />
+            <datalist id="endpoint-models">
+              {models.map((id) => (
+                <option key={id} value={id} />
+              ))}
+            </datalist>
+          </>
+        )}
         <TextField
           label="Khóa API"
           type="password"
-          placeholder="Để trống nếu endpoint không cần khóa"
+          hint={
+            currentKey
+              ? 'Đang có khóa ••••' + currentKey.tail + '. Dán khóa mới để thêm vào nhóm khóa.'
+              : undefined
+          }
+          placeholder={
+            currentKey ? 'Để trống để giữ khóa hiện tại' : 'Để trống nếu endpoint không cần khóa'
+          }
           value={secret}
           onChange={(event) => setSecret(event.target.value)}
         />
@@ -599,18 +690,18 @@ function AddEndpointForm(): JSX.Element {
             {message.text}
           </p>
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button loading={checking} disabled={!url.trim()} onClick={() => void check()}>
             Kiểm tra
           </Button>
-          <Button
-            variant="solid"
-            loading={saving}
-            disabled={!url.trim()}
-            onClick={() => void save()}
-          >
+          <Button variant="solid" loading={saving} disabled={!canSave} onClick={() => void save()}>
             Lưu
           </Button>
+          {editing && (
+            <Button variant="ghost" onClick={onNew}>
+              Endpoint mới
+            </Button>
+          )}
         </div>
       </div>
     </SettingsSection>
@@ -689,10 +780,13 @@ export function LocalPage(): JSX.Element {
                 </>
               }
               description={<span className="font-mono">{preset.baseUrl}</span>}
+              // Once connected, the card's own "Kiểm tra kết nối" checks it; this one only finds and adds it.
               right={
-                <Button loading={busy === presetId} onClick={() => void check(presetId)}>
-                  Kiểm tra
-                </Button>
+                connection ? undefined : (
+                  <Button loading={busy === presetId} onClick={() => void check(presetId)}>
+                    Tìm trên máy
+                  </Button>
+                )
               }
             >
               {connection ? (
