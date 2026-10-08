@@ -1,110 +1,152 @@
+<div align="center">
+
+<img src="resources/icon.png" width="96" alt="Mira" />
+
 # Mira
 
-Mira là workspace dịch thuật cho Windows, dành trước tiên cho dịch giả truyện nhiều chương từ Anh, Trung giản thể/phồn thể và Nhật sang Việt. Mục tiêu lõi: **làm việc cùng AI ngay trong editor**. AI dịch và đề xuất sửa; người dịch duyệt từng chỗ tại chỗ, `Ctrl+Z` hoàn tác được. Mọi thứ trừ bước gọi AI chạy offline, và dữ liệu nằm trên máy người dùng.
+**Workspace dịch truyện cùng AI, ngay trong editor**
 
-> **Trạng thái: bản MVP để thử nghiệm.** Repo hiện chạy được (thư viện, kho SQLite, editor hai pane, dịch chương, panel Hỏi AI) nhưng chưa phải bản hoàn chỉnh, **chưa gọi nhà cung cấp AI thật lần nào** và **không dùng để giữ bản dịch thật**. Sắp tới từng module được làm lại hoàn chỉnh theo kiến trúc bên dưới, mỗi module có spec, test và nghiệm thu trước khi sang module kế.
+Dịch truyện nhiều chương từ Anh, Trung, Nhật sang Việt: AI dịch và đề xuất sửa, bạn duyệt từng chỗ.
 
-**Bắt đầu tại [tài liệu theo module](docs/modules/README.md).** Handbook cũ đã gỡ khỏi repo ngày 2026-10-06; các link vào handbook dưới đây trỏ tới bản cuối của nó ở commit `501be2a`, chỉ để tra lịch sử.
+![Nền tảng](https://img.shields.io/badge/n%E1%BB%81n%20t%E1%BA%A3ng-Windows-1a1a1a)
+![Electron](https://img.shields.io/badge/Electron-44-1a1a1a)
+![Trạng thái](https://img.shields.io/badge/tr%E1%BA%A1ng%20th%C3%A1i-MVP%20th%E1%BB%AD%20nghi%E1%BB%87m-c2410c)
 
-| Bạn cần | Đọc |
+</div>
+
+## 📖 Tổng quan
+
+- **Làm việc cùng AI trong editor.** Bản gốc và bản dịch nằm hai pane cạnh nhau. AI dịch cả chương
+  hoặc đề xuất sửa từng đoạn; bạn nhận hay bỏ từng chỗ ngay tại chỗ, `Ctrl+Z` hoàn tác được.
+- **Dành cho truyện nhiều chương.** Mỗi tác phẩm có thư viện chương, thuật ngữ và bảng xưng hô
+  riêng. AI đọc chúng mỗi lần dịch, nên tên và cách xưng hô giữ nhất quán qua cả bộ truyện.
+- **Dữ liệu nằm trên máy bạn.** Mọi thứ trừ bước gọi AI đều chạy offline. Mỗi tác phẩm là một tệp
+  `.mira` (SQLite), sao lưu bằng cách chép tệp.
+- **Chọn AI theo cách bạn có:** khóa API (Gemini, OpenRouter, OpenAI, DeepSeek, Anthropic, endpoint
+  tương thích OpenAI) hoặc đăng nhập tài khoản ChatGPT, GitHub Copilot.
+
+## ⚠️ Lưu ý
+
+Mira đang là **bản MVP để thử nghiệm**:
+
+- App chạy được: thư viện, editor hai pane, dịch chương, panel Hỏi AI.
+- Chưa được kiểm chứng đầy đủ với nhà cung cấp AI thật.
+- **Đừng dùng nó làm nơi giữ bản dịch duy nhất của bạn.** Định dạng dữ liệu còn thay đổi giữa các
+  phiên bản.
+
+## ✨ Tính năng
+
+- **Dịch chương bằng AI** 👈
+  - Dịch theo lô, có giới hạn số lần gọi model mỗi chương.
+  - Đoạn dịch hỏng được chạy lại riêng.
+  - Có thể chuyển sang model dự phòng.
+- **Hỏi AI về chương đang mở** 👈
+  - Panel chat tự đọc chương, tìm trong tác phẩm, tra thuật ngữ và xưng hô bằng công cụ.
+  - Câu trả lời đi kèm đề xuất sửa để bạn duyệt.
+  - Xem được model đã nghĩ gì và đã gọi công cụ nào.
+- **Duyệt đề xuất tại chỗ**
+  - Mỗi đề xuất hiện ngay trên đoạn văn, có so sánh trước và sau.
+  - Nhận hoặc bỏ từng phần, hay áp dụng tất cả một lần.
+- **Thuật ngữ và xưng hô**
+  - AI trích ứng viên thuật ngữ từ bản gốc, code kiểm lại trước khi đưa bạn duyệt.
+  - Bảng quan hệ xưng hô giữa các nhân vật (anh – em, ta – ngươi…) được đưa vào mỗi lần dịch.
+- **Trau chuốt bản dịch:** chẩn đoán lỗi trước rồi mới sửa, kèm các phép kiểm bằng code.
+- **Editor dễ đọc:**
+  - chữ truyện theo editor Obsidian (16 px, dòng 1,5);
+  - live preview Markdown, ảnh dán thẳng vào bản dịch;
+  - cuộn mượt.
+- **Giao diện gọn:** đen, trắng, xám; màu chỉ dùng cho trạng thái; có theme sáng và tối.
+
+## 🚀 Cách dùng
+
+1. **Kết nối AI:** lần mở đầu, Mira hỏi nhà cung cấp. Dán khóa API, hoặc đăng nhập ChatGPT hay
+   GitHub Copilot.
+2. **Tạo tác phẩm:** đặt tên, ngôn ngữ gốc, ảnh bìa nếu muốn.
+3. **Nhập chương:** dán văn bản hoặc chọn tệp `.txt` / `.md`.
+4. **Dịch:** mở chương, bấm dịch bằng AI, theo dõi tiến độ từng lô.
+5. **Duyệt và sửa:** đọc hai pane song song, nhận hoặc bỏ đề xuất, hỏi AI ở panel bên phải khi cần.
+6. **Xuất:** lấy bản dịch ra `.txt`, `.md`, `.docx` hoặc `.pdf`.
+
+## 📄 Định dạng hỗ trợ
+
+| | Định dạng |
 | --- | --- |
-| Biết module nào đang làm gì | [Tài liệu theo module](docs/modules/README.md) |
-| Hiểu sản phẩm | [Định hướng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/vision.md), [quyết định hiện hành](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/decisions.md) |
-| Hiểu kiến trúc đích | [ADR-005](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md), [Luồng làm việc và kiến trúc AI-first](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/ai-first-architecture.md) |
-| Biết repo đang có gì | [Hiện trạng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/current-state.md) (mỗi phần ghi giữ, viết lại hay gỡ) |
-| Biết làm gì tiếp | [Lộ trình theo module](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md), [scope](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/scope.md) |
-| Hiểu đối thủ | [Thị trường](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/research/market-landscape.md), [mapping với Mira](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/research/feature-map.md) |
-## Kiến trúc
+| Nhập chương | `.txt`, `.md` hoặc dán trực tiếp |
+| Nhập thuật ngữ | `Names.txt` |
+| Xuất bản dịch | `.txt`, `.md`, `.docx`, `.pdf` |
+| Ngôn ngữ gốc | Tiếng Anh, Trung giản thể, Trung phồn thể, Nhật |
+| Ngôn ngữ đích | Tiếng Việt |
 
-Hướng kiến trúc đã chốt ở [ADR-005](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/decisions/0005-ai-first-proposals-no-sentence-mode.md); thiết kế đầy đủ ở [kiến trúc AI-first](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/ai-first-architecture.md). Năm ý chính:
+## 📚 Tài liệu
 
-1. **Đơn vị làm việc là chương, bên trong là đoạn** (mỗi dòng không trống). Không lưu ranh giới câu, không liên kết giữa câu gốc và câu dịch. Mode dịch **Từng câu đã bị bỏ**.
-2. **Một nguồn sự thật có cấu trúc: SQLite.** Mỗi tác phẩm là một tệp `.mira`, kèm `library.db` làm chỉ mục. Markdown chỉ là cách chiếu dữ liệu ra (cho editor, prompt, xuất), không phải nơi lưu.
-3. **Một đường ghi: người gõ thì ghi, AI thì đề xuất.** Bản dịch đang trống thì AI ghi thẳng kèm dấu AI; đã có chữ thì AI tạo đề xuất hiện ngay trong pane (CodeMirror + `@codemirror/merge`), nhận/bỏ từng khối, có snapshot trước khi áp dụng.
-4. **Ba động cơ AI dùng chung một bộ dựng ngữ cảnh và một sổ chi phí:** tác vụ dịch chạy bền trong `main`, Hỏi/Sửa trong panel chat, và ngữ cảnh truyện (thuật ngữ, xưng hô, văn phong).
-5. **Electron + `node:sqlite`.** Không chuyển Tauri (IME trên WebView2 không ghim được), không CRDT. Kết nối AI bằng API key qua **một adapter tương thích OpenAI**; không dùng OAuth thuê bao.
+- 👉 [Tài liệu theo module](docs/modules/README.md): quyết định, nghiên cứu và trạng thái của từng
+  phần sản phẩm. Bắt đầu ở đây.
+- [Kết nối AI](docs/modules/ai-connections/README.md): nhà cung cấp, đăng nhập tài khoản, cách gọi model.
+- [Ngữ cảnh truyện](docs/modules/context/README.md): thuật ngữ, xưng hô, trau chuốt.
+- [Đo lường](docs/modules/measurement/README.md): bộ đo chất lượng bản dịch và Mira Lab.
+- [Hệ thiết kế](docs/modules/design-system/README.md): token, component và quy tắc giao diện.
+- [Quy tắc repository](AGENTS.md): kiểm tra, commit.
 
-```mermaid
-flowchart LR
-  subgraph R[Renderer: React + CodeMirror]
-    ED[Editor hai pane<br/>dấu AI · duyệt tại chỗ]
-    AP[Panel Hỏi / Sửa]
-  end
-  subgraph M[Main process]
-    API[API miền: một cửa ghi]
-    JOB[Tác vụ dịch]
-    CHAT[Chat]
-    CTX[buildContext]
-    PROV[Provider · keyPool · sổ usage]
-  end
-  subgraph S[Lưu trữ]
-    LIB[(library.db)]
-    WORK[(tác phẩm .mira)]
-  end
-  R -- IPC có kiểu --> API
-  API --> WORK
-  API --> LIB
-  JOB --> CTX
-  CHAT --> CTX
-  JOB --> PROV
-  CHAT --> PROV
-  JOB --> API
-```
+Handbook cũ đã gỡ ngày 2026-10-06; bản cuối nằm ở commit `501be2a`, chỉ để tra lịch sử.
 
-Sơ đồ là kiến trúc **đích**; mã đang chạy ở [hiện trạng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/current-state.md). Phần chưa làm: tác vụ dịch bền trong `main`, bảng đề xuất/snapshot, dấu AI, `buildContext` dùng chung.
+## 🆕 Cập nhật gần đây
 
-### Cấu trúc mã nguồn
+- **2026-10-08**
+  - Giao diện đen trắng xám.
+  - Chữ truyện theo editor Obsidian.
+  - Cuộn chuột mượt.
+  - Mọi màn dùng chung một bộ component.
+- **2026-10-08**
+  - Chat tự đọc chương và đề xuất qua công cụ, không còn chọn chế độ.
+  - Hiện phần suy nghĩ của model.
+- **2026-10-08**
+  - Đăng nhập ChatGPT và GitHub Copilot.
+  - Hỗ trợ API Responses và Messages.
+- **2026-10-08** Dịch chương có giới hạn số lần gọi model và chế độ xuất JSON theo schema.
+- **2026-10-06**
+  - Trích thuật ngữ bằng AI.
+  - Trau chuốt bản dịch theo kiểu chẩn đoán rồi sửa.
+  - Prompt khai báo xưng hô trước khi dịch.
 
-```text
-src/
-  shared/              chạy ở mọi nơi; không node:, electron, react
-    contracts/         kiểu, schema valibot, tên kênh IPC, DesktopApi, Result
-    text/              chuẩn hóa và nhập raw, vị trí đoạn
-    segmentation/      chia câu, bản đồ đoạn ↔ câu
-    context/           khớp và kiểm thuật ngữ, xưng hô
-    translation/       lập kế hoạch lô, đọc và đối chiếu kết quả dịch
-    models/            mức suy nghĩ theo model
-  measurement/         mã của Bộ đo, chỉ scripts/bench và scripts/lab dùng; app không import
-  main/
-    index.ts           gốc lắp ráp; cùng electron/ là nơi duy nhất import 'electron'
-    electron/          safeStorage, đăng ký IPC
-    ipc/               kênh → handler đã kiểm đầu vào, mỗi khu vực một tệp (handlers/)
-    services/          nghiệp vụ: library, ai (kết nối, chat, dịch chương, chi phí)
-    infra/             storage (SQLite, schema, migration), providers (adapter HTTP, keyPool)
-  preload/             chỉ electron và shared/contracts
-  renderer/src/        app/, components/, features/, styles/
-```
+## 🛠️ Phát triển
 
-Mỗi tầng của `main` chỉ được import tầng dưới nó: `infra` < `services` < `ipc` < `electron`. Luật này do `noRestrictedImports` trong [`biome.json`](biome.json) ép (mỗi vùng một khối `overrides`; khối sau ghi đè khối trước nên phải nhắc lại đủ luật), không chỉ là quy ước. Tên tệp trong `src/` là PascalCase cho component, camelCase cho phần còn lại; Biome chặn `-` và `_`. Format và lint đều bằng Biome (`node scripts/check.mjs` chạy `biome ci`). Chi tiết và cách thêm thành phần mới: [Cấu trúc mã nguồn và luật ranh giới](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/architecture.md#cấu-trúc-mã-nguồn-và-luật-ranh-giới).
-
-### Lộ trình theo module
-
-Mỗi module là một change openspec riêng; xong module trước mới sang module sau. Điều kiện xong và trạng thái đầy đủ ở [lộ trình](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md).
-
-| Module | Nội dung | Trạng thái |
-| --- | --- | --- |
-| 0 | Chat Hỏi/Sửa: kiểm chứng với nhà cung cấp thật | Code xong, chưa kiểm chứng |
-| 2 | Đoạn: định nghĩa và nhập raw chỉ chuẩn hóa | Chưa làm |
-| 3 | Đề xuất: bảng `proposal`, snapshot, duyệt tại chỗ | Chưa làm |
-| 4 | Tác vụ: `JobRunner` bền trong main, sổ chi phí | Chưa làm |
-| 5 | Kho v6, gỡ mode Từng câu và dữ liệu câu | Chưa làm |
-| 6 | Ngữ cảnh truyện: thuật ngữ, xưng hô, văn phong | Chưa làm |
-| 7, 8 | QA nhất quán; xuất `.md`/`.txt` | Chưa làm |
-
-## Chạy và kiểm tra
-
-Yêu cầu Node.js >=24 và pnpm 8.9.0 theo `package.json` (`packageManager`). Nên lấy pnpm qua `corepack`: pnpm toàn cục mới hơn bản ghim có thể in cảnh báo rồi thoát mã 0 **mà không chạy gì**, và `pnpm install`/`pnpm add` bằng nó sẽ ghi đè `pnpm-lock.yaml` từ lockfileVersion 6.0 sang 9.0. Xem [quy tắc repository](AGENTS.md#checks).
+Yêu cầu:
+- Windows;
+- Node.js ≥ 24;
+- pnpm **8.9.0** theo `packageManager` trong `package.json`. Nên lấy qua `corepack`.
 
 ```powershell
-pnpm install                  # bằng pnpm 8.9.0 (corepack)
-pnpm dev                      # chạy Electron ở chế độ phát triển
-node scripts/check.mjs        # typecheck (node + web), test, lint: chạy trước khi commit
-node scripts/check.mjs --build   # thêm electron-vite build: chạy trước khi push
-pnpm build:win                # installer Windows bằng electron-builder, chưa phải quy trình phát hành chính thức
+pnpm install                     # bằng pnpm 8.9.0 (corepack)
+pnpm dev                         # chạy Electron ở chế độ phát triển
+node scripts/check.mjs           # typecheck, test, lint: chạy trước khi commit
+node scripts/check.mjs --build   # thêm bản build: chạy trước khi push
+pnpm build:win                   # bộ cài Windows, chưa phải quy trình phát hành chính thức
 ```
 
-Lần cài/chạy đầu có thể cần tải Electron qua mạng. Nếu terminal đặt `NPM_CONFIG_OFFLINE=true`, chuyển sang `false` khi cài dependency cần mạng.
+> [!WARNING]
+> pnpm toàn cục mới hơn bản ghim có thể in cảnh báo rồi thoát mã 0 **mà không chạy gì**. Dùng nó để
+> `pnpm install` / `pnpm add` sẽ ghi đè `pnpm-lock.yaml` sang lockfileVersion 9.0. Vì vậy hãy kiểm
+> tra bằng `node scripts/check.mjs`, không bằng `pnpm test`.
 
-Brand đổi từ Miyati sang **Mira** ngày 2026-09-29. Thư mục repo `app-novel` giữ nguyên. Xem [brand](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/product/brand.md) về định danh bản cài và giới hạn migration.
+**Công nghệ:**
+- Electron + React + Tailwind v4;
+- CodeMirror cho editor;
+- `node:sqlite` cho kho dữ liệu;
+- Biome cho format và lint.
 
-Commit theo [quy tắc repository](AGENTS.md#commits). Handbook viết bằng tiếng Việt; commit message viết bằng tiếng Anh.
+Mã nguồn chia theo tầng:
+- `src/shared`: chạy ở mọi nơi;
+- `src/main`: `infra` < `services` < `ipc` < `electron`, mỗi tầng chỉ import tầng dưới;
+- `src/preload`;
+- `src/renderer`.
+
+Biome chặn import ngược tầng. Chi tiết kiến trúc ở [tài liệu theo module](docs/modules/README.md).
+
+Lần cài đầu cần tải Electron qua mạng. Nếu terminal đặt `NPM_CONFIG_OFFLINE=true`, đổi sang `false`
+khi cài.
+
+**Đóng góp:**
+- Commit theo [Conventional Commits](AGENTS.md#commits), message bằng tiếng Anh.
+- Tài liệu sản phẩm viết bằng tiếng Việt.
+
+Mira từng tên là Miyati, đổi ngày 2026-09-29. Thư mục repo vẫn là `app-novel`.
