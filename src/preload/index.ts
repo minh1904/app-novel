@@ -34,7 +34,7 @@ import type {
 } from '../shared/contracts/aiTranslateProposals'
 import type { AiPreferences, MainModel, ModelRef } from '../shared/contracts/aiPreferences'
 import type { BackupExported } from '../shared/contracts/backup'
-import type { ExportResult } from '../shared/contracts/export'
+import type { ExportProgress, ExportResult } from '../shared/contracts/export'
 import { CHANNELS, EVENT_CHANNELS } from '../shared/contracts/channels'
 import type { ChapterChange, ChapterItem, ChaptersChange } from '../shared/contracts/chapters'
 import type { AppInfo, ChromeTheme, DesktopApi } from '../shared/contracts/desktopApi'
@@ -395,7 +395,17 @@ const desktopApi: DesktopApi = {
     exportChapter: (input) =>
       ipcRenderer.invoke(CHANNELS.exportChapter, input) as Promise<Result<ExportResult>>,
     exportWork: (input) =>
-      ipcRenderer.invoke(CHANNELS.exportWork, input) as Promise<Result<ExportResult>>
+      ipcRenderer.invoke(CHANNELS.exportWork, input) as Promise<Result<ExportResult>>,
+    cancel: (workId) =>
+      ipcRenderer.invoke(CHANNELS.exportCancel, { workId }) as Promise<Result<void>>,
+    reveal: (path) => ipcRenderer.invoke(CHANNELS.exportReveal, { path }) as Promise<Result<void>>,
+    // Same rule as `onChunk`: the channel name is fixed here, never taken from the renderer.
+    onProgress: (listener) => {
+      const handler = (_event: IpcRendererEvent, progress: ExportProgress): void =>
+        listener(progress)
+      ipcRenderer.on(EVENT_CHANNELS.exportProgress, handler)
+      return () => ipcRenderer.off(EVENT_CHANNELS.exportProgress, handler)
+    }
   }
 }
 

@@ -41,8 +41,22 @@ export interface ExportResult {
   canceled?: boolean
   filePath?: string
   count?: number
+  /** Chapters in the range left out because they have no translation. */
+  skipped?: number
   error?: string
 }
+
+/** How far an export of several chapters is; sent while it runs. */
+export interface ExportProgress {
+  workId: string
+  done: number
+  total: number
+}
+
+export const exportCancelSchema = v.strictObject({ workId: idSchema })
+export const exportRevealSchema = v.strictObject({
+  path: v.pipe(v.string('Đường dẫn phải là chuỗi.'), v.minLength(1, 'Thiếu đường dẫn.'))
+})
 
 export const exportFormatSchema = v.picklist(EXPORT_FORMATS, 'Định dạng xuất không hợp lệ.')
 export const exportPageSizeSchema = v.optional(

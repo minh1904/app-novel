@@ -25,7 +25,7 @@ import type {
 import type { AiPreferences, MainModel, ModelRef } from './aiPreferences'
 import type { BackupExported } from './backup'
 import type { ChapterChange, ChapterItem, ChaptersChange } from './chapters'
-import type { ExportChapterInput, ExportResult, ExportWorkInput } from './export'
+import type { ExportChapterInput, ExportProgress, ExportResult, ExportWorkInput } from './export'
 import type { LinkRecord } from './links'
 import type { RowSaved } from './rows'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from './library'
@@ -361,6 +361,12 @@ export interface AddressingApi {
 export interface ExportApi {
   exportChapter(input: ExportChapterInput): Promise<Result<ExportResult>>
   exportWork(input: ExportWorkInput): Promise<Result<ExportResult>>
+  /** Stops a running export of the work once the chapter being written is done. */
+  cancel(workId: string): Promise<Result<void>>
+  /** Shows a file or folder this session exported to; any other path is refused. */
+  reveal(path: string): Promise<Result<void>>
+  /** Progress of exports of several chapters; returns the unsubscribe. */
+  onProgress(listener: (progress: ExportProgress) => void): () => void
 }
 
 export interface DesktopApi {

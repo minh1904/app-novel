@@ -11,6 +11,8 @@ export interface WorkAreaProps {
   onOpenChapter(chapterId: string): void
   /** Goes up each time the header asks the Chapters area to start adding a chapter. */
   addChapterSignal: number
+  /** Opens the export dialog on the chapters picked in a list. */
+  onExportChapters(ids: ReadonlySet<string>): void
 }
 
 /**

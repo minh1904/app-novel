@@ -10,7 +10,8 @@ const areaProps: WorkAreaProps = {
   workId: WORK_ID,
   onWork: () => undefined,
   onOpenChapter: () => undefined,
-  addChapterSignal: 0
+  addChapterSignal: 0,
+  onExportChapters: () => {}
 }
 
 const fakeArea = (id: string, label: string): WorkArea => ({

@@ -210,3 +210,111 @@ function DeleteBody({
     </div>
   )
 }
+
+/**
+ * Deletes the chapters picked in the list. Says how many hold text that will be lost, offers a
+ * backup first, and names the count on the button so a slip of the Shift key shows before it costs.
+ */
+export function DeleteChaptersDialog({
+  chapters,
+  onClose,
+  onDelete,
+  onBackup
+}: {
+  /** Empty closes the dialog. */
+  chapters: ChapterItem[]
+  onClose(): void
+  onDelete(chapters: ChapterItem[]): void
+  onBackup?: () => Promise<string | null>
+}): JSX.Element {
+  return (
+    <Dialog
+      open={chapters.length > 0}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+      title={'Xóa ' + chapters.length + ' chương?'}
+    >
+      {chapters.length > 0 && (
+        <DeleteManyBody
+          chapters={chapters}
+          onClose={onClose}
+          onDelete={onDelete}
+          onBackup={onBackup}
+        />
+      )}
+    </Dialog>
+  )
+}
+
+function DeleteManyBody({
+  chapters,
+  onClose,
+  onDelete,
+  onBackup
+}: {
+  chapters: ChapterItem[]
+  onClose(): void
+  onDelete(chapters: ChapterItem[]): void
+  onBackup?: () => Promise<string | null>
+}): JSX.Element {
+  const [backingUp, setBackingUp] = useState(false)
+  const [backupMessage, setBackupMessage] = useState<string | null>(null)
+  const withText = chapters.filter((chapter) => chapter.hasSource || chapter.hasTarget).length
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-body-xs leading-normal">
+        <strong className="font-semibold">{chapters.length} chương</strong> sẽ bị xóa khỏi tác phẩm,
+        các chương còn lại đổi số thứ tự. Việc này không hoàn tác được.
+      </p>
+      {withText > 0 && (
+        <p
+          role="note"
+          className="rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 text-body-xs leading-normal"
+        >
+          <strong className="font-semibold">
+            {withText} chương có bản gốc hoặc bản dịch; chữ trong đó sẽ mất.
+          </strong>{' '}
+          Nên sao lưu tác phẩm trước khi xóa.
+        </p>
+      )}
+      {backupMessage && (
+        <p role="status" className="text-body-xs leading-normal break-words text-subtle">
+          {backupMessage}
+        </p>
+      )}
+      <div className="flex justify-end gap-2">
+        {withText > 0 && onBackup && (
+          <Button
+            className="mr-auto"
+            disabled={backingUp}
+            onClick={() => {
+              setBackingUp(true)
+              void onBackup().then((message) => {
+                setBackingUp(false)
+                setBackupMessage(message)
+              })
+            }}
+          >
+            {backingUp ? 'Đang sao lưu…' : 'Sao lưu trước…'}
+          </Button>
+        )}
+        <Button variant="light" onClick={onClose} autoFocus>
+          Hủy
+        </Button>
+        <Button
+          color="danger"
+          variant="solid"
+          disabled={backingUp}
+          onClick={() => {
+            onDelete(chapters)
+            onClose()
+          }}
+        >
+          {'Xóa ' + chapters.length + ' chương'}
+        </Button>
+      </div>
+    </div>
+  )
+}

@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import type {
   ExportChapterInput,
   ExportFormat,
+  ExportProgress,
   ExportResult,
   ExportWorkInput
 } from '../../../shared/contracts/export'
@@ -25,13 +26,38 @@ export function sanitizeFilename(name: string): string {
   return sanitized.length > 0 ? sanitized : 'novel'
 }
 
+/** Width of the number at the front of each file name, so the files sort in chapter order. */
+export function numberWidth(chapterCount: number): number {
+  return Math.max(3, String(chapterCount).length)
+}
+
 export class ExportService {
+  /** Works whose running export should stop before the next chapter. */
+  private readonly cancelled = new Set<string>()
+  /** Files and folders written this session: the only paths `reveal` will open. */
+  private readonly written = new Set<string>()
+
   constructor(
     private readonly library: LibraryStore,
     private readonly picker: ExportFilePicker,
     private readonly pdfPrinter: PdfPrinter,
-    private readonly writeBuffer: (path: string, data: Buffer) => Promise<void> = writeFile
+    private readonly writeBuffer: (path: string, data: Buffer) => Promise<void> = writeFile,
+    private readonly revealPath: (path: string) => void = () => {}
   ) {}
+
+  cancel(workId: string): void {
+    this.cancelled.add(workId)
+  }
+
+  /**
+   * Shows an exported file in its folder. Limited to what this session wrote, so the renderer cannot
+   * use it to open arbitrary places on disk.
+   */
+  reveal(path: string): boolean {
+    if (!this.written.has(path)) return false
+    this.revealPath(path)
+    return true
+  }
 
   private async generateBuffer(
     format: ExportFormat,
@@ -88,6 +114,7 @@ export class ExportService {
 
     const buffer = await this.generateBuffer(input.format, novelMeta, [chapterItem], input.options)
     await this.writeBuffer(targetPath, buffer)
+    this.written.add(targetPath)
 
     return {
       success: true,
@@ -96,18 +123,29 @@ export class ExportService {
     }
   }
 
-  async exportWork(input: ExportWorkInput): Promise<ExportResult> {
-    const work = this.library.get(input.workId)
-    const allChapters = this.library.listChapters(input.workId)
+  /**
+   * Exports the chosen chapters (all of them when none are named). Chapters with no translation are
+   * left out and counted in `skipped`, so the screen can say how many and which.
+   *
+   * `onProgress` hears after each chapter written; `cancel(workId)` stops before the next one, and
+   * what was already written stays on disk.
+   */
+  async exportWork(
+    input: ExportWorkInput,
+    onProgress: (progress: ExportProgress) => void = () => {}
+  ): Promise<ExportResult> {
+    const workId = input.workId
+    this.cancelled.delete(workId)
+    const work = this.library.get(workId)
+    const allChapters = this.library.listChapters(workId)
 
-    const selectedChapters =
-      input.chapterIds && input.chapterIds.length > 0
-        ? allChapters.filter((c) => input.chapterIds?.includes(c.id))
-        : allChapters
+    const wanted =
+      input.chapterIds && input.chapterIds.length > 0 ? new Set(input.chapterIds) : null
+    const selectedChapters = wanted ? allChapters.filter((c) => wanted.has(c.id)) : allChapters
 
     const items: ChapterExportItem[] = []
     for (const c of selectedChapters) {
-      const text = this.library.readText(input.workId, c.id, 'target')
+      const text = this.library.readText(workId, c.id, 'target')
       if (text.content.trim().length > 0) {
         items.push({
           id: c.id,
@@ -117,9 +155,10 @@ export class ExportService {
         })
       }
     }
+    const skipped = selectedChapters.length - items.length
 
     if (items.length === 0) {
-      return { success: false, error: 'Không có chương nào có nội dung dịch để xuất.' }
+      return { success: false, skipped, error: 'Không có chương nào có nội dung dịch để xuất.' }
     }
 
     const novelMeta: NovelMetadata = {
@@ -128,6 +167,7 @@ export class ExportService {
       author: work.author,
       description: work.description
     }
+    const total = items.length
 
     if (input.mode === 'combined') {
       const suggestedName = `${sanitizeFilename(work.title)}.${input.format}`
@@ -137,35 +177,40 @@ export class ExportService {
         return { success: false, canceled: true }
       }
 
+      onProgress({ workId, done: 0, total })
       const buffer = await this.generateBuffer(input.format, novelMeta, items, input.options)
+      if (this.cancelled.delete(workId)) return { success: false, canceled: true, count: 0 }
       await this.writeBuffer(targetPath, buffer)
+      this.written.add(targetPath)
+      onProgress({ workId, done: total, total })
 
-      return {
-        success: true,
-        filePath: targetPath,
-        count: items.length
-      }
-    } else {
-      const dirPath = await this.picker.chooseExportDirectory()
-      if (!dirPath) {
-        return { success: false, canceled: true }
-      }
-
-      for (const item of items) {
-        const numStr = String(item.number).padStart(3, '0')
-        const chName = sanitizeFilename(item.title)
-        const fileName = `${numStr} - ${chName}.${input.format}`
-        const filePath = join(dirPath, fileName)
-
-        const buffer = await this.generateBuffer(input.format, novelMeta, [item], input.options)
-        await this.writeBuffer(filePath, buffer)
-      }
-
-      return {
-        success: true,
-        filePath: dirPath,
-        count: items.length
-      }
+      return { success: true, filePath: targetPath, count: total, skipped }
     }
+
+    const dirPath = await this.picker.chooseExportDirectory()
+    if (!dirPath) {
+      return { success: false, canceled: true }
+    }
+
+    const width = numberWidth(allChapters.length)
+    onProgress({ workId, done: 0, total })
+    let done = 0
+    for (const item of items) {
+      if (this.cancelled.delete(workId)) {
+        return { success: false, canceled: true, filePath: dirPath, count: done, skipped }
+      }
+      const numStr = String(item.number).padStart(width, '0')
+      const chName = sanitizeFilename(item.title)
+      const fileName = `${numStr} - ${chName}.${input.format}`
+      const filePath = join(dirPath, fileName)
+
+      const buffer = await this.generateBuffer(input.format, novelMeta, [item], input.options)
+      await this.writeBuffer(filePath, buffer)
+      this.written.add(dirPath)
+      done += 1
+      onProgress({ workId, done, total })
+    }
+
+    return { success: true, filePath: dirPath, count: done, skipped }
   }
 }

@@ -1,4 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
+import { statSync } from 'node:fs'
+import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { CHANNELS } from '../../shared/contracts/channels'
 import { createServices } from '../services/createServices'
@@ -56,7 +58,17 @@ export function registerLibraryHandlers(
     // The login service checks the host itself (auth.openai.com, github.com) before asking for this.
     openExternal: (url) => shell.openExternal(url)
   })
-  const exportService = new ExportService(library, electronExportFilePicker(), electronPdfPrinter())
+  const exportService = new ExportService(
+    library,
+    electronExportFilePicker(),
+    electronPdfPrinter(),
+    writeFile,
+    // A folder (chapters exported one file each) opens; a file is shown selected in its folder.
+    (path) => {
+      if (statSync(path, { throwIfNoEntry: false })?.isDirectory()) void shell.openPath(path)
+      else shell.showItemInFolder(path)
+    }
+  )
   const handlers = guardHandlers(
     createLibraryHandlers(
       library,

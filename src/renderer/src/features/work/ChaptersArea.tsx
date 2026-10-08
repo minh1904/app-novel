@@ -10,13 +10,16 @@ import {
 import { AddIcon } from '@solar-icons/react/linear/add'
 import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
 import { ImportIcon } from '@solar-icons/react/linear/import'
+import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
+import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import { Button } from '../../components/ui/Button'
+import { Checkbox } from '../../components/ui/Checkbox'
 import { cn } from '../../lib/cn'
 import { Input, SearchInput } from '../../components/ui/Input'
 import { backupWork, savedMessage } from './backup'
 import { ChapterPager } from './ChapterPager'
-import { DeleteChapterDialog, MoveChapterDialog } from './ChapterDialogs'
+import { DeleteChapterDialog, DeleteChaptersDialog, MoveChapterDialog } from './ChapterDialogs'
 import { CHAPTER_GRID, ChapterRow, type ChapterRowActions } from './ChapterRow'
 import {
   DEFAULT_PAGE_SIZE,
@@ -46,7 +49,8 @@ export function ChaptersArea({
   workId,
   onWork,
   onOpenChapter,
-  addChapterSignal
+  addChapterSignal,
+  onExportChapters
 }: WorkAreaProps): JSX.Element {
   const chapters = useChapters(workId, onWork)
   const { chapters: all } = chapters
@@ -64,6 +68,12 @@ export function ChaptersArea({
   const [importOpen, setImportOpen] = useState(false)
   const [highlight, setHighlight] = useState<Highlight | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  // Picked chapters, kept across pages and filters; the anchor is where a Shift-click range starts.
+  const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set())
+  /** A bulk delete is running: the selection bar waits, so the same chapters are not deleted twice. */
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const anchor = useRef<string | null>(null)
+  const [deletingMany, setDeletingMany] = useState<ChapterItem[]>([])
   const listRef = useRef<HTMLUListElement>(null)
 
   // The header's "Thêm chương" asks this area to open the add row (derived during render, no effect).
@@ -81,6 +91,12 @@ export function ChaptersArea({
     () => all.filter((chapter) => chapterState(chapter) === 'translated').length,
     [all]
   )
+  // Deleted chapters drop out of the selection without an effect: the selection is read through the list.
+  const selected = useMemo(() => all.filter((chapter) => picked.has(chapter.id)), [all, picked])
+  const selectedIds = useMemo(() => new Set(selected.map((chapter) => chapter.id)), [selected])
+  // The rows' actions are memoised; they read the current filter order through this ref.
+  const filteredRef = useRef(filtered)
+  filteredRef.current = filtered
   const currentPage = clampPage(page, filtered.length, pageSize)
   const visible = useMemo(
     () => slicePage(filtered, currentPage, pageSize),
@@ -133,7 +149,25 @@ export function ChaptersArea({
         })
       },
       askMoveTo: (chapter) => setMovingId(chapter.id),
-      askDelete: (chapter) => setDeletingId(chapter.id)
+      askDelete: (chapter) => setDeletingId(chapter.id),
+      select: (chapter, checked, range) => {
+        const order = filteredRef.current
+        const from = range && anchor.current ? order.findIndex((c) => c.id === anchor.current) : -1
+        const to = order.findIndex((c) => c.id === chapter.id)
+        const ids =
+          from >= 0 && to >= 0
+            ? order.slice(Math.min(from, to), Math.max(from, to) + 1).map((c) => c.id)
+            : [chapter.id]
+        anchor.current = chapter.id
+        setPicked((now) => {
+          const next = new Set(now)
+          for (const id of ids) {
+            if (checked) next.add(id)
+            else next.delete(id)
+          }
+          return next
+        })
+      }
     }),
     [chapters.open, chapters.rename, chapters.move, onOpenChapter, pageSize]
   )
@@ -298,12 +332,31 @@ export function ChaptersArea({
                 CHAPTER_GRID,
                 'gap-x-2 border-b border-default bg-subtle px-1 py-2 text-body-xs font-medium text-subtle'
               )}
-              aria-hidden="true"
             >
-              <span className="pl-2">Số</span>
-              <span className="px-2">Tên chương</span>
-              <span className="hidden @min-[560px]:block">Trạng thái</span>
-              <span className="hidden @min-[560px]:block">Sửa lần cuối</span>
+              <PageCheckbox
+                visible={visible}
+                selectedIds={selectedIds}
+                onChange={(ids, checked) =>
+                  setPicked((now) => {
+                    const next = new Set(now)
+                    for (const id of ids) {
+                      if (checked) next.add(id)
+                      else next.delete(id)
+                    }
+                    return next
+                  })
+                }
+              />
+              <span aria-hidden="true">Số</span>
+              <span aria-hidden="true" className="px-2">
+                Tên chương
+              </span>
+              <span aria-hidden="true" className="hidden @min-[560px]:block">
+                Trạng thái
+              </span>
+              <span aria-hidden="true" className="hidden @min-[560px]:block">
+                Sửa lần cuối
+              </span>
               <span />
             </div>
             {addRow}
@@ -331,12 +384,26 @@ export function ChaptersArea({
                     total={all.length}
                     editing={editingId === chapter.id}
                     highlighted={highlight?.id === chapter.id}
+                    selected={selectedIds.has(chapter.id)}
                     actions={actions}
                   />
                 ))}
               </ul>
             )}
           </div>
+
+          {selected.length > 0 && (
+            <SelectionBar
+              count={selected.length}
+              busy={bulkBusy}
+              onClear={() => {
+                setPicked(new Set())
+                anchor.current = null
+              }}
+              onExport={() => onExportChapters(selectedIds)}
+              onDelete={() => setDeletingMany(selected)}
+            />
+          )}
 
           <ChapterPager
             page={currentPage}
@@ -363,6 +430,41 @@ export function ChaptersArea({
         onDelete={(chapter) => {
           setAnnouncement('Đã xóa chương ' + chapter.number + '.')
           void chapters.remove(chapter.id)
+        }}
+        onBackup={async () => {
+          const outcome = await backupWork(workId)
+          if (outcome.kind === 'saved') return savedMessage(outcome.path)
+          if (outcome.kind === 'failed') return 'Không sao lưu được: ' + outcome.message
+          return null
+        }}
+      />
+      <DeleteChaptersDialog
+        chapters={deletingMany}
+        onClose={() => setDeletingMany([])}
+        onDelete={(doomed) => {
+          setBulkBusy(true)
+          void (async () => {
+            // One at a time: each delete renumbers the rest, and the first failure stops the run.
+            let deleted = 0
+            let failure: string | null = null
+            for (const chapter of doomed) {
+              const result = await chapters.remove(chapter.id)
+              if (!result.ok) {
+                failure = 'Không xóa được chương ' + chapter.number + ': ' + result.error.message
+                break
+              }
+              deleted += 1
+            }
+            // What failed and what came after it stays picked, so it can be retried.
+            setPicked(new Set(doomed.slice(deleted).map((chapter) => chapter.id)))
+            anchor.current = null
+            setBulkBusy(false)
+            setAnnouncement(
+              failure === null
+                ? 'Đã xóa ' + deleted + ' chương.'
+                : 'Đã xóa ' + deleted + ' chương. ' + failure
+            )
+          })()
         }}
         onBackup={async () => {
           const outcome = await backupWork(workId)
@@ -440,5 +542,78 @@ function TranslatedProgress({ done, total }: { done: number; total: number }): J
       </span>
       {done}/{total} đã dịch
     </span>
+  )
+}
+
+/** Ticks or unticks every chapter on the page; shows a dash when only some of them are ticked. */
+function PageCheckbox({
+  visible,
+  selectedIds,
+  onChange
+}: {
+  visible: ChapterItem[]
+  selectedIds: ReadonlySet<string>
+  onChange(ids: string[], checked: boolean): void
+}): JSX.Element {
+  const ticked = visible.filter((chapter) => selectedIds.has(chapter.id)).length
+  return (
+    <Checkbox
+      aria-label="Chọn mọi chương trên trang này"
+      className="justify-self-center"
+      disabled={visible.length === 0}
+      checked={visible.length > 0 && ticked === visible.length}
+      indeterminate={ticked > 0 && ticked < visible.length}
+      onCheckedChange={(checked) =>
+        onChange(
+          visible.map((chapter) => chapter.id),
+          checked
+        )
+      }
+    />
+  )
+}
+
+/**
+ * What can be done to the picked chapters at once. Sits under the list and stays in view while the
+ * list scrolls, so the count is always on screen once something is ticked.
+ */
+function SelectionBar({
+  count,
+  busy,
+  onClear,
+  onExport,
+  onDelete
+}: {
+  count: number
+  /** A bulk delete is running. */
+  busy: boolean
+  onClear(): void
+  onExport(): void
+  onDelete(): void
+}): JSX.Element {
+  return (
+    <div
+      role="toolbar"
+      aria-label="Thao tác với chương đã chọn"
+      className="sticky bottom-3 z-(--mira-z-sticky) flex flex-wrap items-center gap-2 rounded-lg border border-default bg-surface px-3 py-2 shadow-sm"
+    >
+      <span className="text-body-sm font-semibold tabular-nums">Đã chọn {count} chương</span>
+      <Button variant="ghost" onClick={onClear} disabled={busy}>
+        Bỏ chọn
+      </Button>
+      <span className="ml-auto flex flex-wrap items-center gap-2">
+        <Button leftIcon={<UploadMinimalisticIcon size={14} />} onClick={onExport} disabled={busy}>
+          Xuất…
+        </Button>
+        <Button
+          color="danger"
+          leftIcon={<TrashBinMinimalisticIcon size={14} />}
+          onClick={onDelete}
+          loading={busy}
+        >
+          Xóa…
+        </Button>
+      </span>
+    </div>
   )
 }

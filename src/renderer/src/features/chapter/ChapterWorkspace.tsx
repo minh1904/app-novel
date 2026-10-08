@@ -508,9 +508,8 @@ export function ChapterWorkspace({
         onOpenChange={setExportOpen}
         workId={work.id}
         workTitle={work.title}
-        chapterId={chapter.id}
-        chapterTitle={chapter.title}
-        chapterNumber={chapter.number}
+        // The list may be behind the text on screen, so the pane says whether there is a translation.
+        chapter={{ ...chapter, hasTarget: translation.trim() !== '' }}
       />
     </div>
   )

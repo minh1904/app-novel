@@ -11,6 +11,7 @@ import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-mi
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import { cn } from '../../lib/cn'
 import { Badge, type BadgeColor } from '../../components/ui/Badge'
+import { Checkbox } from '../../components/ui/Checkbox'
 import { LinkButton } from '../../components/ui/Button'
 import { CompactButton } from '../../components/ui/CompactButton'
 import { ICON } from '../../components/ui/icon'
@@ -33,11 +34,13 @@ export interface ChapterRowActions {
   moveTo(chapter: ChapterItem, to: number): void
   askMoveTo(chapter: ChapterItem): void
   askDelete(chapter: ChapterItem): void
+  /** Ticks or unticks the chapter; with Shift, every chapter between it and the last one ticked. */
+  select(chapter: ChapterItem, checked: boolean, range: boolean): void
 }
 
 /** Grid shared by the list header and every row, so the columns line up. */
 export const CHAPTER_GRID =
-  'grid grid-cols-[48px_minmax(0,1fr)_36px] @min-[560px]:grid-cols-[56px_minmax(0,1fr)_132px_132px_36px]'
+  'grid grid-cols-[28px_40px_minmax(0,1fr)_36px] @min-[560px]:grid-cols-[28px_48px_minmax(0,1fr)_132px_132px_36px]'
 
 /** The same colours as the dots of the chapter sidebar (ChapterNavSidebar). */
 const STATE_COLORS: Record<ChapterState, BadgeColor> = {
@@ -51,12 +54,14 @@ export const ChapterRow = memo(function ChapterRow({
   total,
   editing,
   highlighted,
+  selected,
   actions
 }: {
   chapter: ChapterItem
   total: number
   editing: boolean
   highlighted: boolean
+  selected: boolean
   actions: ChapterRowActions
 }): JSX.Element {
   const label = displayTitle(chapter)
@@ -70,10 +75,18 @@ export const ChapterRow = memo(function ChapterRow({
       className={cn(
         CHAPTER_GRID,
         'items-center gap-x-2 border-b border-default px-1 py-1 transition-colors last:border-b-0',
-        highlighted ? 'bg-selected' : 'hover:bg-hover'
+        highlighted || selected ? 'bg-selected' : 'hover:bg-hover'
       )}
     >
-      <span className="pl-2 text-body-xs text-subtle">{chapter.number}</span>
+      <Checkbox
+        aria-label={'Chọn ' + label}
+        className="justify-self-center"
+        checked={selected}
+        onCheckedChange={(checked, details) =>
+          actions.select(chapter, checked, (details.event as MouseEvent).shiftKey === true)
+        }
+      />
+      <span className="text-body-xs text-subtle">{chapter.number}</span>
 
       {editing ? (
         <RenameInput chapter={chapter} actions={actions} />

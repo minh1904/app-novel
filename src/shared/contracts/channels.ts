@@ -84,7 +84,9 @@ export const CHANNELS = {
   addressingDyadsEffective: 'addressing:dyads:effective',
   addressingCheckCompliance: 'addressing:checkCompliance',
   exportChapter: 'export:chapter',
-  exportWork: 'export:work'
+  exportWork: 'export:work',
+  exportCancel: 'export:cancel',
+  exportReveal: 'export:reveal'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]
@@ -99,7 +101,9 @@ export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]
  */
 export const EVENT_CHANNELS = {
   /** Từng phần câu trả lời của một lượt chat. Preload đóng cứng tên này (D9 của `ai-chat`). */
-  aiChatChunk: 'ai:chat:chunk'
+  aiChatChunk: 'ai:chat:chunk',
+  /** Tiến độ một lượt xuất nhiều chương (`ExportProgress`). Preload đóng cứng tên này. */
+  exportProgress: 'export:progress'
 } as const
 
 export type EventChannel = (typeof EVENT_CHANNELS)[keyof typeof EVENT_CHANNELS]

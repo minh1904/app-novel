@@ -39,6 +39,8 @@ export function WorkDetailScreen({
   const areaId = controlledAreaId ?? localAreaId
   const [editing, setEditing] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  // The chapters picked in the list when the export was opened from there; none for the header.
+  const [exportSelection, setExportSelection] = useState<ReadonlySet<string> | undefined>()
   const [addChapterSignal, setAddChapterSignal] = useState(0)
   const [saved, setSaved] = useState<string | null>(null)
 
@@ -122,7 +124,10 @@ export function WorkDetailScreen({
           onSetArchived: (archived) => void detail.setArchived(archived),
           onSetCover: (file) => void detail.setCover(file),
           onBackup: () => void backUp(),
-          onExport: () => setExportOpen(true)
+          onExport: () => {
+            setExportSelection(undefined)
+            setExportOpen(true)
+          }
         }}
       />
 
@@ -137,7 +142,11 @@ export function WorkDetailScreen({
           workId,
           onWork: detail.applyWork,
           onOpenChapter: (chapterId) => onOpenChapter(workId, chapterId),
-          addChapterSignal
+          addChapterSignal,
+          onExportChapters: (ids) => {
+            setExportSelection(ids)
+            setExportOpen(true)
+          }
         }}
       />
 
@@ -153,6 +162,7 @@ export function WorkDetailScreen({
         onOpenChange={setExportOpen}
         workId={workId}
         workTitle={work.title}
+        selectedIds={exportSelection}
       />
     </div>
   )
