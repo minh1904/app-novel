@@ -33,3 +33,8 @@ khôi phục chữ chưa lưu. Một tab thuộc một truyện, không có tab 
 pane. Đóng tab không hủy yêu cầu AI/tác vụ Main. Hàng đợi dịch bền, batch translation, usage và
 trần chi phí thuộc [Module 7: Tác vụ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ), chưa triển
 khai trong change này.
+
+## Nghiên cứu liên quan
+
+- [Những gì nên đặt ở thanh bên](sidebar-research.md): thanh bên của LinguaGacha, Novelcrafter, CAT tool,
+  Obsidian; kết luận 2026-10-08: không dùng rail điều hướng.
