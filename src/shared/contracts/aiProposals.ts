@@ -1,39 +1,16 @@
 import * as v from 'valibot'
 import { idSchema } from './library'
-import { TEXT_MAX_UNITS } from './text'
 
 const chapterId = idSchema
-const revision = v.pipe(v.number(), v.integer(), v.minValue(0))
-const offset = v.pipe(v.number(), v.integer(), v.minValue(0))
 
-export const chatProposalSchema = v.strictObject({
-  workId: idSchema,
-  chapterId,
-  commandId: idSchema,
-  turnId: v.optional(idSchema),
-  action: v.picklist(['edit', 'apply']),
-  blockAutoApply: v.boolean(),
-  sourceRev: revision,
-  sourceContent: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS)),
-  targetBaseRev: revision,
-  targetBaseContent: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS)),
-  range: v.strictObject({
-    from: offset,
-    to: offset,
-    text: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS))
-  }),
-  replacement: v.pipe(v.string(), v.minLength(1), v.maxLength(TEXT_MAX_UNITS))
-})
-
-export type ChatProposalInput = v.InferInput<typeof chatProposalSchema>
-
-export interface ChatProposalResult {
-  proposalId: string
-  partId: string
-  status: 'pending' | 'applied' | 'rejected' | 'conflict' | 'stale' | 'needs-placement'
-  content: string | null
-  rev: number | null
-}
+/** Where one part of a proposal stands. */
+export type ProposalPartStatus =
+  | 'pending'
+  | 'applied'
+  | 'rejected'
+  | 'conflict'
+  | 'stale'
+  | 'needs-placement'
 
 export const acceptProposalSchema = v.strictObject({
   workId: idSchema,
@@ -57,7 +34,7 @@ export interface ProposalPartView {
   beforeText: string
   afterText: string
   sourceOrder: number | null
-  status: ChatProposalResult['status']
+  status: ProposalPartStatus
   reason: string | null
 }
 
@@ -73,4 +50,8 @@ export interface ProposalQueueItem {
 
 export const chapterProposalRefSchema = v.strictObject({ workId: idSchema, chapterId })
 export const proposalDenySchema = v.strictObject({ workId: idSchema, chapterId, partId: idSchema })
-export const proposalAcceptAllSchema = v.strictObject({ workId: idSchema, chapterId, commandId: idSchema })
+export const proposalAcceptAllSchema = v.strictObject({
+  workId: idSchema,
+  chapterId,
+  commandId: idSchema
+})

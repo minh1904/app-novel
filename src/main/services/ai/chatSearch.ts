@@ -140,3 +140,71 @@ export function hitsIn(
     }
   })
 }
+
+/**
+ * The alignment of one chapter, read once for a tool call that asks about many paragraphs: the row view is
+ * built the first time it is needed instead of once per paragraph, which on a long chapter was the whole
+ * cost of the call.
+ */
+export interface ChapterAlignment {
+  /**
+   * The other side of the stretch `[from, to)` of `side`: every segment that overlaps it, through links
+   * only, as `counterpartOf` reads one offset. `partial` says some of those segments have no link.
+   */
+  counterpart(side: TextSide, from: number, to: number): Counterpart & { partial?: boolean }
+  /** Source segments that have at least one linked translation segment. */
+  linkedSources(): Set<string>
+}
+
+export function alignmentOf(
+  source: TextRecord,
+  target: TextRecord,
+  links: LinkRecord[]
+): ChapterAlignment {
+  let rows: Map<string, string[]> | null = null
+  const bySource = (): Map<string, string[]> =>
+    (rows ??= new Map(
+      buildRows(source, target, links).rows.map((row) => [row.sourceId, row.targetIds])
+    ))
+
+  return {
+    counterpart(side, from, to) {
+      const here = side === 'source' ? source : target
+      const there = side === 'source' ? target : source
+      const end = Math.max(to, from + 1)
+      const segments = here.segments.filter((segment) => segment.start < end && segment.end > from)
+      if (segments.length === 0) return { kind: 'unaligned' }
+      const position = new Map(there.segments.map((item, index) => [item.id, index]))
+      const others = new Set<string>()
+      let unlinked = 0
+      let uncertain = false
+      for (const segment of segments) {
+        const own = links.filter((link) => link.members.includes(segment.id))
+        const ids =
+          side === 'source'
+            ? (bySource().get(segment.id) ?? [])
+            : own.flatMap((link) => link.members.filter((member) => position.has(member)))
+        if (ids.length === 0) {
+          unlinked++
+          continue
+        }
+        for (const id of ids) others.add(id)
+        if (own.some((link) => link.status !== 'ok') || isStale(segment, here)) uncertain = true
+      }
+      if (others.size === 0) return { kind: 'unaligned' }
+      const ordered = [...others].sort((a, b) => position.get(a)! - position.get(b)!)
+      const linked = ordered.map((id) => there.segments[position.get(id)!])
+      return {
+        kind: 'linked',
+        texts: linked.map((item) => there.content.slice(item.start, item.end).trim()),
+        uncertain: uncertain || linked.some((item) => isStale(item, there)),
+        ...(unlinked > 0 ? { partial: true } : {})
+      }
+    },
+    linkedSources() {
+      const linked = new Set<string>()
+      for (const [id, targets] of bySource()) if (targets.length > 0) linked.add(id)
+      return linked
+    }
+  }
+}

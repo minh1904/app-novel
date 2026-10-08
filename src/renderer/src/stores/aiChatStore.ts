@@ -1,19 +1,12 @@
 import { create } from 'zustand'
-import type {
-  ChatChunk,
-  ChatContextBlock,
-  ChatError,
-  ChatMode
-} from '../../../shared/contracts/aiChat'
+import type { ChatChunk, ChatError, ChatLocation } from '../../../shared/contracts/aiChat'
 import type { AiTurnView } from '../../../shared/contracts/aiHistory'
-import type { TargetRange } from '../features/editor/chatRange'
 import {
   applyChunk,
   attachRequestId,
   beginTurn,
   emptySession,
   failTurn,
-  markTurnProposal,
   restoredSession,
   type Session,
   type TurnView
@@ -23,17 +16,9 @@ import { registerStoreReset } from './resetStores'
 export interface BeginTurnInput {
   localId?: string
   question: string
-  mode: ChatMode
-  context: ChatContextBlock[]
-  range: TargetRange | null
   chapterId?: string
-  sourceText?: string
-  targetText?: string
-  sourceRev?: number
-  targetBaseRev?: number
+  location?: ChatLocation
 }
-
-export type ProposalPatch = Parameters<typeof markTurnProposal>[2]
 
 export interface AiChatState {
   workId: string | null
@@ -49,38 +34,14 @@ export interface AiChatState {
   receiveChunk(chunk: ChatChunk): void
   beginTurn(input: BeginTurnInput): TurnView
   attachRequestId(localId: string, requestId: string): void
-  attachRequestIdForWork(
-    workId: string,
-    localId: string,
-    requestId: string,
-    addedContext?: ChatContextBlock[]
-  ): void
+  attachRequestIdForWork(workId: string, localId: string, requestId: string): void
   failTurn(localId: string, error: ChatError): void
   failTurnForWork(workId: string, localId: string, error: ChatError): void
-  markTurnProposal(localId: string, patch: ProposalPatch): void
   setSession(session: Session | ((previous: Session) => Session)): void
   setSessionForWork(workId: string, update: (previous: Session) => Session): void
   restoreSession(views: AiTurnView[]): void
   clearSession(): void
   reset(): void
-}
-
-/**
- * Nối các khối main tự đọc từ kho (thuật ngữ, xưng hô) vào lượt vừa gửi, để danh sách "đã gửi" của
- * panel khớp đúng prompt — trước khi main trả lời, renderer chỉ biết các khối nó tự dựng.
- */
-function withAddedContext(
-  session: Session,
-  localId: string,
-  addedContext: ChatContextBlock[]
-): Session {
-  if (addedContext.length === 0) return session
-  return {
-    ...session,
-    turns: session.turns.map((turn) =>
-      turn.localId === localId ? { ...turn, context: [...turn.context, ...addedContext] } : turn
-    )
-  }
 }
 
 let unsubscribeChunk: (() => void) | null = null
@@ -172,7 +133,8 @@ export const useAiChatStore = create<AiChatState>((set, get) => {
           return
         }
       }
-      if (chunk.kind === 'done' && chunk.proposal && typeof window !== 'undefined') {
+      // A writing tool just made a proposal: the queue and the cards read it from main.
+      if (chunk.kind === 'proposal' && typeof window !== 'undefined') {
         window.dispatchEvent(new Event('mira:proposals-changed'))
       }
     },
@@ -192,14 +154,10 @@ export const useAiChatStore = create<AiChatState>((set, get) => {
         replay(requestId)
       }
     },
-    attachRequestIdForWork: (workId, localId, requestId, addedContext = []) => {
+    attachRequestIdForWork: (workId, localId, requestId) => {
       updateWork(workId, (current) => ({
         ...current,
-        session: withAddedContext(
-          attachRequestId(current.session, localId, requestId),
-          localId,
-          addedContext
-        )
+        session: attachRequestId(current.session, localId, requestId)
       }))
       replay(requestId)
     },
@@ -214,12 +172,6 @@ export const useAiChatStore = create<AiChatState>((set, get) => {
         ...current,
         session: failTurn(current.session, localId, error)
       })),
-
-    markTurnProposal: (localId: string, patch: ProposalPatch) => {
-      set((state) => ({
-        session: markTurnProposal(state.session, localId, patch)
-      }))
-    },
 
     setSession: (sessionOrUpdater) => {
       set((state) => ({

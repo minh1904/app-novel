@@ -1,27 +1,27 @@
 import * as v from 'valibot'
 import { idSchema, SOURCE_LANGUAGES } from './library'
 import type { TokenUsage } from './usage'
-import { TEXT_MAX_UNITS } from './text'
-import type { ChatProposalResult } from './aiProposals'
 
 /**
- * Hỏi AI về chỗ đang sửa: những gì đi qua IPC.
+ * Hỏi AI trong panel chat: những gì đi qua IPC.
  *
  * Khác hẳn [dịch chương](aiTranslate.ts) ở ba điểm, và cả ba đều hiện ra trong kiểu dữ liệu dưới
  * đây. **Một**, câu trả lời về theo dòng, nên một lượt là `send` → nhiều `ChatChunk` → đúng một
  * `done` hoặc `error`, chứ không phải một lời gọi trả một kết quả. **Hai**, không có segment ID nào
- * đi theo: phản hồi là chữ tự do, không bị kiểm theo tập ID. **Ba**, lượt chat chỉ ghi bản dịch khi
- * người dùng chọn Áp dụng thẳng và kết quả qua cùng giao dịch Accept của đề xuất.
+ * đi theo: phản hồi là chữ tự do, không bị kiểm theo tập ID. **Ba**, chat không bao giờ ghi bản
+ * dịch: tool ghi chỉ tạo đề xuất chờ duyệt (change `agentic-chat`).
  *
- * Ngữ cảnh do **renderer** dựng rồi gửi lên, không phải main đọc kho — vì main chỉ thấy bản đã
- * lưu, còn người dùng vừa gõ sửa mấy câu và đang hỏi về chính mấy câu đó (D6 của change `ai-chat`).
- * Đổi lại, payload mang văn bản, nên mọi trần kích thước ở cuối tệp này là bắt buộc, không phải
- * phòng xa.
+ * Lượt gửi **không** mang văn bản chương. Nó mang vị trí người dùng (`ChatLocation`), còn nội dung
+ * thì model tự đọc bằng tool. Trước change `agentic-chat` renderer dựng sẵn ngữ cảnh và người dùng
+ * phải chọn chế độ và phạm vi; các kiểu `ChatMode`, `ChatContextBlock`, `ChatRange` còn lại chỉ để
+ * đọc lượt cũ đã lưu.
  */
 
-/** Gửi chỉ trả lời; hai hành động viết tạo đề xuất có hoặc không tự Accept. Không có Agent (ADR-004). */
+/** Chế độ của lượt cũ (trước `agentic-chat`). Lượt mới không có chế độ và lưu là `chat`. */
 export const CHAT_MODES = ['ask', 'edit', 'apply'] as const
 export type ChatMode = (typeof CHAT_MODES)[number]
+/** Loại của một lượt đã lưu: chế độ cũ, hoặc `chat` cho lượt không chế độ. */
+export type ChatAction = ChatMode | 'chat'
 
 /** Một lượt trong hội thoại. Lịch sử bền trong tác phẩm và đi kèm mỗi lần gửi. */
 export interface ChatTurn {
@@ -29,79 +29,59 @@ export interface ChatTurn {
   text: string
 }
 
-/**
- * Các loại khối ngữ cảnh. Ba loại đầu dựng được ngay từ chương đang mở; `term` và `dyad` chờ change
- * `context-core` và sẽ do **main** dựng, nên danh sách khối là một mảng có nhãn ngay từ đầu — ghép
- * hai nguồn lại chỉ là nối mảng, không phải nối chuỗi.
- */
-export const CHAT_CONTEXT_KINDS = [
-  'chapter-source',
-  'chapter-target',
-  'range',
-  'before',
-  'after',
-  'term',
-  'dyad'
-] as const
-export type ChatContextKind = (typeof CHAT_CONTEXT_KINDS)[number]
-
-/** Một khối đã gửi kèm câu hỏi. `detail` là dòng panel hiện ra; `text` là thứ thật sự gửi đi. */
+/** Khối ngữ cảnh mà lượt cũ đã gửi kèm. Lượt mới không gửi kèm gì; kiểu này chỉ để hiện lại lịch sử. */
 export interface ChatContextBlock {
-  kind: ChatContextKind
-  /** Tiêu đề ngắn, ví dụ "Đoạn đang sửa". */
+  kind: string
   label: string
-  /** Phạm vi/nguồn của khối, ví dụ "3 câu liền trước". Không bao giờ là nội dung. */
   detail: string
   text: string
 }
 
-/** Phạm vi của bản dịch mà một lượt nhắm tới. `text` là nguyên văn đoạn đã gửi (D8). */
+/** Khoảng bản dịch mà một lượt cũ ở chế độ Sửa nhắm tới. Chỉ để đọc lịch sử. */
 export interface ChatRange {
   from: number
   to: number
   text: string
-  /** Segment của bản dịch giao với phạm vi, theo thứ tự trong chương. */
   targetIds: string[]
+}
+
+/**
+ * Người dùng đang đứng ở đâu trong chương của lượt (D1 của change `agentic-chat`).
+ *
+ * Chỉ là vị trí, không bao giờ là chữ: số đoạn đếm từ 1 theo cùng cách tách đoạn mà tool dùng
+ * (`splitParagraphs`), nên "đoạn 5" trong vị trí và "đoạn 5" trong `read_chapter` là một.
+ */
+export interface ChatLocation {
+  /** Đoạn mà con trỏ đang ở, mỗi phía; `null` khi phía đó trống hoặc chưa đặt con trỏ. */
+  caret: { source: number | null; target: number | null }
+  /** Khoảng đoạn đang chọn; `null` khi không có vùng chọn. */
+  selection: { side: 'source' | 'target'; from: number; to: number } | null
 }
 
 export interface ChatSendInput {
   /** Existing work-scoped session; omitted for the first turn of a new conversation. */
   sessionId?: string
   droppedTurns?: number
-  range?: ChatRange | null
-  /** Base captured with the visible context before a writing turn is sent. */
-  proposalBase?: {
-    sourceRev: number
-    sourceContent: string
-    targetRev: number
-    targetContent: string
-    blockAutoApply: boolean
-  }
   /**
-   * Tác phẩm và chương của lượt hỏi.
-   *
-   * Không phải để dựng ngữ cảnh — ngữ cảnh do renderer gửi lên (D6) — mà để **khóa phạm vi của
-   * tool đọc**: một lượt chỉ được đọc trong đúng tác phẩm này, và `chapterId` cho biết "chương này"
-   * là chương nào khi người dùng nói vậy.
+   * Tác phẩm và chương đang mở. Khóa phạm vi của tool: một lượt chỉ đọc được trong tác phẩm này, và
+   * tool ghi chỉ đề xuất được cho chương này.
    */
   workId: string
   chapterId: string
   connectionId: string
   /** Mục model dùng cho lượt này; cấu hình của nó được đọc một lần ở đầu lượt. */
   entryId: string
-  mode: ChatMode
   sourceLang: (typeof SOURCE_LANGUAGES)[number]
   question: string
   /** Các lượt trước của phiên, cũ nhất trước. Rỗng ở lượt đầu. */
   history: ChatTurn[]
-  context: ChatContextBlock[]
+  location: ChatLocation
 }
 
-/** Main trả lời lệnh gửi. `addedContext` là khối main tự đọc từ kho và đã gửi kèm. */
+/** Main trả lời lệnh gửi. */
 export interface ChatStartResult {
   requestId: string
   sessionId?: string
-  addedContext?: ChatContextBlock[]
 }
 
 export type ChatErrorKind =
@@ -130,6 +110,37 @@ export type ChatUsage = TokenUsage
 export type ChatFinishReason = 'stop' | 'length' | 'tool_calls' | 'filter'
 
 /**
+ * Một đề xuất mà tool ghi đã tạo trong lượt. Sửa và dịch đoạn là đề xuất trong hàng chờ của chương;
+ * thuật ngữ là một mục glossary chờ duyệt. Trạng thái **không** nằm ở đây: panel đọc nó từ hàng chờ
+ * hoặc glossary, để thẻ dưới lượt chat và hàng chờ không bao giờ nói hai điều khác nhau.
+ */
+export type ChatToolProposal =
+  | {
+      type: 'edit' | 'translation'
+      proposalId: string
+      partIds: string[]
+      chapterId: string
+      /** Một dòng cho thẻ, ví dụ "Sửa đoạn 7–9 bản dịch". */
+      label: string
+    }
+  | {
+      type: 'term'
+      entryId: string
+      term: string
+      translation: string
+      label: string
+    }
+
+/** Một lần gọi tool, như panel hiện và như lượt lưu lại. `detail` mô tả phạm vi, không bao giờ là nội dung. */
+export interface ChatToolStep {
+  name: string
+  detail: string
+  /** Thiếu ở lượt cũ, đọc như `ok`. */
+  status?: 'ok' | 'error'
+  proposal?: ChatToolProposal
+}
+
+/**
  * Một thông điệp của lượt đang chạy, đi main → renderer.
  *
  * Ba luật bất biến, và chúng là nội dung của test chứ không phải lời hứa trong comment:
@@ -139,10 +150,12 @@ export type ChatFinishReason = 'stop' | 'length' | 'tool_calls' | 'filter'
 export type ChatChunk =
   | { requestId: string; kind: 'delta'; text: string }
   /**
-   * Model vừa **đọc** một thứ trong tác phẩm. Chỉ để panel nói rõ đã đọc gì — `detail` là một dòng
-   * mô tả phạm vi, **không bao giờ** là nội dung đã đọc.
+   * Model vừa gọi một tool. Chỉ để panel nói rõ đã làm gì — `detail` là một dòng mô tả phạm vi,
+   * **không bao giờ** là nội dung đã đọc.
    */
-  | { requestId: string; kind: 'tool'; name: string; detail: string }
+  | { requestId: string; kind: 'tool'; name: string; detail: string; status?: 'ok' | 'error' }
+  /** Tool ghi vừa tạo một đề xuất; gửi ngay, để thẻ hiện ra trong lúc lượt còn chạy. */
+  | { requestId: string; kind: 'proposal'; proposal: ChatToolProposal }
   | {
       requestId: string
       kind: 'done'
@@ -153,11 +166,9 @@ export type ChatChunk =
       keyTail: string | null
       /**
        * Vì sao câu trả lời dừng, **chỉ khi nhà cung cấp nói rõ**. `length` nghĩa là bị cắt vì hết giới hạn
-       * đầu ra — câu trả lời chưa đủ — và trước đây không có gì phân biệt nó với một lượt xong êm.
-       * Thiếu trường này nghĩa là không biết, không phải xong êm. Panel chưa dùng nó.
+       * đầu ra — câu trả lời chưa đủ. Thiếu trường này nghĩa là không biết, không phải xong êm.
        */
       finishReason?: ChatFinishReason
-      proposal?: Pick<ChatProposalResult, 'proposalId' | 'partId' | 'status'>
     }
   | {
       requestId: string
@@ -168,53 +179,17 @@ export type ChatChunk =
     }
 
 /**
- * Trần kích thước. Lý do tồn tại: ngữ cảnh và lịch sử là **văn bản do renderer gửi lên**, nên nếu
- * không chặn thì một chương dài cộng một hội thoại dài đi qua IPC mỗi lượt. Các số này là trần
- * chống hỏng, không phải ngân sách token — ngân sách là việc của `useAiChat` (D10).
+ * Trần kích thước. Lịch sử là văn bản do renderer gửi lên, nên nếu không chặn thì một hội thoại dài đi
+ * qua IPC mỗi lượt. Các số này là trần chống hỏng, không phải ngân sách token — ngân sách là việc của
+ * `historyFor` (D10 của change `ai-chat`).
  */
 export const CHAT_QUESTION_MAX = 4_000
-export const CHAT_BLOCK_TEXT_MAX = 20_000
-export const CHAT_BLOCKS_MAX = 40
 export const CHAT_HISTORY_TURNS_MAX = 40
 export const CHAT_TURN_TEXT_MAX = 20_000
-/** Tổng mọi văn bản của một lần gửi: ngữ cảnh + lịch sử + câu hỏi. */
+/** Tổng mọi văn bản của một lần gửi: lịch sử + câu hỏi. */
 export const CHAT_TOTAL_TEXT_MAX = 200_000
-
-/**
- * Hàng rào bọc khối thay thế ở chế độ Sửa.
- *
- * Nằm ở `shared` vì nó là **hợp đồng giữa hai bên**: main viết prompt yêu cầu hàng rào, renderer tách
- * hàng rào ra để dựng diff. Để nó ở một bên thì bên kia phải đoán lại quy ước, và hai bên lệch nhau
- * sẽ biểu hiện thành "nút Áp dụng không bao giờ hiện" — một lỗi rất khó lần.
- */
-export const FENCE = '```'
-
-/**
- * Khối thay thế trong hàng rào **cuối cùng** của câu trả lời.
- *
- * Trả `null` khi không tách được, và bên gọi **hạ về như chế độ Hỏi** thay vì đoán: coi cả câu trả
- * lời là bản thay thế sẽ ghi luôn phần giải thích vào bản dịch — một lỗi im lặng đúng vào chỗ đang
- * sửa văn bản của người dùng.
- *
- * Lấy hàng rào cuối vì prompt yêu cầu khối thay thế đứng cuối, còn phần giải thích ở trên có thể
- * nhắc một câu gốc trong hàng rào riêng của nó.
- */
-export function extractFence(answer: string): string | null {
-  const close = answer.lastIndexOf(FENCE)
-  if (close <= 0) return null
-  const open = answer.lastIndexOf(FENCE, close - 1)
-  if (open === -1) return null
-
-  // Bỏ nhãn ngôn ngữ ngay sau hàng rào mở (```text, ```vi…) nếu có.
-  const afterOpen = answer.indexOf('\n', open + FENCE.length)
-  if (afterOpen === -1 || afterOpen > close) return null
-  const label = answer.slice(open + FENCE.length, afterOpen).trim()
-  if (label !== '' && /\s/.test(label)) return null
-
-  const body = answer.slice(afterOpen + 1, close)
-  const text = body.replace(/\n$/, '')
-  return text.trim() === '' ? null : text
-}
+/** Số đoạn lớn nhất một vị trí được nêu; chặn số rác, không phải độ dài chương thật. */
+export const CHAT_PARAGRAPH_MAX = 1_000_000
 
 /**
  * Trần cho lịch sử gửi kèm, tính bằng **ký tự** chứ không bằng token.
@@ -233,13 +208,24 @@ const turnSchema = v.strictObject({
   )
 })
 
-const contextBlockSchema = v.strictObject({
-  kind: v.picklist(CHAT_CONTEXT_KINDS, 'Loại khối ngữ cảnh không hợp lệ.'),
-  label: v.pipe(v.string('Nhãn khối phải là chữ.'), v.maxLength(120, 'Nhãn khối quá dài.')),
-  detail: v.pipe(v.string('Mô tả khối phải là chữ.'), v.maxLength(200, 'Mô tả khối quá dài.')),
-  text: v.pipe(
-    v.string('Nội dung khối phải là chữ.'),
-    v.maxLength(CHAT_BLOCK_TEXT_MAX, 'Một khối ngữ cảnh quá dài.')
+const paragraph = v.pipe(
+  v.number('Số đoạn phải là số.'),
+  v.integer('Số đoạn phải là số nguyên.'),
+  v.minValue(1, 'Số đoạn đếm từ 1.'),
+  v.maxValue(CHAT_PARAGRAPH_MAX, 'Số đoạn quá lớn.')
+)
+
+export const chatLocationSchema = v.strictObject({
+  caret: v.strictObject({ source: v.nullable(paragraph), target: v.nullable(paragraph) }),
+  selection: v.nullable(
+    v.pipe(
+      v.strictObject({
+        side: v.picklist(['source', 'target'], 'Phía của vùng chọn không hợp lệ.'),
+        from: paragraph,
+        to: paragraph
+      }),
+      v.check((selection) => selection.from <= selection.to, 'Vùng chọn bị ngược.')
+    )
   )
 })
 
@@ -247,32 +233,19 @@ const contextBlockSchema = v.strictObject({
 function totalTextLength(input: ChatSendInput): number {
   let total = input.question.length
   for (const turn of input.history) total += turn.text.length
-  for (const block of input.context) total += block.text.length
   return total
 }
 
 export const chatSendSchema = v.pipe(
   v.strictObject({
     sessionId: v.optional(idSchema),
-    droppedTurns: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(CHAT_HISTORY_TURNS_MAX))),
-    range: v.optional(v.nullable(v.strictObject({
-      from: v.pipe(v.number(), v.integer(), v.minValue(0)),
-      to: v.pipe(v.number(), v.integer(), v.minValue(0)),
-      text: v.pipe(v.string(), v.maxLength(CHAT_BLOCK_TEXT_MAX)),
-      targetIds: v.pipe(v.array(idSchema), v.maxLength(1000))
-    }))),
-    proposalBase: v.optional(v.strictObject({
-      sourceRev: v.pipe(v.number(), v.integer(), v.minValue(0)),
-      sourceContent: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS)),
-      targetRev: v.pipe(v.number(), v.integer(), v.minValue(0)),
-      targetContent: v.pipe(v.string(), v.maxLength(TEXT_MAX_UNITS)),
-      blockAutoApply: v.boolean()
-    })),
+    droppedTurns: v.optional(
+      v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(CHAT_HISTORY_TURNS_MAX))
+    ),
     workId: idSchema,
     chapterId: v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.')),
     connectionId: idSchema,
     entryId: idSchema,
-    mode: v.picklist(CHAT_MODES, 'Chế độ không hợp lệ.'),
     sourceLang: v.picklist(SOURCE_LANGUAGES, 'Ngôn ngữ nguồn không hợp lệ.'),
     question: v.pipe(
       v.string('Câu hỏi phải là chữ.'),
@@ -284,14 +257,11 @@ export const chatSendSchema = v.pipe(
       v.array(turnSchema, 'Lịch sử hội thoại không hợp lệ.'),
       v.maxLength(CHAT_HISTORY_TURNS_MAX, 'Hội thoại quá dài; hãy bắt đầu hội thoại mới.')
     ),
-    context: v.pipe(
-      v.array(contextBlockSchema, 'Ngữ cảnh không hợp lệ.'),
-      v.maxLength(CHAT_BLOCKS_MAX, 'Quá nhiều khối ngữ cảnh.')
-    )
+    location: chatLocationSchema
   }),
   v.check(
     (input) => totalTextLength(input) <= CHAT_TOTAL_TEXT_MAX,
-    'Câu hỏi kèm ngữ cảnh quá lớn; hãy chọn phạm vi nhỏ hơn.'
+    'Hội thoại quá dài; hãy bắt đầu hội thoại mới.'
   )
 )
 

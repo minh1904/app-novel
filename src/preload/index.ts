@@ -3,8 +3,6 @@ import type { ChatChunk, ChatSendInput, ChatStartResult } from '../shared/contra
 import type {
   AcceptProposalInput,
   AcceptProposalResult,
-  ChatProposalInput,
-  ChatProposalResult,
   ProposalQueueItem
 } from '../shared/contracts/aiProposals'
 import type { AiSessionView, AiTurnView } from '../shared/contracts/aiHistory'
@@ -252,10 +250,6 @@ const desktopApi: DesktopApi = {
         >
     },
     proposals: {
-      createFromChat: (input: ChatProposalInput) =>
-        ipcRenderer.invoke(CHANNELS.aiProposalChatCreate, input) as Promise<
-          Result<ChatProposalResult>
-        >,
       accept: (input: AcceptProposalInput) =>
         ipcRenderer.invoke(CHANNELS.aiProposalAccept, input) as Promise<
           Result<AcceptProposalResult>

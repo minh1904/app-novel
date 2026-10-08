@@ -2,12 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ChapterItem } from '../../../shared/contracts/chapters'
 import type { LinkRecord } from '../../../shared/contracts/links'
 import type { TextRecord, TextSide } from '../../../shared/contracts/text'
-import {
-  CHAT_TOOL_DEFINITIONS,
-  createChatTools,
-  TOOL_TEXT_MAX,
-  type ChatToolLibrary
-} from './chatTools'
+import { createChatTools, TOOL_TEXT_MAX, type ChatToolLibrary } from './chatTools'
 
 /**
  * What the model may look up for itself.
@@ -61,18 +56,6 @@ const call = (name: string, args: unknown = {}): { id: string; name: string; arg
   id: 'c1',
   name,
   args: typeof args === 'string' ? args : JSON.stringify(args)
-})
-
-describe('the tool list', () => {
-  it('offers three reading tools, and none of them writes', () => {
-    const names = CHAT_TOOL_DEFINITIONS.map((tool) => tool.function.name)
-    expect(names).toEqual(['list_chapters', 'read_chapter', 'search_work'])
-    // A write tool would undo the property the whole feature rests on, so the absence is asserted.
-    const text = JSON.stringify(CHAT_TOOL_DEFINITIONS).toLowerCase()
-    for (const verb of ['write', 'save', 'update', 'delete', 'apply', 'ghi', 'xóa']) {
-      expect(text).not.toContain('"' + verb)
-    }
-  })
 })
 
 describe('list_chapters', () => {

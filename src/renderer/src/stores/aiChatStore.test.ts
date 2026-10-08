@@ -25,12 +25,7 @@ describe('aiChatStore', () => {
   })
 
   it('begins turn and updates session', () => {
-    const turn = useAiChatStore.getState().beginTurn({
-      question: 'Xin chào',
-      mode: 'ask',
-      context: [],
-      range: null
-    })
+    const turn = useAiChatStore.getState().beginTurn({ question: 'Xin chào' })
 
     expect(turn.question).toBe('Xin chào')
     expect(useAiChatStore.getState().session.turns.length).toBe(1)
@@ -41,7 +36,7 @@ describe('aiChatStore', () => {
     const store = useAiChatStore.getState()
     store.selectWork('work-a')
     store.setSessionId('session-a')
-    store.beginTurn({ question: 'Hỏi', mode: 'ask', context: [], range: null })
+    store.beginTurn({ question: 'Hỏi' })
     store.selectWork('work-a')
     expect(useAiChatStore.getState()).toMatchObject({
       workId: 'work-a',
@@ -56,26 +51,34 @@ describe('aiChatStore', () => {
     expect(useAiChatStore.getState().session.turns).toHaveLength(1)
   })
 
-  it('adds the blocks main read from the store to the turn they were sent with', () => {
+  it('tells the proposal queue to reload when a writing tool made a proposal', () => {
+    const events: string[] = []
+    ;(window as unknown as { dispatchEvent: (event: Event) => void }).dispatchEvent = (event) =>
+      events.push(event.type)
     const store = useAiChatStore.getState()
-    store.selectWork('work-a')
-    const own = { kind: 'range' as const, label: 'Đoạn đang sửa', detail: '5 ký tự', text: 'Đông' }
-    const term = { kind: 'term' as const, label: 'Thuật ngữ đã duyệt', detail: '1', text: '- A → B' }
-    const first = store.beginTurn({ question: 'A', mode: 'edit', context: [own], range: null })
-    const second = store.beginTurn({ question: 'B', mode: 'ask', context: [], range: null })
-    store.attachRequestIdForWork('work-a', first.localId, 'request-a', [term])
-    store.attachRequestIdForWork('work-a', second.localId, 'request-b')
-    const turns = useAiChatStore.getState().session.turns
-    expect(turns[0].context).toEqual([own, term])
-    expect(turns[1].context).toEqual([])
+    const turn = store.beginTurn({ question: 'Sửa đoạn 3' })
+    store.attachRequestId(turn.localId, 'req-p')
+    store.receiveChunk({
+      requestId: 'req-p',
+      kind: 'proposal',
+      proposal: {
+        type: 'edit',
+        proposalId: 'p',
+        partIds: ['x'],
+        chapterId: 'c',
+        label: 'Sửa đoạn 3'
+      }
+    })
+    expect(events).toEqual(['mira:proposals-changed'])
+    expect(useAiChatStore.getState().session.turns[0].proposals).toHaveLength(1)
   })
 
   it('routes a late stream and send result back to their original work', () => {
     const store = useAiChatStore.getState()
     store.selectWork('work-a')
-    const turn = store.beginTurn({ question: 'A', mode: 'ask', context: [], range: null })
+    const turn = store.beginTurn({ question: 'A' })
     store.selectWork('work-b')
-    store.beginTurn({ question: 'B', mode: 'ask', context: [], range: null })
+    store.beginTurn({ question: 'B' })
     store.receiveChunk({ requestId: 'request-a', kind: 'delta', text: 'Bản A' })
     store.clearSession()
     store.attachRequestIdForWork('work-a', turn.localId, 'request-a')
@@ -97,12 +100,7 @@ describe('aiChatStore', () => {
   })
 
   it('attaches request id and receives chunks', () => {
-    const turn = useAiChatStore.getState().beginTurn({
-      question: 'Dịch câu này',
-      mode: 'ask',
-      context: [],
-      range: null
-    })
+    const turn = useAiChatStore.getState().beginTurn({ question: 'Dịch câu này' })
 
     useAiChatStore.getState().attachRequestId(turn.localId, 'req-123')
     expect(useAiChatStore.getState().session.turns[0].requestId).toBe('req-123')
@@ -128,23 +126,16 @@ describe('aiChatStore', () => {
   })
 
   it('replays chunks that arrive before the send IPC returns its request id', () => {
-    const turn = useAiChatStore.getState().beginTurn({
-      question: 'Dịch',
-      mode: 'edit',
-      context: [],
-      range: { from: 0, to: 0, text: '', targetIds: [] }
-    })
+    const turn = useAiChatStore.getState().beginTurn({ question: 'Dịch' })
     useAiChatStore.getState().receiveChunk({ requestId: 'fast', kind: 'delta', text: 'Đã xong' })
-    useAiChatStore
-      .getState()
-      .receiveChunk({
-        requestId: 'fast',
-        kind: 'done',
-        usage: null,
-        usd: null,
-        keyTail: null,
-        finishReason: 'stop'
-      })
+    useAiChatStore.getState().receiveChunk({
+      requestId: 'fast',
+      kind: 'done',
+      usage: null,
+      usd: null,
+      keyTail: null,
+      finishReason: 'stop'
+    })
     expect(useAiChatStore.getState().session.turns[0].status).toBe('sending')
     useAiChatStore.getState().attachRequestId(turn.localId, 'fast')
     expect(useAiChatStore.getState().session.turns[0]).toMatchObject({

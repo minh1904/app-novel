@@ -25,6 +25,8 @@ export interface TargetRange {
   text: string
   /** Translation segments overlapping the range, in document order. */
   targetIds: string[]
+  /** The range is a real selection, not the paragraph around a caret or the whole chapter. */
+  selected?: boolean
 }
 
 /** The paragraph around `pos`: up and down to a blank line. A blank line is its own empty range. */
@@ -59,6 +61,7 @@ export function targetRange(state: EditorState, scope: TargetScope = 'auto'): Ta
   return {
     from: span.from,
     to: span.to,
+    selected: scope !== 'chapter' && !selection.empty,
     text: state.doc.sliceString(span.from, span.to),
     targetIds: state
       .field(segmentsField)

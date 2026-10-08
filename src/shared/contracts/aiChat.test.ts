@@ -1,22 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import * as v from 'valibot'
 import {
-  CHAT_BLOCK_TEXT_MAX,
-  CHAT_BLOCKS_MAX,
   CHAT_HISTORY_TURNS_MAX,
   CHAT_QUESTION_MAX,
-  CHAT_TOTAL_TEXT_MAX,
+  CHAT_TURN_TEXT_MAX,
   chatSendSchema,
-  type ChatContextBlock,
   type ChatSendInput,
   type ChatTurn
 } from './aiChat'
 
 /**
- * Trần kích thước của một lượt chat. Ngữ cảnh và lịch sử là **văn bản renderer gửi lên**, nên tầng
- * này là chỗ duy nhất chặn được một chương dài đi qua IPC mỗi lượt. Mỗi test dưới đây là một cách
- * payload có thể phình, và trần tổng tồn tại vì từng phần đều dưới trần riêng vẫn có thể cộng lại
- * thành quá lớn.
+ * Hình dạng của một lượt gửi. Lượt không mang văn bản chương nữa (change `agentic-chat`), nên thứ
+ * còn phải chặn là lịch sử phình to và một vị trí vô nghĩa: số đoạn âm, vùng chọn ngược.
  */
 
 const ID = '7f1c2e5a-5b4d-4d5e-9c3a-1b2c3d4e5f60'
@@ -28,17 +23,12 @@ function input(patch: Partial<ChatSendInput> = {}): unknown {
     chapterId: CHAPTER_ID,
     connectionId: ID,
     entryId: ID,
-    mode: 'ask',
     sourceLang: 'en',
     question: 'Dịch tự nhiên hơn giúp tôi.',
     history: [],
-    context: []
+    location: { caret: { source: null, target: 5 }, selection: null }
   }
   return { ...base, ...patch }
-}
-
-function block(text: string): ChatContextBlock {
-  return { kind: 'range', label: 'Đoạn đang sửa', detail: '1 đoạn', text }
 }
 
 function turn(text: string): ChatTurn {
@@ -56,13 +46,76 @@ describe('chatSendSchema', () => {
     expect(firstIssue(input())).toBeNull()
   })
 
+  it('nhận vùng chọn nhiều đoạn và vùng chọn một đoạn', () => {
+    expect(
+      firstIssue(
+        input({
+          location: {
+            caret: { source: 3, target: 12 },
+            selection: { side: 'target', from: 12, to: 14 }
+          }
+        })
+      )
+    ).toBeNull()
+    expect(
+      firstIssue(
+        input({
+          location: {
+            caret: { source: 3, target: null },
+            selection: { side: 'source', from: 3, to: 3 }
+          }
+        })
+      )
+    ).toBeNull()
+  })
+
+  it('từ chối số đoạn âm hoặc bằng 0', () => {
+    expect(
+      firstIssue(input({ location: { caret: { source: -1, target: null }, selection: null } }))
+    ).toBe('Số đoạn đếm từ 1.')
+    expect(
+      firstIssue(
+        input({
+          location: {
+            caret: { source: null, target: null },
+            selection: { side: 'target', from: 0, to: 2 }
+          }
+        })
+      )
+    ).toBe('Số đoạn đếm từ 1.')
+  })
+
+  it('từ chối vùng chọn ngược', () => {
+    expect(
+      firstIssue(
+        input({
+          location: {
+            caret: { source: null, target: 9 },
+            selection: { side: 'target', from: 9, to: 4 }
+          }
+        })
+      )
+    ).toBe('Vùng chọn bị ngược.')
+  })
+
+  it('không còn nhận chế độ, ngữ cảnh hay khoảng văn bản', () => {
+    const base = input() as object
+    expect(v.safeParse(chatSendSchema, { ...base, mode: 'ask' }).success).toBe(false)
+    expect(v.safeParse(chatSendSchema, { ...base, context: [] }).success).toBe(false)
+    expect(v.safeParse(chatSendSchema, { ...base, range: null }).success).toBe(false)
+  })
+
+  it('đòi vị trí', () => {
+    const rest: Partial<ChatSendInput> = { ...(input() as ChatSendInput) }
+    delete rest.location
+    expect(v.safeParse(chatSendSchema, rest).success).toBe(false)
+  })
+
   it('chọn model bằng id của mục, không phải tên model', () => {
     expect(v.safeParse(chatSendSchema, input({ entryId: ID })).success).toBe(true)
-    // A model name is no longer an accepted way to say which model: the entry carries the settings too.
     expect(v.safeParse(chatSendSchema, input({ entryId: 'gemini-flash-latest' })).success).toBe(
       false
     )
-    expect(v.safeParse(chatSendSchema, { ...(input() as object), model: 'x' }).success).toBe(false)
   })
 
   it('từ chối câu hỏi rỗng', () => {
@@ -75,17 +128,6 @@ describe('chatSendSchema', () => {
     )
   })
 
-  it('từ chối một khối ngữ cảnh quá dài', () => {
-    expect(firstIssue(input({ context: [block('a'.repeat(CHAT_BLOCK_TEXT_MAX + 1))] }))).toBe(
-      'Một khối ngữ cảnh quá dài.'
-    )
-  })
-
-  it('từ chối quá nhiều khối ngữ cảnh', () => {
-    const many = Array.from({ length: CHAT_BLOCKS_MAX + 1 }, () => block('x'))
-    expect(firstIssue(input({ context: many }))).toBe('Quá nhiều khối ngữ cảnh.')
-  })
-
   it('từ chối hội thoại quá nhiều lượt', () => {
     const many = Array.from({ length: CHAT_HISTORY_TURNS_MAX + 1 }, () => turn('x'))
     expect(firstIssue(input({ history: many }))).toBe(
@@ -93,26 +135,14 @@ describe('chatSendSchema', () => {
     )
   })
 
-  // Đây là ca mà trần riêng từng phần không bắt được: mười khối, mỗi khối đúng trần của nó.
-  it('từ chối khi tổng văn bản vượt trần dù từng phần đều hợp lệ', () => {
-    const count = Math.ceil(CHAT_TOTAL_TEXT_MAX / CHAT_BLOCK_TEXT_MAX) + 1
-    const blocks = Array.from({ length: count }, () => block('a'.repeat(CHAT_BLOCK_TEXT_MAX)))
-    expect(blocks.length).toBeLessThanOrEqual(CHAT_BLOCKS_MAX)
-    for (const one of blocks) expect(one.text.length).toBeLessThanOrEqual(CHAT_BLOCK_TEXT_MAX)
-    expect(firstIssue(input({ context: blocks }))).toBe(
-      'Câu hỏi kèm ngữ cảnh quá lớn; hãy chọn phạm vi nhỏ hơn.'
-    )
-  })
-
   it('tính cả lịch sử và câu hỏi vào trần tổng', () => {
-    const turns = Array.from({ length: 11 }, () => turn('a'.repeat(CHAT_BLOCK_TEXT_MAX)))
+    const turns = Array.from({ length: 11 }, () => turn('a'.repeat(CHAT_TURN_TEXT_MAX)))
     expect(firstIssue(input({ history: turns }))).toBe(
-      'Câu hỏi kèm ngữ cảnh quá lớn; hãy chọn phạm vi nhỏ hơn.'
+      'Hội thoại quá dài; hãy bắt đầu hội thoại mới.'
     )
   })
 
-  it('từ chối chế độ và ngôn ngữ không có trong danh sách', () => {
-    expect(firstIssue(input({ mode: 'agent' as never }))).toBe('Chế độ không hợp lệ.')
+  it('từ chối ngôn ngữ không có trong danh sách', () => {
     expect(firstIssue(input({ sourceLang: 'vi' as never }))).toBe('Ngôn ngữ nguồn không hợp lệ.')
   })
 

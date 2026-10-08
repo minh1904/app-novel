@@ -105,9 +105,19 @@ export function ChapterWorkspace({
   const [aiOpen, setAiOpen] = useState(false)
   const [aiWidth, setAiWidth] = useState(420)
   const [exportOpen, setExportOpen] = useState(false)
-  // The stretch the AI panel is about, reported by the translation pane as the caret moves. Without
-  // it the panel would be about nothing in particular.
+  // Where the caret is in each pane, and which pane was touched last: the AI panel turns these into the
+  // user's position (change `agentic-chat`), so "đoạn này" means the paragraph the caret is in.
+  const [aiSourceRange, setAiSourceRange] = useState<TargetRange | null>(null)
   const [aiRange, setAiRange] = useState<TargetRange | null>(null)
+  const [aiSide, setAiSide] = useState<'source' | 'target'>('target')
+  const onSourceCaret = useCallback((range: TargetRange) => {
+    setAiSourceRange(range)
+    setAiSide('source')
+  }, [])
+  const onTargetCaret = useCallback((range: TargetRange) => {
+    setAiRange(range)
+    setAiSide('target')
+  }, [])
   /**
    * The two panes as the AI panel sees them: stable objects whose methods reach into the refs when
    * called.
@@ -131,7 +141,6 @@ export function ChapterWorkspace({
       reload: async () => {
         await targetEditor.current?.discard()
       },
-      targetRange: (scope) => targetEditor.current?.targetRange(scope) ?? null,
       reviewProposal: (range, replacement, onAccept, onDeny, label) =>
         targetEditor.current?.reviewProposal(range, replacement, onAccept, onDeny, label) ??
         'stale',
@@ -432,6 +441,7 @@ export function ChapterWorkspace({
               readOnly={!unlocked}
               onSaved={onSourceSaved}
               onStatusChange={setSourceStatus}
+              onTargetChange={onSourceCaret}
             />
           </EditorPane>
 
@@ -457,7 +467,7 @@ export function ChapterWorkspace({
               emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
               onSaved={onTargetSaved}
               onStatusChange={setTargetStatus}
-              onTargetChange={setAiRange}
+              onTargetChange={onTargetCaret}
               onTextChange={setTranslation}
             />
           </EditorPane>
@@ -471,7 +481,21 @@ export function ChapterWorkspace({
                 sourceLang={work.sourceLanguage}
                 source={sourceText}
                 target={targetChat}
-                autoRange={aiRange}
+                sourceCaret={
+                  aiSourceRange && {
+                    from: aiSourceRange.from,
+                    to: aiSourceRange.to,
+                    selected: aiSourceRange.selected === true
+                  }
+                }
+                targetCaret={
+                  aiRange && {
+                    from: aiRange.from,
+                    to: aiRange.to,
+                    selected: aiRange.selected === true
+                  }
+                }
+                activeSide={aiSide}
                 width={aiWidth}
                 onWidthChange={setAiWidth}
                 onClose={() => setAiOpen(false)}

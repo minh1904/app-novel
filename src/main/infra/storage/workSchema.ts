@@ -348,6 +348,59 @@ CREATE TABLE translate_run_context (
 CREATE INDEX translate_run_context_chapter ON translate_run_context (chapter_id, created_at);
 `
 
+/**
+ * Chat turns without a mode (change `agentic-chat`): `action` gains `chat`, and a turn records where the
+ * user was (`location_json`) instead of a range. SQLite cannot change a CHECK constraint in place, so
+ * `ai_turn` is rebuilt the same way `migrateChatActions` did, stashing `proposal.turn_id` first because
+ * dropping the old table fires its `ON DELETE SET NULL`.
+ */
+function migrateAgenticChat(db: Db): void {
+  db.exec(`
+CREATE TEMP TABLE proposal_turn_link AS SELECT id, turn_id FROM proposal WHERE turn_id IS NOT NULL;
+
+CREATE TABLE ai_turn_next (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES ai_session (id) ON DELETE CASCADE,
+  chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  action TEXT NOT NULL CHECK (action IN ('ask', 'edit', 'apply', 'chat')),
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL CHECK (status IN ('sending', 'running', 'done', 'cancelled', 'error', 'interrupted')),
+  context_json TEXT NOT NULL DEFAULT '[]',
+  target_range_json TEXT,
+  location_json TEXT,
+  tools_json TEXT NOT NULL DEFAULT '[]',
+  dropped_turns INTEGER NOT NULL DEFAULT 0 CHECK (dropped_turns >= 0),
+  provider TEXT,
+  model TEXT,
+  usage_json TEXT,
+  cost_usd REAL,
+  finish_reason TEXT CHECK (finish_reason IN ('stop', 'length', 'tool_calls', 'filter')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+INSERT INTO ai_turn_next (
+  id, session_id, chapter_id, action, question, answer, status, context_json, target_range_json,
+  tools_json, dropped_turns, provider, model, usage_json, cost_usd, finish_reason, created_at, updated_at
+)
+SELECT
+  id, session_id, chapter_id, action, question, answer, status, context_json, target_range_json,
+  tools_json, dropped_turns, provider, model, usage_json, cost_usd, finish_reason, created_at, updated_at
+FROM ai_turn;
+
+DROP TABLE ai_turn;
+ALTER TABLE ai_turn_next RENAME TO ai_turn;
+CREATE INDEX ai_turn_session_order ON ai_turn (session_id, created_at, id);
+CREATE INDEX ai_turn_chapter ON ai_turn (chapter_id, created_at);
+
+UPDATE proposal
+SET turn_id = (SELECT link.turn_id FROM proposal_turn_link link WHERE link.id = proposal.id)
+WHERE id IN (SELECT id FROM proposal_turn_link);
+DROP TABLE proposal_turn_link;
+`)
+}
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -404,6 +457,12 @@ export const workSchema: SchemaSpec = {
       version: 9,
       up(db) {
         db.exec(version9)
+      }
+    },
+    {
+      version: 10,
+      up(db) {
+        migrateAgenticChat(db)
       }
     }
   ]

@@ -1,96 +1,53 @@
-import type { ChatProposalInput, ChatProposalResult } from '../../../shared/contracts/aiProposals'
-import { createProposal, getProposal, setProposalPartDecision } from '../../infra/storage/aiProposals'
+import { createProposal } from '../../infra/storage/aiProposals'
 import { getAiTurn } from '../../infra/storage/aiSessions'
 import { StorageError } from '../../infra/storage/errors'
-import { readText } from '../../infra/storage/textFile'
-import type { LibraryStore } from '../library/library'
 import type { Db } from '../../infra/storage/sqlite'
-import { acceptProposalParts, textHash } from './proposalService'
+import type { ToolProposalInput } from '../ai/chatTools'
+import { textHash } from './proposalService'
 
-/** Turns a finished fenced chat answer into a durable proposal, then optionally accepts it. */
-export function createChatProposal(
-  library: LibraryStore,
-  input: ChatProposalInput
-): ChatProposalResult {
-  return library.withWork(input.workId, (db) => db.transaction(() =>
-    createChatProposalInDb(db, input, library.appNow(), () => library.newAppId())
-  ))
-}
-
-/** Caller may include this in the transaction that completes the AI turn. */
-export function createChatProposalInDb(
+/**
+ * A proposal a chat tool made while its turn was still running (change `agentic-chat`): always for review,
+ * never applied here, and tied to the turn and its session. A repeated `commandId` returns the proposal it
+ * already made, so a call that runs twice makes one.
+ *
+ * This is the only way chat creates a proposal. The fenced block at the end of an Edit answer, and the IPC
+ * that let the renderer turn one into a proposal, went with the modes.
+ */
+export function createToolProposalInDb(
   db: Db,
-  input: ChatProposalInput,
+  input: ToolProposalInput,
   now: number,
   newId: () => string
-): ChatProposalResult {
+): { proposalId: string; partIds: string[] } {
+  const { part } = input
   if (
-    input.range.to < input.range.from ||
-    input.range.to > input.targetBaseContent.length ||
-    input.targetBaseContent.slice(input.range.from, input.range.to) !== input.range.text
-  ) throw new StorageError('validation', 'Vùng thay thế không khớp bản dịch lúc gửi.')
-
-    const key = 'chat:' + input.commandId
-    const prior = db.prepare('SELECT id FROM proposal WHERE run_key = ?').get<{ id: string }>(key)
-    if (prior) {
-      const saved = getProposal(db, prior.id)
-      const part = saved.parts[0]
-      const target = readText(db, input.chapterId, 'target')
-      return {
-        proposalId: saved.id, partId: part.id,
-        status: part.status as ChatProposalResult['status'],
-        content: part.status === 'applied' ? target.content : null,
-        rev: part.status === 'applied' ? target.rev : null
-      }
-    }
-    const turn = input.turnId ? getAiTurn(db, input.turnId) : null
-    if (turn && (
-      turn.chapterId !== input.chapterId || turn.status !== 'done' ||
-      turn.action !== input.action ||
-      (turn.range !== null && (
-        turn.range.from !== input.range.from || turn.range.to !== input.range.to ||
-        turn.range.text !== input.range.text
-      ))
-    )) throw new StorageError('validation', 'Lượt AI không khớp đề xuất.')
-    const proposalId = newId()
-    const partId = newId()
-    createProposal(db, {
-      id: proposalId, chapterId: input.chapterId,
-      sessionId: turn?.sessionId, turnId: turn?.id, origin: 'chat',
-      policy: input.action === 'apply' ? 'auto' : 'review',
-      sourceRev: input.sourceRev, sourceHash: textHash(input.sourceContent),
-      targetBaseRev: input.targetBaseRev, targetBaseContent: input.targetBaseContent,
-      context: turn?.context,
-      contextHash: turn ? textHash(JSON.stringify(turn.context)) : null,
-      provider: turn?.provider, model: turn?.model,
-      usage: turn?.usage, runKey: key, now,
-      parts: [{
-        id: partId, baseFrom: input.range.from, baseTo: input.range.to,
-        beforeText: input.range.text, afterText: input.replacement
-      }]
-    })
-    if (input.action === 'edit') {
-      return { proposalId, partId, status: 'pending', content: null, rev: null }
-    }
-    if (input.blockAutoApply) {
-      setProposalPartDecision(db, partId, 'conflict', null, 'unsaved-or-changed-editor', now)
-      return { proposalId, partId, status: 'conflict', content: null, rev: null }
-    }
-    const source = readText(db, input.chapterId, 'source')
-    if (source.rev !== input.sourceRev) {
-      setProposalPartDecision(db, partId, 'stale', null, 'source-changed', now)
-      return { proposalId, partId, status: 'stale', content: null, rev: null }
-    }
-    const accepted = acceptProposalParts(db, {
-      chapterId: input.chapterId, partIds: [partId], commandId: input.commandId,
-      actor: 'auto', now, newId
-    })
-    const status = accepted.accepted.includes(partId)
-      ? 'applied'
-      : getProposal(db, proposalId).parts[0].status as ChatProposalResult['status']
-    return {
-      proposalId, partId, status,
-      content: status === 'applied' ? accepted.content : null,
-      rev: status === 'applied' ? accepted.rev : null
-    }
+    part.baseFrom !== null &&
+    (part.baseTo === null ||
+      part.baseTo < part.baseFrom ||
+      input.targetBaseContent.slice(part.baseFrom, part.baseTo) !== part.beforeText)
+  ) {
+    throw new StorageError('validation', 'Vùng thay thế không khớp bản dịch lúc đề xuất.')
+  }
+  const turn = getAiTurn(db, input.turnId)
+  if (turn.chapterId !== input.chapterId) {
+    throw new StorageError('validation', 'Lượt AI không thuộc chương của đề xuất.')
+  }
+  const saved = createProposal(db, {
+    id: newId(),
+    chapterId: input.chapterId,
+    sessionId: turn.sessionId,
+    turnId: turn.id,
+    origin: 'chat',
+    policy: 'review',
+    sourceRev: input.sourceRev,
+    sourceHash: textHash(input.sourceContent),
+    targetBaseRev: input.targetBaseRev,
+    targetBaseContent: input.targetBaseContent,
+    provider: turn.provider,
+    model: turn.model,
+    runKey: 'chat:' + input.commandId,
+    now,
+    parts: [{ id: newId(), ...part }]
+  })
+  return { proposalId: saved.id, partIds: saved.parts.map((item) => item.id) }
 }

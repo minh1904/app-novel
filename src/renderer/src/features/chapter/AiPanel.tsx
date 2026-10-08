@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
+import type { ChatLocation } from '../../../../shared/contracts/aiChat'
 import { CloseIcon } from '@solar-icons/react/linear/close'
 import { PenNewRoundIcon } from '@solar-icons/react/linear/pen-new-round'
 import { SettingsIcon } from '@solar-icons/react/linear/settings'
@@ -10,31 +11,25 @@ import type { ProposalQueueItem } from '../../../../shared/contracts/aiProposals
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/Menu'
-import type { TargetRange } from '../editor/chatRange'
 import { AiComposer } from './AiComposer'
 import { AiTurn } from './AiTurn'
-import { buildChatContext, rangeLabel, type ContextScope } from './chatContext'
-import { revealStep, type TurnView } from './chatTurns'
+import { buildLocation, locationLabel, type PaneCaret } from './chatLocation'
+import { ProposalCard, type ProposalActions } from './ProposalCard'
+import { isOpenPart } from './proposalStatus'
 import { useAiChat, type ChatEditor } from './useAiChat'
 import { useUiStore } from '../../stores/uiStore'
 import { useConnectionStore } from '../../stores/connectionStore'
 
 /**
- * Asking AI about the stretch being worked on. A real third column next to the two panes (it never
- * covers the text), built from wireframe `man=hoi-ai&v=a`: the conversation scrolls, the composer
- * stays at the bottom and carries the context chip, the mode and the model next to the send button.
+ * Asking AI about the chapter. A real third column next to the two panes (it never covers the text):
+ * the conversation scrolls and the composer stays at the bottom with the model next to the send button.
  *
- * The panel calls a real connection and can write a proposal into the translation, but only through
- * a diff the translator accepted, and only as one undoable step. Everything it says it sent is what
- * it sent.
+ * The model reads the work with tools and proposes changes with tools (change `agentic-chat`); every
+ * proposal waits here, under the turn that made it and in the chapter's queue, until the translator
+ * accepts it, and an accepted one is one undoable step.
  */
 const MIN_WIDTH = 320
 const MAX_WIDTH = 720
-
-const partStatusLabel = {
-  pending: 'Chờ duyệt', applied: 'Đã nhận', rejected: 'Đã bỏ',
-  conflict: 'Xung đột', stale: 'Nguồn đã đổi', 'needs-placement': 'Cần đặt vị trí'
-} as const
 
 export function AiPanel({
   workId,
@@ -43,7 +38,9 @@ export function AiPanel({
   sourceLang,
   source,
   target,
-  autoRange,
+  sourceCaret,
+  targetCaret,
+  activeSide,
   width,
   onWidthChange,
   onClose,
@@ -55,19 +52,21 @@ export function AiPanel({
   /** Which chapter the panel sits in, e.g. "Chương 12". */
   chapterLabel: string
   sourceLang: SourceLanguage
-  /** The source pane, read live so context matches what is on screen. */
+  /** The source pane, read live so the position matches what is on screen. */
   source: { getText(): string; isDirty(): boolean }
-  /** The translation pane: context comes from it, and an applied proposal goes into it. */
+  /** The translation pane: an accepted proposal is shown and reloaded there. */
   target: ChatEditor | null
-  /** The stretch the caret is in, following it as it moves. */
-  autoRange: TargetRange | null
+  /** The caret or selection of each pane, following it as it moves. */
+  sourceCaret: PaneCaret | null
+  targetCaret: PaneCaret | null
+  /** The pane touched last, whose selection counts. */
+  activeSide: 'source' | 'target'
   /** Current panel width in px; the parent grid's third column follows it. */
   width: number
   onWidthChange(width: number): void
   onClose(): void
   onOpenSettings(): void
 }): JSX.Element {
-  const [pinnedWhole, setPinnedWhole] = useState(false)
   const [queueOpen, setQueueOpen] = useState(false)
   const [queueFilter, setQueueFilter] = useState<'all' | 'session'>('all')
   const [queue, setQueue] = useState<ProposalQueueItem[]>([])
@@ -83,48 +82,42 @@ export function AiPanel({
     void window.mira.chapters.list(workId).then((result) => {
       if (active && result.ok) setChapterChoices(result.value.chapters)
     })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [workId])
 
-  /**
-   * An untranslated chapter is about the chapter, whatever the caret is doing.
-   *
-   * Asking "which paragraph of the translation" when the translation is empty has no useful answer,
-   * and the turn would go out carrying nothing — which is how "dịch chương này" once reached the
-   * model with no source attached at all.
-   */
-  const emptyTranslation = targetText.trim() === ''
-  const wholeChapter = pinnedWhole || emptyTranslation
-  const scope: ContextScope = wholeChapter ? 'chapter' : 'range'
-
-  // Asking about the whole chapter is a request, so the range is read on demand rather than tracked:
-  // nothing should be quietly holding a chapter-wide range while the caret sits in one paragraph.
-  const range = useMemo(
-    () => (wholeChapter ? (target?.targetRange('chapter') ?? null) : autoRange),
-    [wholeChapter, target, autoRange]
+  // Where the user is, in the paragraph numbers the tools use. Read when a turn is sent and shown in the
+  // header, so "đoạn này" means what the header says.
+  const location = useMemo<ChatLocation>(
+    () =>
+      buildLocation({
+        sourceText: sourceTextNow,
+        targetText,
+        source: sourceCaret,
+        target: targetCaret,
+        active: activeSide
+      }),
+    [sourceTextNow, targetText, sourceCaret, targetCaret, activeSide]
   )
-
-  const context = useMemo(() => buildChatContext({
-    sourceText: sourceTextNow, targetText, range, scope, radius: 2
-  }), [sourceTextNow, targetText, range, scope])
-  const sendSnapshot = useMemo(() => ({
-    sourceText: sourceTextNow, targetText, range, context
-  }), [sourceTextNow, targetText, range, context])
+  const locationRef = useRef(location)
+  useEffect(() => {
+    locationRef.current = location
+  }, [location])
 
   const chat = useAiChat({
     workId,
     chapterId,
     sourceLang,
-    source,
-    target,
-    range,
-    scope,
-    // The send action belongs to a turn, not to the chapter or the panel.
+    location: () => locationRef.current
   })
 
   // The first fallback of Settings that is not the model in use: what "Thử bằng …" on a failed turn offers.
   const fallbacks = useConnectionStore((state) => state.preferences?.fallbacks)
-  const retryTarget = ((): { selection: { connectionId: string; entryId: string }; label: string } | null => {
+  const retryTarget = ((): {
+    selection: { connectionId: string; entryId: string }
+    label: string
+  } | null => {
     for (const ref of fallbacks ?? []) {
       if (ref.entryId === chat.selection?.entryId) continue
       const connection = chat.usable.find((item) => item.id === ref.connectionId)
@@ -145,7 +138,8 @@ export function AiPanel({
       setQueue(listed.value.proposals)
       setUndoAvailable(listed.value.undoAvailable)
     }
-    if (counts.ok) setPendingCount(counts.value.counts.find((item) => item.chapterId === chapterId)?.count ?? 0)
+    if (counts.ok)
+      setPendingCount(counts.value.counts.find((item) => item.chapterId === chapterId)?.count ?? 0)
   }, [workId, chapterId])
 
   useEffect(() => {
@@ -159,72 +153,106 @@ export function AiPanel({
         setQueue(listed.value.proposals)
         setUndoAvailable(listed.value.undoAvailable)
       }
-      if (counts.ok) setPendingCount(counts.value.counts.find((item) => item.chapterId === chapterId)?.count ?? 0)
+      if (counts.ok)
+        setPendingCount(
+          counts.value.counts.find((item) => item.chapterId === chapterId)?.count ?? 0
+        )
     })
-    return () => { cancelled = true }
-  }, [workId, chapterId, chat.proposalVersion])
+    return () => {
+      cancelled = true
+    }
+  }, [workId, chapterId])
 
   useEffect(() => {
-    const refresh = (): void => { void reloadQueue() }
+    const refresh = (): void => {
+      void reloadQueue()
+    }
     window.addEventListener('mira:proposals-changed', refresh)
     return () => window.removeEventListener('mira:proposals-changed', refresh)
   }, [reloadQueue])
 
-  const acceptPart = async (partId: string): Promise<void> => {
+  // After a decision here, everything that counts pending proposals reloads: this queue, the status bar
+  // and the chapter list all listen for the same event.
+  const announce = (): void => {
+    window.dispatchEvent(new Event('mira:proposals-changed'))
+  }
+
+  const acceptParts = async (partIds: string[]): Promise<void> => {
     if (target?.isDirty() || source.isDirty()) {
       setQueueNotice('Hãy đợi chữ đang sửa được lưu trước khi duyệt.')
       return
     }
-    const result = await window.mira.ai.proposals.accept({
-      workId, chapterId, partId, commandId: crypto.randomUUID()
-    })
-    if (!result.ok) setQueueNotice(result.error.message)
-    else if (result.value.accepted.includes(partId)) {
-      setQueueNotice('Đã áp dụng một phần vào bản dịch.')
+    let applied = 0
+    for (const partId of partIds) {
+      const result = await window.mira.ai.proposals.accept({
+        workId,
+        chapterId,
+        partId,
+        commandId: crypto.randomUUID()
+      })
+      if (!result.ok) {
+        setQueueNotice(result.error.message)
+        break
+      }
+      if (result.value.accepted.includes(partId)) applied++
+    }
+    if (applied > 0) {
+      setQueueNotice(
+        applied === partIds.length
+          ? 'Đã áp dụng vào bản dịch.'
+          : 'Đã áp dụng một phần; phần còn lại cần xem lại.'
+      )
       target?.endReview()
       if (target && !target.isDirty()) await target.reload()
-    } else setQueueNotice('Phần này cần xem lại vì bản dịch hoặc nguồn đã đổi.')
-    await reloadQueue()
+    } else if (partIds.length > 0)
+      setQueueNotice('Phần này cần xem lại vì bản dịch hoặc nguồn đã đổi.')
+    announce()
   }
+  const acceptPart = (partId: string): Promise<void> => acceptParts([partId])
 
   const denyPart = async (partId: string): Promise<void> => {
     const result = await window.mira.ai.proposals.deny(workId, chapterId, partId)
     if (!result.ok) setQueueNotice(result.error.message)
-    else { setQueueNotice('Đã bỏ phần đề xuất.'); target?.endReview() }
-    await reloadQueue()
+    else {
+      setQueueNotice('Đã bỏ phần đề xuất.')
+      target?.endReview()
+    }
+    announce()
   }
 
   const showInEditor = (part: ProposalQueueItem['parts'][number]): void => {
     if (!target || part.baseFrom === null || part.baseTo === null) return
-    const result = target.reviewProposal({
-      from: part.baseFrom, to: part.baseTo, text: part.beforeText, targetIds: []
-    }, part.afterText, () => { void acceptPart(part.id) },
-    () => { void denyPart(part.id) },
-    part.sourceOrder === null ? 'Đề xuất AI' : `Đề xuất đoạn ${part.sourceOrder + 1}`)
+    const result = target.reviewProposal(
+      {
+        from: part.baseFrom,
+        to: part.baseTo,
+        text: part.beforeText,
+        targetIds: []
+      },
+      part.afterText,
+      () => {
+        void acceptPart(part.id)
+      },
+      () => {
+        void denyPart(part.id)
+      },
+      part.sourceOrder === null ? 'Đề xuất AI' : `Đề xuất đoạn ${part.sourceOrder + 1}`
+    )
     if (result === 'stale') setQueueNotice('Vùng đích đã đổi; hãy xem lại đề xuất trong hàng chờ.')
     else setQueueNotice(null)
   }
 
-  const partOfTurn = (turn: TurnView): ProposalQueueItem['parts'][number] | undefined =>
-    queue.flatMap((proposal) => proposal.parts).find((part) => part.id === turn.partId)
-
-  // The answer to a writing turn belongs in the translation pane, not in the chat: when one that was
-  // running here finishes, its proposal opens there as a review. See `revealStep` for which turns.
-  const reveal = useRef(showInEditor)
-  useEffect(() => {
-    reveal.current = showInEditor
-  })
-  const awaitingReview = useRef<ReadonlySet<string>>(new Set())
-  useEffect(() => {
-    const parts = new Map(queue.flatMap((proposal) => proposal.parts).map((part) => [part.id, part]))
-    const step = revealStep(chat.session.turns, awaitingReview.current, chapterId,
-      (partId) => parts.get(partId)?.status)
-    awaitingReview.current = step.watched
-    for (const partId of step.reveal) {
-      const part = parts.get(partId)
-      if (part) reveal.current(part)
-    }
-  }, [chat.session.turns, queue, chapterId])
+  const actions: ProposalActions = {
+    accept: (partIds) => void acceptParts(partIds),
+    deny: (partIds) => {
+      void (async () => {
+        for (const partId of partIds) await denyPart(partId)
+      })()
+    },
+    show: showInEditor
+  }
+  const queueItem = (proposalId: string): ProposalQueueItem | undefined =>
+    queue.find((proposal) => proposal.id === proposalId)
 
   const acceptAll = async (): Promise<void> => {
     if (target?.isDirty() || source.isDirty()) {
@@ -234,10 +262,12 @@ export function AiPanel({
     const result = await window.mira.ai.proposals.acceptAll(workId, chapterId, crypto.randomUUID())
     if (!result.ok) setQueueNotice(result.error.message)
     else {
-      setQueueNotice(`Đã nhận ${result.value.accepted.length} phần; ${result.value.skipped.length} phần cần xem lại.`)
+      setQueueNotice(
+        `Đã nhận ${result.value.accepted.length} phần; ${result.value.skipped.length} phần cần xem lại.`
+      )
       if (target && !target.isDirty() && result.value.accepted.length > 0) await target.reload()
     }
-    await reloadQueue()
+    announce()
   }
 
   const undo = async (): Promise<void> => {
@@ -251,7 +281,7 @@ export function AiPanel({
       setQueueNotice('Đã hoàn tác lượt duyệt gần nhất.')
       if (target) await target.reload()
     }
-    await reloadQueue()
+    announce()
   }
 
   return (
@@ -290,7 +320,7 @@ export function AiPanel({
         <StarsIcon size={16} className="shrink-0 text-info" />
         <h3 className="text-ui-xs font-semibold">Hỏi AI</h3>
         <span className="min-w-0 truncate text-ui-xs text-ink-muted">
-          {chapterLabel} · {rangeLabel(range, targetText, scope)}
+          {chapterLabel} · {locationLabel(location)}
         </span>
         <span className="ml-auto flex shrink-0 items-center gap-0.5">
           {chat.sessions.length > 0 && (
@@ -337,22 +367,36 @@ export function AiPanel({
         {pendingCount > 0 && (
           <div className="rounded-panel border border-line-strong bg-canvas p-2">
             <div className="flex items-center justify-between">
-              <button type="button" className="text-ui-xs font-medium text-ink" aria-expanded={queueOpen}
-                onClick={() => setQueueOpen((value) => !value)}>
+              <button
+                type="button"
+                className="text-ui-xs font-medium text-ink"
+                aria-expanded={queueOpen}
+                onClick={() => setQueueOpen((value) => !value)}
+              >
                 Đề xuất chờ · {chapterLabel} ({pendingCount}) {queueOpen ? '▴' : '▾'}
               </button>
               {queueOpen && (
                 <div className="flex items-center gap-1 text-ui-xs">
                   <button
                     type="button"
-                    className={cx('rounded-control px-1.5 py-0.5', queueFilter === 'all' ? 'bg-control font-semibold text-ink' : 'text-ink-muted hover:text-ink')}
+                    className={cx(
+                      'rounded-control px-1.5 py-0.5',
+                      queueFilter === 'all'
+                        ? 'bg-control font-semibold text-ink'
+                        : 'text-ink-muted hover:text-ink'
+                    )}
                     onClick={() => setQueueFilter('all')}
                   >
                     Tất cả
                   </button>
                   <button
                     type="button"
-                    className={cx('rounded-control px-1.5 py-0.5', queueFilter === 'session' ? 'bg-control font-semibold text-ink' : 'text-ink-muted hover:text-ink')}
+                    className={cx(
+                      'rounded-control px-1.5 py-0.5',
+                      queueFilter === 'session'
+                        ? 'bg-control font-semibold text-ink'
+                        : 'text-ink-muted hover:text-ink'
+                    )}
                     onClick={() => setQueueFilter('session')}
                   >
                     Phiên này
@@ -366,42 +410,54 @@ export function AiPanel({
                   Áp dụng tất cả {pendingCount} phần của {chapterLabel}
                 </Button>
                 {(() => {
-                  const filteredQueue = queueFilter === 'session'
-                    ? queue.filter((proposal) => proposal.sessionId === chat.sessionId)
-                    : queue
-                  const parts = filteredQueue.flatMap((proposal) => proposal.parts.filter((part) =>
-                    ['pending', 'conflict', 'stale', 'needs-placement'].includes(part.status)
-                  ).map((part) => ({ proposal, part })))
+                  const filteredQueue =
+                    queueFilter === 'session'
+                      ? queue.filter((proposal) => proposal.sessionId === chat.sessionId)
+                      : queue
+                  const parts = filteredQueue.flatMap((proposal) =>
+                    proposal.parts.filter(isOpenPart).map((part) => ({ proposal, part }))
+                  )
                   if (parts.length === 0) {
-                    return <p className="text-ui-xs text-ink-muted">Không có đề xuất nào thuộc phiên này.</p>
+                    return (
+                      <p className="text-ui-xs text-ink-muted">
+                        Không có đề xuất nào thuộc phiên này.
+                      </p>
+                    )
                   }
                   return parts.map(({ proposal, part }) => (
-                    <details key={part.id} className="rounded-control border border-line p-2 text-ui-xs">
-                      <summary className="cursor-pointer text-ink">
-                        {proposal.origin === 'chat' ? 'Chat' : 'Dịch chương'} · {partStatusLabel[part.status]}
-                      </summary>
-                      <p className="mt-2 text-ink-muted">Chữ trước</p>
-                      <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.beforeText}</pre>
-                      <p className="mt-2 text-ink-muted">Bản đề xuất</p>
-                      <pre className="selectable max-h-32 overflow-auto whitespace-pre-wrap text-ink">{part.afterText}</pre>
-                      <div className="mt-2 flex gap-1">
-                        {part.baseFrom !== null && part.baseTo !== null &&
-                          <Button size="sm" variant="outline" onClick={() => showInEditor(part)}>
-                            Xem trong editor
-                          </Button>}
-                        <Button size="sm" disabled={part.status === 'needs-placement'} onClick={() => void acceptPart(part.id)}>Áp dụng</Button>
-                        <Button size="sm" variant="outline" onClick={() => void denyPart(part.id)}>Bỏ</Button>
-                      </div>
-                    </details>
+                    <ProposalCard
+                      key={part.id}
+                      title={proposal.origin === 'chat' ? 'Chat' : 'Dịch chương'}
+                      status={part.status}
+                      before={part.beforeText}
+                      after={part.afterText}
+                      onShow={
+                        part.baseFrom !== null && part.baseTo !== null
+                          ? () => showInEditor(part)
+                          : undefined
+                      }
+                      onAccept={isOpenPart(part) ? () => void acceptPart(part.id) : undefined}
+                      acceptDisabled={part.status === 'needs-placement'}
+                      onDeny={isOpenPart(part) ? () => void denyPart(part.id) : undefined}
+                    />
                   ))
                 })()}
               </div>
             )}
           </div>
         )}
-        {queueNotice && <p role="status" className="text-ui-xs text-ink-muted">{queueNotice}</p>}
+        {queueNotice && (
+          <p role="status" className="text-ui-xs text-ink-muted">
+            {queueNotice}
+          </p>
+        )}
         {undoAvailable && (
-          <Button variant="ghost-muted" size="sm" className="self-start" onClick={() => void undo()}>
+          <Button
+            variant="ghost-muted"
+            size="sm"
+            className="self-start"
+            onClick={() => void undo()}
+          >
             Hoàn tác lượt duyệt gần nhất
           </Button>
         )}
@@ -450,78 +506,47 @@ export function AiPanel({
 
         {chat.session.turns.map((turn) => {
           const isOtherChapter = Boolean(turn.chapterId && turn.chapterId !== chapterId)
-          const other = isOtherChapter ? chapterChoices.find((c) => c.id === turn.chapterId) : undefined
+          const other = isOtherChapter
+            ? chapterChoices.find((c) => c.id === turn.chapterId)
+            : undefined
           return (
             <AiTurn
               key={turn.localId}
               turn={turn}
+              workId={workId}
               currentChapterId={chapterId}
               chapterLabel={other ? `Chương ${other.number}` : undefined}
               targetChapterExists={!isOtherChapter || other !== undefined}
+              queueItem={queueItem}
+              actions={actions}
               onCancel={chat.cancel}
-              onRetry={(question) => void chat.send(question, turn.mode)}
+              onRetry={(question) => void chat.send(question)}
               retryWith={
                 turn.status === 'error' && retryTarget
                   ? {
                       label: retryTarget.label,
                       onClick: () => {
                         chat.selectModel(retryTarget.selection)
-                        void chat.send(turn.question, turn.mode)
+                        void chat.send(turn.question)
                       }
                     }
                   : undefined
               }
-              onApply={(applied) => void chat.apply(applied)}
-              onShowInEditor={(shown) => {
-                const part = partOfTurn(shown)
-                if (part) showInEditor(part)
-                else setQueueNotice('Đề xuất này không còn trong hàng chờ của chương.')
-              }}
               onNavigateChapter={(targetId) => {
-                void useUiStore.getState().navigate({ name: 'chapter', workId, chapterId: targetId })
+                void useUiStore
+                  .getState()
+                  .navigate({ name: 'chapter', workId, chapterId: targetId })
               }}
             />
           )
         })}
-
-        {chat.applyState.kind === 'stale' && (
-          <div className="flex flex-col items-start gap-1.5 rounded-panel border border-error/40 bg-error/5 p-2">
-            <p className="text-ui-xs leading-normal text-ink">
-              Chưa áp dụng: đoạn đó đã đổi kể từ lúc hỏi. Xem lại bản dịch rồi hỏi lại cho đúng đoạn
-              hiện tại.
-            </p>
-            <Button variant="ghost-muted" size="sm" onClick={chat.dismissApplyState}>
-              Đã hiểu
-            </Button>
-          </div>
-        )}
-
-        {chat.applyState.kind === 'error' && (
-          <p role="alert" className="rounded-panel border border-error/40 bg-error/5 p-2 text-ui-xs text-ink">
-            {chat.applyState.message}
-          </p>
-        )}
-
-        {chat.applyState.kind === 'applied' && (
-          <p className="text-ui-xs leading-normal text-ink-muted">
-            Đã áp dụng vào bản dịch. Ctrl+Z trong pane bản dịch để hoàn tác.
-          </p>
-        )}
-
       </div>
 
       <p className="shrink-0 px-3 text-ui-xs leading-normal text-ink-muted">
         Hội thoại được lưu trong tác phẩm; đóng panel vẫn có thể mở lại từ Lịch sử.
       </p>
 
-      <AiComposer
-        chat={chat}
-        snapshot={sendSnapshot}
-        rangeLabel={rangeLabel(range, targetText, scope)}
-        wholeChapter={wholeChapter}
-        wholeChapterForced={emptyTranslation}
-        onWholeChapterChange={setPinnedWhole}
-      />
+      <AiComposer chat={chat} />
     </section>
   )
 }

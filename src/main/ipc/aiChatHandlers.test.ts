@@ -148,11 +148,10 @@ const input = (patch: Record<string, unknown> = {}): unknown => ({
   chapterId: CHAPTER_ID,
   connectionId: CONNECTION_ID,
   entryId: '5d6e7f80-9a1b-4c2d-8e3f-405162738495',
-  mode: 'ask',
   sourceLang: 'en',
   question: 'Dịch tự nhiên hơn',
   history: [],
-  context: [],
+  location: { caret: { source: null, target: null }, selection: null },
   ...patch
 })
 

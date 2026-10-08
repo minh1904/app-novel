@@ -108,46 +108,96 @@ describe('createServices', () => {
     expect(stored).toEqual([])
   })
 
-  it('commits a completed chat turn and its proposal before emitting done', async () => {
+  it('lets the chat tools propose against the real store, and only through them', async () => {
     const library = openLibrary()
     const work = library.create({ title: 'Tác phẩm', sourceLang: 'en' })
     const chapter = library.createChapter(work.id).chapter
-    library.saveText(work.id, chapter.id, 'source', 'Winter', 0, [])
-    const answer = 'Bản dịch:\n```\nMùa đông\n```'
-    const frames = [
-      { choices: [{ delta: { content: answer } }] },
-      { choices: [{ delta: {}, finish_reason: 'stop' }] }
-    ].map((value) => 'data: ' + JSON.stringify(value) + '\n\n').join('') + 'data: [DONE]\n\n'
-    const fetchLike = (async () => new Response(frames, {
-      status: 200, headers: { 'content-type': 'text/event-stream' }
-    })) as typeof fetch
+    library.saveText(work.id, chapter.id, 'source', 'Winter came.', 0, [])
+    const call = (id: string, name: string, args: unknown): unknown => ({
+      choices: [
+        {
+          delta: {
+            tool_calls: [
+              {
+                index: id === 't1' ? 0 : 1,
+                id,
+                type: 'function',
+                function: { name, arguments: JSON.stringify(args) }
+              }
+            ]
+          }
+        }
+      ]
+    })
+    const rounds = [
+      [
+        call('t1', 'propose_translation', { chapter: 1, from: 1, to: 1, text: 'Mùa đông đã tới.' }),
+        call('t2', 'propose_glossary_term', { term: 'Winter', translation: 'Mùa đông' })
+      ],
+      // The answer carries a fenced block; with the modes gone it is only text.
+      [
+        { choices: [{ delta: { content: 'Đã đề xuất.\n```\nMùa đông khác\n```' } }] },
+        { choices: [{ delta: {}, finish_reason: 'stop' }] }
+      ]
+    ]
+    let round = 0
+    const fetchLike = (async () => {
+      const frames = rounds[Math.min(round++, rounds.length - 1)]
+      const body =
+        frames.map((value) => 'data: ' + JSON.stringify(value) + '\n\n').join('') +
+        'data: [DONE]\n\n'
+      return new Response(body, { status: 200, headers: { 'content-type': 'text/event-stream' } })
+    }) as typeof fetch
     const services = createServices({ library, crypto: countingCrypto(), fetch: fetchLike })
     const connection = services.connections.create({
-      name: 'Mock', baseUrl: 'http://127.0.0.1:8317/v1', providerId: 'google'
+      name: 'Mock',
+      baseUrl: 'http://127.0.0.1:8317/v1',
+      providerId: 'google'
     })
-    const entryId = services.connections.addModels(connection.id, [{ model: 'gemini-flash-latest' }]).models[0].id
+    const entryId = services.connections.addModels(connection.id, [
+      { model: 'gemini-flash-latest' }
+    ]).models[0].id
     const input: ChatSendInput = {
-      workId: work.id, chapterId: chapter.id, connectionId: connection.id, entryId,
-      mode: 'edit', sourceLang: 'en', question: 'Dịch', history: [], context: [],
-      range: { from: 0, to: 0, text: '', targetIds: [] },
-      proposalBase: { sourceRev: 1, sourceContent: 'Winter', targetRev: 0,
-        targetContent: '', blockAutoApply: false }
+      workId: work.id,
+      chapterId: chapter.id,
+      connectionId: connection.id,
+      entryId,
+      sourceLang: 'en',
+      question: 'Dịch đoạn 1 và thêm thuật ngữ',
+      history: [],
+      location: { caret: { source: 1, target: null }, selection: null }
     }
-    const completed = new Promise<ChatChunk & { kind: 'done' }>((resolve, reject) => {
+    const chunks: ChatChunk[] = []
+    await new Promise<void>((resolve, reject) => {
       services.chat.startWithSession(input, (chunk) => {
+        chunks.push(chunk)
         if (chunk.kind === 'error') reject(new Error(chunk.error.message))
-        if (chunk.kind === 'done') resolve(chunk)
+        if (chunk.kind === 'done') resolve()
       })
     })
-    const done = await completed
-    expect(done.proposal?.status).toBe('pending')
+    const proposals = chunks.flatMap((chunk) => (chunk.kind === 'proposal' ? [chunk.proposal] : []))
+    expect(proposals.map((proposal) => proposal.type)).toEqual(['translation', 'term'])
+    const done = chunks.find((chunk) => chunk.kind === 'done')!
+    const text = proposals[0].type === 'translation' ? proposals[0] : null
     const stored = library.withWork(work.id, (db) => ({
       turn: getAiTurn(db, done.requestId),
-      proposal: getProposal(db, done.proposal!.proposalId)
+      proposal: getProposal(db, text!.proposalId),
+      all: db.prepare('SELECT count(*) AS n FROM proposal').get<{ n: number }>()!.n
     }))
-    expect(stored.turn.status).toBe('done')
-    expect(stored.proposal.parts[0].afterText).toBe('Mùa đông')
-    expect(stored.proposal.turnId).toBe(done.requestId)
+    expect(stored.turn).toMatchObject({ status: 'done', action: 'chat', location: input.location })
+    expect(stored.proposal).toMatchObject({
+      turnId: done.requestId,
+      policy: 'review',
+      origin: 'chat'
+    })
+    expect(stored.proposal.parts[0]).toMatchObject({
+      afterText: 'Mùa đông đã tới.',
+      status: 'pending'
+    })
+    // One proposal, from the tool: the fenced answer made none.
+    expect(stored.all).toBe(1)
     expect(library.readText(work.id, chapter.id, 'target').content).toBe('')
+    const term = services.glossary.list(work.id).find((entry) => entry.source === 'Winter')
+    expect(term).toMatchObject({ target: 'Mùa đông', status: 'pending', origin: 'ai' })
   })
 })

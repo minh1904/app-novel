@@ -1,29 +1,35 @@
-import { useId, useMemo, useState, type JSX } from 'react'
+import { useId, useState, type JSX } from 'react'
 import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
-import { BookIcon } from '@solar-icons/react/linear/book'
 import { CheckIcon } from '@solar-icons/react/linear/check'
 import { CopyIcon } from '@solar-icons/react/linear/copy'
 import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
 import { StopCircleIcon } from '@solar-icons/react/linear/stop-circle'
-import type { ChatContextBlock } from '../../../../shared/contracts/aiChat'
+import type { ChatContextBlock, ChatMode } from '../../../../shared/contracts/aiChat'
+import type { ProposalQueueItem } from '../../../../shared/contracts/aiProposals'
 import { Button } from '../../components/Button'
 import { cx } from '../../components/cx'
-import { diffLines, diffSummary } from './lineDiff'
-import { proposalOf, type TurnView } from './chatTurns'
+import type { TurnView } from './chatTurns'
 import { SafeMarkdown } from './SafeMarkdown'
+import { TermProposalCard, TextProposalCard, type ProposalActions } from './ProposalCard'
+import { summarizeTools, toolCalls } from './toolSummary'
 
 /**
  * One question and its answer, as it actually happened.
  *
- * Two things here are load-bearing rather than decorative. The context list says "đã gửi kèm", not
- * "đã dùng công cụ": Mira chose those blocks by rule, and claiming the model went and looked them up
- * would misdescribe the mechanism. And Apply appears only under a finished Sửa turn that produced a
- * fenced block — a cancelled or failed answer is a truncated one, and applying a truncated rewrite
- * silently shortens the paragraph it replaces.
+ * What the model did with tools is one line, as Hermes shows it, with each call one click away. What it
+ * proposed sits under the answer as cards that are accepted or denied right there; their status comes
+ * from the proposal queue, so the card and the queue never disagree. A turn saved before change
+ * `agentic-chat` keeps its mode label and the context it sent along.
  */
 
-/** Collapsed by default: what was sent is routine, and the answer is what the reader came for. */
+const MODE_LABEL: Record<ChatMode, string> = {
+  ask: 'Hỏi',
+  edit: 'Sửa',
+  apply: 'Áp dụng thẳng'
+}
+
+/** Collapsed by default: what an old turn sent is routine, and the answer is what the reader came for. */
 function SentContext({ blocks }: { blocks: ChatContextBlock[] }): JSX.Element | null {
   const [open, setOpen] = useState(false)
   const listId = useId()
@@ -44,101 +50,67 @@ function SentContext({ blocks }: { blocks: ChatContextBlock[] }): JSX.Element | 
         />
         <span>Đã gửi kèm {blocks.length} khối ngữ cảnh</span>
       </button>
-      {/* grid-rows 0fr -> 1fr so the list slides instead of popping; `inert` keeps the closed rows
-          out of Tab order without unmounting them. */}
-      <div
-        className={cx(
-          'grid transition-[grid-template-rows] duration-200',
-          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-        )}
-      >
-        <div className="min-h-0 overflow-hidden" id={listId} inert={!open}>
-          <ul className="mt-2 ml-[7px] space-y-2 border-l border-line-strong pl-4">
-            {blocks.map((block, index) => (
-              <li key={block.label + String(index)}>
-                <p className="text-ui-xs text-ink">{block.label}</p>
-                <p className="text-ui-xs leading-normal text-ink-muted">{block.detail}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      {open && (
+        <ul id={listId} className="mt-2 ml-[7px] space-y-2 border-l border-line-strong pl-4">
+          {blocks.map((block, index) => (
+            <li key={block.label + String(index)}>
+              <p className="text-ui-xs text-ink">{block.label}</p>
+              <p className="text-ui-xs leading-normal text-ink-muted">{block.detail}</p>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
 
-/**
- * How big the change is, and a way to put it in front of the text it would change.
- *
- * The diff itself is **not** drawn here any more. It used to be, and comparing two places while
- * accepting all-or-nothing was the part that felt wrong: the proposal now goes into the translation
- * pane as marked chunks, each accepted or rejected where it sits. `onShow` opens it there again
- * after the review was closed or the caret moved on; the old before/after text stays one click away
- * but is no longer the main button.
- */
-function ProposalSummary({
-  before,
-  after,
-  onAccept,
-  onShow
-}: {
-  before: string
-  after: string
-  onAccept?: () => void
-  onShow?: () => void
-}): JSX.Element {
+/** The calls of a turn as one line that opens into the list, each call with its status. */
+function ToolSummary({ turn, running }: { turn: TurnView; running: boolean }): JSX.Element | null {
   const [open, setOpen] = useState(false)
-  const lines = useMemo(() => diffLines(before, after), [before, after])
-  const { added, removed } = useMemo(() => diffSummary(lines), [lines])
+  const listId = useId()
+  const calls = toolCalls(turn.tools)
+  if (calls.length === 0) return null
+  const last = calls[calls.length - 1]
+  const line = summarizeTools(turn.tools)
 
   return (
-    <div className="rounded-panel border border-line-strong px-2 py-1.5">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="min-w-0 flex-1 text-ui-xs text-ink-muted">
-          Đề xuất thay {removed} dòng, thêm {added} dòng
-        </span>
-        {onShow && (
-          <Button size="sm" onClick={onShow}>
-            Xem trong bản dịch
-          </Button>
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((value) => !value)}
+        className="flex min-h-6 w-full cursor-pointer items-center gap-1.5 text-left text-ui-xs text-ink-muted outline-none hover:text-ink focus-visible:text-ink"
+      >
+        <AltArrowRightIcon
+          size={14}
+          className={cx('shrink-0 transition-transform', open && 'rotate-90')}
+        />
+        {running ? (
+          <span className="min-w-0 truncate motion-safe:animate-pulse">
+            Đang gọi công cụ · {last.detail}
+          </span>
+        ) : (
+          <span className="min-w-0 truncate">{line}</span>
         )}
-        <Button
-          size="sm"
-          variant={onShow ? 'outline' : 'default'}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? 'Thu gọn' : 'Xem thay đổi'}
-        </Button>
-      </div>
+      </button>
       {open && (
-        <div className="mt-2 space-y-2">
-          <div>
-            <p className="text-ui-xs text-ink-muted">Chữ hiện tại lúc hỏi</p>
-            <pre className="selectable max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">
-              {before}
-            </pre>
-          </div>
-          <div>
-            <p className="text-ui-xs text-ink-muted">Bản AI đề xuất</p>
-            <pre className="selectable max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-canvas p-2 text-ui-xs text-ink">
-              {after}
-            </pre>
-          </div>
-          <div className="flex gap-1">
-            {onAccept && (
-              <Button size="sm" onClick={onAccept}>
-                Áp dụng
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void navigator.clipboard.writeText(after)}
-            >
-              Sao chép bản đề xuất
-            </Button>
-          </div>
-        </div>
+        <ul id={listId} className="mt-1 ml-[7px] space-y-1 border-l border-line-strong pl-4">
+          {calls.map((step, index) => (
+            <li key={step.name + String(index)} className="flex items-start gap-1.5">
+              {step.status === 'error' ? (
+                <DangerCircleIcon
+                  size={13}
+                  className="mt-px shrink-0 text-error"
+                  aria-label="Lỗi"
+                />
+              ) : (
+                <CheckIcon size={13} className="mt-px shrink-0 text-ink-muted" aria-label="Xong" />
+              )}
+              <span className="text-ui-xs leading-normal text-ink-muted">{step.detail}</span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )
@@ -146,37 +118,36 @@ function ProposalSummary({
 
 export function AiTurn({
   turn,
+  workId,
   currentChapterId,
   chapterLabel,
   targetChapterExists = true,
+  queueItem,
+  actions,
   onCancel,
   onRetry,
   retryWith,
-  onApply,
-  onShowInEditor,
   onNavigateChapter
 }: {
   turn: TurnView
+  workId: string
   currentChapterId?: string
+  /** The chapter of a turn sent from another chapter, e.g. "Chương 3". */
   chapterLabel?: string
   targetChapterExists?: boolean
+  /** The proposal as the chapter's queue has it. */
+  queueItem(proposalId: string): ProposalQueueItem | undefined
+  actions: ProposalActions
   onCancel(requestId: string): void
   onRetry(question: string): void
   /** The first fallback model of Settings, offered when the turn failed (spec `model-defaults`). */
   retryWith?: { label: string; onClick(): void }
-  onApply(turn: TurnView): void
-  /** Opens the turn's proposal in the translation pane as a review. */
-  onShowInEditor(turn: TurnView): void
   onNavigateChapter?(chapterId: string): void
 }): JSX.Element {
-  const proposal = proposalOf(turn)
-  const explanation =
-    proposal === null
-      ? turn.answer
-      : turn.answer
-          .slice(0, turn.answer.lastIndexOf('```', turn.answer.lastIndexOf('```') - 1))
-          .trim()
   const running = turn.status === 'sending' || turn.status === 'running'
+  const otherChapter = Boolean(
+    turn.chapterId && currentChapterId && turn.chapterId !== currentChapterId
+  )
 
   return (
     <article className="flex flex-col gap-2">
@@ -184,11 +155,13 @@ export function AiTurn({
         {turn.question}
       </p>
 
+      {turn.mode !== 'chat' && (
+        <p className="text-ui-xs text-ink-muted">Lượt cũ · chế độ {MODE_LABEL[turn.mode]}</p>
+      )}
+
       <SentContext blocks={turn.context} />
 
-      {/* What the model went and looked up for itself. Separate from "đã gửi kèm" because the two are
-          different claims: one is what Mira chose to send, the other is what the model chose to read. */}
-      {/* A fallback model answered: say which and why, apart from what the model read. */}
+      {/* A fallback model answered: say which and why, apart from what the model did with tools. */}
       {turn.tools
         .filter((step) => step.name === 'fallback')
         .map((step, index) => (
@@ -202,35 +175,60 @@ export function AiTurn({
           </p>
         ))}
 
-      {turn.tools.some((step) => step.name !== 'fallback') && (
-        <ul className="ml-[7px] space-y-1 border-l border-line-strong pl-4">
-          {turn.tools.filter((step) => step.name !== 'fallback').map((step, index) => (
-            <li key={step.name + String(index)} className="flex items-center gap-1.5">
-              <BookIcon size={13} className="shrink-0 text-ink-muted" />
-              <span className="text-ui-xs text-ink-muted">Đã đọc: {step.detail}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ToolSummary turn={turn} running={running} />
 
-      {explanation !== '' && (
-        <div className="space-y-1">
-          <SafeMarkdown text={explanation} />
-          {proposal !== null && (
-            <Button
-              size="sm"
-              variant="ghost-muted"
-              onClick={() => void navigator.clipboard.writeText(explanation)}
-            >
-              Sao chép lời giải thích
-            </Button>
-          )}
+      {turn.answer !== '' && <SafeMarkdown text={turn.answer} />}
+
+      {turn.proposals.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {turn.proposals.map((proposal, index) => {
+            const key = proposal.label + String(index)
+            if (proposal.type === 'term') {
+              return <TermProposalCard key={key} workId={workId} proposal={proposal} />
+            }
+            if (otherChapter || proposal.chapterId !== currentChapterId) {
+              return (
+                <div
+                  key={key}
+                  className="flex flex-col gap-1.5 rounded-panel border border-line bg-canvas p-2 text-ui-xs"
+                >
+                  {targetChapterExists ? (
+                    <>
+                      <p className="text-ink-muted">
+                        {proposal.label} · thuộc <strong>{chapterLabel ?? 'chương khác'}</strong>.
+                      </p>
+                      {onNavigateChapter && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="self-start"
+                          onClick={() => onNavigateChapter(proposal.chapterId)}
+                        >
+                          Mở {chapterLabel ?? 'chương'} để duyệt
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-error">Chương của đề xuất này đã bị xóa.</p>
+                  )}
+                </div>
+              )
+            }
+            return (
+              <TextProposalCard
+                key={key}
+                proposal={proposal}
+                item={queueItem(proposal.proposalId)}
+                actions={actions}
+              />
+            )
+          })}
         </div>
       )}
 
       {running && (
         <div className="flex items-center gap-2 text-ui-xs text-ink-muted">
-          <span className="animate-pulse">
+          <span className="motion-safe:animate-pulse">
             {turn.status === 'sending' ? 'Đang gửi…' : 'Đang trả lời…'}
           </span>
           {turn.requestId !== null && (
@@ -248,7 +246,7 @@ export function AiTurn({
 
       {turn.status === 'cancelled' && (
         <p className="text-ui-xs text-ink-muted">
-          Đã hủy. Câu trả lời chưa trọn nên không áp dụng được; hỏi lại nếu cần.
+          Đã hủy. Đề xuất đã tạo trước lúc hủy vẫn ở trên; hỏi lại nếu cần.
         </p>
       )}
 
@@ -280,7 +278,12 @@ export function AiTurn({
             </Button>
           )}
           {retryWith && (
-            <Button variant="ghost-muted" size="sm" className="self-start" onClick={retryWith.onClick}>
+            <Button
+              variant="ghost-muted"
+              size="sm"
+              className="self-start"
+              onClick={retryWith.onClick}
+            >
               <RefreshIcon size={14} />
               Thử bằng {retryWith.label}
             </Button>
@@ -288,80 +291,9 @@ export function AiTurn({
         </div>
       )}
 
-      {turn.mode === 'apply' && turn.autoApply === 'applied' && (
-        <p className="text-ui-xs text-success">Đã áp dụng thẳng vào bản dịch.</p>
-      )}
-
-      {turn.mode === 'edit' && turn.proposalStatus === 'applied' && (
-        <p className="text-ui-xs text-success">Đề xuất đã được áp dụng.</p>
-      )}
-
       {turn.status === 'interrupted' && (
         <p className="text-ui-xs text-ink-muted">
           Lượt này bị ngắt khi app đóng. Phần câu trả lời đã nhận chỉ để đọc; hãy hỏi lại nếu cần.
-        </p>
-      )}
-
-      {turn.mode === 'apply' && turn.autoApply === 'needs-review' && (
-        <p className="text-ui-xs text-ink-muted">
-          Bản gốc hoặc bản dịch đã đổi, hoặc còn chữ chưa lưu. Đề xuất cần được xem lại.
-        </p>
-      )}
-
-      {proposal !== null && turn.range !== null && (
-        <>
-          {turn.chapterId && currentChapterId && turn.chapterId !== currentChapterId ? (
-            <div className="flex flex-col gap-1.5 rounded-panel border border-line bg-canvas p-2 text-ui-xs">
-              {targetChapterExists ? (
-                <>
-                  <p className="text-ink-muted">
-                    Đề xuất này thuộc <strong>{chapterLabel ?? 'chương khác'}</strong>.
-                  </p>
-                  {onNavigateChapter && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="self-start"
-                      onClick={() => onNavigateChapter(turn.chapterId!)}
-                    >
-                      Mở {chapterLabel ?? 'chương'} để xem
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <p className="text-error">
-                  Chương thuộc đề xuất này đã bị xóa nên không áp dụng được.
-                </p>
-              )}
-            </div>
-          ) : (
-            <ProposalSummary
-              before={turn.range.text}
-              after={proposal}
-              onShow={
-                turn.proposalId !== undefined && turn.proposalStatus === 'pending'
-                  ? () => onShowInEditor(turn)
-                  : undefined
-              }
-              onAccept={
-                turn.proposalId !== undefined &&
-                (turn.proposalStatus === 'pending' ||
-                  turn.proposalStatus === 'conflict' ||
-                  turn.proposalStatus === 'stale')
-                  ? () => onApply(turn)
-                  : undefined
-              }
-            />
-          )}
-        </>
-      )}
-
-      {/* The model was asked for a fenced block and did not give one: read it as a plain reply rather
-          than guessing which part of the answer was meant to replace the paragraph. */}
-      {turn.mode !== 'ask' && turn.status === 'done' && proposal === null && (
-        <p className="text-ui-xs text-ink-muted">
-          Câu trả lời chưa có khối thay thế hoàn chỉnh nên không có gì để áp dụng. Hỏi lại và nói rõ
-          phạm vi cần sửa.
         </p>
       )}
 
@@ -397,7 +329,6 @@ export function AiTurn({
                 (turn.usd === null ? 'chưa biết giá' : '$' + turn.usd.toFixed(4))}
             {turn.keyTail !== null && ' · khóa …' + turn.keyTail}
           </span>
-          <CheckIcon size={14} className="ml-auto shrink-0 text-success opacity-0" aria-hidden />
         </div>
       )}
     </article>

@@ -101,7 +101,7 @@ describe('uiStore', () => {
   it('does not cancel a Main AI request when its work tab closes', async () => {
     const chat = useAiChatStore.getState()
     chat.selectWork('one')
-    const turn = chat.beginTurn({ question: 'Dịch', mode: 'ask', context: [], range: null })
+    const turn = chat.beginTurn({ question: 'Dịch' })
     chat.attachRequestIdForWork('one', turn.localId, 'request-one')
     await useUiStore.getState().navigate({ name: 'work', workId: 'one' })
     await useUiStore.getState().navigate({ name: 'work', workId: 'two' })

@@ -150,11 +150,10 @@ describe.skipIf(!LIVE)('live Gemini through connection → entry → gateway (ta
         chapterId: chapter.id,
         connectionId,
         entryId: entries.quiet,
-        mode: 'ask',
         sourceLang: 'en',
         question: 'Trả lời đúng một từ: OK.',
         history: [],
-        context: []
+        location: { caret: { source: null, target: null }, selection: null }
       },
       (chunk) => chunks.push(chunk)
     )

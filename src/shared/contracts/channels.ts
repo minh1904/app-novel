@@ -51,7 +51,6 @@ export const CHANNELS = {
   aiTranslateParagraphFinalize: 'ai:translate:paragraph-finalize',
   aiChatSend: 'ai:chat:send',
   aiChatCancel: 'ai:chat:cancel',
-  aiProposalChatCreate: 'ai:proposals:chat:create',
   aiProposalAccept: 'ai:proposals:accept',
   aiProposalDeny: 'ai:proposals:deny',
   aiProposalAcceptAll: 'ai:proposals:accept-all',

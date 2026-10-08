@@ -1,93 +1,125 @@
 import { randomUUID } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import type { ChatProposalInput } from '../../../shared/contracts/aiProposals'
 import { createTempDirs } from '../../testing/testing'
 import { getProposal } from '../../infra/storage/aiProposals'
-import { createAiSession, startAiTurn, updateAiTurn } from '../../infra/storage/aiSessions'
+import { createAiSession, startAiTurn } from '../../infra/storage/aiSessions'
 import { LibraryStore } from '../library/library'
-import { textHash } from './proposalService'
-import { createChatProposal } from './chatProposalService'
+import type { ToolProposalInput } from '../ai/chatTools'
+import { createToolProposalInDb } from './chatProposalService'
+import { acceptProposalParts } from './proposalService'
 
 const tempDir = createTempDirs()
+
+const TARGET = 'Một.\n\nHai.\n\nBa.'
 
 function fresh(): { library: LibraryStore; workId: string; chapterId: string } {
   const library = LibraryStore.open({ dataDir: tempDir(), now: () => 100, newId: randomUUID })
   const work = library.create({ title: 'Tác phẩm', sourceLang: 'ja' })
   const chapter = library.createChapter(work.id)
-  library.saveText(work.id, chapter.chapter.id, 'source', '原文', 0, [])
+  library.saveText(work.id, chapter.chapter.id, 'source', '一。\n\n二。\n\n三。', 0, [])
+  library.saveText(work.id, chapter.chapter.id, 'target', TARGET, 0, [])
+  library.withWork(work.id, (db) => {
+    createAiSession(db, 's', 'Hỏi', 1)
+    startAiTurn(db, {
+      id: 't',
+      sessionId: 's',
+      chapterId: chapter.chapter.id,
+      action: 'chat',
+      question: 'Sửa đoạn 2',
+      location: { caret: { source: null, target: 2 }, selection: null },
+      droppedTurns: 0,
+      provider: 'p',
+      model: 'm',
+      now: 2
+    })
+  })
   return { library, workId: work.id, chapterId: chapter.chapter.id }
 }
 
-function input(workId: string, chapterId: string, action: ChatProposalInput['action']): ChatProposalInput {
+function input(chapterId: string, patch: Partial<ToolProposalInput> = {}): ToolProposalInput {
+  const from = TARGET.indexOf('Hai.')
   return {
-    workId, chapterId, commandId: randomUUID(), action, blockAutoApply: false,
-    sourceRev: 1, sourceContent: '原文', targetBaseRev: 0, targetBaseContent: '',
-    range: { from: 0, to: 0, text: '' }, replacement: 'Bản dịch'
+    turnId: 't',
+    chapterId,
+    commandId: 't:1',
+    sourceRev: 1,
+    sourceContent: '一。\n\n二。\n\n三。',
+    targetBaseRev: 1,
+    targetBaseContent: TARGET,
+    part: {
+      baseFrom: from,
+      baseTo: from + 4,
+      beforeText: 'Hai.',
+      afterText: 'Hai đã sửa.',
+      sourceOrder: null,
+      sourceText: null,
+      status: 'pending'
+    },
+    ...patch
   }
 }
 
-describe('chat proposal service', () => {
-  it('stores a review proposal without changing a blank translation', () => {
+describe('createToolProposalInDb', () => {
+  it('stores a review proposal tied to the turn and its session, without touching the text', () => {
     const { library, workId, chapterId } = fresh()
-    const result = createChatProposal(library, input(workId, chapterId, 'edit'))
-    expect(result).toMatchObject({ status: 'pending', content: null, rev: null })
-    expect(library.readText(workId, chapterId, 'target')).toMatchObject({ content: '', rev: 0 })
-    expect(library.withWork(workId, (db) => getProposal(db, result.proposalId)).parts[0].afterText).toBe('Bản dịch')
-    library.close()
-  })
-
-  it('uses the same accept service for direct apply and is idempotent', () => {
-    const { library, workId, chapterId } = fresh()
-    const request = input(workId, chapterId, 'apply')
-    const first = createChatProposal(library, request)
-    expect(first).toMatchObject({ status: 'applied', content: 'Bản dịch', rev: 1 })
-    expect(createChatProposal(library, request).proposalId).toBe(first.proposalId)
-    expect(library.readText(workId, chapterId, 'target').rev).toBe(1)
-    library.close()
-  })
-
-  it('keeps a direct action for review if source changed or editor has unsaved text', () => {
-    const { library, workId, chapterId } = fresh()
-    const request = input(workId, chapterId, 'apply')
-    library.saveText(workId, chapterId, 'source', '変更', 1, [])
-    expect(createChatProposal(library, request).status).toBe('stale')
-    expect(library.readText(workId, chapterId, 'target').content).toBe('')
-    const blocked = { ...request, commandId: randomUUID(), blockAutoApply: true }
-    expect(createChatProposal(library, blocked).status).toBe('conflict')
-    library.close()
-  })
-
-  it('rejects a wrong chapter or an anchor that does not match the sent base', () => {
-    const { library, workId, chapterId } = fresh()
-    expect(() => createChatProposal(library, { ...input(workId, chapterId, 'edit'),
-      range: { from: 0, to: 0, text: 'khác' }
-    })).toThrow()
-    expect(() => createChatProposal(library, input(workId, randomUUID(), 'edit'))).toThrow()
-    library.close()
-  })
-
-  it('links the completed turn and hashes the context blocks it sent', () => {
-    const { library, workId, chapterId } = fresh()
-    const sessionId = randomUUID()
-    const turnId = randomUUID()
-    const context = [{ kind: 'chapter-source' as const, label: 'Bản gốc',
-      detail: '2 ký tự', text: '原文' }]
-    library.withWork(workId, (db) => {
-      createAiSession(db, sessionId, 'Dịch', 100)
-      startAiTurn(db, {
-        id: turnId, sessionId, chapterId, action: 'edit', question: 'Dịch', context,
-        range: { from: 0, to: 0, text: '', targetIds: [] },
-        droppedTurns: 0, provider: 'google', model: 'gemini', now: 100
-      })
-      updateAiTurn(db, turnId, { status: 'done', answer: 'Bản dịch',
-        usage: { inputTokens: 12, outputTokens: 4 } }, 101)
+    const created = library.withWork(workId, (db) =>
+      createToolProposalInDb(db, input(chapterId), 100, randomUUID)
+    )
+    const saved = library.withWork(workId, (db) => getProposal(db, created.proposalId))
+    expect(saved).toMatchObject({
+      origin: 'chat',
+      policy: 'review',
+      turnId: 't',
+      sessionId: 's',
+      provider: 'p',
+      model: 'm'
     })
-    const result = createChatProposal(library, { ...input(workId, chapterId, 'edit'), turnId })
-    const stored = library.withWork(workId, (db) => getProposal(db, result.proposalId))
-    expect(stored).toMatchObject({ sessionId, turnId, provider: 'google', model: 'gemini' })
-    expect(stored.context).toEqual(context)
-    expect(stored.contextHash).toBe(textHash(JSON.stringify(context)))
-    expect(stored.usage).toMatchObject({ inputTokens: 12, outputTokens: 4 })
+    expect(saved.parts.map((part) => [part.id, part.status])).toEqual([
+      [created.partIds[0], 'pending']
+    ])
+    expect(library.readText(workId, chapterId, 'target')).toMatchObject({ content: TARGET, rev: 1 })
+
+    const accepted = library.withWork(workId, (db) =>
+      acceptProposalParts(db, {
+        chapterId,
+        partIds: created.partIds,
+        commandId: randomUUID(),
+        actor: 'user',
+        now: 101,
+        newId: randomUUID
+      })
+    )
+    expect(accepted.content).toBe('Một.\n\nHai đã sửa.\n\nBa.')
+    library.close()
+  })
+
+  it('makes one proposal for a command id that runs twice', () => {
+    const { library, workId, chapterId } = fresh()
+    const first = library.withWork(workId, (db) =>
+      createToolProposalInDb(db, input(chapterId), 100, randomUUID)
+    )
+    const again = library.withWork(workId, (db) =>
+      createToolProposalInDb(db, input(chapterId), 100, randomUUID)
+    )
+    expect(again).toEqual(first)
+    const second = library.withWork(workId, (db) =>
+      createToolProposalInDb(db, input(chapterId, { commandId: 't:2' }), 100, randomUUID)
+    )
+    expect(second.proposalId).not.toBe(first.proposalId)
+    library.close()
+  })
+
+  it('refuses an anchor that does not match the base, and another chapter than the turn', () => {
+    const { library, workId, chapterId } = fresh()
+    const wrong = input(chapterId)
+    wrong.part = { ...wrong.part, beforeText: 'Ba.' }
+    expect(() =>
+      library.withWork(workId, (db) => createToolProposalInDb(db, wrong, 100, randomUUID))
+    ).toThrow('Vùng thay thế không khớp')
+    const other = library.createChapter(workId).chapter.id
+    expect(() =>
+      library.withWork(workId, (db) => createToolProposalInDb(db, input(other), 100, randomUUID))
+    ).toThrow('Lượt AI không thuộc chương')
     library.close()
   })
 })

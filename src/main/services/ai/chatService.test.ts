@@ -130,11 +130,10 @@ function input(patch: Partial<ChatSendInput> = {}): ChatSendInput {
     chapterId: CHAPTER_ID,
     connectionId: CONNECTION_ID,
     entryId: ENTRY_ID,
-    mode: 'ask',
     sourceLang: 'en',
     question: 'Dịch tự nhiên hơn',
     history: [],
-    context: [],
+    location: { caret: { source: null, target: 2 }, selection: null },
     ...patch
   }
 }
@@ -162,7 +161,7 @@ function collector(): {
       chunks.push(chunk)
       // `tool` is a progress report, not an ending: a turn that read something is still going, and
       // treating it as the end makes every tool test stop waiting one round early.
-      if (chunk.kind === 'delta' || chunk.kind === 'tool') return
+      if (chunk.kind === 'delta' || chunk.kind === 'tool' || chunk.kind === 'proposal') return
       for (const entry of waiting.splice(0)) {
         if (entry.requestId === chunk.requestId) entry.resolve()
         else waiting.push(entry)
@@ -170,7 +169,11 @@ function collector(): {
     },
     settled(requestId) {
       const already = chunks.some(
-        (c) => c.requestId === requestId && c.kind !== 'delta' && c.kind !== 'tool'
+        (c) =>
+          c.requestId === requestId &&
+          c.kind !== 'delta' &&
+          c.kind !== 'tool' &&
+          c.kind !== 'proposal'
       )
       if (already) return Promise.resolve()
       return new Promise((resolve) => waiting.push({ requestId, resolve }))
@@ -186,7 +189,13 @@ const textOf = (chunks: ChatChunk[], requestId: string): string =>
 
 const endingsOf = (chunks: ChatChunk[], requestId: string): string[] =>
   chunks
-    .filter((c) => c.requestId === requestId && c.kind !== 'delta' && c.kind !== 'tool')
+    .filter(
+      (c) =>
+        c.requestId === requestId &&
+        c.kind !== 'delta' &&
+        c.kind !== 'tool' &&
+        c.kind !== 'proposal'
+    )
     .map((c) => c.kind)
 
 describe('ChatService', () => {
@@ -782,61 +791,139 @@ describe('đọc bằng công cụ', () => {
   })
 })
 
-describe('khối ngữ cảnh main đọc từ kho', () => {
-  const term = {
-    kind: 'term' as const,
-    label: 'Thuật ngữ đã duyệt',
-    detail: '1 mục khớp chương',
-    text: '- Winter → Đông'
+describe('tool ghi và vị trí (agentic-chat)', () => {
+  const TARGET = 'Một.\n\nHai.\n\nBa.'
+  function writableLibrary(): ReturnType<typeof fakeLibrary> {
+    return {
+      ...fakeLibrary(),
+      listChapters: (): ChapterItem[] => [
+        {
+          id: CHAPTER_ID,
+          number: 2,
+          title: 'Chương 2',
+          createdAt: 0,
+          updatedAt: 0,
+          hasSource: true,
+          hasTarget: true
+        }
+      ],
+      readText: (_work?: string, _chapter?: string, side?: string): TextRecord =>
+        ({
+          content: side === 'source' ? '一。\n\n二。\n\n三。' : TARGET,
+          rev: 3,
+          segments: [],
+          updatedAt: 0
+        }) as unknown as TextRecord
+    }
   }
 
-  it('gửi kèm, ghi vào lượt và trả lại cho renderer', async () => {
+  function proposeOnce(args: unknown): ReturnType<typeof connections> {
+    let round = 0
+    return connections(async () => {
+      round += 1
+      if (round === 1) {
+        return sseResponse([
+          toolFrame({
+            index: 0,
+            id: 'w1',
+            function: { name: 'propose_edit', arguments: JSON.stringify(args) }
+          }),
+          DONE
+        ])
+      }
+      // The answer also carries a fenced block: it must not become a proposal.
+      return sseResponse([delta('Đã đề xuất.\n\n```\nHai khác.\n```'), finish('stop'), DONE])
+    })
+  }
+
+  it('gửi chunk proposal trước done, và không tạo đề xuất từ chữ của câu trả lời', async () => {
+    const sink = collector()
+    const created: unknown[] = []
+    const updates: Array<{ status: string; tools: unknown[] }> = []
+    const chat = new ChatService({
+      connections: proposeOnce({ chapter: 2, from: 2, to: 2, text: 'Hai đã sửa.' }),
+      library: writableLibrary(),
+      writes: {
+        createProposal: (_workId, input) => {
+          created.push(input)
+          return { proposalId: 'p1', partIds: ['part1'] }
+        },
+        createPendingTerm: () => {
+          throw new Error('not used')
+        }
+      },
+      records: {
+        start: () => 's1',
+        update: (_id, _work, patch) => updates.push(patch)
+      },
+      newId: () => 'r1',
+      now: () => NOW
+    })
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+
+    const kinds = sink.chunks.map((chunk) => chunk.kind)
+    expect(kinds.indexOf('proposal')).toBeGreaterThan(-1)
+    expect(kinds.indexOf('proposal')).toBeLessThan(kinds.indexOf('done'))
+    expect(sink.chunks.find((chunk) => chunk.kind === 'proposal')).toMatchObject({
+      proposal: { type: 'edit', proposalId: 'p1', partIds: ['part1'], label: 'Sửa đoạn 2 bản dịch' }
+    })
+    expect(created).toEqual([
+      expect.objectContaining({
+        turnId: 'r1',
+        commandId: 'r1:1',
+        targetBaseRev: 3,
+        part: expect.objectContaining({ beforeText: 'Hai.', afterText: 'Hai đã sửa.' })
+      })
+    ])
+    const final = updates.at(-1)!
+    expect(final.status).toBe('done')
+    expect(final.tools).toEqual([
+      expect.objectContaining({ name: 'propose_edit', status: 'ok', proposal: expect.anything() })
+    ])
+  })
+
+  it('không có lối ghi thì tool ghi báo lỗi, lượt vẫn xong', async () => {
+    const sink = collector()
+    const chat = new ChatService({
+      connections: proposeOnce({ chapter: 2, from: 2, to: 2, text: 'Hai đã sửa.' }),
+      library: writableLibrary(),
+      newId: () => 'r1',
+      now: () => NOW
+    })
+    const requestId = chat.start(input(), sink.emit)
+    await sink.settled(requestId)
+    expect(sink.chunks.find((chunk) => chunk.kind === 'tool')).toMatchObject({
+      name: 'propose_edit',
+      status: 'error',
+      detail: 'Lượt này không được tạo đề xuất.'
+    })
+    expect(sink.chunks.some((chunk) => chunk.kind === 'proposal')).toBe(false)
+    expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
+  })
+
+  it('đặt vị trí người dùng ở cuối system prompt, không gửi kèm văn bản chương', async () => {
     let sent: Array<{ role: string; content: string }> = []
     const fetchImpl = (async (_url: string, init?: RequestInit) => {
       sent = (JSON.parse(String(init?.body)) as { messages: typeof sent }).messages
-      return sseResponse([delta('Đông'), DONE])
+      return sseResponse([delta('ok'), DONE])
     }) as typeof fetch
-    const recorded: ChatSendInput[] = []
-    const service = new ChatService({
+    const sink = collector()
+    const chat = new ChatService({
       connections: connections(fetchImpl),
+      chapter: () => ({ workTitle: 'Tác phẩm', number: 2, title: 'Chương 2' }),
       newId: () => 'r1',
-      now: () => NOW,
-      storeContext: () => [term],
-      records: {
-        start: (_id, started) => {
-          recorded.push(started)
-          return 's1'
-        },
-        update: () => undefined
-      }
+      now: () => NOW
     })
-    const own = {
-      kind: 'chapter-source' as const,
-      label: 'Bản gốc của chương',
-      detail: '1',
-      text: 'Winter'
-    }
-    const done = new Promise<void>((resolve) => {
-      const started = service.startWithSession(input({ context: [own] }), (chunk) => {
-        if (chunk.kind === 'done' || chunk.kind === 'error') resolve()
-      })
-      expect(started).toEqual({ requestId: 'r1', sessionId: 's1', addedContext: [term] })
-    })
-    await done
-    expect(recorded[0].context).toEqual([own, term])
-    expect(sent.map((message) => message.content).join('\n')).toContain('- Winter → Đông')
-  })
-
-  it('không thêm gì khi kho không có mục khớp', () => {
-    const service = new ChatService({
-      connections: connections((async () => sseResponse([DONE])) as typeof fetch),
-      newId: () => 'r2',
-      now: () => NOW,
-      storeContext: () => []
-    })
-    const started = service.startWithSession(input(), () => undefined)
-    expect(started).toEqual({ requestId: 'r2' })
-    service.cancelAll()
+    const requestId = chat.start(
+      input({
+        location: { caret: { source: 1, target: 2 }, selection: { side: 'target', from: 2, to: 3 } }
+      }),
+      sink.emit
+    )
+    await sink.settled(requestId)
+    expect(sent[0].content).toMatch(/Đang chọn đoạn 2–3 bản dịch\.\n<\/location>$/)
+    expect(sent.at(-1)).toEqual({ role: 'user', content: 'Dịch tự nhiên hơn' })
   })
 })
 

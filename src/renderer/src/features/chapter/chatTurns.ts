@@ -1,36 +1,35 @@
 import {
   CHAT_HISTORY_CHARS_BUDGET,
-  extractFence,
+  type ChatAction,
   type ChatChunk,
   type ChatContextBlock,
   type ChatError,
   type ChatFinishReason,
-  type ChatMode,
+  type ChatLocation,
+  type ChatRange,
+  type ChatToolProposal,
+  type ChatToolStep,
   type ChatTurn,
   type ChatUsage
 } from '../../../../shared/contracts/aiChat'
-import type { TargetRange } from '../editor/chatRange'
 import type { AiTurnView } from '../../../../shared/contracts/aiHistory'
 
 /**
  * The state of a conversation in the panel, as pure functions.
  *
  * Separated from the component on purpose: the rules worth getting right are not about pixels. Two
- * turns must never mix their text, a closed turn must never gain more, and a half-received answer
- * must never offer an Apply button. Those are the three ways this feature could quietly write the
- * wrong thing into someone's translation, and here they are ordinary functions with ordinary tests.
+ * turns must never mix their text, and a closed turn must never gain more. Those are the ways this
+ * feature could quietly show one answer inside another, and here they are ordinary functions with
+ * ordinary tests.
  *
- * Lives for one session only (Q4): closing the panel drops it, and the panel says so rather than
- * letting the translator assume it was kept.
+ * A turn no longer has a mode or a range (change `agentic-chat`): what it proposes comes from the
+ * writing tools, as `proposals`, and their status is read from the proposal queue, not kept here.
  */
 
 export type TurnStatus = 'sending' | 'running' | 'done' | 'cancelled' | 'error' | 'interrupted'
 
-/** One lookup the model made. `detail` describes the scope; it is never the text that was read. */
-export interface ToolStep {
-  name: string
-  detail: string
-}
+/** One tool call. `detail` describes the scope; it is never the text that was read. */
+export type ToolStep = ChatToolStep
 
 export interface TurnView {
   /** Stable React key, assigned before the request exists. */
@@ -38,16 +37,10 @@ export interface TurnView {
   /** Set once main answers the send call; chunks are matched on it. */
   requestId: string | null
   question: string
-  /** Captured when sent, so a late answer cannot write into a chapter opened afterward. */
+  /** The chapter that was open when it was sent. */
   chapterId?: string
-  sourceText?: string
-  targetText?: string
-  sourceRev?: number
-  targetBaseRev?: number
-  proposalId?: string
-  partId?: string
-  proposalStatus?: 'pending' | 'applied' | 'rejected' | 'conflict' | 'stale' | 'needs-placement'
-  mode: ChatMode
+  /** `chat` for a turn without a mode; an old turn keeps the mode it was sent with. */
+  mode: ChatAction
   answer: string
   status: TurnStatus
   error: ChatError | null
@@ -55,14 +48,16 @@ export interface TurnView {
   usd: number | null
   keyTail: string | null
   finishReason: ChatFinishReason | null
-  /** Outcome of an explicitly requested direct apply. */
-  autoApply: 'applied' | 'needs-review' | null
-  /** Exactly what was sent along with the question, for the "đã gửi kèm" list. */
-  context: ChatContextBlock[]
-  /** What the model went and read for itself, in order. Scope lines only, never content. */
+  /** What the model did with tools, in order. Scope lines only, never content. */
   tools: ToolStep[]
-  /** The stretch this turn is about; the anchor an Apply uses. Null in Hỏi mode. */
-  range: TargetRange | null
+  /** What the writing tools proposed (or an old turn's fenced proposal), in order. */
+  proposals: ChatToolProposal[]
+  /** Where the user was when it was sent; absent on an old turn. */
+  location?: ChatLocation | null
+  /** What an old turn sent along with the question; empty for a `chat` turn. */
+  context: ChatContextBlock[]
+  /** The stretch an old Sửa turn was about. */
+  range: ChatRange | null
 }
 
 export interface Session {
@@ -89,18 +84,11 @@ export function restoredSession(turns: AiTurnView[]): Session {
       usd: turn.costUsd,
       keyTail: null,
       finishReason: turn.finishReason,
-      autoApply:
-        turn.action === 'apply' && turn.proposalStatus !== null
-          ? turn.proposalStatus === 'applied'
-            ? 'applied'
-            : 'needs-review'
-          : null,
-      context: turn.context,
       tools: turn.tools,
-      range: turn.range,
-      proposalId: turn.proposalId ?? undefined,
-      partId: turn.partId ?? undefined,
-      proposalStatus: turn.proposalStatus ?? undefined
+      proposals: turn.proposals,
+      location: turn.location,
+      context: turn.context,
+      range: turn.range
     }))
   }
 }
@@ -110,18 +98,7 @@ const isOpen = (turn: TurnView): boolean => turn.status === 'sending' || turn.st
 
 export function beginTurn(
   session: Session,
-  turn: {
-    localId: string
-    question: string
-    chapterId?: string
-    sourceText?: string
-    targetText?: string
-    sourceRev?: number
-    targetBaseRev?: number
-    mode: ChatMode
-    context: ChatContextBlock[]
-    range: TargetRange | null
-  }
+  turn: { localId: string; question: string; chapterId?: string; location?: ChatLocation }
 ): Session {
   return {
     ...session,
@@ -129,16 +106,19 @@ export function beginTurn(
       ...session.turns,
       {
         ...turn,
+        mode: 'chat',
         requestId: null,
         answer: '',
         tools: [],
+        proposals: [],
+        context: [],
+        range: null,
         status: 'sending',
         error: null,
         usage: null,
         usd: null,
         keyTail: null,
-        finishReason: null,
-        autoApply: null
+        finishReason: null
       }
     ]
   }
@@ -181,11 +161,25 @@ export function applyChunk(session: Session, chunk: ChatChunk): Session {
     }))
   }
   if (chunk.kind === 'tool') {
-    // Reading is progress, not an ending: the turn stays open and the step is appended in order.
+    // A tool call is progress, not an ending: the turn stays open and the step is appended in order.
     return mapTurn(session, matches, (turn) => ({
       ...turn,
       status: 'running',
-      tools: [...turn.tools, { name: chunk.name, detail: chunk.detail }]
+      tools: [
+        ...turn.tools,
+        {
+          name: chunk.name,
+          detail: chunk.detail,
+          ...(chunk.status === undefined ? {} : { status: chunk.status })
+        }
+      ]
+    }))
+  }
+  if (chunk.kind === 'proposal') {
+    return mapTurn(session, matches, (turn) => ({
+      ...turn,
+      status: 'running',
+      proposals: [...turn.proposals, chunk.proposal]
     }))
   }
   if (chunk.kind === 'done') {
@@ -195,20 +189,7 @@ export function applyChunk(session: Session, chunk: ChatChunk): Session {
       usage: chunk.usage,
       usd: chunk.usd,
       keyTail: chunk.keyTail,
-      finishReason: chunk.finishReason ?? null,
-      ...(chunk.proposal
-        ? {
-            proposalId: chunk.proposal.proposalId,
-            partId: chunk.proposal.partId,
-            proposalStatus: chunk.proposal.status,
-            autoApply:
-              turn.mode === 'apply'
-                ? chunk.proposal.status === 'applied'
-                  ? 'applied'
-                  : 'needs-review'
-                : null
-          }
-        : {})
+      finishReason: chunk.finishReason ?? null
     }))
   }
   return mapTurn(session, matches, (turn) => ({
@@ -239,76 +220,6 @@ export function openRequestIds(session: Session): string[] {
   return session.turns
     .filter((turn) => isOpen(turn) && turn.requestId !== null)
     .map((turn) => turn.requestId as string)
-}
-
-/**
- * The replacement a turn offers, or null when it offers none.
- *
- * Null for every status but `done`, and that is the rule that matters: a cancelled or failed answer is
- * a **truncated** one, and applying a truncated rewrite silently shortens the user's paragraph. Also
- * null when the model ignored the fence — see `extractFence`; the panel then falls back to reading the
- * answer as a plain reply instead of guessing which part was the proposal.
- */
-export function proposalOf(turn: TurnView): string | null {
-  if (turn.mode === 'ask' || turn.status !== 'done' || turn.range === null) return null
-  if (turn.finishReason !== 'stop') return null
-  return extractFence(turn.answer)
-}
-
-export function markTurnProposal(
-  session: Session,
-  localId: string,
-  proposal: { proposalId: string; partId: string; status: TurnView['proposalStatus'] }
-): Session {
-  return mapTurn(
-    session,
-    (turn) => turn.localId === localId,
-    (turn) => ({
-      ...turn,
-      proposalId: proposal.proposalId,
-      partId: proposal.partId,
-      proposalStatus: proposal.status,
-      autoApply:
-        turn.mode === 'apply' ? (proposal.status === 'applied' ? 'applied' : 'needs-review') : null
-    })
-  )
-}
-
-/**
- * Which finished writing turns should open their proposal in the translation pane right now.
- *
- * The answer to a writing turn belongs in the editor, but only for a turn the translator just watched
- * run: `watched` holds the turns seen open in this panel, so a session restored from history — every
- * turn already `done` — never opens an old proposal over the text being read. A turn stays watched
- * until its proposal shows up in the queue (`partStatus` is undefined until then), and is dropped as
- * soon as it can no longer be shown: it failed, it made no proposal, it belongs to another chapter, or
- * the proposal is no longer pending.
- */
-export function revealStep(
-  turns: TurnView[],
-  watched: ReadonlySet<string>,
-  chapterId: string,
-  partStatus: (partId: string) => TurnView['proposalStatus']
-): { watched: Set<string>; reveal: string[] } {
-  const next = new Set(watched)
-  const reveal: string[] = []
-  for (const turn of turns) {
-    if (turn.mode !== 'edit') continue
-    if (isOpen(turn)) {
-      next.add(turn.localId)
-      continue
-    }
-    if (!next.has(turn.localId)) continue
-    if (turn.status !== 'done' || turn.partId === undefined || turn.chapterId !== chapterId) {
-      next.delete(turn.localId)
-      continue
-    }
-    const status = partStatus(turn.partId)
-    if (status === undefined) continue
-    next.delete(turn.localId)
-    if (status === 'pending') reveal.push(turn.partId)
-  }
-  return { watched: next, reveal }
 }
 
 /**

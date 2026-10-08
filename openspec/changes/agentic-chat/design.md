@@ -42,11 +42,12 @@ Lý do làm change này xem `proposal.md`. Hiện trạng đọc ngày 2026-10-0
 
 ```ts
 location: {
-  chapterId: string
   caret: { source: number | null; target: number | null }
   selection: { side: 'source' | 'target'; from: number; to: number } | null
 }
 ```
+
+*Khi làm:* `location` không lặp `chapterId`, vì `ChatSendInput` đã có trường đó và hai bản có thể lệch nhau.
 
 Các số là chỉ số đoạn, đếm từ 1. Main dựng một khối ngắn đặt **cuối** system prompt, dạng: "Người dùng
 đang mở chương 12 'Tên'. Con trỏ ở đoạn 5 bản dịch. Đang chọn đoạn 12–14 bản dịch."
@@ -85,6 +86,15 @@ Mở rộng `ChatToolLibrary`:
 
 Hai hàm ghi cuối được truyền vào khi dựng tool cho lượt, kèm `turnId`. Tool không tự mở DB.
 
+*Khi làm:* tên trong mã khác các tên trên:
+
+- Thư viện đọc là `listGlossary(workId)` và `listAddressing(workId, chapterId)`.
+- Căn chỉnh đọc qua `alignmentOf` trong `chatSearch.ts`, dựng hàng một lần cho mỗi lần gọi.
+- Hai hàm ghi nằm trong `ChatToolWrites` (`createProposal`, `createPendingTerm`).
+
+Tool ghi chỉ đề xuất cho **chương đang mở**, vì `proposal.turn_id` đòi đề xuất và lượt cùng chương.
+Kênh IPC `ai:proposals:chat:create` bị bỏ, vì nó cho renderer tạo đề xuất chat không qua tool ghi.
+
 | Tool | Tham số | Ghi chú |
 | --- | --- | --- |
 | `get_current_chapter` | không có | Trả vị trí của lượt (D1) cùng số đoạn mỗi phía và số đoạn đã dịch |
@@ -108,6 +118,18 @@ trống giữa đoạn.
 `propose_translation` dùng đường đề xuất dịch theo đoạn đã có (`aiTranslateProposals`): mỗi đoạn gốc trong
 khoảng thành một phần đề xuất, nên chỗ đặt đoạn dịch mới đi theo luật hiện hành. Nếu model trả ít hoặc
 nhiều đoạn hơn khoảng gốc, tool báo lỗi kèm số đoạn mong đợi, không đoán cách chia.
+
+*Khi làm:* luật hiện hành chỉ đặt được đoạn dịch vào bản dịch **trống**. Bản dịch đã có chữ thì phần
+đề xuất thành "cần đặt vị trí" và không chấp nhận được, mà đó lại là ca thường gặp nhất trong chat. Vì
+vậy mã làm như sau:
+
+- Bản dịch trống: một phần neo `0..0` như dịch chương.
+- Bản dịch có chữ: đặt đoạn mới **sau** đoạn dịch liên kết với đoạn gốc gần nhất phía trước. Không có
+  thì đặt **trước** đoạn dịch liên kết với đoạn gốc gần nhất phía sau. Phần đề xuất thay đoạn neo bằng
+  "đoạn neo + đoạn mới".
+- Không có đoạn liên kết nào: rơi về "cần đặt vị trí".
+
+Cả khoảng thành **một** phần đề xuất, không phải mỗi đoạn một phần.
 
 `commandId` là `turnId + ':' + số thứ tự lần gọi`, để idempotent khi một lần gọi bị chạy lại.
 

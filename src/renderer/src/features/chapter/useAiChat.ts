@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ChatContextBlock, ChatMode } from '../../../../shared/contracts/aiChat'
+import type { ChatLocation } from '../../../../shared/contracts/aiChat'
 import type { AiSessionView } from '../../../../shared/contracts/aiHistory'
 import type { ConnectionView } from '../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../shared/contracts/modelSettings'
@@ -9,28 +9,19 @@ import { resolveModelChoice } from '../models/modelChoice'
 import { useAiChatStore } from '../../stores/aiChatStore'
 import { useConnectionStore } from '../../stores/connectionStore'
 import type { SourceLanguage } from '../../../../shared/contracts/library'
-import type { TargetRange, TargetScope } from '../editor/chatRange'
-import { buildChatContext, type ContextScope } from './chatContext'
+import type { TargetRange } from '../editor/chatRange'
 import { startFailure } from './chatStartFailure'
-import {
-  beginTurn,
-  emptySession,
-  historyFor,
-  markTurnProposal,
-  openRequestIds,
-  type Session,
-  type TurnView
-} from './chatTurns'
+import { beginTurn, emptySession, historyFor, openRequestIds, type Session } from './chatTurns'
 
 /**
- * The panel's one connection to the rest of the app: a session of turns, a provider call per turn,
- * and the editor the answers can be written back into.
+ * The panel's one connection to the rest of the app: a session of turns and a provider call per turn.
+ *
+ * A turn carries the question, the history, the model and where the user is (change `agentic-chat`);
+ * no chapter text goes with it. What the model proposes comes back as proposals in the queue, which the
+ * panel accepts or denies like any other.
  *
  * The app owns the stream listener; this hook binds the current work and chapter to it.
  */
-
-/** How many paragraphs either side of the range go along with a question. */
-const CONTEXT_RADIUS = 2
 
 /**
  * What the panel needs from the translation pane — the subset of `TextEditorHandle` it uses, so the
@@ -40,7 +31,6 @@ export interface ChatEditor {
   getText(): string
   isDirty(): boolean
   reload(): Promise<void>
-  targetRange(scope?: TargetScope): TargetRange | null
   reviewProposal(
     range: TargetRange,
     replacement: string,
@@ -51,42 +41,20 @@ export interface ChatEditor {
   endReview(): void
 }
 
-export interface ChatSendSnapshot {
-  sourceText: string
-  targetText: string
-  range: TargetRange | null
-  context: ChatContextBlock[]
-}
-
 export interface AiChatOptions {
   /** Which work and chapter the turn is about; the read-only tools stay inside this work. */
   workId: string
   chapterId: string
   sourceLang: SourceLanguage
-  /** The source pane, read live so context matches what the translator is looking at. */
-  source: { getText(): string; isDirty(): boolean }
-  /** The translation pane: both the context and the destination of an applied proposal. */
-  target: ChatEditor | null
-  /** The stretch the next turn is about, following the caret. */
-  range: TargetRange | null
-  /** Whether the turn is about the chapter or about that stretch. */
-  scope: ContextScope
+  /** Where the user is right now; read when a turn is sent, so it is the position at that moment. */
+  location(): ChatLocation
 }
-
-export type ApplyState =
-  | { kind: 'idle' }
-  /** Written straight in, because the pane was empty and nothing could be lost. */
-  | { kind: 'applied' }
-  /** Now sitting in the pane as marked chunks, waiting to be accepted or rejected there. */
-  | { kind: 'stale' }
-  | { kind: 'error'; message: string }
 
 export interface AiChatController {
   session: Session
   sessions: AiSessionView[]
   sessionId: string | null
   selectSession(id: string): void
-  proposalVersion: number
   /** Connections that can actually be called: enabled, and with a model to call. */
   usable: ConnectionView[]
   connection: ConnectionView | null
@@ -109,15 +77,11 @@ export interface AiChatController {
   /** Why the last attempt to change a model's level failed, if it did. */
   modelNotice: string | null
   dismissModelNotice(): void
-  /** True once a connection and model are chosen and the range is not empty for Sửa. */
-  canSend(question: string, action?: ChatMode): boolean
-  send(question: string, action?: ChatMode, snapshot?: ChatSendSnapshot): Promise<void>
+  /** True once a connection and model are chosen, there is a question, and no turn is running. */
+  canSend(question: string): boolean
+  send(question: string): Promise<void>
   cancel(requestId: string): void
   newConversation(): void
-  /** Accepts a persisted proposal through the same main-process transaction as direct apply. */
-  apply(turn: TurnView): Promise<void>
-  applyState: ApplyState
-  dismissApplyState(): void
   /** Set when connections could not be read at all. */
   loadError: string | null
 }
@@ -126,7 +90,7 @@ const usableOf = (connections: ConnectionView[]): ConnectionView[] =>
   connections.filter((connection) => connection.enabled)
 
 export function useAiChat(options: AiChatOptions): AiChatController {
-  const { workId, chapterId, sourceLang, source, target, range, scope } = options
+  const { workId, chapterId, sourceLang, location } = options
 
   const connections = useConnectionStore((state) => state.connections)
   const connectionLoad = useConnectionStore((state) => state.load)
@@ -140,9 +104,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   )
   const sessionId = useAiChatStore((state) => (state.workId === workId ? state.sessionId : null))
   const [sessions, setSessions] = useState<AiSessionView[]>([])
-  const [proposalVersion, setProposalVersion] = useState(0)
   const loadSequence = useRef(0)
-  const [applyState, setApplyState] = useState<ApplyState>({ kind: 'idle' })
 
   // The session is read inside callbacks that must not be rebuilt on every chunk, so it is mirrored
   // in a ref. Mirrored in an effect, not during render: writing a ref while rendering is a React
@@ -199,9 +161,9 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     }
   }, [workId, selectSession])
 
-  const latest = useRef({ source, target, range, scope, sourceLang })
+  const latest = useRef({ location, sourceLang })
   useEffect(() => {
-    latest.current = { source, target, range, scope, sourceLang }
+    latest.current = { location, sourceLang }
   })
 
   useEffect(() => {
@@ -274,139 +236,44 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     void window.mira.ai.chat.cancel(requestId)
   }, [])
 
-  /** Main commits the turn and proposal together; the visible editor follows an automatic write. */
-  const reloaded = useRef(new Set<string>())
-  useEffect(() => {
-    for (const turn of session.turns) {
-      if (turn.proposalStatus !== 'applied' || !turn.partId || reloaded.current.has(turn.partId))
-        continue
-      reloaded.current.add(turn.partId)
-      const editor = latest.current.target
-      if (turn.chapterId === chapterId && editor && !editor.isDirty()) void editor.reload()
-    }
-  }, [session, chapterId])
-
   const canSend = useCallback(
-    (question: string, action: ChatMode = 'ask'): boolean => {
+    (question: string): boolean => {
       if (question.trim() === '' || connection === null || chosenModel === null) return false
-      const open = openRequestIds(sessionRef.current).length > 0
-      if (open) return false
-      // Sửa aimed at a paragraph needs a paragraph to replace, so the button stays off rather than
-      // sending a question whose answer could not be applied. Chapter scope is exempt: translating an
-      // empty chapter has nothing to replace and is still the main thing this is for — the apply path
-      // inserts into an empty document rather than refusing.
-      if (action !== 'ask' && scope === 'range' && (range === null || range.text.trim() === '')) {
-        return false
-      }
-      return true
+      return openRequestIds(sessionRef.current).length === 0
     },
-    [connection, chosenModel, range, scope]
+    [connection, chosenModel]
   )
 
   const send = useCallback(
-    async (
-      question: string,
-      action: ChatMode = 'ask',
-      snapshot?: ChatSendSnapshot
-    ): Promise<void> => {
+    async (question: string): Promise<void> => {
       if (connection === null || chosenModel === null) return
       const asked = question.trim()
       if (asked === '') return
 
-      // A new question makes the previous notice stale, and clearing it here keeps the state change
-      // inside an event callback rather than an effect watching the session.
-      setApplyState({ kind: 'idle' })
-
       const current = latest.current
-      const targetRange = snapshot ? snapshot.range : current.range
-      const sourceText = snapshot?.sourceText ?? current.source.getText()
-      const targetText = snapshot?.targetText ?? current.target?.getText() ?? ''
-      const base =
-        action === 'ask'
-          ? null
-          : await Promise.all([
-              window.mira.text.get(workId, chapterId, 'source'),
-              window.mira.text.get(workId, chapterId, 'target')
-            ])
-      if (base && (!base[0].ok || !base[1].ok)) {
-        setApplyState({
-          kind: 'error',
-          message: 'Không đọc được revision của chương để tạo đề xuất.'
-        })
-        return
-      }
-      const proposalBase =
-        base && base[0].ok && base[1].ok
-          ? {
-              sourceRev: base[0].value.rev,
-              sourceContent: sourceText,
-              targetRev: base[1].value.rev,
-              targetContent: targetText,
-              blockAutoApply:
-                current.source.isDirty() ||
-                current.target?.isDirty() === true ||
-                sourceText !== base[0].value.content ||
-                targetText !== base[1].value.content
-            }
-          : undefined
-      // Built even with no range and no caret: the chapter is what the question is about, and a turn
-      // that reached the model with nothing attached is how "dịch chương này" got the answer "hãy
-      // cung cấp nội dung chương". Only a missing translation pane leaves this empty.
-      const context: ChatContextBlock[] =
-        snapshot?.context ??
-        (current.target === null
-          ? []
-          : buildChatContext({
-              sourceText,
-              targetText,
-              range: targetRange,
-              scope: current.scope,
-              radius: CONTEXT_RADIUS
-            }))
-
+      const where = current.location()
       const localId = crypto.randomUUID()
       const { history, dropped } = historyFor(sessionRef.current)
       useAiChatStore.getState().setSessionForWork(workId, (previous) => ({
-        ...beginTurn(previous, {
-          localId,
-          question: asked,
-          chapterId,
-          sourceText,
-          targetText,
-          sourceRev: base && base[0].ok ? base[0].value.rev : undefined,
-          targetBaseRev: base && base[1].ok ? base[1].value.rev : undefined,
-          mode: action,
-          context,
-          range: action === 'ask' ? null : targetRange
-        }),
+        ...beginTurn(previous, { localId, question: asked, chapterId, location: where }),
         dropped
       }))
 
       const result = await window.mira.ai.chat.send({
         ...(sessionId === null ? {} : { sessionId }),
         droppedTurns: dropped,
-        range: action === 'ask' ? null : targetRange,
         workId,
         chapterId,
         connectionId: connection.id,
         entryId: chosenModel,
-        mode: action,
-        ...(proposalBase ? { proposalBase } : {}),
         sourceLang: current.sourceLang,
         question: asked,
         history,
-        context
+        location: where
       })
 
       if (result.ok) {
-        useAiChatStore
-          .getState()
-          .attachRequestIdForWork(
-            workId,
-            localId,
-            result.value.requestId,
-            result.value.addedContext
-          )
+        useAiChatStore.getState().attachRequestIdForWork(workId, localId, result.value.requestId)
       } else {
         useAiChatStore
           .getState()
@@ -423,53 +290,11 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     [connection, chosenModel, workId, chapterId, sessionId]
   )
 
-  const apply = useCallback(
-    async (turn: TurnView): Promise<void> => {
-      const editor = latest.current.target
-      if (!editor || turn.partId === undefined || turn.chapterId !== chapterId) {
-        setApplyState({ kind: 'stale' })
-        return
-      }
-      if (editor.isDirty() || latest.current.source.isDirty()) {
-        setApplyState({ kind: 'error', message: 'Hãy đợi chữ đang sửa được lưu trước khi duyệt.' })
-        return
-      }
-      const result = await window.mira.ai.proposals.accept({
-        workId,
-        chapterId,
-        partId: turn.partId,
-        commandId: crypto.randomUUID()
-      })
-      if (!result.ok) {
-        setApplyState({ kind: 'error', message: result.error.message })
-        return
-      }
-      if (useAiChatStore.getState().workId !== workId) return
-      if (result.value.accepted.includes(turn.partId)) {
-        setApplyState({ kind: 'applied' })
-        setProposalVersion((version) => version + 1)
-        if (turn.proposalId)
-          useAiChatStore.getState().setSession((current) =>
-            markTurnProposal(current, turn.localId, {
-              proposalId: turn.proposalId as string,
-              partId: turn.partId as string,
-              status: 'applied'
-            })
-          )
-        if (!editor.isDirty()) await editor.reload()
-      } else {
-        setApplyState({ kind: 'stale' })
-      }
-    },
-    [workId, chapterId]
-  )
-
   return {
     session,
     sessions,
     sessionId,
     selectSession,
-    proposalVersion,
     usable,
     connection,
     model: chosenModel,
@@ -494,9 +319,6 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       for (const requestId of openRequestIds(sessionRef.current)) cancel(requestId)
       useAiChatStore.getState().clearSession()
     },
-    apply,
-    applyState,
-    dismissApplyState: () => setApplyState({ kind: 'idle' }),
     loadError: connectionLoadError
   }
 }

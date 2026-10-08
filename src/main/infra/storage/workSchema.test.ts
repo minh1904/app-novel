@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 9, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 10, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -151,7 +151,7 @@ describe('work schema', () => {
 
     // Upgrade through the current schema.
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(9)
+    expect(readPragmas(db).userVersion).toBe(10)
 
     // Data preserved
     const row = db.prepare('SELECT title FROM work WHERE id = ?').get<{ title: string }>('w1')
@@ -193,7 +193,7 @@ describe('work schema', () => {
       INSERT INTO provenance (segment_id, origin, at) VALUES ('s', 'human', 1);
     `)
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(9)
+    expect(readPragmas(db).userVersion).toBe(10)
     expect(
       db
         .prepare("SELECT content, rev FROM chapter_text WHERE chapter_id = 'c' AND side = 'target'")
@@ -260,7 +260,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(9)
+    expect(readPragmas(db).userVersion).toBe(10)
     expect(db.prepare('SELECT id, action, answer FROM ai_turn ORDER BY created_at').all()).toEqual([
       { id: 't-ask', action: 'ask', answer: 'Đáp' },
       { id: 't-edit', action: 'edit', answer: 'Bản sửa' },
@@ -336,6 +336,65 @@ describe('work schema', () => {
     db.close()
   })
 
+  it('upgrades v9 to v10: chat turns without a mode keep old turns and their proposals', () => {
+    const db = openDatabase(join(tempDir(), 'v9_to_v10.mira'))
+    migrate(db, {
+      applicationId: WORK_APPLICATION_ID,
+      migrations: workSchema.migrations.slice(0, 9)
+    })
+    db.exec(`
+      INSERT INTO work (id, title, source_lang, created_at, updated_at) VALUES ('w', 'T', 'ja', 1, 1);
+      INSERT INTO chapter (id, position, created_at, updated_at) VALUES ('c', 0, 1, 1);
+      INSERT INTO ai_session (id, title, created_at, updated_at) VALUES ('s', 'Sửa', 1, 1);
+      INSERT INTO ai_turn (id, session_id, chapter_id, action, question, answer, status, context_json,
+        target_range_json, created_at, updated_at)
+        VALUES ('t-edit', 's', 'c', 'edit', 'Sửa', 'Bản sửa', 'done', '[]',
+          '{"from":0,"to":3,"text":"abc","targetIds":[]}', 2, 2);
+      INSERT INTO proposal (id, chapter_id, session_id, turn_id, origin, policy, source_rev, source_hash,
+        target_base_rev, target_base_content, created_at, updated_at)
+        VALUES ('p-edit', 'c', 's', 't-edit', 'chat', 'review', 0, 'h', 0, 'abc', 2, 2);
+      INSERT INTO proposal_part (id, proposal_id, ordinal, base_from, base_to, before_text, after_text)
+        VALUES ('part', 'p-edit', 0, 0, 3, 'abc', 'xyz');
+    `)
+
+    migrate(db, workSchema)
+
+    expect(readPragmas(db).userVersion).toBe(10)
+    expect(
+      db.prepare('SELECT id, action, answer, target_range_json, location_json FROM ai_turn').all()
+    ).toEqual([
+      {
+        id: 't-edit',
+        action: 'edit',
+        answer: 'Bản sửa',
+        target_range_json: '{"from":0,"to":3,"text":"abc","targetIds":[]}',
+        location_json: null
+      }
+    ])
+    // The rebuild must not unlink the old proposal from its turn.
+    expect(db.prepare('SELECT id, turn_id FROM proposal').all()).toEqual([
+      { id: 'p-edit', turn_id: 't-edit' }
+    ])
+    db.exec(`
+      INSERT INTO ai_turn (id, session_id, chapter_id, action, question, status, location_json,
+        created_at, updated_at)
+        VALUES ('t-chat', 's', 'c', 'chat', 'Hỏi', 'done', '{"caret":{"source":null,"target":2},"selection":null}', 3, 3)
+    `)
+    expect(db.prepare("SELECT action FROM ai_turn WHERE id = 't-chat'").get()).toEqual({
+      action: 'chat'
+    })
+    expect(
+      thrown(() =>
+        db.exec(
+          "INSERT INTO ai_turn (id, session_id, action, question, status, created_at, updated_at) VALUES ('x', 's', 'agent', 'q', 'done', 4, 4)"
+        )
+      )
+    ).toBe(true)
+    db.exec("DELETE FROM ai_session WHERE id = 's'")
+    expect(db.prepare('SELECT count(*) AS n FROM ai_turn').get<{ n: number }>()!.n).toBe(0)
+    db.close()
+  })
+
   it('upgrades v8 to v9: adds the run context table, which goes with its chapter', () => {
     const db = openDatabase(join(tempDir(), 'v8_to_v9.mira'))
     migrate(db, {
@@ -349,7 +408,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(9)
+    expect(readPragmas(db).userVersion).toBe(10)
     db.exec(`
       INSERT INTO translate_run_context (run_key, chapter_id, snapshot_json, snapshot_hash, created_at)
       VALUES ('translate:r', 'c', '{}', 'h', 1);

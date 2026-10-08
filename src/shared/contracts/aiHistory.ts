@@ -1,6 +1,14 @@
 import * as v from 'valibot'
 import { idSchema } from './library'
-import type { ChatContextBlock, ChatMode, ChatRange, ChatUsage } from './aiChat'
+import type {
+  ChatAction,
+  ChatContextBlock,
+  ChatLocation,
+  ChatRange,
+  ChatToolProposal,
+  ChatToolStep,
+  ChatUsage
+} from './aiChat'
 
 export interface AiSessionView {
   id: string
@@ -14,13 +22,18 @@ export interface AiTurnView {
   id: string
   sessionId: string
   chapterId: string | null
-  action: ChatMode
+  /** Chế độ của lượt cũ, hoặc `chat` cho lượt không chế độ. */
+  action: ChatAction
   question: string
   answer: string
   status: 'sending' | 'running' | 'done' | 'cancelled' | 'error' | 'interrupted'
+  /** Khối đã gửi kèm; chỉ lượt cũ có. */
   context: ChatContextBlock[]
+  /** Khoảng của lượt Sửa cũ; lượt mới luôn `null`. */
   range: ChatRange | null
-  tools: Array<{ name: string; detail: string }>
+  /** Vị trí người dùng lúc gửi; `null` ở lượt cũ. */
+  location: ChatLocation | null
+  tools: ChatToolStep[]
   droppedTurns: number
   provider: string | null
   model: string | null
@@ -29,9 +42,8 @@ export interface AiTurnView {
   finishReason: 'stop' | 'length' | 'tool_calls' | 'filter' | null
   createdAt: number
   updatedAt: number
-  proposalId: string | null
-  partId: string | null
-  proposalStatus: 'pending' | 'applied' | 'rejected' | 'conflict' | 'stale' | 'needs-placement' | null
+  /** Đề xuất lượt đã tạo: từ tool ghi, hoặc từ khối rào của lượt Sửa cũ. Trạng thái đọc từ hàng chờ. */
+  proposals: ChatToolProposal[]
 }
 
 const pageSize = v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)))

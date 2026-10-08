@@ -11,13 +11,7 @@ import type {
   UpdateModelEntryInput
 } from './aiConnections'
 import type { ChatChunk, ChatSendInput, ChatStartResult } from './aiChat'
-import type {
-  AcceptProposalInput,
-  AcceptProposalResult,
-  ChatProposalInput,
-  ChatProposalResult,
-  ProposalQueueItem
-} from './aiProposals'
+import type { AcceptProposalInput, AcceptProposalResult, ProposalQueueItem } from './aiProposals'
 import type { AiSessionView, AiTurnView } from './aiHistory'
 import type {
   ParagraphBatchInput,
@@ -169,7 +163,6 @@ export interface AiChatApi {
 }
 
 export interface AiProposalsApi {
-  createFromChat(input: ChatProposalInput): Promise<Result<ChatProposalResult>>
   accept(input: AcceptProposalInput): Promise<Result<AcceptProposalResult>>
   deny(workId: string, chapterId: string, partId: string): Promise<Result<void>>
   acceptAll(

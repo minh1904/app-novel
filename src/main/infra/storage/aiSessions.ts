@@ -1,8 +1,10 @@
 import type {
+  ChatAction,
   ChatContextBlock,
   ChatFinishReason,
-  ChatMode,
+  ChatLocation,
   ChatRange,
+  ChatToolStep,
   ChatUsage
 } from '../../../shared/contracts/aiChat'
 import { StorageError } from './errors'
@@ -28,13 +30,14 @@ export interface StoredTurn {
   id: string
   sessionId: string
   chapterId: string | null
-  action: ChatMode
+  action: ChatAction
   question: string
   answer: string
   status: StoredTurnStatus
   context: ChatContextBlock[]
   range: ChatRange | null
-  tools: Array<{ name: string; detail: string }>
+  location: ChatLocation | null
+  tools: ChatToolStep[]
   droppedTurns: number
   provider: string | null
   model: string | null
@@ -57,12 +60,13 @@ interface TurnRow {
   id: string
   session_id: string
   chapter_id: string | null
-  action: ChatMode
+  action: ChatAction
   question: string
   answer: string
   status: StoredTurnStatus
   context_json: string
   target_range_json: string | null
+  location_json: string | null
   tools_json: string
   dropped_turns: number
   provider: string | null
@@ -92,6 +96,7 @@ const turnOf = (row: TurnRow): StoredTurn => ({
   status: row.status,
   context: JSON.parse(row.context_json) as ChatContextBlock[],
   range: row.target_range_json === null ? null : (JSON.parse(row.target_range_json) as ChatRange),
+  location: row.location_json === null ? null : (JSON.parse(row.location_json) as ChatLocation),
   tools: JSON.parse(row.tools_json) as StoredTurn['tools'],
   droppedTurns: row.dropped_turns,
   provider: row.provider,
@@ -145,10 +150,12 @@ export interface StartTurnInput {
   id: string
   sessionId: string
   chapterId: string
-  action: ChatMode
+  action: ChatAction
   question: string
-  context: ChatContextBlock[]
+  /** Only old turns sent context along; a `chat` turn sends none. */
+  context?: ChatContextBlock[]
   range?: ChatRange | null
+  location?: ChatLocation | null
   droppedTurns: number
   provider: string | null
   model: string | null
@@ -162,17 +169,18 @@ export function startAiTurn(db: Db, input: StartTurnInput): StoredTurn {
   db.transaction(() => {
     db.prepare(
       `INSERT INTO ai_turn
-      (id, session_id, chapter_id, action, question, status, context_json, target_range_json, dropped_turns,
-       provider, model, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, 'sending', ?, ?, ?, ?, ?, ?, ?)`
+      (id, session_id, chapter_id, action, question, status, context_json, target_range_json, location_json,
+       dropped_turns, provider, model, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'sending', ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       input.id,
       input.sessionId,
       input.chapterId,
       input.action,
       input.question,
-      JSON.stringify(input.context),
+      JSON.stringify(input.context ?? []),
       input.range ? JSON.stringify(input.range) : null,
+      input.location ? JSON.stringify(input.location) : null,
       input.droppedTurns,
       input.provider,
       input.model,

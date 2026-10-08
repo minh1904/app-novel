@@ -1,18 +1,18 @@
 import type {
   ChatChunk,
-  ChatContextBlock,
   ChatFinishReason,
   ChatSendInput,
   ChatStartResult,
+  ChatToolStep,
   ChatUsage
 } from '../../../shared/contracts/aiChat'
-import type { ChatProposalResult } from '../../../shared/contracts/aiProposals'
 import type { RegisterPresetId } from '../../../shared/contracts/addressingPresets'
-import { buildChatMessages } from './chatPrompt'
+import { buildChatMessages, type LocationChapter } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,
   createChatTools,
   type ChatToolLibrary,
+  type ChatToolWrites,
   type ToolResult
 } from './chatTools'
 import type { ConnectionTranslator } from './connectionService'
@@ -54,10 +54,10 @@ export interface ChatConnections {
 
 export interface ChatServiceOptions {
   connections: ChatConnections
-  /** Khối main tự đọc từ kho (thuật ngữ, xưng hô), nối sau khối renderer gửi lên. */
-  storeContext?: (input: ChatSendInput) => ChatContextBlock[]
   /** Bộ mặc định xưng hô của tác phẩm; luật riêng của bộ đi vào system prompt. */
   register?: (input: ChatSendInput) => RegisterPresetId | null
+  /** Tên tác phẩm, số và tên chương đang mở, cho khối vị trí; thiếu thì khối chỉ nói số đoạn. */
+  chapter?: (input: ChatSendInput) => LocationChapter | null
   records?: {
     start(requestId: string, input: ChatSendInput, provider: string | null, model: string): string
     update(
@@ -66,7 +66,7 @@ export interface ChatServiceOptions {
       patch: {
         answer: string
         status: 'running' | 'done' | 'error' | 'cancelled'
-        tools: Array<{ name: string; detail: string }>
+        tools: ChatToolStep[]
         usage?: ChatUsage | null
         costUsd?: number | null
         finishReason?: ChatFinishReason | null
@@ -75,21 +75,16 @@ export interface ChatServiceOptions {
         model?: string | null
       }
     ): void
-    complete?(
-      requestId: string,
-      input: ChatSendInput,
-      answer: string,
-      tools: Array<{ name: string; detail: string }>,
-      usage: ChatUsage | null,
-      costUsd: number | null,
-      finishReason: ChatFinishReason | null
-    ): ChatProposalResult | null
   }
   /**
-   * Kho để các công cụ **chỉ đọc** nhìn vào. Thiếu nó thì lượt vẫn chạy, chỉ là model không với được
-   * ra ngoài ngữ cảnh đã gửi kèm — đó là hành vi của change này trước khi có tool.
+   * Kho để tool đọc nhìn vào. Thiếu nó thì lượt chạy không có tool nào: model chỉ thấy câu hỏi và lịch sử.
    */
   library?: ChatToolLibrary
+  /**
+   * Hai lối ghi của tool ghi: đề xuất chờ duyệt và thuật ngữ chờ duyệt. Thiếu thì tool ghi trả lời là
+   * lượt này không được tạo đề xuất.
+   */
+  writes?: ChatToolWrites
   newId: () => string
   now: () => number
 }
@@ -166,12 +161,6 @@ export class ChatService {
     // nguyên bộ đó, nên sửa cài đặt giữa chừng chỉ có hiệu lực từ lượt kế tiếp.
     const session = connections.translator(input.connectionId, input.entryId)
 
-    // Khối từ kho đi vào **cùng** mảng ngữ cảnh với khối của renderer trước khi ghi lượt: lịch sử,
-    // hash của đề xuất và prompt cùng thấy một danh sách, và renderer nhận lại phần thêm để panel
-    // liệt kê đúng những gì đã gửi.
-    const addedContext = this.options.storeContext?.(input) ?? []
-    if (addedContext.length > 0) input = { ...input, context: [...input.context, ...addedContext] }
-
     const requestId = newId()
     const sessionId = this.options.records?.start(
       requestId,
@@ -185,11 +174,7 @@ export class ChatService {
     // Cố ý không `await`: `start` phải trả `requestId` trước khi chunk đầu tiên đi ra. `void` cộng
     // `catch` ở trong `run` để không bao giờ có promise bị bỏ rơi.
     void this.run(requestId, input, session, controller, emit)
-    return {
-      requestId,
-      ...(sessionId === undefined ? {} : { sessionId }),
-      ...(addedContext.length > 0 ? { addedContext } : {})
-    }
+    return { requestId, ...(sessionId === undefined ? {} : { sessionId }) }
   }
 
   cancel(requestId: string): void {
@@ -224,14 +209,26 @@ export class ChatService {
     // Vì sao vòng **cuối** dừng — vòng trả lời thật, không phải vòng đọc công cụ trước đó.
     let finishReason: ChatFinishReason | undefined
     let answer = ''
-    const toolSteps: Array<{ name: string; detail: string }> = []
+    const toolSteps: ChatToolStep[] = []
     let persistedLength = 0
     let persistedAt = now()
 
     try {
-      const { library } = this.options
-      const tools = library ? createChatTools(library, input.workId) : null
-      const messages = buildChatMessages(input, this.options.register?.(input))
+      const { library, writes } = this.options
+      // Bound to this turn: where the user is, and the turn a proposal belongs to (its id is the request id).
+      const tools = library
+        ? createChatTools(library, input.workId, {
+            chapterId: input.chapterId,
+            location: input.location,
+            turnId: requestId,
+            ...(writes ? { writes } : {})
+          })
+        : null
+      const messages = buildChatMessages(
+        input,
+        this.options.register?.(input),
+        this.options.chapter?.(input) ?? null
+      )
       // Ngân sách thuộc lượt, không thuộc runner: mỗi lần gọi nhận phần còn lại và tự rút trang về đó.
       let toolChars = 0
 
@@ -318,10 +315,23 @@ export class ChatService {
               turnBudget: TOOL_CHARS_PER_TURN
             }
           )
-          toolChars += result.content.length
+          toolChars += result.charge ?? result.content.length
           if (!this.running.has(requestId)) return
-          emit({ requestId, kind: 'tool', name: result.name, detail: result.detail })
-          toolSteps.push({ name: result.name, detail: result.detail })
+          emit({
+            requestId,
+            kind: 'tool',
+            name: result.name,
+            detail: result.detail,
+            status: result.status
+          })
+          // The card goes out as soon as the proposal exists, while the turn is still running.
+          if (result.proposal) emit({ requestId, kind: 'proposal', proposal: result.proposal })
+          toolSteps.push({
+            name: result.name,
+            detail: result.detail,
+            status: result.status,
+            ...(result.proposal ? { proposal: result.proposal } : {})
+          })
           this.options.records?.update(requestId, input.workId, {
             answer,
             status: 'running',
@@ -334,42 +344,20 @@ export class ChatService {
       if (!this.running.has(requestId)) return
       const wireUsage = usage === null ? null : toWireUsage(usage)
       const usd = usage === null ? null : costOfUsage(usage, this.modelInfo(session))
-      const proposal = this.options.records?.complete
-        ? this.options.records.complete(
-            requestId,
-            input,
-            answer,
-            toolSteps,
-            wireUsage,
-            usd,
-            finishReason ?? null
-          )
-        : null
-      if (!this.options.records?.complete) {
-        this.options.records?.update(requestId, input.workId, {
-          answer,
-          status: 'done',
-          tools: toolSteps,
-          usage: wireUsage,
-          costUsd: usd,
-          finishReason: finishReason ?? null
-        })
-      }
+      this.options.records?.update(requestId, input.workId, {
+        answer,
+        status: 'done',
+        tools: toolSteps,
+        usage: wireUsage,
+        costUsd: usd,
+        finishReason: finishReason ?? null
+      })
       emit({
         requestId,
         kind: 'done',
         usage: wireUsage,
         usd,
         keyTail: session.lastKeyTail(),
-        ...(proposal
-          ? {
-              proposal: {
-                proposalId: proposal.proposalId,
-                partId: proposal.partId,
-                status: proposal.status
-              }
-            }
-          : {}),
         ...(finishReason === undefined ? {} : { finishReason })
       })
     } catch (error) {

@@ -1,4 +1,3 @@
-import { chatStoreContext } from './ai/chatStoreContext'
 import { suggestRegister } from './ai/translate/languageProfiles'
 import type { SecretCrypto } from '../infra/storage/secretStore'
 import { SecretStore } from '../infra/storage/secretStore'
@@ -15,8 +14,9 @@ import {
   startAiTurn,
   updateAiTurn
 } from '../infra/storage/aiSessions'
-import { extractFence } from '../../shared/contracts/aiChat'
-import { createChatProposalInDb } from './proposals/chatProposalService'
+import { createToolProposalInDb } from './proposals/chatProposalService'
+import { createContextEntry, listContextEntries } from '../infra/storage/contextEntries'
+import { getEffectiveDyadsForChapter } from '../infra/storage/addressingEntries'
 
 /** The AI services of the app, built over one library and one way of protecting keys. */
 export interface Services {
@@ -67,12 +67,28 @@ export function createServices({
   }
   const chat = new ChatService({
     connections,
-    storeContext: (input) => chatStoreContext(library, input),
     // Cùng cách chọn bộ với lô dịch. Đọc tác phẩm lỗi thì chat chạy không có luật của bộ, không chặn lượt.
     register: (input) => {
       try {
         const work = library.get(input.workId)
         return suggestRegister(work.sourceLang, work.genre)
+      } catch {
+        return null
+      }
+    },
+    // Tên tác phẩm và chương cho khối vị trí. Đọc lỗi thì khối chỉ nói số đoạn, không chặn lượt.
+    chapter: (input) => {
+      try {
+        const chapter = library
+          .listChapters(input.workId)
+          .find((item) => item.id === input.chapterId)
+        return chapter
+          ? {
+              workTitle: library.get(input.workId).title,
+              number: chapter.number,
+              title: chapter.title
+            }
+          : null
       } catch {
         return null
       }
@@ -88,10 +104,9 @@ export function createServices({
               id: requestId,
               sessionId,
               chapterId: input.chapterId,
-              action: input.mode,
+              action: 'chat',
               question: input.question,
-              context: input.context,
-              range: input.range,
+              location: input.location,
               droppedTurns: input.droppedTurns ?? 0,
               provider,
               model,
@@ -103,53 +118,45 @@ export function createServices({
       update: (requestId, workId, patch) =>
         library.withWork(workId, (db) => {
           updateAiTurn(db, requestId, patch, library.appNow())
-        }),
-      complete: (requestId, input, answer, tools, usage, costUsd, finishReason) =>
-        library.withWork(input.workId, (db) =>
-          db.transaction(() => {
-            const now = library.appNow()
-            updateAiTurn(
-              db,
-              requestId,
-              {
-                answer,
-                status: 'done',
-                tools,
-                usage,
-                costUsd,
-                finishReason
-              },
-              now
-            )
-            const base = input.proposalBase
-            const replacement =
-              finishReason === 'stop' && input.mode !== 'ask' ? extractFence(answer) : null
-            if (!base || !input.range || replacement === null || input.mode === 'ask') return null
-            return createChatProposalInDb(
-              db,
-              {
-                workId: input.workId,
-                chapterId: input.chapterId,
-                commandId: requestId,
-                turnId: requestId,
-                action: input.mode,
-                blockAutoApply: base.blockAutoApply,
-                sourceRev: base.sourceRev,
-                sourceContent: base.sourceContent,
-                targetBaseRev: base.targetRev,
-                targetBaseContent: base.targetContent,
-                range: { from: input.range.from, to: input.range.to, text: input.range.text },
-                replacement
-              },
-              now,
-              () => library.newAppId()
-            )
-          })
-        )
+        })
     },
-    // The same store the rest of the app reads through, handed over **read-only by construction**:
-    // `ChatToolLibrary` names only `listChapters` and `readText`, so no tool can reach a writer.
-    library,
+    // The store the rest of the app reads through. The tools read text, links, the glossary and the
+    // addressing pairs; the only writes they reach are the two below, and both make something that waits
+    // for the user.
+    library: {
+      listChapters: (workId) => library.listChapters(workId),
+      readText: (workId, chapterId, side) => library.readText(workId, chapterId, side),
+      listLinks: (workId, chapterId) => library.listLinks(workId, chapterId),
+      readSideContents: (workId, side) => library.readSideContents(workId, side),
+      listGlossary: (workId) =>
+        library.withWork(workId, (db) =>
+          listContextEntries(db, { kind: 'term', status: 'approved' })
+        ),
+      listAddressing: (workId, chapterId) =>
+        library.withWork(workId, (db) => getEffectiveDyadsForChapter(db, chapterId))
+    },
+    writes: {
+      createProposal: (workId, input) =>
+        library.withWork(workId, (db) =>
+          db.transaction(() =>
+            createToolProposalInDb(db, input, library.appNow(), () => library.newAppId())
+          )
+        ),
+      createPendingTerm: (workId, input) =>
+        library.withWork(workId, (db) => ({
+          entryId: createContextEntry(db, {
+            id: library.newAppId(),
+            kind: 'term',
+            source: input.term,
+            target: input.translation,
+            aliases: input.variants,
+            notes: input.note,
+            status: 'pending',
+            origin: 'ai',
+            now: library.appNow()
+          }).id
+        }))
+    },
     newId: () => library.newAppId(),
     now: () => library.appNow()
   })
