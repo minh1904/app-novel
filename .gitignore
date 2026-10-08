@@ -12,3 +12,11 @@ coverage/
 !.env.example
 .eslintcache
 .vscode/
+
+# Mira Lab: dữ liệu nặng và output chạy lại được, giữ trên máy (xem fixtures/README.md)
+fixtures/private/lab/data/
+fixtures/private/lab/runs/
+fixtures/private/lab/experiments/
+fixtures/private/lab/export/
+fixtures/private/lab/backups/
+fixtures/private/lab/*.log

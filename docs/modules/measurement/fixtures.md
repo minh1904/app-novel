@@ -1,12 +1,14 @@
 # Fixture và quyền sử dụng
 
-Cập nhật: 2026-10-04 · Trạng thái: hợp đồng đang dùng bởi Bộ đo.
+Cập nhật: 2026-10-08 · Trạng thái: hợp đồng đang dùng bởi Bộ đo.
 
 ## Hai vùng dữ liệu
 
 - `fixtures/public/`: chỉ chứa văn bản có căn cứ quyền sử dụng và metadata nguồn.
-- `fixtures/private/`: raw có bản quyền và mọi output chi tiết; bị Git bỏ qua. Thiếu thư mục này
-  không làm các phép kiểm công khai thất bại.
+- `fixtures/private/`: raw có bản quyền và output của Bộ đo. Được commit từ 2026-10-06; từ
+  2026-10-08 thư viện Lab, output từng lần chạy, export và backup chỉ nằm trên máy (danh sách ở
+  [`fixtures/README.md`](../../../fixtures/README.md)). Thiếu thư mục này không làm các phép kiểm
+  công khai thất bại.
 
 Mỗi tác phẩm có metadata, glossary oracle, ma trận xưng hô oracle và các chương. Mỗi chương có nguồn,
 metadata, assertion và có thể có bản tham chiếu. “Oracle” nghĩa là dữ liệu phục vụ một phép đo cụ

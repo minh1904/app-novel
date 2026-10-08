@@ -18,6 +18,11 @@ thái oracle; việc qua schema không có nghĩa nội dung đã được ngư�
 | `public/` | **Có** | Văn bản thuộc phạm vi công cộng hoặc có giấy phép mở. Ai cũng chạy lại được |
 | `private/` | **Có** từ 2026-10-06 (chủ sản phẩm bỏ khỏi `.gitignore`) | Raw có bản quyền (truyện mạng hiện đại), thư viện và kết quả của Mira Lab. Không chia sẻ repo ra ngoài khi còn thư mục này |
 
+Từ 2026-10-08 phần nặng của Mira Lab chỉ nằm trên máy, không vào Git: `lab/data/` (thư viện `.mira`,
+khoảng 324 MB), `lab/runs/`, `lab/experiments/`, `lab/export/`, `lab/backups/` và các tệp `lab/*.log`.
+Raw, glossary, analysis, polish, registry, reports và `lab.json` vẫn được commit. Lịch sử trước ngày
+đó vẫn còn các tệp nặng; repo chỉ nhẹ lại nếu viết lại lịch sử.
+
 Khi chạy thí nghiệm, văn bản của cả hai thư mục được gửi tới nhà cung cấp AI đã chọn.
 
 ## Bộ hiện có
