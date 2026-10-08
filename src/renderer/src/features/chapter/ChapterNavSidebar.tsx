@@ -5,7 +5,12 @@ import { Badge } from '../../components/ui/Badge'
 import { ICON } from '../../components/ui/icon'
 import { NavItem } from '../../components/ui/NavItem'
 import { cn } from '../../lib/cn'
-import { chapterState, chapterStateLabels, displayTitle, type ChapterState } from '../work/chapterList'
+import {
+  chapterState,
+  chapterStateLabels,
+  displayTitle,
+  type ChapterState
+} from '../work/chapterList'
 import { useChapters } from '../work/useChapters'
 
 /** The same colours as the status column of the chapter list (ChapterRow). */
