@@ -10,6 +10,7 @@ import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
 import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import { cn } from '../../lib/cn'
+import { Badge, type BadgeColor } from '../../components/ui/Badge'
 import { LinkButton } from '../../components/ui/Button'
 import { CompactButton } from '../../components/ui/CompactButton'
 import { ICON } from '../../components/ui/icon'
@@ -22,7 +23,7 @@ import {
   MenuTrigger
 } from '../../components/ui/DropdownMenu'
 import { formatFullDate, formatUpdatedParts } from '../library/format'
-import { displayTitle } from './chapterList'
+import { chapterState, chapterStateLabels, displayTitle, type ChapterState } from './chapterList'
 
 export interface ChapterRowActions {
   open(chapter: ChapterItem): void
@@ -36,7 +37,14 @@ export interface ChapterRowActions {
 
 /** Grid shared by the list header and every row, so the columns line up. */
 export const CHAPTER_GRID =
-  'grid grid-cols-[48px_minmax(0,1fr)_36px] @min-[560px]:grid-cols-[56px_minmax(0,1fr)_132px_36px]'
+  'grid grid-cols-[48px_minmax(0,1fr)_36px] @min-[560px]:grid-cols-[56px_minmax(0,1fr)_132px_132px_36px]'
+
+/** The same colours as the dots of the chapter sidebar (ChapterNavSidebar). */
+const STATE_COLORS: Record<ChapterState, BadgeColor> = {
+  translated: 'success',
+  untranslated: 'warning',
+  empty: 'neutral'
+}
 
 export const ChapterRow = memo(function ChapterRow({
   chapter,
@@ -54,6 +62,7 @@ export const ChapterRow = memo(function ChapterRow({
   const label = displayTitle(chapter)
   const updatedAt = new Date(chapter.updatedAt)
   const updated = formatUpdatedParts(updatedAt)
+  const state = chapterState(chapter)
 
   return (
     <li
@@ -87,6 +96,15 @@ export const ChapterRow = memo(function ChapterRow({
           </span>
         </LinkButton>
       )}
+
+      <Badge
+        variant="plain"
+        dot
+        color={STATE_COLORS[state]}
+        className="hidden @min-[560px]:inline-flex"
+      >
+        {chapterStateLabels[state]}
+      </Badge>
 
       <time
         className="hidden text-body-xs text-subtle @min-[560px]:block"

@@ -20,6 +20,7 @@ import { DeleteChapterDialog, MoveChapterDialog } from './ChapterDialogs'
 import { CHAPTER_GRID, ChapterRow, type ChapterRowActions } from './ChapterRow'
 import {
   DEFAULT_PAGE_SIZE,
+  chapterState,
   clampPage,
   filterChapters,
   pageOfPosition,
@@ -76,6 +77,10 @@ export function ChaptersArea({
   // Typing stays responsive on thousands of chapters: the filter follows a beat behind the input.
   const filterText = useDeferredValue(parsed.kind === 'filter' ? parsed.text : '')
   const filtered = useMemo(() => filterChapters(all, filterText), [all, filterText])
+  const translated = useMemo(
+    () => all.filter((chapter) => chapterState(chapter) === 'translated').length,
+    [all]
+  )
   const currentPage = clampPage(page, filtered.length, pageSize)
   const visible = useMemo(
     () => slicePage(filtered, currentPage, pageSize),
@@ -178,9 +183,12 @@ export function ChaptersArea({
   return (
     <section aria-labelledby="chapters-heading" className="@container flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 id="chapters-heading" className="mr-auto text-body-md font-semibold tracking-heading">
-          Chương <span className="font-normal text-subtle">({all.length})</span>
-        </h2>
+        <div className="mr-auto flex items-center gap-3">
+          <h2 id="chapters-heading" className="text-body-md font-semibold tracking-heading">
+            Chương <span className="font-normal text-subtle">({all.length})</span>
+          </h2>
+          {all.length > 0 && <TranslatedProgress done={translated} total={all.length} />}
+        </div>
         {all.length > 0 && (
           <div className="flex min-w-[220px] flex-1 basis-[280px] flex-col gap-1 @min-[760px]:max-w-[360px]">
             <SearchInput
@@ -294,6 +302,7 @@ export function ChaptersArea({
             >
               <span className="pl-2">Số</span>
               <span className="px-2">Tên chương</span>
+              <span className="hidden @min-[560px]:block">Trạng thái</span>
               <span className="hidden @min-[560px]:block">Sửa lần cuối</span>
               <span />
             </div>
@@ -416,5 +425,20 @@ function AddChapterRow({
         Xong
       </Button>
     </form>
+  )
+}
+
+/** How many chapters have a translation, as a count and a thin bar; the count says it for screen readers. */
+function TranslatedProgress({ done, total }: { done: number; total: number }): JSX.Element {
+  return (
+    <span className="flex items-center gap-2 text-body-xs text-subtle tabular-nums">
+      <span aria-hidden="true" className="h-1 w-16 overflow-hidden rounded-full bg-muted">
+        <span
+          className="block h-full rounded-full bg-success"
+          style={{ width: (done / total) * 100 + '%' }}
+        />
+      </span>
+      {done}/{total} đã dịch
+    </span>
   )
 }

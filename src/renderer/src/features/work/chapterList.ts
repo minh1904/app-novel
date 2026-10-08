@@ -37,6 +37,23 @@ export function lossNote(chapter: Pick<ChapterItem, 'hasSource' | 'hasTarget'>):
   return null
 }
 
+/**
+ * How far a chapter has come, from whether its texts are empty. A translation without a source
+ * still counts as "no source": the source is what the chapter is translated from.
+ */
+export type ChapterState = 'translated' | 'untranslated' | 'empty'
+
+export const chapterStateLabels: Record<ChapterState, string> = {
+  translated: 'Đã dịch',
+  untranslated: 'Chưa dịch',
+  empty: 'Chưa có bản gốc'
+}
+
+export function chapterState(chapter: Pick<ChapterItem, 'hasSource' | 'hasTarget'>): ChapterState {
+  if (!chapter.hasSource) return 'empty'
+  return chapter.hasTarget ? 'translated' : 'untranslated'
+}
+
 export type SearchQuery =
   | { kind: 'empty' }
   /** The whole input is a number: confirm to jump to that chapter. */

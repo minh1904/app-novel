@@ -5,8 +5,15 @@ import { Badge } from '../../components/ui/Badge'
 import { ICON } from '../../components/ui/icon'
 import { NavItem } from '../../components/ui/NavItem'
 import { cn } from '../../lib/cn'
-import { displayTitle } from '../work/chapterList'
+import { chapterState, chapterStateLabels, displayTitle, type ChapterState } from '../work/chapterList'
 import { useChapters } from '../work/useChapters'
+
+/** The same colours as the status column of the chapter list (ChapterRow). */
+const STATE_DOTS: Record<ChapterState, string> = {
+  translated: 'bg-success',
+  untranslated: 'bg-warning',
+  empty: 'bg-neutral/40'
+}
 
 /**
  * Left sidebar while a chapter is open: the chapters of the current work, instead of the library
@@ -73,18 +80,9 @@ export function ChapterNavSidebar({
         ) : (
           chapters.map((chapter) => {
             const active = chapter.id === activeChapterId
-            const dotClass =
-              chapter.hasSource && chapter.hasTarget
-                ? 'bg-success'
-                : chapter.hasSource
-                  ? 'bg-warning'
-                  : 'bg-neutral/40'
-            const dotLabel =
-              chapter.hasSource && chapter.hasTarget
-                ? 'Đã dịch'
-                : chapter.hasSource
-                  ? 'Chưa dịch'
-                  : 'Chưa có bản gốc'
+            const state = chapterState(chapter)
+            const dotClass = STATE_DOTS[state]
+            const dotLabel = chapterStateLabels[state]
             const pending = pendingCounts[chapter.id] ?? 0
             return (
               <NavItem
