@@ -20,3 +20,7 @@ fixtures/private/lab/experiments/
 fixtures/private/lab/export/
 fixtures/private/lab/backups/
 fixtures/private/lab/*.log
+# Thư mục skill của các tool agent khác (bản sao của .claude/skills) và ảnh tham khảo: chỉ giữ trên máy
+.agent/
+.agents/
+/assets/*.jpg
