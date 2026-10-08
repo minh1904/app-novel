@@ -12,7 +12,6 @@ import { SearchInput } from '../../components/ui/Input'
 import { ListOption } from '../../components/ui/ListOption'
 import { NavItem } from '../../components/ui/NavItem'
 import { Select } from '../../components/ui/Select'
-import { useDimChrome } from '../../app/useDimChrome'
 import { useUiStore } from '../../stores/uiStore'
 import {
   breadcrumbOf,
@@ -218,7 +217,6 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
   const [searching, setSearching] = useState(false)
   const searchInput = useRef<HTMLInputElement | null>(null)
   const content = useRef<HTMLDivElement | null>(null)
-  useDimChrome(location !== null)
 
   // A deep link's key: scroll its row into view and light it for a moment.
   const key = location?.key

@@ -25,7 +25,6 @@ import { registerLibraryHandlers } from './electron/registerIpc'
 import {
   BOOT_BACKGROUND,
   CHROME_COLORS,
-  chromeColors,
   OVERLAY_TITLE_BAR,
   TOP_BAR_HEIGHT
 } from './electron/titleBar'
@@ -61,8 +60,6 @@ const GLASS_SUPPORTED = isGlassSupported(process.platform, release())
  * starts in the system theme, as the page does (see useTheme).
  */
 let chromeTheme: ChromeTheme = 'dark'
-/** Whether a dialog's backdrop covers the page, so the window buttons dim with it. */
-let chromeDimmed = false
 
 /** Only the top frame of our own window may call the main process. */
 function isTrustedSender(event: IpcMainInvokeEvent): boolean {
@@ -195,18 +192,7 @@ app.whenReady().then(() => {
       throw new Error('Unknown chrome theme')
     }
     chromeTheme = theme
-    if (OVERLAY_TITLE_BAR) mainWindow?.setTitleBarOverlay(chromeColors(theme, chromeDimmed))
-  })
-
-  ipcMain.handle('app:chrome-dimmed', (event, dimmed: unknown): void => {
-    if (!isTrustedSender(event)) {
-      throw new Error('Untrusted IPC sender')
-    }
-    if (typeof dimmed !== 'boolean') {
-      throw new Error('Chrome dimmed must be a boolean')
-    }
-    chromeDimmed = dimmed
-    if (OVERLAY_TITLE_BAR) mainWindow?.setTitleBarOverlay(chromeColors(chromeTheme, dimmed))
+    if (OVERLAY_TITLE_BAR) mainWindow?.setTitleBarOverlay(CHROME_COLORS[theme])
   })
 
   const appearance = createAppearanceHandlers<IpcMainInvokeEvent>({

@@ -153,9 +153,13 @@ Viền ô nhập và track Switch: 3,0 trên nền sáng (`#949494`), 3,0 trên 
 chia bằng viền mảnh.
 
 - **Thanh trên là thanh tiêu đề** (window controls overlay): Windows chỉ vẽ ba nút cửa sổ ở đầu phải.
-  Nền ba nút là `--mira-bg-surface`, biểu tượng là `--mira-text-subtle`, đổi theo theme, nên chúng
-  liền với các icon của thanh. Bản chép màu ở [`titleBar.ts`](../../../src/main/electron/titleBar.ts)
-  có test đối chiếu với token.
+  - **Nền ba nút trong suốt** (`rgba(1, 0, 0, 0)`, cách Hermes Desktop làm; đổi ngày 2026-10-08).
+    Thanh trên của trang hiện xuyên qua, nên lớp phủ dialog phủ lên góc ba nút như phần còn lại của
+    thanh, kể cả lúc mờ dần và blur.
+  - Trước đó nền là màu đặc, được đổi tối khi có dialog. Màu đổi trong một bước còn lớp phủ mờ dần,
+    nên ô ba nút giật và lệch màu; cách này đã bỏ.
+  - Biểu tượng là `--mira-text-subtle`, đổi theo theme, nên liền với các icon của thanh. Bản chép màu
+    ở [`titleBar.ts`](../../../src/main/electron/titleBar.ts) có test đối chiếu với token.
 - **Không có rail điều hướng** (2026-10-08, xem [thanh bên](../workspace/sidebar-research.md#6-kết-luận)).
 - **Thanh trên cao 40 px**, chạy hết chiều ngang:
   - không có logo, nút thu/mở danh sách hay breadcrumb (gỡ ngày 2026-10-08); cột danh sách vẫn thu/mở

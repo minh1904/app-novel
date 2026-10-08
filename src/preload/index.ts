@@ -59,8 +59,6 @@ const desktopApi: DesktopApi = {
   openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url) as Promise<void>,
   setChromeTheme: (theme: ChromeTheme) =>
     ipcRenderer.invoke('app:chrome-theme', theme) as Promise<void>,
-  setChromeDimmed: (dimmed: boolean) =>
-    ipcRenderer.invoke('app:chrome-dimmed', dimmed) as Promise<void>,
   appearance: {
     get: () => ipcRenderer.invoke('app:appearance:get') as Promise<AppearanceState>,
     set: (input: SetAppearanceInput) =>

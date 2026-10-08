@@ -1,7 +1,6 @@
 import type { JSX, ReactNode, RefObject } from 'react'
 import { Dialog as BaseDialog } from '@base-ui/react/dialog'
 import { CloseIcon } from '@solar-icons/react/linear/close'
-import { useDimChrome } from '../../app/useDimChrome'
 import { cn } from '../../lib/cn'
 import { CompactButton } from './CompactButton'
 
@@ -36,7 +35,6 @@ export function Dialog({
   footer,
   children
 }: DialogProps): JSX.Element {
-  useDimChrome(open)
   return (
     <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
       <BaseDialog.Portal>

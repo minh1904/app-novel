@@ -2,12 +2,11 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  BACKDROP_ALPHA,
   BOOT_BACKGROUND,
   CHROME_COLORS,
-  chromeColors,
   HEADER_HEIGHT,
-  TOP_BAR_HEIGHT
+  TOP_BAR_HEIGHT,
+  TRANSPARENT_OVERLAY
 } from './titleBar'
 import { isZoomShortcut, ZOOM_FACTOR } from './zoom'
 
@@ -44,24 +43,9 @@ describe('window button colours', () => {
     expect(CHROME_COLORS.light.symbolColor).toBe(semantic('light', '--mira-text-subtle'))
   })
 
-  it('puts the buttons on the colour of the bar', () => {
-    expect(CHROME_COLORS.dark.color).toBe(semantic('dark', '--mira-bg-surface'))
-    expect(CHROME_COLORS.light.color).toBe(semantic('light', '--mira-bg-surface'))
-  })
-
-  it('dims the buttons by the backdrop of each theme while a dialog is open', () => {
-    for (const theme of ['light', 'dark'] as const) {
-      const selector = theme === 'dark' ? "html[data-theme='dark']" : "html[data-theme='light']"
-      const start = SEMANTIC.indexOf(selector)
-      const block = SEMANTIC.slice(start, SEMANTIC.indexOf('\n}', start))
-      const match =
-        /--mira-bg-backdrop: *color-mix\(in srgb, var\(--mira-neutral-1000\) (\d+)%/.exec(block)
-      expect(match, '--mira-bg-backdrop in ' + selector).not.toBeNull()
-      expect(BACKDROP_ALPHA[theme]).toBe(Number((match as RegExpExecArray)[1]) / 100)
-      expect(chromeColors(theme, false)).toEqual(CHROME_COLORS[theme])
-    }
-    expect(chromeColors('dark', true)).toEqual({ color: '#0b0b0b', symbolColor: '#484848' })
-    expect(chromeColors('light', true)).toEqual({ color: '#adadad', symbolColor: '#3f3f3f' })
+  it('lets the bar and any backdrop show through behind the buttons', () => {
+    expect(CHROME_COLORS.dark.color).toBe(TRANSPARENT_OVERLAY)
+    expect(CHROME_COLORS.light.color).toBe(TRANSPARENT_OVERLAY)
   })
 
   it('starts the window in the colour of its surface', () => {

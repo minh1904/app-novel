@@ -5,7 +5,6 @@ import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
 import { RefreshIcon } from '@solar-icons/react/linear/refresh'
 import { CONNECTION_PRESETS } from '../../../../shared/contracts/aiConnections'
 import { PROVIDER_CARDS } from '../../../../shared/contracts/aiProviders'
-import { useDimChrome } from '../../app/useDimChrome'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Badge } from '../../components/ui/Badge'
 import { Button, LinkButton } from '../../components/ui/Button'
@@ -354,7 +353,6 @@ export function Onboarding(): JSX.Element | null {
     !dismissed
   // Once a flow has started it stays until it ends, even though connecting makes the library non-empty.
   const visible = manual || auto || state.step !== 'idle'
-  useDimChrome(visible)
   if (!visible) return null
 
   function close(): void {

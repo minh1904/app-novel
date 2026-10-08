@@ -18,50 +18,21 @@ export const HEADER_HEIGHT = 40
 export const TOP_BAR_HEIGHT = Math.round(HEADER_HEIGHT * ZOOM_FACTOR) - 1
 
 /**
- * What the window buttons wear, per theme: the bar's own colour (`--mira-bg-surface`) behind them, so
- * the three buttons read as part of the bar, and `--mira-text-subtle` for the glyphs, as the bar's icon
- * buttons use. Windows derives the hover and pressed shades from the background. Both are copied
- * from styles/tokens/ because the OS paints them and cannot read a CSS variable; `titleBar.test.ts`
- * fails when the copies drift apart.
+ * A see-through background for the window buttons, as Hermes Desktop uses: the page's own top bar shows
+ * through, so a dialog's backdrop (its fade and blur included) covers the buttons' corner like the rest
+ * of the bar. An opaque colour sat on top of the backdrop as a bright box and changed in one step while
+ * the backdrop faded. Fully transparent black is read as "no colour" by Electron, hence the red channel.
  */
-export const CHROME_COLORS: Record<ChromeTheme, { color: string; symbolColor: string }> = {
-  dark: { color: '#1a1a1a', symbolColor: '#a3a3a3' },
-  light: { color: '#ffffff', symbolColor: '#5c5c5c' }
-}
+export const TRANSPARENT_OVERLAY = 'rgba(1, 0, 0, 0)'
 
 /**
- * How much black `--mira-bg-backdrop` lays over the page while a dialog is open, per theme. The backdrop
- * cannot cover the window buttons, which the OS paints above the page, so they take the same shade
- * from here instead of standing out as an undimmed box; `titleBar.test.ts` checks the copy.
+ * What the window buttons wear, per theme: the see-through background, and `--mira-text-subtle` for the
+ * glyphs, as the bar's icon buttons use. The glyph colour is copied from styles/tokens/ because the OS
+ * paints it and cannot read a CSS variable; `titleBar.test.ts` fails when the copies drift apart.
  */
-export const BACKDROP_ALPHA: Record<ChromeTheme, number> = { dark: 0.56, light: 0.32 }
-
-/** A colour seen through `alpha` of black. */
-function underBlack(hex: string, alpha: number): string {
-  const channels = [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16))
-  return (
-    '#' +
-    channels
-      .map((value) =>
-        Math.round(value * (1 - alpha))
-          .toString(16)
-          .padStart(2, '0')
-      )
-      .join('')
-  )
-}
-
-/** The window buttons' colours for a theme, dimmed like the page while a dialog is open. */
-export function chromeColors(
-  theme: ChromeTheme,
-  dimmed: boolean
-): { color: string; symbolColor: string } {
-  const colors = CHROME_COLORS[theme]
-  if (!dimmed) return colors
-  return {
-    color: underBlack(colors.color, BACKDROP_ALPHA[theme]),
-    symbolColor: underBlack(colors.symbolColor, BACKDROP_ALPHA[theme])
-  }
+export const CHROME_COLORS: Record<ChromeTheme, { color: string; symbolColor: string }> = {
+  dark: { color: TRANSPARENT_OVERLAY, symbolColor: '#a3a3a3' },
+  light: { color: TRANSPARENT_OVERLAY, symbolColor: '#5c5c5c' }
 }
 
 /**
