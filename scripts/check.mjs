@@ -1,6 +1,6 @@
 // One command that runs every check and cannot pass without proof that it ran.
 //
-//   node scripts/check.mjs            typecheck (node + web), tests (two phases), lint
+//   node scripts/check.mjs            typecheck (node + web), tests (two phases), Biome (lint + format)
 //   node scripts/check.mjs --build    the same, then electron-vite build
 //   node scripts/check.mjs --self-test  prove that a silent step is rejected
 //
@@ -154,31 +154,36 @@ function vitestPhase(name, args) {
   return { ...outcome, passed: counted }
 }
 
+// `biome ci` lints and checks formatting without writing; an unformatted file is an error.
 function lint() {
   return step(
-    'eslint',
-    () => node(bin('eslint', 'bin', 'eslint.js'), ['-f', 'json', '.']),
+    'biome',
+    () =>
+      node(bin('@biomejs', 'biome', 'bin', 'biome'), [
+        'ci',
+        '--reporter=json',
+        '--max-diagnostics=none'
+      ]),
     (text) => {
-      let results
+      let report
       try {
-        results = JSON.parse(text)
+        report = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1))
       } catch {
-        return { ok: false, note: 'eslint did not print its JSON report, so it did not run' }
+        return { ok: false, note: 'biome did not print its JSON report, so it did not run' }
       }
-      const errors = results.reduce((sum, file) => sum + file.errorCount, 0)
-      const warnings = results.reduce((sum, file) => sum + file.warningCount, 0)
-      const note = results.length + ' files, ' + errors + ' errors, ' + warnings + ' warnings'
-      const lines = results
-        .flatMap((file) =>
-          file.messages
-            .filter((message) => message.severity === 2)
-            .map((message) => {
-              const where = posix(file.filePath) + ':' + message.line
-              return where + '  ' + (message.ruleId ?? 'parse') + '  ' + message.message
-            })
-        )
+      const { summary, diagnostics } = report
+      const files = (summary?.changed ?? 0) + (summary?.unchanged ?? 0)
+      const note =
+        files + ' files, ' + summary?.errors + ' errors, ' + summary?.warnings + ' warnings'
+      const lines = (diagnostics ?? [])
+        .filter((diagnostic) => diagnostic.severity === 'error')
+        .map((diagnostic) => {
+          const where = posix(diagnostic.location?.path ?? '?')
+          const line = diagnostic.location?.start?.line
+          return where + (line ? ':' + line : '') + '  ' + diagnostic.category + '  ' + diagnostic.message
+        })
         .slice(0, 30)
-      return results.length > 0 && errors === 0 ? { ok: true, note } : { ok: false, note, lines }
+      return files > 0 && summary.errors === 0 ? { ok: true, note } : { ok: false, note, lines }
     }
   )
 }

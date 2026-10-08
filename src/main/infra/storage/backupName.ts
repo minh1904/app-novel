@@ -1,5 +1,5 @@
 /** Characters Windows does not allow in a file name, plus control characters. */
-// eslint-disable-next-line no-control-regex
+// biome-ignore lint/suspicious/noControlCharactersInRegex: the control characters are what this pattern removes
 const FORBIDDEN = /[\\/:*?"<>|\u0000-\u001f]/g
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
 const MAX_TITLE = 100

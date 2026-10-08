@@ -105,6 +105,7 @@ export function ChaptersArea({
     setHighlight({ id, focus })
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `showPositionOf` only reads `pageSize`; the other inputs are stable hook callbacks.
   const actions: ChapterRowActions = useMemo(
     () => ({
       open: (chapter) => {
@@ -129,8 +130,6 @@ export function ChaptersArea({
       askMoveTo: (chapter) => setMovingId(chapter.id),
       askDelete: (chapter) => setDeletingId(chapter.id)
     }),
-    // `showPositionOf` only reads `pageSize`; the other inputs are stable hook callbacks.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [chapters.open, chapters.rename, chapters.move, onOpenChapter, pageSize]
   )
 

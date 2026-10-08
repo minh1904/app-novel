@@ -20,7 +20,7 @@ import { formatAsDocxBuffer } from './formatters/docxFormatter'
 import { formatAsNovelHtml } from './formatters/pdfFormatter'
 
 export function sanitizeFilename(name: string): string {
-  // eslint-disable-next-line no-control-regex
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: the control characters are what this pattern removes
   const sanitized = name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim()
   return sanitized.length > 0 ? sanitized : 'novel'
 }

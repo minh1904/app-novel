@@ -10,7 +10,6 @@ coverage/
 .env
 .env.*
 !.env.example
-.eslintcache
 .vscode/
 
 # Mira Lab: dữ liệu nặng và output chạy lại được, giữ trên máy (xem fixtures/README.md)

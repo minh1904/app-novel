@@ -151,7 +151,7 @@ export interface Normalized {
 }
 
 // NUL and the other C0 controls, except tab (\t) and line feed (\n) which are real text.
-// eslint-disable-next-line no-control-regex
+// biome-ignore lint/suspicious/noControlCharactersInRegex: the control characters are what this pattern removes
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g
 
 /**

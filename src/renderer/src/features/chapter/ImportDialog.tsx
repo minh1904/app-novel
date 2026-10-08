@@ -126,10 +126,9 @@ function ImportBody({
   }
 
   // A file chosen on the chapter screen opens straight on its preview.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Once per opening; the dialog is remounted each time it opens.
   useEffect(() => {
     if (initialFile) void takeFile(initialFile)
-    // Once per opening; the dialog is remounted each time it opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const prepared = useMemo(() => {

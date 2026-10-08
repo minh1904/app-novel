@@ -140,6 +140,7 @@ export function useSentenceRows(
     return run
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: enqueue and the setters are stable in effect: they only touch refs and state setters.
   const commit = useCallback(
     (sourceId: string): Promise<boolean> =>
       enqueue(async () => {
@@ -179,8 +180,6 @@ export function useSentenceRows(
         changed.current(result.value.target)
         return true
       }),
-    // enqueue and the setters are stable in effect: they only touch refs and state setters.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [workId, chapterId, setDraftMap]
   )
 
@@ -192,6 +191,7 @@ export function useSentenceRows(
     return ok
   }, [commit])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: enqueue and the setters only touch refs and state setters, as in save above
   const review = useCallback(
     (sourceId: string): Promise<boolean> =>
       enqueue(async () => {
@@ -204,7 +204,6 @@ export function useSentenceRows(
         setProblem(sourceId, null)
         return true
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [workId, chapterId]
   )
 

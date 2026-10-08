@@ -61,6 +61,7 @@ function EditBody({
   const [initial, setInitial] = useState<WorkFormValues | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Snapshot once per opening: later changes to `work` must not overwrite what is being typed.
   useEffect(() => {
     let active = true
     if (work.coverVersion === undefined) {
@@ -77,8 +78,6 @@ function EditBody({
     return () => {
       active = false
     }
-    // Snapshot once per opening: later changes to `work` must not overwrite what is being typed.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (loadError) {

@@ -75,7 +75,7 @@ src/
   renderer/src/        app/, components/, features/, styles/
 ```
 
-Mỗi tầng của `main` chỉ được import tầng dưới nó: `infra` < `services` < `ipc` < `electron`. Luật này do `no-restricted-imports` trong [`eslint.config.mjs`](eslint.config.mjs) ép, không chỉ là quy ước. Chi tiết và cách thêm thành phần mới: [Cấu trúc mã nguồn và luật ranh giới](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/architecture.md#cấu-trúc-mã-nguồn-và-luật-ranh-giới).
+Mỗi tầng của `main` chỉ được import tầng dưới nó: `infra` < `services` < `ipc` < `electron`. Luật này do `noRestrictedImports` trong [`biome.json`](biome.json) ép (mỗi vùng một khối `overrides`; khối sau ghi đè khối trước nên phải nhắc lại đủ luật), không chỉ là quy ước. Tên tệp trong `src/` là PascalCase cho component, camelCase cho phần còn lại; Biome chặn `-` và `_`. Format và lint đều bằng Biome (`node scripts/check.mjs` chạy `biome ci`). Chi tiết và cách thêm thành phần mới: [Cấu trúc mã nguồn và luật ranh giới](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/engineering/architecture.md#cấu-trúc-mã-nguồn-và-luật-ranh-giới).
 
 ### Lộ trình theo module
 

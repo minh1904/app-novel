@@ -1,0 +1,394 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "src/**",
+      "electron.vite.config.ts",
+      "vitest.config.ts",
+      "biome.json",
+      "!**/__fixtures__",
+      "!src/**/*.json"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "crlf"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "semicolons": "asNeeded",
+      "trailingCommas": "none"
+    }
+  },
+  "css": { "parser": { "tailwindDirectives": true }, "formatter": { "quoteStyle": "single" } },
+  "assist": { "enabled": true, "actions": { "source": { "organizeImports": "off" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": { "filenameCases": ["camelCase", "PascalCase"], "requireAscii": true }
+        },
+        "useTemplate": "off",
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "noAssignInExpressions": "off",
+        "useIterableCallbackReturn": "off",
+        "noArrayIndexKey": "warn"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": "warn"
+      },
+      "a11y": {
+        "useAriaPropsSupportedByRole": "warn",
+        "noLabelWithoutControl": "warn",
+        "noAutofocus": "warn",
+        "noStaticElementInteractions": "warn",
+        "useSemanticElements": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useFocusableInteractive": "warn"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/shared/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "shared/ chạy ở main, preload và renderer nên không import electron. Mã cần Electron nằm ở src/main.",
+                  "react": "shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer.",
+                  "react-dom": "shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer."
+                },
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "shared/ cũng chạy trong renderer và preload (sandbox) nên không dùng module Node (node:*)."
+                  },
+                  { "group": ["**/main/**"], "message": "shared/ không được import từ src/main." },
+                  {
+                    "group": ["**/renderer/**"],
+                    "message": "shared/ không được import từ src/renderer."
+                  },
+                  {
+                    "group": ["**/preload/**"],
+                    "message": "shared/ không được import từ src/preload."
+                  },
+                  {
+                    "group": ["**/measurement/**"],
+                    "message": "src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/shared/contracts/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "shared/ chạy ở main, preload và renderer nên không import electron. Mã cần Electron nằm ở src/main.",
+                  "react": "shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer.",
+                  "react-dom": "shared/ không phụ thuộc giao diện. Mã React nằm ở src/renderer."
+                },
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "shared/ cũng chạy trong renderer và preload (sandbox) nên không dùng module Node (node:*)."
+                  },
+                  {
+                    "group": ["../**"],
+                    "message": "contracts/ chỉ có kiểu, schema và tên kênh; chỉ import trong contracts/ (các thư mục khác của shared/ được dùng contracts/, không ngược lại)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/measurement/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "react": "measurement/ không phụ thuộc giao diện.",
+                  "react-dom": "measurement/ không phụ thuộc giao diện."
+                },
+                "patterns": [
+                  { "group": ["**/main/**"], "message": "measurement/ không import từ src/main." },
+                  {
+                    "group": ["**/renderer/**"],
+                    "message": "measurement/ không import từ src/renderer."
+                  },
+                  {
+                    "group": ["**/preload/**"],
+                    "message": "measurement/ không import từ src/preload."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/renderer/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "Renderer chỉ nói chuyện với main qua window.mira (preload). Không import electron."
+                },
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "Renderer chạy trong trình duyệt sandbox, không có module Node (node:*)."
+                  },
+                  {
+                    "group": ["**/main/**"],
+                    "message": "Renderer không import từ src/main. Dùng kiểu và hợp đồng trong src/shared."
+                  },
+                  {
+                    "group": ["**/preload/**"],
+                    "message": "Renderer không import từ src/preload. Dùng window.mira."
+                  },
+                  {
+                    "group": ["**/measurement/**"],
+                    "message": "src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/preload/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "Preload chạy trong sandbox: chỉ require được electron, không dùng module Node (node:*)."
+                  },
+                  {
+                    "group": ["**/main/**"],
+                    "message": "Preload không import từ src/main. Chỉ dùng hợp đồng trong src/shared."
+                  },
+                  {
+                    "group": ["**/renderer/**"],
+                    "message": "Preload không import từ src/renderer."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/main/infra/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "Chỉ index.ts và main/electron/ được import electron. Mã khác phải chạy được không cần Electron."
+                },
+                "patterns": [
+                  {
+                    "group": ["**/services/**"],
+                    "message": "infra/ là tầng thấp nhất của main: không import từ services/."
+                  },
+                  { "group": ["**/ipc/**"], "message": "infra/ không import từ ipc/." },
+                  { "group": ["**/electron/**"], "message": "infra/ không import từ electron/." },
+                  { "group": ["**/renderer/**"], "message": "Main không import từ src/renderer." },
+                  {
+                    "group": ["**/measurement/**"],
+                    "message": "src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó."
+                  },
+                  {
+                    "group": ["**/testing/**"],
+                    "message": "main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/main/services/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "Chỉ index.ts và main/electron/ được import electron. Mã khác phải chạy được không cần Electron."
+                },
+                "patterns": [
+                  {
+                    "group": ["**/ipc/**"],
+                    "message": "services/ không import từ ipc/ (ipc gọi services, không ngược lại)."
+                  },
+                  {
+                    "group": ["**/electron/**"],
+                    "message": "services/ không import từ electron/."
+                  },
+                  { "group": ["**/renderer/**"], "message": "Main không import từ src/renderer." },
+                  {
+                    "group": ["**/measurement/**"],
+                    "message": "src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó."
+                  },
+                  {
+                    "group": ["**/testing/**"],
+                    "message": "main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/main/services/library/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "Chỉ index.ts và main/electron/ được import electron. Mã khác phải chạy được không cần Electron."
+                },
+                "patterns": [
+                  {
+                    "group": ["**/ipc/**"],
+                    "message": "services/ không import từ ipc/ (ipc gọi services, không ngược lại)."
+                  },
+                  {
+                    "group": ["**/electron/**"],
+                    "message": "services/ không import từ electron/."
+                  },
+                  {
+                    "group": ["**/ai/**"],
+                    "message": "services/library không import từ services/ai (dịch chương dùng LibraryStore, không ngược lại)."
+                  },
+                  { "group": ["**/renderer/**"], "message": "Main không import từ src/renderer." },
+                  {
+                    "group": ["**/measurement/**"],
+                    "message": "src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó."
+                  },
+                  {
+                    "group": ["**/testing/**"],
+                    "message": "main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/main/ipc/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "electron": "Chỉ index.ts và main/electron/ được import electron. Mã khác phải chạy được không cần Electron."
+                },
+                "patterns": [
+                  {
+                    "group": ["**/electron/**"],
+                    "message": "ipc/ không import từ electron/. Giữ handler thuần để test không cần dựng cửa sổ."
+                  },
+                  { "group": ["**/renderer/**"], "message": "Main không import từ src/renderer." },
+                  {
+                    "group": ["**/measurement/**"],
+                    "message": "src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó."
+                  },
+                  {
+                    "group": ["**/testing/**"],
+                    "message": "main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/main/electron/**", "src/main/index.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  { "group": ["**/renderer/**"], "message": "Main không import từ src/renderer." },
+                  {
+                    "group": ["**/measurement/**"],
+                    "message": "src/measurement là mã của Bộ đo, không đóng gói vào app. Mã app không import nó."
+                  },
+                  {
+                    "group": ["**/testing/**"],
+                    "message": "main/testing/ là công cụ chỉ dành cho test; mã chạy thật không được import nó."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "src/main/**/crash*.ts"],
+      "linter": { "rules": { "style": { "noRestrictedImports": "off" } } }
+    }
+  ]
+}

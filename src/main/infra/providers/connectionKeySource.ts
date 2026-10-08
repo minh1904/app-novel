@@ -64,7 +64,7 @@ export function createConnectionKeySource(options: ConnectionKeySourceOptions): 
       if ('exhausted' in picked) return { exhausted: true, recoverAt: picked.recoverAt }
 
       const row = rows.find((candidate) => candidate.id === picked.lease.keyId) as KeyCipher
-      let opened
+      let opened: Awaited<ReturnType<typeof secrets.open>>
       try {
         opened = await secrets.open(row.cipher)
       } catch (error) {

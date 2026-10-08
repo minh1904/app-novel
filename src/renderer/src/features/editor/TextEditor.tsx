@@ -269,6 +269,7 @@ export function TextEditor({
     [save]
   )
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: The text is read once; the screen remounts this component (key) to load another.
   useEffect(() => {
     if (!host.current) return
     const makeState = (opened: TextRecord): EditorState =>
@@ -332,8 +333,6 @@ export function TextEditor({
       view.current = null
       editor.destroy()
     }
-    // The text is read once; the screen remounts this component (key) to load another.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
