@@ -58,8 +58,8 @@ export interface AppNavProps {
 }
 
 /**
- * The app sidebar: the pages that live outside any one work, 224px with labels or folded to a 48px
- * rail of icons with tooltips. Settings and the theme sit at the bottom.
+ * The app sidebar below the window title bar: pages outside any one work, 224px with labels or folded
+ * to a 48px rail of icons with tooltips. Settings and the theme sit at the bottom.
  */
 export function AppNav({
   page,
@@ -105,11 +105,10 @@ export function AppNav({
     >
       <div
         className={cn(
-          'window-drag flex h-(--mira-header-height) shrink-0 items-center',
-          collapsed ? 'justify-center' : 'justify-between pr-xs pl-sm'
+          'flex h-(--mira-header-height) shrink-0 items-center',
+          collapsed ? 'justify-center' : 'justify-end pr-xs'
         )}
       >
-        {!collapsed && <span className="text-label-md font-semibold tracking-heading">Mira</span>}
         <Tip label={toggleLabel} side={collapsed ? 'right' : 'bottom'}>
           <CompactButton
             aria-label={toggleLabel}

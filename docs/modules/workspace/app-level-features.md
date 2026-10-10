@@ -134,7 +134,9 @@ phẩm ghi đè); Mira có làm Nguồn tải chương từ web hay không (quy�
   cam khi chưa có kết nối AI. Nút đầu thanh hoặc Ctrl+B thu thành rail icon có tooltip; lựa chọn nhớ
   theo máy (`localStorage`, khoá `mira.navCollapsed`). Ở màn Chương, Ctrl+B vẫn ẩn/hiện cột danh sách
   chương như trước.
-- **Thanh trên** ([`AppShell`](../../../src/renderer/src/app/AppShell.tsx)): tên màn ở bên trái
+- **Hai tầng thanh trên** ([`AppShell`](../../../src/renderer/src/app/AppShell.tsx)): thanh tiêu đề cửa sổ
+  chạy hết chiều ngang app và mang tên Mira; bên dưới, thanh bên chung và thanh của màn mới bắt đầu.
+  Thanh của màn giữ tên màn ở bên trái
   ([`TopBarTitle`](../../../src/renderer/src/app/TopBarActions.tsx)), nút riêng của màn ở bên phải.
 - **Trang chủ** ([`HomeScreen`](../../../src/renderer/src/features/home/HomeScreen.tsx)) là màn mở app khi
   không có tab tác phẩm nào để khôi phục. Thẻ "Tiếp tục dịch" là thật: tác phẩm sửa gần nhất, nút Dịch

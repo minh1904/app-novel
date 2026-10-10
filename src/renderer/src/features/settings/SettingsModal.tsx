@@ -25,6 +25,9 @@ import { searchSettings, type SettingsIndexEntry } from './settingsSearch'
 /** How long a row a deep link points at stays lit (Hermes: 1.6s). */
 const HIGHLIGHT_MS = 1_600
 
+/** Same balanced vertical clearance as Hermes Desktop's overlay card. */
+export const SETTINGS_MODAL_INSET = 'inset-y-[calc(var(--mira-header-height)+0.875rem)]'
+
 export type SettingsPages = Record<string, () => ReactNode>
 
 function pageKey(location: SettingsLocation): string {
@@ -276,7 +279,10 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
               event.preventDefault()
             }
           }}
-          className="fixed inset-x-[clamp(1rem,4vw,3rem)] top-[calc(var(--mira-header-height)+0.875rem)] bottom-4 z-(--mira-z-modal) mx-auto flex max-w-[75rem] flex-col rounded-lg border border-strong bg-surface text-default shadow-lg outline-none"
+          className={cn(
+            'fixed inset-x-[clamp(1rem,4vw,3rem)] z-(--mira-z-modal) mx-auto flex max-w-[75rem] flex-col rounded-lg border border-strong bg-surface text-default shadow-lg outline-none',
+            SETTINGS_MODAL_INSET
+          )}
         >
           {group && location && (
             <>

@@ -10,7 +10,7 @@ import { TopBarSlotContext, TopBarTitleSlotContext } from './topBarSlot'
 import type { Theme } from './useTheme'
 
 export interface AppShellProps {
-  /** The app sidebar (AppNav), full height at the left; null on the chapter screen, which keeps its room. */
+  /** The app sidebar (AppNav), below the app title bar; null on the chapter screen. */
   nav: ReactNode | null
   /** A list column beside the work area (the chapter list); null where the screen has none. */
   sidebar: ReactNode | null
@@ -26,12 +26,10 @@ export interface AppShellProps {
 }
 
 /**
- * The right end of the bar belongs to the OS when the page draws the title bar itself (window controls
- * overlay): `titlebar-area-*` is the part left for the page, so everything past it is the buttons'
- * width. With the native title bar (the current setting) the variables do not exist, the fallbacks
- * make the sum zero, and the 10px minimum keeps the usual padding. The sum is taken from the window's
- * width (100vw), not the bar's: with the app sidebar beside it the bar is narrower than the window, and
- * a percentage left the buttons' room short by the sidebar's width.
+ * The right end of the app title bar belongs to the OS when the page draws the title bar itself
+ * (window controls overlay): `titlebar-area-*` is the part left for the page, so everything past it is
+ * the buttons' width. With the native title bar (the current setting) the variables do not exist, the
+ * fallbacks make the sum zero, and the 10px minimum keeps the usual padding.
  */
 const BAR_END_PADDING =
   'max(10px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)))'
@@ -39,11 +37,11 @@ const BAR_END_PADDING =
 const BAR_ICON = ICON.sm
 
 /**
- * The window: the app sidebar at full height, then a bar across the rest and, under it, the optional
- * list column and the work area (docs/modules/workspace/app-level-features.md). The bar holds the page
- * name and the screen's own buttons. Theme and settings live at the foot of the sidebar; where there is
- * none (the chapter screen) they come back to the end of the bar. Ctrl+B folds the list column when
- * the screen has one, else the sidebar.
+ * The window: one title bar across the whole app, then the app sidebar beside a page column. The page
+ * column starts with its own bar and continues with the optional list column and work area
+ * (docs/modules/workspace/app-level-features.md). Theme and settings live at the foot of the sidebar;
+ * where there is none (the chapter screen) they come back to the end of the page bar. Ctrl+B folds the
+ * list column when the screen has one, else the sidebar.
  */
 export function AppShell({
   nav,
@@ -82,70 +80,80 @@ export function AppShell({
   const themeLabel = theme === 'dark' ? 'Chuyển sang nền sáng' : 'Chuyển sang nền tối'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface">
-      {nav}
-      <div className="grid min-w-0 flex-1 grid-rows-[var(--mira-header-height)_minmax(0,1fr)]">
-        <header
-          className="window-drag flex min-w-0 items-center gap-xs border-b border-default pl-md"
-          style={{ paddingRight: BAR_END_PADDING }}
-        >
-          <div ref={setTitleSlot} className="flex min-w-0 items-baseline gap-xs" />
-          <div className="flex-1" />
-          <div ref={setSlot} className="flex shrink-0 items-center gap-xs empty:hidden" />
-          {nav === null && (
-            // Separates the screen's own buttons from the app's; shown only when the screen has some.
-            <span
-              className="hidden h-4 w-px shrink-0 bg-line [:not(:empty)+&]:block"
-              aria-hidden="true"
-            />
-          )}
-          {nav === null && (
-            <div className="flex shrink-0 items-center gap-2xs">
-              <Tip label={themeLabel}>
-                <CompactButton
-                  aria-label={themeLabel}
-                  onClick={onToggleTheme}
-                  icon={
-                    theme === 'dark' ? <SunIcon size={BAR_ICON} /> : <MoonIcon size={BAR_ICON} />
-                  }
-                />
-              </Tip>
-              <Tip label="Cài đặt">
-                <CompactButton
-                  aria-label="Cài đặt"
-                  aria-pressed={settingsOpen}
-                  onClick={onOpenSettings}
-                  icon={<SettingsIcon size={BAR_ICON} />}
-                />
-              </Tip>
+    <div className="grid h-screen grid-rows-[var(--mira-header-height)_minmax(0,1fr)] overflow-hidden bg-surface">
+      <div
+        data-slot="app-titlebar"
+        className="window-drag flex min-w-0 items-center border-b border-default pl-sm"
+        style={{ paddingRight: BAR_END_PADDING }}
+      >
+        <span className="text-label-md font-semibold tracking-heading">Mira</span>
+      </div>
+
+      <div data-slot="app-workspace" className="flex min-h-0 min-w-0">
+        {nav}
+        <div className="grid min-w-0 flex-1 grid-rows-[var(--mira-header-height)_minmax(0,1fr)]">
+          <header
+            data-slot="page-topbar"
+            className="flex min-w-0 items-center gap-xs border-b border-default pr-sm pl-md"
+          >
+            <div ref={setTitleSlot} className="flex min-w-0 items-baseline gap-xs" />
+            <div className="flex-1" />
+            <div ref={setSlot} className="flex shrink-0 items-center gap-xs empty:hidden" />
+            {nav === null && (
+              // Separates the screen's own buttons from the app's; shown only when the screen has some.
+              <span
+                className="hidden h-4 w-px shrink-0 bg-line [:not(:empty)+&]:block"
+                aria-hidden="true"
+              />
+            )}
+            {nav === null && (
+              <div className="flex shrink-0 items-center gap-2xs">
+                <Tip label={themeLabel}>
+                  <CompactButton
+                    aria-label={themeLabel}
+                    onClick={onToggleTheme}
+                    icon={
+                      theme === 'dark' ? <SunIcon size={BAR_ICON} /> : <MoonIcon size={BAR_ICON} />
+                    }
+                  />
+                </Tip>
+                <Tip label="Cài đặt">
+                  <CompactButton
+                    aria-label="Cài đặt"
+                    aria-pressed={settingsOpen}
+                    onClick={onOpenSettings}
+                    icon={<SettingsIcon size={BAR_ICON} />}
+                  />
+                </Tip>
+              </div>
+            )}
+          </header>
+
+          <div
+            className={cn(
+              'grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)]',
+              showSidebar
+                ? 'grid-cols-[var(--mira-sidebar-width)_minmax(0,1fr)]'
+                : 'grid-cols-[minmax(0,1fr)]'
+            )}
+          >
+            {showSidebar && (
+              <aside
+                id="app-sidebar"
+                className="flex min-h-0 flex-col border-r border-default bg-surface"
+                aria-label="Danh sách"
+              >
+                {sidebar}
+              </aside>
+            )}
+
+            <div className="flex min-h-0 min-w-0 flex-col">
+              <TopBarTitleSlotContext.Provider value={titleSlot}>
+                <TopBarSlotContext.Provider value={slot}>
+                  <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+                </TopBarSlotContext.Provider>
+              </TopBarTitleSlotContext.Provider>
             </div>
-          )}
-        </header>
-
-        <div
-          className={cn(
-            'grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)]',
-            showSidebar
-              ? 'grid-cols-[var(--mira-sidebar-width)_minmax(0,1fr)]'
-              : 'grid-cols-[minmax(0,1fr)]'
-          )}
-        >
-          {showSidebar && (
-            <aside
-              id="app-sidebar"
-              className="flex min-h-0 flex-col border-r border-default bg-surface"
-              aria-label="Danh sách"
-            >
-              {sidebar}
-            </aside>
-          )}
-
-          <div className="flex min-h-0 min-w-0 flex-col">
-            <TopBarTitleSlotContext.Provider value={titleSlot}>
-              <TopBarSlotContext.Provider value={slot}>
-                <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
-              </TopBarSlotContext.Provider>
-            </TopBarTitleSlotContext.Provider>
           </div>
         </div>
       </div>
