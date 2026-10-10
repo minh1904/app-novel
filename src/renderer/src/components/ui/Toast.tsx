@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import { CloseIcon } from '@solar-icons/react/linear/close'
 import { cn } from '../../lib/cn'
-import { useNotificationStore, type Toast } from '../../stores/notificationStore'
+import { useNotificationStore, type Toast } from './notificationStore'
 import { CompactButton } from './CompactButton'
 import { LinkButton } from './Button'
 

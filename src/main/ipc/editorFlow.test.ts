@@ -1,13 +1,13 @@
 import type { EditorState, TransactionSpec } from '@codemirror/state'
 import { afterEach, describe, expect, it } from 'vitest'
 import { undo } from '@codemirror/commands'
-import { createEditorState } from '../../renderer/src/features/editor/editorState'
+import { createEditorState } from '../../renderer/src/modules/workspace/chapter-editor/editorState'
 import {
   EditorSession,
   type SessionView,
   type TextStore
-} from '../../renderer/src/features/editor/editorSession'
-import { segmentsField } from '../../renderer/src/features/editor/editorState'
+} from '../../renderer/src/modules/workspace/chapter-editor/editorSession'
+import { segmentsField } from '../../renderer/src/modules/workspace/chapter-editor/editorState'
 import { CHANNELS } from '../../shared/contracts/channels'
 import type { Result } from '../../shared/contracts/result'
 import { segment } from '../../shared/segmentation/segmenter'

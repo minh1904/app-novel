@@ -1,196 +1,308 @@
-# Thiết kế kiến trúc mã nguồn Mira
+---
+version: alpha
+name: Mira
+description: Hệ thiết kế desktop yên tĩnh, rõ ràng và tập trung cho công việc đọc, dịch và biên tập dài.
+colors:
+  primary: "#1a1a1a"
+  canvas-light: "#fafafa"
+  surface-light: "#ffffff"
+  surface-subtle-light: "#fcfcfc"
+  text-light: "#1a1a1a"
+  text-emphasis-light: "#000000"
+  text-subtle-light: "#5c5c5c"
+  border-light: "#ebebeb"
+  canvas-dark: "#141414"
+  surface-dark: "#1a1a1a"
+  surface-subtle-dark: "#1f1f1f"
+  text-dark: "#f5f5f5"
+  text-emphasis-dark: "#ffffff"
+  text-subtle-dark: "#a3a3a3"
+  border-dark: "#262626"
+  success-light: "#15803d"
+  info-light: "#0369a1"
+  warning-light: "#c2410c"
+  error-light: "#b91c1c"
+  accent-light: "#be185d"
+  success-dark: "#4ade80"
+  info-dark: "#7dd3fc"
+  warning-dark: "#fdba74"
+  error-dark: "#fca5a5"
+  accent-dark: "#f9a8d4"
+typography:
+  label-xs:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: 12px
+    fontWeight: 500
+    lineHeight: 1.3
+  label-sm:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: 13px
+    fontWeight: 500
+    lineHeight: 1.3
+  label-md:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: 15px
+    fontWeight: 500
+    lineHeight: 1.3
+  title:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: 20px
+    fontWeight: 600
+    lineHeight: 1.3
+  body-xs:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: 12px
+    fontWeight: 400
+    lineHeight: 1.5
+  body-sm:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.5
+  body-md:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: 15px
+    fontWeight: 400
+    lineHeight: 1.5
+  reading:
+    fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.5
+  code:
+    fontFamily: "JetBrains Mono, Cascadia Code, Consolas, monospace"
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.5
+rounded:
+  none: 0px
+  xs: 4px
+  sm: 6px
+  md: 8px
+  lg: 12px
+  xl: 16px
+  full: 9999px
+spacing:
+  none: 0px
+  3xs: 2px
+  2xs: 4px
+  xs: 8px
+  sm: 12px
+  md: 16px
+  lg: 20px
+  xl: 24px
+  2xl: 32px
+  3xl: 40px
+  4xl: 48px
+components:
+  app-canvas-light:
+    backgroundColor: "{colors.canvas-light}"
+    textColor: "{colors.text-light}"
+  app-surface-light:
+    backgroundColor: "{colors.surface-light}"
+    textColor: "{colors.text-light}"
+  app-surface-subtle-light:
+    backgroundColor: "{colors.surface-subtle-light}"
+    textColor: "{colors.text-light}"
+  heading-light:
+    textColor: "{colors.text-emphasis-light}"
+    typography: "{typography.title}"
+  metadata-light:
+    textColor: "{colors.text-subtle-light}"
+    typography: "{typography.body-xs}"
+  divider-light:
+    backgroundColor: "{colors.border-light}"
+    height: 1px
+  app-canvas-dark:
+    backgroundColor: "{colors.canvas-dark}"
+    textColor: "{colors.text-dark}"
+  app-surface-dark:
+    backgroundColor: "{colors.surface-dark}"
+    textColor: "{colors.text-dark}"
+  app-surface-subtle-dark:
+    backgroundColor: "{colors.surface-subtle-dark}"
+    textColor: "{colors.text-dark}"
+  heading-dark:
+    textColor: "{colors.text-emphasis-dark}"
+    typography: "{typography.title}"
+  metadata-dark:
+    textColor: "{colors.text-subtle-dark}"
+    typography: "{typography.body-xs}"
+  divider-dark:
+    backgroundColor: "{colors.border-dark}"
+    height: 1px
+  status-success-light:
+    textColor: "{colors.success-light}"
+  status-info-light:
+    textColor: "{colors.info-light}"
+  status-warning-light:
+    textColor: "{colors.warning-light}"
+  status-error-light:
+    textColor: "{colors.error-light}"
+  status-accent-light:
+    textColor: "{colors.accent-light}"
+  status-success-dark:
+    textColor: "{colors.success-dark}"
+  status-info-dark:
+    textColor: "{colors.info-dark}"
+  status-warning-dark:
+    textColor: "{colors.warning-dark}"
+  status-error-dark:
+    textColor: "{colors.error-dark}"
+  status-accent-dark:
+    textColor: "{colors.accent-dark}"
+  button-sm:
+    height: 24px
+    padding: 8px
+    rounded: "{rounded.xs}"
+    typography: "{typography.label-xs}"
+  button-md:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.surface-light}"
+    height: 32px
+    padding: 12px
+    rounded: "{rounded.sm}"
+    typography: "{typography.label-sm}"
+  button-lg:
+    height: 40px
+    padding: 16px
+    rounded: "{rounded.md}"
+    typography: "{typography.label-md}"
+  compact-button:
+    size: 24px
+    rounded: "{rounded.xs}"
+  input-md:
+    height: 32px
+    padding: 12px
+    rounded: "{rounded.sm}"
+    typography: "{typography.body-sm}"
+  dialog-md:
+    width: 512px
+    rounded: "{rounded.xl}"
+---
 
-Cập nhật: 2026-10-10 · Trạng thái: **Kiến trúc mục tiêu đã chốt, refactor chưa triển khai**.
+# Hệ thiết kế Mira
 
-Tài liệu này là nguồn quy tắc kiến trúc cấp repository. Tài liệu theo module ghi quyết định sản phẩm,
-nghiên cứu và trạng thái triển khai; OpenSpec mô tả từng change chuyển hệ thống tới kiến trúc này.
+Cập nhật: 2026-10-10 · Trạng thái: **Quy tắc UI hiện hành**.
 
-## Nguyên tắc
+Tài liệu này là nguồn quy tắc thị giác và tương tác cấp repository. Frontmatter cung cấp token tối thiểu
+cho công cụ; phần bên dưới giải thích cách dùng. Giá trị thực thi nằm trong
+[`src/renderer/src/styles/tokens/`](src/renderer/src/styles/tokens/) và component dùng chung nằm trong
+[`src/renderer/src/components/ui/`](src/renderer/src/components/ui/). Hai nơi phải được cập nhật cùng
+một change; sai khác giữa chúng là lỗi tài liệu hoặc lỗi triển khai.
 
-1. **Ranh giới process trước.** Main, preload, renderer và shared có môi trường chạy và quyền khác nhau;
-   không vượt ranh giới bằng import tắt.
-2. **Domain trước, feature sau.** Thư mục cấp cao nói Mira làm việc với phạm vi sản phẩm nào; feature/use
-   case nằm trong domain sở hữu nó.
-3. **Ownership trước tái sử dụng.** Mã ở owner sử dụng chính cho đến khi có ít nhất hai consumer độc lập và
-   semantics đã trung lập domain.
-4. **Phụ thuộc một chiều và kiểm tra được.** Kiến trúc không chỉ nằm trong tài liệu; bộ check phải phát
-   hiện import ngược, deep import và chu trình.
-5. **Colocate theo thay đổi.** Component, hook, model, store và test thường thay đổi cùng nhau thì ở gần
-   nhau.
-6. **Refactor cơ học tách khỏi đổi hành vi.** Một commit di chuyển không đồng thời viết lại state, đổi UI
-   hay thay contract.
+Kiến trúc mã nguồn, module và hướng phụ thuộc nằm ở [`ARCHITECTURE.md`](ARCHITECTURE.md). Lịch sử quyết
+định, nghiên cứu và bằng chứng triển khai nằm ở
+[`docs/modules/design-system/`](docs/modules/design-system/README.md).
 
-## Ranh giới repository
+## Overview
 
-```text
-src/
-├── main/           # Electron host, dịch vụ, persistence, provider và IPC
-├── preload/        # bridge typed, capability tối thiểu cho renderer
-├── renderer/       # React UI; chỉ gọi host qua window.mira
-├── shared/         # contract và logic thuần chạy được ở nhiều process
-└── measurement/    # bộ đo độc lập, không đóng gói vào app
-```
+Mira là ứng dụng desktop cho công việc đọc, dịch và biên tập dài. Giao diện phải tạo cảm giác yên tĩnh,
+chính xác và bền khi dùng nhiều giờ: ít màu trang trí, mật độ vừa phải, phân cấp bằng khoảng cách và chữ,
+không bằng nhiều khung card hoặc hiệu ứng.
 
-Hướng phụ thuộc:
+Năm nguyên tắc bắt buộc:
 
-```text
-shared ← main services ← main IPC ← Electron composition
-   ↑
-   ├── preload bridge
-   └── renderer
+1. **Nội dung là trọng tâm.** Chrome của ứng dụng lùi lại; văn bản, bản dịch và trạng thái công việc nổi
+   lên trước.
+2. **Grayscale là mặc định.** Màu chỉ truyền đạt trạng thái hoặc một điểm nhấn đã có nghĩa rõ ràng.
+3. **Cùng một ngôn ngữ control.** Nút, input và group dùng chung thang 24/32/40 px; kích thước mặc định
+   cho màn feature là 32 px.
+4. **Accessible từ token.** Focus luôn nhìn thấy; chữ quan trọng và cạnh control đạt contrast; màu không
+   bao giờ là dấu hiệu duy nhất.
+5. **Primitive trước tùy biến.** Màn feature dùng component chung. Nếu primitive thiếu khả năng thật sự
+   dùng lại, mở rộng primitive và test nó thay vì dựng control tại chỗ.
 
-measurement đứng ngoài app runtime.
-```
+## Colors
 
-- `shared` không dùng Electron, React hoặc Node API.
-- Renderer không import main/preload/measurement; dùng `window.mira` và contract ở `src/shared`.
-- Preload không chứa business orchestration và không phơi primitive IPC tổng quát.
-- Main giữ `infra` ở tầng thấp, `services` điều phối nghiệp vụ, `ipc` chỉ adapter contract và
-  `electron` sở hữu lifecycle/native integration.
-- Các rule hiện có trong `biome.json` tiếp tục là hàng rào cho ranh giới process.
+Mỗi màu đi qua ba tầng: foundation là giá trị thô, semantic nói mục đích theo theme, component token nói
+vai trò trong một control. Màn feature chỉ dùng tên semantic như `bg-surface`, `text-subtle`,
+`border-default`; không đọc màu foundation hay component token.
 
-## Kiến trúc renderer mục tiêu
+- `bg` là nền cửa sổ, `surface` là sheet/bar/popover, `subtle` là mặt phẳng thứ hai, `muted` là fill.
+- `text` dùng cho nội dung, `emphasis` cho điểm nhấn, `subtle` cho nội dung phụ, `muted` cho metadata.
+  `faint` chỉ dành cho trang trí, không dành cho chữ người dùng cần đọc.
+- Link là chữ mạnh nhất kèm underline; không dùng xanh dương chỉ để biểu thị link.
+- `success`, `info`, `warning`, `error`, `accent` lần lượt biểu thị hoàn tất, đang diễn ra/thông tin,
+  cần chú ý, thất bại/nguy hiểm và điểm nổi bật không phán xét. Nhãn hoặc icon phải nói lại ý nghĩa màu.
+- Theme tối dùng semantic token riêng; không đảo màu bằng filter và không suy ra màu trong component.
+- Focus dùng ring xám; trạng thái lỗi có ring đỏ. Không bỏ focus ring nếu chưa có dấu focus tương đương.
 
-```text
-src/renderer/src/
-├── app/
-│   ├── navigation/             # view model và điều hướng cấp app
-│   ├── screens/                # màn compose nhiều module
-│   ├── shell/                  # khung cửa sổ và provider cấp app
-│   └── hooks/                  # đồng bộ lifecycle cấp app với hệ thống ngoài
-├── components/
-│   └── ui/                     # primitive/pattern UI trung lập domain
-├── hooks/                      # hook generic dùng bởi nhiều module
-├── lib/                        # helper thuần, trung lập domain
-└── modules/
-    ├── library/
-    ├── workspace/
-    ├── ai-connections/
-    ├── context/
-    ├── sources/
-    └── export/
-```
+## Typography
 
-Không tạo `renderer/src/shared`: tên này dễ nhầm với `src/shared`, là contract dùng qua nhiều process.
-Mã dùng chung trong renderer phải nói rõ nó là UI, hook hay thư viện thuần.
+- UI dùng Inter; nội dung truyện dùng font hệ thống để đọc tiếng Việt và CJK ổn định; code dùng JetBrains
+  Mono với fallback Cascadia/Consolas.
+- Chỉ dùng các cỡ UI 12, 13, 15 và 20 px; nội dung đọc là 16 px. Không thêm cỡ để sửa cục bộ một màn.
+- Body dùng line-height 1.5, nhãn và tiêu đề ngắn dùng 1.3. Trọng lượng hợp lệ là 400, 500 và 600.
+- Tạo phân cấp theo thứ tự: nội dung, weight, màu semantic, khoảng cách. Không dùng ALL CAPS, tracking tùy
+  ý hoặc nhiều cấp heading chỉ để trang trí.
+- Chuỗi dài, tên model và đường dẫn phải co/cắt có chủ ý; không làm control nở vô hạn.
 
-### Domain và feature/use case
+## Layout
 
-| Module | Sở hữu | Feature/use case chính |
-| --- | --- | --- |
-| `library` | catalog tác phẩm và metadata thư viện | danh sách, tạo/sửa tác phẩm, ảnh bìa |
-| `workspace` | phiên làm việc trên một tác phẩm/chương | work detail, chapter navigation, editor, assistant, translation |
-| `ai-connections` | kết nối, tài khoản, model và preference AI | onboarding, settings, model selection |
-| `context` | tri thức hỗ trợ dịch | glossary, xưng hô, kho dùng chung, văn phong |
-| `sources` | nguồn raw và cập nhật | source management, binding, update feed |
-| `export` | trình bày lựa chọn export ở renderer | phạm vi, định dạng và export dialog |
+- Dùng scale khoảng cách 2/4/8/12/16/20/24/32/40/48 px. Khoảng cách ngoài một nhóm phải lớn hơn hoặc
+  bằng khoảng cách trong nhóm.
+- Thanh tiêu đề cao 40 px. Sidebar chuẩn rộng 260 px; app sidebar hiện tại rộng 224 px và thu về rail
+  48 px theo quyết định navigation riêng.
+- Ưu tiên một mặt phẳng lớn chia bằng hairline border. Card chỉ dùng khi nhóm có biên nhận thức và hành
+  động riêng; không bọc mọi section trong card.
+- Màn feature dùng control `md` 32 px. `sm` 24 px dành cho toolbar, table/row hoặc composition nội bộ;
+  `lg` 40 px chỉ cho một hành động chính nổi bật và tối đa một lần trên một màn.
+- Layout phải chịu được cửa sổ hẹp, chuỗi tiếng Việt dài và nội dung CJK. Chỉ ẩn thông tin khi có đường
+  truy cập thay thế rõ ràng.
+- Z-index chỉ dùng scale `sticky < backdrop < modal < dropdown < toast < tooltip`; không viết số tùy ý.
 
-Feature/use case chỉ tạo các thư mục `components`, `hooks`, `model`, `store` hoặc `adapter` khi thật sự có
-trách nhiệm tương ứng. Không dựng cây thư mục rỗng để mọi module trông giống nhau.
+## Elevation & Depth
 
-## Quy tắc đặt mã
+- Border và thay đổi surface tạo cấu trúc chính; shadow chỉ giúp phần tử nổi thật sự tách khỏi mặt phẳng.
+- `shadow-xs` cho control nổi nhẹ; `sm` cho menu/popover; `md` cho dialog; `lg` chỉ dành cho lớp phủ lớn.
+- Dialog luôn có backdrop, focus trap, close affordance và phần thân cuộn được khi cần.
+- Không dùng acrylic/glass. Cửa sổ và panel có nền đặc ở cả hai theme.
+- Motion chỉ giải thích thay đổi trạng thái: 120 ms cho feedback nhỏ, 200 ms mặc định, 300 ms cho chuyển
+  cảnh lớn. Tôn trọng `prefers-reduced-motion`; không animation trang trí lặp lại.
 
-### Component
+## Shapes
 
-- Primitive hoặc pattern UI không biết domain → `components/ui`.
-- Component chỉ có nghĩa trong một domain → module sở hữu.
-- Màn hình compose nhiều module nhưng không sở hữu business state → `app/screens`.
-- Hai module dùng cùng component chưa đủ để chuyển nó thành primitive; xem semantics có trung lập không.
+- Radius theo thang 0/4/6/8/12/16 px; pill chỉ cho tag, switch track hoặc affordance thật sự tròn.
+- Control 24/32/40 px lần lượt dùng radius 4/6/8 px. Card dùng 12 px; dialog dùng 16 px.
+- Phần tử nằm trong phần tử khác dùng radius nhỏ hơn theo khoảng cách inset; tránh nhiều đường cong cạnh
+  nhau không đồng tâm.
+- Icon dùng thang 12/14/16/18/24 px. Icon tương tác phải nằm trong hit target của component, không tự
+  quyết định kích thước vùng bấm.
 
-### Hook
+## Components
 
-- Hook đóng gói state/effect của một use case → đặt cạnh use case hoặc `<module>/hooks`.
-- Hook domain-neutral được nhiều module dùng → root `hooks`.
-- Hàm format, validate, state transition hoặc tính toán thuần → `model`/`lib`, không đổi thành hook.
-- Không tạo lifecycle hook tổng quát như `useMount`; đặt tên theo hệ thống được đồng bộ, ví dụ
-  `useWorkspaceRestore` hoặc `useSystemThemeSync`.
+- `components/ui` chỉ chứa primitive hoặc pattern trung lập domain. Component biết chương, tác phẩm,
+  glossary, model hoặc connection thuộc module sở hữu theo `ARCHITECTURE.md`.
+- Button có tone `neutral` hoặc `danger`, variant `solid`, `outline`, `light`, `ghost`. `outline` là mặc
+  định; `solid` là primary action; destructive action dùng `danger` và lời xác nhận phù hợp.
+- CompactButton chỉ có icon, bắt buộc có accessible name. Không dùng icon không nhãn khi nghĩa có thể mơ
+  hồ.
+- Input, select trigger và button đứng cạnh nhau phải cùng chiều cao. Field có label luôn hiện, help/error
+  nằm dưới và trạng thái invalid có cả chữ lẫn style.
+- Badge chỉ diễn tả trạng thái/phân loại, không đóng vai button. CardButton không chứa control tương tác
+  khác bên trong.
+- Dialog dùng 400/512/760 px cho `sm`/`md`/`lg`; hành động chính ở cuối, hành động phá hủy không được đặt
+  làm lựa chọn mặc định vô tình.
+- Tất cả control phải hỗ trợ keyboard, focus-visible, disabled và loading nếu có thao tác bất đồng bộ.
+  Dùng Base UI primitive hiện có trước khi tự triển khai hành vi ARIA.
 
-### State và store
+## Do’s and Don’ts
 
-- Domain state → `<module>/store`.
-- State khung app như navigation, theme hoặc shell → `app`.
-- Contract dữ liệu đi qua process → `src/shared/contracts`, không đặt trong Zustand store hay component.
-- Không dùng một global store làm nơi chứa state chỉ vì nhiều màn nhìn thấy nó. App composition hoặc public
-  API của owner vẫn là mặc định.
+### Nên
 
-### Test
+- Dùng semantic token và component UI hiện có.
+- Giữ một primary action rõ ràng, wording là động từ cụ thể.
+- Dùng khoảng trắng, heading và divider để nhóm nội dung.
+- Kiểm cả theme sáng/tối, bàn phím, reduced motion, tiếng Việt dài và trạng thái loading/error/empty.
+- Cập nhật token, component test, tài liệu module và file này trong cùng change khi đổi quy tắc chung.
 
-- Test colocate với source mà nó bảo vệ.
-- Khi di chuyển owner, di chuyển cả test trong cùng lát cắt.
-- Trước khi tách store/component lớn, bổ sung characterization test nếu test hiện tại chưa khóa hành vi.
-- Không đổi fixture persistence hoặc contract trong một refactor chỉ đổi kiến trúc renderer.
+### Không nên
 
-## Public surface và import
-
-Module có thể cung cấp `public.ts` với export tường minh cho app hoặc module khác. Đây là boundary, không
-phải barrel gom toàn bộ file.
-
-- Import bên trong module dùng relative path ngắn.
-- Import qua boundary dùng `@renderer/*`.
-- Module không import từ `app`.
-- Module không deep-import implementation của module khác.
-- Phụ thuộc liên module phải đi qua `public.ts`, có hướng một chiều và không tạo chu trình.
-- Nếu hai module thường xuyên cần implementation của nhau, xem lại ownership trước khi tạo exception.
-- Type/model dùng qua nhiều process thuộc `src/shared`; type chỉ phục vụ presentation thuộc module.
-
-Hướng renderer:
-
-```text
-src/shared contracts
-        ↓
-renderer lib / hooks / components-ui
-        ↓
-renderer modules qua public surface
-        ↓
-app composition
-```
-
-## Composition root
-
-`App.tsx` chỉ lắp provider, shell, navigation và surface cấp app. Các trách nhiệm sau có owner riêng:
-
-- khôi phục workspace;
-- shortcut cấp ứng dụng;
-- đồng bộ theme hệ thống;
-- đọc version ứng dụng;
-- điều hướng và chọn màn;
-- giữ workspace tab sống;
-- listener phiên AI của workspace.
-
-Tách trách nhiệm không đồng nghĩa tạo hook cho mọi đoạn code. Chỉ tách khi phần đó có lifecycle, contract
-hoặc khả năng test riêng.
-
-## Quy trình thay đổi kiến trúc
-
-1. Ghi quyết định và trạng thái vào module liên quan.
-2. Tạo OpenSpec cho thay đổi cross-cutting trước khi di chuyển source.
-3. Chụp baseline bằng `node scripts/check.mjs`.
-4. Di chuyển theo owner, một lát cắt có thể review trong một phiên.
-5. Chạy `node scripts/check.mjs` sau mỗi lát cắt và `node scripts/check.mjs --build` trước khi push.
-6. Cập nhật tài liệu từ “mục tiêu” sang “đã triển khai” chỉ sau khi cây cũ, exception và import cũ đã
-   được xóa.
-
-## Trạng thái áp dụng
-
-| Phạm vi | Trạng thái 2026-10-10 |
-| --- | --- |
-| Ranh giới main/preload/renderer/shared/measurement | Đã triển khai và có rule Biome |
-| `components/ui` và design token | Đã triển khai |
-| Module renderer theo domain | Đã chốt, chưa triển khai |
-| Public surface và alias qua boundary | Đã chốt, chưa triển khai |
-| Checker import/chu trình module | Đề xuất trong OpenSpec, chưa triển khai |
-| Làm mỏng `App.tsx` và tách `uiStore` | Đề xuất trong OpenSpec, chưa triển khai |
-
-Kế hoạch triển khai nằm ở
-[`openspec/changes/refactor-renderer-domain-architecture/`](openspec/changes/refactor-renderer-domain-architecture/).
-Theo dõi bằng chứng và trạng thái tại
-[`docs/modules/frontend-architecture/`](docs/modules/frontend-architecture/README.md).
-
-## Nguồn tham khảo
-
-- Repo LMS v3 ở `D:\izone\lms-v3`: tham khảo cách colocate `components/hooks/model/store/adapter`, không
-  sao chép convention routing của Next.js hoặc barrel rộng.
-- [React — Reusing Logic with Custom Hooks](https://react.dev/learn/reusing-logic-with-custom-hooks).
-- [Bulletproof React — Project Structure](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md).
-- [Tutti — Desktop Layering](https://github.com/tutti-os/tutti/blob/main/docs/conventions/desktop-layering.md).
+- Không viết mã màu, cỡ chữ, radius, shadow hoặc z-index tùy ý trong màn feature.
+- Không dùng màu semantic để trang trí hoặc dùng màu làm tín hiệu duy nhất.
+- Không tự viết `<button>`, input/select/textarea nhìn thấy được khi primitive chung đã tồn tại.
+- Không truyền `sm`/`lg` từ màn feature chỉ để ép layout; sửa composition hoặc primitive owner trước.
+- Không đưa component domain vào `components/ui` chỉ vì có hai consumer.
+- Không thêm glass, gradient, animation hoặc card lồng nhau nếu chúng không làm rõ cấu trúc hay trạng thái.
 

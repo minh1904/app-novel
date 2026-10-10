@@ -1,14 +1,14 @@
 # Kiến trúc frontend
 
-Cập nhật: 2026-10-10 · Trạng thái: **Quyết định đã chốt; refactor chưa triển khai**. Chủ trì: chủ sản phẩm.
+Cập nhật: 2026-10-10 · Trạng thái: **Quyết định đã chốt; đã triển khai hoàn tất**. Chủ trì: chủ sản phẩm.
 
 ## Câu hỏi module này trả lời
 
 Renderer của Mira chia domain, feature/use case, component, hook và store thế nào; ranh giới import nào phải
 được giữ; quá trình chuyển từ cây hiện tại sang kiến trúc mục tiêu đang ở đâu?
 
-Quy tắc bền vững nằm ở [`DESIGN.md`](../../../DESIGN.md). Tài liệu này lưu bằng chứng khảo sát, quyết định
-và trạng thái triển khai của riêng renderer.
+Quy tắc bền vững nằm ở [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Tài liệu này lưu bằng chứng khảo
+sát, quyết định và trạng thái triển khai của riêng renderer.
 
 ## Hiện trạng đã quan sát
 
@@ -85,16 +85,25 @@ OpenSpec [`refactor-renderer-domain-architecture`](../../../openspec/changes/ref
 | Khảo sát cây, kích thước file và import graph | Hoàn tất |
 | Chốt domain, ownership và dependency direction | Hoàn tất |
 | Tạo tài liệu và OpenSpec | Hoàn tất |
-| Boundary checker | Chưa triển khai |
-| Di chuyển library/AI/context/sources/export | Chưa triển khai |
-| Di chuyển workspace và tách app/store | Chưa triển khai |
-| Bật cưỡng chế, xóa cây cũ và build verification | Chưa triển khai |
+| Boundary checker | Hoàn tất (`scripts/check-renderer-boundaries.mjs`) |
+| Di chuyển library/AI/context/sources/export | Hoàn tất (`modules/{library,ai-connections,context,sources,export}`) |
+| Di chuyển workspace và tách app/store | Hoàn tất (`modules/workspace`, `app/`) |
+| Bật cưỡng chế, xóa cây cũ và build verification | Hoàn tất |
 
-Không apply khi `source-system-foundation` hoặc change khác còn sửa cùng các file renderer trong worktree.
-Mỗi lát cắt phải chạy `node scripts/check.mjs`; trước push chạy `node scripts/check.mjs --build`.
+## Bằng chứng kiểm tra hoàn tất (2026-10-10)
+
+Lệnh kiểm tra: `node scripts/check.mjs --build`
+
+- **Renderer boundaries:** 254 files, 0 violations.
+- **Typecheck:** node (651 files), web (1009 files), scripts (381 files) đều thành công.
+- **Vitest:** 2335 tests in 213 files (2220 parallel + 115 serial) đều pass (không giảm test từ baseline 1523).
+- **Biome:** 625 files, 0 errors.
+- **Build electron-vite:** 3 bundles written (main, preload, renderer) thành công.
+- **Smoke test:** `smoke-sqlite.mjs`, `smoke-net-fetch.mjs`, khởi chạy Electron app thành công.
+- **Hợp đồng và persistence:** Giữ nguyên contract `src/shared`, IPC channels, schema database và storage keys. Không thay đổi wording hay design tokens.
 
 ---
 
-[Mục lục module](../README.md) · [Thiết kế repository](../../../DESIGN.md) ·
+[Mục lục module](../README.md) · [Kiến trúc repository](../../../ARCHITECTURE.md) ·
 [OpenSpec refactor](../../../openspec/changes/refactor-renderer-domain-architecture/)
 

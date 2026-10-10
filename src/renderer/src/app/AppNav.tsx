@@ -18,7 +18,8 @@ import { Kbd } from '../components/ui/Input'
 import { NavItem } from '../components/ui/NavItem'
 import { Tip } from '../components/ui/Tooltip'
 import { cn } from '../lib/cn'
-import type { AppPage, Theme } from '../stores/uiStore'
+import type { Theme } from '../components/ui/themeStore'
+import type { AppPage } from '../modules/workspace/public'
 
 interface NavEntry {
   page: AppPage

@@ -8,6 +8,16 @@ research, and implementation status in the module they belong to. The old handbo
 not add new content there. Distinguish accepted decisions, proposals, research observations, and
 implemented behavior. Write product documentation in Vietnamese.
 
+## Design and architecture
+
+Read [DESIGN.md](DESIGN.md) before visual or interaction work. It is the current normative UI rulebook;
+keep its machine-readable tokens aligned with the implementation and record research/history in the
+design-system module.
+
+Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing source layout, module ownership, imports, hooks,
+stores, or process boundaries. It is the repository architecture rulebook; module documentation keeps
+evidence and implementation status, while an OpenSpec change's `design.md` only describes that change.
+
 ## Checks
 
 Run `node scripts/check.mjs` before committing and `node scripts/check.mjs --build` before pushing. It

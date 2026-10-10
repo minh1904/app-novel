@@ -6,7 +6,7 @@ import { CompactButton } from '../components/ui/CompactButton'
 import { cn } from '../lib/cn'
 import { ICON } from '../components/ui/icon'
 import { Tip } from '../components/ui/Tooltip'
-import { TopBarSlotContext, TopBarTitleSlotContext } from './topBarSlot'
+import { TopBarSlotContext, TopBarTitleSlotContext } from '../components/ui/topBarSlot'
 import type { Theme } from './useTheme'
 
 export interface AppShellProps {

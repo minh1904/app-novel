@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { notifyError } from '../stores/notificationStore'
+import { notifyError } from '../components/ui/notificationStore'
 
 /** Hermes saves a settings field 550 ms after the last change (its settings/config-settings.tsx). */
 export const AUTOSAVE_DELAY_MS = 550

@@ -115,6 +115,19 @@ function typecheck(project) {
   )
 }
 
+function rendererBoundaries() {
+  return step(
+    'renderer boundaries',
+    () => node(join(root, 'scripts', 'check-renderer-boundaries.mjs')),
+    (text) => {
+      const result = /renderer boundaries: (\d+) files, 0 violations/.exec(text)
+      return result && Number(result[1]) > 0
+        ? { ok: true, note: result[1] + ' files, 0 violations' }
+        : { ok: false, note: 'checker printed no successful file count' }
+    }
+  )
+}
+
 /** Reads vitest's summary lines; both counts have to be present, and nothing may have failed. */
 function readVitest(text) {
   const tests = /^\s*Tests\s+(.+?)\s*\((\d+)\)\s*$/m.exec(text)
@@ -229,6 +242,7 @@ function main() {
   const outcomes = []
   console.log('check: ' + root)
 
+  outcomes.push(rendererBoundaries())
   outcomes.push(typecheck('node'))
   outcomes.push(typecheck('web'))
   outcomes.push(typecheck('scripts'))

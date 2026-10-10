@@ -3,12 +3,12 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { installSmoothWheel } from './app/smoothWheel'
 import { TooltipProvider } from './components/ui/Tooltip'
-import { applyThemeEffect, useUiStore } from './stores/uiStore'
+import { applyThemeEffect, useThemeStore } from './components/ui/themeStore'
 import './styles/index.css'
 
 // The theme the person chose in Settings (or the system's), before the first render; it also tells main
 // which colour the window buttons should wear.
-applyThemeEffect(useUiStore.getState().theme)
+applyThemeEffect(useThemeStore.getState().theme)
 
 // A notched mouse wheel glides through long text instead of jumping (app/smoothWheel.ts).
 installSmoothWheel()

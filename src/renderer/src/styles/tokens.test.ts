@@ -109,8 +109,8 @@ function openingTag(text: string, start: number): string {
 
 /** Editors whose writing surface is a bare textarea inside a frame of their own. */
 const EDITOR_SURFACES = new Set([
-  'features/chapter/SentenceMode.tsx',
-  'features/chapter/chat/AiComposer.tsx'
+  'modules/workspace/chapter-navigation/SentenceMode.tsx',
+  'modules/workspace/assistant/AiComposer.tsx'
 ])
 
 const CONTROLS =

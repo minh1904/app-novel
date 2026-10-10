@@ -7,7 +7,7 @@ import { Dialog } from '../components/ui/Dialog'
 import { ICON } from '../components/ui/icon'
 import { Kbd, SearchInput } from '../components/ui/Input'
 import { ListOption } from '../components/ui/ListOption'
-import { SOON_LABEL } from '../features/work/mockFeatures'
+import { SOON_LABEL } from '../lib/mockFeatures'
 
 interface Result {
   icon: ReactNode

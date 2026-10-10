@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'electron-vite'
 import type { Plugin } from 'vite'
+import { resolve } from 'node:path'
 
 function contentSecurityPolicy(): Plugin {
   return {
@@ -37,6 +38,9 @@ export default defineConfig({
   main: {},
   preload: {},
   renderer: {
+    resolve: {
+      alias: { '@renderer': resolve(import.meta.dirname, 'src/renderer/src') }
+    },
     plugins: [react(), tailwindcss(), contentSecurityPolicy()]
   }
 })

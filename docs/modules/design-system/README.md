@@ -1,12 +1,15 @@
 # Hệ thiết kế giao diện Mira
 
-Cập nhật: 2026-10-09 · Trạng thái: **Đã chốt và đã triển khai**. Các quyết định cũ được giữ dưới
+Cập nhật: 2026-10-10 · Trạng thái: **Đã chốt và đã triển khai**. Các quyết định cũ được giữ dưới
 nhãn lịch sử khi đã bị thay thế. Chủ trì: chủ sản phẩm.
 
 ## Câu hỏi chương này trả lời
 
 Mira tổ chức token và component dùng chung thế nào, mỗi token nằm ở đâu, và một màn mới phải dùng
 những gì để cùng ngôn ngữ thị giác với các màn khác?
+
+Quy tắc UI hiện hành, ngắn gọn và máy đọc được nằm ở [`DESIGN.md`](../../../DESIGN.md). Tài liệu module
+này giữ lịch sử quyết định, nghiên cứu, bằng chứng và giới hạn triển khai.
 
 ## Quyết định
 
@@ -196,7 +199,7 @@ thêm được dependency bằng pnpm toàn cục.
 primitive hoặc pattern trung lập domain. Component biết thuật ngữ và hành vi của library, workspace,
 kết nối AI, ngữ cảnh hoặc nguồn phải nằm trong module sở hữu; việc có hai consumer không tự động biến nó
 thành UI primitive. Xem [kiến trúc frontend](../frontend-architecture/README.md) và
-[`DESIGN.md`](../../../DESIGN.md).
+[`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
 
 | Component | Dùng khi |
 | --- | --- |
@@ -294,6 +297,7 @@ artifact tái chạy được.
 
 ---
 
-[Mục lục module](../README.md) · [Phân tích Obsidian](obsidian-comparison.md) ·
+[Mục lục module](../README.md) · [Quy tắc UI](../../../DESIGN.md) ·
+[Phân tích Obsidian](obsidian-comparison.md) ·
 [Phân tích Hermes (lịch sử)](hermes-comparison.md) ·
 [Nghiên cứu kính trên nền ảnh (lịch sử)](soft-glass-research.md)
