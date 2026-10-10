@@ -1,7 +1,7 @@
 # Rà flow Kết nối AI so với Hermes
 
-Cập nhật: 2026-10-09 · Trạng thái: **Quan sát** (phần 1–2, đọc mã Hermes `apps/desktop/src` và mã Mira trên
-cây làm việc ngày 2026-10-09), **Đã chốt** (phần 3–4, chủ sản phẩm chốt ngày 2026-10-09). Chủ trì: chủ sản phẩm.
+Cập nhật: 2026-10-09 · Trạng thái: **Quan sát** (phần 1 và baseline phần 2 trước khi sửa), **Đã chốt**
+(phần 3–4) và **trạng thái triển khai** (bảng ở cuối phần 3). Chủ trì: chủ sản phẩm.
 
 **Quyết định ngày 2026-10-09:**
 
@@ -37,6 +37,9 @@ Hermes **không có** giao diện cho nhiều khóa trên một provider. Pool k
 chip trong menu model.
 
 ## 2. Mira đang lệch ở đâu (quan sát, 2026-10-09)
+
+> **Baseline lịch sử trước khi sửa.** Các sai lệch dưới đây giải thích lý do của change; bảng
+> “Trạng thái triển khai” mới mô tả code sau change.
 
 **Thẻ provider làm quá nhiều việc.** Mở thẻ Khóa API ra là thấy: mô tả, Bật kết nối, Tên, danh sách khóa, danh
 sách mục model (mỗi mục có menu 8 lệnh và 3 hộp thoại), Kiểm tra, Xóa. Mỗi kết nối của provider lặp lại cả
@@ -99,7 +102,7 @@ khối đó. Màn nhìn rối chủ yếu vì vậy.
 5. **Thẻ lỗi có lối sửa.** Khóa sai thì hiện "X từ chối khóa API" kèm nút [Cập nhật khóa], mở thẳng thẻ khóa.
    Hết hạn mức thì hiện giờ hồi kèm [Thử bằng Y]. Thẻ lỗi trong hộp thoại Dịch cũng có các nút này.
 6. **Endpoint tùy chỉnh theo Hermes:** danh sách gọn có Dùng / Xóa; bấm vào một dòng để nạp vào form sửa (sửa
-   được cả Chế độ API); có nút "Endpoint mới". Lưu cần có tên, URL và model.
+   được cả Chế độ API); có nút "Endpoint mới". Lưu cần URL và model; tên trống dùng hostname.
 7. **Mức suy luận còn hai chỗ:** mặc định ở Model chính, và flyout theo từng model trong menu. Bỏ ô này khỏi
    hộp thoại Cơ bản và khỏi màn xác nhận của Onboarding (màn đó chỉ còn "Đổi model").
 8. **Phản hồi đồng nhất:** mọi thao tác ghi đều có toast khi lỗi (hiện `notice`); ô văn bản tự lưu khi rời ô;
@@ -114,8 +117,8 @@ khối đó. Màn nhìn rối chủ yếu vì vậy.
 | --- | --- |
 | 1. Thẻ provider chỉ lo khóa | **Đã làm.** Mở thẻ ra còn: mô tả, "Lấy khóa ↗", danh sách khóa (khi có từ hai khóa), dòng "Danh sách model ›", và một hàng gồm bật/tắt, Kiểm tra, Xóa kết nối. Khác đề xuất: không dùng menu "…", vì một hàng ba thao tác đã đủ gọn và mỗi thao tác chỉ cần một lần bấm. |
 | 2. Danh sách model rời khỏi thẻ | **Đã làm.** Có trang Model › Danh sách model. Lệnh "Sửa danh sách model…" mở thẳng phần của kết nối đang chọn. Kết nối tài khoản cũng có danh sách model ở đây. |
-| 3. Lưu khóa là dùng được ngay | **Đã làm** bằng `connectKey`: kiểm khóa, gỡ khóa bị từ chối, thêm model đầu tiên dò được. Lỗi mạng thì vẫn giữ khóa và hiện cảnh báo. Khác đề xuất: không tự đặt Model chính, vì khi chưa đặt, Mira đã tự dùng mục mặc định của kết nối bật đầu tiên. Onboarding vẫn giữ luồng riêng, gỡ khóa với mọi lỗi. |
-| 4. Thiếu kết nối thì đi một đường | **Chưa làm.** Phải sửa chuỗi prop `onOpenSettings` từ `App.tsx` xuống khung chat và hộp thoại Dịch, mà một session khác đang sửa dở `App.tsx`. Làm sau khi phần đó đã vào main. |
+| 3. Lưu khóa là dùng được ngay | **Đã làm một phần.** `connectKey` lưu khóa, thử kiểm connection và cố thêm model đầu tiên. Phép kiểm dùng cả pool nên có thể không thử đúng khóa mới; rollback tìm theo suffix bốn ký tự; lỗi thêm model bị bỏ qua; ô Kích hoạt theo `providerId` có thể chọn connection đầu tiên. Không tự đặt Model chính. |
+| 4. Thiếu kết nối thì đi một đường | **Chưa làm.** Chat và Dịch vẫn mở Cài đặt; menu model và Model List mở Onboarding; bấm Gửi có thể bị vô hiệu. Connection bật nhưng không có model cũng chưa được xử lý nhất quán. |
 | 5. Thẻ lỗi có lối sửa | **Đã làm** trong chat và hộp thoại Dịch, cho lỗi `auth` và `quota`. Lỗi `auth` lúc chạy vẫn hiện câu gốc của nhà cung cấp dưới dòng tiêu đề tiếng Việt. |
 | 6. Endpoint theo Hermes | **Đã làm**, trừ nút "Dùng": Mira không có "endpoint đang dùng"; model chính chọn ở trang Model. |
 | 7. Mức suy luận còn hai chỗ | **Đổi:** vẫn giữ ô này trong hộp thoại Cơ bản. Hộp thoại đó giờ là chỗ sửa từng model của trang Danh sách model, giống submenu chỉnh model của Hermes, và chỉ nó báo khi mức đã lưu không còn hợp lệ. Màn xác nhận của Onboarding chỉ chỉnh qua menu, như đề xuất. |
@@ -132,13 +135,16 @@ Chưa kiểm bằng mắt trên app chạy thật. Mới chỉ qua typecheck, te
 - **Không kiểm khóa khi lưu như Hermes:** Mira giữ bước kiểm nhẹ, vì lỗi khóa giữa một đợt dịch hàng loạt
   tốn hơn lỗi trong chat.
 
-## Thứ tự làm
+## Thứ tự đã thực hiện và backlog còn lại
 
-1. Mục 3 và 8: lưu khóa là dùng được ngay; toast khi lỗi; hỏi xác nhận khi xóa. Lợi nhiều, sửa ít.
-2. Mục 5: thẻ lỗi có lối sửa.
-3. Mục 1, 2 và 7: dựng lại thẻ provider và tách trang Danh sách model. Đây là việc lớn nhất.
-4. Mục 6 và 4: endpoint dạng danh sách cùng form; một đường duy nhất khi thiếu kết nối.
-5. Mục 9: dọn dẹp.
+Đã thực hiện theo thứ tự: phản hồi/xác nhận → thẻ lỗi → tách Model List và thẻ provider → endpoint →
+dọn dẹp. Backlog hiện còn:
+
+1. Cho service trả ID khóa vừa tạo; kiểm đúng khóa mới và rollback bằng ID.
+2. Buộc ô Kích hoạt nhắm đúng connection, không chỉ `providerId`.
+3. Không bỏ qua lỗi thêm model đầu tiên.
+4. Hợp nhất mọi flow thiếu connection/model về một entry point.
+5. Chạy visual QA và thử bằng tài khoản/khóa thật.
 
 ---
 

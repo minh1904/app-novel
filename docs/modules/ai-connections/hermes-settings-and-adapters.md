@@ -1,7 +1,8 @@
 # Cài đặt và lớp provider của Hermes: học được gì
 
-Cập nhật: 2026-10-08 · Trạng thái: **Quan sát** (phần 1–3, đọc mã Hermes commit `bf871a5943` và mã Mira
-ngày 2026-10-08), **Đề xuất** (phần 4–5), chưa chốt. Chủ trì: chủ sản phẩm, kỹ thuật.
+Cập nhật: 2026-10-09 · Trạng thái: **Quan sát Hermes** (phần 1–2), **snapshot lịch sử Mira**
+(phần 3) và **đề xuất lịch sử** (phần 4–5). Quyết định và implementation mới nằm ở
+[Kết nối AI](README.md) và [rà flow](hermes-ux-flow-review.md).
 
 ## Câu hỏi chương này trả lời
 
@@ -144,24 +145,23 @@ repo `D:\personal\hermes-agent`.
 Kiểm khóa trước khi lưu: 401/403 nghĩa là khóa sai; 200 hoặc 429 nghĩa là khóa đúng; lỗi mạng thì vẫn cho
 lưu nhưng có cảnh báo.
 
-## 3. Mira đã có gì (quan sát mã, 2026-10-08)
-
-> **Đã cũ một phần** (2026-10-09). Mira nay đã có thăm dò route và lưu base URL đã giải, có chuỗi dự phòng,
-> và có transport Anthropic Messages và Responses. Flow giao diện xem ở
-> [Rà flow Kết nối AI so với Hermes](hermes-ux-flow-review.md).
+## 3. Mira hiện có gì (đối chiếu lại 2026-10-09)
 
 | Hermes | Mira hiện tại |
 | --- | --- |
 | `ProviderProfile` khai bằng dữ liệu | `compat.ts`: bảng khác biệt theo `providerId` (`maxTokensField`, `streamUsage`), cùng tinh thần "dữ liệu, không dò URL" (design D10 của `ai-gateway`). Preset ở `aiConnections.ts`. |
-| Transport theo `api_mode` | Chỉ một transport OpenAI-compatible (`openAiChatTransport.ts`). Không có Anthropic hay Gemini native: ADR-004 loại. |
+| Transport theo `api_mode` | Ba transport: Chat Completions, Responses và Anthropic Messages; Codex, Copilot và custom endpoint chọn mode qua `transportFactory.ts`. Không có Gemini native hay Bedrock. |
 | Thang suy luận và clamp | `modelCapability.ts` cùng `nearestThinkingLevel`: mức lấy từ catalog models.dev; model lạ chỉ có "Mặc định". Khác Hermes ở chỗ mức bị từ chối thì báo lỗi rõ, không lặng lẽ hạ. |
-| `FailoverReason` | `ProviderErrorKind`, 9 loại kèm `retryable` (`types.ts`, `classifyError.ts`, change `provider-error-reasons`). Chưa có cờ đổi khóa hay chuyển dự phòng. |
+| `FailoverReason` | `ProviderErrorKind` cùng `errorPolicy.ts` quyết định retry, dừng run và fallback. Mira dùng policy function thay vì đặt mọi cờ trên enum lỗi. |
 | Pool khóa | `keyPool.ts`, `gateway/keyScheduler.ts`, `limiter`, `ratePacer`, `retryPolicy`. Chưa có thời gian nghỉ theo model. |
-| Chuỗi dự phòng | Chưa có. |
+| Chuỗi dự phòng | Đã có cho chat trong `fallback.ts`; dịch chương không tự đổi model mà mời người dùng tiếp tục bằng model khác. |
 | Catalog và giá | `modelCatalog.json`, bản chụp models.dev. |
-| Kiểm endpoint | Nút "Kiểm tra kết nối" gọi `ai:connections:test`. Chưa có thăm dò route, chưa lưu base URL đã giải. |
+| Kiểm endpoint | `endpointProbe.ts` thử `/models`, biến thể `/v1` và route theo API mode, rồi lưu base URL đã giải. |
 
-## 4. Đề xuất cho màn Cài đặt (giai đoạn 2)
+## 4. Đề xuất lịch sử cho màn Cài đặt
+
+> Phần này giải thích thiết kế trước khi triển khai. Modal, nav, toast, endpoint form và Model List đã
+> có; `ModelEntries` không còn nằm trong thẻ provider.
 
 Làm theo khung Hermes, nhưng chỉ có những nhóm mà Mira có nội dung thật:
 
@@ -171,7 +171,7 @@ Làm theo khung Hermes, nhưng chỉ có những nhóm mà Mira có nội dung t
   | Nhóm | Gồm |
   | --- | --- |
   | **Model** | Model mặc định cho dịch và cho chat; mức suy luận |
-  | **Kết nối AI** | Tài khoản (chỉ giao diện); Khóa API; Endpoint tùy chỉnh (gateway); Trên máy (Ollama, LM Studio) |
+  | **Kết nối AI** | Tài khoản; Khóa API; Endpoint tùy chỉnh; Trên máy (Ollama, LM Studio) |
   | **Giao diện** | Theme sáng/tối/hệ thống; sau này là cỡ chữ (kính đã gỡ ngày 2026-10-08) |
   | **Về Mira** | Phiên bản |
 
@@ -180,34 +180,17 @@ Làm theo khung Hermes, nhưng chỉ có những nhóm mà Mira có nội dung t
   pane hẹp.
 - **Lưu:** tự lưu sau 550 ms cho trường văn bản. Khóa API giữ nút Lưu tại chỗ, vì dán nhầm khóa là chuyện
   phải xác nhận.
-- **Thẻ provider:** theo kiểu "API keys" của Hermes, có chấm trạng thái, ô khóa `••••` bấm để sửa, và link
-  lấy khóa. Danh sách mục model của Mira (`ModelEntries`) nằm trong thẻ khi mở ra.
+- **Thẻ provider:** theo kiểu "API keys" của Hermes, có chấm trạng thái, ô khóa `••••` bấm để sửa và link
+  lấy khóa. Danh sách model đã được tách sang trang Model › Danh sách model.
 
-## 5. Đề xuất cho lớp provider
+## 5. Trạng thái các đề xuất lớp provider
 
-**Nên lấy**, theo thứ tự lợi ích trên công sức:
-
-1. **Kiểm endpoint kiểu Hermes:** `/models` cùng biến thể `/v1`, rồi lưu base URL đã giải. Thêm thăm dò
-   route chat 1 token, và cảnh báo khi 200 mà không có model. Lỗi gõ sai URL gateway là lỗi người dùng
-   gặp nhiều nhất.
-2. **Thêm cờ hành động vào `ProviderErrorKind`:** `rotateKey` cho `auth` và `quota` của một khóa;
-   `fallback` cho `quota` và `invalid_request` do model. Bộ lập lịch khóa và chuỗi dự phòng đọc cờ này, không
-   đoán lại từ HTTP status.
-3. **Thời gian nghỉ theo model trong `keyPool`:** một model Gemini bị 429 không khóa luôn khóa đó cho model
-   khác cùng project.
-4. **Chuỗi model dự phòng cho dịch hàng loạt**, kèm dòng báo "đã chuyển sang Y vì X". Hành vi này phải
-   được chủ sản phẩm chốt: đổi model giữa chừng làm văn phong của một chương lệch.
-5. **Mở rộng `compat.ts` thành một "profile" nhỏ:** thêm hook cho cách gửi tham số suy luận theo hãng
-   (DeepSeek `thinking`, OpenRouter `reasoning`), thay vì một nhánh trong transport. Đây là việc Hermes làm
-   bằng `build_api_kwargs_extras`.
-
-**Không lấy:**
-
-- **Transport Anthropic, Responses, Bedrock và client Gemini native.** ADR-004 chọn một adapter
-  OpenAI-compatible cùng gateway tự dựng. Muốn đổi thì cần một quyết định mới.
-- **OAuth subscription:** xem [Kết nối AI](README.md), phần 3.
-- **Plugin provider từ thư mục người dùng:** Mira không có hệ plugin, và bảy preset hiện tại vừa đủ.
-- **Lưu khóa không mã hóa trong `auth.json`:** Mira giữ `safeStorage`.
+- **Đã triển khai:** endpoint probe, ba transport, OAuth Codex/Copilot, fallback chat và lỗi theo policy.
+- **Đã chốt khác đề xuất:** dịch chương không tự đổi model; nó mời người dùng dịch tiếp phần thiếu bằng
+  model khác để tránh đổi giọng âm thầm.
+- **Chưa triển khai:** cooldown theo từng model trong pool khóa và hook/profile tổng quát cho tham số
+  suy luận theo hãng.
+- **Không lấy:** Bedrock, Gemini native, plugin provider từ thư mục người dùng và lưu token không mã hóa.
 
 ---
 

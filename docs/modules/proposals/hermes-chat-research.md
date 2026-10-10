@@ -59,15 +59,20 @@ Hai điểm mã khác bản thiết kế:
 - Khi bản dịch không trống, `propose_translation` đặt đoạn mới cạnh đoạn dịch liên kết gần nhất. Không
   có đoạn liên kết nào gần đó thì mới rơi về "cần đặt vị trí" như đề xuất dịch chương.
 
-## 1. Mira hiện có (quan sát mã, 2026-10-07)
+## 1. Mira hiện có (quan sát mã, cập nhật 2026-10-09)
 
 **Thành phần:**
 
 | Thành phần | File | Việc |
 | --- | --- | --- |
-| Panel | `src/renderer/src/features/chapter/chat/AiPanel.tsx` | Nằm bên phải màn chương; chọn phiên đã lưu qua một menu |
-| Lượt chat | `AiTurn.tsx` | Hiển thị lượt gọi tool, danh sách ngữ cảnh đã gửi kèm, Sao chép / Hỏi lại |
-| Ô soạn | `AiComposer.tsx` | Chọn chế độ (`ask` / `edit` / `apply`), menu model; không gửi khi IME đang gõ dở |
+| Panel | `src/renderer/src/features/chapter/chat/AiPanel.tsx` | Cột phải màn chương; menu lịch sử chỉ chọn trong 30 phiên mới nhất |
+| Lượt chat | `AiTurn.tsx` | Hiển thị reasoning, dòng tool gộp và thẻ proposal |
+| Ô soạn | `AiComposer.tsx` | Không mode/phạm vi; có model, gửi/dừng, Enter và chặn IME; chưa có draft theo phiên, hàng đợi hay attachment |
+| Lưu phiên | `aiSessions.ts`, `aiChatStore.ts` | `ai_session`/`ai_turn` bền trong tác phẩm; store giữ phiên khi panel ẩn hoặc đổi chương |
+| Lịch sử model | `chatTurns.ts`, `chatPrompt.ts` | Chỉ question/answer của lượt hoàn tất trong ngân sách 24.000 ký tự; không gửi lại tool result |
+| Phân trang | `aiHistory.ts`, `sessions.ts` | Storage/handler có cursor; renderer mới tải trang đầu, 30 phiên và 100 lượt |
+| Quản lý phiên | — | Chưa có tìm kiếm, rename, delete, pin, archive hay export |
+| Nguồn ngoài | — | Chưa có attachment hoặc reference document |
 | Markdown | `SafeMarkdown.tsx` | Tự viết, chỉ hỗ trợ đoạn, tiêu đề, trích dẫn, code và danh sách |
 
 `SafeMarkdown.tsx` cố ý không chạy HTML và không tải ảnh; đây là ràng buộc an toàn, không phải thiếu
@@ -167,7 +172,7 @@ sót. CSP của renderer cũng chỉ cho tải ảnh `'self' data:`.
 | Nháp theo phiên, lưu sau 400 ms không gõ | **Làm** |
 | Ô tự giãn theo khoảng cao của Hermes | **Làm** |
 | Hàng đợi tin khi model đang trả lời | **Làm**, dạng đơn giản: sửa, xóa, gửi ngay |
-| Dán đoạn dài thành tệp đính kèm | **Bỏ**: Mira không có kiểu tệp đính kèm, và đoạn dán vào thường chính là văn bản cần dịch |
+| Attachment theo lượt và reference document theo tác phẩm | **Chưa chốt**: attachment là snapshot thuộc lượt; reference document là nguồn tái sử dụng thuộc tác phẩm. Cần OpenSpec riêng về ownership, versioning, backup, giới hạn và cách model đọc. |
 | Lệnh `/`, `@` nhắc tệp, `:` emoji, giọng nói, composer nổi | **Bỏ** |
 
 ### 3c. Pill chọn model
@@ -180,15 +185,17 @@ Làm như Hermes:
 Chi tiết nằm ở [Kết nối AI](../ai-connections/README.md), phần 3. `ModelSelectionMenu` vẫn là một menu
 duy nhất, dùng chung cho chat và hộp thoại dịch.
 
-### 3d. Quản lý phiên
+### 3d. Quản lý phiên — đề xuất chưa triển khai
 
 | Tính năng | Đề xuất |
 | --- | --- |
-| Danh sách phiên của tác phẩm thay cho menu hiện tại: tìm theo tiêu đề, nhóm theo ngày | **Làm** |
-| Đổi tên, xóa có xác nhận | **Làm** |
-| Ghim phiên | **Làm** |
-| Sửa tin của người dùng, tạo lại câu trả lời | **Làm**, có điều kiện: đề xuất của lượt cũ giữ nguyên trạng thái duyệt và không tự bị thu hồi |
-| Rẽ nhánh (branch) sang phiên mới, xuất JSON | **Bỏ** ở đợt này |
+| Danh sách phiên của tác phẩm, tìm theo tiêu đề, nhóm theo ngày | **Đề xuất làm**; hiện chỉ có menu 30 phiên mới nhất |
+| Đổi tên | **Đề xuất làm**; chưa có schema/API/UI |
+| Xóa có xác nhận | **Chưa chốt** tác động tới proposal và glossary pending |
+| Ghim phiên | **Đề xuất làm**; chưa có schema/API/UI |
+| Lưu trữ phiên | **Đề xuất mới, chưa chốt** |
+| Sửa tin của người dùng, tạo lại câu trả lời | **Đề xuất có điều kiện**: proposal cũ không tự bị thu hồi |
+| Rẽ nhánh và xuất JSON | **Bỏ** ở đợt này |
 
 ## 4. Ràng buộc khi làm
 

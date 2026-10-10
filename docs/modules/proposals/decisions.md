@@ -77,4 +77,17 @@ muốn đi hết luồng chọn Áp dụng thẳng. Cả hai giữ nguồn gốc
 - Schema và cơ chế neo đang được kiểm qua [OpenSpec](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/proposals/tasks.md);
   retention, đặt vị trí và UX diff còn mở. Xem [bằng chứng và câu hỏi mở](evidence.md).
 
+## Chưa được quyết định
+
+Các mục sau chưa phải hành vi sản phẩm đã chốt:
+
+- rename, delete, pin, archive, tìm kiếm và retention của phiên;
+- xóa phiên tác động thế nào tới proposal và context entry đang chờ;
+- phân trang lịch sử ở renderer và nguồn dựng lịch sử gửi model;
+- attachment theo lượt và reference document theo tác phẩm;
+- provenance bền của glossary pending do tool chat tạo.
+
+Code hiện tại không được dùng như quyết định mặc định cho các mục này. `ON DELETE SET NULL` trên
+proposal chỉ là hành vi schema hiện có, chưa phải quyết định UX về xóa phiên.
+
 [Luồng duyệt](review-flow.md) · [Phiên và nhiều chương](sessions-and-jobs.md) · [Về mục lục](README.md)

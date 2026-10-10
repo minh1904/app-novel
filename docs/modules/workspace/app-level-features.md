@@ -1,6 +1,7 @@
 # Tính năng toàn app cho thanh bên chung
 
-Cập nhật: 2026-10-08 · Trạng thái: **Quan sát** (phần 1–2), **Đề xuất** (phần 3–4), chưa chốt.
+Cập nhật: 2026-10-09 · Trạng thái: **Quan sát** (phần 1–2), **Đề xuất** (phần 3–4), **Đã chốt** (phần 5),
+**Đã triển khai trong working tree** (phần 6), **Lộ trình** (phần 7).
 Chủ trì: chủ sản phẩm.
 
 ## Câu hỏi chương này trả lời
@@ -110,14 +111,64 @@ phẩm hoặc "chương kế chưa dịch".
 mục đầu dùng dữ liệu đã có. Kho dùng chung, Prompt & văn phong, Cập nhật và Trợ lý AI thêm vào khi tính
 năng tương ứng chạy thật. Không đặt mục "Sắp có" lên thanh bên, để tránh lại cảm giác trống.
 
-## 5. Câu hỏi cho chủ sản phẩm
+## 5. Quyết định
 
-1. Mở lại quyết định "không rail" ngày 2026-10-08 và dùng thanh bên chung theo phần 4?
-2. Thanh bên có nhãn chữ (khoảng 200 px, như GalTransl) hay chỉ icon (44 px, tooltip)?
-3. Có hiện "tác phẩm đang mở" ở giữa thanh bên không?
-4. Glossary dùng chung kế thừa thế nào: tác phẩm tự gắn kho chung, hay kho chung áp cho mọi tác phẩm
-   rồi tác phẩm ghi đè?
-5. Mira có làm Nguồn (tải chương từ web) không? Câu trả lời quyết định mục Cập nhật.
+**Chốt ngày 2026-10-09:** mở lại kết luận "không rail" của [nghiên cứu thanh bên](sidebar-research.md#6-kết-luận)
+và dùng **phương án A** của wireframe: thanh bên có nhãn, rộng 224 px, **thu được thành rail icon 48 px**.
+
+- Thứ tự: Tìm (Ctrl K) · Trang chủ · Thư viện · Tác vụ · Cập nhật · nhóm **Tài nguyên** (Kho dùng chung,
+  Prompt & văn phong, Trợ lý AI) · đáy Cài đặt và nút đổi nền.
+- Không hiện "tác phẩm đang mở" trên thanh bên (phương án C không chọn).
+- **Màn Chương tạm để ngoài**: ở màn Chương thanh bên ẩn, màn giữ nguyên cột danh sách chương và hai
+  editor; Cài đặt và đổi nền trở lại cuối thanh trên. Bố cục màn Chương khi có thanh bên chốt sau.
+- Các mục chưa có tính năng thật vẫn hiện trên thanh bên và mở ra màn minh hoạ gắn nhãn "Sắp có", để
+  chủ sản phẩm xem trước toàn bộ bố cục.
+
+Còn mở: glossary dùng chung kế thừa thế nào (tác phẩm tự gắn kho, hay kho áp cho mọi tác phẩm rồi tác
+phẩm ghi đè); Mira có làm Nguồn tải chương từ web hay không (quyết định mục Cập nhật có ở lại không).
+
+## 6. Hành vi đã có
+
+- **Thanh bên** ([`AppNav`](../../../src/renderer/src/app/AppNav.tsx)): mục đang xem sáng lên; trong một tác
+  phẩm và ở form tạo tác phẩm, mục Thư viện sáng. Thư viện có số tác phẩm chưa lưu trữ. Cài đặt có chấm
+  cam khi chưa có kết nối AI. Nút đầu thanh hoặc Ctrl+B thu thành rail icon có tooltip; lựa chọn nhớ
+  theo máy (`localStorage`, khoá `mira.navCollapsed`). Ở màn Chương, Ctrl+B vẫn ẩn/hiện cột danh sách
+  chương như trước.
+- **Thanh trên** ([`AppShell`](../../../src/renderer/src/app/AppShell.tsx)): tên màn ở bên trái
+  ([`TopBarTitle`](../../../src/renderer/src/app/TopBarActions.tsx)), nút riêng của màn ở bên phải.
+- **Trang chủ** ([`HomeScreen`](../../../src/renderer/src/features/home/HomeScreen.tsx)) là màn mở app khi
+  không có tab tác phẩm nào để khôi phục. Thẻ "Tiếp tục dịch" là thật: tác phẩm sửa gần nhất, nút Dịch
+  tiếp mở chương đang làm dở (hoặc mở tác phẩm khi chưa có chương), kèm tối đa ba tác phẩm khác. Thư viện
+  trống thì hiện danh sách bước bắt đầu, bước kết nối AI tự đánh dấu xong khi đã có kết nối.
+- **Thư viện** ([`LibraryScreen`](../../../src/renderer/src/features/library/LibraryScreen.tsx)) là thật,
+  thay chỗ placeholder "đang dựng lại": lưới thẻ tác phẩm mới sửa trước, lọc Tất cả / Đang dịch / Chưa
+  bắt đầu / Tạm dừng / Lưu trữ (tác phẩm lưu trữ chỉ hiện ở bộ lọc của nó), tìm theo tên và tên gốc, báo
+  số tệp tác phẩm không mở được.
+- **Màn minh hoạ** (`MOCK_FEATURES` trong [`mockFeatures.ts`](../../../src/renderer/src/features/work/mockFeatures.ts)):
+  Tác vụ, Cập nhật, Kho dùng chung, Prompt & văn phong, Trợ lý AI, bảng Tìm và lệnh (Ctrl K), và các thẻ
+  số liệu, tác vụ, chương mới, hoạt động ở Trang chủ. Dữ liệu là chữ cố định, không đọc tệp, không gọi
+  main, mọi nút bị khoá.
+
+Wireframe đã duyệt (bốn phương án, chín màn) là tệp HTML tạm, không lưu trong repo. Ảnh chụp app ngày
+2026-10-09 khớp phương án A.
+
+## 7. Lộ trình: biến màn minh hoạ thành tính năng
+
+Mỗi dòng là một tính năng sẽ có OpenSpec riêng trước khi làm. Xong dòng nào thì xoá mục tương ứng trong
+`MOCK_FEATURES` và nhãn "Sắp có".
+
+| Tính năng | Màn minh hoạ cho thấy | Cần có trước | Liên quan |
+| --- | --- | --- | --- |
+| **Hàng đợi tác vụ toàn app** | Tác vụ của mọi tác phẩm: tiến độ, tốc độ, token, chi phí, thời gian còn lại; thử lại, tạm dừng, huỷ, chạy trước; lỗi hết hạn mức tự thử lại; biểu đồ tốc độ; số việc đang chạy và chấm lỗi trên thanh bên | `JobRunner` bền trong main, chia lô, retry, ghi chi phí | Module 7 trong [phiên và tác vụ](../proposals/sessions-and-jobs.md); khu vực Tác vụ của từng tác phẩm |
+| **Số liệu ở Trang chủ** | Chương dịch tuần này, chi phí tuần này, đề xuất chờ duyệt, lỗi kiểm tra; hoạt động gần đây | Ghi usage theo lượt gọi; đếm đề xuất theo tác phẩm (đã có theo chương); kiểm tra chất lượng | [Tính năng của đối thủ](competitor-features.md) hạng 2–3 |
+| **Cập nhật chương mới** | Chương gốc mới của các truyện đang theo dõi, gom theo ngày; dịch ngay hoặc tải về; nguồn lỗi | Khu vực Nguồn của tác phẩm: lưu địa chỉ mục lục, tải chương, tự kiểm theo lịch | [Nguồn và cập nhật](../sources/updates-research.md): năm cách làm, rủi ro pháp lý, bộ so khác |
+| **Kho dùng chung** | Bộ thuật ngữ dùng cho nhiều tác phẩm, số lần khớp, mục bị tác phẩm ghi đè, nhập Names.txt / VietPhrase.txt, bảng thay thế | Mô hình kế thừa kho → tác phẩm; trình đọc Names.txt / VietPhrase.txt | [Glossary](../context/glossary.md); câu hỏi còn mở ở phần 5 |
+| **Prompt & văn phong** | Hồ sơ văn phong: giọng văn, xưng hô mặc định, cách phiên âm tên, câu mẫu; tác phẩm kế thừa rồi ghi đè; ước lượng token gửi kèm | Lắp ngữ cảnh đọc được hồ sơ; khu vực Văn phong của tác phẩm | Lát 5 của [lộ trình Ngữ cảnh](../context/roadmap.md) |
+| **Trợ lý AI ngoài chương** | Chat không gắn chương, đọc được cả thư viện, so cách dịch một tên giữa các truyện, tạo đề xuất sửa ở nhiều chương | Công cụ tìm trên nhiều tác phẩm; phiên chat cấp thư viện | Chat hiện tại trong [đề xuất và phiên AI](../proposals/README.md) |
+| **Tìm và lệnh (Ctrl K)** | Một ô tìm cho tác phẩm, chương, thuật ngữ, câu trong bản dịch, và lệnh có phím tắt | Chỉ mục tìm kiếm toàn thư viện; danh sách lệnh | [Tính năng của đối thủ](competitor-features.md) hạng 10–11 |
+
+Thứ tự gợi ý: Tìm và lệnh (nhảy tới tác phẩm, chương là làm được ngay bằng dữ liệu đang có) → hàng đợi
+tác vụ → số liệu Trang chủ → Kho dùng chung → Prompt & văn phong → Trợ lý AI → Cập nhật (sau khi có Nguồn).
 
 ---
 

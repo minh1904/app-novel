@@ -1,6 +1,7 @@
 # Module Đề xuất và phiên AI
 
-Cập nhật: 2026-10-08 · Trạng thái: quyết định sản phẩm đã chốt; OpenSpec và mã đang triển khai.
+Cập nhật: 2026-10-09 · Trạng thái: proposal và phiên cơ bản đã triển khai; quản lý phiên và tài liệu
+tham khảo còn là đề xuất.
 Chủ trì: chủ sản phẩm và kỹ thuật. Câu hỏi: AI ghi, người duyệt và quay lại kết quả nhiều chương ra sao?
 
 ## Phạm vi
@@ -28,11 +29,11 @@ những chi tiết không được ghi tại đó là **đề xuất** cho OpenS
   [quyết định](decisions.md). Đơn vị chương/đoạn và SQLite vẫn theo ADR-005.
 - **OpenSpec đã hoàn tất:** [change `proposals`](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/proposals/tasks.md)
   mô tả bảng, neo vùng, quyết định từng phần và nghiệm thu. Toàn bộ 27/27 task đã được triển khai và kiểm chứng.
-- **Đã hoàn tất trong mã nguồn:** schema tác phẩm v7, phiên/lượt AI, đề xuất bền, Accept/Deny/Accept
-  all/Hoàn tác có checkpoint, composer với hành động theo lượt, lớp diff trong editor, SafeMarkdown,
-  badge hàng chờ theo chương, lọc đề xuất theo phiên, điều hướng đề xuất giữa các chương, và đường dịch chương theo dòng không
-  trống vào nhóm đề xuất. Hộp dịch mặc định Duyệt trước; Áp dụng thẳng chỉ tự ghi khi bản dịch còn
-  trống và không đổi. Xem [kho](../../../src/main/infra/storage/aiProposals.ts),
+- **Đã hoàn tất trong mã nguồn:** các bảng session/proposal được thêm từ schema v7; agentic chat thêm
+  `action = 'chat'` và `location_json` ở v10, reasoning ở v11. Phiên/lượt AI, proposal bền,
+  Accept/Deny/Accept all/Hoàn tác có checkpoint, lớp diff trong editor, hàng chờ theo chương, lọc theo
+  phiên và điều hướng giữa các chương đều đã có. Hộp dịch mặc định Duyệt trước; Áp dụng thẳng chỉ tự
+  ghi khi đích còn an toàn. Xem [kho](../../../src/main/infra/storage/aiProposals.ts),
   [service duyệt](../../../src/main/services/proposals/proposalService.ts),
   [dịch theo đoạn](../../../src/main/services/ai/paragraphTranslation.ts).
 - **Chat không chế độ (change `agentic-chat`, mã đã có ngày 2026-10-08):** ô soạn chỉ còn ô nhập,
@@ -44,6 +45,12 @@ những chi tiết không được ghi tại đó là **đề xuất** cho OpenS
   [đề xuất từ tool](../../../src/main/services/proposals/chatProposalService.ts) và
   [quyết định mục 9](decisions.md). Chưa đo trên model thật; xem
   [nghiên cứu Hermes](hermes-chat-research.md).
+- **Vòng đời đang chạy:** phiên được tạo ở lượt gửi đầu, giữ khi panel ẩn hoặc đổi chương và đọc lại
+  sau khi mở app; lượt dở thành `interrupted`. Proposal chat gắn session/turn nhưng có vòng đời độc lập.
+- **Giới hạn hiện tại:** UI chỉ tải 30 phiên và 100 lượt mới nhất. Lịch sử model chỉ gồm question/answer
+  của lượt hoàn tất trong ngân sách 24.000 ký tự; không gửi lại reasoning hay tool result.
+- **Chưa triển khai:** rename, delete, pin, archive, tìm kiếm, retention, attachment và reference
+  document. Pending glossary chưa có ownership session/turn trực tiếp.
 
 Module 5 dựng đường duyệt và dữ liệu đề xuất. [Module 7 Tác vụ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ)
 chịu trách nhiệm chạy, tạm dừng và tiếp tục dịch nhiều chương sau khi app tắt. Module 5 cần có hàng

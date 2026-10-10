@@ -1,6 +1,7 @@
 # Hệ thiết kế giao diện Mira
 
-Cập nhật: 2026-10-08 · Trạng thái: **Đã chốt và đã triển khai**. Chủ trì: chủ sản phẩm.
+Cập nhật: 2026-10-09 · Trạng thái: **Đã chốt và đã triển khai**. Các quyết định cũ được giữ dưới
+nhãn lịch sử khi đã bị thay thế. Chủ trì: chủ sản phẩm.
 
 ## Câu hỏi chương này trả lời
 
@@ -22,20 +23,21 @@ phẩm yêu cầu:
   - màu chỉ dùng cho trạng thái.
 - **Chữ và icon theo Obsidian:**
   - chữ giao diện 12 / 13 / 15 / 20 px, chữ đọc 16 px, dòng 1,5 / 1,3;
-  - icon 14 / 16 / 18 px, ribbon 44 px.
+  - icon 14 / 16 / 18 px. Ribbon 44 px là số tham chiếu Obsidian; rail Mira hiện rộng 48 px.
 - **Xoá toàn bộ component cũ** ở `src/renderer/src/components/` và dựng lại bộ mới ở
   [`components/ui/`](../../../src/renderer/src/components/ui/).
 
-**Cùng ngày, sau đó:** chủ sản phẩm gỡ giao diện màn Thư viện (cả mục Gần đây, Lưu trữ) và dải tab truyện
-trên thanh trên để dựng lại UI. Màn Thư viện tạm chỉ hiện một trạng thái rỗng; dữ liệu phía sau
-(`useLibrary`, `libraryStore`, tab trong `uiStore`) giữ nguyên.
+**Quyết định lịch sử ngày 2026-10-08:** chủ sản phẩm từng gỡ giao diện màn Thư viện để dựng lại UI.
+Ngày 2026-10-09, `LibraryScreen` đã có lại lưới tác phẩm, bộ lọc, tìm kiếm, tạo và mở tác phẩm.
 
 Hướng Hermes, hướng "paper" và hướng Obsidian trước đó chỉ còn giá trị lịch sử:
 [phân tích Hermes](hermes-comparison.md), [nghiên cứu kính trên nền ảnh](soft-glass-research.md),
 [phân tích Obsidian](obsidian-comparison.md).
 
-**Font:** Inter 4.1 (variable, SIL OFL) cho toàn bộ giao diện và chữ truyện, đóng gói ở `assets/fonts/` vì CSP không cho
-tải font từ CDN. Chữ Trung, Nhật rơi về font CJK của Windows. Code vẫn là JetBrains Mono. Google Sans Flex đã gỡ.
+**Font hiện tại:** Inter 4.1 (variable, SIL OFL) cho giao diện, đóng gói ở `assets/fonts/` vì CSP không
+cho tải font từ CDN. Editor và chế độ câu dùng font hệ thống (`Segoe UI Variable Text` trên Windows),
+cỡ 16 px, dòng 1,5; chữ Trung, Nhật rơi về font CJK của hệ thống. Code và định danh kỹ thuật dùng
+JetBrains Mono. Google Sans Flex đã gỡ.
 
 **2026-10-08, cùng tối: thang control cho app desktop.** Chủ sản phẩm duyệt đề xuất sau khi đối chiếu
 `DESIGN.md`, `DESIGN-REVIEW.md` của LMS v3 với các nguyên lý thị giác. Bộ size chép từ LMS là của một
@@ -148,8 +150,8 @@ Viền ô nhập và track Switch: 3,0 trên nền sáng (`#949494`), 3,0 trên 
 
 ## Khung cửa sổ
 
-[`AppShell.tsx`](../../../src/renderer/src/app/AppShell.tsx) theo bố cục Acme: một mặt phẳng trắng
-chia bằng viền mảnh.
+[`AppShell.tsx`](../../../src/renderer/src/app/AppShell.tsx) và `AppNav.tsx` theo bố cục Acme: các mặt
+phẳng chia bằng viền mảnh.
 
 - **Thanh trên là thanh tiêu đề** (window controls overlay): Windows chỉ vẽ ba nút cửa sổ ở đầu phải.
   - **Nền ba nút trong suốt** (`rgba(1, 0, 0, 0)`, cách Hermes Desktop làm; đổi ngày 2026-10-08).
@@ -159,11 +161,16 @@ chia bằng viền mảnh.
     nên ô ba nút giật và lệch màu; cách này đã bỏ.
   - Biểu tượng là `--mira-text-subtle`, đổi theo theme, nên liền với các icon của thanh. Bản chép màu
     ở [`titleBar.ts`](../../../src/main/electron/titleBar.ts) có test đối chiếu với token.
-- **Không có rail điều hướng** (2026-10-08, xem [thanh bên](../workspace/sidebar-research.md#6-kết-luận)).
-- **Thanh trên cao 40 px**, chạy hết chiều ngang:
-  - không có logo, nút thu/mở danh sách hay breadcrumb (gỡ ngày 2026-10-08); cột danh sách vẫn thu/mở
-    bằng Ctrl + B, và các màn tự có nút quay lại;
-  - phải: nút riêng của màn, một vạch ngăn, rồi nút đổi theme và Cài đặt, sát ba nút cửa sổ.
+- **Điều hướng hiện tại** (quyết định 2026-10-09):
+  - các màn cấp app có sidebar rộng 224 px, thu được thành rail icon 48 px;
+  - sidebar chứa Tìm, Trang chủ, Thư viện, Tác vụ, Cập nhật, nhóm Tài nguyên, Cài đặt và theme;
+  - màn Chương tạm không hiện app sidebar để giữ chiều rộng cho editor; Ctrl+B ở đây vẫn điều khiển
+    cột danh sách chương.
+- **Thanh trên cao 40 px:** nằm bên phải app sidebar; tên màn ở trái, nút riêng ở phải. Khi app sidebar
+  bị ẩn ở màn Chương, theme và Cài đặt trở lại cuối thanh trên.
+- Quyết định “không rail” ngày 2026-10-08 chỉ còn giá trị lịch sử; xem
+  [nghiên cứu thanh bên](../workspace/sidebar-research.md) và
+  [tính năng toàn app](../workspace/app-level-features.md).
 - **Cuộn mượt** (2026-10-08):
   - Cờ `enable-smooth-scrolling` của Chromium ở main không đủ: trên Windows mỗi nấc chuột vẫn nhảy
     khoảng 100 px gần như tức thì.
@@ -201,6 +208,9 @@ thêm được dependency bằng pnpm toàn cục.
 | `Input`, `SearchInput`, `Textarea`, `Kbd` | Ô nhập không nhãn: `md` 32 / `sm` 24 px, bằng nút đứng cạnh |
 | `Select`, `Switch` (36 × 20), `Slider`, `TabsRoot`… | Tabs có kiểu `line` (gạch chân) và `pill` (track xám) |
 | `Card`, `EmptyState`, `Spinner` | `Card` thay `Panel` |
+| `CardButton` | Card mà toàn bộ bề mặt mở một đối tượng; không đặt control khác bên trong |
+| `ProgressBar` | Tiến độ 0–100, có nhãn hỗ trợ và tone trạng thái |
+| `ConfirmDialog` | Xác nhận thao tác không hoàn tác, dựng từ `Dialog` và `Button` |
 | `SettingRow`, `SectionHeading`, `SettingsSection` | Dòng cài đặt kiểu Obsidian: tên, mô tả, control bên phải |
 | `NavItem` | Hàng 32 px của cột danh sách hoặc điều hướng (chương, trang cài đặt). Hàng đang mở có lớp phủ chọn và `aria-current`; có `leading`, `trailing`, `strong` |
 | `ActionRow` | Lựa chọn dẫn tới bước khác: tiêu đề, mô tả, nhãn, mũi tên; cả hàng bấm được (chọn nhà cung cấp, chọn tài khoản) |
@@ -217,8 +227,11 @@ thêm được dependency bằng pnpm toàn cục.
 - Mọi control dùng cỡ mặc định `md`. Màn không truyền `size="sm"` hay `size="lg"`; hai cỡ này chỉ
   còn để component chung dùng bên trong.
 - Ngoại lệ:
-  - `<input type="file">` ẩn;
-  - textarea là mặt viết của một trình soạn có khung riêng (ô chat, chế độ câu).
+  - `<input type="file">` ẩn; control nhìn thấy để mở picker vẫn phải dùng component chung;
+  - textarea là mặt viết của một trình soạn có khung riêng: `AiComposer` và `SentenceMode`.
+
+Phép kiểm hiện miễn `input[type="file"]` theo loại input, chưa tự xác nhận nó thật sự ẩn; đây vẫn là
+yêu cầu review. Proxy file picker viết tay ở `GlossaryDialogs.tsx` là nợ cần chuyển thành component chung.
 
 Các màn feature được chuyển bằng codemod:
 
@@ -250,24 +263,27 @@ Các màn feature được chuyển bằng codemod:
 [`titleBar.test.ts`](../../../src/main/electron/titleBar.test.ts) đối chiếu màu nút cửa sổ, màu khởi
 động và chiều cao header với token.
 
-## Đã kiểm
+## Đã kiểm và phạm vi bằng chứng
 
-Ngày 2026-10-08:
+Snapshot ngày 2026-10-08, trước app sidebar và Thư viện mới:
 
 - `node scripts/check.mjs` qua: typecheck, 2.208 test, lint 0 lỗi.
 - Dò bản build không còn class nào thiếu CSS.
 - Đã chạy bản build trên Windows 11 với bản sao thư viện thật trong thư mục tạm và chụp màn Chương
   (sáng), Thư viện (sáng, tối) và Cài đặt (sáng).
 
+Ảnh trên không xác minh AppNav, PageFrame, Trang chủ hoặc Thư viện được thêm ngày 2026-10-09.
+Wireframe và ảnh xác nhận phương án A không được lưu trong repo, nên chưa phải visual regression
+artifact tái chạy được.
+
 ## Giới hạn
 
-- **Màn feature vẫn còn style viết tay.** Header phụ màn Chương 36 px, các bảng thư viện và khoảng 400
-  kích thước `h-[…]` / `w-[…]` tùy ý chưa đổi sang component và khoảng cách có tên. Một số nút trong
-  màn vẫn đậm `font-semibold` từ trước.
-- **Chưa có `NavItem` dùng chung:** danh sách chương và mục cài đặt vẫn tự dựng hàng.
-- **Không còn đường mở tác phẩm từ giao diện** cho tới khi màn Thư viện mới xong; tác phẩm đã mở trước đó
-  vẫn được khôi phục khi mở app. Tạo tác phẩm và các thao tác sao lưu, khôi phục, lưu trữ chỉ còn ở tầng
-  dữ liệu.
+- **Màn feature vẫn còn style viết tay.** Header phụ màn Chương vẫn 36 px; một số kích thước tùy ý và
+  `font-semibold` chưa đổi sang component/token có tên.
+- `NavItem` đã dùng cho app nav, danh sách chương và mục Cài đặt. Thư viện đã có đường tạo và mở tác phẩm.
+- Màn Chương tạm chưa dùng app sidebar; bố cục cuối cùng chưa chốt.
+- Tác vụ, Cập nhật, Kho dùng chung, Prompt & văn phong, Trợ lý AI và bảng lệnh vẫn là mock.
+- Chưa có visual regression artifact được lưu trong repo.
 - **Theme tối là suy ra**; ảnh Acme chỉ có bản sáng.
 
 ---

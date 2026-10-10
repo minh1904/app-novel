@@ -1,7 +1,7 @@
 # Học thêm từ Hermes: lõi gọi model, dữ liệu và vỏ app
 
-Cập nhật: 2026-10-08 · Trạng thái: **Quan sát** (phần 1, đọc mã Hermes commit `bf871a5943` và mã Mira
-ngày 2026-10-08), **Đề xuất** (phần 2–6), chưa chốt mục nào. Chủ trì: chủ sản phẩm, kỹ thuật.
+Cập nhật: 2026-10-09 · Trạng thái: **Quan sát** (phần 1), **đề xuất** (phần 2–6), trừ các mục ghi rõ
+“Đã chốt” hoặc “Đã thử”. Chủ trì: chủ sản phẩm, kỹ thuật.
 
 ## Câu hỏi chương này trả lời
 
@@ -48,7 +48,7 @@ bên. Các mục còn lại dựa trên đọc mã có ghi file:dòng nhưng ch�
 
 ### 2b. Khối `<think>` lẫn trong nội dung
 
-- **Mira (đã kiểm):** `parseItems` (`infra/providers/openAiCompatible.ts:153`) bỏ fence rồi lấy từ dấu
+- **Mira (đã kiểm):** `parseItems` (`infra/providers/openAiCompatible.ts:173-174`) bỏ fence rồi lấy từ dấu
   `[` đầu tiên tới `]` cuối cùng. Một khối suy luận có dấu ngoặc vuông nằm trước JSON sẽ làm hỏng phép
   đọc. Không có chỗ nào lọc `<think>`.
 - **Hermes:** `agent/think_scrubber.py:31` `StreamingThinkScrubber` lọc theo stream, giữ lại thẻ bị cắt
@@ -58,7 +58,7 @@ bên. Các mục còn lại dựa trên đọc mã có ghi file:dòng nhưng ch�
 
 ### 2c. Sửa nhẹ tham số tool call
 
-- **Mira (đã kiểm):** `readArgs` (`services/ai/chatTools.ts:134`) gặp JSON hỏng thì trả `null` và tool
+- **Mira (đã kiểm):** `readArgs` (`services/ai/chatTools.ts:355-360`) gặp JSON hỏng thì trả `null` và tool
   báo lỗi, tốn một vòng.
 - **Hermes:** `tools/arg_coercion.py:20` `coerce_tool_args` ép kiểu theo schema: `"42"` thành số,
   `"true"` thành bool, chuỗi JSON thành mảng hoặc object.
@@ -93,7 +93,7 @@ bên. Các mục còn lại dựa trên đọc mã có ghi file:dòng nhưng ch�
 ### 3a. Model dự phòng cho lô dịch
 
 - **Mira (đã kiểm):** `quota` và `rate_limited` có `haltsRun: true`
-  (`services/ai/errorPolicy.ts:33-34`). Dự phòng model chỉ dùng trong chat.
+  (`services/ai/errorPolicy.ts:35-42`). Dự phòng model chỉ dùng trong chat.
 - **Hermes:** `agent/fallback_cooldown.py` chuyển sang model dự phòng và ghi thời điểm model chính mở
   lại (`_arm_rate_limit_cooldown`, `_provider_reset_delay`), rồi quay lại khi hết hạn.
 - **Đã chốt khác:** dịch chương không tự đổi model mà mời "Dịch tiếp bằng Y" (mục 10). Ý tưởng

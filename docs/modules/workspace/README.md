@@ -37,13 +37,14 @@ khai trong change này.
 ## Nghiên cứu liên quan
 
 - [Những gì nên đặt ở thanh bên](sidebar-research.md): thanh bên của LinguaGacha, Novelcrafter, CAT tool,
-  Obsidian; kết luận 2026-10-08: không dùng rail điều hướng.
+  Obsidian; quyết định lịch sử 2026-10-08 không dùng rail đã được thay ngày 2026-10-09 bằng sidebar thu
+  được thành rail.
 - [Tính năng của đối thủ và cách lấp chỗ trống](competitor-features.md): tính năng trong từng màn của
   LinguaGacha, AiNiee, GalTransl, công cụ Việt, app viết truyện và CAT tool; 15 tính năng xếp hạng và ba
-  cách lấp chỗ trống khi không có rail (đề xuất, chưa chốt).
+  cách lấp chỗ trống trong thiết kế cũ không có rail (nghiên cứu lịch sử).
 - [Tính năng toàn app cho thanh bên chung](app-level-features.md): mục cấp app của GalTransl, AiNiee,
-  Mihon, Novelcrafter, Notion, CAT tool; đề xuất thanh bên Trang chủ / Thư viện / Tác vụ / tài nguyên
-  dùng chung (đề xuất, chưa chốt).
+  Mihon, Novelcrafter, Notion, CAT tool; chốt 2026-10-09 thanh bên phương án A (thu được thành rail),
+  đã có Trang chủ, Thư viện và màn minh hoạ cho các mục còn lại, kèm lộ trình làm thật.
 - [Bố cục hai pane ở màn dịch chương](chapter-panes.md): cách Crowdin, Immersive Translate, CAT tool đặt
   bản gốc; đã làm thu gọn bản gốc, kéo chia bề rộng, cuộn cùng và làm sáng đoạn tương ứng.
 - [Xuất chương, xuất hàng loạt và chọn nhiều chương](export-and-bulk.md): khóa bản gốc gom vào menu

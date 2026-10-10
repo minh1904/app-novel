@@ -1,6 +1,6 @@
 # Bằng chứng và câu hỏi mở
 
-Cập nhật: 2026-10-04 · Trạng thái: quan sát nguồn chính thức và mã Mira; kết luận cho Mira là đề xuất.
+Cập nhật: 2026-10-09 · Trạng thái: quan sát nguồn chính thức và mã Mira; kết luận cho Mira là đề xuất.
 Chủ trì: sản phẩm/kỹ thuật. Câu hỏi: phần nào là mẫu tham khảo, phần nào Mira phải tự quyết?
 
 ## Antigravity: phạm vi quan sát
@@ -21,29 +21,30 @@ vi, và quay lại hội thoại**. Mira tự định nghĩa giao dịch văn b�
 
 | Quan sát từ mã | Giới hạn |
 | --- | --- |
-| [`chatReview.ts`](https://github.com/minh1904/app-novel/blob/c21c555/src/renderer/src/features/editor/chatReview.ts) dùng CodeMirror merge để nhận/bỏ từng khối ngay trong pane. | Review này chỉ cho chat; chưa là hồ sơ đề xuất bền vững. |
-| [`chatTurns.ts`](../../../src/renderer/src/features/chapter/chat/chatTurns.ts) ghi rõ session chỉ sống khi panel còn mở. [`ChapterWorkspace.tsx`](../../../src/renderer/src/features/chapter/ChapterWorkspace.tsx) chỉ render `AiPanel` khi `aiOpen`. | Đóng panel unmount và mất hội thoại; chưa có lịch sử phiên. |
-| [`AiPanel.tsx`](../../../src/renderer/src/features/chapter/chat/AiPanel.tsx) nhận `chapterId` hiện tại; [`useAiChat.ts`](../../../src/renderer/src/features/chapter/chat/useAiChat.ts) giữ state trong hook. | Panel đang buộc vào chương mở, chưa có hàng chờ xuyên chương. |
-| [Roadmap Module 5](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#5-đề-xuất) dự kiến `proposal`/`text_snapshot`; [Module 7](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ) mới có `JobRunner`. | Đều là kế hoạch; chưa có bảng và dịch nhiều chương bền vững. |
-| [Spec content-model](https://github.com/minh1904/app-novel/blob/501be2a/openspec/specs/content-model/spec.md) và [spec dịch chương](https://github.com/minh1904/app-novel/blob/501be2a/openspec/specs/ai-translate-chapter/spec.md) vẫn mô tả segment/provenance. | Đây là hợp đồng MVP cần sửa khi lập change Module 5/8, không phải thiết kế đoạn mới đã chốt. |
+| `ai_session` và `ai_turn` được lưu bền trong SQLite của tác phẩm; mỗi lượt giữ câu hỏi, câu trả lời, reasoning, trạng thái, model, usage, tool và vị trí lúc gửi. | Phiên chưa có rename, delete, pin, archive, tìm kiếm hay retention. |
+| Store chat nằm ở cấp ứng dụng theo tác phẩm và listener stream nằm ở `App`, nên ẩn panel hoặc đổi chương không làm mất lượt đang chạy. | Chọn phiên khác hoặc tạo hội thoại mới hủy request đang chạy của phiên hiện tại; lượt dở khi app đóng thành `interrupted` ở lần mở sau. |
+| Storage và handler có keyset pagination cho phiên và lượt. | Bridge renderer chỉ tải trang đầu: tối đa 30 phiên và 100 lượt; chưa có tải thêm, `hasMore` hay cursor ở UI. |
+| Lịch sử gửi model chỉ gồm câu hỏi và câu trả lời của lượt `done`, trong ngân sách 24.000 ký tự. | Tool call/result, reasoning, proposal và vị trí cũ không được gửi lại. Giới hạn 40 message chưa được áp đồng bộ khi dựng lịch sử. |
+| Proposal chat gắn chương, phiên và lượt; storage kiểm tra ba liên kết khớp nhau. | Proposal có vòng đời độc lập: liên kết tới session/turn dùng `ON DELETE SET NULL`. Pending glossary chưa có provenance session/turn trực tiếp. |
+| Chat agentic có tool đọc và tool ghi; tool ghi chỉ tạo proposal hoặc context entry chờ duyệt. | Attachment theo lượt và reference document theo tác phẩm chưa có contract, schema, API, UI hay OpenSpec. |
 
 ## Đã chốt sau khi tổng hợp
 
-Chủ sản phẩm đã chọn [mọi kết quả AI đều có hồ sơ đề xuất](decisions.md), kể cả pane trống; mặc định
-duyệt trước, nhưng có mode Áp dụng thẳng trong chat và dịch chương (quyết định bổ sung 2026-10-05).
-Accept all trong chương và hành động riêng cho toàn lượt dịch; phiên cũ mở lại để tiếp tục hội thoại.
+Chủ sản phẩm đã chọn [mọi kết quả AI đều có hồ sơ đề xuất](decisions.md), kể cả pane trống. Hộp dịch
+chương vẫn có Duyệt trước/Áp dụng thẳng; panel chat từ quyết định 2026-10-08 không còn mode và proposal
+chỉ sinh từ tool ghi, luôn chờ duyệt. Accept all trong chương và hành động riêng cho toàn lượt dịch;
+phiên cũ mở lại để tiếp tục hội thoại.
 
-## Cần chốt trong OpenSpec Module 5
+## Câu hỏi còn mở sau triển khai
 
-1. Đề xuất lưu theo cả chương để review từng khối hay từng đoạn riêng? Cách ánh xạ khối diff về
-   đoạn nguồn khi số đoạn hai bên lệch là gì?
-2. Chọn neo/ID đoạn thế nào để chịu được chèn, dời, tách, gộp và đoạn trùng chữ?
-3. Lưu bao lâu hội thoại và snapshot; backup, xóa tác phẩm, xóa phiên tác động thế nào tới đề xuất?
-4. Cách lưu quyết định từng khối và phục hồi review dang dở sau khi app tắt?
-5. `ai_mark` ở Module 8: Module 5 ghi nguồn gốc của chữ được Accept thế nào trong giai đoạn chuyển
-   tiếp, để sau này tạo dấu mà không suy ngược từ nội dung?
-
-Các câu này không chặn việc ghi yêu cầu UX vào tài liệu. Chúng phải được giải trước khi khóa schema
-và giao diện, đồng thời kiểm V11/V12 và IME theo [kế hoạch kiểm chứng](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/validation.md).
+1. Retention và giới hạn dung lượng cho session, turn, snapshot và tool metadata là gì?
+2. Rename, pin, archive và delete phiên có ngữ nghĩa nào; delete ảnh hưởng thế nào tới proposal và
+   context entry đang chờ?
+3. Phân trang được đưa tới renderer ra sao để UI và lịch sử gửi model không chỉ thấy trang đầu?
+4. Có cần gửi lại tool call/result của lượt cũ cho model, hay chỉ question/answer như hiện tại?
+5. Pending glossary do tool tạo giữ provenance tới session/turn ra sao?
+6. Có làm attachment theo lượt và reference document theo tác phẩm không; nếu có thì ownership,
+   versioning, backup, giới hạn và quyền đọc của tool là gì?
+7. `ai_mark` ghi nguồn gốc phần chữ đã Accept thế nào khi proposal mất liên kết tới phiên/lượt?
 
 [Về mục lục](README.md)

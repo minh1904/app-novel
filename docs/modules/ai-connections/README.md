@@ -1,6 +1,6 @@
 # Kết nối AI
 
-Cập nhật: 2026-10-08 · Trạng thái: **Đã chốt hướng** (mục "Quyết định 2026-10-08"); phần giao diện **đã
+Cập nhật: 2026-10-09 · Trạng thái: **Đã chốt hướng** (mục "Quyết định 2026-10-08"); phần giao diện **đã
 triển khai** (mục "Đã triển khai"); đăng nhập thuê bao và ba transport **có trong mã**, chưa thử với tài
 khoản thật (mục "Đã triển khai (change `subscription-providers`)"). Phần 1–2 là quan sát; phần 3–4 là đề xuất ngày 2026-10-07, đã bị quyết định mới thay ở các
 điểm ghi rõ. Chủ trì: chủ sản phẩm, kỹ thuật.
@@ -18,7 +18,7 @@ subscription, không preset mang tên CLI subscription) ở các điểm sau:
 
 - **Cài đặt là một modal phủ lên app**, như Hermes: điều hướng dọc, breadcrumb, ô tìm kiếm, tự lưu.
   Nhóm Providers có bốn mục: Tài khoản, Khóa API, Endpoint tùy chỉnh, Trên máy. Nhóm Model có: Model
-  chính, Dự phòng. Thêm onboarding lần đầu.
+  chính, Dự phòng và Danh sách model. Thêm onboarding lần đầu.
 - **Đăng nhập subscription ngay trong app** cho **ChatGPT/Codex** và **GitHub Copilot**, bằng device code
   như Hermes. Token lưu bằng `safeStorage` ở main process. Hermes để token dạng chữ thường; Mira không
   làm vậy.
@@ -44,19 +44,20 @@ dùng có thể chịu rủi ro điều khoản. App phải nói rõ điều nà
   khóa vĩnh viễn. Vì vậy "giống Hermes" nghĩa là không có mục này. Gemini vẫn dùng bằng khóa API
   (`generativelanguage.googleapis.com`) như hiện nay.
 
-Đặc tả sẽ nằm ở change OpenSpec `hermes-provider-settings`. Phần chat tự gọi tool nằm ở
+Phần giao diện được triển khai qua change `hermes-settings-modal`; đăng nhập thuê bao và transport qua
+`subscription-providers`. Phần chat tự gọi tool nằm ở
 [Học UI chat của Hermes](../proposals/hermes-chat-research.md), mục "Quyết định 2026-10-08".
 
 ## Đã triển khai (change `hermes-settings-modal`, 2026-10-08)
 
-Trạng thái: **đã chạy trong working tree**, chưa commit. Phần 1 bên dưới vẫn tả Mira trước change này.
+Trạng thái: **đã có trong mã và lịch sử Git**. Phần 1 bên dưới là snapshot trước change này.
 
 **Modal Cài đặt**
 (`src/renderer/src/features/settings/SettingsModal.tsx`)
 
 - Nút bánh răng mở một thẻ phủ lên màn đang xem, không đổi view. Đóng bằng Esc, nút X hoặc bấm ra ngoài.
 - Điều hướng dọc 13rem có bốn nhóm:
-  - Model: Model chính, Dự phòng.
+  - Model: Model chính, Dự phòng, Danh sách model.
   - Kết nối AI: Tài khoản, Khóa API, Endpoint tùy chỉnh, Trên máy.
   - Giao diện.
   - Về Mira.
@@ -223,7 +224,8 @@ khoản trước khi revert.
 Chi tiết và lý do ở [Rà flow Kết nối AI so với Hermes](hermes-ux-flow-review.md), mục "Trạng thái triển
 khai".
 
-- **Dán khóa:** dán khóa ở thẻ provider hay ở ô Kích hoạt là dùng được ngay.
+- **Dán khóa:** lưu khóa, thử kiểm kết nối và cố thêm model đầu tiên. Với pool nhiều khóa, phép kiểm chưa
+  bảo đảm đã dùng đúng khóa vừa thêm; xem các giới hạn bên dưới.
 - **Danh sách model:** chuyển sang trang Model › Danh sách model.
 - **Thẻ provider:** chỉ còn khóa và một hàng thao tác.
 - **Endpoint tùy chỉnh:** thành danh sách cùng một form sửa.
@@ -231,7 +233,18 @@ khai".
 - **Xóa:** xóa khóa và xóa kết nối đều hỏi xác nhận.
 - **Lỗi khi lưu:** hiện thành toast.
 
-## 1. Mira hiện có gì (quan sát mã, 2026-10-07)
+**Khoảng trống và rủi ro hiện tại:**
+
+- `connectKey` và Onboarding nhận diện khóa vừa thêm bằng bốn ký tự cuối để rollback. Hai khóa trùng
+  suffix hoặc hai lần thêm đồng thời có thể xác định sai khóa; service cần trả ID khóa vừa tạo.
+- Phép kiểm kết nối dùng cả pool theo thứ tự, nên một khóa cũ tốt có thể che khóa mới hỏng. Lỗi thêm
+  model đầu tiên hiện chưa chặn trạng thái thành công.
+- Ô Kích hoạt truyền `providerId`; khi có nhiều connection cùng provider, service có thể thêm khóa vào
+  connection đầu tiên thay vì connection đang chọn.
+- Luồng thiếu connection chưa thống nhất: chat/dịch mở Cài đặt, menu model mở Onboarding, còn bấm Gửi
+  có thể bị vô hiệu. Connection bật nhưng không có model cũng chưa được phân loại nhất quán.
+
+## 1. Snapshot Mira trước các change (quan sát mã, 2026-10-07)
 
 **Kết nối:**
 

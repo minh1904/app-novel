@@ -126,6 +126,10 @@ Theo mẫu hai tầng: Thư viện là màn chính; khi mở một tác phẩm, 
 
 ## 6. Kết luận
 
+> **Đã mở lại ngày 2026-10-09:** chủ sản phẩm thấy giao diện trống khi không có thanh bên và chọn thanh
+> bên chung theo phương án A ở [tính năng toàn app](app-level-features.md#5-quyết-định). Phần dưới giữ
+> làm lịch sử.
+
 **Chốt ngày 2026-10-08:** Mira **không dùng rail điều hướng**. Đề xuất ở phần 5 không làm.
 
 Lý do:

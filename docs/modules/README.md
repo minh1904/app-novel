@@ -1,6 +1,6 @@
 # Tài liệu theo module
 
-Cập nhật: 2026-10-04 · Trạng thái: mục lục tài liệu module của Mira.
+Cập nhật: 2026-10-09 · Trạng thái: mục lục tài liệu module của Mira.
 
 Mỗi thư mục là nơi chịu trách nhiệm cho một phạm vi sản phẩm hoặc kỹ thuật. Handbook cũ đã gỡ khỏi
 repo ngày 2026-10-06; link nguồn tới nó trỏ bản cuối ở commit `501be2a`. Quyết định, hành vi và cách
@@ -13,6 +13,7 @@ vận hành mới được viết tại module liên quan.
 | [Ngữ cảnh dịch](context/README.md) | Glossary, nhân vật, xưng hô, văn phong, ký ức và cách lắp ngữ cảnh |
 | [Bộ đo chất lượng](measurement/README.md) | Fixture, phép kiểm, chạy thí nghiệm, chấm mù và báo cáo |
 | [Đề xuất và phiên AI](proposals/README.md) | Duyệt thay đổi tại editor, lịch sử phiên và hàng chờ theo chương |
+| [Nguồn và cập nhật](sources/README.md) | Chương gốc đến từ đâu, phát hiện chương mới và raw bị sửa, trang Cập nhật; nghiên cứu cách làm và rủi ro pháp lý |
 | [Phiên làm việc theo tác phẩm](workspace/README.md) | Tab truyện, khôi phục vị trí và bảo vệ bản sửa chưa lưu |
 
 Tài liệu module phải phân biệt hành vi đã chạy, kết quả một thí nghiệm, đề xuất và quyết định sản
