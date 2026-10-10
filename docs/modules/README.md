@@ -2,9 +2,8 @@
 
 Cập nhật: 2026-10-10 · Trạng thái: mục lục tài liệu module của Mira.
 
-Mỗi thư mục là nơi chịu trách nhiệm cho một phạm vi sản phẩm hoặc kỹ thuật. Handbook cũ đã gỡ khỏi
-repo ngày 2026-10-06; link nguồn tới nó trỏ bản cuối ở commit `501be2a`. Quyết định, hành vi và cách
-vận hành mới được viết tại module liên quan.
+Mỗi thư mục là nơi chịu trách nhiệm cho một phạm vi sản phẩm hoặc kỹ thuật. Quyết định, hành vi
+và cách vận hành được viết tại module liên quan.
 
 | Module | Mục đích |
 | --- | --- |
