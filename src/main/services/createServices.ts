@@ -7,6 +7,7 @@ import { ChatService } from './ai/chatService'
 import { ConnectionService } from './ai/connectionService'
 import { GlossaryService } from './context/glossaryService'
 import type { LibraryStore } from './library/library'
+import { createSourceServices, type SourceServices } from '../sources/sourceServices'
 import {
   createAiSession,
   getAiSession,
@@ -25,6 +26,7 @@ export interface Services {
   paragraphTranslator: ParagraphTranslator
   chat: ChatService
   glossary: GlossaryService
+  sources: SourceServices
 }
 
 /**
@@ -169,5 +171,6 @@ export function createServices({
     now: () => library.appNow()
   })
   const glossary = new GlossaryService(library, () => library.appNow())
-  return { connections, translator, paragraphTranslator, chat, glossary }
+  const sources = createSourceServices(library, crypto)
+  return { connections, translator, paragraphTranslator, chat, glossary, sources }
 }

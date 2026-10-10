@@ -1,4 +1,4 @@
-import type { SourceLanguage } from '../contracts/library'
+import { builtinLanguageProfile, type SourceLanguage } from '../contracts/library'
 import {
   ABBREVIATIONS_ALWAYS,
   ABBREVIATIONS_UNLESS_CAPITAL,
@@ -21,12 +21,9 @@ export interface SegmentRange {
 /** The languages text can be split in: the source languages, plus Vietnamese for translations. */
 export type SegmentLanguage = SourceLanguage | 'vi'
 
-const LOCALE: Record<SegmentLanguage, string> = {
-  en: 'en',
-  vi: 'vi',
-  'zh-Hans': 'zh-Hans',
-  'zh-Hant': 'zh-Hant',
-  ja: 'ja'
+function segmentLocale(lang: SegmentLanguage): string {
+  if (lang === 'vi') return 'vi'
+  return builtinLanguageProfile(lang)?.locale ?? lang
 }
 
 const SPACE = /\s/
@@ -108,7 +105,7 @@ function repair(text: string, spans: Span[], lang: SegmentLanguage): Span[] {
  * none, and a range covers a sentence from its first to its last character that is not white space.
  */
 export function segment(text: string, lang: SegmentLanguage): SegmentRange[] {
-  const segmenter = new Intl.Segmenter(LOCALE[lang], { granularity: 'sentence' })
+  const segmenter = new Intl.Segmenter(segmentLocale(lang), { granularity: 'sentence' })
   const ranges: SegmentRange[] = []
 
   let lineStart = 0

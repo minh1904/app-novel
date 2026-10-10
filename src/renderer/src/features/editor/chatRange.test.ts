@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
 import { undo } from '@codemirror/commands'
 import { applyProposal, targetRange } from './chatRange'
 import { createEditorState } from './editorState'

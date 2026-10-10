@@ -64,7 +64,7 @@ describe('library IPC handlers', () => {
 
   it.each([
     ['a missing language', { title: 'A' }],
-    ['an unknown language', { title: 'A', sourceLang: 'fr' }],
+    ['an invalid language', { title: 'A', sourceLang: 'bad_lang' }],
     ['an unexpected field', { title: 'A', sourceLang: 'en', path: 'C:\\evil' }],
     ['a non-object payload', 'hello'],
     ['null', null],

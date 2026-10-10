@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { idSchema, SOURCE_LANGUAGES } from './library'
+import { idSchema, sourceLanguageSchema, type SourceLanguage } from './library'
 import type { TokenUsage } from './usage'
 
 /**
@@ -71,7 +71,7 @@ export interface ChatSendInput {
   connectionId: string
   /** Mục model dùng cho lượt này; cấu hình của nó được đọc một lần ở đầu lượt. */
   entryId: string
-  sourceLang: (typeof SOURCE_LANGUAGES)[number]
+  sourceLang: SourceLanguage
   question: string
   /** Các lượt trước của phiên, cũ nhất trước. Rỗng ở lượt đầu. */
   history: ChatTurn[]
@@ -250,7 +250,7 @@ export const chatSendSchema = v.pipe(
     chapterId: v.pipe(v.string('ID chương phải là chữ.'), v.uuid('ID chương không hợp lệ.')),
     connectionId: idSchema,
     entryId: idSchema,
-    sourceLang: v.picklist(SOURCE_LANGUAGES, 'Ngôn ngữ nguồn không hợp lệ.'),
+    sourceLang: sourceLanguageSchema,
     question: v.pipe(
       v.string('Câu hỏi phải là chữ.'),
       v.trim(),

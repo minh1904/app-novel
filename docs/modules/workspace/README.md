@@ -47,5 +47,9 @@ khai trong change này.
   đã có Trang chủ, Thư viện và màn minh hoạ cho các mục còn lại, kèm lộ trình làm thật.
 - [Bố cục hai pane ở màn dịch chương](chapter-panes.md): cách Crowdin, Immersive Translate, CAT tool đặt
   bản gốc; đã làm thu gọn bản gốc, kéo chia bề rộng, cuộn cùng và làm sáng đoạn tương ứng.
+- [Điều hướng chương và thanh bên màn dịch](chapter-sidebar-ux.md): nghiên cứu nút back trên topbar,
+  ô tìm kiếm và nhảy chương, các bộ lọc trạng thái và tổ chức thanh bên.
+- [Các thao tác với panel chương](chapter-panel-actions.md): nghiên cứu menu ngữ cảnh trên từng chương,
+  phím tắt chuyển chương, sắp xếp, lọc và dòng chảy làm việc liên tục.
 - [Xuất chương, xuất hàng loạt và chọn nhiều chương](export-and-bulk.md): khóa bản gốc gom vào menu
   pane gốc, phạm vi và tiến độ khi xuất, chọn nhiều chương để xuất hoặc xóa.

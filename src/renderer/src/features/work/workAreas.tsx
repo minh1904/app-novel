@@ -2,7 +2,7 @@ import { ChaptersArea } from './ChaptersArea'
 import { ContextAreaMock } from './ContextAreaMock'
 import { JobsAreaMock } from './JobsAreaMock'
 import { MOCK_FEATURES } from './mockFeatures'
-import { SourcesAreaMock } from './SourcesAreaMock'
+import { SourcesArea } from './SourcesArea'
 import type { WorkArea } from './workArea'
 
 /**
@@ -26,9 +26,8 @@ export const contextArea: WorkArea = {
 
 export const sourcesArea: WorkArea = {
   id: MOCK_FEATURES.sourcesArea.id,
-  label: MOCK_FEATURES.sourcesArea.label,
-  soon: true,
-  render: () => <SourcesAreaMock />
+  label: 'Bản raw',
+  render: (props) => <SourcesArea workId={props.workId} />
 }
 
 export const jobsArea: WorkArea = {

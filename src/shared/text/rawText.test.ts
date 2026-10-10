@@ -84,6 +84,14 @@ describe('detectEncoding', () => {
     }
   })
 
+  it('uses a generic fallback for Korean and an unprofiled valid tag', () => {
+    expect(() => detectEncoding(bytes(0xff, 0x61), 'ko')).not.toThrow()
+    expect(detectEncoding(CP1252_CAFE, 'fr-CA')).toEqual({
+      encoding: 'windows-1252',
+      reason: 'legacy'
+    })
+  })
+
   it('lets a mistaken guess be corrected: the same bytes decode differently', () => {
     expect(decodeRaw(GBK_NIHAO, 'gb18030').text).toBe('你好')
     expect(decodeRaw(GBK_NIHAO, 'big5').text).not.toBe('你好')

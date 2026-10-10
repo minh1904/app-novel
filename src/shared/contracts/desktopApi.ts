@@ -48,6 +48,31 @@ import type {
   CharacterItem,
   ParagraphAddressingCheckItem
 } from './addressing'
+import type {
+  SourceBinding,
+  SourceBindingCreateInput,
+  SourceBindingDeleteInput,
+  SourceBindingIdentifyInput,
+  SourceBindingPreviewCreateInput,
+  SourceBindingsListInput,
+  SourceBindingUpdateInput,
+  SourceCatalogGetInput,
+  SourceCatalogItem,
+  SourceCatalogListInput,
+  SourceCatalogPage,
+  SourceDescriptor,
+  SourceRegistryListInput,
+  SourceSyncCancelInput,
+  SourceSyncProgress,
+  SourceSyncRun,
+  SourceSyncStartInput,
+  SourceSyncStatusInput,
+  SourceUpdateApplyInput,
+  SourceUpdateMarkSeenInput,
+  SourceUpdatePreviewApplyInput,
+  SourceUpdatesListInput,
+  SourceUpdatesPage
+} from './sources'
 
 export interface AppInfo {
   name: string
@@ -369,6 +394,36 @@ export interface ExportApi {
   onProgress(listener: (progress: ExportProgress) => void): () => void
 }
 
+export interface SourcesApi {
+  catalog: {
+    list(input: SourceCatalogListInput): Promise<Result<SourceCatalogPage>>
+    get(input: SourceCatalogGetInput): Promise<Result<SourceCatalogItem>>
+  }
+  bindings: {
+    list(input: SourceBindingsListInput): Promise<Result<SourceBinding[]>>
+    identify(input: SourceBindingIdentifyInput): Promise<Result<SourceDescriptor | null>>
+    previewCreate(input: SourceBindingPreviewCreateInput): Promise<Result<unknown>>
+    create(input: SourceBindingCreateInput): Promise<Result<SourceBinding>>
+    update(input: SourceBindingUpdateInput): Promise<Result<SourceBinding>>
+    delete(input: SourceBindingDeleteInput): Promise<Result<void>>
+  }
+  sync: {
+    start(input: SourceSyncStartInput): Promise<Result<SourceSyncRun>>
+    cancel(input: SourceSyncCancelInput): Promise<Result<SourceSyncRun>>
+    status(input: SourceSyncStatusInput): Promise<Result<SourceSyncRun>>
+    onProgress(listener: (progress: SourceSyncProgress) => void): () => void
+  }
+  updates: {
+    list(input: SourceUpdatesListInput): Promise<Result<SourceUpdatesPage>>
+    markSeen(input: SourceUpdateMarkSeenInput): Promise<Result<{ updatedCount: number }>>
+    previewApply(input: SourceUpdatePreviewApplyInput): Promise<Result<unknown>>
+    apply(input: SourceUpdateApplyInput): Promise<Result<unknown>>
+  }
+  registry: {
+    list(input?: SourceRegistryListInput): Promise<Result<{ sources: SourceDescriptor[] }>>
+  }
+}
+
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
   /** Opens an https link in the browser; main only allows the hosts in `EXTERNAL_LINK_HOSTS`. */
@@ -392,4 +447,5 @@ export interface DesktopApi {
   glossary: GlossaryApi
   addressing: AddressingApi
   export: ExportApi
+  sources: SourcesApi
 }

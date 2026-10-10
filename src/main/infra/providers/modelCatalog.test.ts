@@ -143,6 +143,14 @@ describe('estimateCost', () => {
     expect(three.inputTokens - one.inputTokens).toBe(2 * (one.inputTokens - 250))
   })
 
+  it('uses a generic estimate for Korean and unprofiled valid tags', () => {
+    for (const sourceLang of ['ko', 'fr-CA']) {
+      const estimate = estimateCost({ sourceChars: 1000, sourceLang, batchCount: 0 })
+      expect(estimate.inputTokens).toBeGreaterThan(0)
+      expect(estimate.outputTokens).toBeGreaterThan(0)
+    }
+  })
+
   it('reports no price at all when the model is unknown, rather than zero', () => {
     const estimate = estimateCost({ sourceChars: 1000, sourceLang: 'ja', batchCount: 1 })
     expect(estimate.usd).toBeUndefined()

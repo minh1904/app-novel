@@ -169,7 +169,7 @@ describe('library.db v4 → v5', () => {
       frozen_scope: 'day',
       freeze_strikes: 2
     })
-    expect(readPragmas(db).userVersion).toBe(7)
+    expect(readPragmas(db).userVersion).toBe(8)
     db.close()
   })
 
@@ -197,7 +197,7 @@ describe('library.db v4 → v5', () => {
   it('is complete from nothing: a new file has the latest tables and no rows', () => {
     const db = openDatabase(join(tempDir(), 'fresh.db'))
     migrate(db, librarySchema)
-    expect(readPragmas(db).userVersion).toBe(7)
+    expect(readPragmas(db).userVersion).toBe(8)
     expect(db.prepare('SELECT COUNT(*) AS n FROM ai_model').get<{ n: number }>()!.n).toBe(0)
     db.close()
   })
@@ -241,7 +241,7 @@ describe('library.db v4 → v5', () => {
     }
     expect(error).toBeInstanceOf(StorageError)
     expect((error as StorageError).code).toBe('unsupported_version')
-    expect(readPragmas(db).userVersion).toBe(7)
+    expect(readPragmas(db).userVersion).toBe(8)
     db.close()
   })
 })
@@ -276,4 +276,73 @@ describe('library schema v6', () => {
     ])
     db.close()
   })
+})
+
+describe('library schema v8', () => {
+  const thrown = (fn: () => unknown): boolean => {
+    try {
+      fn()
+    } catch {
+      return true
+    }
+    return false
+  }
+
+  it('creates adapter, auth, job and rebuildable schedule storage with constrained states', () => {
+    const db = openDatabase(join(tempDir(), 'v8.db'))
+    migrate(db, librarySchema)
+    expect(readPragmas(db).userVersion).toBe(8)
+    db.exec(`
+      INSERT INTO source_adapter_install (adapter_id, version, manifest_json, artifact_sha256,
+        trust_level, state, installed_at, updated_at)
+      VALUES ('builtin.folder', '1.0.0', '{}', 'sha', 'builtin', 'enabled', 1, 1);
+      INSERT INTO source_auth_profile (id, adapter_id, label, encrypted_secret, account_partition,
+        state, created_at, updated_at)
+      VALUES ('auth', 'builtin.folder', 'Tài khoản', x'0102ff', 'persist:source-auth', 'ok', 1, 1);
+      INSERT INTO source_job (id, work_id, binding_id, kind, state, attempt, created_at, updated_at)
+      VALUES ('job', 'work', 'binding', 'catalog_sync', 'queued', 0, 1, 1);
+      INSERT INTO source_schedule_index (work_id, binding_id, enabled, next_check_at, priority, last_result)
+      VALUES ('work', 'binding', 1, 10, 0, 'ok');
+    `)
+    expect(
+      db
+        .prepare(
+          "SELECT typeof(encrypted_secret) AS storage FROM source_auth_profile WHERE id = 'auth'"
+        )
+        .get()
+    ).toEqual({ storage: 'blob' })
+    expect(
+      thrown(() =>
+        db.exec(`INSERT INTO source_auth_profile
+          (id, adapter_id, label, encrypted_secret, account_partition, state, created_at, updated_at)
+          VALUES ('bad', 'builtin.folder', 'Bad', x'01', 'p', 'unknown', 1, 1)`)
+      )
+    ).toBe(true)
+    expect(
+      thrown(() =>
+        db.exec(`INSERT INTO source_schedule_index
+          (work_id, binding_id, enabled, priority) VALUES ('work', 'binding', 1, 0)`)
+      )
+    ).toBe(true)
+    db.exec("DELETE FROM source_adapter_install WHERE adapter_id = 'builtin.folder'")
+    expect(db.prepare('SELECT count(*) AS n FROM source_auth_profile').get()).toEqual({ n: 0 })
+    db.close()
+  })
+
+  it.each([1, 2, 3, 4, 5, 6, 7])(
+    'upgrades a library v%i file without losing old rows',
+    (version) => {
+      const db = openDatabase(join(tempDir(), 'library-from-v' + version + '.db'))
+      migrate(db, upTo(version))
+      db.exec(`INSERT INTO work_index
+      (id, file_name, title, source_lang, status, archived, chapter_count, created_at, updated_at)
+      VALUES ('w', 'w.mira', 'Tác phẩm', 'ja', 'not-started', 0, 0, 1, 2)`)
+      migrate(db, librarySchema)
+      expect(readPragmas(db).userVersion).toBe(8)
+      expect(db.prepare("SELECT title FROM work_index WHERE id = 'w'").get()).toEqual({
+        title: 'Tác phẩm'
+      })
+      db.close()
+    }
+  )
 })

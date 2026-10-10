@@ -125,7 +125,8 @@ và dùng **phương án A** của wireframe: thanh bên có nhãn, rộng 224 p
   chủ sản phẩm xem trước toàn bộ bố cục.
 
 Còn mở: glossary dùng chung kế thừa thế nào (tác phẩm tự gắn kho, hay kho áp cho mọi tác phẩm rồi tác
-phẩm ghi đè); Mira có làm Nguồn tải chương từ web hay không (quyết định mục Cập nhật có ở lại không).
+phẩm ghi đè). Hướng hệ thống Nguồn và việc giữ trang Cập nhật đã chốt ngày 2026-10-10; website, lịch và
+cách truy cập cụ thể vẫn theo [thiết kế nguồn đa quốc gia](../sources/system-design.md).
 
 ## 6. Hành vi đã có
 
@@ -147,9 +148,10 @@ phẩm ghi đè); Mira có làm Nguồn tải chương từ web hay không (quy�
   bắt đầu / Tạm dừng / Lưu trữ (tác phẩm lưu trữ chỉ hiện ở bộ lọc của nó), tìm theo tên và tên gốc, báo
   số tệp tác phẩm không mở được.
 - **Màn minh hoạ** (`MOCK_FEATURES` trong [`mockFeatures.ts`](../../../src/renderer/src/features/work/mockFeatures.ts)):
-  Tác vụ, Cập nhật, Kho dùng chung, Prompt & văn phong, Trợ lý AI, bảng Tìm và lệnh (Ctrl K), và các thẻ
+  Tác vụ, Kho dùng chung, Prompt & văn phong, Trợ lý AI, bảng Tìm và lệnh (Ctrl K), và các thẻ
   số liệu, tác vụ, chương mới, hoạt động ở Trang chủ. Dữ liệu là chữ cố định, không đọc tệp, không gọi
-  main, mọi nút bị khoá.
+  main, mọi nút bị khoá. (Màn **Cập nhật** và khu vực **Bản raw** đã được triển khai thật qua nền tảng
+  Source System Foundation).
 
 Wireframe đã duyệt (bốn phương án, chín màn) là tệp HTML tạm, không lưu trong repo. Ảnh chụp app ngày
 2026-10-09 khớp phương án A.
@@ -163,7 +165,7 @@ Mỗi dòng là một tính năng sẽ có OpenSpec riêng trước khi làm. Xo
 | --- | --- | --- | --- |
 | **Hàng đợi tác vụ toàn app** | Tác vụ của mọi tác phẩm: tiến độ, tốc độ, token, chi phí, thời gian còn lại; thử lại, tạm dừng, huỷ, chạy trước; lỗi hết hạn mức tự thử lại; biểu đồ tốc độ; số việc đang chạy và chấm lỗi trên thanh bên | `JobRunner` bền trong main, chia lô, retry, ghi chi phí | Module 7 trong [phiên và tác vụ](../proposals/sessions-and-jobs.md); khu vực Tác vụ của từng tác phẩm |
 | **Số liệu ở Trang chủ** | Chương dịch tuần này, chi phí tuần này, đề xuất chờ duyệt, lỗi kiểm tra; hoạt động gần đây | Ghi usage theo lượt gọi; đếm đề xuất theo tác phẩm (đã có theo chương); kiểm tra chất lượng | [Tính năng của đối thủ](competitor-features.md) hạng 2–3 |
-| **Cập nhật chương mới** | Chương gốc mới của các truyện đang theo dõi, gom theo ngày; dịch ngay hoặc tải về; nguồn lỗi | Khu vực Nguồn của tác phẩm: lưu địa chỉ mục lục, tải chương, tự kiểm theo lịch | [Nguồn và cập nhật](../sources/updates-research.md): năm cách làm, rủi ro pháp lý, bộ so khác |
+| **Cập nhật chương mới** (Đã xong nền tảng) | Chương gốc mới của các truyện đang theo dõi, gom theo ngày; xem diff trước khi áp dụng; nguồn lỗi | **Đã triển khai** cho tệp/thư mục cục bộ (`source-system-foundation`); adapter mạng là follow-up | [Thiết kế nguồn đa quốc gia](../sources/system-design.md); [nghiên cứu cơ chế](../sources/updates-research.md) |
 | **Kho dùng chung** | Bộ thuật ngữ dùng cho nhiều tác phẩm, số lần khớp, mục bị tác phẩm ghi đè, nhập Names.txt / VietPhrase.txt, bảng thay thế | Mô hình kế thừa kho → tác phẩm; trình đọc Names.txt / VietPhrase.txt | [Glossary](../context/glossary.md); câu hỏi còn mở ở phần 5 |
 | **Prompt & văn phong** | Hồ sơ văn phong: giọng văn, xưng hô mặc định, cách phiên âm tên, câu mẫu; tác phẩm kế thừa rồi ghi đè; ước lượng token gửi kèm | Lắp ngữ cảnh đọc được hồ sơ; khu vực Văn phong của tác phẩm | Lát 5 của [lộ trình Ngữ cảnh](../context/roadmap.md) |
 | **Trợ lý AI ngoài chương** | Chat không gắn chương, đọc được cả thư viện, so cách dịch một tên giữa các truyện, tạo đề xuất sửa ở nhiều chương | Công cụ tìm trên nhiều tác phẩm; phiên chat cấp thư viện | Chat hiện tại trong [đề xuất và phiên AI](../proposals/README.md) |

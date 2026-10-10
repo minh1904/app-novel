@@ -25,7 +25,9 @@ import { textHandlers } from './handlers/text'
 import { worksHandlers } from './handlers/works'
 import { exportHandlers } from './handlers/export'
 import { workspaceHandlers } from './handlers/workspace'
+import { sourcesHandlers } from './handlers/sources'
 import type { ExportService } from '../services/export/exportService'
+import type { SourceServices } from '../sources/sourceServices'
 
 /**
  * Channel → validated handler. Free of Electron imports so tests can call it directly.
@@ -42,7 +44,8 @@ export function createLibraryHandlers(
   glossary?: GlossaryService,
   addressing?: AddressingService,
   paragraphTranslator?: ParagraphTranslator,
-  exportService?: ExportService
+  exportService?: ExportService,
+  sources?: SourceServices
 ): Record<Channel, RawHandler<unknown>> {
   const deps: HandlerDeps = {
     library,
@@ -53,7 +56,8 @@ export function createLibraryHandlers(
     glossary,
     addressing,
     paragraphTranslator,
-    exportService
+    exportService,
+    sources
   }
   return {
     ...worksHandlers(deps),
@@ -70,7 +74,8 @@ export function createLibraryHandlers(
     ...sessionHandlers(deps),
     ...glossaryHandlers(deps),
     ...addressingHandlers(deps),
-    ...exportHandlers(deps)
+    ...exportHandlers(deps),
+    ...sourcesHandlers(deps)
   }
 }
 

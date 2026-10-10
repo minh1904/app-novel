@@ -30,7 +30,7 @@ describe('work schema', () => {
   it('stamps the Mira application id and the latest schema version', () => {
     const db = openDatabase(join(tempDir(), 'work.mira'))
     migrate(db, workSchema)
-    expect(readPragmas(db)).toEqual({ userVersion: 11, applicationId: WORK_APPLICATION_ID })
+    expect(readPragmas(db)).toEqual({ userVersion: 12, applicationId: WORK_APPLICATION_ID })
     db.close()
   })
 
@@ -46,12 +46,101 @@ describe('work schema', () => {
     db.close()
   })
 
-  it('enforces languages, statuses and a non-blank title', () => {
+  it('allows open BCP-47 source languages while enforcing statuses and a non-blank title', () => {
     const db = fresh()
-    expect(thrown(() => db.exec("UPDATE work SET source_lang = 'fr'"))).toBe(true)
+    db.exec("UPDATE work SET source_lang = 'ko'")
+    db.exec("UPDATE work SET source_lang = 'fr-CA'")
+    expect(db.prepare('SELECT source_lang FROM work').get()).toEqual({ source_lang: 'fr-CA' })
     expect(thrown(() => db.exec("UPDATE work SET status = 'done'"))).toBe(true)
     expect(thrown(() => db.exec("UPDATE work SET title = '   '"))).toBe(true)
+    expect(thrown(() => db.exec("UPDATE work SET source_lang = '   '"))).toBe(true)
     expect(thrown(() => db.exec("UPDATE work SET target_lang = 'en'"))).toBe(true)
+    db.close()
+  })
+
+  it('enforces source ownership uniques, foreign keys and binding cascades', () => {
+    const db = fresh()
+    db.exec(`
+      INSERT INTO source_binding (id, adapter_id, adapter_version, remote_work_id, language_tag, label,
+        created_at, updated_at)
+      VALUES ('b', 'builtin.folder', '1.0.0', 'folder:a', 'ko', 'Bản thư mục', 1, 1);
+      INSERT INTO source_sync_run (id, binding_id, trigger, state, adapter_version, started_at)
+      VALUES ('r', 'b', 'manual', 'completed', '1.0.0', 2);
+      INSERT INTO source_catalog_item (id, binding_id, remote_chapter_id, chapter_id, ordinal_key, title,
+        kind, access_state, first_seen_at, last_seen_at, metadata_hash)
+      VALUES ('i', 'b', 'chapter-1', 'c', '0001', 'Chương 1', 'chapter', 'public', 2, 2, 'meta');
+      INSERT INTO source_content_revision (id, catalog_item_id, content_hash, payload_hash, normalized_text,
+        normalization_version, fetched_at, adapter_version, access_state, is_complete)
+      VALUES ('rev', 'i', 'content', 'payload', 'Raw', 1, 3, '1.0.0', 'public', 1);
+      INSERT INTO source_update_event (id, binding_id, catalog_item_id, kind, dedupe_key, payload_json,
+        detected_at)
+      VALUES ('e', 'b', 'i', 'added', 'b:i:added', '{}', 3);
+    `)
+    expect(
+      thrown(() =>
+        db.exec(`INSERT INTO source_binding
+          (id, adapter_id, adapter_version, remote_work_id, language_tag, label, created_at, updated_at)
+          VALUES ('b2', 'builtin.folder', '1.1.0', 'folder:a', 'ja', 'Trùng', 1, 1)`)
+      )
+    ).toBe(true)
+    expect(
+      thrown(() =>
+        db.exec(`INSERT INTO source_catalog_item
+          (id, binding_id, remote_chapter_id, ordinal_key, title, kind, access_state, first_seen_at,
+           last_seen_at, metadata_hash)
+          VALUES ('i2', 'b', 'chapter-1', '0002', 'Trùng', 'chapter', 'public', 2, 2, 'meta2')`)
+      )
+    ).toBe(true)
+    expect(
+      thrown(() =>
+        db.exec(`INSERT INTO source_content_revision
+          (id, catalog_item_id, content_hash, payload_hash, normalized_text, normalization_version,
+           fetched_at, adapter_version, access_state, is_complete)
+          VALUES ('rev2', 'i', 'content', 'payload2', 'Raw 2', 1, 4, '1.0.0', 'public', 1)`)
+      )
+    ).toBe(true)
+    expect(
+      thrown(() =>
+        db.exec(`INSERT INTO source_update_event
+          (id, binding_id, kind, dedupe_key, payload_json, detected_at)
+          VALUES ('e2', 'b', 'renamed', 'b:i:added', '{}', 4)`)
+      )
+    ).toBe(true)
+
+    db.exec("DELETE FROM chapter WHERE id = 'c'")
+    expect(db.prepare("SELECT chapter_id FROM source_catalog_item WHERE id = 'i'").get()).toEqual({
+      chapter_id: null
+    })
+    expect(
+      db.prepare("SELECT normalized_text FROM source_content_revision WHERE id = 'rev'").get()
+    ).toEqual({
+      normalized_text: 'Raw'
+    })
+
+    db.exec("DELETE FROM source_binding WHERE id = 'b'")
+    for (const table of [
+      'source_sync_run',
+      'source_catalog_item',
+      'source_content_revision',
+      'source_update_event'
+    ]) {
+      expect(db.prepare('SELECT count(*) AS n FROM ' + table).get()).toEqual({ n: 0 })
+    }
+    db.close()
+  })
+
+  it('permits at most one primary source binding', () => {
+    const db = fresh()
+    db.exec(`INSERT INTO source_binding
+      (id, adapter_id, adapter_version, remote_work_id, language_tag, label, is_primary, created_at, updated_at)
+      VALUES ('b1', 'a', '1', 'w1', 'ja', 'Một', 1, 1, 1)`)
+    expect(
+      thrown(() =>
+        db.exec(`INSERT INTO source_binding
+          (id, adapter_id, adapter_version, remote_work_id, language_tag, label, is_primary, created_at, updated_at)
+          VALUES ('b2', 'a', '1', 'w2', 'ja', 'Hai', 1, 1, 1)`)
+      )
+    ).toBe(true)
     db.close()
   })
 
@@ -151,7 +240,7 @@ describe('work schema', () => {
 
     // Upgrade through the current schema.
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(11)
+    expect(readPragmas(db).userVersion).toBe(12)
 
     // Data preserved
     const row = db.prepare('SELECT title FROM work WHERE id = ?').get<{ title: string }>('w1')
@@ -193,7 +282,7 @@ describe('work schema', () => {
       INSERT INTO provenance (segment_id, origin, at) VALUES ('s', 'human', 1);
     `)
     migrate(db, workSchema)
-    expect(readPragmas(db).userVersion).toBe(11)
+    expect(readPragmas(db).userVersion).toBe(12)
     expect(
       db
         .prepare("SELECT content, rev FROM chapter_text WHERE chapter_id = 'c' AND side = 'target'")
@@ -260,7 +349,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(11)
+    expect(readPragmas(db).userVersion).toBe(12)
     expect(db.prepare('SELECT id, action, answer FROM ai_turn ORDER BY created_at').all()).toEqual([
       { id: 't-ask', action: 'ask', answer: 'Đáp' },
       { id: 't-edit', action: 'edit', answer: 'Bản sửa' },
@@ -359,7 +448,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(11)
+    expect(readPragmas(db).userVersion).toBe(12)
     expect(
       db.prepare('SELECT id, action, answer, target_range_json, location_json FROM ai_turn').all()
     ).toEqual([
@@ -408,7 +497,7 @@ describe('work schema', () => {
 
     migrate(db, workSchema)
 
-    expect(readPragmas(db).userVersion).toBe(11)
+    expect(readPragmas(db).userVersion).toBe(12)
     db.exec(`
       INSERT INTO translate_run_context (run_key, chapter_id, snapshot_json, snapshot_hash, created_at)
       VALUES ('translate:r', 'c', '{}', 'h', 1);
@@ -417,4 +506,52 @@ describe('work schema', () => {
     expect(db.prepare('SELECT count(*) AS n FROM translate_run_context').get()).toEqual({ n: 0 })
     db.close()
   })
+
+  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])(
+    'upgrades a work v%i file to v12 preserving data and allowing ko/BCP-47',
+    (version) => {
+      const db = openDatabase(join(tempDir(), 'work-from-v' + version + '.mira'))
+      migrate(db, {
+        applicationId: WORK_APPLICATION_ID,
+        migrations: workSchema.migrations.filter((m) => m.version <= version)
+      })
+      db.exec(`
+        INSERT INTO work (id, title, source_lang, created_at, updated_at)
+        VALUES ('w', 'Tác phẩm cũ', 'ja', 1, 1);
+        INSERT INTO chapter (id, position, title, created_at, updated_at)
+        VALUES ('c', 0, 'Chương 1', 1, 1);
+        INSERT INTO chapter_text (chapter_id, side, content, rev, updated_at)
+        VALUES ('c', 'source', 'Raw text', 0, 1), ('c', 'target', 'Bản dịch', 0, 1);
+      `)
+      if (version >= 7) {
+        const action = version === 7 ? 'hoi' : 'ask'
+        db.exec(`
+          INSERT INTO ai_session (id, title, created_at, updated_at)
+          VALUES ('s', 'Hỏi đáp', 1, 1);
+          INSERT INTO ai_turn (id, session_id, chapter_id, action, question, answer, status, created_at, updated_at)
+          VALUES ('t', 's', 'c', '${action}', 'Hỏi', 'Đáp', 'done', 1, 1);
+        `)
+      }
+      migrate(db, workSchema)
+      expect(readPragmas(db).userVersion).toBe(12)
+      expect(db.prepare("SELECT title FROM work WHERE id = 'w'").get()).toEqual({
+        title: 'Tác phẩm cũ'
+      })
+      expect(
+        db
+          .prepare("SELECT content FROM chapter_text WHERE chapter_id = 'c' AND side = 'source'")
+          .get()
+      ).toEqual({ content: 'Raw text' })
+
+      db.exec("UPDATE work SET source_lang = 'ko'")
+      expect(db.prepare("SELECT source_lang FROM work WHERE id = 'w'").get()).toEqual({
+        source_lang: 'ko'
+      })
+      db.exec("UPDATE work SET source_lang = 'fr-CA'")
+      expect(db.prepare("SELECT source_lang FROM work WHERE id = 'w'").get()).toEqual({
+        source_lang: 'fr-CA'
+      })
+      db.close()
+    }
+  )
 })

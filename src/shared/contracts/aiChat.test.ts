@@ -142,8 +142,10 @@ describe('chatSendSchema', () => {
     )
   })
 
-  it('từ chối ngôn ngữ không có trong danh sách', () => {
-    expect(firstIssue(input({ sourceLang: 'vi' as never }))).toBe('Ngôn ngữ nguồn không hợp lệ.')
+  it('từ chối ngôn ngữ không hợp lệ', () => {
+    expect(firstIssue(input({ sourceLang: 'bad_lang' as never }))).toBe(
+      'Ngôn ngữ nguồn phải là thẻ BCP-47 hợp lệ.'
+    )
   })
 
   it('từ chối trường lạ', () => {

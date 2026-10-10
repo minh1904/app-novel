@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
-import { languages, type SourceLanguage } from './works'
+import { languageMeta, type SourceLanguage } from './works'
 
 const sizes = {
   sm: 'size-7 text-[13px] rounded-[8px]',
@@ -31,7 +31,7 @@ export function LanguageMark({
         className
       )}
     >
-      {languages[language].glyph}
+      {languageMeta(language).glyph}
     </span>
   )
 }

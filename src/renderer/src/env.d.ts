@@ -7,5 +7,3 @@ declare global {
     mira: DesktopApi
   }
 }
-
-export {}

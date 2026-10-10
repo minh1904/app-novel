@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { SOURCE_LANGUAGES, type SourceLanguage } from './library'
+import { SOURCE_LANGUAGES, sourceLanguageSchema, type SourceLanguage } from './library'
 
 /**
  * Contracts and Valibot schemas for measurement fixtures (measure-fixtures spec).
@@ -27,7 +27,7 @@ export const WorkFixtureSchema = v.pipe(
   v.object({
     slug: v.optional(v.string('slug phải là chuỗi')),
     id: v.optional(v.string('id phải là chuỗi')),
-    lang: v.picklist(FIXTURE_LANGUAGES, 'Ngôn ngữ nguồn không được hỗ trợ.'),
+    lang: sourceLanguageSchema,
     title: v.nullable(v.string()),
     author: v.optional(v.nullable(v.string())),
     published: v.optional(v.string()),
@@ -136,7 +136,7 @@ export type PronounsFile = v.InferOutput<typeof PronounsFileSchema>
 export const ChapterMetaSchema = v.object({
   id: v.string('id chương phải là chuỗi'),
   order: v.optional(v.number()),
-  lang: v.optional(v.picklist(FIXTURE_LANGUAGES)),
+  lang: v.optional(sourceLanguageSchema),
   title: v.optional(v.nullable(v.string())),
   pov: v.optional(v.nullable(v.string())),
   paragraphs: v.number('paragraphs phải là số'),

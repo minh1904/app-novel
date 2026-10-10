@@ -10,12 +10,12 @@ import { Select } from '../../components/ui/Select'
 import { TextareaField } from '../../components/ui/Field'
 import { TextField } from '../../components/ui/Field'
 import { CoverPicker } from '../library/CoverPicker'
-import { languages } from '../library/works'
+import { languageMeta, languages } from '../library/works'
 import { emptyWorkForm, type WorkFormValues } from './workFormValues'
 
 const languageOptions = (Object.keys(languages) as SourceLanguage[]).map((value) => ({
   value,
-  label: languages[value].name
+  label: languageMeta(value).name
 }))
 
 export interface WorkFormProps {
@@ -146,7 +146,7 @@ export function WorkForm({
     ) : (
       <TextField
         label="Ngôn ngữ gốc"
-        value={languages[values.sourceLang].name}
+        value={languageMeta(values.sourceLang).name}
         readOnly
         hint="Không đổi được sau khi tạo, vì bản gốc và bản dịch đã gắn với ngôn ngữ này."
       />

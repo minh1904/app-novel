@@ -14,11 +14,12 @@ import type { Usage } from '../../infra/providers/usage'
  * Số ký tự trên một token, theo ngôn ngữ nguồn. **Phỏng đoán, chưa đo** — cùng chỗ một hằng số để
  * sửa một lần khi có số thật từ bước kiểm chứng.
  */
-const CHARS_PER_TOKEN: Record<SourceLanguage, number> = {
+const CHARS_PER_TOKEN: Partial<Record<SourceLanguage, number>> = {
   en: 4,
   'zh-Hans': 1.3,
   'zh-Hant': 1.3,
-  ja: 1.3
+  ja: 1.3,
+  ko: 1.5
 }
 
 /**
@@ -83,7 +84,7 @@ export function estimateCost(input: CostEstimateInput): CostEstimate {
   const chars = Math.max(0, sourceChars)
   const batches = Math.max(0, Math.trunc(batchCount))
 
-  const bodyTokens = Math.ceil(chars / CHARS_PER_TOKEN[sourceLang])
+  const bodyTokens = Math.ceil(chars / (CHARS_PER_TOKEN[sourceLang] ?? 2))
   const inputTokens = bodyTokens + batches * PROMPT_OVERHEAD_TOKENS_PER_BATCH
   const outputTokens = Math.ceil(bodyTokens * OUTPUT_RATIO)
 

@@ -8,6 +8,7 @@ import { GlossaryService } from '../../services/context/glossaryService'
 import { AddressingService } from '../../services/context/addressingService'
 import type { ExportService } from '../../services/export/exportService'
 import type { LibraryStore } from '../../services/library/library'
+import type { SourceServices } from '../../sources/sourceServices'
 import type { RawHandler } from '../handler'
 import type { FilePicker } from '../filePicker'
 
@@ -22,6 +23,7 @@ export interface HandlerDeps {
   glossary?: GlossaryService
   addressing?: AddressingService
   exportService?: ExportService
+  sources?: SourceServices
 }
 
 /**
@@ -67,4 +69,8 @@ export function addressingOf(deps: HandlerDeps): AddressingService {
 
 export function exportServiceOf(deps: HandlerDeps): ExportService {
   return deps.exportService ?? unavailable()
+}
+
+export function sourcesOf(deps: HandlerDeps): SourceServices {
+  return deps.sources ?? unavailable()
 }

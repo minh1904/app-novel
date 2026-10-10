@@ -11,8 +11,9 @@ import { CreateWorkScreen } from './features/library/CreateWorkScreen'
 import { LibraryScreen } from './features/library/LibraryScreen'
 import type { Work } from './features/library/works'
 import { SharedGlossaryMock } from './features/shared-glossary/SharedGlossaryMock'
+import { SourcesScreen } from './features/sources/SourcesScreen'
 import { StyleProfilesMock } from './features/style-profiles/StyleProfilesMock'
-import { UpdatesScreenMock } from './features/updates/UpdatesScreenMock'
+import { UpdatesScreen } from './features/updates/UpdatesScreen'
 import { useLibrary } from './features/library/useLibrary'
 import { ChapterNavSidebar } from './features/chapter/ChapterNavSidebar'
 import { ChapterScreen } from './features/chapter/ChapterScreen'
@@ -232,7 +233,10 @@ export function App(): JSX.Element {
       content = <JobsScreenMock />
       break
     case 'updates':
-      content = <UpdatesScreenMock />
+      content = <UpdatesScreen />
+      break
+    case 'sources':
+      content = <SourcesScreen onOpenSettings={openSettings} />
       break
     case 'shared':
       content = <SharedGlossaryMock />

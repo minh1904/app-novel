@@ -1,8 +1,77 @@
 import * as v from 'valibot'
 import type { ErrorCode } from './result'
 
-export const SOURCE_LANGUAGES = ['en', 'zh-Hans', 'zh-Hant', 'ja'] as const
-export type SourceLanguage = (typeof SOURCE_LANGUAGES)[number]
+export const BUILTIN_SOURCE_LANGUAGES = ['en', 'zh-Hans', 'zh-Hant', 'ja', 'ko'] as const
+/** Presets shown by Mira. Persistence accepts every valid BCP-47 language tag. */
+export const SOURCE_LANGUAGES = BUILTIN_SOURCE_LANGUAGES
+export type BuiltinSourceLanguage = (typeof BUILTIN_SOURCE_LANGUAGES)[number]
+
+const GRANDFATHERED_LANGUAGE_TAGS = new Set([
+  'art-lojban',
+  'cel-gaulish',
+  'en-gb-oed',
+  'i-ami',
+  'i-bnn',
+  'i-default',
+  'i-enochian',
+  'i-hak',
+  'i-klingon',
+  'i-lux',
+  'i-mingo',
+  'i-navajo',
+  'i-pwn',
+  'i-tao',
+  'i-tay',
+  'i-tsu',
+  'no-bok',
+  'no-nyn',
+  'sgn-be-fr',
+  'sgn-be-nl',
+  'sgn-ch-de',
+  'zh-guoyu',
+  'zh-hakka',
+  'zh-min',
+  'zh-min-nan',
+  'zh-xiang'
+])
+
+/** Validate the complete tags accepted by ECMA-402 plus BCP-47 private-use and grandfathered tags. */
+export function isLanguageTag(value: string): boolean {
+  if (value.length === 0 || value.length > 255 || value.includes('_')) return false
+  const lower = value.toLowerCase()
+  if (GRANDFATHERED_LANGUAGE_TAGS.has(lower)) return true
+  if (/^x(?:-[a-z0-9]{1,8})+$/i.test(value)) return true
+  try {
+    Intl.getCanonicalLocales(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export const sourceLanguageSchema = v.pipe(
+  v.string('Ngôn ngữ nguồn phải là chữ.'),
+  v.check(isLanguageTag, 'Ngôn ngữ nguồn phải là thẻ BCP-47 hợp lệ.')
+)
+export type SourceLanguage = v.InferOutput<typeof sourceLanguageSchema>
+
+export interface BuiltinLanguageProfile {
+  id: BuiltinSourceLanguage
+  locale: string
+}
+
+const BUILTIN_LANGUAGE_PROFILES: Record<BuiltinSourceLanguage, BuiltinLanguageProfile> = {
+  en: { id: 'en', locale: 'en' },
+  'zh-Hans': { id: 'zh-Hans', locale: 'zh-Hans' },
+  'zh-Hant': { id: 'zh-Hant', locale: 'zh-Hant' },
+  ja: { id: 'ja', locale: 'ja' },
+  ko: { id: 'ko', locale: 'ko' }
+}
+
+/** Returns null for a valid persisted tag which has no Mira-specific profile. */
+export function builtinLanguageProfile(tag: string): BuiltinLanguageProfile | null {
+  return BUILTIN_LANGUAGE_PROFILES[tag as BuiltinSourceLanguage] ?? null
+}
 
 export const WORK_STATUSES = ['not-started', 'in-progress', 'paused'] as const
 export type WorkStatus = (typeof WORK_STATUSES)[number]
@@ -94,7 +163,7 @@ const cover = v.pipe(
   )
 )
 
-const sourceLang = v.picklist(SOURCE_LANGUAGES, 'Chọn ngôn ngữ nguồn hợp lệ.')
+const sourceLang = sourceLanguageSchema
 const status = v.picklist(WORK_STATUSES, 'Trạng thái không hợp lệ.')
 export const idSchema = v.pipe(v.string('ID phải là chữ.'), v.uuid('ID không hợp lệ.'))
 

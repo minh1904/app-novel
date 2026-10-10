@@ -1,5 +1,9 @@
 import { useContext, type JSX, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
+import { CompactButton } from '../components/ui/CompactButton'
+import { ICON } from '../components/ui/icon'
+import { cn } from '../lib/cn'
 import { TopBarSlotContext, TopBarTitleSlotContext, WorkTabActiveContext } from './topBarSlot'
 
 /**
@@ -15,22 +19,61 @@ export function TopBarActions({ children }: { children: ReactNode }): JSX.Elemen
   return slot === null || !active ? null : createPortal(children, slot)
 }
 
-/** The page name at the left of the top bar, with an optional note after it. */
-export function TopBarTitle({
-  children,
-  note
-}: {
+export interface TopBarTitleProps {
   children: ReactNode
   note?: ReactNode
-}): JSX.Element | null {
+  onBack?: () => void
+  backLabel?: string
+  size?: 'md' | 'sm'
+  className?: string
+}
+
+/** The page name at the left of the top bar, with an optional note and back button. */
+export function TopBarTitle({
+  children,
+  note,
+  onBack,
+  backLabel = 'Quay lại',
+  size = 'sm',
+  className
+}: TopBarTitleProps): JSX.Element | null {
   const slot = useContext(TopBarTitleSlotContext)
   const active = useContext(WorkTabActiveContext)
   if (slot === null || !active) return null
   return createPortal(
-    <>
-      <h1 className="m-0 truncate text-label-md">{children}</h1>
-      {note && <span className="truncate text-body-xs text-muted">{note}</span>}
-    </>,
+    <div className="flex min-w-0 items-center gap-1.5 text-body-sm">
+      {onBack && (
+        <CompactButton
+          aria-label={backLabel}
+          title={backLabel}
+          onClick={onBack}
+          icon={<AltArrowLeftIcon size={ICON.sm} />}
+        />
+      )}
+      {typeof children === 'string' ? (
+        <h1
+          className={cn(
+            'm-0 truncate',
+            size === 'sm'
+              ? 'text-body-sm font-medium text-default'
+              : 'text-label-md font-semibold text-default',
+            className
+          )}
+        >
+          {children}
+        </h1>
+      ) : (
+        children
+      )}
+      {note && (
+        <>
+          <span className="select-none text-body-xs font-normal text-muted/60" aria-hidden="true">
+            /
+          </span>
+          <span className="truncate text-body-xs text-muted">{note}</span>
+        </>
+      )}
+    </div>,
     slot
   )
 }

@@ -41,11 +41,12 @@ describe('languageProfile', () => {
     expect(empty.join('\n')).toContain('Giữ hậu tố')
   })
 
-  it('tiếng Trung đổi lối xưng hô theo thể loại, không có profile cho ngôn ngữ lạ', () => {
+  it('tiếng Trung đổi lối xưng hô theo thể loại và dùng fallback rõ cho profile lạ', () => {
     expect(languageProfile({ sourceLang: 'zh-Hant', genre: '武侠' }).join('\n')).toContain('cổ đại')
     expect(languageProfile({ sourceLang: 'zh-Hans' }).join('\n')).toContain('giữ một lối')
     expect(languageProfile({ sourceLang: 'en' }).join('\n')).toContain('I/you')
-    expect(languageProfile({ sourceLang: 'fr' })).toEqual([])
+    expect(languageProfile({ sourceLang: 'ko' }).join('\n')).toContain('kính ngữ')
+    expect(languageProfile({ sourceLang: 'fr-CA' })).toEqual([])
   })
 })
 

@@ -28,6 +28,11 @@ describe('segment: ranges', () => {
     }
   })
 
+  it('segments Korean and an unprofiled valid tag without a closed locale table', () => {
+    expect(texts('첫 문장입니다. 두 번째 문장입니다.', 'ko')).toHaveLength(2)
+    expect(texts('Bonjour. Encore.', 'fr-CA')).toHaveLength(2)
+  })
+
   it('give the same answer every time', () => {
     const input = 'Mr. Lee left. 「行こう。もう遅い。」\n\nDr. Kim stayed.'
     expect(segment(input, 'en')).toEqual(segment(input, 'en'))

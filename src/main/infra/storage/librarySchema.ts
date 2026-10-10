@@ -190,6 +190,54 @@ CREATE TABLE ai_oauth_token (
 );
 `
 
+const version8 = `
+CREATE TABLE source_adapter_install (
+  adapter_id TEXT PRIMARY KEY,
+  version TEXT NOT NULL,
+  manifest_json TEXT NOT NULL,
+  artifact_sha256 TEXT NOT NULL,
+  trust_level TEXT NOT NULL CHECK (trust_level IN ('builtin', 'official', 'untrusted')),
+  state TEXT NOT NULL CHECK (state IN ('enabled', 'disabled', 'deprecated', 'incompatible')),
+  installed_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE source_auth_profile (
+  id TEXT PRIMARY KEY,
+  adapter_id TEXT NOT NULL REFERENCES source_adapter_install (adapter_id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  encrypted_secret BLOB NOT NULL,
+  account_partition TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('ok', 'relogin', 'expired')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX source_auth_profile_adapter ON source_auth_profile (adapter_id);
+
+CREATE TABLE source_job (
+  id TEXT PRIMARY KEY,
+  work_id TEXT NOT NULL,
+  binding_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('queued', 'running', 'completed', 'failed', 'cancelled', 'waiting_user')),
+  attempt INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX source_job_work_binding ON source_job (work_id, binding_id, kind);
+
+CREATE TABLE source_schedule_index (
+  work_id TEXT NOT NULL,
+  binding_id TEXT NOT NULL,
+  enabled INTEGER NOT NULL CHECK (enabled IN (0, 1)),
+  next_check_at INTEGER,
+  priority INTEGER NOT NULL,
+  last_result TEXT NOT NULL,
+  PRIMARY KEY (work_id, binding_id)
+);
+CREATE INDEX source_schedule_index_next ON source_schedule_index (enabled, next_check_at);
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -232,6 +280,12 @@ export const librarySchema: SchemaSpec = {
       version: 7,
       up(db) {
         db.exec(version7)
+      }
+    },
+    {
+      version: 8,
+      up(db) {
+        db.exec(version8)
       }
     }
   ]

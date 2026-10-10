@@ -1,5 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { syntaxTree } from '@codemirror/language'
+import type { syntaxTree } from '@codemirror/language'
 import type { Extension, Text } from '@codemirror/state'
 
 /**

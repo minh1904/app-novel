@@ -1,5 +1,5 @@
 import { redo, undo } from '@codemirror/commands'
-import { EditorState, Transaction, type TransactionSpec } from '@codemirror/state'
+import { type EditorState, Transaction, type TransactionSpec } from '@codemirror/state'
 import { describe, expect, it } from 'vitest'
 import { segment, type SegmentLanguage } from '../../../../shared/segmentation/segmenter'
 import type { SegmentRecord } from '../../../../shared/contracts/text'

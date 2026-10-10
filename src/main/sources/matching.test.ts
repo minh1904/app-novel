@@ -1,0 +1,82 @@
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { createTempDirs } from '../testing/testing'
+import { openDatabase } from '../infra/storage/sqlite'
+import { workSchema } from '../infra/storage/workSchema'
+import { migrate } from '../infra/storage/migrate'
+import { listCatalogItems, listSourceBindings } from '../infra/storage/sourceStorage'
+import { MatchingPreviewService } from './matching'
+
+const tempDir = createTempDirs()
+
+describe('MatchingPreviewService', () => {
+  it('previews matching without touching DB and creates binding only on confirmation', () => {
+    const dbPath = join(tempDir(), 'work.mira')
+    const db = openDatabase(dbPath)
+    migrate(db, workSchema)
+    db.exec(`
+      INSERT INTO work (id, title, source_lang, created_at, updated_at)
+      VALUES ('w1', 'Tác phẩm', 'ja', 1, 1);
+      INSERT INTO chapter (id, position, title, created_at, updated_at)
+      VALUES ('c1', 0, 'Chương 1', 1, 1), ('c2', 1, 'Chương 2', 1, 1);
+    `)
+
+    const service = new MatchingPreviewService()
+
+    const preview = service.createPreview({
+      sourceId: 'builtin.folder',
+      remoteWorkId: 'folder:raws',
+      catalogItems: [
+        { remoteChapterId: '01.txt', title: 'Chương 1 - Mở đầu', order: 1, access: 'public' },
+        { remoteChapterId: '02.txt', title: 'Chapter 2', order: 2, access: 'public' },
+        {
+          remoteChapterId: '03.txt',
+          title: 'Chương 3 - Chưa có ở Mira',
+          order: 3,
+          access: 'public'
+        },
+        {
+          remoteChapterId: '04.bin',
+          title: 'Lỗi định dạng',
+          order: 4,
+          access: 'parser_broken',
+          error: 'invalid format'
+        }
+      ],
+      existingChapters: [
+        { id: 'c1', number: 1, title: 'Chương 1' },
+        { id: 'c2', number: 2, title: 'Chương 2' }
+      ]
+    })
+
+    expect(preview.totalCount).toBe(4)
+    expect(preview.matchedCount).toBe(2)
+    expect(preview.unmatchedCount).toBe(1)
+    expect(preview.errorCount).toBe(1)
+
+    // DB remains unchanged during preview
+    expect(listSourceBindings(db)).toHaveLength(0)
+    expect(listCatalogItems(db)).toHaveLength(0)
+
+    // Confirm creates binding and catalog items
+    const binding = service.confirm(db, preview.previewId, {
+      id: 'b1',
+      adapterVersion: '1.0.0',
+      languageTag: 'ja',
+      label: 'Bản folder raw',
+      isPrimary: true,
+      now: 1000
+    })
+
+    expect(binding.id).toBe('b1')
+    expect(listSourceBindings(db)).toHaveLength(1)
+
+    const items = listCatalogItems(db, 'b1')
+    expect(items).toHaveLength(3) // 3 valid items inserted, error item skipped
+    expect(items.find((i) => i.remoteChapterId === '01.txt')?.chapterId).toBe('c1')
+    expect(items.find((i) => i.remoteChapterId === '02.txt')?.chapterId).toBe('c2')
+    expect(items.find((i) => i.remoteChapterId === '03.txt')?.chapterId).toBeNull()
+
+    db.close()
+  })
+})

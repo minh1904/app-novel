@@ -15,8 +15,9 @@ import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimal
 import { splitParagraphs } from '../../../../shared/text/paragraphSpans'
 import type { ChapterItem } from '../../../../shared/contracts/chapters'
 import type { TextRecord } from '../../../../shared/contracts/text'
-import { TopBarActions } from '../../app/TopBarActions'
+import { TopBarActions, TopBarTitle } from '../../app/TopBarActions'
 import { WorkTabActiveContext } from '../../app/topBarSlot'
+import { Breadcrumb } from '../../components/ui/Breadcrumb'
 import { Button, LinkButton } from '../../components/ui/Button'
 import { CompactButton } from '../../components/ui/CompactButton'
 import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../components/ui/DropdownMenu'
@@ -405,6 +406,15 @@ export function ChapterWorkspace({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <TopBarTitle onBack={onBackToWork} backLabel={`Về tác phẩm: ${work.title}`} size="sm">
+        <Breadcrumb
+          items={[
+            { label: work.title, onClick: onBackToWork, title: `Về tác phẩm: ${work.title}` },
+            { label: headingTitle(chapter) }
+          ]}
+        />
+      </TopBarTitle>
+
       {/* Ask AI, focus and the chapter menu sit in the window's top bar, in the same row as the
           window buttons. They still belong to this screen: the bar only gives them a place. */}
       <TopBarActions>
@@ -464,7 +474,7 @@ export function ChapterWorkspace({
       </TopBarActions>
 
       {/* Which chapter, then the mode and the context the translator reads while working. One row, so the panes keep the height. */}
-      <div className="flex h-[36px] shrink-0 items-center gap-3 border-b border-default bg-surface px-2.5">
+      <div className="flex h-(--mira-header-height) shrink-0 items-center gap-3 border-b border-default bg-surface px-2.5">
         <h2 className="min-w-0 flex-1 truncate text-body-sm font-semibold">
           {headingTitle(chapter)}{' '}
           <span className="font-normal text-subtle">· {paragraphFigures(source, target)}</span>

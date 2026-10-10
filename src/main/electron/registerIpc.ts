@@ -50,7 +50,7 @@ export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
 ): void {
-  const { connections, translator, paragraphTranslator, chat } = createServices({
+  const { connections, translator, paragraphTranslator, chat, sources } = createServices({
     library,
     crypto: electronSafeStorage,
     fetch: electronFetch,
@@ -79,7 +79,8 @@ export function registerLibraryHandlers(
       undefined,
       undefined,
       paragraphTranslator,
-      exportService
+      exportService,
+      sources
     ),
     isTrustedSender,
     // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để

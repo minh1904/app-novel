@@ -9,6 +9,7 @@ vận hành mới được viết tại module liên quan.
 | Module | Mục đích |
 | --- | --- |
 | [Hệ thiết kế giao diện](design-system/README.md) | Token màu, chữ, khoảng cách, bán kính và component dùng chung; token ba tầng như LMS v3, style Acme, chữ và icon theo Obsidian; component Base UI ở `components/ui` |
+| [Kiến trúc frontend](frontend-architecture/README.md) | Domain, feature/use case, ownership component-hook-store, hướng phụ thuộc và trạng thái refactor renderer |
 | [Kết nối AI](ai-connections/README.md) | Provider, khóa API, chọn model, onboarding và trạng thái kết nối subscription |
 | [Ngữ cảnh dịch](context/README.md) | Glossary, nhân vật, xưng hô, văn phong, ký ức và cách lắp ngữ cảnh |
 | [Bộ đo chất lượng](measurement/README.md) | Fixture, phép kiểm, chạy thí nghiệm, chấm mù và báo cáo |

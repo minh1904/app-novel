@@ -406,6 +406,133 @@ const version11 = `
 ALTER TABLE ai_turn ADD COLUMN reasoning TEXT NOT NULL DEFAULT '';
 `
 
+/** Source ownership and an open source-language column (change `source-system-foundation`). */
+const version12 = `
+ALTER TABLE work RENAME TO work_v11;
+CREATE TABLE work (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL CHECK (length(trim(title)) > 0),
+  original_title TEXT,
+  description TEXT,
+  cover_path TEXT,
+  source_lang TEXT NOT NULL CHECK (length(trim(source_lang)) > 0),
+  target_lang TEXT NOT NULL DEFAULT 'vi' CHECK (target_lang = 'vi'),
+  status TEXT NOT NULL DEFAULT 'not-started' CHECK (status IN ('not-started', 'in-progress', 'paused')),
+  archived INTEGER NOT NULL DEFAULT 0 CHECK (archived IN (0, 1)),
+  last_chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  author TEXT,
+  genre TEXT
+);
+INSERT INTO work (id, title, original_title, description, cover_path, source_lang, target_lang, status,
+  archived, last_chapter_id, created_at, updated_at, author, genre)
+SELECT id, title, original_title, description, cover_path, source_lang, target_lang, status, archived,
+  last_chapter_id, created_at, updated_at, author, genre FROM work_v11;
+DROP TABLE work_v11;
+CREATE UNIQUE INDEX work_singleton ON work ((1));
+
+CREATE TABLE source_binding (
+  id TEXT PRIMARY KEY,
+  adapter_id TEXT NOT NULL CHECK (length(trim(adapter_id)) > 0),
+  adapter_version TEXT NOT NULL CHECK (length(trim(adapter_version)) > 0),
+  remote_work_id TEXT NOT NULL CHECK (length(remote_work_id) > 0),
+  canonical_url TEXT,
+  country_code TEXT,
+  language_tag TEXT NOT NULL CHECK (length(trim(language_tag)) > 0),
+  label TEXT NOT NULL CHECK (length(trim(label)) > 0),
+  is_primary INTEGER NOT NULL DEFAULT 0 CHECK (is_primary IN (0, 1)),
+  enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+  auth_profile_id TEXT,
+  schedule_policy_json TEXT NOT NULL DEFAULT '{}',
+  catalog_cursor_json TEXT,
+  last_valid_sync_at INTEGER,
+  last_attempt_at INTEGER,
+  next_check_at INTEGER,
+  consecutive_failures INTEGER NOT NULL DEFAULT 0 CHECK (consecutive_failures >= 0),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (adapter_id, remote_work_id)
+);
+CREATE UNIQUE INDEX source_binding_primary ON source_binding (is_primary) WHERE is_primary = 1;
+CREATE INDEX source_binding_adapter ON source_binding (adapter_id, enabled);
+CREATE INDEX source_binding_schedule ON source_binding (enabled, next_check_at);
+
+CREATE TABLE source_sync_run (
+  id TEXT PRIMARY KEY,
+  binding_id TEXT NOT NULL REFERENCES source_binding (id) ON DELETE CASCADE,
+  trigger TEXT NOT NULL CHECK (trigger IN ('manual', 'import')),
+  state TEXT NOT NULL CHECK (state IN ('queued', 'running', 'completed', 'failed', 'cancelled', 'waiting_user')),
+  adapter_version TEXT NOT NULL,
+  catalog_complete INTEGER NOT NULL DEFAULT 0 CHECK (catalog_complete IN (0, 1)),
+  started_at INTEGER NOT NULL,
+  finished_at INTEGER,
+  failure_kind TEXT,
+  failure_message TEXT,
+  stats_json TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX source_sync_run_binding ON source_sync_run (binding_id, started_at DESC, id);
+
+CREATE TABLE source_catalog_item (
+  id TEXT PRIMARY KEY,
+  binding_id TEXT NOT NULL REFERENCES source_binding (id) ON DELETE CASCADE,
+  remote_chapter_id TEXT NOT NULL CHECK (length(remote_chapter_id) > 0),
+  remote_url TEXT,
+  chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  ordinal_key TEXT NOT NULL,
+  volume_title TEXT,
+  title TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  published_at INTEGER,
+  remote_updated_at INTEGER,
+  revision_token TEXT,
+  access_state TEXT NOT NULL CHECK (access_state IN ('public', 'login_required',
+    'age_verification_required', 'entitlement_required', 'manual_intervention_required',
+    'temporarily_unavailable', 'parser_broken')),
+  first_seen_at INTEGER NOT NULL,
+  last_seen_at INTEGER NOT NULL,
+  missing_streak INTEGER NOT NULL DEFAULT 0 CHECK (missing_streak >= 0),
+  removed_at INTEGER,
+  metadata_hash TEXT NOT NULL,
+  UNIQUE (binding_id, remote_chapter_id)
+);
+CREATE INDEX source_catalog_binding_order ON source_catalog_item (binding_id, ordinal_key, id);
+CREATE INDEX source_catalog_chapter ON source_catalog_item (chapter_id) WHERE chapter_id IS NOT NULL;
+
+CREATE TABLE source_content_revision (
+  id TEXT PRIMARY KEY,
+  catalog_item_id TEXT NOT NULL REFERENCES source_catalog_item (id) ON DELETE CASCADE,
+  content_hash TEXT NOT NULL,
+  payload_hash TEXT NOT NULL,
+  normalized_text TEXT NOT NULL,
+  normalization_version INTEGER NOT NULL CHECK (normalization_version > 0),
+  remote_updated_at INTEGER,
+  fetched_at INTEGER NOT NULL,
+  adapter_version TEXT NOT NULL,
+  access_state TEXT NOT NULL CHECK (access_state IN ('public', 'login_required',
+    'age_verification_required', 'entitlement_required', 'manual_intervention_required',
+    'temporarily_unavailable', 'parser_broken')),
+  is_complete INTEGER NOT NULL CHECK (is_complete IN (0, 1)),
+  UNIQUE (catalog_item_id, content_hash)
+);
+CREATE INDEX source_content_revision_item ON source_content_revision (catalog_item_id, fetched_at DESC, id);
+
+CREATE TABLE source_update_event (
+  id TEXT PRIMARY KEY,
+  binding_id TEXT NOT NULL REFERENCES source_binding (id) ON DELETE CASCADE,
+  catalog_item_id TEXT REFERENCES source_catalog_item (id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('added', 'renamed', 'moved', 'access_changed', 'raw_changed',
+    'missing_remote', 'reappeared', 'parser_warning')),
+  dedupe_key TEXT NOT NULL UNIQUE,
+  payload_json TEXT NOT NULL DEFAULT '{}',
+  detected_at INTEGER NOT NULL,
+  seen_at INTEGER,
+  acted_at INTEGER
+);
+CREATE INDEX source_update_event_feed ON source_update_event (detected_at DESC, id);
+CREATE INDEX source_update_event_binding ON source_update_event (binding_id, detected_at DESC, id);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -474,6 +601,12 @@ export const workSchema: SchemaSpec = {
       version: 11,
       up(db) {
         db.exec(version11)
+      }
+    },
+    {
+      version: 12,
+      up(db) {
+        db.exec(version12)
       }
     }
   ]

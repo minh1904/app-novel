@@ -55,7 +55,15 @@ export function resolveTheme(preference: ThemePreference): Theme {
 }
 
 /** The app-level screens of the sidebar (docs/modules/workspace/app-level-features.md). */
-export type AppPage = 'home' | 'library' | 'jobs' | 'updates' | 'shared' | 'style' | 'assistant'
+export type AppPage =
+  | 'home'
+  | 'library'
+  | 'jobs'
+  | 'updates'
+  | 'sources'
+  | 'shared'
+  | 'style'
+  | 'assistant'
 
 export type View =
   | { name: AppPage }

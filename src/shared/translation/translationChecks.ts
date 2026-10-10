@@ -251,7 +251,6 @@ export function checkUnbalancedQuotes(tgtParas: string[]): UnbalancedQuoteIssue[
     const closeGuill = (text.match(/»/g) || []).length
     if (openGuill !== closeGuill) {
       issues.push({ paragraphIndex: idx, reason: 'Ngoặc «» không cân' })
-      continue
     }
   }
 

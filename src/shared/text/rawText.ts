@@ -25,7 +25,7 @@ export function encodingLabel(id: EncodingId): string {
 
 /** Older encodings to try, in order, when a file is not UTF-8. Windows-1252 decodes every byte, so
  * it can only ever be the last resort and is never offered for Chinese or Japanese. */
-const LEGACY_BY_LANGUAGE: Record<SourceLanguage, EncodingId[]> = {
+const LEGACY_BY_LANGUAGE: Partial<Record<SourceLanguage, EncodingId[]>> = {
   'zh-Hans': ['gb18030'],
   'zh-Hant': ['big5', 'gb18030'],
   ja: ['shift_jis', 'euc-jp'],
@@ -96,7 +96,7 @@ export function detectEncoding(bytes: Uint8Array, sourceLang: SourceLanguage): D
   if (bom) return { encoding: bom, reason: 'bom' }
   if (decodesCleanly(bytes, 'utf-8')) return { encoding: 'utf-8', reason: 'utf8' }
 
-  const candidates = LEGACY_BY_LANGUAGE[sourceLang]
+  const candidates = LEGACY_BY_LANGUAGE[sourceLang] ?? ['windows-1252']
   const clean = candidates.filter((encoding) => decodesCleanly(bytes, encoding))
   if (clean.length === 1) return { encoding: clean[0], reason: 'legacy' }
   if (clean.length > 1) {

@@ -4,9 +4,9 @@ import { ClipboardTextIcon } from '@solar-icons/react/linear/clipboard-text'
 import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
 import type { WorkSummary } from '../../../../shared/contracts/library'
 import type { TextSide } from '../../../../shared/contracts/text'
-import { TopBarActions } from '../../app/TopBarActions'
+import { TopBarTitle } from '../../app/TopBarActions'
+import { Breadcrumb } from '../../components/ui/Breadcrumb'
 import { Button } from '../../components/ui/Button'
-import { CompactButton } from '../../components/ui/CompactButton'
 import { cn } from '../../lib/cn'
 import type { TextStore } from '../editor/editorSession'
 import { languages } from '../library/works'
@@ -162,16 +162,15 @@ export function ChapterScreen({
   /** Keeps the chapter inside the same frame as a chapter that has a source, so only the middle changes. */
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Same place as the chapter's own controls once it has text: the window's top bar. */}
-      <TopBarActions>
-        <CompactButton
-          aria-label="Về tác phẩm"
-          title="Về tác phẩm"
-          onClick={onBackToWork}
-          icon={<AltArrowLeftIcon size={16} />}
+      <TopBarTitle onBack={onBackToWork} backLabel={`Về tác phẩm: ${work.title}`} size="sm">
+        <Breadcrumb
+          items={[
+            { label: work.title, onClick: onBackToWork, title: `Về tác phẩm: ${work.title}` },
+            { label: headingTitle(chapter) }
+          ]}
         />
-      </TopBarActions>
-      <header className="flex h-[36px] shrink-0 items-center gap-2 border-b border-default bg-surface px-2.5">
+      </TopBarTitle>
+      <header className="flex h-(--mira-header-height) shrink-0 items-center gap-2 border-b border-default bg-surface px-2.5">
         <h2 className="min-w-0 truncate text-body-sm font-semibold">
           {headingTitle(chapter)}{' '}
           <span className="font-normal text-subtle">

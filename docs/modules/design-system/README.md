@@ -192,6 +192,12 @@ export component (yêu cầu của React fast refresh). `variants()` và `cn()` 
 [`lib/cn.ts`](../../../src/renderer/src/lib/cn.ts) thay cho `class-variance-authority`, vì repo không
 thêm được dependency bằng pnpm toàn cục.
 
+**Ownership component (quyết định 2026-10-10, chưa hoàn tất refactor):** `components/ui` chỉ chứa
+primitive hoặc pattern trung lập domain. Component biết thuật ngữ và hành vi của library, workspace,
+kết nối AI, ngữ cảnh hoặc nguồn phải nằm trong module sở hữu; việc có hai consumer không tự động biến nó
+thành UI primitive. Xem [kiến trúc frontend](../frontend-architecture/README.md) và
+[`DESIGN.md`](../../../DESIGN.md).
+
 | Component | Dùng khi |
 | --- | --- |
 | `Button` | Màu `neutral` / `danger` × kiểu `solid` / `outline` (mặc định) / `light` / `ghost` × cỡ `lg` 40 / `md` 32 / `sm` 24. `solid` là hành động chính, tối đa một nút mỗi màn. Có `leftIcon`, `rightIcon`, `icon` (nút vuông), `loading` |

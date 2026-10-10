@@ -58,15 +58,17 @@ describe('fixture contracts', () => {
       expect(v.is(WorkFixtureSchema, jaWork)).toBe(true)
     })
 
-    it('rejects unsupported language like ko', () => {
-      const koWork = {
-        slug: 'ko-test',
-        lang: 'ko',
-        title: 'Test',
-        rights: 'Public',
-        chapters: ['01']
+    it('accepts Korean and valid BCP-47 fixture languages', () => {
+      for (const lang of ['ko', 'fr-CA']) {
+        const work = {
+          slug: `${lang}-test`,
+          lang,
+          title: 'Test',
+          rights: 'Public',
+          chapters: ['01']
+        }
+        expect(v.is(WorkFixtureSchema, work)).toBe(true)
       }
-      expect(v.is(WorkFixtureSchema, koWork)).toBe(false)
     })
 
     it('rejects work missing both slug and id', () => {

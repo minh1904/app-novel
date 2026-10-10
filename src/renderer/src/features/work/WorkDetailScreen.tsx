@@ -1,7 +1,9 @@
 import { useState, type JSX } from 'react'
 import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
 import type { WorkSummary } from '../../../../shared/contracts/library'
+import { TopBarTitle } from '../../app/TopBarActions'
 import { Alert } from '../../components/ui/Alert'
+import { Breadcrumb } from '../../components/ui/Breadcrumb'
 import { Button } from '../../components/ui/Button'
 import { backupWork, savedMessage } from './backup'
 import { EditWorkDialog } from './EditWorkDialog'
@@ -96,74 +98,84 @@ export function WorkDetailScreen({
   }
 
   return (
-    <div className="mx-auto flex max-w-[960px] flex-col gap-5 px-6 py-6">
-      {saved && (
-        <Alert tone="success" onDismiss={() => setSaved(null)}>
-          {saved}
-        </Alert>
-      )}
-      {detail.notice && (
-        <div
-          role="alert"
-          className="flex items-start justify-between gap-3 rounded-sm border border-error/40 bg-error/8 px-3.5 py-2.5 text-body-xs"
-        >
-          <span>{detail.notice}</span>
-          <Button variant="ghost" onClick={detail.dismissNotice}>
-            Đóng
-          </Button>
-        </div>
-      )}
+    <>
+      <TopBarTitle onBack={onBackToLibrary} backLabel="Về thư viện" size="sm">
+        <Breadcrumb
+          items={[
+            { label: 'Thư viện', onClick: onBackToLibrary, title: 'Về thư viện' },
+            { label: work.title }
+          ]}
+        />
+      </TopBarTitle>
+      <div className="mx-auto flex max-w-[960px] flex-col gap-5 px-6 py-6">
+        {saved && (
+          <Alert tone="success" onDismiss={() => setSaved(null)}>
+            {saved}
+          </Alert>
+        )}
+        {detail.notice && (
+          <div
+            role="alert"
+            className="flex items-start justify-between gap-3 rounded-sm border border-error/40 bg-error/8 px-3.5 py-2.5 text-body-xs"
+          >
+            <span>{detail.notice}</span>
+            <Button variant="ghost" onClick={detail.dismissNotice}>
+              Đóng
+            </Button>
+          </div>
+        )}
 
-      <WorkHeader
-        work={work}
-        actions={{
-          onContinue: () => void continueWork(),
-          onAddChapter: () => setAddChapterSignal((signal) => signal + 1),
-          onEdit: () => setEditing(true),
-          onSetPaused: (paused) => void detail.setPaused(paused),
-          onSetArchived: (archived) => void detail.setArchived(archived),
-          onSetCover: (file) => void detail.setCover(file),
-          onBackup: () => void backUp(),
-          onExport: () => {
-            setExportSelection(undefined)
-            setExportOpen(true)
-          }
-        }}
-      />
+        <WorkHeader
+          work={work}
+          actions={{
+            onContinue: () => void continueWork(),
+            onAddChapter: () => setAddChapterSignal((signal) => signal + 1),
+            onEdit: () => setEditing(true),
+            onSetPaused: (paused) => void detail.setPaused(paused),
+            onSetArchived: (archived) => void detail.setArchived(archived),
+            onSetCover: (file) => void detail.setCover(file),
+            onBackup: () => void backUp(),
+            onExport: () => {
+              setExportSelection(undefined)
+              setExportOpen(true)
+            }
+          }}
+        />
 
-      <WorkAreaHost
-        areas={workAreas}
-        selectedId={areaId}
-        onSelect={(selected) => {
-          setLocalAreaId(selected)
-          onAreaChange?.(selected)
-        }}
-        areaProps={{
-          workId,
-          onWork: detail.applyWork,
-          onOpenChapter: (chapterId) => onOpenChapter(workId, chapterId),
-          addChapterSignal,
-          onExportChapters: (ids) => {
-            setExportSelection(ids)
-            setExportOpen(true)
-          }
-        }}
-      />
+        <WorkAreaHost
+          areas={workAreas}
+          selectedId={areaId}
+          onSelect={(selected) => {
+            setLocalAreaId(selected)
+            onAreaChange?.(selected)
+          }}
+          areaProps={{
+            workId,
+            onWork: detail.applyWork,
+            onOpenChapter: (chapterId) => onOpenChapter(workId, chapterId),
+            addChapterSignal,
+            onExportChapters: (ids) => {
+              setExportSelection(ids)
+              setExportOpen(true)
+            }
+          }}
+        />
 
-      <EditWorkDialog
-        work={work}
-        open={editing}
-        onClose={() => setEditing(false)}
-        onSave={(patch) => detail.update(patch)}
-      />
+        <EditWorkDialog
+          work={work}
+          open={editing}
+          onClose={() => setEditing(false)}
+          onSave={(patch) => detail.update(patch)}
+        />
 
-      <ExportDialog
-        open={exportOpen}
-        onOpenChange={setExportOpen}
-        workId={workId}
-        workTitle={work.title}
-        selectedIds={exportSelection}
-      />
-    </div>
+        <ExportDialog
+          open={exportOpen}
+          onOpenChange={setExportOpen}
+          workId={workId}
+          workTitle={work.title}
+          selectedIds={exportSelection}
+        />
+      </div>
+    </>
   )
 }

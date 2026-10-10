@@ -1,6 +1,10 @@
-import type { WorkSummary } from '../../../../shared/contracts/library'
+import type {
+  BuiltinSourceLanguage,
+  SourceLanguage,
+  WorkSummary
+} from '../../../../shared/contracts/library'
 
-export type SourceLanguage = 'en' | 'zh-Hans' | 'zh-Hant' | 'ja'
+export type { SourceLanguage }
 
 export type WorkStatus = 'not-started' | 'in-progress' | 'paused'
 
@@ -30,11 +34,28 @@ export interface Work {
   lastChapter?: ChapterRef
 }
 
-export const languages: Record<SourceLanguage, { name: string; short: string; glyph: string }> = {
+export const languages: Record<
+  BuiltinSourceLanguage,
+  { name: string; short: string; glyph: string }
+> = {
   en: { name: 'Tiếng Anh', short: 'Anh', glyph: 'Aa' },
   'zh-Hans': { name: 'Tiếng Trung giản thể', short: 'Trung giản thể', glyph: '简' },
   'zh-Hant': { name: 'Tiếng Trung phồn thể', short: 'Trung phồn thể', glyph: '繁' },
-  ja: { name: 'Tiếng Nhật', short: 'Nhật', glyph: 'あ' }
+  ja: { name: 'Tiếng Nhật', short: 'Nhật', glyph: 'あ' },
+  ko: { name: 'Tiếng Hàn', short: 'Hàn', glyph: '한' }
+}
+
+export function languageMeta(tag: string): { name: string; short: string; glyph: string } {
+  if (tag in languages) {
+    return languages[tag as BuiltinSourceLanguage]
+  }
+  const clean = tag.trim()
+  const short = clean.slice(0, 3).toUpperCase()
+  return {
+    name: clean,
+    short: short.length > 0 ? short : '???',
+    glyph: clean.slice(0, 2).toUpperCase() || '?'
+  }
 }
 
 export const statusLabels: Record<WorkStatus, string> = {

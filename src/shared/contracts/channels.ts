@@ -86,7 +86,23 @@ export const CHANNELS = {
   exportChapter: 'export:chapter',
   exportWork: 'export:work',
   exportCancel: 'export:cancel',
-  exportReveal: 'export:reveal'
+  exportReveal: 'export:reveal',
+  sourcesCatalogList: 'sources:catalog:list',
+  sourcesCatalogGet: 'sources:catalog:get',
+  sourcesBindingsList: 'sources:bindings:list',
+  sourcesBindingsIdentify: 'sources:bindings:identify',
+  sourcesBindingsPreviewCreate: 'sources:bindings:preview-create',
+  sourcesBindingsCreate: 'sources:bindings:create',
+  sourcesBindingsUpdate: 'sources:bindings:update',
+  sourcesBindingsDelete: 'sources:bindings:delete',
+  sourcesSyncStart: 'sources:sync:start',
+  sourcesSyncCancel: 'sources:sync:cancel',
+  sourcesSyncStatus: 'sources:sync:status',
+  sourcesUpdatesList: 'sources:updates:list',
+  sourcesUpdatesMarkSeen: 'sources:updates:mark-seen',
+  sourcesUpdatesPreviewApply: 'sources:updates:preview-apply',
+  sourcesUpdatesApply: 'sources:updates:apply',
+  sourcesRegistryList: 'sources:registry:list'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]
@@ -103,7 +119,9 @@ export const EVENT_CHANNELS = {
   /** Từng phần câu trả lời của một lượt chat. Preload đóng cứng tên này (D9 của `ai-chat`). */
   aiChatChunk: 'ai:chat:chunk',
   /** Tiến độ một lượt xuất nhiều chương (`ExportProgress`). Preload đóng cứng tên này. */
-  exportProgress: 'export:progress'
+  exportProgress: 'export:progress',
+  /** Tiến độ lượt kiểm tra nguồn (`SourceSyncProgress`). */
+  sourceSyncProgress: 'source:sync:progress'
 } as const
 
 export type EventChannel = (typeof EVENT_CHANNELS)[keyof typeof EVENT_CHANNELS]

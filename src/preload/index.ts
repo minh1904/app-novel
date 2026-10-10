@@ -52,6 +52,15 @@ import type {
   CharacterItem
 } from '../shared/contracts/addressing'
 import type { AddressingComplianceReport } from '../shared/context/addressingCompliance'
+import type {
+  SourceBinding,
+  SourceCatalogItem,
+  SourceCatalogPage,
+  SourceDescriptor,
+  SourceSyncProgress,
+  SourceSyncRun,
+  SourceUpdatesPage
+} from '../shared/contracts/sources'
 
 const desktopApi: DesktopApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info') as Promise<AppInfo>,
@@ -405,6 +414,68 @@ const desktopApi: DesktopApi = {
         listener(progress)
       ipcRenderer.on(EVENT_CHANNELS.exportProgress, handler)
       return () => ipcRenderer.off(EVENT_CHANNELS.exportProgress, handler)
+    }
+  },
+  sources: {
+    catalog: {
+      list: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesCatalogList, input) as Promise<
+          Result<SourceCatalogPage>
+        >,
+      get: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesCatalogGet, input) as Promise<Result<SourceCatalogItem>>
+    },
+    bindings: {
+      list: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesBindingsList, input) as Promise<Result<SourceBinding[]>>,
+      identify: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesBindingsIdentify, input) as Promise<
+          Result<SourceDescriptor | null>
+        >,
+      previewCreate: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesBindingsPreviewCreate, input) as Promise<
+          Result<unknown>
+        >,
+      create: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesBindingsCreate, input) as Promise<Result<SourceBinding>>,
+      update: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesBindingsUpdate, input) as Promise<Result<SourceBinding>>,
+      delete: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesBindingsDelete, input) as Promise<Result<void>>
+    },
+    sync: {
+      start: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesSyncStart, input) as Promise<Result<SourceSyncRun>>,
+      cancel: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesSyncCancel, input) as Promise<Result<SourceSyncRun>>,
+      status: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesSyncStatus, input) as Promise<Result<SourceSyncRun>>,
+      onProgress: (listener) => {
+        const handler = (_event: IpcRendererEvent, progress: SourceSyncProgress): void =>
+          listener(progress)
+        ipcRenderer.on(EVENT_CHANNELS.sourceSyncProgress, handler)
+        return () => ipcRenderer.off(EVENT_CHANNELS.sourceSyncProgress, handler)
+      }
+    },
+    updates: {
+      list: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesUpdatesList, input) as Promise<
+          Result<SourceUpdatesPage>
+        >,
+      markSeen: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesUpdatesMarkSeen, input) as Promise<
+          Result<{ updatedCount: number }>
+        >,
+      previewApply: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesUpdatesPreviewApply, input) as Promise<Result<unknown>>,
+      apply: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesUpdatesApply, input) as Promise<Result<unknown>>
+    },
+    registry: {
+      list: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesRegistryList, input) as Promise<
+          Result<{ sources: SourceDescriptor[] }>
+        >
     }
   }
 }

@@ -1,0 +1,208 @@
+import { describe, expect, it } from 'vitest'
+import { createTempDirs } from '../testing/testing'
+import { LibraryStore } from '../services/library/library'
+import { createSourceServices } from '../sources/sourceServices'
+import { createLibraryHandlers, guardHandlers } from './libraryHandlers'
+import type {
+  SourceBinding,
+  SourceCatalogItem,
+  SourceCatalogPage,
+  SourceUpdatesPage
+} from '../../shared/contracts/sources'
+import type { SecretCrypto } from '../infra/storage/secretStore'
+
+const tempDir = createTempDirs()
+
+const mockCrypto: SecretCrypto = {
+  isEncryptionAvailable: () => true,
+  encrypt: async (plain) => Buffer.from(`enc:${plain}`),
+  decrypt: async (cipher) => ({
+    value: Buffer.from(cipher).toString('utf8').replace(/^enc:/, ''),
+    shouldReEncrypt: false
+  })
+}
+
+describe('Sources IPC handlers', () => {
+  function setup() {
+    const dir = tempDir()
+    let nowTime = 1000
+    const library = LibraryStore.open({ dataDir: dir, now: () => nowTime })
+    const work = library.create({ title: 'Tác phẩm test', sourceLang: 'ja' })
+    const sources = createSourceServices(library, mockCrypto)
+    const handlers = createLibraryHandlers(
+      library,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      sources
+    )
+
+    return { library, work, sources, handlers, dir }
+  }
+
+  it('handles binding CRUD and contract round-trip', async () => {
+    const { library, work, handlers } = setup()
+
+    // Create binding
+    const createRes = await handlers['sources:bindings:create']({
+      workId: work.id,
+      sourceId: 'mira.folder',
+      remoteWorkId: 'folder:chapters',
+      languageTag: 'ja',
+      label: 'Bản Raw Folder',
+      role: 'primary',
+      expectedPreviewId: 'preview-1'
+    })
+
+    expect(createRes.ok).toBe(true)
+    if (!createRes.ok) return
+    const binding = createRes.value as SourceBinding
+    expect(binding.workId).toBe(work.id)
+    expect(binding.sourceId).toBe('mira.folder')
+    expect(binding.role).toBe('primary')
+
+    // List bindings
+    const listRes = await handlers['sources:bindings:list']({ workId: work.id })
+    expect(listRes.ok).toBe(true)
+    if (!listRes.ok) return
+    const bindings = listRes.value as SourceBinding[]
+    expect(bindings).toHaveLength(1)
+    expect(bindings[0].id).toBe(binding.id)
+
+    // Update binding
+    const updateRes = await handlers['sources:bindings:update']({
+      workId: work.id,
+      bindingId: binding.id,
+      patch: { label: 'Bản Đã Đổi Tên' }
+    })
+    expect(updateRes.ok).toBe(true)
+    if (!updateRes.ok) return
+    const updated = updateRes.value as SourceBinding
+    expect(updated.label).toBe('Bản Đã Đổi Tên')
+
+    // Delete binding
+    const deleteRes = await handlers['sources:bindings:delete']({
+      workId: work.id,
+      bindingId: binding.id,
+      confirmed: true
+    })
+    expect(deleteRes.ok).toBe(true)
+
+    const emptyList = await handlers['sources:bindings:list']({ workId: work.id })
+    expect(emptyList.ok).toBe(true)
+    if (emptyList.ok) expect(emptyList.value as SourceBinding[]).toHaveLength(0)
+
+    library.close()
+  })
+
+  it('handles catalog listing, pagination and item retrieval', async () => {
+    const { library, work, handlers } = setup()
+
+    // Create a binding directly in db
+    library.withWork(work.id, (db) => {
+      db.exec(`
+        INSERT INTO source_binding (id, adapter_id, adapter_version, remote_work_id, language_tag, label, created_at, updated_at)
+        VALUES ('b1', 'mira.folder', '1.0.0', 'folder:raws', 'ja', 'Raw', 1000, 1000);
+
+        INSERT INTO source_catalog_item (id, binding_id, remote_chapter_id, ordinal_key, title, kind, access_state, first_seen_at, last_seen_at, metadata_hash)
+        VALUES
+          ('item-1', 'b1', 'ch-1', '0001', 'Hồi 1', 'chapter', 'public', 1000, 1000, ''),
+          ('item-2', 'b1', 'ch-2', '0002', 'Hồi 2', 'chapter', 'public', 1000, 1000, ''),
+          ('item-3', 'b1', 'ch-3', '0003', 'Hồi 3', 'chapter', 'public', 1000, 1000, '');
+      `)
+    })
+
+    // List with limit 2
+    const page1 = await handlers['sources:catalog:list']({
+      workId: work.id,
+      bindingId: 'b1',
+      limit: 2
+    })
+    expect(page1.ok).toBe(true)
+    if (!page1.ok) return
+    const p1 = page1.value as SourceCatalogPage
+    expect(p1.items).toHaveLength(2)
+    expect(p1.exhausted).toBe(false)
+    expect(p1.nextCursor).toBe('2')
+
+    // Get single item
+    const getRes = await handlers['sources:catalog:get']({
+      workId: work.id,
+      itemId: 'item-1'
+    })
+    expect(getRes.ok).toBe(true)
+    if (!getRes.ok) return
+    const itm = getRes.value as SourceCatalogItem
+    expect(itm.id).toBe('item-1')
+    expect(itm.title).toBe('Hồi 1')
+
+    // Not found item
+    const notFound = await handlers['sources:catalog:get']({
+      workId: work.id,
+      itemId: 'item-missing'
+    })
+    expect(notFound.ok).toBe(false)
+
+    library.close()
+  })
+
+  it('rejects untrusted senders via guardHandlers', async () => {
+    const { library, work, handlers } = setup()
+    const guarded = guardHandlers(handlers, () => false)
+
+    const res = await guarded['sources:bindings:list']({} as any, { workId: work.id })
+    expect(res.ok).toBe(false)
+    if (!res.ok) {
+      expect(res.error.code).toBe('untrusted_sender')
+    }
+
+    library.close()
+  })
+
+  it('supports update event mark-seen and preview-apply roundtrip', async () => {
+    const { library, work, handlers } = setup()
+
+    library.withWork(work.id, (db) => {
+      db.exec(`
+        INSERT INTO source_binding (id, adapter_id, adapter_version, remote_work_id, language_tag, label, created_at, updated_at)
+        VALUES ('b1', 'mira.folder', '1.0.0', 'folder:raws', 'ja', 'Raw', 1000, 1000);
+
+        INSERT INTO source_update_event (id, binding_id, kind, dedupe_key, payload_json, detected_at)
+        VALUES ('ev-1', 'b1', 'added', 'key-1', '{"title":"Chương 1"}', 1000);
+      `)
+    })
+
+    // List updates
+    const listRes = await handlers['sources:updates:list']({ workId: work.id })
+    expect(listRes.ok).toBe(true)
+    if (!listRes.ok) return
+    const lr = listRes.value as SourceUpdatesPage
+    expect(lr.items).toHaveLength(1)
+    expect(lr.items[0].seenAt).toBeNull()
+
+    // Mark seen
+    const markRes = await handlers['sources:updates:mark-seen']({
+      workId: work.id,
+      eventIds: ['ev-1']
+    })
+    expect(markRes.ok).toBe(true)
+    if (!markRes.ok) return
+    const mr = markRes.value as { updatedCount: number }
+    expect(mr.updatedCount).toBe(1)
+
+    // Verify seenAt is now recorded
+    const listAfter = await handlers['sources:updates:list']({ workId: work.id })
+    if (listAfter.ok) {
+      const la = listAfter.value as SourceUpdatesPage
+      expect(la.items[0].seenAt).toBeTypeOf('number')
+      expect(la.items[0].actedAt).toBeNull()
+    }
+
+    library.close()
+  })
+})

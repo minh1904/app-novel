@@ -108,7 +108,8 @@ const LANGUAGE_NAME: Record<string, string> = {
   ja: 'tiếng Nhật',
   'zh-Hans': 'tiếng Trung',
   'zh-Hant': 'tiếng Trung',
-  en: 'tiếng Anh'
+  en: 'tiếng Anh',
+  ko: 'tiếng Hàn'
 }
 
 export function languageName(sourceLang?: string): string {
@@ -176,6 +177,14 @@ function english(): string[] {
   ]
 }
 
+function korean(): string[] {
+  return [
+    '- Hệ thống kính ngữ và đuôi câu tiếng Hàn phản ánh vai vế và mức độ thân mật; dịch sang đại từ và ngữ khí tiếng Việt phù hợp ngữ cảnh.',
+    '- Tên riêng và địa danh dùng âm Hán Hàn phổ biến hoặc phiên âm theo quy ước của truyện.',
+    '- Dịch tự nhiên sang tiếng Việt, tránh chuyển ngữ máy móc các hậu tố xưng hô.'
+  ]
+}
+
 /** Các dòng quy ước theo ngôn ngữ nguồn; mảng rỗng khi ngôn ngữ không có profile. */
 export function languageProfile(input: LanguageProfileInput): string[] {
   switch (input.sourceLang) {
@@ -186,6 +195,8 @@ export function languageProfile(input: LanguageProfileInput): string[] {
       return chinese(genreFamily(input.genre))
     case 'en':
       return english()
+    case 'ko':
+      return korean()
     default:
       return []
   }

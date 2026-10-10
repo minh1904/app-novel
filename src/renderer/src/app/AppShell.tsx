@@ -96,7 +96,7 @@ export function AppShell({
             data-slot="page-topbar"
             className="flex min-w-0 items-center gap-xs border-b border-default pr-sm pl-md"
           >
-            <div ref={setTitleSlot} className="flex min-w-0 items-baseline gap-xs" />
+            <div ref={setTitleSlot} className="flex min-w-0 items-center gap-xs" />
             <div className="flex-1" />
             <div ref={setSlot} className="flex shrink-0 items-center gap-xs empty:hidden" />
             {nav === null && (

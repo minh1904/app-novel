@@ -2,6 +2,7 @@ import type { JSX, ReactNode } from 'react'
 import { Book2Icon } from '@solar-icons/react/linear/book-2'
 import { ChatRoundLineIcon } from '@solar-icons/react/linear/chat-round-line'
 import { ChecklistMinimalisticIcon } from '@solar-icons/react/linear/checklist-minimalistic'
+import { CompassIcon } from '@solar-icons/react/linear/compass'
 import { FeedIcon } from '@solar-icons/react/linear/feed'
 import { Home2Icon } from '@solar-icons/react/linear/home-2'
 import { LibraryIcon } from '@solar-icons/react/linear/library'
@@ -32,7 +33,8 @@ const MAIN: NavEntry[] = [
   { page: 'home', label: 'Trang chủ', icon: icon(Home2Icon) },
   { page: 'library', label: 'Thư viện', icon: icon(LibraryIcon) },
   { page: 'jobs', label: 'Tác vụ', icon: icon(ChecklistMinimalisticIcon) },
-  { page: 'updates', label: 'Cập nhật', icon: icon(FeedIcon) }
+  { page: 'updates', label: 'Cập nhật', icon: icon(FeedIcon) },
+  { page: 'sources', label: 'Nguồn', icon: icon(CompassIcon) }
 ]
 const RESOURCES: NavEntry[] = [
   { page: 'shared', label: 'Kho dùng chung', icon: icon(Book2Icon) },

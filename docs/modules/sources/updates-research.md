@@ -1,7 +1,7 @@
 # Cập nhật chương mới: đối thủ làm gì, Mira nên làm gì
 
-Cập nhật: 2026-10-09 · Trạng thái: **Fact hiện trạng**, **quan sát có nguồn** và **đề xuất chưa chốt**;
-chưa có quyết định về cách lấy chương. Phần pháp lý chỉ phục vụ đánh giá sản phẩm, không phải ý kiến luật.
+Cập nhật: 2026-10-10 · Trạng thái: **Fact hiện trạng**, **quan sát có nguồn**, **đã chốt hướng đa nguồn**
+và **đề xuất cơ chế chưa triển khai**. Phần pháp lý chỉ phục vụ đánh giá sản phẩm, không phải ý kiến luật.
 Chủ trì: chủ sản phẩm.
 
 ## Câu hỏi chương này trả lời
@@ -29,6 +29,7 @@ luật, bài phân tích; **[chưa kiểm]** chưa đọc được trang gốc.
 | Legado (阅读) | Repo gốc [`gedoor/legado`](https://raw.githubusercontent.com/gedoor/legado/main/README.md) đã bị xoá mã; đọc qua [bản mirror](https://gitea.com/wys1310/legado), [`ruleHelp.md`](https://gitea.com/wys1310/legado/raw/branch/master/app/src/main/assets/web/help/md/ruleHelp.md) [mã] |
 | LNReader, Kotatsu | [`updates/index.ts`](https://raw.githubusercontent.com/lnreader/lnreader/master/src/services/updates/index.ts), [lnreader-plugins](https://github.com/lnreader/lnreader-plugins) [mã]; [`TrackWorker.kt`](https://cdn.jsdelivr.net/gh/kotatsuapp/kotatsu@devel/app/src/main/kotlin/org/koitharu/kotatsu/tracker/work/TrackWorker.kt), [README Kotatsu](https://cdn.jsdelivr.net/gh/kotatsuapp/kotatsu@devel/README.md) [mã] |
 | lncrawl, FanFicFare, Readwise | [README lncrawl](https://raw.githubusercontent.com/lncrawl/lightnovel-crawler/dev/README.md), [chế độ cập nhật FanFicFare](https://github.com/JimmXinu/FanFicFare/wiki/UpdateModes), [Reader feed](https://docs.readwise.io/reader/docs/faqs/feed) [docs] |
+| Repo crawler Nhật–Hàn–Trung | [Khảo sát repo và mã adapter](repository-survey.md): Narou, Kakuyomu, Alphapolis, Novelpia, Joara, Qidian, JJWXC, Fanqie, Ciweimao và framework đa nguồn [mã] |
 | Nền tảng raw | [API Syosetu](https://dev.syosetu.com/man/api/) và [guideline](https://dev.syosetu.com/site/guideline) [docs]; [ToS Kakuyomu](https://kakuyomu.jp/legal/tos); RSS Royal Road `/fiction/syndication/<fiction-id>` [chưa kiểm ToS]; 字体反爬 của 起点: [fishc](https://fishc.com.cn/archiver/tid-185495.html), [Tencent Cloud](https://cloud.tencent.com/developer/news/622804) [báo] |
 | Pháp lý | Luật SHTT sửa đổi 2022 ([bản tiếng Anh](https://thuvienphapluat.vn/van-ban/EN/So-huu-tri-tue/Law-07-2022-QH15-amendments-to-some-Articles-of-Law-Intellectual-Property/531773/tieng-anh.aspx)), [Berne](https://tapchitoaan.vn/index.php/cong-uoc-berne-va-su-tuong-thich-voi-luat-so-huu-tri-tue-viet-nam), [ngoại lệ Điều 25](https://lsvn.vn/bo-sung-cac-truong-hop-ngoai-le-khong-xam-pham-quyen-tac-gia1657018953-a120831.html); Tachiyomi: [TorrentFreak](https://torrentfreak.com/tachiyomi-manga-reader-how-threats-can-motivate-pirates-boost-engagement-240113/), [Anime Corner](https://animecorner.me/tachiyomi-team-stops-app-development-after-cease-and-desist-by-kakao-entertainment/); vụ 书源 ở 闵行: [澎湃](https://www.thepaper.cn/newsDetail_forward_32966194); crawler và Điều 285 BLHS Trung Quốc: [secrss](https://www.secrss.com/articles/7518), [allbrightlaw](https://www.allbrightlaw.com/CN/10475/3a742750e4a53fcc.aspx); Yuewen kiện: [chinawriter 2021](https://www.chinawriter.com.cn/n1/2021/0415/c404023-32078978.html), [2023](https://www.chinawriter.com.cn/n1/2023/0617/c404023-40016017.html); JJWXC kiện 番茄: [ithome](https://www.ithome.com/0/984/270.htm) [báo] |
 
@@ -51,6 +52,12 @@ sangtacviet "Dịch trang web"): **chưa tìm được tài liệu về cơ ch�
 FanFicFare ở chế độ mặc định chủ yếu so số lượng chương. Chưa đủ bằng chứng để khái quát mọi app crawler
 đều dùng URL làm khóa. Các luồng đã khảo sát tập trung vào danh sách/metadata chương; nghiên cứu chưa
 tìm thấy cơ chế lưu hash nội dung để cảnh báo raw đã dịch bị sửa. Với Mira đó là trường hợp quan trọng.
+
+Khảo sát repo bổ sung ngày 2026-10-10 làm rõ hơn ba mẫu: công cụ Nhật đầy đủ như Narou tải lại catalog
+rồi giữ dữ liệu cũ khi catalog co bất thường; Novelpia Global cache theo `episode_no` và chỉ lấy chương
+thiếu; các adapter Trung khai concurrency, charset và trạng thái VIP theo từng nguồn. Các repo này vẫn
+thường dựa vào ID/file/timestamp hơn là hash nội dung, nên đề xuất lưu hash raw của Mira không bị thay.
+Chi tiết và link mã nằm ở [khảo sát repo](repository-survey.md).
 
 ## 2. Raw nằm ở đâu và lấy được không (quan sát)
 
@@ -96,6 +103,12 @@ tìm thấy cơ chế lưu hash nội dung để cảnh báo raw đã dịch b�
 - Ít trang trả `ETag`/`Last-Modified`; phải tự băm mục lục.
 - Mục lục có **chương thông báo** (请假条 xin nghỉ, 上架感言 cảm nghĩ lên kệ) trông như chương mới, không
   nên đưa vào hàng dịch.
+- Repo Nhật–Hàn–Trung cho thấy phải tách **đồng bộ catalog** khỏi **lấy nội dung**. ID chương ổn định dùng
+  để diff; URL ticket/signed URL chỉ là quyền truy cập tạm. Quyền truy cập cần thành trạng thái riêng
+  (`login_required`, `age_verification`, `entitlement_required`), không retry như lỗi mạng.
+- Adapter là ranh giới bảo mật: rule JavaScript/Lua tải ngoài trong LNReader, Legado, Shosetsu hoặc APK
+  Mihon có độ phủ cao nhưng chạy rộng quyền. Nếu Mira mở adapter, hướng đề xuất là rule không-JS mặc định,
+  network broker giới hạn origin và code adapter cách ly, ký và audit.
 - Selector và cách chống crawl đổi thường xuyên; Mihon, Legado cần cả cộng đồng để giữ nguồn chạy được.
 - Kho chương của Mira còn lưu nội dung nguồn/bản dịch, revision, thời gian và cờ có nội dung; phần thiếu
   cho module này là danh tính nguồn, URL/ID chương ở nguồn, hash raw, lần kiểm và trạng thái phát hiện/gỡ.
@@ -111,10 +124,16 @@ tìm thấy cơ chế lưu hash nội dung để cảnh báo raw đã dịch b�
 | **D** | **Luật nguồn do người dùng nhập** (kiểu 书源), Mira không kèm luật nào | Kiểm mục lục theo lịch, tự tải chương, tự xếp hàng dịch | Phơi nhiễm cao hơn A–C vì hệ rule có thể được dùng với nguồn lậu và phải chạy code/cấu hình bên thứ ba; cần tư vấn và threat model riêng | Cao: ngôn ngữ luật, sandbox JS, Cloudflare, encoding, lịch và chẩn đoán nguồn hỏng |
 | **E** | **Kèm sẵn scraper cho từng trang** | Tự động với trang được hỗ trợ | Mira trực tiếp chọn và duy trì nguồn; mỗi adapter phải được đánh giá theo ToS, giấy phép nội dung và biện pháp truy cập, không suy rằng mọi trang đều hợp pháp hoặc đều phạm luật | Rất cao và liên tục |
 
-**Đề xuất của nghiên cứu này, chưa phải quyết định:** làm **A trước, rồi B**, thêm **C** như adapter nhỏ.
+**Đề xuất của nghiên cứu này, chưa phải quyết định:** làm **A trước**, thêm **C** như adapter nhỏ, rồi
+**B** khi đã có network broker và mô hình phiên đăng nhập.
 Để **D** ở trạng thái hoãn với ba điều kiện: không kèm luật/kho luật mặc định, không giải mã chống crawl,
 không giả fingerprint. **Loại E.** Không phương án nào tự bảo đảm tuân thủ; nguồn dữ liệu, ToS, biện pháp
 truy cập, giấy phép tác phẩm và cách sử dụng bản dịch phải được đánh giá riêng.
+
+Khảo sát repo bổ sung đề xuất thêm một điều kiện kỹ thuật: schema của A nên có sẵn `sourceId`, remote ID,
+access state, catalog checkpoint và content hash. Nhờ vậy C/B dùng lại engine diff mà không phải đổi mô
+hình chương. Nếu sau này làm D, ưu tiên rule khai báo không-JS và adapter do Mira ký thay vì chạy rule
+tùy ý cùng quyền với app.
 
 ## 6. Bộ so khác dùng chung (đề xuất)
 
@@ -167,20 +186,20 @@ target đã chốt. Nếu chọn A/B/C, cần OpenSpec riêng rồi mới sửa 
 
 ## 8. Nhật ký quyết định
 
-- **Đã chốt:** giữ tạm trang Cập nhật trên thanh bên dưới dạng màn “Sắp có”.
-- **Chưa chốt:** A/B/C/D/E; tên “Nguồn” và “Bản raw”; trang Cập nhật có tồn tại nếu chỉ hỗ trợ nhập tệp;
-  cách xử lý raw đã sửa.
+- **Đã chốt:** Mira có hệ thống nhiều nguồn novel; màn chọn nguồn lọc rõ nền tảng Trung Quốc, Nhật Bản
+  và Hàn Quốc nhưng không khóa khả năng thêm quốc gia/ngôn ngữ khác. Giữ trang Cập nhật; thiết kế ở
+  [hệ thống nguồn đa quốc gia](system-design.md).
+- **Đã chốt:** ưu tiên Syosetu/Kakuyomu, Novelpia, Qidian/Fanqie; bản đầu chỉ dùng adapter Mira phát
+  hành; mặc định chỉ thông báo chương mới; raw sửa chỉ gắn cờ; xác nhận chương mất sau ba catalog hợp lệ;
+  hỗ trợ nhiều tài khoản trên một nguồn; bản đầu chỉ kiểm tra thủ công khi app đang mở.
+- **Đã chốt:** browser chỉ mở tương tác khi người dùng yêu cầu, không chạy nền trong bản đầu; dùng
+  **Nguồn nội dung** cho website/API/RSS/tệp hoặc adapter và **Bản raw** cho bản văn gắn với tác phẩm.
 - **Không được suy từ mock:** nguồn được hỗ trợ, chu kỳ sáu giờ, tự tải, tự dịch hoặc cơ chế sửa nguồn.
 
 ## 9. Câu hỏi cho chủ sản phẩm
 
-1. Chọn hướng nào ở phần 5? Nghiên cứu đề xuất A → B → C, hoãn D, loại E.
-2. Tách tên hai khái niệm: khu vực **Nguồn** của tác phẩm (nhiều bản raw, S3.1) và **nơi lấy chương**
-   (tệp, URL). Gợi ý: giữ "Nguồn" cho nơi lấy chương, đổi S3.1 thành "Bản raw".
-3. Khi raw của chương đã dịch bị sửa: chỉ gắn cờ và để người dùng quyết, hay tự tạo đề xuất dịch lại các
-   đoạn đổi (đi qua luồng duyệt đề xuất sẵn có)?
-4. Trang Cập nhật có ở lại thanh bên nếu chỉ làm A (không có lịch kiểm tự động), hay gộp vào Thư viện
-   thành bộ lọc "Có chương mới"?
+Các câu hỏi phạm vi cho phiên bản đầu đã được trả lời. Website nào đạt điều kiện kỹ thuật để phát hành
+vẫn phải được xác minh bằng spike và OpenSpec của từng adapter.
 
 ---
 

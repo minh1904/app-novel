@@ -1,0 +1,408 @@
+import { EVENT_CHANNELS } from '../../../shared/contracts/channels'
+import {
+  sourceBindingCreateInputSchema,
+  sourceBindingDeleteInputSchema,
+  sourceBindingIdentifyInputSchema,
+  sourceBindingPreviewCreateInputSchema,
+  sourceBindingsListInputSchema,
+  sourceBindingUpdateInputSchema,
+  sourceCatalogGetInputSchema,
+  sourceCatalogListInputSchema,
+  sourceSyncCancelInputSchema,
+  sourceSyncStartInputSchema,
+  sourceSyncStatusInputSchema,
+  sourceRegistryListInputSchema,
+  sourceUpdateApplyInputSchema,
+  sourceUpdateMarkSeenInputSchema,
+  sourceUpdatePreviewApplyInputSchema,
+  sourceUpdatesListInputSchema,
+  type SourceCatalogItem,
+  type SourceDescriptor,
+  type SourceSyncRun,
+  type SourceUpdateEvent
+} from '../../../shared/contracts/sources'
+import {
+  getSyncRun,
+  listCatalogItems,
+  listUpdateEvents,
+  markEventSeen,
+  type StoredCatalogItem,
+  type StoredSyncRun,
+  type StoredUpdateEvent
+} from '../../infra/storage/sourceStorage'
+import { StorageError } from '../../infra/storage/errors'
+import { createHandler, createSinkHandler } from '../handler'
+import { sourcesOf, type AreaHandlers, type HandlerDeps } from './deps'
+
+function storedToContractCatalogItem(s: StoredCatalogItem): SourceCatalogItem {
+  return {
+    id: s.id,
+    bindingId: s.bindingId,
+    remoteChapterId: s.remoteChapterId,
+    remoteUrl: s.remoteUrl,
+    chapterId: s.chapterId,
+    position: Number.parseInt(s.ordinalKey, 10) || 0,
+    title: s.title,
+    kind: (['chapter', 'volume', 'extra', 'unknown'].includes(s.kind)
+      ? s.kind
+      : 'chapter') as SourceCatalogItem['kind'],
+    access: s.accessState as SourceCatalogItem['access'],
+    contentHash: null,
+    firstSeenAt: s.firstSeenAt,
+    lastSeenAt: s.lastSeenAt,
+    missingStreak: s.missingStreak,
+    removedAt: s.removedAt
+  }
+}
+
+function storedToContractSyncRun(s: StoredSyncRun): SourceSyncRun {
+  return {
+    id: s.id,
+    bindingId: s.bindingId,
+    trigger: s.trigger === 'import' ? 'manual' : s.trigger,
+    state: s.state as SourceSyncRun['state'],
+    adapterVersion: s.adapterVersion,
+    complete: s.catalogComplete,
+    phase: s.state === 'completed' ? 'done' : 'catalog',
+    processedCount: 0,
+    totalCount: null,
+    failure: s.failureKind
+      ? {
+          code: ([
+            'cancelled',
+            'login_required',
+            'manual_intervention_required',
+            'temporarily_unavailable',
+            'parser_broken',
+            'adapter_missing',
+            'deadline_exceeded'
+          ].includes(s.failureKind)
+            ? s.failureKind
+            : 'unknown') as any,
+          message: s.failureMessage ?? 'Lỗi kiểm tra nguồn',
+          retryable: s.failureKind !== 'cancelled'
+        }
+      : null,
+    startedAt: s.startedAt,
+    finishedAt: s.finishedAt
+  }
+}
+
+function storedToContractUpdateEvent(s: StoredUpdateEvent): SourceUpdateEvent {
+  let parsedPayload: Record<string, unknown> | null = null
+  try {
+    parsedPayload = JSON.parse(s.payloadJson)
+  } catch {
+    parsedPayload = null
+  }
+
+  return {
+    id: s.id,
+    bindingId: s.bindingId,
+    catalogItemId: s.catalogItemId,
+    kind: s.kind as SourceUpdateEvent['kind'],
+    dedupeKey: s.dedupeKey,
+    payload: parsedPayload,
+    detectedAt: s.detectedAt,
+    seenAt: s.seenAt,
+    actedAt: s.actedAt
+  }
+}
+
+export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
+  const sources = () => sourcesOf(deps)
+
+  return {
+    'sources:catalog:list': createHandler(sourceCatalogListInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        const stored = listCatalogItems(db, input.bindingId)
+        const limit = input.limit ?? 50
+        let offset = 0
+        if (input.cursor) {
+          offset = Number.parseInt(input.cursor, 10) || 0
+        }
+
+        const slice = stored.slice(offset, offset + limit)
+        const nextOffset = offset + limit
+        const exhausted = nextOffset >= stored.length
+
+        return {
+          items: slice.map(storedToContractCatalogItem),
+          nextCursor: exhausted ? null : String(nextOffset),
+          exhausted
+        }
+      })
+    }),
+
+    'sources:catalog:get': createHandler(sourceCatalogGetInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        const item = sources().catalog.get(db, input.itemId)
+        if (!item) {
+          throw new StorageError('not_found', `Catalog item ${input.itemId} không tồn tại`)
+        }
+        return storedToContractCatalogItem(item)
+      })
+    }),
+
+    'sources:bindings:list': createHandler(sourceBindingsListInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        return sources().bindings.listBindings(db, input.workId)
+      })
+    }),
+
+    'sources:bindings:identify': createHandler(sourceBindingIdentifyInputSchema, (input) => {
+      const manifest = sources().registry.findByUrl(input.candidate)
+      if (!manifest) return null
+
+      const descriptor: SourceDescriptor = {
+        sourceId: manifest.sourceId,
+        displayName: manifest.displayName,
+        nativeName: manifest.nativeNames[0] ?? null,
+        aliases: manifest.aliases,
+        domains: manifest.domains,
+        countryCode: (manifest.countryCode === 'ZZ' ? null : manifest.countryCode) as any,
+        languageTags: manifest.languageTags as any,
+        capabilities: manifest.capabilities as any,
+        access:
+          manifest.origin.kind === 'builtin'
+            ? 'local'
+            : manifest.auth === 'none'
+              ? 'public'
+              : 'account',
+        health: {
+          state: (manifest.health ?? 'healthy') as any,
+          checkedAt: null,
+          message: null
+        }
+      }
+      return descriptor
+    }),
+
+    'sources:bindings:preview-create': createHandler(
+      sourceBindingPreviewCreateInputSchema,
+      (input) => {
+        return {
+          previewId: deps.library.newAppId(),
+          workId: input.workId,
+          sourceId: input.sourceId,
+          remoteWorkId: input.remoteWorkId,
+          totalCount: 0,
+          matchedCount: 0,
+          unmatchedCount: 0,
+          errorCount: 0
+        }
+      }
+    ),
+
+    'sources:bindings:create': createHandler(sourceBindingCreateInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        return sources().bindings.createBinding(
+          db,
+          input.workId,
+          input,
+          deps.library.appNow(),
+          () => deps.library.newAppId()
+        )
+      })
+    }),
+
+    'sources:bindings:update': createHandler(sourceBindingUpdateInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        return sources().bindings.updateBinding(
+          db,
+          input.workId,
+          input.bindingId,
+          input.patch,
+          deps.library.appNow()
+        )
+      })
+    }),
+
+    'sources:bindings:delete': createHandler(sourceBindingDeleteInputSchema, (input) => {
+      deps.library.withWork(input.workId, (db) => {
+        sources().bindings.deleteBinding(db, input.workId, input.bindingId)
+      })
+    }),
+
+    'sources:sync:start': createSinkHandler(sourceSyncStartInputSchema, (input, sink) => {
+      return deps.library.withWork(input.workId, async (db) => {
+        const run = await sources().sync.startSync(
+          db,
+          input.bindingId,
+          deps.library.appNow(),
+          () => deps.library.newAppId(),
+          (progress) => {
+            if (!sink.isDestroyed()) {
+              sink.send(EVENT_CHANNELS.sourceSyncProgress, progress)
+            }
+          }
+        )
+        return storedToContractSyncRun(run)
+      })
+    }),
+
+    'sources:sync:cancel': createHandler(sourceSyncCancelInputSchema, (input) => {
+      // Find in active work or across works
+      for (const work of deps.library.list().works) {
+        const cancelled = deps.library.withWork(work.id, (db) => {
+          return sources().sync.cancelSync(db, input.runId, deps.library.appNow())
+        })
+        if (cancelled) break
+      }
+      return {
+        id: input.runId,
+        bindingId: '',
+        trigger: 'manual',
+        state: 'cancelled',
+        adapterVersion: '1.0.0',
+        complete: false,
+        phase: 'done',
+        processedCount: 0,
+        totalCount: null,
+        failure: { code: 'cancelled', message: 'Lượt kiểm tra đã bị hủy', retryable: false },
+        startedAt: null,
+        finishedAt: deps.library.appNow()
+      }
+    }),
+
+    'sources:sync:status': createHandler(sourceSyncStatusInputSchema, (input) => {
+      for (const work of deps.library.list().works) {
+        const run = deps.library.withWork(work.id, (db) => getSyncRun(db, input.runId))
+        if (run) return storedToContractSyncRun(run)
+      }
+      throw new StorageError('not_found', `Lượt sync ${input.runId} không tìm thấy`)
+    }),
+
+    'sources:updates:list': createHandler(sourceUpdatesListInputSchema, (input) => {
+      const workId = input.workId ?? deps.library.list().works[0]?.id
+      if (!workId) {
+        return { items: [], nextCursor: null, exhausted: true }
+      }
+
+      return deps.library.withWork(workId, (db) => {
+        let events = listUpdateEvents(db, input.bindingId)
+        if (input.unseenOnly) {
+          events = events.filter((e) => e.seenAt === null)
+        }
+
+        const limit = input.limit ?? 50
+        let offset = 0
+        if (input.cursor) {
+          offset = Number.parseInt(input.cursor, 10) || 0
+        }
+
+        const slice = events.slice(offset, offset + limit)
+        const nextOffset = offset + limit
+        const exhausted = nextOffset >= events.length
+
+        return {
+          items: slice.map(storedToContractUpdateEvent),
+          nextCursor: exhausted ? null : String(nextOffset),
+          exhausted
+        }
+      })
+    }),
+
+    'sources:updates:mark-seen': createHandler(sourceUpdateMarkSeenInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        const now = deps.library.appNow()
+        for (const id of input.eventIds) {
+          markEventSeen(db, id, now)
+        }
+        return { updatedCount: input.eventIds.length }
+      })
+    }),
+
+    'sources:updates:preview-apply': createHandler(sourceUpdatePreviewApplyInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        const events = listUpdateEvents(db)
+        const ev = events.find((e) => e.id === input.eventId)
+        if (!ev) {
+          throw new StorageError('not_found', `Sự kiện cập nhật ${input.eventId} không tồn tại`)
+        }
+        let payload: Record<string, unknown> = {}
+        try {
+          payload = JSON.parse(ev.payloadJson)
+        } catch {
+          // empty
+        }
+        const chapterId = (payload.chapterId as string) ?? null
+        const revisionId = (payload.revisionId as string) ?? null
+        if (!chapterId || !revisionId) {
+          return {
+            eventId: ev.id,
+            previewId: deps.library.newAppId(),
+            canApply: false
+          }
+        }
+        const preview = sources().content.previewApply(db, chapterId, revisionId)
+        return {
+          eventId: ev.id,
+          previewId: deps.library.newAppId(),
+          canApply: true,
+          ...preview
+        }
+      })
+    }),
+
+    'sources:updates:apply': createHandler(sourceUpdateApplyInputSchema, (input) => {
+      return deps.library.withWork(input.workId, (db) => {
+        const events = listUpdateEvents(db)
+        const ev = events.find((e) => e.id === input.eventId)
+        if (!ev) {
+          throw new StorageError('not_found', `Sự kiện cập nhật ${input.eventId} không tồn tại`)
+        }
+        let payload: Record<string, unknown> = {}
+        try {
+          payload = JSON.parse(ev.payloadJson)
+        } catch {
+          // empty
+        }
+        const chapterId = (payload.chapterId as string) ?? null
+        const revisionId = (payload.revisionId as string) ?? null
+        if (!chapterId || !revisionId) {
+          throw new StorageError('validation', 'Sự kiện không có revision hoặc chapter liên kết')
+        }
+
+        const result = sources().content.applyRevision(
+          db,
+          {
+            chapterId,
+            revisionId,
+            expectedRev: input.expectedRev
+          },
+          deps.library.appNow(),
+          () => deps.library.newAppId()
+        )
+        return { applied: true, currentRev: result.currentRev }
+      })
+    }),
+
+    'sources:registry:list': createHandler(sourceRegistryListInputSchema, (input) => {
+      const manifests = sources().registry.query(input ?? {})
+      return {
+        sources: manifests.map((manifest) => ({
+          sourceId: manifest.sourceId,
+          displayName: manifest.displayName,
+          nativeName: manifest.nativeNames[0] ?? null,
+          aliases: manifest.aliases,
+          domains: manifest.domains,
+          countryCode: (manifest.countryCode === 'ZZ' ? null : manifest.countryCode) as any,
+          languageTags: manifest.languageTags as any,
+          capabilities: manifest.capabilities as any,
+          access:
+            manifest.origin.kind === 'builtin'
+              ? 'local'
+              : manifest.auth === 'none'
+                ? 'public'
+                : 'account',
+          health: {
+            state: (manifest.health ?? 'healthy') as any,
+            checkedAt: null,
+            message: null
+          }
+        }))
+      }
+    })
+  }
+}
