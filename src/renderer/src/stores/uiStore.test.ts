@@ -11,9 +11,23 @@ describe('uiStore', () => {
 
   it('initializes with default values', () => {
     const state = useUiStore.getState()
-    expect(state.view).toEqual({ name: 'library' })
+    expect(state.view).toEqual({ name: 'home' })
     expect(state.sidebarOpen).toBe(true)
+    expect(state.navCollapsed).toBe(false)
     expect(state.settings).toBeNull()
+  })
+
+  it('folds the app sidebar to its rail and back', () => {
+    useUiStore.getState().toggleNav()
+    expect(useUiStore.getState().navCollapsed).toBe(true)
+    useUiStore.getState().toggleNav()
+    expect(useUiStore.getState().navCollapsed).toBe(false)
+  })
+
+  it('goes to an app page without opening a work tab', async () => {
+    await useUiStore.getState().navigate({ name: 'jobs' })
+    expect(useUiStore.getState().view).toEqual({ name: 'jobs' })
+    expect(useUiStore.getState().tabs).toEqual([])
   })
 
   it('navigates to next view directly when no leaveGuard is registered', async () => {

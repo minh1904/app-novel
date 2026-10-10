@@ -20,5 +20,14 @@ export const MOCK_FEATURES = {
   sentenceModeSidePanels: {
     id: 'sentence-mode-side-panels',
     label: 'Gợi ý · Thuật ngữ · Lịch sử · QA'
-  }
+  },
+  // The app sidebar's pages (docs/modules/workspace/app-level-features.md). Home and Library are real;
+  // the cards on Home other than "Tiếp tục dịch" and these pages are pictures.
+  homeOverview: { id: 'home-overview', label: 'Số liệu, tác vụ và hoạt động ở Trang chủ' },
+  jobsPage: { id: 'jobs-page', label: 'Tác vụ' },
+  updatesPage: { id: 'updates-page', label: 'Cập nhật' },
+  sharedGlossary: { id: 'shared-glossary', label: 'Kho dùng chung' },
+  styleProfiles: { id: 'style-profiles', label: 'Prompt & văn phong' },
+  assistantPage: { id: 'assistant-page', label: 'Trợ lý AI' },
+  commandPalette: { id: 'command-palette', label: 'Tìm và lệnh (Ctrl K)' }
 } as const satisfies Record<string, MockFeature>

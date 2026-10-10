@@ -1,6 +1,6 @@
 import { useContext, type JSX, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { TopBarSlotContext, WorkTabActiveContext } from './topBarSlot'
+import { TopBarSlotContext, TopBarTitleSlotContext, WorkTabActiveContext } from './topBarSlot'
 
 /**
  * Draws its children in the top bar instead of where it is written.
@@ -13,4 +13,24 @@ export function TopBarActions({ children }: { children: ReactNode }): JSX.Elemen
   const slot = useContext(TopBarSlotContext)
   const active = useContext(WorkTabActiveContext)
   return slot === null || !active ? null : createPortal(children, slot)
+}
+
+/** The page name at the left of the top bar, with an optional note after it. */
+export function TopBarTitle({
+  children,
+  note
+}: {
+  children: ReactNode
+  note?: ReactNode
+}): JSX.Element | null {
+  const slot = useContext(TopBarTitleSlotContext)
+  const active = useContext(WorkTabActiveContext)
+  if (slot === null || !active) return null
+  return createPortal(
+    <>
+      <h1 className="m-0 truncate text-label-md">{children}</h1>
+      {note && <span className="truncate text-body-xs text-muted">{note}</span>}
+    </>,
+    slot
+  )
 }

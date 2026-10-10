@@ -13,6 +13,24 @@ export type Theme = 'light' | 'dark'
 export type ThemePreference = Theme | 'system'
 
 const THEME_KEY = 'mira.theme'
+const NAV_KEY = 'mira.navCollapsed'
+
+/** Whether the app sidebar was left as a rail; a per-device convenience like the theme. */
+function readNavCollapsed(): boolean {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem(NAV_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeNavCollapsed(collapsed: boolean): void {
+  try {
+    localStorage.setItem(NAV_KEY, collapsed ? '1' : '0')
+  } catch {
+    // Not saved: the rail still holds until the app closes.
+  }
+}
 
 /** A per-device convenience, so storage that throws or is empty means "follow the system". */
 function readThemePreference(): ThemePreference {
@@ -36,8 +54,11 @@ export function resolveTheme(preference: ThemePreference): Theme {
   return preference === 'system' ? systemTheme() : preference
 }
 
+/** The app-level screens of the sidebar (docs/modules/workspace/app-level-features.md). */
+export type AppPage = 'home' | 'library' | 'jobs' | 'updates' | 'shared' | 'style' | 'assistant'
+
 export type View =
-  | { name: 'library' }
+  | { name: AppPage }
   | { name: 'create' }
   | { name: 'work'; workId: string }
   | { name: 'chapter'; workId: string; chapterId: string }
@@ -73,6 +94,10 @@ export interface UiState {
   /** The onboarding card was asked for (model menu "Thêm nhà cung cấp"); it also opens by itself when there is no connection. */
   onboardingOpen: boolean
   sidebarOpen: boolean
+  /** The app sidebar is folded to its icon rail. */
+  navCollapsed: boolean
+  /** The search and command palette (Ctrl K). */
+  paletteOpen: boolean
   theme: Theme
   themePreference: ThemePreference
   appVersion: string
@@ -90,6 +115,8 @@ export interface UiState {
   setOnboardingOpen(open: boolean): void
   toggleSidebar(): void
   setSidebarOpen(open: boolean): void
+  toggleNav(): void
+  setPaletteOpen(open: boolean): void
   setTheme(theme: Theme): void
   setThemePreference(preference: ThemePreference): void
   /** Follows a Windows light/dark switch while the preference is `system`. */
@@ -100,7 +127,7 @@ export interface UiState {
 }
 
 const initialValues = {
-  view: { name: 'library' } as View,
+  view: { name: 'home' } as View,
   tabs: [] as WorkspaceTab[],
   activeWorkId: null as string | null,
   workspaceReady: false,
@@ -108,6 +135,8 @@ const initialValues = {
   settings: null as SettingsLocation | null,
   onboardingOpen: false,
   sidebarOpen: true,
+  navCollapsed: false,
+  paletteOpen: false,
   theme: 'light' as Theme,
   themePreference: 'system' as ThemePreference,
   appVersion: '',
@@ -144,6 +173,7 @@ const startPreference = readThemePreference()
 
 export const useUiStore = create<UiState>((set, get) => ({
   ...initialValues,
+  navCollapsed: readNavCollapsed(),
   themePreference: startPreference,
   theme: resolveTheme(startPreference),
 
@@ -211,7 +241,7 @@ export const useUiStore = create<UiState>((set, get) => ({
         current.activeWorkId === workId
           ? (fallback?.workId ?? tabs[0]?.workId ?? null)
           : current.activeWorkId,
-      view: wasVisible ? (fallback ? viewOf(fallback) : { name: 'library' }) : current.view
+      view: wasVisible ? (fallback ? viewOf(fallback) : { name: 'home' }) : current.view
     })
     await saveWorkspace(get())
     return true
@@ -229,7 +259,7 @@ export const useUiStore = create<UiState>((set, get) => ({
     set({
       tabs: state.tabs,
       activeWorkId: selected?.workId ?? null,
-      view: selected ? viewOf(selected) : { name: 'library' },
+      view: selected ? viewOf(selected) : { name: 'home' },
       workspaceReady: true,
       workspaceNotice: notices.join(' ') || null
     })
@@ -242,6 +272,12 @@ export const useUiStore = create<UiState>((set, get) => ({
   setOnboardingOpen: (onboardingOpen) => set({ onboardingOpen }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+  toggleNav: () => {
+    const navCollapsed = !get().navCollapsed
+    writeNavCollapsed(navCollapsed)
+    set({ navCollapsed })
+  },
+  setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setTheme: (theme) => {
     applyThemeEffect(theme)
     set({ theme })

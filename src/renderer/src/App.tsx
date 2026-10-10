@@ -1,9 +1,18 @@
 import { useEffect, type JSX } from 'react'
+import { AppNav } from './app/AppNav'
 import { AppShell } from './app/AppShell'
+import { CommandPaletteMock } from './app/CommandPaletteMock'
 import { WorkTabActiveContext } from './app/topBarSlot'
 import { Button, LinkButton } from './components/ui/Button'
-import { EmptyState } from './components/ui/EmptyState'
+import { AssistantScreenMock } from './features/assistant/AssistantScreenMock'
+import { HomeScreen } from './features/home/HomeScreen'
+import { JobsScreenMock } from './features/jobs/JobsScreenMock'
 import { CreateWorkScreen } from './features/library/CreateWorkScreen'
+import { LibraryScreen } from './features/library/LibraryScreen'
+import type { Work } from './features/library/works'
+import { SharedGlossaryMock } from './features/shared-glossary/SharedGlossaryMock'
+import { StyleProfilesMock } from './features/style-profiles/StyleProfilesMock'
+import { UpdatesScreenMock } from './features/updates/UpdatesScreenMock'
 import { useLibrary } from './features/library/useLibrary'
 import { ChapterNavSidebar } from './features/chapter/ChapterNavSidebar'
 import { ChapterScreen } from './features/chapter/ChapterScreen'
@@ -17,7 +26,7 @@ import { SETTINGS_PAGES } from './features/settings/settingsPages'
 import { Toaster } from './components/ui/Toast'
 import { Onboarding } from './features/onboarding/Onboarding'
 import { WorkDetailScreen } from './features/work/WorkDetailScreen'
-import { useUiStore, type View } from './stores/uiStore'
+import { useUiStore, type AppPage, type View } from './stores/uiStore'
 import { useAiChatStore } from './stores/aiChatStore'
 import { useConnectionStore } from './stores/connectionStore'
 
@@ -33,6 +42,17 @@ export function App(): JSX.Element {
   const toggleTheme = useUiStore((state) => state.toggleTheme)
   const toggleSidebar = useUiStore((state) => state.toggleSidebar)
   const settingsOpen = useUiStore((state) => state.settings !== null)
+  const navCollapsed = useUiStore((state) => state.navCollapsed)
+  const paletteOpen = useUiStore((state) => state.paletteOpen)
+  const connectionLoad = useConnectionStore((state) => state.load)
+  const connectionCount = useConnectionStore((state) => state.connections.length)
+  const hasConnection = connectionLoad === 'ready' && connectionCount > 0
+  const connectionNotice =
+    connectionLoad === 'failed'
+      ? 'Không tải được kết nối AI'
+      : connectionLoad === 'ready' && connectionCount === 0
+        ? 'Chưa kết nối AI'
+        : null
 
   useEffect(() => {
     useUiStore.getState().setLeaveGuardRegistry(registry)
@@ -47,6 +67,21 @@ export function App(): JSX.Element {
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [registry])
+
+  // Ctrl K opens search and commands from anywhere, unless something closer to the key claimed it.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.defaultPrevented) return
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey) {
+        if (event.key.toLowerCase() === 'k') {
+          event.preventDefault()
+          useUiStore.getState().setPaletteOpen(true)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   // A stream continues while the chapter panel is hidden or another chapter is being viewed.
   useEffect(() => useAiChatStore.getState().startListening(), [])
@@ -124,6 +159,18 @@ export function App(): JSX.Element {
   }
   const openChapterView = (workId: string, chapterId: string): void =>
     go({ name: 'chapter', workId, chapterId })
+  const openWork = (workId: string): void => go({ name: 'work', workId })
+  const continueWork = async (work: Work): Promise<void> => {
+    const chapter = work.lastChapter
+    if (!chapter) return openWork(work.id)
+    const result = await window.mira.chapters.open(work.id, chapter.id)
+    if (result.ok) {
+      library.applyWork(result.value.work)
+      openChapterView(work.id, chapter.id)
+    } else {
+      openWork(work.id)
+    }
+  }
 
   let content: JSX.Element = <div />
   // Only the chapter screen has a second column (its chapter list).
@@ -152,14 +199,49 @@ export function App(): JSX.Element {
           </div>
         )
       } else {
-        // The library screen is being rebuilt (docs/modules/design-system/README.md); until then the
-        // view only says so. The data behind it (useLibrary) stays.
         content = (
-          <EmptyState title="Thư viện đang được dựng lại">
-            Giao diện thư viện tạm gỡ để dựng lại theo hệ thiết kế mới.
-          </EmptyState>
+          <LibraryScreen
+            works={works}
+            problems={library.problems.length}
+            onOpenWork={openWork}
+            onCreateWork={() => go({ name: 'create' })}
+          />
         )
       }
+      break
+    case 'home':
+      content =
+        library.load === 'ready' ? (
+          <HomeScreen
+            works={works}
+            connected={hasConnection}
+            onContinue={(work) => void continueWork(work)}
+            onOpenWork={openWork}
+            onCreateWork={() => go({ name: 'create' })}
+            onOpenSettings={openSettings}
+            onOpenJobs={() => go({ name: 'jobs' })}
+            onOpenUpdates={() => go({ name: 'updates' })}
+          />
+        ) : (
+          <p role="status" className="px-6 pt-8 text-body-sm text-subtle">
+            {library.load === 'loading' ? 'Đang mở thư viện…' : library.loadError}
+          </p>
+        )
+      break
+    case 'jobs':
+      content = <JobsScreenMock />
+      break
+    case 'updates':
+      content = <UpdatesScreenMock />
+      break
+    case 'shared':
+      content = <SharedGlossaryMock />
+      break
+    case 'style':
+      content = <StyleProfilesMock />
+      break
+    case 'assistant':
+      content = <AssistantScreenMock />
       break
     case 'create':
       content = (
@@ -213,6 +295,30 @@ export function App(): JSX.Element {
   }
 
   const visibleWorkId = view.name === 'work' || view.name === 'chapter' ? view.workId : null
+  // The sidebar marks the page on screen; a work and the create form belong to the library.
+  const navPage: AppPage =
+    view.name === 'work' || view.name === 'create' || view.name === 'chapter'
+      ? 'library'
+      : view.name
+  // The chapter screen keeps its width for the editors (docs/modules/workspace/app-level-features.md).
+  const nav =
+    view.name === 'chapter' ? null : (
+      <AppNav
+        page={navPage}
+        collapsed={navCollapsed}
+        onNavigate={(page) => go({ name: page })}
+        onToggleCollapsed={() => useUiStore.getState().toggleNav()}
+        onOpenPalette={() => useUiStore.getState().setPaletteOpen(true)}
+        libraryCount={
+          library.load === 'ready' ? works.filter((work) => !work.archived).length : null
+        }
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onOpenSettings={openSettings}
+        settingsOpen={settingsOpen}
+        connectionNotice={connectionNotice}
+      />
+    )
   const tabPanes = tabs.map((tab) => {
     const active = tab.workId === visibleWorkId
     if (!active && tab.location.name === 'chapter' && !registry.isDirty(tab.workId)) return null
@@ -257,9 +363,12 @@ export function App(): JSX.Element {
   return (
     <LeaveGuardContext.Provider value={registry}>
       <AppShell
+        nav={nav}
         sidebar={sidebar}
         sidebarOpen={sidebarOpen}
-        onToggleSidebar={toggleSidebar}
+        onToggleSidebar={
+          view.name === 'chapter' ? toggleSidebar : () => useUiStore.getState().toggleNav()
+        }
         theme={theme}
         onToggleTheme={toggleTheme}
         onOpenSettings={openSettings}
@@ -283,13 +392,17 @@ export function App(): JSX.Element {
           <p role="status" className="p-6 text-body-sm text-subtle">
             Đang khôi phục phiên làm việc…
           </p>
-        ) : view.name === 'library' || view.name === 'create' ? (
+        ) : visibleWorkId === null ? (
           content
         ) : null}
         {tabPanes}
       </AppShell>
       {leaveDialog}
       <SettingsModal pages={SETTINGS_PAGES} />
+      <CommandPaletteMock
+        open={paletteOpen}
+        onOpenChange={(open) => useUiStore.getState().setPaletteOpen(open)}
+      />
       <Onboarding />
       <Toaster />
     </LeaveGuardContext.Provider>
