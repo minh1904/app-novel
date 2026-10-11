@@ -57,7 +57,7 @@ export function Disclosure({
         size={ICON['2xs']}
         aria-hidden="true"
         className={cn(
-          'shrink-0 opacity-70 transition-transform duration-(--mira-duration-fast)',
+          'shrink-0 opacity-70 transition-transform duration-(--mira-duration-fast) ease-standard',
           !open && '-rotate-90'
         )}
       />
@@ -73,7 +73,11 @@ export function Disclosure({
       ) : (
         trigger
       )}
-      {children && <Collapsible.Panel className="mt-3xs">{children}</Collapsible.Panel>}
+      {children && (
+        <Collapsible.Panel className="mt-3xs h-(--collapsible-panel-height) overflow-hidden transition-[height,opacity] duration-(--mira-duration-base) ease-standard data-starting-style:h-0 data-starting-style:opacity-0 data-ending-style:h-0 data-ending-style:opacity-0">
+          {children}
+        </Collapsible.Panel>
+      )}
     </Collapsible.Root>
   )
 }

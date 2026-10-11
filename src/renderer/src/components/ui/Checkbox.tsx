@@ -13,7 +13,7 @@ import { ICON } from './icon'
  * khi được kích hoạt. Nằm cùng hàng với nhãn để có thể nhấp chọn toàn bộ hàng.
  */
 const box =
-  'flex size-4 shrink-0 items-center justify-center border border-(--mira-border-input) bg-surface transition-colors duration-(--mira-duration-fast) data-checked:border-transparent data-checked:bg-inverted data-checked:text-inverted data-disabled:cursor-not-allowed data-disabled:opacity-50'
+  'flex size-4 shrink-0 items-center justify-center border border-(--mira-border-input) bg-surface transition-[background-color,border-color,transform] duration-(--mira-duration-fast) ease-standard active:scale-95 data-checked:border-transparent data-checked:bg-inverted data-checked:text-inverted data-disabled:cursor-not-allowed data-disabled:opacity-50 data-disabled:active:scale-100'
 
 const row = 'inline-flex items-center gap-xs text-body-sm text-default'
 
@@ -27,7 +27,7 @@ export function Checkbox({ children, className, ...props }: CheckboxProps): JSX.
     // biome-ignore lint/a11y/noLabelWithoutControl: phần tử gốc checkbox của Base UI đóng vai trò là control điều khiển.
     <label data-slot="checkbox" className={cn(row, className)}>
       <BaseCheckbox.Root {...props} className={cn(box, 'rounded-xs', focusRing)}>
-        <BaseCheckbox.Indicator>
+        <BaseCheckbox.Indicator className="flex items-center justify-center transition-transform duration-(--mira-duration-fast) ease-standard data-unchecked:scale-0 data-checked:scale-100">
           <CheckIcon size={ICON['2xs']} />
         </BaseCheckbox.Indicator>
       </BaseCheckbox.Root>
@@ -54,7 +54,7 @@ export function Radio({ children, className, ...props }: RadioProps): JSX.Elemen
     // biome-ignore lint/a11y/noLabelWithoutControl: phần tử gốc radio của Base UI đóng vai trò là control điều khiển.
     <label data-slot="radio" className={cn(row, className)}>
       <BaseRadio.Root {...props} className={cn(box, 'rounded-full', focusRing)}>
-        <BaseRadio.Indicator className="size-1.5 rounded-full bg-(--mira-text-inverted)" />
+        <BaseRadio.Indicator className="size-1.5 rounded-full bg-(--mira-text-inverted) transition-transform duration-(--mira-duration-fast) ease-standard data-unchecked:scale-0 data-checked:scale-100" />
       </BaseRadio.Root>
       {children}
     </label>

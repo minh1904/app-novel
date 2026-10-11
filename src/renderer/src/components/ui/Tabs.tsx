@@ -51,10 +51,10 @@ export function TabsTab({
     <BaseTabs.Tab
       data-slot="tabs-tab"
       className={cn(
-        'inline-flex items-center gap-2xs text-subtle transition-colors duration-(--mira-duration-fast) hover:text-default data-active:text-default',
+        'inline-flex items-center gap-2xs text-subtle transition-[color,background-color,transform] duration-(--mira-duration-fast) ease-standard hover:text-default active:scale-[0.98] data-active:text-default',
         variant === 'line'
-          ? 'relative h-8 text-label-sm after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-active:after:bg-(--mira-text)'
-          : 'h-full rounded-xs px-sm text-label-xs data-active:bg-surface data-active:shadow-xs',
+          ? 'relative h-8 text-label-sm after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:transition-colors after:duration-(--mira-duration-fast) data-active:after:bg-(--mira-text)'
+          : 'h-full rounded-xs px-sm text-label-xs transition-[background-color,box-shadow,color] duration-(--mira-duration-fast) ease-standard data-active:bg-surface data-active:shadow-xs',
         focusRing,
         className
       )}

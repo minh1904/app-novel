@@ -51,7 +51,7 @@ export function Select<T extends string>({
         id={id}
         aria-label={label}
         className={cn(
-          'inline-flex shrink-0 items-center gap-xs border border-(--mira-input-border) bg-(--mira-input-bg) text-(--mira-input-fg)',
+          'group inline-flex shrink-0 items-center gap-xs border border-(--mira-input-border) bg-(--mira-input-bg) text-(--mira-input-fg)',
           'transition-colors duration-(--mira-duration-fast) ease-standard hover:bg-(--mira-input-bg-hover) data-popup-open:bg-(--mira-input-bg-hover)',
           'data-disabled:cursor-not-allowed data-disabled:bg-disabled data-disabled:text-disabled',
           size === 'md'
@@ -63,7 +63,7 @@ export function Select<T extends string>({
       >
         {icon && <span className="flex text-muted">{icon}</span>}
         <BaseSelect.Value className="truncate whitespace-nowrap" />
-        <BaseSelect.Icon className="ml-auto flex text-muted">
+        <BaseSelect.Icon className="ml-auto flex text-muted transition-transform duration-(--mira-duration-fast) ease-standard group-data-popup-open:rotate-180">
           <AltArrowDownIcon size={14} />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>

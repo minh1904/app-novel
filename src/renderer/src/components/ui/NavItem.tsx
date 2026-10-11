@@ -38,7 +38,7 @@ export function NavItem({
       {...props}
       className={cn(
         'flex h-8 w-full min-w-0 shrink-0 items-center gap-xs rounded-sm px-xs text-left text-body-sm select-none',
-        'transition-colors duration-(--mira-duration-fast) ease-standard data-disabled:cursor-not-allowed data-disabled:text-disabled',
+        'transition-[color,background-color,transform] duration-(--mira-duration-fast) ease-standard active:scale-[0.99] data-disabled:cursor-not-allowed data-disabled:text-disabled data-disabled:active:scale-100',
         active
           ? 'bg-(--mira-nav-bg-active) text-(--mira-nav-fg-active)'
           : 'text-(--mira-nav-fg) hover:bg-(--mira-nav-bg-hover) hover:text-(--mira-nav-fg-active)',

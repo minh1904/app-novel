@@ -154,3 +154,41 @@
   border-radius: var(--mira-radius-sm);
   animation: setting-highlight 1.6s ease-out;
 }
+
+/* Hiệu ứng trượt vào nhẹ nhàng cho thông báo nổi (Toast) */
+@keyframes toast-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(1rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toast-right {
+  animation: toast-slide-in-right var(--mira-duration-base) var(--mira-ease-enter);
+}
+
+.animate-toast-top {
+  animation: toast-slide-in-top var(--mira-duration-base) var(--mira-ease-enter);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-toast-right,
+  .animate-toast-top {
+    animation: none;
+  }
+}

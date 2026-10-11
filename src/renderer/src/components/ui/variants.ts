@@ -19,8 +19,8 @@ import { ICON } from './icon'
 export const buttonVariants = variants({
   base: cn(
     'inline-flex shrink-0 items-center justify-center whitespace-nowrap select-none',
-    'transition-colors duration-(--mira-duration-fast) ease-standard',
-    'data-disabled:cursor-not-allowed [&_svg]:shrink-0',
+    'transition-[color,background-color,border-color,box-shadow,transform] duration-(--mira-duration-fast) ease-standard active:scale-[0.98]',
+    'data-disabled:cursor-not-allowed data-disabled:active:scale-100 [&_svg]:shrink-0',
     focusRing
   ),
   variants: {
@@ -115,8 +115,8 @@ export const linkButtonVariants = variants({
 export const compactButtonVariants = variants({
   base: cn(
     'inline-flex shrink-0 items-center justify-center select-none',
-    'transition-colors duration-(--mira-duration-fast) ease-standard',
-    'data-disabled:cursor-not-allowed data-disabled:bg-transparent data-disabled:text-disabled data-disabled:shadow-none',
+    'transition-[color,background-color,border-color,box-shadow,transform] duration-(--mira-duration-fast) ease-standard active:scale-[0.96]',
+    'data-disabled:cursor-not-allowed data-disabled:bg-transparent data-disabled:text-disabled data-disabled:shadow-none data-disabled:active:scale-100',
     '[&_svg]:shrink-0',
     focusRing
   ),

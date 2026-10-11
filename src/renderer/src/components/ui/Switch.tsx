@@ -15,7 +15,7 @@ export function Switch({
     <BaseSwitch.Root
       data-slot="switch"
       className={cn(
-        'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-(--mira-switch-track) transition-colors duration-(--mira-duration-fast) ease-standard',
+        'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-(--mira-switch-track) transition-colors duration-(--mira-duration-base) ease-standard',
         'data-checked:bg-(--mira-switch-track-on) data-disabled:cursor-not-allowed data-disabled:opacity-50',
         focusRing,
         className
@@ -24,7 +24,7 @@ export function Switch({
     >
       <BaseSwitch.Thumb
         className={cn(
-          'absolute left-0.5 size-4 rounded-full bg-(--mira-switch-thumb) shadow-xs transition-transform duration-(--mira-duration-fast) ease-standard',
+          'absolute left-0.5 size-4 rounded-full bg-(--mira-switch-thumb) shadow-xs transition-[transform,background-color,width] duration-(--mira-duration-base) ease-standard active:w-5',
           'data-checked:translate-x-4 data-checked:bg-(--mira-switch-thumb-on)'
         )}
       />

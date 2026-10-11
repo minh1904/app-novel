@@ -38,7 +38,10 @@ export function ProgressBar({
       className={cn('block h-1.5 w-full overflow-hidden rounded-full bg-muted', className)}
     >
       <span
-        className={cn('block h-full rounded-full', FILLS[tone])}
+        className={cn(
+          'block h-full rounded-full transition-[width] duration-(--mira-duration-base) ease-standard',
+          FILLS[tone]
+        )}
         style={{ width: `${clamped}%` }}
       />
     </span>

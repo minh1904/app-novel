@@ -16,11 +16,15 @@ const DOT: Record<Toast['kind'], string> = {
 function ToastCard({ toast }: { toast: Toast }): JSX.Element {
   const dismiss = useNotificationStore((state) => state.dismiss)
   const loud = toast.kind === 'error' || toast.kind === 'warning'
+  const animClass = toast.placement === 'top-center' ? 'animate-toast-top' : 'animate-toast-right'
   return (
     <div
       role={loud ? 'alert' : 'status'}
       data-slot="toast"
-      className="pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-sm rounded-md border border-default bg-surface px-sm py-xs text-default shadow-sm"
+      className={cn(
+        'pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-sm rounded-md border border-default bg-surface px-sm py-xs text-default shadow-sm',
+        animClass
+      )}
     >
       <span className={cn('mt-2 size-1.5 shrink-0 rounded-full', DOT[toast.kind])} />
       <div className="flex min-w-0 flex-1 flex-col gap-3xs">

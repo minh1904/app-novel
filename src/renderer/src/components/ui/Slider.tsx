@@ -63,6 +63,7 @@ export function Slider({
           <BaseSlider.Thumb
             className={cn(
               'block size-4 rounded-full border border-default bg-surface shadow-sm',
+              'transition-[transform,box-shadow] duration-(--mira-duration-fast) ease-standard hover:scale-110 active:scale-95',
               focusRing
             )}
           />

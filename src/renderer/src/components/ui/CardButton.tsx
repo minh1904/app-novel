@@ -24,7 +24,7 @@ export function CardButton({
       {...props}
       className={cn(
         'flex min-w-0 rounded-lg border border-default bg-surface p-md text-left',
-        'transition-colors duration-(--mira-duration-fast) ease-standard hover:border-strong',
+        'transition-[color,border-color,box-shadow,transform] duration-(--mira-duration-fast) ease-standard hover:border-strong hover:shadow-xs active:scale-[0.99]',
         focusRing,
         className
       )}
