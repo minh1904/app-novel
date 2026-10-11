@@ -1,0 +1,19 @@
+{
+  "props": {
+    "pageProps": {
+      "__APOLLO_STATE__": {
+        "Work:WRONG_ID": {
+          "__typename": "Work",
+          "id": "WRONG_ID",
+          "title": "Wrong",
+          "author": { "__ref": "Author:a1" },
+          "tableOfContentsV2": { "__typename": "TableOfContentsV2", "chapters": [] },
+          "episodes": []
+        },
+        "Author:a1": { "__typename": "Author", "name": "X" }
+      },
+      "workId": "1234567890"
+    }
+  },
+  "query": {}
+}

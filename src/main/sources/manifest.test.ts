@@ -68,4 +68,52 @@ describe('adapter manifests and registry', () => {
     ])
     expect(registry.findByUrl('https://novel.example.kr/work/1')?.sourceId).toBe('mira.korean')
   })
+
+  it('enforces release gate masking for closed adapters and allows opt-in in tests (Task 8.1)', () => {
+    const closedKakuyomu: SourceManifest = {
+      manifestVersion: 1,
+      sourceId: 'mira.jp.kakuyomu',
+      displayName: 'Kakuyomu',
+      nativeNames: ['カクヨム'],
+      aliases: ['kakuyomu'],
+      domains: ['kakuyomu.jp'],
+      adapterVersion: '1.0.0',
+      apiVersion: '1.0.0',
+      dataVersion: 1,
+      countryCode: 'JP',
+      languageTags: ['ja'],
+      capabilities: ['identify', 'work', 'catalog', 'chapter'],
+      auth: 'none',
+      origin: { kind: 'builtin' },
+      limits: { maxPages: 10, pageSize: 100, timeoutMs: 15000 },
+      health: 'unchecked',
+      releaseGate: 'closed',
+      networkPolicy: {
+        origins: ['https://kakuyomu.jp'],
+        minIntervalMs: 1000,
+        maxConcurrency: 1,
+        maxRedirects: 5,
+        maxAttempts: 3,
+        maxResponseBytes: 5_000_000,
+        requestTimeoutMs: 15000,
+        operationRequestBudget: 20
+      }
+    }
+
+    // Default production registry
+    const prodRegistry = new SourceRegistry([closedKakuyomu])
+    expect(prodRegistry.get('mira.jp.kakuyomu')?.capabilities).toEqual([])
+    expect(prodRegistry.query({ capability: 'catalog' })).toHaveLength(0)
+    expect(prodRegistry.findByUrl('https://kakuyomu.jp/works/123')?.capabilities).toEqual([])
+
+    // Test registry with allowUnreleased: true
+    const testRegistry = new SourceRegistry([closedKakuyomu], { allowUnreleased: true })
+    expect(testRegistry.get('mira.jp.kakuyomu')?.capabilities).toEqual([
+      'identify',
+      'work',
+      'catalog',
+      'chapter'
+    ])
+    expect(testRegistry.query({ capability: 'catalog' })).toHaveLength(1)
+  })
 })

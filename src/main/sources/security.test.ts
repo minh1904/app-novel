@@ -1,3 +1,4 @@
+import { readFileSync, readdirSync } from 'node:fs'
 import { symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as v from 'valibot'
@@ -285,6 +286,48 @@ describe('Sources security suite (Task 10.1)', () => {
           expect(refused.error.code).toBe('untrusted_sender')
         }
       }
+    })
+  })
+
+  describe('6. Network architecture boundary check (Task 10.1)', () => {
+    it('prohibits direct imports of net, http, https, dns, or undici outside transport allowlist', () => {
+      const sourcesDir = join(import.meta.dirname)
+      const walkFiles = (dir: string): string[] => {
+        const entries = readdirSync(dir, { withFileTypes: true })
+        const files: string[] = []
+        for (const entry of entries) {
+          const full = join(dir, entry.name)
+          if (entry.isDirectory()) {
+            files.push(...walkFiles(full))
+          } else if (
+            entry.isFile() &&
+            entry.name.endsWith('.ts') &&
+            !entry.name.endsWith('.test.ts')
+          ) {
+            files.push(full)
+          }
+        }
+        return files
+      }
+
+      const files = walkFiles(sourcesDir)
+      const ALLOWLIST = new Set([
+        join(sourcesDir, 'broker.ts'),
+        join(sourcesDir, 'kakuyomu', 'smoke.ts')
+      ])
+
+      const FORBIDDEN_PATTERN = /from\s+['"](node:)?(net|http|https|dns|undici)['"]/
+
+      const violations: string[] = []
+      for (const file of files) {
+        if (ALLOWLIST.has(file)) continue
+        const text = readFileSync(file, 'utf8')
+        if (FORBIDDEN_PATTERN.test(text)) {
+          violations.push(file)
+        }
+      }
+
+      expect(violations).toEqual([])
     })
   })
 })

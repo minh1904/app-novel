@@ -1,0 +1,39 @@
+{
+  "props": {
+    "pageProps": {
+      "__APOLLO_STATE__": {
+        "Work:1234567890": {
+          "__typename": "Work",
+          "id": "1234567890",
+          "title": "テスト作品",
+          "author": { "__ref": "Author:author1" },
+          "tableOfContentsV2": {
+            "__typename": "TableOfContentsV2",
+            "chapters": []
+          },
+          "episodes": [
+            { "__ref": "Episode:111000001" },
+            { "__ref": "Episode:111000002" }
+          ]
+        },
+        "Author:author1": { "__typename": "Author", "name": "テスト著者" },
+        "Episode:111000001": {
+          "__typename": "Episode",
+          "id": "111000001",
+          "title": "第一話",
+          "publishedAt": "2024-01-01T00:00:00Z",
+          "accessState": "public"
+        },
+        "Episode:111000002": {
+          "__typename": "Episode",
+          "id": "111000002",
+          "title": "第二話",
+          "publishedAt": "2024-01-02T00:00:00Z",
+          "accessState": "public"
+        }
+      },
+      "workId": "1234567890"
+    }
+  },
+  "query": {}
+}

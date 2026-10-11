@@ -16,7 +16,7 @@ describe('NetworkBroker', () => {
 
   it('rejects requests to origins not in manifest allowlist', async () => {
     const broker = new NetworkBroker({
-      allowedOrigins: ['https://novel.syosetu.com'],
+      allowedOrigins: ['https://kakuyomu.jp'],
       allowNetwork: true
     })
     await expect(broker.request({ url: 'https://evil.com/data' })).rejects.toMatchObject({

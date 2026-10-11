@@ -74,5 +74,27 @@ export function validateManifest(manifest: SourceManifest): SourceManifest {
     'invalid timeout'
   )
   requireCondition(manifest.health === undefined || HEALTH.has(manifest.health), 'invalid health')
+  requireCondition(
+    manifest.releaseGate === undefined ||
+      manifest.releaseGate === 'open' ||
+      manifest.releaseGate === 'closed',
+    'invalid release gate'
+  )
+  if (manifest.networkPolicy !== undefined) {
+    requireCondition(
+      Array.isArray(manifest.networkPolicy.origins) && manifest.networkPolicy.origins.length > 0,
+      'invalid network origins'
+    )
+    requireCondition(
+      Number.isSafeInteger(manifest.networkPolicy.minIntervalMs) &&
+        manifest.networkPolicy.minIntervalMs >= 0,
+      'invalid minIntervalMs'
+    )
+    requireCondition(
+      Number.isSafeInteger(manifest.networkPolicy.maxConcurrency) &&
+        manifest.networkPolicy.maxConcurrency > 0,
+      'invalid maxConcurrency'
+    )
+  }
   return manifest
 }

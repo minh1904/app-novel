@@ -52,7 +52,7 @@ export class SourceBindingService {
   createBinding(
     db: Db,
     workId: string,
-    input: Omit<SourceBindingCreateInput, 'expectedPreviewId'>,
+    input: Omit<SourceBindingCreateInput, 'expectedPreviewId'> & { canonicalUrl?: string | null },
     now: number,
     newId: () => string
   ): SourceBinding {
@@ -79,7 +79,7 @@ export class SourceBindingService {
         adapterId: input.sourceId,
         adapterVersion: '1.0.0', // Set to manifest or adapter default
         remoteWorkId: input.remoteWorkId,
-        canonicalUrl: null,
+        canonicalUrl: input.canonicalUrl ?? null,
         countryCode: null,
         languageTag: input.languageTag,
         label: input.label,

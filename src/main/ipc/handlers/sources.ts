@@ -7,6 +7,7 @@ import {
   sourceBindingsListInputSchema,
   sourceBindingUpdateInputSchema,
   sourceCatalogGetInputSchema,
+  sourceCatalogDownloadInputSchema,
   sourceCatalogListInputSchema,
   sourceSyncCancelInputSchema,
   sourceSyncStartInputSchema,
@@ -17,13 +18,14 @@ import {
   sourceUpdatePreviewApplyInputSchema,
   sourceUpdatesListInputSchema,
   type SourceCatalogItem,
-  type SourceDescriptor,
+  type SourceBindingIdentifyResult,
   type SourceSyncRun,
   type SourceUpdateEvent
 } from '../../../shared/contracts/sources'
 import {
   getSyncRun,
   listCatalogItems,
+  listSourceBindings,
   listUpdateEvents,
   markEventSeen,
   type StoredCatalogItem,
@@ -31,7 +33,8 @@ import {
   type StoredUpdateEvent
 } from '../../infra/storage/sourceStorage'
 import { StorageError } from '../../infra/storage/errors'
-import { createHandler, createSinkHandler } from '../handler'
+import { identifyKakuyomu } from '../../sources/kakuyomu/identify'
+import { createAsyncHandler, createHandler, createSinkHandler } from '../handler'
 import { sourcesOf, type AreaHandlers, type HandlerDeps } from './deps'
 
 function storedToContractCatalogItem(s: StoredCatalogItem): SourceCatalogItem {
@@ -111,6 +114,17 @@ function storedToContractUpdateEvent(s: StoredUpdateEvent): SourceUpdateEvent {
 
 export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
   const sources = () => sourcesOf(deps)
+  const activeDownloads = new Set<string>()
+  const urlPreviews = new Map<
+    string,
+    {
+      workId: string
+      sourceId: string
+      remoteWorkId: string
+      canonicalUrl: string
+      expiresAt: number
+    }
+  >()
 
   return {
     'sources:catalog:list': createHandler(sourceCatalogListInputSchema, (input) => {
@@ -144,6 +158,53 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
       })
     }),
 
+    'sources:catalog:download': createAsyncHandler(
+      sourceCatalogDownloadInputSchema,
+      async (input) => {
+        const key = `${input.workId}:${input.itemId}`
+        if (activeDownloads.has(key)) throw new StorageError('conflict', 'Chương đang được tải')
+        activeDownloads.add(key)
+        try {
+          const { item, binding } = deps.library.withWork(input.workId, (db) => {
+            const item = sources().catalog.get(db, input.itemId)
+            if (!item) throw new StorageError('not_found', 'Chương trong danh mục không tồn tại')
+            const binding = listSourceBindings(db).find(
+              (candidate) => candidate.id === item.bindingId
+            )
+            if (!binding || !binding.enabled)
+              throw new StorageError('validation', 'Nguồn đã bị tắt')
+            if (item.chapterId)
+              throw new StorageError('conflict', 'Chương này đã được tải vào Mira')
+            if (item.accessState !== 'public') {
+              throw new StorageError('validation', 'Chương này hiện không thể tải công khai')
+            }
+            return { item, binding }
+          })
+          const page = await sources().getChapter({
+            sourceId: binding.adapterId,
+            remoteWorkId: binding.remoteWorkId,
+            remoteChapterId: item.remoteChapterId,
+            languageTag: binding.languageTag
+          })
+          if (!page.text.trim()) throw new StorageError('validation', 'Nguồn trả về chương rỗng')
+
+          const { chapter } = deps.library.createChapter(input.workId, item.title)
+          try {
+            deps.library.saveText(input.workId, chapter.id, 'source', page.text, 0, [])
+            deps.library.withWork(input.workId, (db) => {
+              sources().catalog.mapChapter(db, item.id, chapter.id)
+            })
+          } catch (error) {
+            deps.library.deleteChapter(input.workId, chapter.id)
+            throw error
+          }
+          return { chapterId: chapter.id, title: item.title }
+        } finally {
+          activeDownloads.delete(key)
+        }
+      }
+    ),
+
     'sources:bindings:list': createHandler(sourceBindingsListInputSchema, (input) => {
       return deps.library.withWork(input.workId, (db) => {
         return sources().bindings.listBindings(db, input.workId)
@@ -152,35 +213,89 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
 
     'sources:bindings:identify': createHandler(sourceBindingIdentifyInputSchema, (input) => {
       const manifest = sources().registry.findByUrl(input.candidate)
-      if (!manifest) return null
+      if (!manifest || !manifest.capabilities.includes('identify')) return null
 
-      const descriptor: SourceDescriptor = {
-        sourceId: manifest.sourceId,
-        displayName: manifest.displayName,
-        nativeName: manifest.nativeNames[0] ?? null,
-        aliases: manifest.aliases,
-        domains: manifest.domains,
-        countryCode: (manifest.countryCode === 'ZZ' ? null : manifest.countryCode) as any,
-        languageTags: manifest.languageTags as any,
-        capabilities: manifest.capabilities as any,
-        access:
-          manifest.origin.kind === 'builtin'
-            ? 'local'
-            : manifest.auth === 'none'
-              ? 'public'
-              : 'account',
-        health: {
-          state: (manifest.health ?? 'healthy') as any,
-          checkedAt: null,
-          message: null
-        }
+      const identity =
+        manifest.sourceId === 'mira.jp.kakuyomu' ? identifyKakuyomu(input.candidate) : null
+      if (!identity) return null
+
+      const result: SourceBindingIdentifyResult = {
+        source: {
+          sourceId: manifest.sourceId,
+          displayName: manifest.displayName,
+          nativeName: manifest.nativeNames[0] ?? null,
+          aliases: manifest.aliases,
+          domains: manifest.domains,
+          countryCode: (manifest.countryCode === 'ZZ'
+            ? null
+            : manifest.countryCode) as SourceBindingIdentifyResult['source']['countryCode'],
+          languageTags:
+            manifest.languageTags as SourceBindingIdentifyResult['source']['languageTags'],
+          capabilities: manifest.capabilities,
+          access:
+            manifest.origin.kind === 'builtin'
+              ? 'local'
+              : manifest.auth === 'none'
+                ? 'public'
+                : 'account',
+          health: {
+            state: manifest.health ?? 'healthy',
+            checkedAt: null,
+            message: null
+          }
+        },
+        remoteWorkId: identity.remoteWorkId,
+        canonicalUrl: identity.canonicalUrl,
+        inputRemoteChapterId: identity.inputRemoteChapterId ?? null
       }
-      return descriptor
+      return result
     }),
 
-    'sources:bindings:preview-create': createHandler(
+    'sources:bindings:preview-create': createAsyncHandler(
       sourceBindingPreviewCreateInputSchema,
-      (input) => {
+      async (input) => {
+        if (input.sourceId === 'mira.jp.kakuyomu') {
+          for (const [id, pending] of urlPreviews) {
+            if (pending.expiresAt < deps.library.appNow()) urlPreviews.delete(id)
+          }
+          const preview = await sources().preview({
+            sourceId: input.sourceId,
+            remoteWorkId: input.remoteWorkId
+          })
+          const previewId = deps.library.newAppId()
+          const expiresAt = deps.library.appNow() + 10 * 60_000
+          const canonicalUrl = `https://kakuyomu.jp/works/${input.remoteWorkId}`
+          urlPreviews.set(previewId, {
+            workId: input.workId,
+            sourceId: input.sourceId,
+            remoteWorkId: input.remoteWorkId,
+            canonicalUrl,
+            expiresAt
+          })
+          return {
+            previewId,
+            expiresAt,
+            workId: input.workId,
+            sourceId: input.sourceId,
+            remoteWorkId: input.remoteWorkId,
+            canonicalUrl,
+            inputRemoteChapterId: input.inputRemoteChapterId ?? null,
+            title: preview.title,
+            author: null,
+            description: null,
+            languageTag: preview.languageTag,
+            totalCount: preview.items.length,
+            matchedCount: preview.items.length,
+            unmatchedCount: 0,
+            errorCount: 0,
+            warnings: [],
+            sample: preview.items.slice(0, 20).map((item) => ({
+              remoteChapterId: item.remoteChapterId,
+              title: item.title || item.remoteChapterId,
+              position: item.order
+            }))
+          }
+        }
         return {
           previewId: deps.library.newAppId(),
           workId: input.workId,
@@ -195,15 +310,28 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
     ),
 
     'sources:bindings:create': createHandler(sourceBindingCreateInputSchema, (input) => {
-      return deps.library.withWork(input.workId, (db) => {
+      const preview = urlPreviews.get(input.expectedPreviewId)
+      if (
+        input.sourceId === 'mira.jp.kakuyomu' &&
+        (!preview ||
+          preview.expiresAt < deps.library.appNow() ||
+          preview.workId !== input.workId ||
+          preview.sourceId !== input.sourceId ||
+          preview.remoteWorkId !== input.remoteWorkId)
+      ) {
+        throw new StorageError('validation', 'Bản xem trước URL đã hết hạn hoặc không khớp')
+      }
+      const binding = deps.library.withWork(input.workId, (db) => {
         return sources().bindings.createBinding(
           db,
           input.workId,
-          input,
+          { ...input, canonicalUrl: preview?.canonicalUrl ?? null },
           deps.library.appNow(),
           () => deps.library.newAppId()
         )
       })
+      if (preview) urlPreviews.delete(input.expectedPreviewId)
+      return binding
     }),
 
     'sources:bindings:update': createHandler(sourceBindingUpdateInputSchema, (input) => {
@@ -224,8 +352,8 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
       })
     }),
 
-    'sources:sync:start': createSinkHandler(sourceSyncStartInputSchema, (input, sink) => {
-      return deps.library.withWork(input.workId, async (db) => {
+    'sources:sync:start': createSinkHandler(sourceSyncStartInputSchema, async (input, sink) => {
+      return deps.library.withWorkAsync(input.workId, async (db) => {
         const run = await sources().sync.startSync(
           db,
           input.bindingId,

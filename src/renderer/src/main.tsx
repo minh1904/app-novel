@@ -6,11 +6,10 @@ import { TooltipProvider } from './components/ui/Tooltip'
 import { applyThemeEffect, useThemeStore } from './components/ui/themeStore'
 import './styles/index.css'
 
-// The theme the person chose in Settings (or the system's), before the first render; it also tells main
-// which colour the window buttons should wear.
+// Áp dụng theme người dùng đã chọn trong Cài đặt (hoặc theme hệ thống) trước lần render đầu tiên, đồng thời đồng bộ màu nút cửa sổ.
 applyThemeEffect(useThemeStore.getState().theme)
 
-// A notched mouse wheel glides through long text instead of jumping (app/smoothWheel.ts).
+// Cuộn mượt khi dùng con lăn chuột có khấc trong văn bản dài thay vì bị giật khung hình.
 installSmoothWheel()
 
 const root = document.getElementById('root')

@@ -52,7 +52,7 @@ describe('SourcesArea component (Task 9.1 & 9.3)', () => {
       })
     )
 
-    // Keyed by binding ID, both zh-Hans cards appear separately
+    // Định danh theo binding ID, cả hai thẻ zh-Hans đều xuất hiện riêng biệt
     expect(html).toContain('Bản Qidian Web')
     expect(html).toContain('Bản EPUB Đối Chiếu')
     expect(html).toContain('Bản chính')

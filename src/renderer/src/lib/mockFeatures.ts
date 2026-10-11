@@ -1,6 +1,6 @@
 /**
- * Features that exist only as a picture on screen. Each one is labelled "Sắp có" and does not read a
- * file, call the main process or write data. Remove the entry when the feature is real.
+ * Các tính năng hiện chỉ hiển thị giao diện minh họa ("Sắp có").
+ * Không thực hiện đọc file, gọi tiến trình chính hay ghi dữ liệu. Xóa mục tương ứng khi tính năng hoàn thiện.
  */
 export interface MockFeature {
   id: string
@@ -14,15 +14,13 @@ export const MOCK_FEATURES = {
   contextArea: { id: 'context-area', label: 'Ngữ cảnh' },
   sourcesArea: { id: 'sources-area', label: 'Nguồn' },
   jobsArea: { id: 'jobs-area', label: 'Tác vụ' },
-  // `aiPanel` was removed on 2026-10-02: the "Hỏi AI" panel calls a real provider and writes into the
-  // translation, so it is no longer a picture on screen (change `ai-chat`).
+  // Bảng "Hỏi AI" đã được triển khai chính thức và không còn thuộc danh sách giao diện minh họa.
   sentenceModeToolbar: { id: 'sentence-mode-toolbar', label: 'Tìm & lọc hàng' },
   sentenceModeSidePanels: {
     id: 'sentence-mode-side-panels',
     label: 'Gợi ý · Thuật ngữ · Lịch sử · QA'
   },
-  // The app sidebar's pages (docs/modules/workspace/app-level-features.md). Home and Library are real;
-  // the cards on Home other than "Tiếp tục dịch" and these pages are pictures.
+  // Các trang điều hướng trên thanh bên: Trang chủ và Thư viện đã hoàn thiện; các thẻ phụ và các trang bên dưới là giao diện mẫu.
   homeOverview: { id: 'home-overview', label: 'Số liệu, tác vụ và hoạt động ở Trang chủ' },
   jobsPage: { id: 'jobs-page', label: 'Tác vụ' },
   updatesPage: { id: 'updates-page', label: 'Cập nhật' },

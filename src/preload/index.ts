@@ -54,8 +54,11 @@ import type {
 import type { AddressingComplianceReport } from '../shared/context/addressingCompliance'
 import type {
   SourceBinding,
+  SourceBindingIdentifyResult,
+  SourceBindingPreview,
   SourceCatalogItem,
   SourceCatalogPage,
+  SourceCatalogDownloadResult,
   SourceDescriptor,
   SourceSyncProgress,
   SourceSyncRun,
@@ -408,7 +411,7 @@ const desktopApi: DesktopApi = {
     cancel: (workId) =>
       ipcRenderer.invoke(CHANNELS.exportCancel, { workId }) as Promise<Result<void>>,
     reveal: (path) => ipcRenderer.invoke(CHANNELS.exportReveal, { path }) as Promise<Result<void>>,
-    // Same rule as `onChunk`: the channel name is fixed here, never taken from the renderer.
+    // Quy tắc tương tự như `onChunk`: tên kênh được cố định tại đây, không bao giờ nhận từ renderer.
     onProgress: (listener) => {
       const handler = (_event: IpcRendererEvent, progress: ExportProgress): void =>
         listener(progress)
@@ -423,18 +426,22 @@ const desktopApi: DesktopApi = {
           Result<SourceCatalogPage>
         >,
       get: (input) =>
-        ipcRenderer.invoke(CHANNELS.sourcesCatalogGet, input) as Promise<Result<SourceCatalogItem>>
+        ipcRenderer.invoke(CHANNELS.sourcesCatalogGet, input) as Promise<Result<SourceCatalogItem>>,
+      download: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesCatalogDownload, input) as Promise<
+          Result<SourceCatalogDownloadResult>
+        >
     },
     bindings: {
       list: (input) =>
         ipcRenderer.invoke(CHANNELS.sourcesBindingsList, input) as Promise<Result<SourceBinding[]>>,
       identify: (input) =>
         ipcRenderer.invoke(CHANNELS.sourcesBindingsIdentify, input) as Promise<
-          Result<SourceDescriptor | null>
+          Result<SourceBindingIdentifyResult | null>
         >,
       previewCreate: (input) =>
         ipcRenderer.invoke(CHANNELS.sourcesBindingsPreviewCreate, input) as Promise<
-          Result<unknown>
+          Result<SourceBindingPreview>
         >,
       create: (input) =>
         ipcRenderer.invoke(CHANNELS.sourcesBindingsCreate, input) as Promise<Result<SourceBinding>>,

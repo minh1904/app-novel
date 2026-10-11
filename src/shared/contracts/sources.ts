@@ -13,7 +13,7 @@ const nonEmptyText = (label: string, maxLength = MAX_SOURCE_TEXT_LENGTH) =>
     v.maxLength(maxLength, label + ' quá dài.')
   )
 
-/** Source-owned IDs are opaque; only emptiness and a defensive transport bound are enforced. */
+/** ID do nguồn quản lý; kiểm tra không rỗng và có độ dài tối đa an toàn. */
 export const sourceOpaqueIdSchema = nonEmptyText('ID', 512)
 export const sourceIdSchema = v.pipe(
   nonEmptyText('Source ID', 128),
@@ -40,6 +40,7 @@ const positiveIntegerSchema = v.pipe(v.number(), v.safeInteger(), v.minValue(1))
 export const SOURCE_CAPABILITIES = [
   'identify',
   'metadata',
+  'work',
   'catalog',
   'chapter',
   'session',
@@ -99,8 +100,41 @@ export const sourceAuthSchema = v.strictObject({
 })
 export type SourceAuth = v.InferOutput<typeof sourceAuthSchema>
 
+export const sourceNetworkPolicySchema = v.strictObject({
+  origins: v.pipe(
+    v.array(
+      v.pipe(
+        v.string(),
+        v.url(),
+        v.check((value) => {
+          const url = new URL(value)
+          return (
+            url.protocol === 'https:' &&
+            url.origin === value &&
+            url.username === '' &&
+            url.password === '' &&
+            url.pathname === '/' &&
+            url.search === '' &&
+            url.hash === ''
+          )
+        }, 'Origin mạng phải là HTTPS origin canonical.')
+      )
+    ),
+    v.minLength(1),
+    v.maxLength(20)
+  ),
+  minIntervalMs: v.pipe(nonNegativeIntegerSchema, v.maxValue(60_000)),
+  maxConcurrency: v.pipe(positiveIntegerSchema, v.maxValue(8)),
+  maxRedirects: v.pipe(nonNegativeIntegerSchema, v.maxValue(5)),
+  maxAttempts: v.pipe(positiveIntegerSchema, v.maxValue(5)),
+  maxResponseBytes: v.pipe(positiveIntegerSchema, v.maxValue(20_000_000)),
+  requestTimeoutMs: v.pipe(positiveIntegerSchema, v.maxValue(300_000)),
+  operationRequestBudget: v.pipe(positiveIntegerSchema, v.maxValue(100))
+})
+export type SourceNetworkPolicy = v.InferOutput<typeof sourceNetworkPolicySchema>
+
 export const sourceLimitsSchema = v.strictObject({
-  pageSize: v.pipe(positiveIntegerSchema, v.maxValue(MAX_SOURCE_PAGE_SIZE)),
+  pageSize: v.pipe(positiveIntegerSchema, v.maxValue(50_000)),
   maxPages: v.pipe(positiveIntegerSchema, v.maxValue(1000)),
   timeoutMs: v.pipe(positiveIntegerSchema, v.maxValue(300_000))
 })
@@ -110,20 +144,23 @@ export const sourceManifestSchema = v.strictObject({
   manifestVersion: v.literal(1),
   sourceId: sourceIdSchema,
   displayName: nonEmptyText('Tên nguồn'),
-  nativeName: v.nullable(nonEmptyText('Tên bản địa')),
+  nativeNames: v.pipe(v.array(nonEmptyText('Tên bản địa')), v.maxLength(50)),
   aliases: v.pipe(v.array(nonEmptyText('Alias')), v.maxLength(50)),
   domains: v.pipe(v.array(nonEmptyText('Domain', 253)), v.maxLength(50)),
   countryCode: v.nullable(sourceCountryCodeSchema),
   languageTags: v.pipe(v.array(sourceLanguageSchema), v.minLength(1), v.maxLength(50)),
   capabilities: v.pipe(v.array(sourceCapabilitySchema), v.maxLength(SOURCE_CAPABILITIES.length)),
-  access: sourceAccessKindSchema,
-  health: sourceHealthSchema,
+  health: v.optional(sourceHealthStateSchema),
   adapterVersion: sourceVersionSchema,
-  apiVersion: positiveIntegerSchema,
+  apiVersion: sourceVersionSchema,
   dataVersion: positiveIntegerSchema,
-  auth: sourceAuthSchema,
-  origins: v.pipe(v.array(v.pipe(v.string(), v.url())), v.maxLength(50)),
-  limits: sourceLimitsSchema
+  auth: v.picklist(['none', 'optional', 'required'] as const),
+  origin: v.variant('kind', [
+    v.strictObject({ kind: v.literal('builtin') }),
+    v.strictObject({ kind: v.literal('package'), packageName: nonEmptyText('Tên package', 214) })
+  ]),
+  limits: sourceLimitsSchema,
+  network: v.optional(sourceNetworkPolicySchema)
 })
 export type SourceManifest = v.InferOutput<typeof sourceManifestSchema>
 
@@ -209,6 +246,12 @@ export const sourceSyncFailureSchema = v.strictObject({
     'parser_broken',
     'adapter_missing',
     'deadline_exceeded',
+    'redirect_not_allowed',
+    'redirect_limit_exceeded',
+    'address_blocked',
+    'origin_not_allowed',
+    'response_too_large',
+    'request_budget_exceeded',
     'unknown'
   ] as const),
   message: nonEmptyText('Lỗi sync', 2000),
@@ -271,6 +314,11 @@ export const sourceCatalogGetInputSchema = v.strictObject({
   workId: sourceOpaqueIdSchema,
   itemId: sourceOpaqueIdSchema
 })
+export const sourceCatalogDownloadInputSchema = sourceCatalogGetInputSchema
+export const sourceCatalogDownloadResultSchema = v.strictObject({
+  chapterId: sourceOpaqueIdSchema,
+  title: nonEmptyText('Tên chương', 1000)
+})
 export const sourceCatalogPageSchema = v.strictObject({
   items: v.array(sourceCatalogItemSchema),
   nextCursor: v.nullable(sourceCursorSchema),
@@ -282,12 +330,46 @@ export const sourceBindingIdentifyInputSchema = v.strictObject({
   workId: sourceOpaqueIdSchema,
   candidate: nonEmptyText('Nguồn cần nhận diện', 4096)
 })
+export const sourceBindingIdentifyResultSchema = v.strictObject({
+  source: sourceDescriptorSchema,
+  remoteWorkId: sourceOpaqueIdSchema,
+  canonicalUrl: v.pipe(v.string(), v.url()),
+  inputRemoteChapterId: v.nullable(sourceOpaqueIdSchema)
+})
+export type SourceBindingIdentifyResult = v.InferOutput<typeof sourceBindingIdentifyResultSchema>
 export const sourceBindingPreviewCreateInputSchema = v.strictObject({
   workId: sourceOpaqueIdSchema,
   sourceId: sourceIdSchema,
   remoteWorkId: sourceOpaqueIdSchema,
+  canonicalUrl: v.optional(v.nullable(v.pipe(v.string(), v.url()))),
+  inputRemoteChapterId: v.optional(v.nullable(sourceOpaqueIdSchema)),
   authProfileId: v.optional(v.nullable(sourceOpaqueIdSchema))
 })
+export const sourceBindingPreviewSampleSchema = v.strictObject({
+  remoteChapterId: sourceOpaqueIdSchema,
+  title: nonEmptyText('Tên mục catalog', 1000),
+  position: v.pipe(v.number(), v.finite())
+})
+export const sourceBindingPreviewSchema = v.strictObject({
+  previewId: sourceOpaqueIdSchema,
+  expiresAt: timestampSchema,
+  workId: sourceOpaqueIdSchema,
+  sourceId: sourceIdSchema,
+  remoteWorkId: sourceOpaqueIdSchema,
+  canonicalUrl: v.nullable(v.pipe(v.string(), v.url())),
+  inputRemoteChapterId: v.nullable(sourceOpaqueIdSchema),
+  title: nonEmptyText('Tên tác phẩm', 1000),
+  author: v.nullable(nonEmptyText('Tác giả', 1000)),
+  description: v.nullable(v.pipe(v.string(), v.maxLength(20_000))),
+  languageTag: sourceLanguageSchema,
+  totalCount: nonNegativeIntegerSchema,
+  matchedCount: nonNegativeIntegerSchema,
+  unmatchedCount: nonNegativeIntegerSchema,
+  errorCount: nonNegativeIntegerSchema,
+  warnings: v.pipe(v.array(nonEmptyText('Cảnh báo', 2000)), v.maxLength(50)),
+  sample: v.pipe(v.array(sourceBindingPreviewSampleSchema), v.maxLength(20))
+})
+export type SourceBindingPreview = v.InferOutput<typeof sourceBindingPreviewSchema>
 export const sourceBindingCreateInputSchema = v.strictObject({
   workId: sourceOpaqueIdSchema,
   sourceId: sourceIdSchema,
@@ -357,6 +439,8 @@ export const sourceUpdateApplyInputSchema = v.strictObject({
 
 export type SourceCatalogListInput = v.InferInput<typeof sourceCatalogListInputSchema>
 export type SourceCatalogGetInput = v.InferInput<typeof sourceCatalogGetInputSchema>
+export type SourceCatalogDownloadInput = v.InferInput<typeof sourceCatalogDownloadInputSchema>
+export type SourceCatalogDownloadResult = v.InferOutput<typeof sourceCatalogDownloadResultSchema>
 export type SourceCatalogPage = v.InferOutput<typeof sourceCatalogPageSchema>
 export type SourceBindingsListInput = v.InferInput<typeof sourceBindingsListInputSchema>
 export type SourceBindingIdentifyInput = v.InferInput<typeof sourceBindingIdentifyInputSchema>

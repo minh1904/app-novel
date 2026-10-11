@@ -1,4 +1,4 @@
-/** IPC channel names. Kept free of runtime imports so the sandboxed preload can bundle it. */
+/** Tên các kênh IPC. Không dùng import runtime để script preload có thể đóng gói độc lập. */
 export const CHANNELS = {
   worksList: 'works:list',
   worksGet: 'works:get',
@@ -89,6 +89,7 @@ export const CHANNELS = {
   exportReveal: 'export:reveal',
   sourcesCatalogList: 'sources:catalog:list',
   sourcesCatalogGet: 'sources:catalog:get',
+  sourcesCatalogDownload: 'sources:catalog:download',
   sourcesBindingsList: 'sources:bindings:list',
   sourcesBindingsIdentify: 'sources:bindings:identify',
   sourcesBindingsPreviewCreate: 'sources:bindings:preview-create',

@@ -189,7 +189,7 @@ export class SourceSyncService {
               id: newId(),
               bindingId,
               remoteChapterId: item.remoteChapterId,
-              remoteUrl: null,
+              remoteUrl: item.url ?? null,
               chapterId: null, // Note: NOT linked to chapter automatically!
               ordinalKey: String(item.order).padStart(6, '0'),
               volumeTitle: null,
@@ -211,6 +211,7 @@ export class SourceSyncService {
             // Update existing catalog item
             const updated: StoredCatalogItem = {
               ...prior,
+              remoteUrl: item.url ?? prior.remoteUrl,
               title: item.title,
               ordinalKey: String(item.order).padStart(6, '0'),
               accessState: item.access,

@@ -53,10 +53,14 @@ import type {
   SourceBindingCreateInput,
   SourceBindingDeleteInput,
   SourceBindingIdentifyInput,
+  SourceBindingIdentifyResult,
+  SourceBindingPreview,
   SourceBindingPreviewCreateInput,
   SourceBindingsListInput,
   SourceBindingUpdateInput,
   SourceCatalogGetInput,
+  SourceCatalogDownloadInput,
+  SourceCatalogDownloadResult,
   SourceCatalogItem,
   SourceCatalogListInput,
   SourceCatalogPage,
@@ -80,7 +84,7 @@ export interface AppInfo {
   platform: NodeJS.Platform
 }
 
-/** The two looks of the window chrome; the same two values the renderer's theme takes. */
+/** Hai chế độ giao diện khung cửa sổ ứng dụng: sáng và tối. */
 export type ChromeTheme = 'light' | 'dark'
 
 export interface WorksApi {
@@ -88,28 +92,28 @@ export interface WorksApi {
   get(id: string): Promise<Result<WorkSummary>>
   create(input: CreateWorkInput): Promise<Result<WorkSummary>>
   update(id: string, patch: WorkPatch): Promise<Result<WorkSummary>>
-  /** The cover as a JPEG data URL, or null when the work has none. */
+  /** Ảnh bìa dưới dạng JPEG data URL, hoặc null khi tác phẩm chưa có ảnh bìa. */
   getCover(id: string): Promise<Result<string | null>>
-  /** Pass null to remove the cover. */
+  /** Truyền null để xóa ảnh bìa. */
   setCover(id: string, cover: string | null): Promise<Result<WorkSummary>>
 }
 
 export interface ChaptersApi {
   list(workId: string): Promise<Result<{ chapters: ChapterItem[] }>>
-  /** Appends a chapter; an empty or missing title shows as "Chương N". */
+  /** Thêm một chương mới; nếu tên rỗng hoặc thiếu sẽ hiển thị mặc định "Chương N". */
   create(workId: string, title?: string): Promise<Result<ChapterChange>>
   rename(workId: string, chapterId: string, title: string): Promise<Result<ChapterChange>>
-  /** `to` is the 1-based position the chapter should end up at. */
+  /** `to` là vị trí kết quả 1-indexed của chương sau khi di chuyển. */
   move(workId: string, chapterId: string, to: number): Promise<Result<ChaptersChange>>
   delete(workId: string, chapterId: string): Promise<Result<ChaptersChange>>
-  /** Records the chapter as the one being worked on ("Tiếp tục" returns here). */
+  /** Đánh dấu chương đang được làm việc để nút "Tiếp tục" mở lại. */
   open(workId: string, chapterId: string): Promise<Result<{ work: WorkSummary }>>
 }
 
 export interface TextApi {
-  /** A side that was never saved reads as empty at revision 0. */
+  /** Phía văn bản chưa từng lưu sẽ trả về rỗng ở revision 0. */
   get(workId: string, chapterId: string, side: TextSide): Promise<Result<TextRecord>>
-  /** Replaces the text and its segments together; `expectedRev` is the revision last read. */
+  /** Thay thế toàn bộ văn bản và danh sách đoạn văn; `expectedRev` là revision đã đọc trước đó. */
   save(
     workId: string,
     chapterId: string,
@@ -121,11 +125,11 @@ export interface TextApi {
 }
 
 export interface RowsApi {
-  /** The links of a chapter, which say which translated segments belong to which source segment. */
+  /** Danh sách liên kết của chương, chỉ định đoạn văn bản dịch tương ứng với đoạn nguồn nào. */
   links(workId: string, chapterId: string): Promise<Result<{ links: LinkRecord[] }>>
   /**
-   * Writes the translation of one row into the chapter's translation, with its segments and link,
-   * in one step. `expectedRev` is the translation revision last read. An empty text removes it.
+   * Lưu bản dịch của một hàng vào chương cùng với các segment và liên kết tương ứng.
+   * `expectedRev` là revision của bản dịch đã đọc trước đó. Văn bản rỗng sẽ xóa hàng.
    */
   save(
     workId: string,
@@ -134,13 +138,13 @@ export interface RowsApi {
     text: string,
     expectedRev: number
   ): Promise<Result<RowSaved>>
-  /** Confirms a row: its link is fine now and has been looked at. */
+  /** Xác nhận một hàng: liên kết đã được xem xét và chấp thuận. */
   review(
     workId: string,
     chapterId: string,
     sourceId: string
   ): Promise<Result<{ links: LinkRecord[] }>>
-  /** Links translated segments nobody linked to rows without a translation, in order. */
+  /** Tự động ghép nối các đoạn văn bản dịch chưa liên kết với các hàng chưa có bản dịch theo thứ tự. */
   autoPair(
     workId: string,
     chapterId: string
@@ -148,20 +152,20 @@ export interface RowsApi {
 }
 
 export interface ImagesApi {
-  /** Stores an image (a data URL) pasted or dropped into a chapter's translation; returns its ID. */
+  /** Lưu trữ ảnh (dạng data URL) dán hoặc kéo thả vào bản dịch chương; trả về ID của ảnh. */
   put(workId: string, data: string): Promise<Result<{ id: string }>>
-  /** The image as a data URL, or null when it no longer exists. */
+  /** Lấy nội dung ảnh dưới dạng data URL, hoặc null nếu không tồn tại. */
   get(workId: string, imageId: string): Promise<Result<string | null>>
   delete(workId: string, imageId: string): Promise<Result<void>>
 }
 
 export interface BackupApi {
   /**
-   * Opens a "save as" dialog (suggesting a file name) and writes a backup of the work there.
-   * Resolves to the `cancelled` error code when the user dismisses the dialog.
+   * Mở hộp thoại "Lưu bản sao" và ghi bản sao lưu tác phẩm ra tệp.
+   * Trả về mã lỗi `cancelled` nếu người dùng hủy hộp thoại.
    */
   export(workId: string): Promise<Result<BackupExported>>
-  /** Opens a file dialog and adds the chosen backup to the library as a new work. */
+  /** Mở hộp thoại chọn tệp và khôi phục bản sao lưu vào thư viện thành tác phẩm mới. */
   restore(): Promise<Result<WorkSummary>>
 }
 
@@ -264,7 +268,7 @@ export interface AiApi {
   sessions: AiSessionsApi
 }
 
-/** Account logins (change `subscription-providers`). No token ever comes back on these. */
+/** Quản lý đăng nhập tài khoản qua IPC. Không bao giờ truyền token về renderer. */
 export interface AiAccountsApi {
   start(provider: AccountProvider): Promise<Result<LoginStart>>
   poll(sessionId: string): Promise<Result<LoginStatus>>
@@ -386,11 +390,11 @@ export interface AddressingApi {
 export interface ExportApi {
   exportChapter(input: ExportChapterInput): Promise<Result<ExportResult>>
   exportWork(input: ExportWorkInput): Promise<Result<ExportResult>>
-  /** Stops a running export of the work once the chapter being written is done. */
+  /** Hủy lượt xuất bản tác phẩm đang chạy sau khi chương hiện tại hoàn tất. */
   cancel(workId: string): Promise<Result<void>>
-  /** Shows a file or folder this session exported to; any other path is refused. */
+  /** Mở tệp hoặc thư mục mà phiên này vừa xuất ra trên trình quản lý tệp. */
   reveal(path: string): Promise<Result<void>>
-  /** Progress of exports of several chapters; returns the unsubscribe. */
+  /** Đăng ký lắng nghe tiến trình xuất nhiều chương; trả về hàm hủy đăng ký. */
   onProgress(listener: (progress: ExportProgress) => void): () => void
 }
 
@@ -398,11 +402,12 @@ export interface SourcesApi {
   catalog: {
     list(input: SourceCatalogListInput): Promise<Result<SourceCatalogPage>>
     get(input: SourceCatalogGetInput): Promise<Result<SourceCatalogItem>>
+    download(input: SourceCatalogDownloadInput): Promise<Result<SourceCatalogDownloadResult>>
   }
   bindings: {
     list(input: SourceBindingsListInput): Promise<Result<SourceBinding[]>>
-    identify(input: SourceBindingIdentifyInput): Promise<Result<SourceDescriptor | null>>
-    previewCreate(input: SourceBindingPreviewCreateInput): Promise<Result<unknown>>
+    identify(input: SourceBindingIdentifyInput): Promise<Result<SourceBindingIdentifyResult | null>>
+    previewCreate(input: SourceBindingPreviewCreateInput): Promise<Result<SourceBindingPreview>>
     create(input: SourceBindingCreateInput): Promise<Result<SourceBinding>>
     update(input: SourceBindingUpdateInput): Promise<Result<SourceBinding>>
     delete(input: SourceBindingDeleteInput): Promise<Result<void>>
@@ -426,11 +431,10 @@ export interface SourcesApi {
 
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
-  /** Opens an https link in the browser; main only allows the hosts in `EXTERNAL_LINK_HOSTS`. */
+  /** Mở liên kết https trên trình duyệt; chỉ cho phép các host an toàn. */
   openExternal(url: string): Promise<void>
   /**
-   * Tells the window which colours its minimise/maximise/close buttons should wear. The OS draws
-   * them over the page's own top bar, so they have to follow the page's theme to look like part of it.
+   * Thiết lập giao diện màu sắc cho các nút thu nhỏ/phóng to/đóng cửa sổ theo giao diện trang.
    */
   setChromeTheme(theme: ChromeTheme): Promise<void>
   works: WorksApi

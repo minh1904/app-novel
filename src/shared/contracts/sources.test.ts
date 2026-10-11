@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import * as v from 'valibot'
 import {
   MAX_SOURCE_CURSOR_LENGTH,
+  sourceBindingIdentifyResultSchema,
+  sourceBindingPreviewSchema,
   sourceBindingSchema,
   sourceCatalogItemSchema,
   sourceCatalogListInputSchema,
@@ -25,14 +27,22 @@ const descriptor = {
 } as const
 
 const manifest = {
-  ...descriptor,
   manifestVersion: 1,
+  sourceId: descriptor.sourceId,
+  displayName: descriptor.displayName,
+  nativeNames: ['Thư mục'],
+  aliases: descriptor.aliases,
+  domains: descriptor.domains,
+  countryCode: 'ZZ',
+  languageTags: descriptor.languageTags,
+  capabilities: descriptor.capabilities,
   adapterVersion: '1.2.3',
-  apiVersion: 1,
+  apiVersion: '1.0.0',
   dataVersion: 1,
-  auth: { type: 'none' },
-  origins: [],
-  limits: { pageSize: 100, maxPages: 20, timeoutMs: 30_000 }
+  auth: 'none',
+  origin: { kind: 'builtin' },
+  limits: { pageSize: 100, maxPages: 20, timeoutMs: 30_000 },
+  health: 'healthy'
 } as const
 
 describe('source descriptor and manifest contracts', () => {
@@ -53,6 +63,38 @@ describe('source descriptor and manifest contracts', () => {
     { ...manifest, capabilities: ['database'] }
   ])('rejects invalid manifest metadata %#', (value) => {
     expect(v.is(sourceManifestSchema, value)).toBe(false)
+  })
+
+  it('validates a bounded HTTPS network policy', () => {
+    const networkManifest = {
+      ...manifest,
+      sourceId: 'mira.jp.kakuyomu',
+      domains: ['kakuyomu.jp'],
+      network: {
+        origins: ['https://kakuyomu.jp'],
+        minIntervalMs: 1000,
+        maxConcurrency: 1,
+        maxRedirects: 3,
+        maxAttempts: 3,
+        maxResponseBytes: 2_000_000,
+        requestTimeoutMs: 30_000,
+        operationRequestBudget: 20
+      }
+    } as const
+
+    expect(v.is(sourceManifestSchema, networkManifest)).toBe(true)
+    expect(
+      v.is(sourceManifestSchema, {
+        ...networkManifest,
+        network: { ...networkManifest.network, origins: ['http://kakuyomu.jp'] }
+      })
+    ).toBe(false)
+    expect(
+      v.is(sourceManifestSchema, {
+        ...networkManifest,
+        network: { ...networkManifest.network, maxConcurrency: 0 }
+      })
+    ).toBe(false)
   })
 })
 
@@ -134,6 +176,31 @@ describe('source persisted DTO contracts', () => {
   ])('rejects invalid %s state', (_name, schema, value) => {
     expect(v.is(schema, value)).toBe(false)
   })
+
+  it.each([
+    'redirect_not_allowed',
+    'address_blocked',
+    'response_too_large',
+    'request_budget_exceeded',
+    'parser_broken'
+  ])('accepts safe source failure code %s', (code) => {
+    expect(
+      v.is(sourceSyncRunSchema, {
+        id: 'run-1',
+        bindingId: 'binding-1',
+        trigger: 'manual',
+        state: 'failed',
+        adapterVersion: '1.0.0',
+        complete: false,
+        phase: 'catalog',
+        processedCount: 0,
+        totalCount: null,
+        failure: { code, message: 'Yêu cầu nguồn thất bại', retryable: false },
+        startedAt: 1,
+        finishedAt: 2
+      })
+    ).toBe(true)
+  })
 })
 
 describe('source IPC contracts', () => {
@@ -153,5 +220,46 @@ describe('source IPC contracts', () => {
       })
     ).toBe(false)
     expect(v.is(sourceCatalogListInputSchema, { workId: 'work-1', secret: 'nope' })).toBe(false)
+  })
+
+  it('round-trips typed identify and preview results', () => {
+    const source = {
+      ...descriptor,
+      sourceId: 'mira.jp.kakuyomu',
+      domains: ['kakuyomu.jp'],
+      countryCode: 'JP',
+      languageTags: ['ja'],
+      access: 'public',
+      health: { state: 'unchecked', checkedAt: null, message: null }
+    }
+    expect(
+      v.is(sourceBindingIdentifyResultSchema, {
+        source,
+        remoteWorkId: '123',
+        canonicalUrl: 'https://kakuyomu.jp/works/123',
+        inputRemoteChapterId: '456'
+      })
+    ).toBe(true)
+    expect(
+      v.is(sourceBindingPreviewSchema, {
+        previewId: 'preview-1',
+        expiresAt: 10_000,
+        workId: 'work-1',
+        sourceId: 'mira.jp.kakuyomu',
+        remoteWorkId: '123',
+        canonicalUrl: 'https://kakuyomu.jp/works/123',
+        inputRemoteChapterId: '456',
+        title: 'Tác phẩm mẫu',
+        author: 'Tác giả mẫu',
+        description: 'Mô tả',
+        languageTag: 'ja',
+        totalCount: 2,
+        matchedCount: 0,
+        unmatchedCount: 2,
+        errorCount: 0,
+        warnings: [],
+        sample: []
+      })
+    ).toBe(true)
   })
 })

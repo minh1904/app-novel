@@ -1,5 +1,5 @@
 /**
- * Registry for resetting Zustand stores between unit tests.
+ * Đăng ký hàm đặt lại trạng thái cho các Zustand store giữa các unit test.
  */
 const resetters = new Set<() => void>()
 

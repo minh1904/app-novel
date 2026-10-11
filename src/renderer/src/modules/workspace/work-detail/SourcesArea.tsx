@@ -1,8 +1,11 @@
 import { useEffect, useState, type JSX } from 'react'
-import { ImportIcon } from '@solar-icons/react/linear/import'
-import { StarIcon } from '@solar-icons/react/linear/star'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
-import { TrashBinTrashIcon } from '@solar-icons/react/linear/trash-bin-trash'
+import {
+  ImportIcon,
+  StarIcon,
+  RefreshIcon,
+  TrashBinTrashIcon
+} from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { Badge } from '../../../components/ui/Badge'
 import { ConfirmDialog, type ConfirmRequest } from '../../../components/ui/ConfirmDialog'
@@ -12,7 +15,11 @@ import { ICON } from '../../../components/ui/icon'
 import { cn } from '../../../lib/cn'
 import { LanguageMark } from '../../library/public'
 import type { SourceLanguage } from '../../library/public'
-import type { SourceBinding } from '../../../../../shared/contracts/sources'
+import type {
+  SourceBinding,
+  SourceCatalogItem,
+  SourceCatalogPage
+} from '../../../../../shared/contracts/sources'
 import { AddRawDialog } from './AddRawDialog'
 
 export interface SourcesAreaProps {
@@ -24,7 +31,8 @@ const ADAPTER_NAMES: Record<string, string> = {
   'mira.folder': 'Thư mục tệp',
   'builtin.folder': 'Thư mục tệp',
   'mira.single-file': 'Tệp văn bản',
-  'builtin.single-file': 'Tệp văn bản'
+  'builtin.single-file': 'Tệp văn bản',
+  'mira.jp.kakuyomu': 'カクヨム (Kakuyomu)'
 }
 
 export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.Element {
@@ -32,8 +40,15 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
   const [loading, setLoading] = useState(!initialBindings)
   const [addRawOpen, setAddRawOpen] = useState(false)
   const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null)
+  const [catalogBindingId, setCatalogBindingId] = useState<string | null>(null)
+  const [catalogItems, setCatalogItems] = useState<SourceCatalogItem[]>([])
+  const [catalogCursor, setCatalogCursor] = useState<string | null>(null)
+  const [catalogExhausted, setCatalogExhausted] = useState(false)
+  const [catalogLoading, setCatalogLoading] = useState(false)
+  const [catalogError, setCatalogError] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
-  // Sync state
+  // Trạng thái đồng bộ
   const [activeSync, setActiveSync] = useState<{
     bindingId: string
     runId: string
@@ -53,9 +68,57 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
         }
       }
     } catch {
-      // ignore
+      // Bỏ qua lỗi khi tải lại
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadCatalog = async (bindingId: string, cursor?: string): Promise<void> => {
+    if (!window.mira?.sources?.catalog) return
+    setCatalogLoading(true)
+    setCatalogError(null)
+    try {
+      const result = await window.mira.sources.catalog.list({
+        workId,
+        bindingId,
+        cursor,
+        limit: 50
+      })
+      if (!result.ok) {
+        setCatalogError(result.error.message)
+        return
+      }
+      const page: SourceCatalogPage = result.value
+      setCatalogItems((current) => (cursor ? [...current, ...page.items] : page.items))
+      setCatalogCursor(page.nextCursor)
+      setCatalogExhausted(page.exhausted)
+    } catch {
+      setCatalogError('Không tải được danh mục chương.')
+    } finally {
+      setCatalogLoading(false)
+    }
+  }
+
+  const handleDownloadChapter = async (item: SourceCatalogItem): Promise<void> => {
+    if (!window.mira?.sources?.catalog) return
+    setDownloadingId(item.id)
+    setCatalogError(null)
+    try {
+      const result = await window.mira.sources.catalog.download({ workId, itemId: item.id })
+      if (!result.ok) {
+        setCatalogError(result.error.message)
+        return
+      }
+      setCatalogItems((current) =>
+        current.map((candidate) =>
+          candidate.id === item.id ? { ...candidate, chapterId: result.value.chapterId } : candidate
+        )
+      )
+    } catch {
+      setCatalogError('Không tải được chương.')
+    } finally {
+      setDownloadingId(null)
     }
   }
 
@@ -65,7 +128,7 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
     }
   }, [workId, initialBindings])
 
-  // Listen to sync progress
+  // Lắng nghe tiến trình đồng bộ
   useEffect(() => {
     if (typeof window !== 'undefined' && window.mira?.sources?.sync?.onProgress) {
       const unsubscribe = window.mira.sources.sync.onProgress((progress) => {
@@ -90,7 +153,7 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
     return undefined
   }, [workId])
 
-  // Set primary
+  // Đặt làm nguồn chính
   const handleSetPrimary = async (bindingId: string): Promise<void> => {
     if (typeof window !== 'undefined' && window.mira?.sources?.bindings) {
       const res = await window.mira.sources.bindings.update({
@@ -116,7 +179,7 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
     }
   }
 
-  // Trigger manual sync
+  // Kích hoạt đồng bộ thủ công
   const handleStartSync = async (bindingId: string): Promise<void> => {
     if (typeof window !== 'undefined' && window.mira?.sources?.sync) {
       setActiveSync({
@@ -137,7 +200,7 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
     }
   }
 
-  // Cancel running sync
+  // Hủy tiến trình đồng bộ đang chạy
   const handleCancelSync = async (runId: string): Promise<void> => {
     if (typeof window !== 'undefined' && window.mira?.sources?.sync) {
       await window.mira.sources.sync.cancel({ runId })
@@ -145,7 +208,7 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
     }
   }
 
-  // Unlink binding
+  // Gỡ liên kết nguồn raw
   const handleUnlink = (binding: SourceBinding): void => {
     setConfirmRequest({
       title: `Gỡ Bản raw "${binding.label}"?`,
@@ -315,6 +378,24 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
                     >
                       Kiểm tra
                     </Button>
+                    {binding.sourceId === 'mira.jp.kakuyomu' && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (catalogBindingId === binding.id) {
+                            setCatalogBindingId(null)
+                          } else {
+                            setCatalogBindingId(binding.id)
+                            setCatalogItems([])
+                            setCatalogCursor(null)
+                            setCatalogExhausted(false)
+                            void loadCatalog(binding.id)
+                          }
+                        }}
+                      >
+                        {catalogBindingId === binding.id ? 'Ẩn chương' : 'Danh mục chương'}
+                      </Button>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -325,6 +406,59 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
                     Gỡ
                   </Button>
                 </div>
+                {catalogBindingId === binding.id && (
+                  <div className="flex flex-col gap-xs border-t border-subtle pt-sm">
+                    {catalogItems.length === 0 && catalogLoading ? (
+                      <p role="status" className="m-0 text-body-sm text-subtle">
+                        Đang tải danh mục…
+                      </p>
+                    ) : catalogItems.length === 0 ? (
+                      <p className="m-0 text-body-sm text-subtle">
+                        Chưa có danh mục. Nhấn “Kiểm tra” để đồng bộ danh sách chương trước.
+                      </p>
+                    ) : (
+                      <ul className="m-0 flex list-none flex-col gap-2xs p-0">
+                        {catalogItems.map((item) => (
+                          <li
+                            key={item.id}
+                            className="flex items-center justify-between gap-sm py-2xs"
+                          >
+                            <span className="min-w-0 truncate text-body-sm text-default">
+                              {item.position}. {item.title}
+                            </span>
+                            {item.chapterId ? (
+                              <Badge color="accent">Đã tải</Badge>
+                            ) : item.access === 'public' ? (
+                              <Button
+                                variant="outline"
+                                disabled={downloadingId === item.id || catalogLoading}
+                                onClick={() => void handleDownloadChapter(item)}
+                              >
+                                {downloadingId === item.id ? 'Đang tải…' : 'Tải chương'}
+                              </Button>
+                            ) : (
+                              <Badge color="neutral">Chưa truy cập được</Badge>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {catalogError && (
+                      <p role="alert" className="m-0 text-body-sm text-danger">
+                        {catalogError}
+                      </p>
+                    )}
+                    {!catalogExhausted && catalogItems.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        disabled={catalogLoading || !catalogCursor}
+                        onClick={() => catalogCursor && void loadCatalog(binding.id, catalogCursor)}
+                      >
+                        {catalogLoading ? 'Đang tải…' : 'Tải thêm danh mục'}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </li>
             )
           })}

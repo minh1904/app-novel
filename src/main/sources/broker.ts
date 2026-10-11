@@ -1,5 +1,10 @@
+import { lookup } from 'node:dns/promises'
+import { BlockList, isIP } from 'node:net'
+import { Agent, fetch } from 'undici'
+
 export interface NetworkRequest {
   url: string
+  signal?: AbortSignal
   method?: 'GET' | 'POST'
   headers?: Record<string, string>
   body?: string | Uint8Array
@@ -28,20 +33,66 @@ export class NetworkBrokerError extends Error {
   }
 }
 
-const PRIVATE_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', '169.254.169.254'])
+const BLOCKED_ADDRESSES = new BlockList()
+for (const [address, prefix] of [
+  ['0.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['100.64.0.0', 10],
+  ['127.0.0.0', 8],
+  ['169.254.0.0', 16],
+  ['172.16.0.0', 12],
+  ['192.0.0.0', 24],
+  ['192.0.2.0', 24],
+  ['192.88.99.0', 24],
+  ['192.168.0.0', 16],
+  ['198.18.0.0', 15],
+  ['198.51.100.0', 24],
+  ['203.0.113.0', 24],
+  ['224.0.0.0', 4],
+  ['240.0.0.0', 4]
+] as const)
+  BLOCKED_ADDRESSES.addSubnet(address, prefix, 'ipv4')
+for (const [address, prefix] of [
+  ['::', 128],
+  ['::1', 128],
+  ['64:ff9b:1::', 48],
+  ['100::', 64],
+  ['2001::', 23],
+  ['2001:db8::', 32],
+  ['2002::', 16],
+  ['fc00::', 7],
+  ['fe80::', 10],
+  ['ff00::', 8]
+] as const)
+  BLOCKED_ADDRESSES.addSubnet(address, prefix, 'ipv6')
 
 export function isPrivateAddress(hostname: string): boolean {
-  const lower = hostname.toLowerCase()
-  if (PRIVATE_HOSTS.has(lower)) return true
-  if (/^10\.\d+\.\d+\.\d+$/.test(lower)) return true
-  if (/^192\.168\.\d+\.\d+$/.test(lower)) return true
-  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(lower)) return true
-  return false
+  const host = hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '')
+  if (host === 'localhost' || host === 'localhost.localdomain' || host.startsWith('::ffff:'))
+    return true
+  const family = isIP(host)
+  return family > 0 && BLOCKED_ADDRESSES.check(host, family === 4 ? 'ipv4' : 'ipv6')
 }
 
 export interface NetworkBrokerPolicy {
   allowedOrigins: string[]
   allowNetwork?: boolean
+  minIntervalMs?: number
+  maxRedirects?: number
+  maxResponseBytes?: number
+  requestTimeoutMs?: number
+}
+
+let nextAllowedRequestAt = 0
+
+async function waitForPacing(minIntervalMs: number): Promise<void> {
+  const now = Date.now()
+  const startAt = Math.max(now, nextAllowedRequestAt)
+  nextAllowedRequestAt = startAt + minIntervalMs
+  if (startAt > now) await new Promise((resolve) => setTimeout(resolve, startAt - now))
 }
 
 export class NetworkBroker {
@@ -54,38 +105,130 @@ export class NetworkBroker {
         'network adapter requests are not enabled in this release'
       )
     }
+    if (req.method && req.method !== 'GET') {
+      throw new NetworkBrokerError('network_disabled', 'only GET requests are supported')
+    }
+    if (req.authHandle || req.body) {
+      throw new NetworkBrokerError('auth_handle_invalid', 'request credentials are not supported')
+    }
 
-    let parsed: URL
+    let url: URL
     try {
-      parsed = new URL(req.url)
+      url = new URL(req.url)
     } catch {
       throw new NetworkBrokerError('origin_not_allowed', 'invalid request URL')
     }
-
-    if (isPrivateAddress(parsed.hostname)) {
+    const isAllowed = (candidate: URL): boolean =>
+      candidate.protocol === 'https:' &&
+      !candidate.username &&
+      !candidate.password &&
+      this.policy.allowedOrigins.some((origin) => {
+        try {
+          return new URL(origin).origin === candidate.origin
+        } catch {
+          return false
+        }
+      })
+    if (isPrivateAddress(url.hostname)) {
       throw new NetworkBrokerError(
         'private_address_blocked',
-        `request to private address ${parsed.hostname} is blocked`
+        'private network addresses are blocked'
       )
     }
-
-    const origin = parsed.origin
-    const allowed = this.policy.allowedOrigins.some((allowedOrigin) => {
-      try {
-        return new URL(allowedOrigin).origin === origin
-      } catch {
-        return false
-      }
-    })
-
-    if (!allowed) {
+    if (!isAllowed(url)) {
       throw new NetworkBrokerError(
         'origin_not_allowed',
-        `origin ${origin} is not in the declared manifest origins`
+        `origin ${url.origin} is not in the declared HTTPS origins`
       )
     }
 
-    throw new NetworkBrokerError('network_disabled', 'network broker execution stub')
+    const maxRedirects = this.policy.maxRedirects ?? 5
+    const maxBytes = this.policy.maxResponseBytes ?? 8 * 1024 * 1024
+    const timeoutMs = this.policy.requestTimeoutMs ?? 15_000
+    const headers = new Headers(req.headers)
+    for (const name of ['authorization', 'cookie', 'proxy-authorization', 'host', 'connection']) {
+      headers.delete(name)
+    }
+    headers.set('user-agent', 'Mira/0.1 (+local novel source reader)')
+
+    for (let redirects = 0; ; redirects += 1) {
+      if (!isAllowed(url)) {
+        throw new NetworkBrokerError('origin_not_allowed', 'redirect origin is not allowed')
+      }
+      const records = isIP(url.hostname)
+        ? [{ address: url.hostname, family: isIP(url.hostname) }]
+        : await lookup(url.hostname, { all: true, verbatim: true })
+      if (!records.length || records.some(({ address }) => isPrivateAddress(address))) {
+        throw new NetworkBrokerError(
+          'private_address_blocked',
+          'host resolves to a private or special-use address'
+        )
+      }
+      let index = 0
+      const agent = new Agent({
+        connect: {
+          lookup: (_hostname, lookupOptions, callback) => {
+            if (lookupOptions.all) {
+              callback(null, records)
+              return
+            }
+            const record = records[index++ % records.length]
+            callback(null, record.address, record.family)
+          }
+        }
+      })
+      const controller = new AbortController()
+      const abortFromCaller = () => controller.abort(req.signal?.reason)
+      if (req.signal?.aborted) abortFromCaller()
+      else req.signal?.addEventListener('abort', abortFromCaller, { once: true })
+      const timeout = setTimeout(() => controller.abort(), timeoutMs)
+      try {
+        await waitForPacing(this.policy.minIntervalMs ?? 1000)
+        const response = await fetch(url, {
+          dispatcher: agent,
+          headers,
+          redirect: 'manual',
+          signal: controller.signal
+        })
+        if ([301, 302, 303, 307, 308].includes(response.status)) {
+          await response.body?.cancel()
+          const location = response.headers.get('location')
+          if (!location || redirects >= maxRedirects) {
+            throw new NetworkBrokerError('origin_not_allowed', 'redirect limit exceeded')
+          }
+          url = new URL(location, url)
+          continue
+        }
+        const chunks: Uint8Array[] = []
+        let size = 0
+        if (response.body) {
+          for await (const chunk of response.body) {
+            const bytes = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
+            size += bytes.byteLength
+            if (size > maxBytes) {
+              controller.abort()
+              throw new NetworkBrokerError('network_disabled', 'response exceeds size limit')
+            }
+            chunks.push(bytes)
+          }
+        }
+        const body = new Uint8Array(size)
+        let offset = 0
+        for (const chunk of chunks) {
+          body.set(chunk, offset)
+          offset += chunk.byteLength
+        }
+        return {
+          status: response.status,
+          headers: Object.fromEntries(response.headers.entries()),
+          body
+        }
+      } finally {
+        clearTimeout(timeout)
+        req.signal?.removeEventListener('abort', abortFromCaller)
+        await agent.close()
+      }
+    }
   }
 }
 

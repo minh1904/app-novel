@@ -33,6 +33,17 @@ export interface SourceManifest {
   origin: { kind: 'builtin' } | { kind: 'package'; packageName: string }
   limits: { maxPages: number; pageSize: number; timeoutMs: number }
   health?: SourceHealth
+  releaseGate?: 'open' | 'closed'
+  networkPolicy?: {
+    origins: string[]
+    minIntervalMs: number
+    maxConcurrency: number
+    maxRedirects: number
+    maxAttempts: number
+    maxResponseBytes: number
+    requestTimeoutMs: number
+    operationRequestBudget: number
+  }
 }
 
 export interface CatalogItem {

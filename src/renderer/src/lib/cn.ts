@@ -1,6 +1,6 @@
 export type ClassValue = string | false | null | undefined
 
-/** Joins class names, skipping the empty ones. A caller's class goes last so it can extend a component. */
+/** Nối các tên lớp CSS (class name), bỏ qua các giá trị rỗng hoặc falsy. */
 export function cn(...classes: ClassValue[]): string {
   return classes.filter(Boolean).join(' ')
 }
@@ -24,9 +24,8 @@ export interface VariantsConfig<V extends VariantMap> {
 }
 
 /**
- * A class-variance helper in the shape of `cva` (the IZONE LMS components use it): a base class, one
- * class per value of each variant, and compound classes for combinations. Kept in-house because the
- * repo cannot add dependencies with the global pnpm (AGENTS.md).
+ * Hàm hỗ trợ quản lý biến thể class name: gồm lớp cơ sở (base), các lớp theo biến thể (variants),
+ * và các biến thể kết hợp (compound variants).
  */
 export function variants<V extends VariantMap>(
   config: VariantsConfig<V>

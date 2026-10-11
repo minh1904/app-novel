@@ -1,0 +1,63 @@
+{
+  "props": {
+    "pageProps": {
+      "__APOLLO_STATE__": {
+        "Work:9999999999": {
+          "__typename": "Work",
+          "id": "9999999999",
+          "title": "複数章作品",
+          "author": { "__ref": "Author:author2" },
+          "tableOfContentsV2": {
+            "__typename": "TableOfContentsV2",
+            "chapters": [
+              { "__ref": "Chapter:ch1" },
+              { "__ref": "Chapter:ch2" }
+            ]
+          },
+          "episodes": []
+        },
+        "Author:author2": { "__typename": "Author", "name": "別著者" },
+        "Chapter:ch1": {
+          "__typename": "Chapter",
+          "id": "ch1",
+          "title": "第一章",
+          "episodes": [
+            { "__ref": "Episode:222000001" },
+            { "__ref": "Episode:222000002" }
+          ]
+        },
+        "Chapter:ch2": {
+          "__typename": "Chapter",
+          "id": "ch2",
+          "title": "第二章",
+          "episodes": [
+            { "__ref": "Episode:222000003" }
+          ]
+        },
+        "Episode:222000001": {
+          "__typename": "Episode",
+          "id": "222000001",
+          "title": "一の一",
+          "publishedAt": "2024-02-01T00:00:00Z",
+          "accessState": "public"
+        },
+        "Episode:222000002": {
+          "__typename": "Episode",
+          "id": "222000002",
+          "title": "一の二",
+          "publishedAt": "2024-02-02T00:00:00Z",
+          "accessState": "public"
+        },
+        "Episode:222000003": {
+          "__typename": "Episode",
+          "id": "222000003",
+          "title": "二の一",
+          "publishedAt": "2024-02-03T00:00:00Z",
+          "accessState": "public"
+        }
+      },
+      "workId": "9999999999"
+    }
+  },
+  "query": {}
+}

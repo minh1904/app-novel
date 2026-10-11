@@ -1,14 +1,18 @@
 import { useState, type JSX } from 'react'
-import { FolderIcon } from '@solar-icons/react/linear/folder'
-import { DocumentIcon } from '@solar-icons/react/linear/document'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { DangerTriangleIcon } from '@solar-icons/react/linear/danger-triangle'
+import {
+  FolderIcon,
+  DocumentIcon,
+  GlobeIcon,
+  CheckCircleIcon,
+  DangerTriangleIcon
+} from '@renderer/components/ui/reicon'
+
 import { Dialog } from '../../../components/ui/Dialog'
 import { Button } from '../../../components/ui/Button'
 import { TextField } from '../../../components/ui/Field'
 import { Select } from '../../../components/ui/Select'
 import { ICON } from '../../../components/ui/icon'
-import type { SourceBinding } from '../../../../../shared/contracts/sources'
+import type { SourceBinding, SourceBindingPreview } from '../../../../../shared/contracts/sources'
 
 export interface AddRawDialogProps {
   open: boolean
@@ -18,7 +22,7 @@ export interface AddRawDialogProps {
   onBindingCreated: (binding: SourceBinding) => void
 }
 
-type SourceKind = 'file' | 'folder'
+type SourceKind = 'file' | 'folder' | 'url'
 
 const SOURCE_KINDS = [
   {
@@ -32,6 +36,12 @@ const SOURCE_KINDS = [
     title: 'Tệp văn bản đơn',
     description: 'Nhập nội dung từ một tệp văn bản .txt hoặc .md',
     icon: <DocumentIcon size={ICON.md} />
+  },
+  {
+    kind: 'url' as SourceKind,
+    title: 'URL nguồn mạng',
+    description: 'Theo dõi tác phẩm từ website web novel được hỗ trợ qua URL',
+    icon: <GlobeIcon size={ICON.md} />
   }
 ]
 
@@ -58,27 +68,38 @@ export function AddRawDialog({
 }: AddRawDialogProps): JSX.Element {
   const [kind, setKind] = useState<SourceKind>('folder')
   const [pathValue, setPathValue] = useState('')
+  const [urlValue, setUrlValue] = useState('')
   const [label, setLabel] = useState('')
   const [languageTag, setLanguageTag] = useState(defaultLanguageTag)
   const [role, setRole] = useState<'primary' | 'reference'>('primary')
 
-  // Step state
+  // Trạng thái các bước
   const [step, setStep] = useState<'select' | 'preview' | 'config'>('select')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Preview result
+  // Kết quả xem trước — dùng kiểu đầy đủ cho URL, kiểu đơn giản cho file/folder
   const [previewResult, setPreviewResult] = useState<{
     previewId: string
     totalCount: number
     matchedCount: number
     unmatchedCount: number
     errorCount: number
+    // Thêm cho URL preview
+    title?: string
+    author?: string | null
+    warnings?: string[]
+    sample?: Array<{ remoteChapterId: string; title: string; position: number }>
+    canonicalUrl?: string | null
+    inputRemoteChapterId?: string | null
+    sourceId?: string
+    remoteWorkId?: string
   } | null>(null)
 
   const reset = (): void => {
     setKind('folder')
     setPathValue('')
+    setUrlValue('')
     setLabel('')
     setLanguageTag(defaultLanguageTag)
     setRole('primary')
@@ -96,8 +117,8 @@ export function AddRawDialog({
   const sourceId = kind === 'folder' ? 'mira.folder' : 'mira.single-file'
   const remoteWorkId = kind === 'folder' ? `folder:${pathValue.trim()}` : `file:${pathValue.trim()}`
 
-  // Step 1 -> Step 2 (Preview)
-  const handlePreview = async (): Promise<void> => {
+  // Bước 1 -> Bước 2 (Xem trước) — cho file/folder
+  const handlePreviewFilePath = async (): Promise<void> => {
     if (!pathValue.trim()) {
       setError('Vui lòng nhập đường dẫn tệp hoặc thư mục')
       return
@@ -130,7 +151,7 @@ export function AddRawDialog({
           setError(res.error.message || 'Không thể đọc bản raw từ đường dẫn này')
         }
       } else {
-        // Fallback for test / dev environment
+        // Dữ liệu dự phòng cho môi trường kiểm thử
         setPreviewResult({
           previewId: 'mock-preview-id',
           totalCount: 10,
@@ -150,24 +171,133 @@ export function AddRawDialog({
     }
   }
 
-  // Step 2 -> Step 3 (Config)
-  const handleProceedToConfig = (): void => {
-    setStep('config')
-  }
-
-  // Confirm and Create
-  const handleConfirm = async (): Promise<void> => {
+  // Bước 1 -> Bước 2 (Xem trước) — cho URL
+  const handlePreviewUrl = async (): Promise<void> => {
+    const candidate = urlValue.trim()
+    if (!candidate) {
+      setError('Vui lòng nhập URL tác phẩm')
+      return
+    }
     setError(null)
     setLoading(true)
 
     try {
       if (typeof window !== 'undefined' && window.mira?.sources?.bindings) {
+        // Bước 1: identify URL
+        const identifyRes = await window.mira.sources.bindings.identify({ workId, candidate })
+        if (!identifyRes.ok) {
+          setError(identifyRes.error.message || 'Không thể nhận diện URL này')
+          return
+        }
+        if (!identifyRes.value) {
+          setError('URL này không được hỗ trợ hoặc nguồn tương ứng chưa khả dụng')
+          return
+        }
+        const identified = identifyRes.value
+
+        // Kiểm tra gate: nếu health không phải unchecked/healthy thì báo lỗi
+        const health = identified.source.health.state
+        if (health === 'broken') {
+          setError('Nguồn này hiện không hoạt động. Vui lòng thử lại sau.')
+          return
+        }
+
+        // Bước 2: preview-create
+        const previewRes = await window.mira.sources.bindings.previewCreate({
+          workId,
+          sourceId: identified.source.sourceId,
+          remoteWorkId: identified.remoteWorkId,
+          canonicalUrl: identified.canonicalUrl,
+          inputRemoteChapterId: identified.inputRemoteChapterId ?? null
+        })
+
+        if (!previewRes.ok) {
+          // Giữ input khi retry
+          setError(
+            previewRes.error.message || 'Không thể xem trước tác phẩm này. Vui lòng thử lại.'
+          )
+          return
+        }
+
+        const p = previewRes.value as SourceBindingPreview
+        setPreviewResult({
+          previewId: p.previewId,
+          totalCount: p.totalCount,
+          matchedCount: p.matchedCount,
+          unmatchedCount: p.unmatchedCount,
+          errorCount: p.errorCount,
+          title: p.title,
+          author: p.author,
+          warnings: p.warnings,
+          sample: p.sample,
+          canonicalUrl: p.canonicalUrl,
+          inputRemoteChapterId: p.inputRemoteChapterId,
+          sourceId: p.sourceId,
+          remoteWorkId: p.remoteWorkId
+        })
+        if (!label && p.title) setLabel(p.title)
+        // URL source ngôn ngữ thường là ja
+        if (p.languageTag) setLanguageTag(p.languageTag)
+        setStep('preview')
+      } else {
+        // Mock cho môi trường kiểm thử
+        setPreviewResult({
+          previewId: 'mock-url-preview',
+          totalCount: 5,
+          matchedCount: 5,
+          unmatchedCount: 0,
+          errorCount: 0,
+          title: 'テスト作品',
+          author: 'テスト著者',
+          warnings: [],
+          sample: [
+            { remoteChapterId: '111000001', title: '第一話', position: 0 },
+            { remoteChapterId: '111000002', title: '第二話', position: 1 }
+          ],
+          canonicalUrl: candidate,
+          sourceId: 'mira.jp.kakuyomu',
+          remoteWorkId: '1234567890'
+        })
+        if (!label) setLabel('テスト作品')
+        setStep('preview')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Lỗi khi xem trước URL')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePreview = kind === 'url' ? handlePreviewUrl : handlePreviewFilePath
+
+  // Bước 2 -> Bước 3 (Cấu hình)
+  const handleProceedToConfig = (): void => {
+    setStep('config')
+  }
+
+  // Xác nhận và tạo bản raw
+  const handleConfirm = async (): Promise<void> => {
+    setError(null)
+    setLoading(true)
+
+    try {
+      const effectiveSourceId = kind === 'url' ? (previewResult?.sourceId ?? '') : sourceId
+      const effectiveRemoteWorkId =
+        kind === 'url' ? (previewResult?.remoteWorkId ?? '') : remoteWorkId
+      const defaultLabel =
+        kind === 'folder'
+          ? 'Bản Raw Thư mục'
+          : kind === 'file'
+            ? 'Bản Raw Tệp'
+            : (previewResult?.title ?? 'Bản Raw URL')
+
+      if (typeof window !== 'undefined' && window.mira?.sources?.bindings) {
         const res = await window.mira.sources.bindings.create({
           workId,
-          sourceId,
-          remoteWorkId,
+          sourceId: effectiveSourceId,
+          remoteWorkId: effectiveRemoteWorkId,
           languageTag,
-          label: label.trim() || (kind === 'folder' ? 'Bản Raw Thư mục' : 'Bản Raw Tệp'),
+          label: label.trim() || defaultLabel,
           role,
           expectedPreviewId: previewResult?.previewId ?? 'preview-1'
         })
@@ -178,17 +308,17 @@ export function AddRawDialog({
           setError(res.error.message || 'Không thể tạo bản raw')
         }
       } else {
-        // Mock success
+        // Tạo thành công trong môi trường kiểm thử
         onBindingCreated({
           id: 'mock-binding-' + Date.now(),
           workId,
-          sourceId,
+          sourceId: effectiveSourceId,
           adapterVersion: '1.0.0',
-          remoteWorkId,
-          canonicalUrl: null,
+          remoteWorkId: effectiveRemoteWorkId,
+          canonicalUrl: previewResult?.canonicalUrl ?? null,
           countryCode: null,
           languageTag,
-          label: label.trim() || 'Bản Raw',
+          label: label.trim() || defaultLabel,
           role,
           authProfileId: null,
           enabled: true,
@@ -256,12 +386,12 @@ export function AddRawDialog({
           </div>
         )}
 
-        {/* STEP 1: SELECT KIND & PATH */}
+        {/* STEP 1: SELECT KIND & PATH/URL */}
         {step === 'select' && (
           <div className="flex flex-col gap-md">
             <div className="flex flex-col gap-xs">
               <span className="text-label-sm font-medium text-default">Phương thức nhập</span>
-              <div className="grid grid-cols-2 gap-sm">
+              <div className="grid grid-cols-3 gap-sm">
                 {SOURCE_KINDS.map((opt) => (
                   <div
                     key={opt.kind}
@@ -282,19 +412,39 @@ export function AddRawDialog({
               </div>
             </div>
 
-            <div className="flex flex-col gap-xs">
-              <TextField
-                label={
-                  kind === 'folder' ? 'Đường dẫn thư mục chương' : 'Đường dẫn tệp .txt hoặc .md'
-                }
-                value={pathValue}
-                onChange={(e) => setPathValue(e.target.value)}
-                placeholder={kind === 'folder' ? 'D:\\Novels\\MyNovel\\raw' : 'D:\\Novels\\raw.txt'}
-              />
-              <span className="text-body-xs text-muted">
-                Mira sẽ đọc theo yêu cầu và không chỉnh sửa tệp gốc trên máy tính của bạn.
-              </span>
-            </div>
+            {kind === 'url' ? (
+              <div className="flex flex-col gap-xs">
+                <TextField
+                  label="URL tác phẩm"
+                  value={urlValue}
+                  onChange={(e) => {
+                    setUrlValue(e.target.value)
+                    setError(null)
+                  }}
+                  placeholder="https://kakuyomu.jp/works/1234567890"
+                />
+                <span className="text-body-xs text-muted">
+                  Paste URL trang tác phẩm hoặc tập chương. Mira sẽ nhận diện nguồn và xem trước
+                  danh mục trước khi xác nhận.
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-xs">
+                <TextField
+                  label={
+                    kind === 'folder' ? 'Đường dẫn thư mục chương' : 'Đường dẫn tệp .txt hoặc .md'
+                  }
+                  value={pathValue}
+                  onChange={(e) => setPathValue(e.target.value)}
+                  placeholder={
+                    kind === 'folder' ? 'D:\\Novels\\MyNovel\\raw' : 'D:\\Novels\\raw.txt'
+                  }
+                />
+                <span className="text-body-xs text-muted">
+                  Mira sẽ đọc theo yêu cầu và không chỉnh sửa tệp gốc trên máy tính của bạn.
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -304,9 +454,28 @@ export function AddRawDialog({
             <div className="flex items-center gap-xs text-success">
               <CheckCircleIcon size={ICON.md} />
               <span className="text-label-md font-medium text-default">
-                Đã quét thông tin nguồn thành công
+                {kind === 'url'
+                  ? 'Đã xem trước tác phẩm thành công'
+                  : 'Đã quét thông tin nguồn thành công'}
               </span>
             </div>
+
+            {/* Tiêu đề/tác giả cho URL preview */}
+            {kind === 'url' && previewResult.title && (
+              <div className="rounded-md border border-default bg-muted p-md">
+                <div className="text-label-md font-semibold text-default">
+                  {previewResult.title}
+                </div>
+                {previewResult.author && (
+                  <div className="mt-2xs text-body-xs text-muted">{previewResult.author}</div>
+                )}
+                {previewResult.canonicalUrl && (
+                  <div className="mt-2xs truncate text-body-xs text-subtle">
+                    {previewResult.canonicalUrl}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-sm rounded-md border border-default bg-muted p-md">
               <div className="flex flex-col gap-3xs">
@@ -316,24 +485,74 @@ export function AddRawDialog({
                 </span>
               </div>
               <div className="flex flex-col gap-3xs">
-                <span className="text-body-xs text-muted">Chương ghép được:</span>
+                <span className="text-body-xs text-muted">
+                  {kind === 'url' ? 'Có thể theo dõi:' : 'Chương ghép được:'}
+                </span>
                 <span className="text-heading font-semibold text-success">
                   {previewResult.matchedCount}
                 </span>
               </div>
-              <div className="flex flex-col gap-3xs">
-                <span className="text-body-xs text-muted">Chưa ghép:</span>
-                <span className="text-body-md font-medium text-default">
-                  {previewResult.unmatchedCount}
-                </span>
-              </div>
-              <div className="flex flex-col gap-3xs">
-                <span className="text-body-xs text-muted">Không đọc được:</span>
-                <span className="text-body-md font-medium text-muted">
-                  {previewResult.errorCount}
-                </span>
-              </div>
+              {previewResult.unmatchedCount > 0 && (
+                <div className="flex flex-col gap-3xs">
+                  <span className="text-body-xs text-muted">Chưa ghép:</span>
+                  <span className="text-body-md font-medium text-default">
+                    {previewResult.unmatchedCount}
+                  </span>
+                </div>
+              )}
+              {previewResult.errorCount > 0 && (
+                <div className="flex flex-col gap-3xs">
+                  <span className="text-body-xs text-muted">Không đọc được:</span>
+                  <span className="text-body-md font-medium text-muted">
+                    {previewResult.errorCount}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Cảnh báo */}
+            {previewResult.warnings && previewResult.warnings.length > 0 && (
+              <div className="flex flex-col gap-xs rounded-md border border-warning bg-warning/10 p-sm">
+                <div className="flex items-center gap-xs text-warning">
+                  <DangerTriangleIcon size={ICON.sm} />
+                  <span className="text-label-xs font-medium">Cảnh báo</span>
+                </div>
+                {previewResult.warnings.map((w, i) => (
+                  <span key={i} className="text-body-xs text-warning">
+                    {w}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Sample catalog cho URL */}
+            {kind === 'url' && previewResult.sample && previewResult.sample.length > 0 && (
+              <div className="flex flex-col gap-xs">
+                <span className="text-label-xs font-medium text-muted">
+                  Một số chương đầu tiên:
+                </span>
+                <div className="flex flex-col gap-2xs rounded-md border border-default bg-surface p-sm">
+                  {previewResult.sample.slice(0, 5).map((item) => (
+                    <div key={item.remoteChapterId} className="flex items-center gap-xs">
+                      <span className="min-w-[2rem] text-body-xs text-muted tabular-nums">
+                        {item.position + 1}.
+                      </span>
+                      <span className="text-body-xs text-default">{item.title}</span>
+                      {previewResult.inputRemoteChapterId === item.remoteChapterId && (
+                        <span className="rounded-xs bg-selected/20 px-1 py-0.5 text-body-2xs text-selected">
+                          được chọn
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {previewResult.sample.length > 5 && (
+                    <span className="text-body-xs text-muted">
+                      +{previewResult.sample.length - 5} chương khác…
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             <p className="m-0 text-body-xs text-subtle">
               Việc xem trước không thay đổi cơ sở dữ liệu tác phẩm. Xác nhận ở bước tiếp theo để tạo
