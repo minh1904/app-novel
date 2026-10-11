@@ -58,7 +58,9 @@ describe('parseKakuyomuWorkPage – flat catalog', () => {
     expect(r.workMeta.author).toBe('テスト著者')
     expect(r.items).toHaveLength(2)
     expect(r.items[0].remoteChapterId).toBe('111000001')
+    expect(r.items[0].order).toBe(1)
     expect(r.items[1].remoteChapterId).toBe('111000002')
+    expect(r.items[1].order).toBe(2)
     expect(r.items[0].identityConfidence).toBe('stable')
   })
 })
@@ -70,6 +72,7 @@ describe('parseKakuyomuWorkPage – sectioned catalog', () => {
     const r = parseKakuyomuWorkPage(json, '9999999999')
     expect(r.complete).toBe(true)
     expect(r.items.map((i) => i.remoteChapterId)).toEqual(['222000001', '222000002', '222000003'])
+    expect(r.items.map((i) => i.order)).toEqual([1, 2, 3])
   })
 })
 

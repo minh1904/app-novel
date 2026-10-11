@@ -503,7 +503,13 @@ describe('ai translate channels', () => {
     expect(result.held).toEqual([])
     expect(result.failed).toEqual([])
     expect(result.error).toBeNull()
-    expect(result.usage).toEqual({ inputTokens: 120, outputTokens: 90 })
+    expect(result.usage).toEqual({
+      inputTokens: 120,
+      uncachedInputTokens: 120,
+      outputTokens: 90,
+      source: 'provider',
+      complete: true
+    })
 
     const target = harness.library.readText(harness.workId, harness.chapterId, 'target')
     expect(target.content).toContain('VI:One.')

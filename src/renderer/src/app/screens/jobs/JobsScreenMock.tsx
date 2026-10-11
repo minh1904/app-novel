@@ -33,8 +33,8 @@ const JOBS: {
     done: 19,
     total: 47,
     speed: '2,1 chương/phút',
-    tokens: '412k',
-    cost: '$0,31',
+    tokens: '—',
+    cost: '—',
     eta: '~13 phút',
     state: 'running'
   },
@@ -45,8 +45,8 @@ const JOBS: {
     done: 252,
     total: 412,
     speed: '41 chương/phút',
-    tokens: '1,9 tr',
-    cost: '$0,12',
+    tokens: '—',
+    cost: '—',
     eta: '~4 phút',
     state: 'running'
   },
@@ -57,8 +57,8 @@ const JOBS: {
     done: 7,
     total: 30,
     speed: '—',
-    tokens: '96k',
-    cost: '$0,05',
+    tokens: '—',
+    cost: '—',
     eta: 'Thử lại 14:30',
     state: 'error'
   },

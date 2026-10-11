@@ -20,7 +20,9 @@ import { Button } from '../../../components/ui/Button'
 import { Checkbox } from '../../../components/ui/Checkbox'
 import { cn } from '../../../lib/cn'
 import { Input, SearchInput } from '../../../components/ui/Input'
-import { backupWork, savedMessage } from '../../library/public'
+import { backupWork, savedMessage, useLibraryStore } from '../../library/public'
+import { ConfirmDialog, type ConfirmRequest } from '../../../components/ui/ConfirmDialog'
+import { ChapterGapItem } from './ChapterGapItem'
 import { ChapterPager } from './ChapterPager'
 import { DeleteChapterDialog, DeleteChaptersDialog, MoveChapterDialog } from './ChapterDialogs'
 import { CHAPTER_GRID, ChapterRow, type ChapterRowActions } from './ChapterRow'
@@ -29,11 +31,13 @@ import {
   chapterState,
   clampPage,
   filterChapters,
+  findJumpTarget,
   pageOfPosition,
   parseQuery,
   slicePage,
   type PageSize
 } from './chapterList'
+import { extractChapterNumber } from '../../../../../shared/text/chapterNumber'
 import { ImportTxtMockDialog } from './ImportTxtMockDialog'
 import { MOCK_FEATURES, SOON_LABEL } from '../../../lib/mockFeatures'
 import { useChapters } from './useChapters'
@@ -76,6 +80,7 @@ export function ChaptersArea({
   /** Đang thực hiện xóa hàng loạt: thanh chọn chờ để tránh xóa trùng lặp. */
   const [bulkBusy, setBulkBusy] = useState(false)
   const anchor = useRef<string | null>(null)
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null)
   const [deletingMany, setDeletingMany] = useState<ChapterItem[]>([])
   const listRef = useRef<HTMLUListElement>(null)
 
@@ -86,7 +91,7 @@ export function ChaptersArea({
     setAddKey((key) => key + 1)
   }
 
-  const parsed = parseQuery(query)
+  const parsed = parseQuery(query, all)
   // Giữ phản hồi mượt mà khi gõ với hàng nghìn chương bằng useDeferredValue
   const filterText = useDeferredValue(parsed.kind === 'filter' ? parsed.text : '')
   const filtered = useMemo(() => filterChapters(all, filterText), [all, filterText])
@@ -183,6 +188,39 @@ export function ChaptersArea({
     return true
   }
 
+  const handleReorderByRaw = async (): Promise<void> => {
+    if (!window.mira?.sources?.bindings || !window.mira?.sources?.catalog?.reorderBySource) return
+    const listRes = await window.mira.sources.bindings.list({ workId })
+    if (!listRes.ok || listRes.value.length === 0) {
+      setAnnouncement('Tác phẩm chưa có bản raw liên kết.')
+      return
+    }
+    const primary = listRes.value.find((b) => b.role === 'primary') ?? listRes.value[0]
+    setConfirmRequest({
+      title: 'Sắp xếp theo nguồn raw?',
+      description: `Sắp xếp lại toàn bộ các chương đã gắn kết theo thứ tự catalog của bản raw "${primary.label}". Các chương tự nhập sẽ giữ nguyên vị trí tương đối.`,
+      confirmLabel: 'Sắp xếp lại',
+      onConfirm: async () => {
+        const res = await window.mira.sources.catalog.reorderBySource({
+          workId,
+          bindingId: primary.id
+        })
+        if (res.ok) {
+          void chapters.reload()
+          void useLibraryStore.getState().reload()
+          if (onWork && window.mira?.works?.get) {
+            void window.mira.works.get(workId).then((r) => {
+              if (r?.ok) onWork(r.value)
+            })
+          }
+          setAnnouncement(`Đã sắp xếp lại ${res.value.reorderedCount} chương theo nguồn raw.`)
+        } else {
+          setAnnouncement('Không thể sắp xếp: ' + res.error.message)
+        }
+      }
+    })
+  }
+
   function onSearchKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     if (event.key === 'Escape' && query !== '') {
       event.preventDefault()
@@ -193,13 +231,17 @@ export function ChaptersArea({
     }
     if (event.key !== 'Enter' || parsed.kind !== 'jump') return
     event.preventDefault()
-    if (parsed.number < 1 || parsed.number > all.length) {
-      setSearchError('Chỉ có ' + all.length + ' chương; nhập số từ 1 đến ' + all.length + '.')
+    const target =
+      parsed.targetChapter ??
+      findJumpTarget(all, parsed.number)?.chapter ??
+      (parsed.number >= 1 && parsed.number <= all.length ? all[parsed.number - 1] : undefined)
+    if (!target) {
+      setSearchError('Không tìm thấy chương ' + parsed.number + '.')
       return
     }
     setSearchError(null)
-    const target = all[parsed.number - 1]
-    setPage(pageOfPosition(parsed.number, pageSize))
+    const targetIndex = all.findIndex((c) => c.id === target.id)
+    setPage(pageOfPosition(targetIndex + 1, pageSize))
     setHighlight({ id: target.id, focus: true })
   }
 
@@ -250,6 +292,9 @@ export function ChaptersArea({
         {/* With no chapters the empty state below carries both actions. */}
         {all.length > 0 && (
           <>
+            <Button variant="outline" onClick={() => void handleReorderByRaw()}>
+              Sắp xếp theo nguồn raw
+            </Button>
             {importButton}
             <Button
               variant="solid"
@@ -380,17 +425,35 @@ export function ChaptersArea({
               </div>
             ) : (
               <ul ref={listRef} aria-label="Danh sách chương">
-                {visible.map((chapter) => (
-                  <ChapterRow
-                    key={chapter.id}
-                    chapter={chapter}
-                    total={all.length}
-                    editing={editingId === chapter.id}
-                    highlighted={highlight?.id === chapter.id}
-                    selected={selectedIds.has(chapter.id)}
-                    actions={actions}
-                  />
-                ))}
+                {visible.map((chapter, index) => {
+                  const prev = index > 0 ? visible[index - 1] : undefined
+                  const prevNum = prev ? extractChapterNumber(prev.title) : null
+                  const currNum = extractChapterNumber(chapter.title)
+                  const gap =
+                    prevNum !== null && currNum !== null && currNum - prevNum > 1
+                      ? currNum - prevNum - 1
+                      : 0
+
+                  return (
+                    <div key={chapter.id} className="contents">
+                      {gap > 0 && (
+                        <ChapterGapItem
+                          missingCount={gap}
+                          startNumber={prevNum! + 1}
+                          endNumber={currNum! - 1}
+                        />
+                      )}
+                      <ChapterRow
+                        chapter={chapter}
+                        total={all.length}
+                        editing={editingId === chapter.id}
+                        highlighted={highlight?.id === chapter.id}
+                        selected={selectedIds.has(chapter.id)}
+                        actions={actions}
+                      />
+                    </div>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -477,6 +540,7 @@ export function ChaptersArea({
         }}
       />
       <ImportTxtMockDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ConfirmDialog request={confirmRequest} onClose={() => setConfirmRequest(null)} />
     </section>
   )
 }

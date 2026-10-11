@@ -11,6 +11,20 @@ import type {
   UpdateConnectionInput,
   UpdateModelEntryInput
 } from './aiConnections'
+import type {
+  AgentCancelInput,
+  AgentOperationDetailView,
+  AgentSendInput,
+  AgentSendResult,
+  AgentSessionDetailView,
+  AgentSessionView,
+  AgentStreamEvent,
+  AgentTargetChanged,
+  AgentUndoInput,
+  AgentUndoResult,
+  AgentWriteIntent,
+  AgentWriteIntentAck
+} from './agent'
 import type { ChatChunk, ChatSendInput, ChatStartResult } from './aiChat'
 import type { AcceptProposalInput, AcceptProposalResult, ProposalQueueItem } from './aiProposals'
 import type { AiSessionView, AiTurnView } from './aiHistory'
@@ -60,10 +74,13 @@ import type {
   SourceBindingUpdateInput,
   SourceCatalogGetInput,
   SourceCatalogDownloadInput,
+  SourceCatalogDownloadRangeInput,
   SourceCatalogDownloadResult,
   SourceCatalogItem,
   SourceCatalogListInput,
   SourceCatalogPage,
+  SourceCatalogReorderInput,
+  SourceDownloadProgress,
   SourceDescriptor,
   SourceRegistryListInput,
   SourceSyncCancelInput,
@@ -403,6 +420,9 @@ export interface SourcesApi {
     list(input: SourceCatalogListInput): Promise<Result<SourceCatalogPage>>
     get(input: SourceCatalogGetInput): Promise<Result<SourceCatalogItem>>
     download(input: SourceCatalogDownloadInput): Promise<Result<SourceCatalogDownloadResult>>
+    downloadRange(input: SourceCatalogDownloadRangeInput): Promise<Result<void>>
+    reorderBySource(input: SourceCatalogReorderInput): Promise<Result<{ reorderedCount: number }>>
+    onDownloadProgress(listener: (progress: SourceDownloadProgress) => void): () => void
   }
   bindings: {
     list(input: SourceBindingsListInput): Promise<Result<SourceBinding[]>>
@@ -429,6 +449,28 @@ export interface SourcesApi {
   }
 }
 
+export interface AgentApi {
+  sessions: {
+    list(options?: { limit?: number }): Promise<Result<{ sessions: AgentSessionView[] }>>
+    get(sessionId: string): Promise<Result<AgentSessionDetailView>>
+    create(title?: string): Promise<Result<AgentSessionView>>
+  }
+  turn: {
+    send(input: AgentSendInput): Promise<Result<AgentSendResult>>
+    cancel(input: AgentCancelInput): Promise<Result<void>>
+  }
+  operations: {
+    get(operationId: string): Promise<Result<AgentOperationDetailView>>
+    undo(input: AgentUndoInput): Promise<Result<AgentUndoResult>>
+  }
+  coordinator: {
+    ackWriteIntent(input: AgentWriteIntentAck): Promise<Result<void>>
+    onWriteIntent(listener: (intent: AgentWriteIntent) => void): () => void
+    onTargetChanged(listener: (event: AgentTargetChanged) => void): () => void
+  }
+  onStreamEvent(listener: (event: AgentStreamEvent) => void): () => void
+}
+
 export interface DesktopApi {
   getAppInfo(): Promise<AppInfo>
   /** Mở liên kết https trên trình duyệt; chỉ cho phép các host an toàn. */
@@ -448,6 +490,7 @@ export interface DesktopApi {
   images: ImagesApi
   backup: BackupApi
   ai: AiApi
+  agent: AgentApi
   glossary: GlossaryApi
   addressing: AddressingApi
   export: ExportApi

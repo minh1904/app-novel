@@ -45,14 +45,18 @@ import { cn } from '../../../lib/cn'
 import { ExportDialog } from '../../export/public'
 import { backupWork, savedMessage } from '../../library/public'
 import { DeleteChapterDialog, MoveChapterDialog } from '../work-detail/ChapterDialogs'
+import { ChapterGapItem } from '../work-detail/ChapterGapItem'
 import {
   chapterState,
   chapterStateLabels,
   displayTitle,
+  findJumpTarget,
   fold,
+  formatChapterLabel,
   parseQuery,
   type ChapterState
 } from '../work-detail/chapterList'
+import { extractChapterNumber } from '../../../../../shared/text/chapterNumber'
 import { useChapters } from '../work-detail/useChapters'
 
 /** Màu sắc tương ứng với các trạng thái của chương (đã dịch, chưa dịch, trống). */
@@ -124,6 +128,7 @@ export function ChapterNavSidebar({
       const numStr = String(parsed.number)
       return chapters.filter(
         (chapter) =>
+          extractChapterNumber(chapter.title) === parsed.number ||
           chapter.number === parsed.number ||
           String(chapter.number).startsWith(numStr) ||
           fold(displayTitle(chapter)).includes(fold(numStr))
@@ -193,7 +198,10 @@ export function ChapterNavSidebar({
     if (event.key === 'Enter') {
       event.preventDefault()
       if (parsed.kind === 'jump') {
-        const exact = chapters.find((chapter) => chapter.number === parsed.number)
+        const exact =
+          parsed.targetChapter ??
+          findJumpTarget(chapters, parsed.number)?.chapter ??
+          chapters.find((chapter) => chapter.number === parsed.number)
         if (exact) {
           onOpenChapter(exact.id)
           return
@@ -280,7 +288,7 @@ export function ChapterNavSidebar({
             )}
           </div>
         ) : (
-          filteredChapters.map((chapter) => {
+          filteredChapters.map((chapter, index) => {
             const active = chapter.id === activeChapterId
             const isEditing = editingId === chapter.id
             const label = displayTitle(chapter)
@@ -289,132 +297,157 @@ export function ChapterNavSidebar({
             const dotLabel = chapterStateLabels[state]
             const pending = pendingCounts[chapter.id] ?? 0
 
+            const prev = index > 0 ? filteredChapters[index - 1] : undefined
+            const prevNum = prev ? extractChapterNumber(prev.title) : null
+            const currNum = extractChapterNumber(chapter.title)
+            const gap =
+              prevNum !== null && currNum !== null && currNum - prevNum > 1
+                ? currNum - prevNum - 1
+                : 0
+
             if (isEditing) {
               return (
-                <RenameInlineInput
-                  key={chapter.id}
-                  chapter={chapter}
-                  onCommit={(title) => void handleCommitRename(chapter.id, title)}
-                  onCancel={() => setEditingId(null)}
-                />
+                <div key={chapter.id} className="contents">
+                  {gap > 0 && (
+                    <ChapterGapItem
+                      missingCount={gap}
+                      startNumber={prevNum! + 1}
+                      endNumber={currNum! - 1}
+                    />
+                  )}
+                  <RenameInlineInput
+                    chapter={chapter}
+                    onCommit={(title) => void handleCommitRename(chapter.id, title)}
+                    onCancel={() => setEditingId(null)}
+                  />
+                </div>
               )
             }
 
             return (
-              <ContextMenuRoot key={chapter.id}>
-                <div className="group relative flex items-center">
-                  <ContextMenuTrigger className="min-w-0 flex-1">
-                    <NavItem
-                      data-chapter-id={chapter.id}
-                      active={active}
-                      onClick={() => onOpenChapter(chapter.id)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'F2') {
-                          event.preventDefault()
-                          setEditingId(chapter.id)
-                        }
-                      }}
-                      className="pr-7"
-                      leading={
-                        <span
-                          aria-hidden="true"
-                          title={dotLabel}
-                          className={cn('size-1.5 shrink-0 rounded-full', dotClass)}
-                        />
-                      }
-                      trailing={
-                        pending > 0 ? (
-                          <Badge
-                            color="warning"
-                            className="tabular-nums transition-opacity group-hover:opacity-0"
-                            title={`${pending} đề xuất chờ duyệt`}
-                          >
-                            {pending}
-                          </Badge>
-                        ) : undefined
-                      }
-                    >
-                      {chapter.number}. {label}
-                    </NavItem>
-                  </ContextMenuTrigger>
-
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                    <MenuRoot>
-                      <MenuTrigger
-                        render={
-                          <CompactButton
-                            aria-label={'Thao tác với ' + label}
-                            icon={<MenuDotsIcon size={ICON.xs} />}
+              <div key={chapter.id} className="contents">
+                {gap > 0 && (
+                  <ChapterGapItem
+                    missingCount={gap}
+                    startNumber={prevNum! + 1}
+                    endNumber={currNum! - 1}
+                  />
+                )}
+                <ContextMenuRoot>
+                  <div className="group relative flex items-center">
+                    <ContextMenuTrigger className="min-w-0 flex-1">
+                      <NavItem
+                        data-chapter-id={chapter.id}
+                        active={active}
+                        onClick={() => onOpenChapter(chapter.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'F2') {
+                            event.preventDefault()
+                            setEditingId(chapter.id)
+                          }
+                        }}
+                        className="pr-7"
+                        leading={
+                          <span
+                            aria-hidden="true"
+                            title={dotLabel}
+                            className={cn('size-1.5 shrink-0 rounded-full', dotClass)}
                           />
                         }
-                      />
-                      <MenuPopup align="end">
-                        <MenuItem disabled={active} onClick={() => onOpenChapter(chapter.id)}>
-                          <FolderOpenIcon size={14} />
-                          Mở chương
-                        </MenuItem>
-                        <MenuItem onClick={() => setEditingId(chapter.id)}>
-                          <PenNewSquareIcon size={14} />
-                          <span className="flex-1">Đổi tên</span>
-                          <kbd className="text-body-2xs text-muted">F2</kbd>
-                        </MenuItem>
-                        <MenuItem onClick={() => void handleInsertAfter(chapter)}>
-                          <AddIcon size={14} />
-                          Chèn chương mới phía sau
-                        </MenuItem>
-                        <MenuItem
-                          disabled={chapters.length < 2}
-                          onClick={() => setMovingChapter(chapter)}
-                        >
-                          <HashtagIcon size={14} />
-                          Chuyển vị trí…
-                        </MenuItem>
-                        <MenuItem onClick={() => setExportingChapter(chapter)}>
-                          <UploadMinimalisticIcon size={14} />
-                          Xuất chương này…
-                        </MenuItem>
-                        <MenuSeparator />
-                        <MenuItem tone="danger" onClick={() => setDeletingChapter(chapter)}>
-                          <TrashBinMinimalisticIcon size={14} />
-                          Xóa chương…
-                        </MenuItem>
-                      </MenuPopup>
-                    </MenuRoot>
-                  </div>
-                </div>
+                        trailing={
+                          pending > 0 ? (
+                            <Badge
+                              color="warning"
+                              className="tabular-nums transition-opacity group-hover:opacity-0"
+                              title={`${pending} đề xuất chờ duyệt`}
+                            >
+                              {pending}
+                            </Badge>
+                          ) : undefined
+                        }
+                      >
+                        {formatChapterLabel(chapter)}
+                      </NavItem>
+                    </ContextMenuTrigger>
 
-                <ContextMenuPopup>
-                  <ContextMenuItem disabled={active} onClick={() => onOpenChapter(chapter.id)}>
-                    <FolderOpenIcon size={14} />
-                    Mở chương
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => setEditingId(chapter.id)}>
-                    <PenNewSquareIcon size={14} />
-                    <span className="flex-1">Đổi tên</span>
-                    <kbd className="text-body-2xs text-muted">F2</kbd>
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => void handleInsertAfter(chapter)}>
-                    <AddIcon size={14} />
-                    Chèn chương mới phía sau
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    disabled={chapters.length < 2}
-                    onClick={() => setMovingChapter(chapter)}
-                  >
-                    <HashtagIcon size={14} />
-                    Chuyển vị trí…
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => setExportingChapter(chapter)}>
-                    <UploadMinimalisticIcon size={14} />
-                    Xuất chương này…
-                  </ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem tone="danger" onClick={() => setDeletingChapter(chapter)}>
-                    <TrashBinMinimalisticIcon size={14} />
-                    Xóa chương…
-                  </ContextMenuItem>
-                </ContextMenuPopup>
-              </ContextMenuRoot>
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                      <MenuRoot>
+                        <MenuTrigger
+                          render={
+                            <CompactButton
+                              aria-label={'Thao tác với ' + label}
+                              icon={<MenuDotsIcon size={ICON.xs} />}
+                            />
+                          }
+                        />
+                        <MenuPopup align="end">
+                          <MenuItem disabled={active} onClick={() => onOpenChapter(chapter.id)}>
+                            <FolderOpenIcon size={14} />
+                            Mở chương
+                          </MenuItem>
+                          <MenuItem onClick={() => setEditingId(chapter.id)}>
+                            <PenNewSquareIcon size={14} />
+                            <span className="flex-1">Đổi tên</span>
+                            <kbd className="text-body-2xs text-muted">F2</kbd>
+                          </MenuItem>
+                          <MenuItem onClick={() => void handleInsertAfter(chapter)}>
+                            <AddIcon size={14} />
+                            Chèn chương mới phía sau
+                          </MenuItem>
+                          <MenuItem
+                            disabled={chapters.length < 2}
+                            onClick={() => setMovingChapter(chapter)}
+                          >
+                            <HashtagIcon size={14} />
+                            Chuyển vị trí…
+                          </MenuItem>
+                          <MenuItem onClick={() => setExportingChapter(chapter)}>
+                            <UploadMinimalisticIcon size={14} />
+                            Xuất chương này…
+                          </MenuItem>
+                          <MenuSeparator />
+                          <MenuItem tone="danger" onClick={() => setDeletingChapter(chapter)}>
+                            <TrashBinMinimalisticIcon size={14} />
+                            Xóa chương…
+                          </MenuItem>
+                        </MenuPopup>
+                      </MenuRoot>
+                    </div>
+                  </div>
+
+                  <ContextMenuPopup>
+                    <ContextMenuItem disabled={active} onClick={() => onOpenChapter(chapter.id)}>
+                      <FolderOpenIcon size={14} />
+                      Mở chương
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => setEditingId(chapter.id)}>
+                      <PenNewSquareIcon size={14} />
+                      <span className="flex-1">Đổi tên</span>
+                      <kbd className="text-body-2xs text-muted">F2</kbd>
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => void handleInsertAfter(chapter)}>
+                      <AddIcon size={14} />
+                      Chèn chương mới phía sau
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      disabled={chapters.length < 2}
+                      onClick={() => setMovingChapter(chapter)}
+                    >
+                      <HashtagIcon size={14} />
+                      Chuyển vị trí…
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => setExportingChapter(chapter)}>
+                      <UploadMinimalisticIcon size={14} />
+                      Xuất chương này…
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem tone="danger" onClick={() => setDeletingChapter(chapter)}>
+                      <TrashBinMinimalisticIcon size={14} />
+                      Xóa chương…
+                    </ContextMenuItem>
+                  </ContextMenuPopup>
+                </ContextMenuRoot>
+              </div>
             )
           })
         )}

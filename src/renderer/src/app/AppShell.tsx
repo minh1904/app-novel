@@ -68,7 +68,6 @@ export function AppShell({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onToggleSidebar])
 
-  const showSidebar = sidebar !== null && sidebarOpen
   const themeLabel = theme === 'dark' ? 'Chuyển sang nền sáng' : 'Chuyển sang nền tối'
 
   return (
@@ -121,25 +120,25 @@ export function AppShell({
             )}
           </header>
 
-          <div
-            className={cn(
-              'grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)]',
-              showSidebar
-                ? 'grid-cols-[var(--mira-sidebar-width)_minmax(0,1fr)]'
-                : 'grid-cols-[minmax(0,1fr)]'
-            )}
-          >
-            {showSidebar && (
+          <div className="flex min-h-0 min-w-0 flex-1">
+            {sidebar !== null && (
               <aside
                 id="app-sidebar"
-                className="flex min-h-0 flex-col border-r border-default bg-surface"
+                inert={!sidebarOpen || undefined}
+                aria-hidden={!sidebarOpen || undefined}
+                className={cn(
+                  'flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-default bg-surface transition-[width] duration-(--mira-duration-base) ease-standard',
+                  sidebarOpen ? 'w-(--mira-sidebar-width)' : 'w-0 border-r-0'
+                )}
                 aria-label="Danh sách"
               >
-                {sidebar}
+                <div className="flex min-h-0 w-(--mira-sidebar-width) min-w-(--mira-sidebar-width) flex-1 flex-col">
+                  {sidebar}
+                </div>
               </aside>
             )}
 
-            <div className="flex min-h-0 min-w-0 flex-col">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <TopBarTitleSlotContext.Provider value={titleSlot}>
                 <TopBarSlotContext.Provider value={slot}>
                   <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>

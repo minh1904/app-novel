@@ -73,6 +73,18 @@ describe('chapters', () => {
     expect(titles(listed)).toEqual(['Mở đầu', '', 'Cuộc gặp gỡ'])
   })
 
+  it('inserts chapters at specified positions and shifts existing ones', () => {
+    const { store, dataDir, workId } = setup()
+    store.createChapter(workId, 'Chương 10')
+    store.createChapterAt(workId, 0, 'Chương 1')
+    store.createChapterAt(workId, 1, 'Chương 5')
+
+    const listed = store.listChapters(workId)
+    expect(titles(listed)).toEqual(['Chương 1', 'Chương 5', 'Chương 10'])
+    expect(listed.map((c) => c.number)).toEqual([1, 2, 3])
+    expectContiguous(dataDir, workId)
+  })
+
   it('renames in place, clears to an empty title, and keeps the position', () => {
     const { store, workId } = setup()
     store.createChapter(workId, 'A')

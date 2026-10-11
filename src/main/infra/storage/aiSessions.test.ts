@@ -52,7 +52,7 @@ describe('AI sessions in a work file', () => {
         answer: 'Bản dịch',
         status: 'done',
         tools: [{ name: 'read', detail: 'Chương 1' }],
-        usage: { inputTokens: 12, outputTokens: 8 },
+        usage: { inputTokens: 12, outputTokens: 8, source: 'provider', complete: true },
         costUsd: 0.002,
         finishReason: 'stop'
       },
@@ -71,7 +71,7 @@ describe('AI sessions in a work file', () => {
       droppedTurns: 2,
       provider: 'openai',
       model: 'gpt-test',
-      usage: { inputTokens: 12, outputTokens: 8 }
+      usage: { inputTokens: 12, outputTokens: 8, source: 'provider', complete: true }
     })
     expect(listAiTurns(reopened, 's1', 10).map((turn) => turn.id)).toEqual(['t1'])
     reopened.close()

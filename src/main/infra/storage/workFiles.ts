@@ -1,10 +1,12 @@
+import { randomUUID } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import type { WorkList, WorkProblem, WorkSummary } from '../../../shared/contracts/library'
 import { exportToFile, verifyWorkFile } from './backupFile'
 import { StorageError, toStorageError } from './errors'
+import { createLibraryBackup, findLatestValidLibraryBackup, removeSideFiles } from './libraryBackup'
 import { librarySchema } from './librarySchema'
-import { migrate } from './migrate'
+import { latestVersion, migrate, readPragmas } from './migrate'
 import { openDatabase, type Db } from './sqlite'
 import { assertWorkId, openWorkFile, readWork, rowToSummary, type WorkRow } from './workFile'
 
@@ -30,6 +32,7 @@ interface IndexRow extends WorkRow {
 export class WorkFiles {
   private readonly worksDir: string
   private readonly tmpDir: string
+  private readonly backupsDir: string
   /** `library.db`: the index of works, and room for data that belongs to no single work. */
   readonly index: Db
   private problems: WorkProblem[] = []
@@ -40,7 +43,9 @@ export class WorkFiles {
   ) {
     this.worksDir = join(dataDir, 'works')
     this.tmpDir = join(this.worksDir, '.tmp')
+    this.backupsDir = join(dataDir, 'backups')
     mkdirSync(this.tmpDir, { recursive: true })
+    mkdirSync(this.backupsDir, { recursive: true })
     this.index = this.openIndex()
   }
 
@@ -183,8 +188,8 @@ export class WorkFiles {
   }
 
   /**
-   * Opens `library.db`. A corrupt index is set aside and recreated (reconcile refills it);
-   * an index written by a newer app is left alone and reported.
+   * Opens `library.db`. A corrupt database is restored from the latest valid backup;
+   * if no backup exists, it refuses with a recovery error instead of silently recreating a blank DB.
    */
   private openIndex(): Db {
     const path = join(this.dataDir, 'library.db')
@@ -193,16 +198,49 @@ export class WorkFiles {
     } catch (error) {
       const storageError = toStorageError(error)
       if (storageError.code !== 'corrupt') throw storageError
-      renameSync(path, path + '.corrupt-' + this.now())
-      rmSync(path + '-wal', { force: true })
-      rmSync(path + '-shm', { force: true })
-      return this.openAndMigrateIndex(path)
+
+      const backup =
+        findLatestValidLibraryBackup(this.backupsDir) ?? findLatestValidLibraryBackup(this.dataDir)
+
+      if (backup) {
+        if (existsSync(path)) {
+          renameSync(path, path + '.corrupt-' + this.now())
+          removeSideFiles(path)
+        }
+        copyFileSync(backup, path)
+        removeSideFiles(path)
+        return this.openAndMigrateIndex(path)
+      }
+
+      throw new StorageError(
+        'corrupt',
+        'Cơ sở dữ liệu thư viện bị hỏng và không tìm thấy bản sao lưu hợp lệ để khôi phục.'
+      )
     }
   }
 
   private openAndMigrateIndex(path: string): Db {
     const db = openDatabase(path)
     try {
+      const { userVersion } = readPragmas(db)
+      const latest = latestVersion(librarySchema)
+      if (userVersion > 0) {
+        const check = db.prepare('PRAGMA quick_check').get<{ quick_check: string }>()
+        if (check?.quick_check !== 'ok') {
+          throw new StorageError('corrupt', 'Cơ sở dữ liệu thư viện bị hỏng dữ liệu.')
+        }
+        if (userVersion < latest) {
+          mkdirSync(this.backupsDir, { recursive: true })
+          let backupDest = join(this.backupsDir, `library-backup-${this.now()}.db`)
+          if (existsSync(backupDest)) {
+            backupDest = join(
+              this.backupsDir,
+              `library-backup-${this.now()}-${randomUUID().slice(0, 8)}.db`
+            )
+          }
+          createLibraryBackup(db, backupDest)
+        }
+      }
       migrate(db, librarySchema)
       return db
     } catch (error) {
@@ -217,6 +255,14 @@ export class WorkFiles {
     // (-journal, -wal, -shm), so nothing there is worth keeping after a restart.
     for (const name of readdirSync(this.tmpDir)) {
       rmSync(join(this.tmpDir, name), { recursive: true, force: true })
+    }
+
+    if (existsSync(this.backupsDir)) {
+      for (const name of readdirSync(this.backupsDir)) {
+        if (name.endsWith('.part')) {
+          rmSync(join(this.backupsDir, name), { force: true })
+        }
+      }
     }
 
     const problems: WorkProblem[] = []

@@ -78,6 +78,27 @@ export function insertChapter(db: Db, id: string, title: string, now: number): C
   return getChapter(db, id)
 }
 
+/** Inserts a chapter at 0-based `targetPosition`, shifting subsequent chapters up. */
+export function insertChapterAt(
+  db: Db,
+  id: string,
+  targetPosition: number,
+  title: string,
+  now: number
+): ChapterItem {
+  const total = countChapters(db)
+  const pos = Math.max(0, Math.min(Math.floor(targetPosition), total))
+  if (pos < total) {
+    db.prepare('UPDATE chapter SET position = position + 1 WHERE position >= ?').run(pos)
+  }
+  db.prepare(
+    `INSERT INTO chapter (id, position, title, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?)`
+  ).run(id, pos, title, now, now)
+  touchWork(db, now)
+  return getChapter(db, id)
+}
+
 export function renameChapter(db: Db, chapterId: string, title: string, now: number): ChapterItem {
   findChapter(db, chapterId)
   db.prepare('UPDATE chapter SET title = ?, updated_at = ? WHERE id = ?').run(title, now, chapterId)

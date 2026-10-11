@@ -5,6 +5,7 @@ import {
   clampPage,
   displayTitle,
   filterChapters,
+  formatChapterLabel,
   headingTitle,
   lossNote,
   fold,
@@ -40,6 +41,21 @@ describe('displayTitle', () => {
   it('falls back to "Chương N" for an untitled chapter', () => {
     expect(displayTitle({ number: 12, title: '' })).toBe('Chương 12')
     expect(displayTitle({ number: 12, title: 'Mở đầu' })).toBe('Mở đầu')
+  })
+})
+
+describe('formatChapterLabel', () => {
+  it('omits repeated number prefix when title already contains a chapter prefix', () => {
+    expect(formatChapterLabel({ number: 1, title: 'Chương 10: Khởi hành' })).toBe(
+      'Chương 10: Khởi hành'
+    )
+    expect(formatChapterLabel({ number: 1, title: 'Chapter 2' })).toBe('Chapter 2')
+    expect(formatChapterLabel({ number: 1, title: '01 - Mở đầu' })).toBe('01 - Mở đầu')
+  })
+
+  it('prefixes with position number when title is plain text or empty', () => {
+    expect(formatChapterLabel({ number: 2, title: 'Khởi hành' })).toBe('2. Khởi hành')
+    expect(formatChapterLabel({ number: 3, title: '' })).toBe('Chương 3')
   })
 })
 
@@ -94,6 +110,36 @@ describe('parseQuery', () => {
     ['1.5', { kind: 'filter', text: '1.5' }]
   ])('reads %j', (raw, expected) => {
     expect(parseQuery(raw)).toEqual(expected)
+  })
+
+  it('resolves jump target by title chapter number when sparse chapters exist', () => {
+    const list = [
+      {
+        id: 'c10',
+        number: 1, // position is 0 -> number is 1
+        title: 'Chương 10: Khởi hành',
+        createdAt: 0,
+        updatedAt: 0,
+        hasSource: true,
+        hasTarget: false
+      }
+    ]
+
+    const query10 = parseQuery('10', list)
+    expect(query10).toEqual({
+      kind: 'jump',
+      number: 10,
+      targetIndex: 0,
+      targetChapter: list[0]
+    })
+
+    const query1 = parseQuery('1', list)
+    expect(query1).toEqual({
+      kind: 'jump',
+      number: 1,
+      targetIndex: 0,
+      targetChapter: list[0]
+    })
   })
 })
 

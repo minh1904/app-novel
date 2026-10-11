@@ -180,10 +180,21 @@ describe('toWireUsage', () => {
   it('reports the total input, cache included, because that is what a person expects to see', () => {
     expect(
       toWireUsage({ inputTokens: 60, outputTokens: 20, cacheReadTokens: 40, cacheWriteTokens: 10 })
-    ).toEqual({ inputTokens: 110, outputTokens: 20 })
+    ).toEqual({
+      inputTokens: 110,
+      uncachedInputTokens: 60,
+      outputTokens: 20,
+      cacheReadTokens: 40,
+      cacheWriteTokens: 10,
+      source: 'provider',
+      complete: true
+    })
     expect(toWireUsage({ inputTokens: 5, outputTokens: 1 })).toEqual({
       inputTokens: 5,
-      outputTokens: 1
+      uncachedInputTokens: 5,
+      outputTokens: 1,
+      source: 'provider',
+      complete: true
     })
   })
 })

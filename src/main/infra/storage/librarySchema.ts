@@ -238,6 +238,91 @@ CREATE TABLE source_schedule_index (
 CREATE INDEX source_schedule_index_next ON source_schedule_index (enabled, next_check_at);
 `
 
+/** App-scoped agent orchestration. Work/chapter references remain soft across files. */
+const version9 = `
+CREATE TABLE agent_session (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX agent_session_updated ON agent_session (updated_at DESC, id);
+
+CREATE TABLE agent_turn (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES agent_session (id) ON DELETE CASCADE,
+  instruction TEXT NOT NULL,
+  answer TEXT NOT NULL DEFAULT '',
+  reasoning TEXT NOT NULL DEFAULT '',
+  context_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL CHECK (status IN
+    ('queued', 'running', 'completed', 'waiting_user', 'failed', 'cancelled', 'interrupted')),
+  usage_json TEXT,
+  cost_usd REAL,
+  legacy_ref_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX agent_turn_session_order ON agent_turn (session_id, created_at, id);
+CREATE UNIQUE INDEX agent_turn_one_active ON agent_turn (session_id)
+  WHERE status IN ('queued', 'running');
+
+CREATE TABLE agent_operation (
+  id TEXT PRIMARY KEY,
+  turn_id TEXT NOT NULL REFERENCES agent_turn (id) ON DELETE CASCADE,
+  command_id TEXT NOT NULL UNIQUE,
+  capability TEXT NOT NULL,
+  target_json TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('queued', 'running', 'completed', 'partially_completed',
+    'conflict', 'failed', 'cancelled', 'interrupted', 'undone')),
+  progress_json TEXT,
+  model_ref_json TEXT,
+  usage_json TEXT,
+  result_json TEXT,
+  error_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX agent_operation_turn_order ON agent_operation (turn_id, created_at, id);
+CREATE INDEX agent_operation_state ON agent_operation (state, updated_at);
+
+CREATE TABLE agent_activity (
+  id TEXT PRIMARY KEY,
+  turn_id TEXT NOT NULL REFERENCES agent_turn (id) ON DELETE CASCADE,
+  operation_id TEXT REFERENCES agent_operation (id) ON DELETE SET NULL,
+  step_seq INTEGER NOT NULL CHECK (step_seq > 0),
+  kind TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
+  label TEXT NOT NULL,
+  detail_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (turn_id, step_seq)
+);
+CREATE INDEX agent_activity_turn_order ON agent_activity (turn_id, step_seq);
+
+CREATE TABLE agent_legacy_import (
+  work_id TEXT NOT NULL,
+  legacy_session_id TEXT NOT NULL,
+  agent_session_id TEXT NOT NULL REFERENCES agent_session (id) ON DELETE CASCADE,
+  imported_at INTEGER NOT NULL,
+  PRIMARY KEY (work_id, legacy_session_id),
+  UNIQUE (agent_session_id)
+);
+
+CREATE TABLE agent_legacy_turn_import (
+  work_id TEXT NOT NULL,
+  legacy_session_id TEXT NOT NULL,
+  legacy_turn_id TEXT NOT NULL,
+  agent_turn_id TEXT NOT NULL REFERENCES agent_turn (id) ON DELETE CASCADE,
+  imported_at INTEGER NOT NULL,
+  PRIMARY KEY (work_id, legacy_session_id, legacy_turn_id),
+  UNIQUE (agent_turn_id),
+  FOREIGN KEY (work_id, legacy_session_id)
+    REFERENCES agent_legacy_import (work_id, legacy_session_id) ON DELETE CASCADE
+);
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -286,6 +371,12 @@ export const librarySchema: SchemaSpec = {
       version: 8,
       up(db) {
         db.exec(version8)
+      }
+    },
+    {
+      version: 9,
+      up(db) {
+        db.exec(version9)
       }
     }
   ]

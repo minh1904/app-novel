@@ -536,7 +536,13 @@ describe('model entries over IPC', () => {
         temperature: 0.3,
         reasoning_effort: 'none'
       })
-      expect(result.usage).toEqual({ inputTokens: 12, outputTokens: 2 })
+      expect(result.usage).toEqual({
+        inputTokens: 12,
+        uncachedInputTokens: 12,
+        outputTokens: 2,
+        source: 'provider',
+        complete: true
+      })
       expect(result.ms).toBeGreaterThanOrEqual(0)
     })
 

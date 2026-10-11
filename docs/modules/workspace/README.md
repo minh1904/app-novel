@@ -16,8 +16,7 @@ Chương này trả lời cách Mira mở nhiều truyện trong cùng cửa s�
 - Chuyển tab giữ editor có chữ chưa lưu cùng selection/undo trong bộ nhớ. Tab ẩn không nhận focus
   hoặc phím tắt; editor chương sạch có thể được tháo và dựng lại từ kho khi chọn. Đóng tab hoặc rời chương
   trong cùng tab hỏi lưu/bỏ/ở lại cho bản sửa liên quan. Thoát cửa sổ kiểm tra mọi tab còn dirty.
-- Danh sách chương bỏ phản hồi IPC đến muộn của truyện khác. Phiên chat được giữ theo tác phẩm;
-  chunk của request AI được gắn theo ID yêu cầu, kể cả sau khi chuyển tab.
+- Danh sách chương bỏ phản hồi IPC đến muộn của truyện khác. Phiên trợ lý AI được quản lý ở cấp ứng dụng (OpenSpec `app-agent-foundation`), không bị mất khi chuyển tab; chunk stream gắn theo requestId và duy trì xuyên suốt.
 - Thanh tab nằm trong titlebar, cuộn ngang khi nhiều truyện. Ctrl+Tab và Ctrl+Shift+Tab chuyển
   tab; tác vụ trong editor đã nhận phím trước được ưu tiên.
 

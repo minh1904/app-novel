@@ -533,6 +533,46 @@ CREATE INDEX source_update_event_feed ON source_update_event (detected_at DESC, 
 CREATE INDEX source_update_event_binding ON source_update_event (binding_id, detected_at DESC, id);
 `
 
+/** Durable evidence for reversible agent writes owned by this work file. */
+const version13 = `
+CREATE TABLE agent_operation_checkpoint (
+  operation_id TEXT PRIMARY KEY,
+  chapter_id TEXT NOT NULL REFERENCES chapter (id) ON DELETE CASCADE,
+  side TEXT NOT NULL CHECK (side IN ('source', 'target')),
+  state TEXT NOT NULL DEFAULT 'prepared' CHECK (state IN ('prepared', 'applied', 'terminal', 'undone')),
+  before_rev INTEGER NOT NULL CHECK (before_rev >= 0),
+  before_content TEXT NOT NULL,
+  last_applied_rev INTEGER CHECK (last_applied_rev > before_rev),
+  applied_units INTEGER NOT NULL DEFAULT 0 CHECK (applied_units >= 0),
+  total_units INTEGER NOT NULL CHECK (total_units >= 0),
+  terminal_state TEXT CHECK (terminal_state IN
+    ('completed', 'partially_completed', 'cancelled', 'conflict', 'failed', 'interrupted', 'undone')),
+  terminal_result_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  terminal_at INTEGER,
+  CHECK ((state = 'prepared' AND last_applied_rev IS NULL AND applied_units = 0)
+    OR state IN ('applied', 'terminal', 'undone')),
+  CHECK ((state IN ('prepared', 'applied') AND terminal_state IS NULL AND terminal_at IS NULL)
+    OR (state IN ('terminal', 'undone') AND terminal_state IS NOT NULL AND terminal_at IS NOT NULL))
+);
+CREATE INDEX agent_operation_checkpoint_target
+  ON agent_operation_checkpoint (chapter_id, side, updated_at);
+
+CREATE TABLE agent_operation_batch (
+  operation_id TEXT NOT NULL REFERENCES agent_operation_checkpoint (operation_id) ON DELETE CASCADE,
+  batch_key TEXT NOT NULL,
+  expected_rev INTEGER NOT NULL CHECK (expected_rev >= 0),
+  after_rev INTEGER NOT NULL CHECK (after_rev > expected_rev),
+  applied_units INTEGER NOT NULL CHECK (applied_units > 0),
+  checksum TEXT NOT NULL CHECK (length(checksum) > 0),
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (operation_id, batch_key)
+);
+CREATE INDEX agent_operation_batch_order
+  ON agent_operation_batch (operation_id, created_at, batch_key);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -607,6 +647,12 @@ export const workSchema: SchemaSpec = {
       version: 12,
       up(db) {
         db.exec(version12)
+      }
+    },
+    {
+      version: 13,
+      up(db) {
+        db.exec(version13)
       }
     }
   ]

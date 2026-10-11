@@ -1,3 +1,5 @@
+import type { TokenUsage } from '../../../shared/contracts/usage'
+
 /**
  * What a provider says a call cost in tokens, in one shape for every endpoint.
  *
@@ -107,9 +109,27 @@ export function addUsage(total: Usage | null, next: Usage | null): Usage | null 
  * The shape that crosses IPC (`TokenUsage`): `inputTokens` is the **total** input including cache,
  * which is the number a person expects to see on screen and what the renderer already shows.
  */
-export function toWireUsage(usage: Usage): { inputTokens: number; outputTokens: number } {
-  return {
+export function toWireUsage(usage: Usage, complete = true): TokenUsage {
+  const result: TokenUsage = {
     inputTokens: usage.inputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0),
-    outputTokens: usage.outputTokens
+    uncachedInputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+    source: 'provider',
+    complete
   }
+  if (usage.cacheReadTokens !== undefined) result.cacheReadTokens = usage.cacheReadTokens
+  if (usage.cacheWriteTokens !== undefined) result.cacheWriteTokens = usage.cacheWriteTokens
+  if (usage.reasoningTokens !== undefined) result.reasoningTokens = usage.reasoningTokens
+  return result
+}
+
+/** Aggregates every executed call; missing usage lowers completeness rather than becoming zero. */
+export function aggregateReportedUsage(calls: readonly (Usage | null)[]): TokenUsage | null {
+  let total: Usage | null = null
+  let complete = true
+  for (const call of calls) {
+    if (call === null) complete = false
+    else total = addUsage(total, call)
+  }
+  return total === null ? null : toWireUsage(total, complete)
 }

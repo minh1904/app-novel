@@ -1,6 +1,7 @@
 # Bằng chứng và câu hỏi mở
 
-Cập nhật: 2026-10-09 · Trạng thái: quan sát nguồn chính thức và mã Mira; kết luận cho Mira là đề xuất.
+Cập nhật: 2026-10-11 · Trạng thái: quan sát nguồn chính thức và mã Mira; contract agent đích còn là
+OpenSpec chưa triển khai.
 Chủ trì: sản phẩm/kỹ thuật. Câu hỏi: phần nào là mẫu tham khảo, phần nào Mira phải tự quyết?
 
 ## Antigravity: phạm vi quan sát
@@ -26,14 +27,19 @@ vi, và quay lại hội thoại**. Mira tự định nghĩa giao dịch văn b�
 | Storage và handler có keyset pagination cho phiên và lượt. | Bridge renderer chỉ tải trang đầu: tối đa 30 phiên và 100 lượt; chưa có tải thêm, `hasMore` hay cursor ở UI. |
 | Lịch sử gửi model chỉ gồm câu hỏi và câu trả lời của lượt `done`, trong ngân sách 24.000 ký tự. | Tool call/result, reasoning, proposal và vị trí cũ không được gửi lại. Giới hạn 40 message chưa được áp đồng bộ khi dựng lịch sử. |
 | Proposal chat gắn chương, phiên và lượt; storage kiểm tra ba liên kết khớp nhau. | Proposal có vòng đời độc lập: liên kết tới session/turn dùng `ON DELETE SET NULL`. Pending glossary chưa có provenance session/turn trực tiếp. |
-| Chat agentic có tool đọc và tool ghi; tool ghi chỉ tạo proposal hoặc context entry chờ duyệt. | Attachment theo lượt và reference document theo tác phẩm chưa có contract, schema, API, UI hay OpenSpec. |
+| `chatToolsAgentic.test.ts` kiểm danh sách tool, đọc đoạn, revision guard, giới hạn và ba tool ghi; `createServices.test.ts` kiểm proposal/chunk được lưu qua service; `chatTurns.test.ts` và `toolSummary.test.ts` kiểm nhận chunk và tóm tắt ở renderer. | Đây là bằng chứng code/test cho baseline proposal-only, không chứng minh chất lượng chọn tool của model thật hay toàn bộ nghiệm thu UI. Task model thật và task nghiệm thu UI của change cũ chưa hoàn tất. |
+
+Artifact proposal/design/spec/tasks gốc được giữ tại
+[lịch sử `agentic-chat` superseded](history/agentic-chat/README.md). Change cũ dừng ở 20/22 task, không
+được archive và delta không được merge. Change `app-agent-foundation` đã triển khai hoàn tất toàn bộ 8 module
+và đã được nghiệm thu đầy đủ; xem [Báo cáo nghiệm thu Foundation](acceptance-app-agent-foundation.md).
 
 ## Đã chốt sau khi tổng hợp
 
-Chủ sản phẩm đã chọn [mọi kết quả AI đều có hồ sơ đề xuất](decisions.md), kể cả pane trống. Hộp dịch
-chương vẫn có Duyệt trước/Áp dụng thẳng; panel chat từ quyết định 2026-10-08 không còn mode và proposal
-chỉ sinh từ tool ghi, luôn chờ duyệt. Accept all trong chương và hành động riêng cho toàn lượt dịch;
-phiên cũ mở lại để tiếp tục hội thoại.
+Hồ sơ proposal, Accept/Deny legacy và dữ liệu phiên cũ vẫn được duy trì qua `legacyRef`. Với lượt agent mới,
+nền tảng `app-agent-foundation` áp dụng operation trực tiếp có write lease, batch journal, checkpoint và undo
+ở work DB, cùng phiên toàn ứng dụng tại `library.db` và UI trợ lý mount tại app composition root. Toàn bộ kịch bản
+tích hợp và UI thực tế đã nghiệm thu thành công.
 
 ## Câu hỏi còn mở sau triển khai
 

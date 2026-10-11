@@ -232,8 +232,8 @@ function StatsMock(): JSX.Element {
     },
     {
       label: 'Chi phí tuần này',
-      value: '$1,62',
-      note: '≈ 41.000 đ · 3,9 triệu token',
+      value: '—',
+      note: 'Tính theo lượt chạy hoàn tất',
       icon: WalletIcon
     },
     {

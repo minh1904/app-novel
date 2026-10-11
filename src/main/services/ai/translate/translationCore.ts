@@ -1,4 +1,4 @@
-import type { TokenUsage } from '../../../../shared/contracts/usage'
+import type { Usage } from '../../../infra/providers/usage'
 import type { SegmentRefusal, TranslateFailure } from '../../../../shared/contracts/aiTranslate'
 import type {
   TempMappedUnit,
@@ -59,7 +59,7 @@ export interface TranslateCoreBatchOutcome {
    * nhân vật và cặp xưng hô. Đã có bản dịch, nhưng tên và xưng hô chưa được đối chiếu, cần soát lại.
    */
   withoutContextIds: string[]
-  usage: TokenUsage | null
+  usage: Usage | null
   error: CoreFailure | null
   /**
    * Request lượt chính có câu trả lời được dùng; `null` khi lô không có gì để gửi. Khi schema bị từ chối
@@ -91,7 +91,7 @@ export async function executeTranslateBatch({
   now,
   budget = new CallBudget(1, LOCAL_EXTRA)
 }: TranslateCoreBatchOptions): Promise<TranslateCoreBatchOutcome> {
-  let totalUsage: TokenUsage | null = null
+  let totalUsage: Usage | null = null
   // Mọi lời gọi model của lô đi qua đây: xin ngân sách trước, ghi số request HTTP thật sau.
   const call = async (
     round: BudgetRound,
@@ -396,13 +396,13 @@ async function splitFiltered(
   refused: SegmentRefusal[]
   /** Phần không được gửi vì hết ngân sách lượt. */
   unsent: string[]
-  usage: TokenUsage | null
+  usage: Usage | null
 }> {
   const matched: TranslateUnit[] = []
   const missing: string[] = []
   const refused: SegmentRefusal[] = []
   const unsent: string[] = []
-  let usage: TokenUsage | null = null
+  let usage: Usage | null = null
   let calls = 0
   const ids = (part: TempMappedUnit[]): string[] => part.map((unit) => unit.originalId)
 

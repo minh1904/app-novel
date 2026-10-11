@@ -11,10 +11,13 @@ import { Badge } from '../../../components/ui/Badge'
 import { ConfirmDialog, type ConfirmRequest } from '../../../components/ui/ConfirmDialog'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import { ProgressBar } from '../../../components/ui/ProgressBar'
+import { Input } from '../../../components/ui/Input'
 import { ICON } from '../../../components/ui/icon'
 import { cn } from '../../../lib/cn'
-import { LanguageMark } from '../../library/public'
+import { LanguageMark, useLibraryStore } from '../../library/public'
 import type { SourceLanguage } from '../../library/public'
+import type { WorkSummary } from '../../../../../shared/contracts/library'
+import { useChapterStore } from '../store/chapterStore'
 import type {
   SourceBinding,
   SourceCatalogItem,
@@ -25,6 +28,7 @@ import { AddRawDialog } from './AddRawDialog'
 export interface SourcesAreaProps {
   workId: string
   initialBindings?: SourceBinding[]
+  onWork?: (summary: WorkSummary) => void
 }
 
 const ADAPTER_NAMES: Record<string, string> = {
@@ -35,7 +39,7 @@ const ADAPTER_NAMES: Record<string, string> = {
   'mira.jp.kakuyomu': 'カクヨム (Kakuyomu)'
 }
 
-export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.Element {
+export function SourcesArea({ workId, initialBindings, onWork }: SourcesAreaProps): JSX.Element {
   const [bindings, setBindings] = useState<SourceBinding[]>(initialBindings ?? [])
   const [loading, setLoading] = useState(!initialBindings)
   const [addRawOpen, setAddRawOpen] = useState(false)
@@ -47,6 +51,13 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
   const [catalogLoading, setCatalogLoading] = useState(false)
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [rangeInput, setRangeInput] = useState('')
+  const [downloadingRange, setDownloadingRange] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState<{
+    current: number
+    total: number
+    itemTitle: string
+  } | null>(null)
 
   // Trạng thái đồng bộ
   const [activeSync, setActiveSync] = useState<{
@@ -100,6 +111,21 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
     }
   }
 
+  const notifyChaptersChanged = async (): Promise<void> => {
+    void useChapterStore.getState().reload()
+    void useLibraryStore.getState().reload()
+    if (onWork && window.mira?.works?.get) {
+      try {
+        const workRes = await window.mira.works.get(workId)
+        if (workRes?.ok) {
+          onWork(workRes.value)
+        }
+      } catch {
+        // Bỏ qua lỗi cập nhật thông tin tác phẩm
+      }
+    }
+  }
+
   const handleDownloadChapter = async (item: SourceCatalogItem): Promise<void> => {
     if (!window.mira?.sources?.catalog) return
     setDownloadingId(item.id)
@@ -115,10 +141,34 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
           candidate.id === item.id ? { ...candidate, chapterId: result.value.chapterId } : candidate
         )
       )
+      void notifyChaptersChanged()
     } catch {
       setCatalogError('Không tải được chương.')
     } finally {
       setDownloadingId(null)
+    }
+  }
+
+  const handleDownloadRange = async (bindingId: string): Promise<void> => {
+    if (!window.mira?.sources?.catalog || !rangeInput.trim()) return
+    setDownloadingRange(true)
+    setCatalogError(null)
+    try {
+      const res = await window.mira.sources.catalog.downloadRange({
+        workId,
+        bindingId,
+        range: rangeInput.trim()
+      })
+      if (!res.ok) {
+        setCatalogError(res.error.message)
+      } else {
+        setRangeInput('')
+        void notifyChaptersChanged()
+      }
+    } catch {
+      setCatalogError('Không thể thực hiện tải dải chương.')
+    } finally {
+      setDownloadingRange(false)
     }
   }
 
@@ -127,6 +177,27 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
       void reloadBindings()
     }
   }, [workId, initialBindings])
+
+  // Lắng nghe tiến trình tải chương nền
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Lắng nghe sự kiện tải chương nền
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.mira?.sources?.catalog?.onDownloadProgress) {
+      const unsubscribe = window.mira.sources.catalog.onDownloadProgress((progress) => {
+        setDownloadProgress(progress)
+        if (progress.current >= progress.total && progress.total > 0) {
+          void notifyChaptersChanged()
+          setTimeout(() => {
+            setDownloadProgress(null)
+            if (catalogBindingId) {
+              void loadCatalog(catalogBindingId)
+            }
+          }, 1500)
+        }
+      })
+      return () => unsubscribe()
+    }
+    return undefined
+  }, [catalogBindingId, workId, onWork])
 
   // Lắng nghe tiến trình đồng bộ
   useEffect(() => {
@@ -408,6 +479,43 @@ export function SourcesArea({ workId, initialBindings }: SourcesAreaProps): JSX.
                 </div>
                 {catalogBindingId === binding.id && (
                   <div className="flex flex-col gap-xs border-t border-subtle pt-sm">
+                    {/* Bulk range download toolbar */}
+                    <div className="flex flex-col gap-xs rounded-md border border-subtle bg-muted/20 p-xs">
+                      <div className="flex items-center gap-xs">
+                        <Input
+                          placeholder="Dải chương (ví dụ: 1, 5, 10-25)"
+                          value={rangeInput}
+                          onChange={(e) => setRangeInput(e.target.value)}
+                          disabled={downloadingRange}
+                        />
+                        <Button
+                          variant="outline"
+                          disabled={downloadingRange || !rangeInput.trim()}
+                          onClick={() => void handleDownloadRange(binding.id)}
+                        >
+                          {downloadingRange ? 'Đang gửi…' : 'Tải dải chương'}
+                        </Button>
+                      </div>
+                      {downloadProgress && (
+                        <div className="flex flex-col gap-2xs pt-2xs">
+                          <div className="flex items-center justify-between text-body-xs text-subtle">
+                            <span className="truncate">Đang tải: {downloadProgress.itemTitle}</span>
+                            <span>
+                              {downloadProgress.current} / {downloadProgress.total}
+                            </span>
+                          </div>
+                          <ProgressBar
+                            label="Tiến độ tải chương"
+                            value={
+                              downloadProgress.total > 0
+                                ? (downloadProgress.current / downloadProgress.total) * 100
+                                : 0
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     {catalogItems.length === 0 && catalogLoading ? (
                       <p role="status" className="m-0 text-body-sm text-subtle">
                         Đang tải danh mục…

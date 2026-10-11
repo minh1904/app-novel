@@ -237,10 +237,23 @@ export function useParagraphTranslate(
         }
         if (batch.usage) {
           const previous = spent
-          spent = {
+          const sumOpt = (a?: number, b?: number): number | undefined =>
+            a === undefined && b === undefined ? undefined : (a ?? 0) + (b ?? 0)
+          const next: TranslateUsage = {
             inputTokens: (previous?.inputTokens ?? 0) + batch.usage.inputTokens,
-            outputTokens: (previous?.outputTokens ?? 0) + batch.usage.outputTokens
+            outputTokens: (previous?.outputTokens ?? 0) + batch.usage.outputTokens,
+            source: 'provider',
+            complete: (previous?.complete ?? true) && batch.usage.complete
           }
+          const uncached = sumOpt(previous?.uncachedInputTokens, batch.usage.uncachedInputTokens)
+          const cacheRead = sumOpt(previous?.cacheReadTokens, batch.usage.cacheReadTokens)
+          const cacheWrite = sumOpt(previous?.cacheWriteTokens, batch.usage.cacheWriteTokens)
+          const reasoning = sumOpt(previous?.reasoningTokens, batch.usage.reasoningTokens)
+          if (uncached !== undefined) next.uncachedInputTokens = uncached
+          if (cacheRead !== undefined) next.cacheReadTokens = cacheRead
+          if (cacheWrite !== undefined) next.cacheWriteTokens = cacheWrite
+          if (reasoning !== undefined) next.reasoningTokens = reasoning
+          spent = next
           setUsage(spent)
         }
         // Ngân sách lời gọi của lượt (main giữ): báo một lần khi đã dùng 80%, và khi đã hết.

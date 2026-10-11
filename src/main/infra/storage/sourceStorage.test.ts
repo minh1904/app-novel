@@ -16,7 +16,7 @@ const tempDir = createTempDirs()
 describe('source storage and schedule index projection', () => {
   it('rebuilds schedule index projection from work files and preserves bindings and catalog when projection is cleared', () => {
     const dir = tempDir()
-    let nowTime = 1000
+    const nowTime = 1000
     const files = WorkFiles.open({ dataDir: dir, now: () => nowTime })
 
     // Create two works

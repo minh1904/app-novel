@@ -69,7 +69,8 @@ src/renderer/src/
     ├── ai-connections/
     ├── context/
     ├── sources/
-    └── export/
+    ├── export/
+    └── agent/
 ```
 
 Không tạo `renderer/src/shared`: tên này dễ nhầm với `src/shared`, là contract dùng qua nhiều process.
@@ -85,6 +86,7 @@ Mã dùng chung trong renderer phải nói rõ nó là UI, hook hay thư viện 
 | `context` | tri thức hỗ trợ dịch | glossary, xưng hô, kho dùng chung, văn phong |
 | `sources` | nguồn raw và cập nhật | source management, binding, update feed |
 | `export` | trình bày lựa chọn export ở renderer | phạm vi, định dạng và export dialog |
+| `agent` | trợ lý AI toàn ứng dụng, session và timeline activity | agent panel, chat/turns, activity timeline, write locks |
 
 Feature/use case chỉ tạo các thư mục `components`, `hooks`, `model`, `store` hoặc `adapter` khi thật sự có
 trách nhiệm tương ứng. Không dựng cây thư mục rỗng để mọi module trông giống nhau.

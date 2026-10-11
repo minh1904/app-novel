@@ -26,6 +26,7 @@ import { worksHandlers } from './handlers/works'
 import { exportHandlers } from './handlers/export'
 import { workspaceHandlers } from './handlers/workspace'
 import { sourcesHandlers } from './handlers/sources'
+import { agentHandlers } from './handlers/agent'
 import type { ExportService } from '../services/export/exportService'
 import type { SourceServices } from '../sources/sourceServices'
 
@@ -75,7 +76,8 @@ export function createLibraryHandlers(
     ...glossaryHandlers(deps),
     ...addressingHandlers(deps),
     ...exportHandlers(deps),
-    ...sourcesHandlers(deps)
+    ...sourcesHandlers(deps),
+    ...agentHandlers(deps)
   }
 }
 

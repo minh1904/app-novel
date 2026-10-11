@@ -23,7 +23,7 @@ const delta = (requestId: string, text: string): ChatChunk => ({ requestId, kind
 const done = (requestId: string): Extract<ChatChunk, { kind: 'done' }> => ({
   requestId,
   kind: 'done',
-  usage: { inputTokens: 10, outputTokens: 5 },
+  usage: { inputTokens: 10, outputTokens: 5, source: 'provider', complete: true },
   usd: 0.001,
   keyTail: '9f3a',
   finishReason: 'stop'

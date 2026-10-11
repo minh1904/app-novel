@@ -15,14 +15,8 @@ import { openConnectionSettings } from '../../ai-connections/public'
 import { useParagraphTranslate } from './useParagraphTranslate'
 
 const count = (value: number): string => value.toLocaleString('vi')
-const money = (usd?: number): string =>
-  usd === undefined
-    ? 'chưa biết giá'
-    : usd < 0.01
-      ? 'dưới $0,01'
-      : '$' + usd.toFixed(2).replace('.', ',')
 
-function Figure({ label, value }: { label: string; value: string }): JSX.Element {
+export function Figure({ label, value }: { label: string; value: string }): JSX.Element {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-default py-1.5 last:border-b-0">
       <span className="text-body-xs text-subtle">{label}</span>
@@ -229,7 +223,7 @@ function TranslateFlow({
       </div>
       {run.stage === 'planning' && (
         <p role="status" className="m-0 text-body-xs text-subtle">
-          Đang tính số đoạn và ước lượng chi phí…
+          Đang tính số đoạn và chuẩn bị danh sách lô…
         </p>
       )}
       {plan && (
@@ -238,18 +232,10 @@ function TranslateFlow({
             <Figure label="Số đoạn sẽ dịch" value={count(plan.paragraphCount)} />
             <Figure label="Số lô sẽ gửi" value={count(plan.batches.length)} />
             <Figure
-              label="Token (ước lượng)"
-              value={`${count(plan.estimate.inputTokens)} vào · ${count(plan.estimate.outputTokens)} ra`}
-            />
-            <Figure label="Chi phí (ước lượng)" value={money(plan.estimate.usd)} />
-            <Figure
               label="Ngữ cảnh gửi kèm"
               value={`${count(plan.context.glossary)} thuật ngữ · ${count(plan.context.characters)} nhân vật · ${count(plan.context.dyads)} cặp xưng hô`}
             />
           </div>
-          <p className="m-0 text-body-xs leading-normal text-subtle">
-            Giá tham khảo cập nhật {plan.catalogReadAt}. Lượng dùng thật hiện sau khi dịch.
-          </p>
           {plan.hasTranslation && (
             <p
               role="note"

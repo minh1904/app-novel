@@ -1,4 +1,5 @@
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
+import { extractChapterNumber } from '../../../../../shared/text/chapterNumber'
 
 /** Các quy tắc xử lý danh sách chương: tên gọi, tìm kiếm, nhảy tới chương và phân trang. */
 
@@ -9,6 +10,19 @@ export const DEFAULT_PAGE_SIZE: PageSize = 50
 /** Tên hiển thị của chương: tiêu đề thực tế hoặc "Chương N" nếu để trống. */
 export function displayTitle(chapter: Pick<ChapterItem, 'number' | 'title'>): string {
   return chapter.title === '' ? 'Chương ' + chapter.number : chapter.title
+}
+
+/**
+ * Định dạng nhãn hiển thị chương: nếu tiêu đề đã có tiền tố số rõ ràng
+ * (^Chương\s+\d+, ^Chapter\s+\d+, ^\d+[\s.:-]) thì giữ nguyên tiêu đề, tránh lặp
+ * "1. Chương 10". Nếu tiêu đề thuần chữ hoặc rỗng thì hiển thị "N. {title}".
+ */
+export function formatChapterLabel(chapter: Pick<ChapterItem, 'number' | 'title'>): string {
+  const title = displayTitle(chapter)
+  if (/^(?:chương|chapter)\s+\d+|^\d+[\s.:-]/i.test(title)) {
+    return title
+  }
+  return `${chapter.number}. ${title}`
 }
 
 /** Tiêu đề đầu trang: "Chương N: tiêu đề", trừ khi tiêu đề đã bắt đầu bằng "Chương". */
@@ -54,13 +68,52 @@ export function chapterState(chapter: Pick<ChapterItem, 'hasSource' | 'hasTarget
 export type SearchQuery =
   | { kind: 'empty' }
   /** Người dùng nhập số nguyên: chuyển trực tiếp tới chương số đó. */
-  | { kind: 'jump'; number: number }
+  | {
+      kind: 'jump'
+      number: number
+      targetIndex?: number
+      targetChapter?: ChapterItem
+    }
   | { kind: 'filter'; text: string }
 
-export function parseQuery(raw: string): SearchQuery {
+/** Tìm chương nhảy tới theo cả số tiêu đề lẫn số thứ tự danh sách. */
+export function findJumpTarget(
+  chapters: ChapterItem[],
+  targetNumber: number
+): { chapter: ChapterItem; index: number } | null {
+  // 1. Ưu tiên số hiệu trích xuất từ tiêu đề (ví dụ Chương 10)
+  const byTitleIndex = chapters.findIndex((ch) => extractChapterNumber(ch.title) === targetNumber)
+  if (byTitleIndex >= 0) {
+    return { chapter: chapters[byTitleIndex], index: byTitleIndex }
+  }
+
+  // 2. Đối chiếu theo số thứ tự danh sách (ch.number === targetNumber)
+  const byNumberIndex = chapters.findIndex((ch) => ch.number === targetNumber)
+  if (byNumberIndex >= 0) {
+    return { chapter: chapters[byNumberIndex], index: byNumberIndex }
+  }
+
+  return null
+}
+
+export function parseQuery(raw: string, chapters?: ChapterItem[]): SearchQuery {
   const text = raw.trim()
   if (text === '') return { kind: 'empty' }
-  if (/^\d+$/.test(text)) return { kind: 'jump', number: Number(text) }
+  if (/^\d+$/.test(text)) {
+    const num = Number(text)
+    if (chapters && chapters.length > 0) {
+      const target = findJumpTarget(chapters, num)
+      if (target) {
+        return {
+          kind: 'jump',
+          number: num,
+          targetIndex: target.index,
+          targetChapter: target.chapter
+        }
+      }
+    }
+    return { kind: 'jump', number: num }
+  }
   return { kind: 'filter', text }
 }
 

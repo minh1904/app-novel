@@ -58,8 +58,15 @@ export function ChapterScreen({
   const [dragging, setDragging] = useState(false)
   const opener = useRef<HTMLElement | null>(null)
   const picker = useRef<HTMLInputElement>(null)
-  const sourceStore = useMemo(() => makeStore(workId, chapterId, 'source'), [workId, chapterId])
-  const targetStore = useMemo(() => makeStore(workId, chapterId, 'target'), [workId, chapterId])
+  const activeChapterId = screen.chapter?.id ?? chapterId
+  const sourceStore = useMemo(
+    () => makeStore(workId, activeChapterId, 'source'),
+    [workId, activeChapterId]
+  )
+  const targetStore = useMemo(
+    () => makeStore(workId, activeChapterId, 'target'),
+    [workId, activeChapterId]
+  )
 
   if (screen.load === 'loading') {
     return (
@@ -124,7 +131,7 @@ export function ChapterScreen({
       open={importing}
       onOpenChange={setImporting}
       workId={workId}
-      chapterId={chapterId}
+      chapterId={chapter.id}
       sourceLang={work.sourceLanguage}
       baseRev={source.rev}
       replacing={hasSource}

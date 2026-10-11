@@ -6,6 +6,16 @@
  * sang dạng này ở ranh giới.
  */
 export interface TokenUsage {
+  /** Total provider-reported input, including cache reads/writes. */
   inputTokens: number
+  /** Input not served from or written to cache, when the provider breakdown makes it knowable. */
+  uncachedInputTokens?: number
   outputTokens: number
+  cacheReadTokens?: number
+  cacheWriteTokens?: number
+  /** A subset of outputTokens, never an additional count. */
+  reasoningTokens?: number
+  source: 'provider'
+  /** False when at least one executed provider call omitted usage. */
+  complete: boolean
 }

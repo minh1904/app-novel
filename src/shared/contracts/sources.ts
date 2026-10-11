@@ -319,6 +319,21 @@ export const sourceCatalogDownloadResultSchema = v.strictObject({
   chapterId: sourceOpaqueIdSchema,
   title: nonEmptyText('Tên chương', 1000)
 })
+export const sourceCatalogReorderInputSchema = v.strictObject({
+  workId: sourceOpaqueIdSchema,
+  bindingId: sourceOpaqueIdSchema
+})
+export type SourceCatalogReorderInput = v.InferInput<typeof sourceCatalogReorderInputSchema>
+
+export const sourceCatalogDownloadRangeInputSchema = v.strictObject({
+  workId: sourceOpaqueIdSchema,
+  bindingId: sourceOpaqueIdSchema,
+  range: nonEmptyText('Dải chương', 500)
+})
+export type SourceCatalogDownloadRangeInput = v.InferInput<
+  typeof sourceCatalogDownloadRangeInputSchema
+>
+
 export const sourceCatalogPageSchema = v.strictObject({
   items: v.array(sourceCatalogItemSchema),
   nextCursor: v.nullable(sourceCursorSchema),
@@ -454,6 +469,12 @@ export type SourceSyncStartInput = v.InferInput<typeof sourceSyncStartInputSchem
 export type SourceSyncCancelInput = v.InferInput<typeof sourceSyncCancelInputSchema>
 export type SourceSyncStatusInput = v.InferInput<typeof sourceSyncStatusInputSchema>
 export type SourceSyncProgress = v.InferOutput<typeof sourceSyncProgressSchema>
+export const sourceDownloadProgressSchema = v.strictObject({
+  current: nonNegativeIntegerSchema,
+  total: nonNegativeIntegerSchema,
+  itemTitle: v.string()
+})
+export type SourceDownloadProgress = v.InferOutput<typeof sourceDownloadProgressSchema>
 export type SourceUpdatesListInput = v.InferInput<typeof sourceUpdatesListInputSchema>
 export type SourceUpdatesPage = v.InferOutput<typeof sourceUpdatesPageSchema>
 export type SourceUpdateMarkSeenInput = v.InferInput<typeof sourceUpdateMarkSeenInputSchema>

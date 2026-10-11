@@ -11,6 +11,16 @@ import type {
   AcceptProposalResult,
   ProposalQueueItem
 } from '../shared/contracts/aiProposals'
+import type {
+  AgentOperationDetailView,
+  AgentSendResult,
+  AgentSessionDetailView,
+  AgentSessionView,
+  AgentStreamEvent,
+  AgentTargetChanged,
+  AgentUndoResult,
+  AgentWriteIntent
+} from '../shared/contracts/agent'
 import type { AiSessionView, AiTurnView } from '../shared/contracts/aiHistory'
 import type {
   AddModelEntriesInput,
@@ -60,6 +70,7 @@ import type {
   SourceCatalogPage,
   SourceCatalogDownloadResult,
   SourceDescriptor,
+  SourceDownloadProgress,
   SourceSyncProgress,
   SourceSyncRun,
   SourceUpdatesPage
@@ -430,7 +441,19 @@ const desktopApi: DesktopApi = {
       download: (input) =>
         ipcRenderer.invoke(CHANNELS.sourcesCatalogDownload, input) as Promise<
           Result<SourceCatalogDownloadResult>
-        >
+        >,
+      downloadRange: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesCatalogDownloadRange, input) as Promise<Result<void>>,
+      reorderBySource: (input) =>
+        ipcRenderer.invoke(CHANNELS.sourcesCatalogReorderBySource, input) as Promise<
+          Result<{ reorderedCount: number }>
+        >,
+      onDownloadProgress: (listener) => {
+        const handler = (_event: IpcRendererEvent, progress: SourceDownloadProgress): void =>
+          listener(progress)
+        ipcRenderer.on(EVENT_CHANNELS.sourcesDownloadProgress, handler)
+        return () => ipcRenderer.off(EVENT_CHANNELS.sourcesDownloadProgress, handler)
+      }
     },
     bindings: {
       list: (input) =>
@@ -483,6 +506,57 @@ const desktopApi: DesktopApi = {
         ipcRenderer.invoke(CHANNELS.sourcesRegistryList, input) as Promise<
           Result<{ sources: SourceDescriptor[] }>
         >
+    }
+  },
+  agent: {
+    sessions: {
+      list: (options) =>
+        ipcRenderer.invoke(CHANNELS.agentSessionsList, options) as Promise<
+          Result<{ sessions: AgentSessionView[] }>
+        >,
+      get: (sessionId) =>
+        ipcRenderer.invoke(CHANNELS.agentSessionsGet, { sessionId }) as Promise<
+          Result<AgentSessionDetailView>
+        >,
+      create: (title) =>
+        ipcRenderer.invoke(CHANNELS.agentSessionsCreate, { title }) as Promise<
+          Result<AgentSessionView>
+        >
+    },
+    turn: {
+      send: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentTurnSend, input) as Promise<Result<AgentSendResult>>,
+      cancel: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentTurnCancel, input) as Promise<Result<void>>
+    },
+    operations: {
+      get: (operationId) =>
+        ipcRenderer.invoke(CHANNELS.agentOperationGet, { operationId }) as Promise<
+          Result<AgentOperationDetailView>
+        >,
+      undo: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentOperationUndo, input) as Promise<Result<AgentUndoResult>>
+    },
+    coordinator: {
+      ackWriteIntent: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentTargetWriteAck, input) as Promise<Result<void>>,
+      onWriteIntent: (listener) => {
+        const handler = (_event: IpcRendererEvent, intent: AgentWriteIntent): void =>
+          listener(intent)
+        ipcRenderer.on(EVENT_CHANNELS.agentTargetWriteIntent, handler)
+        return () => ipcRenderer.off(EVENT_CHANNELS.agentTargetWriteIntent, handler)
+      },
+      onTargetChanged: (listener) => {
+        const handler = (_event: IpcRendererEvent, event: AgentTargetChanged): void =>
+          listener(event)
+        ipcRenderer.on(EVENT_CHANNELS.agentTargetChanged, handler)
+        return () => ipcRenderer.off(EVENT_CHANNELS.agentTargetChanged, handler)
+      }
+    },
+    onStreamEvent: (listener) => {
+      const handler = (_event: IpcRendererEvent, event: AgentStreamEvent): void => listener(event)
+      ipcRenderer.on(EVENT_CHANNELS.agentStreamEvent, handler)
+      return () => ipcRenderer.off(EVENT_CHANNELS.agentStreamEvent, handler)
     }
   }
 }

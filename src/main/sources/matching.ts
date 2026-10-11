@@ -19,7 +19,7 @@ export interface MatchCandidate {
   title: string
   order: number
   matchedChapterId: string | null
-  confidence: 'high' | 'unmatched' | 'error'
+  confidence: 'high' | 'medium' | 'unmatched' | 'error'
   error?: string
 }
 
@@ -34,15 +34,8 @@ export interface ImportMatchingPreview {
   items: MatchCandidate[]
 }
 
-/** Extract integer chapter number from titles like 'Chương 1', 'Chapter 02', '003 - Title', '第4章', '5.txt'. */
-export function extractChapterNumber(title: string): number | null {
-  const match = /(?:chương|chapter|ch|hồi|tập|đoạn|thứ|第)?\s*(\d+)/i.exec(title)
-  if (match) {
-    const num = Number.parseInt(match[1], 10)
-    if (!Number.isNaN(num) && num > 0) return num
-  }
-  return null
-}
+import { normalizeFullWidthDigits, extractChapterNumber } from '../../shared/text/chapterNumber'
+export { normalizeFullWidthDigits, extractChapterNumber }
 
 export function generateMatchingPreview(input: {
   sourceId: string
@@ -50,9 +43,17 @@ export function generateMatchingPreview(input: {
   catalogItems: Array<CatalogItem & { error?: string }>
   existingChapters: ChapterSummaryForMatching[]
 }): ImportMatchingPreview {
-  const chaptersByNumber = new Map<number, ChapterSummaryForMatching>()
+  const chaptersByExtractedNumber = new Map<number, ChapterSummaryForMatching>()
+  const chaptersByRelativeOrder = new Map<number, ChapterSummaryForMatching>()
+  const chapterHasExtractedNumber = new Set<string>()
+
   for (const ch of input.existingChapters) {
-    chaptersByNumber.set(ch.number, ch)
+    const num = extractChapterNumber(ch.title)
+    if (num != null) {
+      chaptersByExtractedNumber.set(num, ch)
+      chapterHasExtractedNumber.add(ch.id)
+    }
+    chaptersByRelativeOrder.set(ch.number, ch)
   }
 
   const items: MatchCandidate[] = []
@@ -76,17 +77,50 @@ export function generateMatchingPreview(input: {
       continue
     }
 
-    const num = extractChapterNumber(raw.title) ?? raw.order
-    const chapter = chaptersByNumber.get(num)
-    if (chapter && !usedChapterIds.has(chapter.id)) {
-      usedChapterIds.add(chapter.id)
+    const rawNum = extractChapterNumber(raw.title)
+    let matchedChapter: ChapterSummaryForMatching | undefined
+    let confidence: 'high' | 'medium' = 'high'
+
+    if (rawNum != null) {
+      // 1. Direct match on extracted chapter number
+      const candidate = chaptersByExtractedNumber.get(rawNum)
+      if (candidate && !usedChapterIds.has(candidate.id)) {
+        matchedChapter = candidate
+        confidence = 'high'
+      } else {
+        // Fallback: match by relative order only if existing chapter has no explicit number in title
+        const relCandidate = chaptersByRelativeOrder.get(raw.order)
+        if (
+          relCandidate &&
+          !usedChapterIds.has(relCandidate.id) &&
+          !chapterHasExtractedNumber.has(relCandidate.id)
+        ) {
+          matchedChapter = relCandidate
+          confidence = 'medium'
+        }
+      }
+    } else {
+      // Raw title has no explicit number: fallback to relative order
+      const relCandidate = chaptersByRelativeOrder.get(raw.order)
+      if (
+        relCandidate &&
+        !usedChapterIds.has(relCandidate.id) &&
+        !chapterHasExtractedNumber.has(relCandidate.id)
+      ) {
+        matchedChapter = relCandidate
+        confidence = 'medium'
+      }
+    }
+
+    if (matchedChapter) {
+      usedChapterIds.add(matchedChapter.id)
       matchedCount += 1
       items.push({
         remoteChapterId: raw.remoteChapterId,
         title: raw.title,
         order: raw.order,
-        matchedChapterId: chapter.id,
-        confidence: 'high'
+        matchedChapterId: matchedChapter.id,
+        confidence
       })
     } else {
       unmatchedCount += 1

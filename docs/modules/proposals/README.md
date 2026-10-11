@@ -1,63 +1,35 @@
-# Module Đề xuất và phiên AI
+# Module Trợ lý AI và đề xuất
 
-Cập nhật: 2026-10-09 · Trạng thái: proposal và phiên cơ bản đã triển khai; quản lý phiên và tài liệu
-tham khảo còn là đề xuất.
-Chủ trì: chủ sản phẩm và kỹ thuật. Câu hỏi: AI ghi, người duyệt và quay lại kết quả nhiều chương ra sao?
+Cập nhật: 2026-10-11 · Trạng thái: quyết định sản phẩm và roadmap hiện hành. Foundation agent có
+nhiều khối đã tồn tại trong mã nhưng đường chạy đầu-cuối chưa được nghiệm thu lại.
 
-## Phạm vi
+Module này chịu trách nhiệm cho hội thoại với Trợ lý, tác vụ AI dài, thao tác ghi có thể hoàn tác và
+dữ liệu proposal cũ. Trợ lý là tính năng toàn ứng dụng; tác phẩm và chương chỉ là ngữ cảnh hoặc đích
+của một lượt.
 
-Chủ sản phẩm ưu tiên trải nghiệm **Đề xuất → Accept/Deny → Accept all** trong editor, lấy
-Antigravity làm tham chiếu UX. Panel AI cần giữ hội thoại khi chỉ bị ẩn, có lịch sử phiên và cho
-phép trở lại đề xuất của chương khác. Quyết định hiện hành nằm ở [trang quyết định](decisions.md);
-những chi tiết không được ghi tại đó là **đề xuất** cho OpenSpec Module 5.
-
-| Đọc để trả lời | Trang |
+| Cần biết | Nguồn hiện hành |
 | --- | --- |
-| Điều gì đã được chốt và thay ADR-005 ở đâu? | [Quyết định hiện hành](decisions.md) |
-| Người dịch thấy gì và thao tác ra sao? | [Luồng duyệt](review-flow.md) |
-| Phiên AI, lượt dịch nhiều chương và hàng chờ quan hệ thế nào? | [Phiên và nhiều chương](sessions-and-jobs.md) |
-| Dữ liệu nào phải lưu và điều kiện nào cho phép ghi? | [Dữ liệu và an toàn](data-and-safety.md) |
-| Antigravity thực sự cho thấy gì; mã Mira hiện làm gì? | [Bằng chứng và câu hỏi mở](evidence.md) |
-| Panel AI nên trình bày câu trả lời và ngữ cảnh ra sao? | [Nghiên cứu lại panel AI](chat-panel-research.md) |
-| Học gì từ UI chat của Hermes Desktop: hiển thị tin nhắn, ô soạn, chọn model, phiên? | [Học UI chat của Hermes Desktop](hermes-chat-research.md) |
+| Sản phẩm đã chốt điều gì? | [Quyết định](decisions.md) |
+| Làm agent theo thứ tự nào và gate hoàn thành là gì? | [Roadmap agent](agent-roadmap.md) |
+| Session, turn, operation và task khác nhau thế nào? | [Phiên và tác vụ](sessions-and-jobs.md) |
+| Ghi dữ liệu và hoàn tác phải an toàn ra sao? | [Dữ liệu và an toàn](data-and-safety.md) |
+| Proposal cũ được duyệt thế nào? | [Luồng duyệt proposal legacy](review-flow.md) |
 
-## Ranh giới quyết định
+## Hiện trạng
 
-- **Đã chốt:** mọi kết quả AI thay chữ đều có hồ sơ đề xuất, kể cả pane trống; mặc định duyệt trước,
-  mode Áp dụng thẳng tự Accept khi an toàn; Accept/Deny/Accept all theo phạm vi rõ; panel và lịch sử
-  phiên theo tác phẩm, không mất khi ẩn/tắt app; xem
-  [quyết định](decisions.md). Đơn vị chương/đoạn và SQLite vẫn theo ADR-005.
-- **OpenSpec đã hoàn tất:** [change `proposals`](https://github.com/minh1904/app-novel/blob/501be2a/openspec/changes/proposals/tasks.md)
-  mô tả bảng, neo vùng, quyết định từng phần và nghiệm thu. Toàn bộ 27/27 task đã được triển khai và kiểm chứng.
-- **Đã hoàn tất trong mã nguồn:** các bảng session/proposal được thêm từ schema v7; agentic chat thêm
-  `action = 'chat'` và `location_json` ở v10, reasoning ở v11. Phiên/lượt AI, proposal bền,
-  Accept/Deny/Accept all/Hoàn tác có checkpoint, lớp diff trong editor, hàng chờ theo chương, lọc theo
-  phiên và điều hướng giữa các chương đều đã có. Hộp dịch mặc định Duyệt trước; Áp dụng thẳng chỉ tự
-  ghi khi đích còn an toàn. Xem [kho](../../../src/main/infra/storage/aiProposals.ts),
-  [service duyệt](../../../src/main/services/proposals/proposalService.ts),
-  [dịch theo đoạn](../../../src/main/services/ai/paragraphTranslation.ts).
-- **Chat không chế độ (change `agentic-chat`, mã đã có ngày 2026-10-08):** ô soạn chỉ còn ô nhập,
-  menu model và nút gửi/dừng. Lượt gửi mang vị trí người dùng thay cho ngữ cảnh. Model đọc bằng
-  `get_current_chapter`, `read_segments`, `list_glossary`, `list_addressing` cùng các tool đọc cũ, và đề
-  xuất bằng `propose_edit`, `propose_translation`, `propose_glossary_term`. Đề xuất hiện thành thẻ dưới
-  lượt chat, trạng thái lấy từ hàng chờ. Kênh IPC cho renderer tự tạo đề xuất chat đã bị bỏ. Xem
-  [tool](../../../src/main/services/ai/chatTools.ts),
-  [đề xuất từ tool](../../../src/main/services/proposals/chatProposalService.ts) và
-  [quyết định mục 9](decisions.md). Chưa đo trên model thật; xem
-  [nghiên cứu Hermes](hermes-chat-research.md).
-- **Vòng đời đang chạy:** phiên được tạo ở lượt gửi đầu, giữ khi panel ẩn hoặc đổi chương và đọc lại
-  sau khi mở app; lượt dở thành `interrupted`. Proposal chat gắn session/turn nhưng có vòng đời độc lập.
-- **Giới hạn hiện tại:** UI chỉ tải 30 phiên và 100 lượt mới nhất. Lịch sử model chỉ gồm question/answer
-  của lượt hoàn tất trong ngân sách 24.000 ký tự; không gửi lại reasoning hay tool result.
-- **Chưa triển khai:** rename, delete, pin, archive, tìm kiếm, retention, attachment và reference
-  document. Pending glossary chưa có ownership session/turn trực tiếp.
+Mira đã có schema session toàn ứng dụng, target resolver, capability registry, operation journal,
+checkpoint, một phần runner dịch chương và module renderer cho agent. Các phần này là nền để tái sử
+dụng, không phải bằng chứng rằng Trợ lý đã chạy hoàn chỉnh.
 
-Module 5 dựng đường duyệt và dữ liệu đề xuất. [Module 7 Tác vụ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ)
-chịu trách nhiệm chạy, tạm dừng và tiếp tục dịch nhiều chương sau khi app tắt. Module 5 cần có hàng
-chờ theo chương ngay từ đầu để Module 7 có chỗ đưa kết quả vào; không đồng nhất lịch sử hội thoại với
-trạng thái tiến độ tác vụ. [Module 8 Gỡ Từng câu](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#8-gỡ-từng-câu)
-mới xóa các bảng và đường dữ liệu segment/link/provenance.
+Đường tích hợp còn thiếu hoặc chưa chứng minh gồm UI → IPC → `AgentService`, vòng model gọi
+capability, cancel/undo thật, progress và usage xuyên suốt, xử lý lỗi capability, cùng tác vụ nhiều
+chương có thể phục hồi. [Roadmap agent](agent-roadmap.md) là nguồn trạng thái duy nhất cho phần này.
 
-Tài liệu này phân biệt quyết định đã chốt, OpenSpec và phần mã mới đang chờ nghiệm thu.
+Proposal theo tác phẩm và Accept/Deny vẫn tồn tại để đọc dữ liệu cũ và phục vụ các luồng legacy chưa
+chuyển đổi. Không dùng thiết kế proposal-only cũ làm contract cho lượt agent mới.
+
+OpenSpec [`app-agent-foundation`](../../../openspec/changes/app-agent-foundation/proposal.md) mô tả
+foundation dự kiến. Checklist của change là hồ sơ thực hiện tại thời điểm viết, không thay cho kiểm
+chứng runtime hiện tại.
 
 [Về mục lục module](../README.md)

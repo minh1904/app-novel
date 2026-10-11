@@ -90,6 +90,8 @@ export const CHANNELS = {
   sourcesCatalogList: 'sources:catalog:list',
   sourcesCatalogGet: 'sources:catalog:get',
   sourcesCatalogDownload: 'sources:catalog:download',
+  sourcesCatalogDownloadRange: 'sources:catalog:download-range',
+  sourcesCatalogReorderBySource: 'sources:catalog:reorder-by-source',
   sourcesBindingsList: 'sources:bindings:list',
   sourcesBindingsIdentify: 'sources:bindings:identify',
   sourcesBindingsPreviewCreate: 'sources:bindings:preview-create',
@@ -103,7 +105,15 @@ export const CHANNELS = {
   sourcesUpdatesMarkSeen: 'sources:updates:mark-seen',
   sourcesUpdatesPreviewApply: 'sources:updates:preview-apply',
   sourcesUpdatesApply: 'sources:updates:apply',
-  sourcesRegistryList: 'sources:registry:list'
+  sourcesRegistryList: 'sources:registry:list',
+  agentSessionsList: 'agent:sessions:list',
+  agentSessionsGet: 'agent:sessions:get',
+  agentSessionsCreate: 'agent:sessions:create',
+  agentTurnSend: 'agent:turn:send',
+  agentTurnCancel: 'agent:turn:cancel',
+  agentOperationGet: 'agent:operation:get',
+  agentOperationUndo: 'agent:operation:undo',
+  agentTargetWriteAck: 'agent:target:write-ack'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]
@@ -122,7 +132,15 @@ export const EVENT_CHANNELS = {
   /** Tiến độ một lượt xuất nhiều chương (`ExportProgress`). Preload đóng cứng tên này. */
   exportProgress: 'export:progress',
   /** Tiến độ lượt kiểm tra nguồn (`SourceSyncProgress`). */
-  sourceSyncProgress: 'source:sync:progress'
+  sourceSyncProgress: 'source:sync:progress',
+  /** Tiến độ tải dải chương raw. */
+  sourcesDownloadProgress: 'sources:download:progress',
+  /** Event stream của lượt agent đang chạy (`AgentStreamEvent`). */
+  agentStreamEvent: 'agent:stream:event',
+  /** Thông báo ý định ghi đích để editor chặn input và flush dirty (`AgentWriteIntent`). */
+  agentTargetWriteIntent: 'agent:target:write-intent',
+  /** Thông báo đích đã đổi sau khi operation kết thúc để editor cập nhật (`AgentTargetChanged`). */
+  agentTargetChanged: 'agent:target:changed'
 } as const
 
 export type EventChannel = (typeof EVENT_CHANNELS)[keyof typeof EVENT_CHANNELS]

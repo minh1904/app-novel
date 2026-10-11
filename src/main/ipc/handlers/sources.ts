@@ -8,6 +8,8 @@ import {
   sourceBindingUpdateInputSchema,
   sourceCatalogGetInputSchema,
   sourceCatalogDownloadInputSchema,
+  sourceCatalogDownloadRangeInputSchema,
+  sourceCatalogReorderInputSchema,
   sourceCatalogListInputSchema,
   sourceSyncCancelInputSchema,
   sourceSyncStartInputSchema,
@@ -23,15 +25,18 @@ import {
   type SourceUpdateEvent
 } from '../../../shared/contracts/sources'
 import {
+  computeTargetPosition,
   getSyncRun,
   listCatalogItems,
   listSourceBindings,
   listUpdateEvents,
   markEventSeen,
+  reorderByCatalog,
   type StoredCatalogItem,
   type StoredSyncRun,
   type StoredUpdateEvent
 } from '../../infra/storage/sourceStorage'
+import { parseRangeString } from '../../../shared/text/rangeParser'
 import { StorageError } from '../../infra/storage/errors'
 import { identifyKakuyomu } from '../../sources/kakuyomu/identify'
 import { createAsyncHandler, createHandler, createSinkHandler } from '../handler'
@@ -188,7 +193,10 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
           })
           if (!page.text.trim()) throw new StorageError('validation', 'Nguồn trả về chương rỗng')
 
-          const { chapter } = deps.library.createChapter(input.workId, item.title)
+          const targetPos = deps.library.withWork(input.workId, (db) =>
+            computeTargetPosition(db, item.bindingId, item.ordinalKey)
+          )
+          const { chapter } = deps.library.createChapterAt(input.workId, targetPos, item.title)
           try {
             deps.library.saveText(input.workId, chapter.id, 'source', page.text, 0, [])
             deps.library.withWork(input.workId, (db) => {
@@ -204,6 +212,82 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
         }
       }
     ),
+
+    'sources:catalog:download-range': createSinkHandler(
+      sourceCatalogDownloadRangeInputSchema,
+      async (input, sink) => {
+        const positions = parseRangeString(input.range)
+        if (positions.length === 0) {
+          throw new StorageError('validation', 'Dải chương không hợp lệ')
+        }
+
+        const candidateItems = deps.library.withWork(input.workId, (db) => {
+          const binding = listSourceBindings(db).find((b) => b.id === input.bindingId)
+          if (!binding || !binding.enabled) throw new StorageError('validation', 'Nguồn đã bị tắt')
+          const allItems = listCatalogItems(db, input.bindingId)
+          const posSet = new Set(positions)
+          return allItems.filter(
+            (it) =>
+              it.accessState === 'public' &&
+              !it.chapterId &&
+              posSet.has(Number.parseInt(it.ordinalKey, 10) || 0)
+          )
+        })
+
+        let downloadedCount = 0
+        for (let i = 0; i < candidateItems.length; i++) {
+          const item = candidateItems[i]
+          try {
+            sink.send(EVENT_CHANNELS.sourcesDownloadProgress, {
+              workId: input.workId,
+              bindingId: input.bindingId,
+              current: i + 1,
+              total: candidateItems.length,
+              title: item.title
+            })
+          } catch {
+            // sink is best-effort
+          }
+
+          const { binding } = deps.library.withWork(input.workId, (db) => {
+            const binding = listSourceBindings(db).find((b) => b.id === item.bindingId)
+            if (!binding) throw new StorageError('not_found', 'Không tìm thấy nguồn')
+            return { binding }
+          })
+
+          const page = await sources().getChapter({
+            sourceId: binding.adapterId,
+            remoteWorkId: binding.remoteWorkId,
+            remoteChapterId: item.remoteChapterId,
+            languageTag: binding.languageTag
+          })
+          if (!page.text.trim()) continue
+
+          const targetPos = deps.library.withWork(input.workId, (db) =>
+            computeTargetPosition(db, item.bindingId, item.ordinalKey)
+          )
+          const { chapter } = deps.library.createChapterAt(input.workId, targetPos, item.title)
+          try {
+            deps.library.saveText(input.workId, chapter.id, 'source', page.text, 0, [])
+            deps.library.withWork(input.workId, (db) => {
+              sources().catalog.mapChapter(db, item.id, chapter.id)
+            })
+            downloadedCount++
+          } catch (error) {
+            deps.library.deleteChapter(input.workId, chapter.id)
+            throw error
+          }
+        }
+
+        return { downloadedCount, totalAttempted: candidateItems.length }
+      }
+    ),
+
+    'sources:catalog:reorder-by-source': createHandler(sourceCatalogReorderInputSchema, (input) => {
+      deps.library.withWork(input.workId, (db) => {
+        reorderByCatalog(db, input.bindingId, Date.now())
+      })
+    }),
 
     'sources:bindings:list': createHandler(sourceBindingsListInputSchema, (input) => {
       return deps.library.withWork(input.workId, (db) => {

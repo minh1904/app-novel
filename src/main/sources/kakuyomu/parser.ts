@@ -127,7 +127,7 @@ function parseEpisode(
     value: {
       remoteChapterId: id,
       title,
-      order: index,
+      order: index + 1,
       url: canonicalUrl,
       access,
       identityConfidence: 'stable'

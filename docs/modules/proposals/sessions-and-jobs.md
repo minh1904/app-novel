@@ -1,44 +1,39 @@
-# Phiên AI, lịch sử và nhiều chương
+# Phiên Trợ lý và tác vụ
 
-Cập nhật: 2026-10-09 · Trạng thái: vòng đời phiên và proposal đã triển khai; quản lý phiên,
-retention và tác vụ nhiều chương còn mở.
-Chủ trì: sản phẩm/kỹ thuật. Câu hỏi: panel đang mở ở chương khác thì kết quả đi đâu?
+Cập nhật: 2026-10-11 · Trạng thái: contract sản phẩm hiện hành; phần task nhiều chương chưa triển khai.
 
-## Ba vòng đời
+## Bốn vòng đời
 
-| Đối tượng | Hiện trạng đã triển khai | Vòng đời |
+| Đối tượng | Nơi lưu | Vai trò |
 | --- | --- | --- |
-| **Phiên AI** | `ai_session` theo tác phẩm; chứa các `ai_turn` bền, mỗi lượt ghi chương, vị trí, model, câu hỏi/trả lời, tool, usage và trạng thái | Ẩn panel hoặc đổi chương không kết thúc phiên. Mở lại app đọc được lịch sử; lượt đang dở thành `interrupted`. Chưa có rename/delete/pin/archive/retention. |
-| **Lượt dịch / tác vụ** | Dịch một chương có run/proposal; `JobRunner` nhiều chương chưa thuộc module này | Chia lô, retry, hủy và phục hồi tác vụ nhiều chương vẫn thuộc Module 7. |
-| **Đề xuất** | Bản ghi theo chương, có phần neo, trạng thái duyệt và liên kết nullable tới session/turn | Tồn tại độc lập với panel. Theo schema hiện tại, xóa session sẽ bỏ liên kết session/turn nhưng không xóa proposal. |
+| **Session** | `library.db` | Một hội thoại toàn ứng dụng; còn nguyên khi đổi màn, chương hoặc tác phẩm. |
+| **Turn** | `library.db` | Một yêu cầu và câu trả lời, kèm context snapshot, model, activity và usage. |
+| **Operation** | `library.db` + journal/checkpoint trong work DB | Một thao tác ghi ngắn do turn tạo, có target, tiến độ, cancel và Undo. |
+| **Task** | `library.db`, sẽ bổ sung | Công việc dài gồm nhiều item, có pause/cancel/retry, ngân sách và phục hồi sau khi mở lại app. |
 
-## Hành vi người dùng cần giữ
+Proposal cũ tiếp tục nằm trong work DB và được truy cập qua `legacyRef`; nó không phải task hay
+operation mới.
 
-- Ẩn/đóng panel rồi mở lại trong cùng lần chạy app: hội thoại và vị trí xem vẫn còn.
-- Mở chương khác: panel vẫn xem được phiên của tác phẩm, còn mỗi đề xuất luôn mở đúng chương của nó.
-- Tắt/mở app: **lịch sử phiên và đề xuất đã lưu** còn tra cứu được; người dùng có thể mở phiên cũ
-  để tiếp tục chat. Tác vụ nhiều chương tiếp tục theo Module 7. Tiếp tục chat là lượt gọi AI mới,
-  không đòi giữ một kết nối provider hay tiến trình AI qua lần tắt app.
-- Người dùng có thể tạo phiên mới, xem phiên cũ và biết đề xuất nào vẫn chờ. Tạo phiên mới không xóa
-  lịch sử/đề xuất của phiên trước.
-- Lịch sử theo **tác phẩm**, không theo chương đang mở; mỗi lượt và đề xuất vẫn ghi `chapterId`.
+## Hành vi phải đạt
 
-## Ranh giới triển khai còn lại
+- Có thể tạo và tiếp tục session ở ngoài tác phẩm.
+- Mở Trợ lý từ chương chỉ bổ sung context cho lượt mới; không tạo lịch sử thứ hai.
+- Chuyển màn không hủy turn hoặc task đang chạy. Stream được định danh bằng request/turn ID.
+- Mỗi operation và task hiển thị đúng target; **Mở đích** điều hướng tới chương liên quan.
+- Đóng app biến turn đang stream thành `interrupted`. Task bền đọc journal để tiếp tục hoặc báo trạng
+  thái cần xử lý; không tự tuyên bố hoàn tất.
+- Lịch sử chat và trạng thái task là hai danh sách liên kết, không gộp tiến độ dài vào transcript.
 
-Module quản lý phiên cần chốt và đặc tả riêng rename/delete/pin/archive, phân trang end-to-end,
-retention và quan hệ khi xóa phiên. Storage đã có cursor, nhưng renderer mới tải 30 phiên và 100 lượt
-mới nhất; các lượt cũ hơn chưa hiện và chưa tham gia lịch sử gửi model. Module 7 vẫn sở hữu
-`JobRunner`, dịch nhiều chương, retry, hủy, chi phí và phục hồi tác vụ.
+## Tác vụ dịch nhiều chương đầu tiên
 
-Với nhiều chương, phải cho xem danh sách chương đã xong/chờ duyệt/đang dịch/lỗi và lọc đề xuất theo
-chương hoặc lượt dịch. Đó là yêu cầu điều hướng dữ liệu cho Module 5 và Module 7, chưa có UI được
-duyệt. Không buộc người dùng đứng ở chương mà AI đang dịch.
+`translate_range` nhận danh sách chương đã resolve và tạo một task gồm các item tuần tự. Mỗi item gọi
+pipeline dịch chương hiện có và lưu trạng thái `queued`, `running`, `completed`, `failed` hoặc
+`cancelled`. Task lưu ngân sách, usage đã tiêu, lỗi cuối và con trỏ tiếp tục.
 
-Lượt dở khi app đóng giữ partial answer và được đánh dấu `interrupted` ở lần khởi động sau. Proposal
-do tool chat tạo luôn ở chế độ duyệt trước; pending glossary hiện chỉ giữ liên hệ trong metadata tool,
-chưa có provenance session/turn trực tiếp.
+UI tối thiểu cần tổng tiến độ, chương đang chạy, danh sách lỗi, Pause/Continue, Cancel và Retry item.
+Không cần scheduler tổng quát, DAG hoặc chạy song song ở phiên bản đầu.
 
-Nguồn: [quyết định module](decisions.md),
-[roadmap](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ).
+Quản lý session nâng cao như rename, pin, archive, tìm kiếm, retention và attachment được hoãn cho tới
+khi vòng chat và task cốt lõi đã chạy đầu-cuối.
 
-[Về mục lục](README.md)
+[Quyết định](decisions.md) · [Roadmap agent](agent-roadmap.md) · [Về module](README.md)

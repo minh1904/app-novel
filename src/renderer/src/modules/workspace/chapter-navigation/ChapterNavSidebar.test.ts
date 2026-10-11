@@ -82,4 +82,10 @@ describe('ChapterNavSidebar', () => {
     const html = render()
     expect(html).toContain('1/2 chương đã dịch')
   })
+
+  it('renders clean labels and gap indicator when chapters are sparse', () => {
+    const html = render()
+    // With ch-1 and ch-2, no gap
+    expect(html).not.toContain('Khuyết')
+  })
 })

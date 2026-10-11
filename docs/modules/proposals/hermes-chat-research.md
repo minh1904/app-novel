@@ -1,6 +1,8 @@
 # Học UI chat của Hermes Desktop
 
-Cập nhật: 2026-10-08 · Trạng thái: **Đã chốt hướng** chat tự gọi tool (mục "Quyết định 2026-10-08"); **Quan sát** (phần 1–2), **Đề xuất** (phần 3–5). Phạm vi bốn nhóm
+Cập nhật: 2026-10-11 · Trạng thái: **nghiên cứu và baseline lịch sử** cho chat tự gọi tool;
+contract proposal-only đã bị `app-agent-foundation` thay thế cho lượt mới. **Quan sát** (phần 1–2),
+**Đề xuất lịch sử** (phần 3–5). Phạm vi bốn nhóm
 tính năng do chủ sản phẩm chọn cùng ngày; chi tiết bên trong mỗi nhóm vẫn là đề xuất. Chủ trì: chủ sản
 phẩm, kỹ thuật.
 
@@ -36,14 +38,16 @@ Chủ sản phẩm chốt:
   giờ ghi thẳng, đúng [quyết định về đề xuất](decisions.md).
 - **Hiển thị lượt gọi tool như Hermes:** gộp thành một dòng tóm tắt, bấm để mở chi tiết.
 
-Đặc tả nằm ở change OpenSpec `agentic-chat`. Các mục 3a–3d bên dưới vẫn là phạm vi UI của change đó.
-Riêng các dòng về chế độ và phạm vi trong ô soạn không còn đúng.
+Đặc tả cũ nằm trong [lịch sử superseded của `agentic-chat`](history/agentic-chat/README.md), không còn
+là active OpenSpec và không được merge vào main specs. Các mục 3a–3d bên dưới là đề xuất lịch sử;
+`app-agent-foundation` mới là contract đích cho lượt agent mới.
 
-**Hiện trạng ngày 2026-10-08 (mã):** change `agentic-chat` đã có trong mã. Gồm ô soạn không chế độ,
+**Baseline ngày 2026-10-08 (mã):** phần lớn change `agentic-chat` đã có trong mã. Gồm ô soạn không chế độ,
 vị trí người dùng ở cuối system prompt, bảy tool đọc, ba tool ghi chỉ tạo đề xuất, trần 10 đề xuất mỗi
 lượt, dòng tóm tắt lượt gọi tool và thẻ đề xuất dưới lượt chat. Test chạy trên model giả và kho thật.
-**Chưa đo trên model thật:** bảng đo 5 câu hỏi mẫu (task 6.1 của change) còn trống cho tới khi chủ sản
-phẩm chạy với khóa thật.
+Test tự động dùng model giả và kho test; chúng không phải nghiệm thu với model thật.
+**Chưa đo trên model thật:** bảng đo 5 câu hỏi mẫu (task 6.1 của change) còn trống; change đã bị rút ở
+20/22 task nên bảng này được giữ làm bằng chứng thiếu, không còn là gate của active change.
 
 | Câu hỏi mẫu | Số vòng tool | Ký tự đọc | Số đề xuất | Đọc trước khi trả lời? |
 | --- | --- | --- | --- | --- |

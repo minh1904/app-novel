@@ -25,7 +25,7 @@ const mockCrypto: SecretCrypto = {
 describe('Sources IPC handlers', () => {
   function setup() {
     const dir = tempDir()
-    let nowTime = 1000
+    const nowTime = 1000
     const library = LibraryStore.open({ dataDir: dir, now: () => nowTime })
     const work = library.create({ title: 'Tác phẩm test', sourceLang: 'ja' })
     const sources = createSourceServices(library, mockCrypto)
@@ -202,6 +202,110 @@ describe('Sources IPC handlers', () => {
       expect(la.items[0].seenAt).toBeTypeOf('number')
       expect(la.items[0].actedAt).toBeNull()
     }
+
+    library.close()
+  })
+
+  it('downloads chapters with relative position insertion and supports reorder by catalog', async () => {
+    const { library, work, handlers, sources } = setup()
+
+    sources.getChapter = async ({ remoteChapterId }) => ({
+      remoteChapterId,
+      text: `Nội dung chương ${remoteChapterId}`,
+      contentHash: `hash-${remoteChapterId}`,
+      payloadHash: `phash-${remoteChapterId}`,
+      normalizationVersion: 1
+    })
+
+    library.withWork(work.id, (db) => {
+      db.exec(`
+        INSERT INTO source_binding (id, adapter_id, adapter_version, remote_work_id, language_tag, label, enabled, is_primary, created_at, updated_at)
+        VALUES ('b1', 'mira.folder', '1.0.0', 'folder:raws', 'ja', 'Raw', 1, 1, 1000, 1000);
+
+        INSERT INTO source_catalog_item (id, binding_id, remote_chapter_id, ordinal_key, title, kind, access_state, first_seen_at, last_seen_at, metadata_hash)
+        VALUES
+          ('it-1', 'b1', 'ch-1', '000001', 'Chương 1', 'chapter', 'public', 1000, 1000, 'm1'),
+          ('it-5', 'b1', 'ch-5', '000005', 'Chương 5', 'chapter', 'public', 1000, 1000, 'm5'),
+          ('it-10', 'b1', 'ch-10', '000010', 'Chương 10', 'chapter', 'public', 1000, 1000, 'm10');
+      `)
+    })
+
+    // Download chapter 10 first
+    const res10 = await handlers['sources:catalog:download']({ workId: work.id, itemId: 'it-10' })
+    expect(res10.ok).toBe(true)
+    let chapters = library.listChapters(work.id)
+    expect(chapters.map((c) => c.title)).toEqual(['Chương 10'])
+
+    // Download chapter 1 next -> should be inserted at position 0
+    const res1 = await handlers['sources:catalog:download']({ workId: work.id, itemId: 'it-1' })
+    expect(res1.ok).toBe(true)
+    chapters = library.listChapters(work.id)
+    expect(chapters.map((c) => c.title)).toEqual(['Chương 1', 'Chương 10'])
+
+    // Download chapter 5 next -> should be inserted between 1 and 10
+    const res5 = await handlers['sources:catalog:download']({ workId: work.id, itemId: 'it-5' })
+    expect(res5.ok).toBe(true)
+    chapters = library.listChapters(work.id)
+    expect(chapters.map((c) => c.title)).toEqual(['Chương 1', 'Chương 5', 'Chương 10'])
+
+    // Now test reorder: user moves chapter 10 to position 1 (1-based) -> [10, 1, 5]
+    library.moveChapter(work.id, chapters[2].id, 1)
+    expect(library.listChapters(work.id).map((c) => c.title)).toEqual([
+      'Chương 10',
+      'Chương 1',
+      'Chương 5'
+    ])
+
+    // Run reorder-by-source
+    const reorderRes = await handlers['sources:catalog:reorder-by-source']({
+      workId: work.id,
+      bindingId: 'b1'
+    })
+    expect(reorderRes.ok).toBe(true)
+    expect(library.listChapters(work.id).map((c) => c.title)).toEqual([
+      'Chương 1',
+      'Chương 5',
+      'Chương 10'
+    ])
+
+    library.close()
+  })
+
+  it('supports bulk range download', async () => {
+    const { library, work, handlers, sources } = setup()
+
+    sources.getChapter = async ({ remoteChapterId }) => ({
+      remoteChapterId,
+      text: `Nội dung ${remoteChapterId}`,
+      contentHash: `h-${remoteChapterId}`,
+      payloadHash: `p-${remoteChapterId}`,
+      normalizationVersion: 1
+    })
+
+    library.withWork(work.id, (db) => {
+      db.exec(`
+        INSERT INTO source_binding (id, adapter_id, adapter_version, remote_work_id, language_tag, label, enabled, is_primary, created_at, updated_at)
+        VALUES ('b1', 'mira.folder', '1.0.0', 'folder:raws', 'ja', 'Raw', 1, 1, 1000, 1000);
+
+        INSERT INTO source_catalog_item (id, binding_id, remote_chapter_id, ordinal_key, title, kind, access_state, first_seen_at, last_seen_at, metadata_hash)
+        VALUES
+          ('it-1', 'b1', 'ch-1', '000001', 'Chương 1', 'chapter', 'public', 1000, 1000, 'm1'),
+          ('it-2', 'b1', 'ch-2', '000002', 'Chương 2', 'chapter', 'public', 1000, 1000, 'm2'),
+          ('it-3', 'b1', 'ch-3', '000003', 'Chương 3', 'chapter', 'public', 1000, 1000, 'm3');
+      `)
+    })
+
+    const res = await handlers['sources:catalog:download-range']({
+      workId: work.id,
+      bindingId: 'b1',
+      range: '1-2'
+    })
+    expect(res.ok).toBe(true)
+    if (res.ok) {
+      expect((res.value as any).downloadedCount).toBe(2)
+    }
+    const chapters = library.listChapters(work.id)
+    expect(chapters.map((c) => c.title)).toEqual(['Chương 1', 'Chương 2'])
 
     library.close()
   })

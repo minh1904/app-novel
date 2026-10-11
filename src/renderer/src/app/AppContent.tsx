@@ -4,7 +4,7 @@ import { AppShell } from './AppShell'
 import { CommandPaletteMock } from './CommandPaletteMock'
 import { WorkTabActiveContext } from '../components/ui/topBarSlot'
 import { Button, LinkButton } from '../components/ui/Button'
-import { AssistantScreenMock } from './screens/assistant/AssistantScreenMock'
+import { AgentPanel } from '../modules/agent/public'
 import { HomeScreen } from './screens/home/HomeScreen'
 import { JobsScreenMock } from './screens/jobs/JobsScreenMock'
 import { CreateWorkScreen } from '../modules/library/public'
@@ -162,7 +162,17 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
       content = <StyleProfilesMock />
       break
     case 'assistant':
-      content = <AssistantScreenMock />
+      content = (
+        <AgentPanel
+          onOpenTarget={(target) => {
+            if (target.kind === 'chapter') {
+              openChapterView(target.workId, target.chapterId)
+            } else if (target.kind === 'work') {
+              openWork(target.workId)
+            }
+          }}
+        />
+      )
       break
     case 'create':
       content = (
@@ -190,7 +200,7 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
       const backToWork = (): void => go({ name: 'work', workId: view.workId })
       content = (
         <ChapterScreen
-          key={view.chapterId}
+          key={view.workId}
           workId={view.workId}
           chapterId={view.chapterId}
           onBackToWork={backToWork}
@@ -267,7 +277,7 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
               />
             ) : (
               <ChapterScreen
-                key={tab.location.chapterId}
+                key={tab.workId}
                 workId={tab.workId}
                 chapterId={tab.location.chapterId}
                 onBackToWork={backToWork}

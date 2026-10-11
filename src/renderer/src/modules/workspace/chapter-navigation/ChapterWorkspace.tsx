@@ -17,9 +17,12 @@ import {
 
 import { splitParagraphs } from '../../../../../shared/text/paragraphSpans'
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
+import type { SourceCatalogItem } from '../../../../../shared/contracts/sources'
+import { extractChapterNumber } from '../../../../../shared/text/chapterNumber'
 import type { TextRecord } from '../../../../../shared/contracts/text'
 import { TopBarActions, TopBarTitle } from '../../../components/ui/TopBarActions'
 import { WorkTabActiveContext } from '../../../components/ui/topBarSlot'
+import { cn } from '../../../lib/cn'
 import { Breadcrumb } from '../../../components/ui/Breadcrumb'
 import { Button, LinkButton } from '../../../components/ui/Button'
 import { CompactButton } from '../../../components/ui/CompactButton'
@@ -33,12 +36,14 @@ import type { TargetRange } from '../chapter-editor/chatRange'
 import type { ParagraphAnchor } from '../chapter-editor/paragraphLink'
 import { TextEditor, type TextEditorHandle } from '../chapter-editor/TextEditor'
 import { ExportDialog } from '../../export/public'
-import { languages, type Work } from '../../library/public'
+import { languages, useLibraryStore, type Work } from '../../library/public'
+import { useChapterStore } from '../store/chapterStore'
 import { usePaneLayoutStore } from '../store/paneLayoutStore'
 import { useWorkspaceStore } from '../store/workspaceStore'
 import { headingTitle } from '../work-detail/chapterList'
 import { contextArea } from '../work-detail/workAreas'
 import { AiPanel } from '../assistant/AiPanel'
+import { defaultWorkspaceAgentAdapter } from '@renderer/modules/agent/public'
 import type { ChatEditor } from '../assistant/useAiChat'
 import { AiTranslateDialog } from '../translation/AiTranslateDialog'
 import { ChapterStatusBar } from './ChapterStatusBar'
@@ -100,6 +105,13 @@ const paragraphFigures = (source: TextRecord, target: TextRecord): string => {
   return sourceCount + ' đoạn gốc · ' + targetCount + ' đoạn dịch'
 }
 
+interface GapPromptState {
+  nextChapter: ChapterItem
+  rawItem: SourceCatalogItem
+  targetNumber: number
+  loading: boolean
+}
+
 /**
  * Chế độ toàn văn của chương: bản gốc bên trái, bản dịch bên phải, mỗi khung cuộn độc lập.
  */
@@ -129,6 +141,49 @@ export function ChapterWorkspace({
   const [translation, setTranslation] = useState(target.content)
   const [unlocked, setUnlocked] = useState(false)
   const [mode, setMode] = useState<'full' | 'sentence'>('full')
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Đặt lại trạng thái cục bộ mỗi khi chuyển sang chương khác.
+  useEffect(() => {
+    setTranslation(target.content)
+    setUnlocked(false)
+    setSourceStatus(IDLE)
+    setTargetStatus(IDLE)
+    setAiRange(null)
+    setAiSourceRange(null)
+  }, [chapter.id, target.content])
+
+  useEffect(() => {
+    if (!tabActive) return
+    defaultWorkspaceAgentAdapter.setActiveContextGetter(() => ({
+      workId: work.id,
+      chapterId: chapter.id,
+      side: 'target'
+    }))
+    return () => {
+      defaultWorkspaceAgentAdapter.setActiveContextGetter(() => null)
+    }
+  }, [tabActive, work.id, chapter.id])
+
+  useEffect(() => {
+    return defaultWorkspaceAgentAdapter.registerEditor(
+      { workId: work.id, chapterId: chapter.id, side: 'target' },
+      {
+        isDirty: () => targetStatus.dirty,
+        flush: async () => {
+          const res = await targetEditor.current?.save()
+          return { ok: res?.kind === 'saved' || res?.kind === 'unchanged' }
+        },
+        setReadOnly: (_ro) => {},
+        reload: async () => {
+          const res = await targetStore.get()
+          if (res.ok) {
+            setTranslation(res.value.content)
+            onTargetReplaced(res.value)
+          }
+        }
+      }
+    )
+  }, [work.id, chapter.id, targetStatus.dirty, targetStore, onTargetReplaced])
   const sentence = useRef<SentenceModeHandle>(null)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiWidth, setAiWidth] = useState(420)
@@ -352,6 +407,122 @@ export function ChapterWorkspace({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [mode, tabActive, aiOpen, toggleSource, toggleTarget])
 
+  const [gapPrompt, setGapPrompt] = useState<GapPromptState | null>(null)
+  const navigate = useWorkspaceStore((state) => state.navigate)
+
+  const handleNavigateChapter = useCallback(
+    async (direction: 'next' | 'prev'): Promise<void> => {
+      const res = await window.mira?.chapters?.list(work.id)
+      if (!res?.ok) return
+      const chaptersList = res.value.chapters
+      const idx = chaptersList.findIndex((c) => c.id === chapter.id)
+      if (idx < 0) return
+
+      if (direction === 'prev') {
+        if (idx > 0) {
+          const prevCh = chaptersList[idx - 1]
+          void navigate({ name: 'chapter', workId: work.id, chapterId: prevCh.id })
+        }
+        return
+      }
+
+      // direction === 'next'
+      if (idx >= chaptersList.length - 1) return
+      const nextCh = chaptersList[idx + 1]
+
+      // Check gap between chapters
+      const currNum = extractChapterNumber(chapter.title)
+      const nextNum = extractChapterNumber(nextCh.title)
+
+      if (currNum !== null && nextNum !== null && nextNum - currNum > 1) {
+        const targetNumber = currNum + 1
+        try {
+          const bRes = await window.mira?.sources?.bindings?.list({ workId: work.id })
+          if (bRes?.ok && bRes.value.length > 0) {
+            const primary = bRes.value.find((b) => b.role === 'primary') ?? bRes.value[0]
+            const catRes = await window.mira?.sources?.catalog?.list({
+              workId: work.id,
+              bindingId: primary.id,
+              limit: 200
+            })
+            if (catRes?.ok) {
+              const rawItem = catRes.value.items.find(
+                (item) =>
+                  !item.chapterId &&
+                  (extractChapterNumber(item.title) === targetNumber ||
+                    item.position === targetNumber)
+              )
+              if (rawItem) {
+                setGapPrompt({
+                  nextChapter: nextCh,
+                  rawItem,
+                  targetNumber,
+                  loading: false
+                })
+                return
+              }
+            }
+          }
+        } catch {
+          // Fallback to normal navigation
+        }
+      }
+
+      void navigate({ name: 'chapter', workId: work.id, chapterId: nextCh.id })
+    },
+    [work.id, chapter.id, chapter.title, navigate]
+  )
+
+  const handleDownloadAndOpenAdjacent = async (prompt: GapPromptState): Promise<void> => {
+    setGapPrompt((prev) => (prev ? { ...prev, loading: true } : null))
+    try {
+      const dlRes = await window.mira?.sources?.catalog?.download({
+        workId: work.id,
+        itemId: prompt.rawItem.id
+      })
+      if (dlRes?.ok) {
+        setGapPrompt(null)
+        void useChapterStore.getState().reload()
+        void useLibraryStore.getState().reload()
+        void navigate({
+          name: 'chapter',
+          workId: work.id,
+          chapterId: dlRes.value.chapterId
+        })
+        return
+      }
+    } finally {
+      setGapPrompt((prev) => (prev ? { ...prev, loading: false } : null))
+    }
+  }
+
+  const handleSkipToAvailable = async (prompt: GapPromptState): Promise<void> => {
+    setGapPrompt(null)
+    void navigate({
+      name: 'chapter',
+      workId: work.id,
+      chapterId: prompt.nextChapter.id
+    })
+  }
+
+  // Phím tắt Alt+Down (chương kế tiếp) và Alt+Up (chương trước đó)
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (!tabActive || event.defaultPrevented) return
+      if (event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault()
+          void handleNavigateChapter('next')
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault()
+          void handleNavigateChapter('prev')
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [tabActive, handleNavigateChapter])
+
   useRegisterLeaveGuard({
     isDirty: () =>
       mode === 'sentence'
@@ -487,6 +658,38 @@ export function ChapterWorkspace({
         </LinkButton>
       </div>
 
+      {gapPrompt && (
+        <div
+          role="region"
+          aria-label="Thông báo khoảng khuyết chương"
+          className="flex flex-wrap items-center justify-between gap-sm border-b border-warning/40 bg-warning/10 px-md py-xs text-body-sm text-default"
+        >
+          <div className="flex items-center gap-xs">
+            <span className="font-medium text-warning">Khoảng khuyết:</span>
+            <span>Chương liền kề (Chương {gapPrompt.targetNumber}) chưa có trong tác phẩm.</span>
+          </div>
+          <div className="flex items-center gap-xs">
+            <Button
+              variant="solid"
+              disabled={gapPrompt.loading}
+              onClick={() => void handleDownloadAndOpenAdjacent(gapPrompt)}
+            >
+              {gapPrompt.loading ? 'Đang tải…' : 'Tải & Mở chương kế'}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={gapPrompt.loading}
+              onClick={() => void handleSkipToAvailable(gapPrompt)}
+            >
+              Chuyển tới {gapPrompt.nextChapter.title || 'Chương ' + gapPrompt.nextChapter.number}
+            </Button>
+            <Button variant="ghost" disabled={gapPrompt.loading} onClick={() => setGapPrompt(null)}>
+              Đóng
+            </Button>
+          </div>
+        </div>
+      )}
+
       {mode === 'sentence' ? (
         <div className="min-h-0 flex-1 p-3">
           <SentenceMode
@@ -605,7 +808,7 @@ export function ChapterWorkspace({
                 }
               >
                 <TextEditor
-                  key={sourceEpoch}
+                  key={`${chapter.id}:${sourceEpoch}`}
                   handleRef={sourceEditor}
                   record={source}
                   lang={work.sourceLanguage}
@@ -653,7 +856,7 @@ export function ChapterWorkspace({
                 }
               >
                 <TextEditor
-                  key={targetEpoch}
+                  key={`${chapter.id}:${targetEpoch}`}
                   handleRef={targetEditor}
                   record={target}
                   lang="vi"
@@ -692,38 +895,45 @@ export function ChapterWorkspace({
           </div>
 
           <div
-            className={aiOpen ? 'min-h-0 shrink-0 border-l border-default' : 'hidden'}
-            style={{ width: aiWidth }}
-          >
-            {tabActive && (
-              <AiPanel
-                workId={work.id}
-                chapterId={chapter.id}
-                chapterLabel={headingTitle(chapter)}
-                sourceLang={work.sourceLanguage}
-                source={sourceText}
-                target={targetChat}
-                sourceCaret={
-                  aiSourceRange && {
-                    from: aiSourceRange.from,
-                    to: aiSourceRange.to,
-                    selected: aiSourceRange.selected === true
-                  }
-                }
-                targetCaret={
-                  aiRange && {
-                    from: aiRange.from,
-                    to: aiRange.to,
-                    selected: aiRange.selected === true
-                  }
-                }
-                activeSide={aiSide}
-                width={aiWidth}
-                onWidthChange={setAiWidth}
-                onClose={() => setAiOpen(false)}
-                onOpenSettings={onOpenSettings}
-              />
+            inert={!aiOpen || undefined}
+            aria-hidden={!aiOpen || undefined}
+            className={cn(
+              'min-h-0 shrink-0 overflow-hidden border-default transition-[width] duration-(--mira-duration-base) ease-standard',
+              aiOpen ? 'border-l' : 'w-0 border-l-0'
             )}
+            style={{ width: aiOpen ? aiWidth : 0 }}
+          >
+            <div className="flex h-full min-h-0 flex-col" style={{ width: aiWidth }}>
+              {tabActive && (
+                <AiPanel
+                  workId={work.id}
+                  chapterId={chapter.id}
+                  chapterLabel={headingTitle(chapter)}
+                  sourceLang={work.sourceLanguage}
+                  source={sourceText}
+                  target={targetChat}
+                  sourceCaret={
+                    aiSourceRange && {
+                      from: aiSourceRange.from,
+                      to: aiSourceRange.to,
+                      selected: aiSourceRange.selected === true
+                    }
+                  }
+                  targetCaret={
+                    aiRange && {
+                      from: aiRange.from,
+                      to: aiRange.to,
+                      selected: aiRange.selected === true
+                    }
+                  }
+                  activeSide={aiSide}
+                  width={aiWidth}
+                  onWidthChange={setAiWidth}
+                  onClose={() => setAiOpen(false)}
+                  onOpenSettings={onOpenSettings}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -799,7 +1009,7 @@ function FoldedPane({
     <div
       ref={strip}
       className={
-        'flex w-8 shrink-0 flex-col items-center gap-2 border-default bg-surface py-3 ' +
+        'flex w-8 shrink-0 flex-col items-center gap-2 border-default bg-surface py-3 transition-opacity duration-(--mira-duration-fast) ' +
         (side === 'left' ? 'border-r' : 'border-l')
       }
     >

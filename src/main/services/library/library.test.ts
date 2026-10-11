@@ -1,4 +1,5 @@
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -217,18 +218,38 @@ describe('LibraryStore recovery', () => {
     expect(store.list().works.map((w) => w.id)).toEqual([work.id])
   })
 
-  it('sets aside a corrupt library.db and rebuilds it', () => {
+  it('restores a corrupt library.db from backup and rebuilds the index', () => {
     const dir = tempDir()
     let store = open(dir)
     const work = store.create({ title: 'A', sourceLang: 'en' })
     store.close()
     stores.length = 0
+
+    // Provide a valid backup
+    mkdirSync(join(dir, 'backups'), { recursive: true })
+    copyFileSync(join(dir, 'library.db'), join(dir, 'backups', 'library-backup-1.db'))
+
     for (const suffix of ['-wal', '-shm']) rmSync(join(dir, 'library.db' + suffix), { force: true })
     writeFileSync(join(dir, 'library.db'), 'garbage')
 
     store = open(dir)
     expect(store.list().works.map((w) => w.id)).toEqual([work.id])
     expect(readdirSync(dir).some((n) => n.startsWith('library.db.corrupt-'))).toBe(true)
+  })
+
+  it('refuses a corrupt library.db without silently recreating it when no backup exists', () => {
+    const dir = tempDir()
+    const store = open(dir)
+    store.create({ title: 'A', sourceLang: 'en' })
+    store.close()
+    stores.length = 0
+
+    for (const suffix of ['-wal', '-shm']) rmSync(join(dir, 'library.db' + suffix), { force: true })
+    writeFileSync(join(dir, 'library.db'), 'garbage')
+
+    expect(() => open(dir)).toThrow(/không tìm thấy bản sao lưu hợp lệ/)
+    expect(readdirSync(dir).some((n) => n.startsWith('library.db.corrupt-'))).toBe(false)
+    expect(readFileSync(join(dir, 'library.db'), 'utf-8')).toBe('garbage')
   })
 
   it('refuses a work file from a newer schema without modifying it', () => {

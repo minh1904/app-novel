@@ -723,3 +723,89 @@ export function rebuildScheduleIndex(
     }
   })
 }
+
+/**
+ * Computes the relative 0-based insertion position for a catalog item based on its ordinal_key,
+ * preserving predecessor/successor relative positions.
+ */
+export function computeTargetPosition(db: Db, bindingId: string, targetOrdinalKey: string): number {
+  const linked = db
+    .prepare(
+      `SELECT c.position AS position, s.ordinal_key AS ordinal_key
+       FROM source_catalog_item s
+       JOIN chapter c ON c.id = s.chapter_id
+       WHERE s.binding_id = ? AND s.chapter_id IS NOT NULL
+       ORDER BY s.ordinal_key ASC`
+    )
+    .all<{ position: number; ordinal_key: string }>(bindingId)
+
+  if (linked.length === 0) {
+    const total = db.prepare('SELECT count(*) AS n FROM chapter').get<{ n: number }>()?.n ?? 0
+    return total
+  }
+
+  let p: { position: number; ordinal_key: string } | null = null
+  let s: { position: number; ordinal_key: string } | null = null
+
+  for (const item of linked) {
+    if (item.ordinal_key < targetOrdinalKey) {
+      p = item
+    } else if (item.ordinal_key > targetOrdinalKey && s === null) {
+      s = item
+    }
+  }
+
+  if (p && s) {
+    return p.position < s.position ? s.position : p.position + 1
+  }
+  if (p) return p.position + 1
+  if (s) return s.position
+
+  const total = db.prepare('SELECT count(*) AS n FROM chapter').get<{ n: number }>()?.n ?? 0
+  return total
+}
+
+/**
+ * Reorders linked chapters for a binding according to ordinal_key ASC,
+ * preserving slots of non-linked chapters.
+ */
+export function reorderByCatalog(db: Db, bindingId: string, now: number): void {
+  const allChapters = db
+    .prepare('SELECT id, position FROM chapter ORDER BY position ASC')
+    .all<{ id: string; position: number }>()
+
+  const catalogRows = db
+    .prepare(
+      `SELECT chapter_id, ordinal_key
+       FROM source_catalog_item
+       WHERE binding_id = ? AND chapter_id IS NOT NULL
+       ORDER BY ordinal_key ASC`
+    )
+    .all<{ chapter_id: string; ordinal_key: string }>(bindingId)
+
+  if (catalogRows.length <= 1) return
+
+  const linkedChapterIds = new Set(catalogRows.map((r) => r.chapter_id))
+  const sortedLinkedIds = catalogRows.map((r) => r.chapter_id)
+
+  let linkedIdx = 0
+  const newOrder: string[] = []
+  for (const ch of allChapters) {
+    if (linkedChapterIds.has(ch.id)) {
+      newOrder.push(sortedLinkedIds[linkedIdx++])
+    } else {
+      newOrder.push(ch.id)
+    }
+  }
+
+  db.transaction(() => {
+    for (let i = 0; i < newOrder.length; i++) {
+      db.prepare('UPDATE chapter SET position = ?, updated_at = ? WHERE id = ?').run(
+        i,
+        now,
+        newOrder[i]
+      )
+    }
+    db.prepare('UPDATE work SET updated_at = ?').run(now)
+  })
+}

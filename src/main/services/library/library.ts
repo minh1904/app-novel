@@ -11,6 +11,7 @@ import { IMAGE_MAX_PER_WORK } from '../../../shared/contracts/images'
 import {
   deleteChapter,
   insertChapter,
+  insertChapterAt,
   listChapters,
   moveChapter,
   openChapter,
@@ -32,6 +33,20 @@ import {
   type RowRef
 } from '../../infra/storage/sentenceRows'
 import { readSideContents, readText, saveText } from '../../infra/storage/textFile'
+import type {
+  AgentOperationBatch,
+  AgentOperationCheckpoint,
+  AgentOperationEvidence,
+  AgentOperationTerminalState,
+  ApplyAgentTranslationBatchInput
+} from '../../infra/storage/agentOperationJournal'
+import {
+  applyAgentTranslationBatch,
+  markAgentOperationTerminal,
+  prepareAgentOperation,
+  readAgentOperationEvidence,
+  undoAgentOperation
+} from '../../infra/storage/agentOperationJournal'
 import { decodeCover, encodeCover } from '../../infra/storage/cover'
 import { decodeImage, encodeImage } from '../../infra/storage/image'
 import { StorageError } from '../../infra/storage/errors'
@@ -49,6 +64,10 @@ import {
   writeCover
 } from '../../infra/storage/workFile'
 import { WorkFiles } from '../../infra/storage/workFiles'
+import {
+  reconcileStartupOperations,
+  type ReconcileStartupOperationsResult
+} from '../agent/operationReconciler'
 
 export interface LibraryOptions {
   /** Directory that holds `library.db` and `works/`. */
@@ -84,7 +103,13 @@ export class LibraryStore {
 
   static open(options: LibraryOptions): LibraryStore {
     const now = options.now ?? Date.now
-    return new LibraryStore(WorkFiles.open({ dataDir: options.dataDir, now }), now, options)
+    const files = WorkFiles.open({ dataDir: options.dataDir, now })
+    reconcileStartupOperations(files.index, files, now())
+    return new LibraryStore(files, now, options)
+  }
+
+  reconcileOperations(): ReconcileStartupOperationsResult {
+    return reconcileStartupOperations(this.appDb, this.files, this.now())
   }
 
   /**
@@ -164,6 +189,14 @@ export class LibraryStore {
     })
   }
 
+  createChapterAt(workId: string, position: number, title = ''): ChapterChange {
+    const chapterId = this.newChapterId()
+    return this.changeChapters(workId, (db, now) => {
+      const chapter = insertChapterAt(db, chapterId, position, title.trim(), now)
+      return { chapter }
+    })
+  }
+
   renameChapter(workId: string, chapterId: string, title: string): ChapterChange {
     return this.changeChapters(workId, (db, now) => ({
       chapter: renameChapter(db, chapterId, title.trim(), now)
@@ -195,6 +228,121 @@ export class LibraryStore {
     return this.files.withWork(workId, (db) => readSideContents(db, side))
   }
 
+  private readonly writeLeases = new Map<string, string>()
+
+  acquireTargetWriteLease(
+    target: { workId: string; chapterId: string; side: TextSide },
+    operationId: string
+  ): () => void {
+    const key = `${target.workId}:${target.chapterId}:${target.side}`
+    const existing = this.writeLeases.get(key)
+    if (existing) {
+      throw new StorageError('conflict', `Target đang được khóa bởi operation ${existing}`)
+    }
+    this.writeLeases.set(key, operationId)
+    return () => {
+      if (this.writeLeases.get(key) === operationId) {
+        this.writeLeases.delete(key)
+      }
+    }
+  }
+
+  private assertNoTargetLease(workId: string, chapterId: string, side: TextSide): void {
+    const key = `${workId}:${chapterId}:${side}`
+    const holder = this.writeLeases.get(key)
+    if (holder) {
+      throw new StorageError('conflict', `Target đang được Agent cập nhật (operation ${holder}).`)
+    }
+  }
+
+  private assertHoldsTargetLease(
+    workId: string,
+    chapterId: string,
+    side: TextSide,
+    operationId: string
+  ): void {
+    const key = `${workId}:${chapterId}:${side}`
+    const holder = this.writeLeases.get(key)
+    if (holder !== operationId) {
+      throw new StorageError(
+        'conflict',
+        `Operation ${operationId} không nắm giữ write lease trên target.`
+      )
+    }
+  }
+
+  prepareAgentOperation(
+    workId: string,
+    input: { operationId: string; chapterId: string; side: TextSide; totalUnits: number }
+  ): AgentOperationCheckpoint {
+    return this.changeChapters(workId, (db, now) => ({
+      checkpoint: prepareAgentOperation(db, input, now)
+    })).checkpoint
+  }
+
+  readAgentOperationEvidence(workId: string, operationId: string): AgentOperationEvidence | null {
+    return this.files.withWork(workId, (db) => readAgentOperationEvidence(db, operationId))
+  }
+
+  applyAgentTranslationBatch(
+    workId: string,
+    input: ApplyAgentTranslationBatchInput
+  ): AgentOperationBatch {
+    const evidence = this.readAgentOperationEvidence(workId, input.operationId)
+    if (!evidence) {
+      throw new StorageError('not_found', 'Không tìm thấy checkpoint operation.')
+    }
+    this.assertHoldsTargetLease(
+      workId,
+      evidence.checkpoint.chapterId,
+      evidence.checkpoint.side,
+      input.operationId
+    )
+    return this.changeChapters(workId, (db, now) => ({
+      batch: applyAgentTranslationBatch(db, input, now, this.newContentId)
+    })).batch
+  }
+
+  markAgentOperationTerminal(
+    workId: string,
+    operationId: string,
+    state: AgentOperationTerminalState,
+    result: unknown
+  ): AgentOperationCheckpoint {
+    return this.changeChapters(workId, (db, now) => ({
+      checkpoint: markAgentOperationTerminal(db, operationId, state, result, now)
+    })).checkpoint
+  }
+
+  undoAgentOperation(
+    workId: string,
+    operationId: string
+  ): { checkpoint: AgentOperationCheckpoint; restoredRev: number } {
+    const evidence = this.readAgentOperationEvidence(workId, operationId)
+    if (!evidence) {
+      throw new StorageError('not_found', 'Không tìm thấy checkpoint operation.')
+    }
+    const key = `${workId}:${evidence.checkpoint.chapterId}:${evidence.checkpoint.side}`
+    const alreadyHeld = this.writeLeases.get(key) === operationId
+    const release = alreadyHeld
+      ? () => {}
+      : this.acquireTargetWriteLease(
+          {
+            workId,
+            chapterId: evidence.checkpoint.chapterId,
+            side: evidence.checkpoint.side
+          },
+          operationId
+        )
+    try {
+      return this.changeChapters(workId, (db, now) =>
+        undoAgentOperation(db, operationId, now, this.newContentId)
+      )
+    } finally {
+      release()
+    }
+  }
+
   /** Text and segments are replaced together; `expectedRev` guards against a stale writer. */
   saveText(
     workId: string,
@@ -204,6 +352,7 @@ export class LibraryStore {
     expectedRev: number,
     segments: SegmentInput[]
   ): TextRecord {
+    this.assertNoTargetLease(workId, chapterId, side)
     const saved = this.changeChapters(workId, (db, now) => ({
       text: saveText(
         db,
@@ -233,6 +382,7 @@ export class LibraryStore {
     workId: string,
     args: RowRef & { text: string; expectedRev: number; by?: RowAuthor }
   ): RowSaved {
+    this.assertNoTargetLease(workId, args.chapterId, 'target')
     return this.changeChapters(workId, (db, now) => ({
       saved: saveRow(db, args, now, this.newContentId)
     })).saved
