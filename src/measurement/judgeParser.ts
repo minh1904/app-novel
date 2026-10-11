@@ -1,6 +1,6 @@
 /**
- * Lenient parser and verdict evaluator for LLM judge (design D4).
- * Pure function with no Node/DOM dependencies.
+ * Bộ phân tích cú pháp linh hoạt và đánh giá kết quả cho trọng tài LLM.
+ * Hàm thuần túy không phụ thuộc Node/DOM.
  */
 
 export interface JudgeError {
@@ -23,55 +23,55 @@ export function evaluateTwoPassVerdicts(
   p1: 'A' | 'B' | 'tie',
   p2: 'A' | 'B' | 'tie'
 ): { consistentVerdict: 'A' | 'B' | 'tie'; isInconsistent: boolean } {
-  // Pass 2 has swapped candidates: A in Pass 2 is Run B, B in Pass 2 is Run A.
-  // Run A wins if: Pass 1 picked A AND Pass 2 picked B.
+  // Lượt 2 đảo vị trí hai ứng viên: A ở lượt 2 là lượt chạy B, B ở lượt 2 là lượt chạy A.
+  // Lượt chạy A thắng nếu: Lượt 1 chọn A VÀ Lượt 2 chọn B.
   if (p1 === 'A' && p2 === 'B') {
     return { consistentVerdict: 'A', isInconsistent: false }
   }
-  // Run B wins if: Pass 1 picked B AND Pass 2 picked A.
+  // Lượt chạy B thắng nếu: Lượt 1 chọn B VÀ Lượt 2 chọn A.
   if (p1 === 'B' && p2 === 'A') {
     return { consistentVerdict: 'B', isInconsistent: false }
   }
-  // Both tied:
+  // Cả hai đều hòa:
   if (p1 === 'tie' && p2 === 'tie') {
     return { consistentVerdict: 'tie', isInconsistent: false }
   }
-  // Any disagreement (e.g. both picked candidate A regardless of order -> position bias!)
+  // Mọi bất đồng (ví dụ cả hai lượt đều chọn vị trí A bất kể thứ tự -> thiên vị vị trí)
   return { consistentVerdict: 'tie', isInconsistent: true }
 }
 
 /**
- * Normalizes and parses raw LLM text into JudgeOutput:
- * - Strips markdown code blocks (```json ... ``` or ``` ...)
- * - Strips leading/trailing text outside the first { and last }
- * - Fixes raw unescaped newlines inside strings if needed
+ * Chuẩn hóa và phân tích cú pháp văn bản thô từ LLM thành JudgeOutput:
+ * - Loại bỏ các khối mã markdown (```json ... ``` hoặc ``` ...)
+ * - Loại bỏ văn bản thừa trước dấu { đầu tiên và sau dấu } cuối cùng
+ * - Xử lý dấu xuống dòng chưa escape bên trong chuỗi ký tự nếu cần
  */
 export function parseJudgeResponse(rawText: string): JudgeOutput | null {
   if (!rawText || rawText.trim() === '') return null
 
   let text = rawText.trim()
 
-  // 1. Remove markdown fences ```json ... ``` or ``` ... ```
+  // 1. Loại bỏ khối markdown ```json ... ``` hoặc ``` ... ```
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
   if (fenceMatch) {
     text = fenceMatch[1].trim()
   }
 
-  // 2. Extract outer JSON object {...}
+  // 2. Trích xuất đối tượng JSON ngoài cùng {...}
   const firstBrace = text.indexOf('{')
   const lastBrace = text.lastIndexOf('}')
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     text = text.slice(firstBrace, lastBrace + 1)
   }
 
-  // 3. Attempt direct JSON parse
+  // 3. Thử phân tích cú pháp JSON trực tiếp
   try {
     const parsed = JSON.parse(text)
     if (validateJudgeStructure(parsed)) {
       return parsed
     }
   } catch {
-    // 4. Try lenient fixes: unescaped control newlines inside quotes
+    // 4. Thử sửa lỗi linh hoạt: ký tự xuống dòng chưa escape trong chuỗi
     try {
       const sanitized = sanitizeRawJsonString(text)
       const parsed = JSON.parse(sanitized)

@@ -1,9 +1,9 @@
 import type { SourceLanguage } from '../contracts/library'
 
 /**
- * Turning the bytes of a text file into the text a chapter will store: which encoding, and the few
- * changes made on the way in. Pure functions with no DOM or Node API beyond `TextDecoder`, so the
- * rules can be tested on their own and run unchanged in the renderer.
+ * Chuyển đổi byte của tệp văn bản thành nội dung lưu trữ của chương: xác định bảng mã và
+ * áp dụng một số điều chỉnh chuẩn hóa. Các hàm thuần túy không dùng API của DOM hay Node ngoài `TextDecoder`,
+ * giúp kiểm thử độc lập và có thể chạy trực tiếp trong renderer.
  */
 
 export const ENCODINGS = [
@@ -23,8 +23,8 @@ export function encodingLabel(id: EncodingId): string {
   return ENCODINGS.find((encoding) => encoding.id === id)?.label ?? id
 }
 
-/** Older encodings to try, in order, when a file is not UTF-8. Windows-1252 decodes every byte, so
- * it can only ever be the last resort and is never offered for Chinese or Japanese. */
+/** Các bảng mã cũ được thử lần lượt khi tệp không phải UTF-8. Windows-1252 giải mã mọi byte,
+ * do đó chỉ dùng làm giải pháp cuối cùng và không áp dụng cho tiếng Trung hoặc tiếng Nhật. */
 const LEGACY_BY_LANGUAGE: Partial<Record<SourceLanguage, EncodingId[]>> = {
   'zh-Hans': ['gb18030'],
   'zh-Hant': ['big5', 'gb18030'],
@@ -33,13 +33,13 @@ const LEGACY_BY_LANGUAGE: Partial<Record<SourceLanguage, EncodingId[]>> = {
 }
 
 export type DetectionReason =
-  /** The file starts with a byte order mark. */
+  /** Tệp bắt đầu bằng dấu thứ tự byte (BOM). */
   | 'bom'
-  /** Valid UTF-8 with no replacement characters. */
+  /** Định dạng UTF-8 hợp lệ không có ký tự thay thế. */
   | 'utf8'
-  /** Not UTF-8, but decodes cleanly in an older encoding that suits the source language. */
+  /** Không phải UTF-8, nhưng giải mã trọn vẹn bằng một bảng mã cũ phù hợp với ngôn ngữ nguồn. */
   | 'legacy'
-  /** Nothing decoded cleanly; the encoding with the fewest replacement characters was taken. */
+  /** Không có bảng mã nào giải mã trọn vẹn; chọn bảng mã có ít ký tự thay thế nhất. */
   | 'fallback'
 
 export interface Detection {
@@ -48,7 +48,7 @@ export interface Detection {
 }
 
 const BOM = String.fromCharCode(0xfeff)
-/** U+2028 and U+2029, written without the literal characters, which would end a source line. */
+/** U+2028 và U+2029, viết không dùng ký tự trực tiếp để tránh ngắt dòng mã nguồn. */
 const LINE_SEPARATORS = new RegExp('[' + String.fromCharCode(0x2028, 0x2029) + ']', 'g')
 const REPLACEMENT = '�'
 
@@ -69,7 +69,7 @@ function decodesCleanly(bytes: Uint8Array, encoding: EncodingId): boolean {
   }
 }
 
-/** Half-width katakana (U+FF61–U+FF9F): a sign that EUC-JP bytes were read as Shift_JIS. */
+/** Katakana nửa chiều rộng (U+FF61–U+FF9F): dấu hiệu cho thấy byte EUC-JP bị đọc nhầm thành Shift_JIS. */
 export function countHalfWidthKatakana(text: string): number {
   let count = 0
   for (const char of text) {
@@ -87,9 +87,9 @@ export function countReplacements(text: string): number {
 }
 
 /**
- * Chooses an encoding: byte order mark, then strict UTF-8, then the older encodings that suit the
- * work's source language. Several older encodings accept the same bytes, so a clean decode is not
- * proof; the preview shows the text and lets the user pick another.
+ * Chọn bảng mã phù hợp: ưu tiên dấu thứ tự byte (BOM), sau đó kiểm tra UTF-8 chuẩn,
+ * rồi đến các bảng mã cũ phù hợp với ngôn ngữ nguồn của tác phẩm. Nhiều bảng mã cũ cùng nhận diện
+ * chuỗi byte tương tự nhau nên giải mã không lỗi chưa hẳn đã đúng; bản xem trước cho phép người dùng đổi bảng mã.
  */
 export function detectEncoding(bytes: Uint8Array, sourceLang: SourceLanguage): Detection {
   const bom = bomEncoding(bytes)
@@ -100,8 +100,8 @@ export function detectEncoding(bytes: Uint8Array, sourceLang: SourceLanguage): D
   const clean = candidates.filter((encoding) => decodesCleanly(bytes, encoding))
   if (clean.length === 1) return { encoding: clean[0], reason: 'legacy' }
   if (clean.length > 1) {
-    // EUC-JP text is also valid Shift_JIS, where it turns into runs of half-width katakana, which
-    // real Japanese text almost never has. Prefer the reading with the fewest of them.
+    // Văn bản EUC-JP cũng có thể là Shift_JIS hợp lệ nhưng bị biến thành chuỗi katakana nửa chiều rộng
+    // (rất hiếm khi xuất hiện trong tiếng Nhật thực tế). Ưu tiên cách đọc có ít ký tự này nhất.
     const score = (encoding: EncodingId): number =>
       sourceLang === 'ja' ? countHalfWidthKatakana(new TextDecoder(encoding).decode(bytes)) : 0
     const best = clean.reduce((winner, next) => (score(next) < score(winner) ? next : winner))
@@ -120,7 +120,7 @@ export function detectEncoding(bytes: Uint8Array, sourceLang: SourceLanguage): D
   return { encoding: best, reason: 'fallback' }
 }
 
-/** Decodes with the chosen encoding. A leading byte order mark is dropped by the decoder. */
+/** Giải mã với bảng mã đã chọn. Dấu BOM ở đầu sẽ tự động được bộ giải mã loại bỏ. */
 export function decodeRaw(
   bytes: Uint8Array,
   encoding: EncodingId
@@ -146,21 +146,20 @@ export interface NormalizeChange {
 
 export interface Normalized {
   text: string
-  /** Only the kinds that actually changed something, in a fixed order. */
+  /** Chỉ gồm các loại thay đổi thực sự có tác động, theo thứ tự cố định. */
   changes: NormalizeChange[]
 }
 
-// NUL and the other C0 controls, except tab (\t) and line feed (\n) which are real text.
-// biome-ignore lint/suspicious/noControlCharactersInRegex: the control characters are what this pattern removes
+// Ký tự NUL và các ký tự điều khiển C0 khác, ngoại trừ tab (\t) và xuống dòng (\n).
+// biome-ignore lint/suspicious/noControlCharactersInRegex: biểu thức này chủ đích lọc các ký tự điều khiển
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g
 
 /**
- * The only changes made to a text on its way into a chapter: the byte order mark, line endings
- * (to LF), control characters, space/tab runs left dangling at a line's end or doubled up inside
- * one, and blank lines or trailing spaces at the two ends of the whole text. The indentation at
- * the start of a line is left alone — full-width (U+3000) or not, it is how the source marks a new
- * paragraph, not a typo. Punctuation, case, Han forms and Unicode normalisation are untouched too,
- * and each change made is counted.
+ * Các thay đổi duy nhất áp dụng cho văn bản khi nhập vào chương: dấu thứ tự byte (BOM), chuẩn hóa xuống dòng (về LF),
+ * ký tự điều khiển, khoảng trắng/tab thừa ở cuối dòng hoặc bị lặp bên trong dòng,
+ * và các dòng trống/khoảng trắng ở hai đầu văn bản. Khoảng thụt đầu dòng được giữ nguyên
+ * (dù là dấu cách thông thường hay khoảng trắng toàn phần U+3000) vì đó là cách văn bản gốc đánh dấu đoạn mới.
+ * Dấu câu, chữ hoa/thường, dạng chữ Hán và chuẩn hóa Unicode được giữ nguyên vẹn; mỗi thay đổi đều được đếm.
  */
 export function normalizeRaw(input: string): Normalized {
   const changes: NormalizeChange[] = []
@@ -188,18 +187,18 @@ export function normalizeRaw(input: string): Normalized {
   text = text.replace(CONTROL, () => (controls++, ''))
   note('control', controls)
 
-  // Space or tab left dangling before a line break, which cannot be meant.
+  // Khoảng trắng hoặc tab thừa ngay trước dấu xuống dòng.
   let lineEnds = 0
   text = text.replace(/[ \t]+(?=\n|$)/g, () => (lineEnds++, ''))
   note('line-end', lineEnds)
 
-  // Two or more spaces/tabs in a row inside a line (not the indentation it starts with) collapse
-  // to one: almost always a slip from pasting out of a word processor or PDF.
+  // Gộp hai hoặc nhiều khoảng trắng/tab liên tiếp bên trong dòng (không tính khoảng thụt đầu dòng)
+  // thành một khoảng trắng: thường phát sinh khi dán từ trình soạn thảo hoặc tệp PDF.
   let spaces = 0
   text = text.replace(/(?<=[^\n\u3000])[ \t]{2,}/g, () => (spaces++, ' '))
   note('space', spaces)
 
-  // Blank lines before the first real line go, but the first line keeps its own indentation.
+  // Loại bỏ các dòng trống ở đầu văn bản, nhưng giữ nguyên thụt đầu dòng của dòng đầu tiên.
   const before = text.length
   text = text.replace(/^(?:[^\S\n]*\n)+/, '').replace(/\s+$/, '')
   note('trim', before - text.length)
@@ -207,7 +206,7 @@ export function normalizeRaw(input: string): Normalized {
   return { text, changes }
 }
 
-/** A short sentence for each kind of change, for the preview. */
+/** Câu mô tả ngắn gọn cho từng loại thay đổi, dùng cho bản xem trước. */
 export function describeChange(change: NormalizeChange): string {
   const n = change.count.toLocaleString('vi')
   switch (change.kind) {

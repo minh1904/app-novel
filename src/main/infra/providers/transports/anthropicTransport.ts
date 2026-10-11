@@ -25,23 +25,20 @@ import { ProviderError } from '../types'
 import type { Usage } from '../usage'
 
 /**
- * Anthropic Messages: `POST {base}/v1/messages`, streamed, with an API key (change `subscription-providers`,
- * design D6, after Hermes `agent/anthropic_adapter.py`). Mira's turns and tools become Messages blocks at the
- * edge, and the stream comes back as the same events every transport gives.
- *
- * The prompt cache is marked on the system prompt and the tools: a translation's system prompt is long and
- * the same for every batch of a run, which is where caching pays most.
+ * Giao vận Anthropic Messages: gọi `POST {base}/v1/messages` dạng stream với khóa API.
+ * Chuyển đổi các lượt hội thoại và công cụ sang định dạng block của Anthropic,
+ * hỗ trợ đánh dấu cache cho system prompt và danh sách công cụ.
  */
 
 export const ANTHROPIC_VERSION = '2023-06-01'
 export const ANTHROPIC_BETA =
   'interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14'
-/** `max_tokens` is required by the API; this is what a model entry with no cap sends. */
+/** Số lượng token tối đa mặc định khi cấu hình mô hình không chỉ định giới hạn (`max_tokens` là bắt buộc). */
 export const DEFAULT_MAX_TOKENS = 8192
-/** Room for the answer on top of a thinking budget. */
+/** Dung lượng token dự phòng dành cho câu trả lời ngoài ngân sách suy luận (thinking budget). */
 export const ANSWER_ROOM = 4096
 
-/** Thinking budget by Mira level, for the models that take a budget (Claude 4.5 and older). */
+/** Ngân sách suy luận theo mức độ dành cho các mô hình sử dụng ngân sách cố định. */
 export const THINKING_BUDGET: Record<string, number> = {
   minimal: 1024,
   low: 4000,
@@ -51,7 +48,7 @@ export const THINKING_BUDGET: Record<string, number> = {
   max: 32000
 }
 
-/** Effort by Mira level, for the models that think adaptively (Claude 4.6 and later). */
+/** Mức độ nỗ lực suy luận (effort) dành cho các mô hình suy luận thích ứng. */
 const ADAPTIVE_EFFORT: Record<string, string> = {
   minimal: 'low',
   low: 'low',
@@ -61,7 +58,7 @@ const ADAPTIVE_EFFORT: Record<string, string> = {
   max: 'max'
 }
 
-/** How a Claude model thinks, read from its id (`claude-sonnet-4-6`, `claude-opus-4.5`, `claude-3-5-haiku`). */
+/** Cơ chế suy luận của mô hình Claude dựa trên tên định danh. */
 export type ClaudeThinking = 'adaptive' | 'budget' | 'none'
 
 export function claudeThinking(model: string): ClaudeThinking {
@@ -71,7 +68,7 @@ export function claudeThinking(model: string): ClaudeThinking {
   if (!match) return 'budget'
   const major = Number(match[1])
   const minor = match[2] === undefined ? 0 : Number(match[2])
-  // A date suffix (`claude-sonnet-4-20250514`) is not a minor version.
+  // Hậu tố ngày tháng không phải là phiên bản phụ (minor version).
   const realMinor = minor > 99 ? 0 : minor
   return major > 4 || (major === 4 && realMinor >= 6) ? 'adaptive' : 'budget'
 }
@@ -91,8 +88,8 @@ function parseArguments(text: string): unknown {
 }
 
 /**
- * Mira's turns as Messages: system turns go to `system`; a tool answer is a `tool_result` in a user turn;
- * turns of the same role in a row are merged, because the API wants them to alternate.
+ * Chuyển đổi các lượt tin nhắn sang định dạng Anthropic Messages:
+ * gom các tin nhắn liên tiếp cùng vai trò và chuyển kết quả công cụ thành `tool_result`.
  */
 export function toAnthropicMessages(messages: ChatMessage[]): {
   system: string[]
@@ -130,7 +127,7 @@ export function toAnthropicMessages(messages: ChatMessage[]): {
   return { system, messages: out }
 }
 
-/** The request body for one model. */
+/** Tạo nội dung body của yêu cầu gửi tới Anthropic. */
 export function buildAnthropicBody(request: ChatRequest): Record<string, unknown> {
   const { system, messages } = toAnthropicMessages(request.messages)
   const body: Record<string, unknown> = { model: request.model, messages, stream: true }
@@ -172,7 +169,7 @@ export function buildAnthropicBody(request: ChatRequest): Record<string, unknown
       const budget = THINKING_BUDGET[level] ?? THINKING_BUDGET.medium
       body.thinking = { type: 'enabled', budget_tokens: budget }
       maxTokens = Math.max(maxTokens, budget + ANSWER_ROOM)
-      // Thinking with a budget takes only the default sampling.
+      // Khi bật suy luận có ngân sách chỉ sử dụng tham số lấy mẫu mặc định.
       temperature = 1
       topP = undefined
     }
@@ -194,7 +191,7 @@ function count(value: unknown): number | undefined {
     : undefined
 }
 
-/** Anthropic's `input_tokens` already leaves the cache out; the cache counts come apart. */
+/** Phân tích thông tin token sử dụng (inputTokens không bao gồm token đọc từ cache). */
 function usageOf(raw: Record<string, unknown>, output: number | undefined): Usage | null {
   const input = count(raw.input_tokens)
   if (input === undefined || output === undefined) return null
@@ -222,7 +219,7 @@ export function mapStopReason(reason: unknown): FinishReason {
   }
 }
 
-/** Reads a Messages event stream into Mira's events; pure over the payloads, so fixtures test it. */
+/** Đọc luồng sự kiện SSE từ Anthropic Messages thành các sự kiện stream chuẩn. */
 export async function* readAnthropicEvents(
   events: AsyncIterable<{ data: string }>,
   options: { now: () => number; secrets: readonly (string | null)[]; onEvent?: () => void }
@@ -317,7 +314,7 @@ export async function* readAnthropicEvents(
   }
 }
 
-/** Why an Anthropic key is refused before it is saved; `null` when it looks like an API key. */
+/** Kiểm tra tính hợp lệ của khóa Anthropic trước khi lưu trữ (trả về null nếu hợp lệ). */
 export function anthropicKeyProblem(key: string): string | null {
   const trimmed = key.trim()
   if (trimmed.startsWith('sk-ant-oat')) {
@@ -329,7 +326,7 @@ export function anthropicKeyProblem(key: string): string | null {
   return null
 }
 
-/** The address without a trailing `/v1`, so `/v1/messages` is never doubled. */
+/** Chuẩn hóa địa chỉ URL cơ sở, loại bỏ hậu tố `/v1` để tránh trùng lặp endpoint. */
 export function anthropicBase(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, '').replace(/\/v1$/, '')
 }
@@ -348,7 +345,7 @@ export class AnthropicMessagesTransport implements ChatTransport {
     this.timeouts = { ...DEFAULT_TIMEOUTS, ...options.timeouts }
   }
 
-  /** `GET /v1/models`, page by page (`has_more`, `after_id`). */
+  /** Lấy danh sách mô hình qua `GET /v1/models`, hỗ trợ phân trang (`has_more`, `after_id`). */
   async listModels(call: CallOptions): Promise<string[]> {
     const ids: string[] = []
     let after: string | null = null

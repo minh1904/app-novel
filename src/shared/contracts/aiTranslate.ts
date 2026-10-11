@@ -29,7 +29,7 @@ export interface TranslateEstimate {
 export interface TranslatePlan {
   connectionId: string
   connectionName: string
-  /** Mục model đã chọn: dịch bằng cấu hình của chính mục này (design D1). */
+  /** Mục model đã chọn: dịch bằng cấu hình của chính mục này. */
   entryId: string
   /** Tên hiển thị của mục, để hộp thoại nói "dịch bằng …". */
   entryName: string
@@ -78,22 +78,21 @@ export type TranslateErrorKind =
   | 'invalid_response'
   | 'cancelled'
   | 'conflict'
-  /** The run's call budget ran out before these segments could be tried again (`callBudget.ts`). */
+  /** Ngân sách lượt gọi của phiên dịch đã cạn trước khi các đoạn này kịp thử lại. */
   | 'budget_exhausted'
 
-/** Rounds of model calls a translation run makes, counted against its budget. */
-/** `fallback`: the main call sent again without a response schema the provider rejected. */
+/** Các vòng gọi model trong một phiên dịch, được tính vào ngân sách gọi. */
 export type BudgetRound = 'main' | 'split' | 'bare' | 'repair' | 'fallback'
 
-/** How much of a run's call budget is spent, after a batch. */
+/** Báo cáo mức tiêu thụ ngân sách gọi của phiên dịch sau mỗi lô. */
 export interface BudgetReport {
-  /** Model calls the run has made so far. */
+  /** Số lượt gọi model đã thực hiện. */
   used: number
   limit: number
   byRound: Record<BudgetRound, number>
-  /** HTTP requests behind those calls, gateway retries included; reported, not counted against the limit. */
+  /** Số lượt yêu cầu HTTP thực tế (bao gồm cả các lần thử lại). */
   httpAttempts: number
-  /** At least 80% of the limit is used. */
+  /** Cảnh báo khi đã dùng từ 80% giới hạn trở lên. */
   warn: boolean
 }
 
@@ -103,20 +102,18 @@ export interface TranslateFailure {
   /** Mốc sớm nhất có khóa hồi phục, khi lỗi là hết hạn mức và biết được mốc đó. */
   recoverAt: number | null
   /**
-   * Lỗi này có dừng cả lượt dịch chương không. Main quyết định theo chính sách lỗi
-   * (`errorPolicy.ts`); renderer làm theo, không tự xét theo `kind`.
+   * Lỗi này có dừng cả lượt dịch chương không. Main quyết định theo chính sách lỗi; renderer làm theo.
    */
   haltsRun: boolean
   /**
-   * Another model could get past this failure; the dialog then offers to continue the missing paragraphs
-   * with the first fallback of Settings. Set by main's policy, like `haltsRun`.
+   * Đề xuất tiếp tục các đoạn còn thiếu bằng model dự phòng trong Cài đặt.
    */
   fallback?: boolean
 }
 
 /**
  * Nhóm lý do bộ lọc nội dung chặn một đoạn. `prohibited` không bao giờ được chuyển sang model khác;
- * `recitation` là bộ lọc trích dẫn, không phải vấn đề nội dung (`content-refusals.md`).
+ * `recitation` là bộ lọc trích dẫn, không phải vấn đề nội dung.
  */
 export type RefusalGroup = 'prohibited' | 'safety' | 'recitation' | 'other'
 

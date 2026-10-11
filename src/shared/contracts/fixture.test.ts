@@ -35,7 +35,7 @@ describe('fixture contracts', () => {
       }
       expect(v.is(WorkFixtureSchema, xiyouji)).toBe(true)
 
-      // 3. en-fight-above-the-trees style
+      // 3. Dạng fixture tác phẩm tiếng Anh
       const enWork = {
         slug: 'en-fight-above-the-trees',
         lang: 'en',

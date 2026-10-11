@@ -1,7 +1,7 @@
 /**
- * Safety guard: checks that text to be written to disk does not contain any API keys
- * or authorization tokens (spec measure-runs R7).
- * Pure function with no Node/DOM dependencies.
+ * Bảo vệ an toàn: kiểm tra văn bản chuẩn bị ghi xuống đĩa không chứa khóa API
+ * hoặc token xác thực.
+ * Hàm thuần túy không phụ thuộc Node/DOM.
  */
 
 const KEY_PATTERNS = [/AIza[0-9A-Za-z-_]{30,}/, /sk-[0-9A-Za-z-_]{20,}/, /Bearer\s+[A-Za-z0-9-_.]+/]

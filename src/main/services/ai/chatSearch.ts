@@ -4,18 +4,17 @@ import type { SegmentRecord, TextRecord, TextSide } from '../../../shared/contra
 import { paragraphAt, splitParagraphs, type ParagraphSpan } from './chatToolText'
 
 /**
- * `search_work`: a substring scan over the stored text of every chapter, no index (D3 of change
- * `chat-tools-paging-search`). CJK needs no word splitting to match; Latin letters match regardless of
- * case. Offsets are only trusted when normalising did not change the length of the text, otherwise the
- * scan runs on the text as stored.
+ * `search_work`: quét chuỗi con trên toàn bộ văn bản của các chương mà không cần chỉ mục.
+ * Tiếng Trung/Nhật/Hàn so khớp trực tiếp không cần tách từ; chữ cái La-tinh so khớp không phân biệt hoa thường.
+ * Vị trí offset chỉ được sử dụng khi quá trình chuẩn hóa không làm thay đổi độ dài văn bản.
  */
 
 export const SEARCH_QUERY_MAX = 100
 export const SEARCH_RESULTS_MAX = 20
-/** Characters of context on each side of a match, cut at the edges of its line. */
+/** Số ký tự ngữ cảnh hai bên kết quả tìm kiếm, ngắt tại ranh giới dòng. */
 export const SEARCH_EXCERPT_RADIUS = 60
 
-/** Where `query` occurs in `content`, as offsets into `content` itself. */
+/** Tìm vị trí xuất hiện của `query` trong `content`, trả về mảng các chỉ số offset. */
 export function findMatches(content: string, query: string): number[] {
   const folded = fold(content)
   const needle = fold(query)
@@ -35,11 +34,11 @@ export function findMatches(content: string, query: string): number[] {
 function fold(text: string): string {
   const normal = text.normalize('NFC')
   const lower = normal.toLowerCase()
-  // Lower-casing a few letters changes their length; then only the normalised form is comparable.
+  // Chuyển chữ thường một số ký tự đặc biệt có thể đổi độ dài; khi đó dùng chuỗi đã chuẩn hóa để so sánh.
   return lower.length === normal.length ? lower : normal
 }
 
-/** The line around a match, at most `SEARCH_EXCERPT_RADIUS` characters each side, with marks where cut. */
+/** Trích đoạn văn bản quanh vị trí khớp, tối đa `SEARCH_EXCERPT_RADIUS` ký tự mỗi bên. */
 export function excerptAt(
   content: string,
   span: ParagraphSpan,
@@ -55,7 +54,7 @@ export function excerptAt(
   )
 }
 
-/** What the other side says about a match, as far as the alignment links can tell. */
+/** Đoạn văn bản đối ứng ở phía còn lại theo liên kết gióng hàng. */
 export type Counterpart =
   | { kind: 'linked'; texts: string[]; uncertain: boolean }
   | { kind: 'unaligned' }
@@ -67,11 +66,10 @@ const isStale = (segment: SegmentRecord, record: TextRecord): boolean =>
   segment.status !== 'ok' || segment.textRev !== record.rev
 
 /**
- * The other side of a match, **only** through alignment links (D4): the segment that holds the match,
- * its links, the segments they join on the other side, in that side's order. No segment, no link, or a
- * link with nothing on the other side is `unaligned` — never "the paragraph with the same number", which
- * looks like evidence and is often wrong. A link that needs review or is broken, or a segment written
- * for an older revision, still gives its text but is marked uncertain.
+ * Tìm đoạn văn bản đối ứng ở phía còn lại chỉ thông qua các liên kết gióng hàng:
+ * xác định phân đoạn chứa kết quả tìm kiếm, đọc các liên kết và lấy phân đoạn tương ứng ở phía đối diện.
+ * Nếu không có phân đoạn, không có liên kết hoặc liên kết rỗng thì trả về `unaligned`.
+ * Nếu liên kết cần soát lại hoặc phân đoạn thuộc bản sửa đổi cũ, văn bản vẫn được trả về nhưng đánh dấu `uncertain`.
  */
 export function counterpartOf(
   side: TextSide,
@@ -86,7 +84,7 @@ export function counterpartOf(
   if (!segment) return { kind: 'unaligned' }
   const own = links.filter((link) => link.members.includes(segment.id))
   const position = new Map(there.segments.map((item, index) => [item.id, index]))
-  // From the source side, read the pairs through the row view the editor shows, so both agree.
+  // Với phía văn bản gốc, đọc cặp liên kết qua view hàng để đảm bảo đồng nhất với editor.
   const others =
     side === 'source'
       ? (buildRows(source, target, links).rows.find((row) => row.sourceId === segment.id)
@@ -110,15 +108,15 @@ export interface SearchHit {
   chapter: number
   title: string
   chapterId: string
-  /** 1-based paragraph on the searched side. */
+  /** Chỉ số đoạn văn bản tính từ 1 trên phía được tìm kiếm. */
   paragraph: number
   offset: number
   excerpt: string
 }
 
 /**
- * One chapter's hits, in text order. Paragraphs are only worked out for a chapter that has a match: most
- * chapters have none, and splitting all of them was most of the cost of a search.
+ * Danh sách kết quả tìm kiếm trong một chương theo thứ tự xuất hiện.
+ * Chỉ tính toán số đoạn khi chương đó có kết quả khớp để tối ưu hiệu năng.
  */
 export function hitsIn(
   chapter: { number: number; title: string; id: string },
@@ -142,17 +140,16 @@ export function hitsIn(
 }
 
 /**
- * The alignment of one chapter, read once for a tool call that asks about many paragraphs: the row view is
- * built the first time it is needed instead of once per paragraph, which on a long chapter was the whole
- * cost of the call.
+ * Thông tin gióng hàng của một chương, đọc một lần cho lệnh gọi tool:
+ * xây dựng view hàng ở lần đầu tiên cần tới thay vì tính toán lại cho từng đoạn văn bản.
  */
 export interface ChapterAlignment {
   /**
-   * The other side of the stretch `[from, to)` of `side`: every segment that overlaps it, through links
-   * only, as `counterpartOf` reads one offset. `partial` says some of those segments have no link.
+   * Tìm văn bản đối ứng trong khoảng `[from, to)` của một phía thông qua liên kết gióng hàng.
+   * `partial` biểu thị một số phân đoạn trong khoảng chưa có liên kết.
    */
   counterpart(side: TextSide, from: number, to: number): Counterpart & { partial?: boolean }
-  /** Source segments that have at least one linked translation segment. */
+  /** Các phân đoạn gốc có ít nhất một phân đoạn dịch liên kết tương ứng. */
   linkedSources(): Set<string>
 }
 

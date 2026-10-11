@@ -25,8 +25,8 @@ export interface ParseNamesResult {
 }
 
 /**
- * Parses Names.txt formatted text (source=target per line).
- * Ignores empty lines, comments (#, //), and records malformed or duplicate lines.
+ * Phân tích cú pháp văn bản định dạng Names.txt (mỗi dòng có dạng nguồn=đích).
+ * Bỏ qua các dòng trống, chú thích (#, //), và ghi nhận các dòng sai định dạng hoặc trùng lặp.
  */
 export function parseNamesText(content: string): ParseNamesResult {
   const lines = content.split(/\r?\n/)

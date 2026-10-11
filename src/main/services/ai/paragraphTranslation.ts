@@ -47,7 +47,7 @@ function paragraphId(order: number, text: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`
 }
 
-/** Each nonblank source line is one paragraph, as defined by ADR-005. */
+/** Mỗi dòng văn bản gốc không rỗng được xem là một đoạn văn bản riêng biệt. */
 export function paragraphUnits(content: string): ParagraphUnit[] {
   return content
     .split(/\r?\n/)
@@ -66,7 +66,7 @@ function failure(error: unknown, now: number): TranslateFailure {
   throw error
 }
 
-/** The batches a chapter is cut into for an entry's input limit; the plan and a lost budget use the same cut. */
+/** Chia một chương thành các lô dịch dựa trên giới hạn token đầu vào của mục cấu hình model. */
 function batchesOf(
   units: ParagraphUnit[],
   inputTokenLimit: number | undefined,
@@ -82,7 +82,7 @@ function batchesOf(
   }))
 }
 
-/** The calls one batch made: the run's counters after it, minus those before it. */
+/** Tính số lượt gọi chênh lệch của một lô: lấy số lượt sau khi chạy trừ đi số lượt trước khi chạy. */
 function budgetDelta(
   before: BudgetSnapshot,
   after: BudgetSnapshot
@@ -101,13 +101,12 @@ function budgetDelta(
 
 export class ParagraphTranslator {
   /**
-   * The call budget of each run still open, by `runId` (change `translation-call-budget`). In memory: a run
-   * rarely outlives an app restart, and one that does gets a fresh budget from its plan.
+   * Ngân sách lượt gọi API của từng lượt dịch đang mở, định danh theo `runId`.
+   * Lưu trong bộ nhớ tạm: nếu ứng dụng khởi động lại, lượt dịch sẽ được cấp ngân sách mới từ kế hoạch.
    */
   private readonly budgets = new Map<string, CallBudget>()
   /**
-   * Runs where a batch's schema was rejected, with how many batches fell back: the run's later batches go
-   * without schema (change `translate-structured-output-trial`, D6). In memory, like the budgets.
+   * Theo dõi các lượt dịch có lô bị từ chối schema định dạng và số lô đã chuyển sang dự phòng.
    */
   private readonly fellBack = new Map<string, number>()
 
@@ -117,16 +116,14 @@ export class ParagraphTranslator {
       connections: ConnectionService
       now: () => number
       /**
-       * Ask for the JSON-schema output mode where the model supports it. Off in the product; only the Lab
-       * turns it on, until a repeated measurement shows it helps.
+       * Yêu cầu chế độ JSON-schema khi model hỗ trợ (mặc định tắt trong sản phẩm).
        */
       outputSchema?: boolean
     }
   ) {}
 
   /**
-   * `extraCalls` overrides the run's extra call fund (`defaultExtra`); only the Lab sets it, to measure what
-   * the default costs.
+   * Tạo kế hoạch dịch thuật cho chương: chia lô, tính toán ngân sách lượt gọi và chụp nhanh ngữ cảnh.
    */
   plan(
     { workId, chapterId, connectionId, entryId }: ParagraphPlanInput,
@@ -146,7 +143,7 @@ export class ParagraphTranslator {
       runId,
       new CallBudget(batches.length, extraCalls ?? defaultExtra(batches.length))
     )
-    // The work context is frozen here, once, for every call of the run (`contextSnapshot.ts`).
+    // Chụp nhanh ngữ cảnh một lần duy nhất cho toàn bộ các lượt gọi trong lượt dịch này.
     const record = takeContextSnapshot(library, workId, chapterId, source.content)
     library.withWork(workId, (db) => {
       pruneOrphanRunContexts(db, chapterId, this.options.now())
@@ -489,8 +486,7 @@ export class ParagraphTranslator {
   }
 
   /**
-   * The run's budget, or a fresh one from its plan when it was lost (the app restarted mid-run). At worst
-   * such a run gets one more extra fund than it would have.
+   * Lấy ngân sách lượt gọi của lượt dịch, hoặc khởi tạo mới từ kế hoạch nếu bị mất (khi ứng dụng khởi động lại giữa chừng).
    */
   private budgetFor(runId: string, plannedBatches: () => number): CallBudget {
     const known = this.budgets.get(runId)

@@ -10,7 +10,7 @@ import {
 } from './aiChat'
 
 /**
- * Hình dạng của một lượt gửi. Lượt không mang văn bản chương nữa (change `agentic-chat`), nên thứ
+ * Hình dạng của một lượt gửi. Lượt không mang văn bản chương nữa, nên thứ
  * còn phải chặn là lịch sử phình to và một vị trí vô nghĩa: số đoạn âm, vùng chọn ngược.
  */
 

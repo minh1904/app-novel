@@ -30,10 +30,10 @@ import type { ExportService } from '../services/export/exportService'
 import type { SourceServices } from '../sources/sourceServices'
 
 /**
- * Channel → validated handler. Free of Electron imports so tests can call it directly.
+ * Channel → handler đã được xác thực dữ liệu. Không import Electron để các bài test có thể gọi trực tiếp.
  *
- * Each area of channels lives in its own file under `handlers/`. The return type is the record of
- * **every** `Channel`, so a channel that no area handles is still a compile error here.
+ * Mỗi nhóm kênh nằm trong tệp riêng dưới thư mục `handlers/`. Kiểu trả về là bản ghi chứa **toàn bộ**
+ * các `Channel`, do đó nếu có kênh nào chưa được xử lý sẽ báo lỗi biên dịch ngay tại đây.
  */
 export function createLibraryHandlers(
   library: LibraryStore,
@@ -80,8 +80,8 @@ export function createLibraryHandlers(
 }
 
 /**
- * Refuses every call whose sender is not trusted before validation or storage run. Generic over the
- * event type so the rule can be tested without Electron.
+ * Từ chối mọi yêu cầu có nguồn gửi không đáng tin cậy trước khi tiến hành xác thực hoặc thao tác với bộ lưu trữ.
+ * Sử dụng generic cho kiểu sự kiện để quy tắc này có thể kiểm thử độc lập mà không cần Electron.
  */
 export function guardHandlers<E>(
   handlers: Record<Channel, RawHandler<unknown>>,

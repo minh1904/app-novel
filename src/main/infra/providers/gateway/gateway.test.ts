@@ -16,7 +16,7 @@ interface MemoryKeys {
   clock: { now: number }
 }
 
-/** A key store in memory, driven by the real scheduler, that records every report it receives. */
+/** Kho lưu trữ khóa trong bộ nhớ phục vụ kiểm thử, ghi nhận mọi báo cáo nhận được. */
 function memoryKeys(ids: string[], clock: { now: number } = { now: NOW }): MemoryKeys {
   const rows: KeyRecord[] = ids.map((id) => ({
     id,
@@ -352,10 +352,9 @@ describe('reporting to the key layer', () => {
       if (calls === 2) throw fail('network')
       return lease.id
     })
-    // The store throws if a lease is reported twice or without having been issued.
+    // Kho khóa ném lỗi nếu một lease được báo cáo hai lần hoặc chưa từng được cấp phát.
     expect(keys.reports).toHaveLength(calls)
-    // A network failure is reported as what it is; the key layer then leaves the key alone for it
-    // (covered above). Only a call that never finished (cancelled, timed out) is `neutral`.
+    // Lỗi mạng được báo cáo đúng loại lỗi; chỉ yêu cầu chưa hoàn tất (hủy, timeout) mới là `neutral`.
     expect(
       keys.reports.map((r) => (typeof r.outcome === 'string' ? r.outcome : r.outcome.kind))
     ).toEqual(['rate_limited', 'network', 'ok'])
@@ -398,7 +397,7 @@ describe('call: several at once (measured: six 429s froze a key for 30 minutes)'
     const results = await Promise.all(
       Array.from({ length: 6 }, () =>
         gateway.call(async (lease) => {
-          // Every call is already in flight on `a` before the first answer comes back.
+          // Mọi cuộc gọi đều đang thực thi với khóa `a` trước khi phản hồi đầu tiên trả về.
           await new Promise((resolve) => setTimeout(resolve, 0))
           if (lease.id === 'a') throw fail('rate_limited', { status: 429 })
           return lease.id
@@ -536,7 +535,7 @@ describe('stream', () => {
     const { gateway, keys, limiter } = rig(['a'])
     const stream = gateway.stream(() => events(['1', '2', '3']))
     await stream.next()
-    // Walking away early: the reader stops asking and closes the stream.
+    // Dừng sớm: bên đọc ngừng yêu cầu và đóng luồng stream.
     await stream.return(undefined)
     expect(limiter.inFlight).toBe(0)
     expect(keys.reports).toEqual([{ key: 'a', outcome: 'neutral' }])
@@ -560,7 +559,7 @@ describe('GatewayRegistry', () => {
 })
 
 describe('the pace of an entry (RPM)', () => {
-  /** A rig whose pacer and gateway share one fake clock, so waiting for a turn moves time like it would. */
+  /** Môi trường kiểm thử chia sẻ đồng hồ giả lập giữa pacer và gateway để mô phỏng trôi thời gian khi chờ lượt. */
   function pacedRig(
     ids: string[],
     rpm: number
@@ -617,7 +616,7 @@ describe('the pace of an entry (RPM)', () => {
       if (attempts === 1) throw fail('network')
       return 'ok'
     })
-    // The first attempt went at once; the retry (after its own backoff) still has to wait for its turn.
+    // Lần gọi đầu thực thi ngay; lần thử lại (sau khi backoff) vẫn phải chờ đến lượt theo tốc độ.
     expect(attempts).toBe(2)
     expect(turns.length).toBeGreaterThanOrEqual(1)
   })
@@ -658,7 +657,7 @@ describe('the pace of an entry (RPM)', () => {
 
     expect(await waiting).toMatchObject({ kind: 'cancelled' })
     expect(sent).toBe(false)
-    // It never took a key, so there is nothing to report and no probe left hanging.
+    // Chưa lấy khóa nên không có gì cần báo cáo và không để lại probe bị treo.
     expect(keys.acquired).toEqual(['a'])
     expect(keys.reports).toHaveLength(1)
   })
@@ -701,7 +700,7 @@ describe('GatewayRegistry, per entry', () => {
 
   it('shares the key scheduler between the entries of one connection, and not between connections', () => {
     const registry = new GatewayRegistry(() => NOW)
-    // Two entries of one connection ask the same scheduler, so a 429 seen through one is seen by the other.
+    // Hai mục mô hình của cùng kết nối dùng chung bộ điều phối, nên lỗi 429 ở một bên sẽ tác động đến bên còn lại.
     expect(registry.runtimeFor('conn')).toBe(registry.runtimeFor('conn'))
     expect(registry.runtimeFor('other')).not.toBe(registry.runtimeFor('conn'))
   })
@@ -751,7 +750,7 @@ describe('GatewayRegistry, per entry', () => {
   })
 
   it('shares the same pace between the translation and the chat that use one entry', async () => {
-    // The pacer is the entry's, so whichever feature asks, the turn comes from one place.
+    // Bộ điều phối tốc độ thuộc về mục mô hình, nên mọi tính năng gọi đến đều dùng chung lượt chờ.
     const waits: number[] = []
     const registry = new GatewayRegistry(
       () => NOW,

@@ -84,8 +84,8 @@ import { AccountLogins } from './accountLogins'
 /**
  * Mọi thao tác với kết nối AI mà tầng IPC cần, gom một chỗ.
  *
- * Khóa API vào qua `addApiKey` rồi **không ra nữa**: mọi giá trị trả về là `ConnectionView`, chỉ
- * mang bốn ký tự cuối (D2 của change `ai-connection`).
+ * Khóa API vào qua `addApiKey` rồi không ra nữa: mọi giá trị trả về là `ConnectionView`, chỉ
+ * mang bốn ký tự cuối.
  */
 export interface ConnectionServiceOptions {
   db: Db
@@ -142,7 +142,7 @@ export interface ConnectionTranslator {
   connection: ConnectionView
   /** Mục đã dùng, như lúc dựng provider: cài đặt của nó đã nằm trong `provider`. */
   entry: ModelEntry
-  /** Khóa cấu hình của mục lúc này; lô dịch so nó với khóa của kế hoạch (design D6). */
+  /** Khóa cấu hình của mục lúc này; lô dịch so nó với khóa của kế hoạch. */
   settingsKey: string
   provider: OpenAiCompatibleProvider
   /**
@@ -161,7 +161,7 @@ export class ConnectionService {
    */
   private readonly registry: GatewayRegistry
 
-  /** Token của các kết nối tài khoản (change `subscription-providers`). */
+  /** Token xác thực của các kết nối tài khoản. */
   readonly accounts: AccountCredentials
   private readonly logins: AccountLogins
 
@@ -322,7 +322,7 @@ export class ConnectionService {
     return this.list()
   }
 
-  /** Settings › Model: the main model, the fallbacks, and whether onboarding was put off. */
+  /** Cài đặt › Model: model chính, danh sách dự phòng, và cờ bỏ qua hướng dẫn ban đầu. */
   preferences(): AiPreferences {
     return readAiPreferences(this.options.db)
   }
@@ -353,8 +353,8 @@ export class ConnectionService {
   }
 
   /**
-   * A key pasted into a provider card: the connection is made from the preset if there is none yet, then the
-   * key is added. One call, so a card never ends up with a connection and no key.
+   * Lưu khóa API dán vào thẻ provider: tạo kết nối từ cấu hình sẵn nếu chưa có, sau đó thêm khóa.
+   * Đảm bảo tính nguyên tử để không xảy ra trường hợp có kết nối nhưng thiếu khóa.
    */
   async ensureWithKey({ providerId, secret }: EnsureWithKeyInput): Promise<ConnectionView> {
     const { db, now, newId } = this.options
@@ -379,8 +379,8 @@ export class ConnectionService {
   }
 
   /**
-   * Checks an address with a key typed now or the first usable key of a connection (design D5 of change
-   * `hermes-settings-modal`). Saves nothing; the caller decides whether to keep `resolvedBaseUrl`.
+   * Kiểm tra địa chỉ endpoint bằng khóa API vừa nhập hoặc khóa dùng được đầu tiên của kết nối.
+   * Không tự động lưu; bên gọi quyết định có giữ lại `resolvedBaseUrl` hay không.
    */
   async probe(input: ProbeEndpointInput): Promise<EndpointProbeResult> {
     const { db, secrets, fetchImpl } = this.options
@@ -464,7 +464,7 @@ export class ConnectionService {
   }
 
   /**
-   * Nút "Kiểm tra" của một mục (design D10): gửi một yêu cầu nhỏ bằng **đúng cài đặt đã lưu** của mục và nói
+   * Nút "Kiểm tra" của một mục: gửi một yêu cầu nhỏ bằng **đúng cài đặt đã lưu** của mục và nói
    * kết quả. Nhà cung cấp từ chối thì lỗi mang lời gốc của nó (đã che khóa), không đổi gì đã lưu.
    */
   async testEntry(entryId: string): Promise<ModelEntryTestResult> {

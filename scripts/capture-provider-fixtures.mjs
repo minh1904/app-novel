@@ -1,29 +1,26 @@
-// Captures what Gemini's OpenAI-compatible endpoint really answers, so the provider layer is tested
-// against recorded shapes instead of shapes read out of documentation.
+// Ghi lại phản hồi thực tế từ endpoint tương thích OpenAI của Gemini, giúp tầng provider được kiểm thử
+// dựa trên cấu trúc dữ liệu thực tế thay vì cấu trúc suy ra từ tài liệu.
 //
 //   GEMINI_API_KEY=...   node scripts/capture-provider-fixtures.mjs
-//   node scripts/capture-provider-fixtures.mjs --dry-run      print the plan, make no request
-//   ... --burst 20       also fire 20 requests at once to provoke a 429 (spends free-tier quota)
-//   ... --model NAME     probe this model only (see below)
+//   node scripts/capture-provider-fixtures.mjs --dry-run      in kế hoạch, không gửi request
+//   ... --burst 20       gửi đồng thời 20 request để kích hoạt lỗi 429 (tiêu tốn hạn mức gói miễn phí)
+//   ... --model NAME     chỉ thăm dò mô hình này (xem bên dưới)
 //
-// Two kinds of scenario:
+// Hai loại kịch bản:
 //
-//   baseline  questions about the endpoint itself (shape of an answer, where usage arrives, what a bad
-//             key looks like). They are written under fixed names that the provider tests replay, so they
-//             run only when no --model is given, against the first "flash" model the API lists. Running
-//             them for another model would overwrite the recordings those tests are built on.
+//   baseline  các câu hỏi về chính endpoint (cấu trúc phản hồi, vị trí trả về usage, hình thức khi sai key).
+//             Được ghi dưới tên cố định để các bài kiểm thử provider phát lại, do đó chỉ chạy khi không truyền
+//             --model, nhắm vào mô hình "flash" đầu tiên mà API liệt kê. Chạy với mô hình khác sẽ ghi đè dữ liệu mẫu.
 //
-//   probe     questions about one model: which reasoning levels it accepts, and whether it takes a
-//             temperature or a top_p (change `ai-model-settings`, design D4). They are written as
-//             `probe-<model>-<scenario>.json`, so a run for each model sits side by side, and they run
-//             for every model, with or without --model. Use them to check what the catalog says a model
-//             supports (`modelCapability`) against what the provider really does:
+//   probe     các câu hỏi về một mô hình cụ thể: chấp nhận các mức tư duy (reasoning) nào, có nhận temperature
+//             hoặc top_p hay không. Được ghi dưới dạng `probe-<model>-<scenario>.json` để có thể đối chiếu
+//             giữa các mô hình, chạy cho từng mô hình khi có hoặc không có --model. Dùng để đối chiếu khả năng
+//             hỗ trợ của mô hình (`modelCapability`) với hành vi thực tế của provider:
 //               node scripts/capture-provider-fixtures.mjs --model gemini-2.5-pro
 //
-// The key is read from the environment and never written anywhere: every request, response and file
-// name is scrubbed, and the script re-reads the files it wrote and deletes them if the key is still
-// found (only those: files from an earlier run are not its to remove).
-// Do not put the key on a command line that gets pasted into a chat.
+// Khóa API được đọc từ biến môi trường và không bao giờ được ghi xuống đĩa: mọi request, response và tên tệp
+// đều được lọc sạch; script sẽ đọc lại các tệp vừa ghi và xóa ngay nếu phát hiện sót khóa.
+// Tuyệt đối không đưa khóa API vào dòng lệnh.
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -43,7 +40,7 @@ const burst = Number(flag('--burst') ?? 0)
 const wantedModel = flag('--model') ?? process.env.GEMINI_MODEL
 const key = process.env.GEMINI_API_KEY ?? ''
 
-/** Each scenario answers one question the design left open (see design.md, Open Questions). */
+/** Mỗi kịch bản giải quyết một câu hỏi kỹ thuật về hành vi của API. */
 const BASELINE = [
   { name: 'models', asks: 'what does GET /models return, and under which ids?' },
   { name: 'models-no-key', asks: 'does a missing key still look like a 404 here?' },
@@ -58,9 +55,9 @@ const BASELINE = [
 ]
 
 /**
- * What a model is asked, one parameter at a time, so a rejection can be pinned on the parameter that
- * caused it. `effort-invalid` is not a level any model has: it records how a refusal reads, which is what
- * the "Kiểm tra" button will show a person who picked a level the model does not take.
+ * Thăm dò từng tham số riêng lẻ với mô hình để xác định chính xác nguyên nhân nếu bị từ chối.
+ * `effort-invalid` ghi lại phản hồi khi từ chối mức tư duy không hợp lệ, dùng để kiểm tra
+ * thông báo hiển thị cho người dùng khi chọn mức mô hình không hỗ trợ.
  */
 const PROBES = [
   { name: 'effort-none', asks: 'does it take reasoning_effort "none" (thinking off)?', extra: { reasoning_effort: 'none' } },
@@ -73,7 +70,7 @@ const PROBES = [
   { name: 'top-p', asks: 'does it take top_p 0.9 on its own?', extra: { top_p: 0.9 } }
 ]
 
-/** A model id as a file name part: `gemini-2.5-pro` stays readable, a path-like id loses its slashes. */
+/** Chuyển mã định danh mô hình thành chuỗi hợp lệ trong tên tệp: giữ `gemini-2.5-pro`, loại bỏ dấu gạch chéo. */
 function slug(id) {
   return String(id).replace(/^models\//, '').replace(/[^A-Za-z0-9.-]+/g, '-')
 }
@@ -103,7 +100,7 @@ if (key === '') {
   process.exit(1)
 }
 
-/** Removes the key, its URL-encoded form and any Bearer token from text that is about to be saved. */
+/** Loại bỏ khóa API, chuỗi URL-encoded và Bearer token khỏi văn bản chuẩn bị lưu. */
 function scrub(text) {
   let out = text
   for (const secret of [key, encodeURIComponent(key)]) out = out.split(secret).join('<redacted>')
@@ -126,7 +123,7 @@ async function call({ method = 'GET', path, body, auth = key }) {
     headers,
     body: body === undefined ? undefined : JSON.stringify(body)
   })
-  // Read as raw text: an SSE body must be kept byte for byte, and an error body may not be JSON.
+  // Đọc dưới dạng văn bản thô: body của SSE cần giữ nguyên từng byte, và body lỗi có thể không phải JSON.
   const text = await response.text()
   return {
     request: {
@@ -140,7 +137,7 @@ async function call({ method = 'GET', path, body, auth = key }) {
   }
 }
 
-/** Files this run wrote: the leak check below looks at these and at nothing else. */
+/** Các tệp được ghi trong lượt chạy này để kiểm tra rò rỉ khóa. */
 const written = []
 
 function save(name, model, result) {
@@ -152,7 +149,7 @@ function save(name, model, result) {
   console.log('saved  ' + name.padEnd(36) + 'HTTP ' + status)
 }
 
-/** One line a person can read and paste: what the model answered, or the first words of why it refused. */
+/** Tóm tắt kết quả phản hồi của mô hình hoặc lý do bị từ chối thành một dòng ngắn gọn. */
 function summarize(result) {
   const { status, bodyText } = result.response
   try {
@@ -172,8 +169,7 @@ function summarize(result) {
 mkdirSync(OUT_DIR, { recursive: true })
 
 let model = wantedModel
-// Needed only to pick a model. Saved as a recording only in baseline mode: a probe run must leave the
-// baseline files alone.
+// Chỉ dùng để chọn mô hình. Chỉ lưu kết quả mẫu ở chế độ baseline để tránh ghi đè dữ liệu chuẩn.
 const modelsResult = model === undefined ? await call({ path: '/models' }) : undefined
 if (modelsResult !== undefined) {
   save('models', '(not chosen yet)', modelsResult)
@@ -183,7 +179,7 @@ if (modelsResult !== undefined) {
     )
     model = ids.find((id) => /flash/i.test(id) && !/image|tts|live|audio/i.test(id)) ?? ids[0]
   } catch {
-    // fall through to the check below
+    // Bỏ qua lỗi và tiếp tục kiểm tra điều kiện bên dưới
   }
 }
 if (model === undefined) {
@@ -215,8 +211,7 @@ if (!probeOnly) {
   }
 }
 
-// Probes run one after another, not together: a refusal should be the parameter's, never a rate limit
-// that the model's own earlier probes caused.
+// Các thăm dò chạy tuần tự để tránh chạm giới hạn tần suất (rate limit) làm sai lệch kết quả thăm dò tham số.
 const outcomes = []
 for (const probe of PROBES) {
   const result = await call(chat(probe.extra))
@@ -226,7 +221,7 @@ for (const probe of PROBES) {
 console.log('\nWhat ' + model + ' did with each parameter:')
 for (const outcome of outcomes) console.log('  ' + outcome.name.padEnd(16) + outcome.line)
 
-// Prove the key did not land in any file. If it did, delete what this run wrote rather than leave it on disk.
+// Kiểm tra xem khóa API có bị lọt vào tệp không; nếu có, xóa toàn bộ các tệp vừa tạo.
 const leaked = written.filter((file) => {
   const text = readFileSync(file, 'utf8')
   return text.includes(key) || text.includes(encodeURIComponent(key))

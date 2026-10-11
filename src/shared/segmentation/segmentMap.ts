@@ -2,20 +2,20 @@ import { segment, type SegmentLanguage, type SegmentRange } from './segmenter'
 import type { SegmentInput, SegmentRecord } from '../contracts/text'
 
 /**
- * How segment regions follow the text as it is edited, and how the regions an edit disturbed are
- * split again. Pure: no editor, no storage. Offsets are UTF-16 code units, like the stored regions.
+ * Cơ chế theo dõi tọa độ segment khi văn bản được chỉnh sửa và phân đoạn lại những vùng bị tác động.
+ * Hàm thuần túy: không phụ thuộc editor hay kho lưu trữ. Tọa độ là các đơn vị mã UTF-16.
  */
 
-/** A segment while editing. `id` is null for a segment the store has not given an ID yet. */
+/** Một segment trong quá trình chỉnh sửa. `id` là null nếu kho lưu trữ chưa cấp ID. */
 export interface Seg {
   id: string | null
   from: number
   to: number
-  /** Changed since the last save (or new): shown as edited, and a reason to split it again. */
+  /** Đã thay đổi kể từ lần lưu trước (hoặc tạo mới): đánh dấu trạng thái chỉnh sửa và là căn cứ để phân đoạn lại. */
   edited: boolean
 }
 
-/** One change in the coordinates of the text before it was applied. */
+/** Một thay đổi theo hệ tọa độ của văn bản trước khi áp dụng chỉnh sửa. */
 export interface Edit {
   from: number
   to: number
@@ -38,13 +38,13 @@ export function toSegmentInputs(segs: Seg[]): SegmentInput[] {
 }
 
 /**
- * Moves the regions through a set of changes. `edits` are in ascending order and do not overlap, all
- * in the coordinates of the text before any of them (what a CodeMirror change set gives). Segments an
- * edit does not touch keep their ID and their text and only shift.
+ * Dịch chuyển các vùng segment qua một tập hợp các thay đổi. Danh sách `edits` theo thứ tự tăng dần
+ * và không chồng lấn, đều tính theo tọa độ của văn bản trước chỉnh sửa.
+ * Các segment không bị tác động sẽ giữ nguyên ID, nội dung và chỉ bị dịch chuyển vị trí.
  */
 export function applyEdits(segs: Seg[], edits: Edit[]): Seg[] {
   let current = segs
-  // Applying from the last to the first keeps the coordinates of the earlier edits valid.
+  // Áp dụng từ chỉnh sửa cuối về đầu để bảo toàn tính hợp lệ của tọa độ các chỉnh sửa trước đó.
   for (let i = edits.length - 1; i >= 0; i--) current = applyEdit(current, edits[i])
   return current
 }
@@ -55,8 +55,7 @@ function applyEdit(segs: Seg[], edit: Edit): Seg[] {
   const delta = n - (to - from)
   if (delta === 0 && from === to) return segs
 
-  // Segments whose region the replaced range overlaps. For a pure insertion this is the one segment
-  // the position lies strictly inside, if any.
+  // Các segment mà khoảng thay thế chồng lấn. Với trường hợp chèn thuần túy, đây là segment duy nhất bao trọn vị trí chèn (nếu có).
   let first = -1
   let last = -1
   segs.forEach((seg, index) => {
@@ -93,7 +92,7 @@ function applyEdit(segs: Seg[], edit: Edit): Seg[] {
     return out
   }
 
-  // The change lies outside every segment. Text typed at the edge of one belongs to it.
+  // Thay đổi nằm ngoài mọi segment. Ký tự gõ ở mép ngoài của segment sẽ được nhập vào segment đó.
   const out: Seg[] = []
   const lineBreak = insert.indexOf('\n')
   const headPart = lineBreak === -1 ? insert : insert.slice(0, lineBreak)
@@ -102,11 +101,11 @@ function applyEdit(segs: Seg[], edit: Edit): Seg[] {
 
   for (const seg of segs) {
     if (seg.to === from && hasText(headPart)) {
-      // Continuing the sentence: the part up to the first line break joins it.
+      // Viết tiếp câu: phần nội dung cho đến dấu xuống dòng đầu tiên sẽ nối vào segment này.
       out.push({ ...seg, to: from + headPart.length, edited: true })
       extendedLeft = true
     } else if (seg.from === from && from === to && !extendedLeft && hasText(tailPart)) {
-      // Typing in front of a sentence that has white space or a line break on its left.
+      // Gõ vào ngay trước một câu có khoảng trắng hoặc dấu xuống dòng ở bên trái.
       const start = from + insert.length - tailPart.length
       out.push({ ...seg, from: start, to: seg.to + delta, edited: true })
     } else {
@@ -116,7 +115,7 @@ function applyEdit(segs: Seg[], edit: Edit): Seg[] {
   return out
 }
 
-/** Breaks that make the order of the regions meaningless: bad range, out of bounds, overlap, repeated ID. */
+/** Các lỗi cấu trúc khiến thứ tự vùng segment mất ý nghĩa: vùng sai, vượt biên, chồng lấn, trùng lặp ID. */
 function structuralProblems(content: string, segs: Seg[]): string[] {
   const problems: string[] = []
   const ids = new Set<string>()
@@ -135,7 +134,7 @@ function structuralProblems(content: string, segs: Seg[]): string[] {
   return problems
 }
 
-/** What is wrong with a set of segments, as readable lines; empty when it is sound. */
+/** Danh sách các lỗi của tập hợp segment dưới dạng dòng chữ dễ đọc; trả về mảng rỗng nếu hợp lệ. */
 export function checkSegments(content: string, segs: Seg[]): string[] {
   const problems = structuralProblems(content, segs)
   if (problems.length > 0) return problems
@@ -163,7 +162,7 @@ function cuts(content: string, offset: number): boolean {
   return before >= 0xd800 && before <= 0xdbff && after >= 0xdc00 && after <= 0xdfff
 }
 
-/** The start and end offsets of every line of `content`, the end being before the line break. */
+/** Tọa độ bắt đầu và kết thúc của từng dòng trong `content`, điểm kết thúc nằm trước dấu xuống dòng. */
 function lineBounds(content: string): Array<[number, number]> {
   const lines: Array<[number, number]> = []
   let start = 0
@@ -178,7 +177,7 @@ function lineBounds(content: string): Array<[number, number]> {
   }
 }
 
-/** Index of the line holding `offset`, found by bisection. */
+/** Chỉ số dòng chứa vị trí `offset`, tìm kiếm bằng phương pháp chia đôi (nhị phân). */
 function lineOf(lines: Array<[number, number]>, offset: number): number {
   let low = 0
   let high = lines.length - 1
@@ -194,16 +193,16 @@ const overlap = (a: SegmentRange, b: SegmentRange): number =>
   Math.max(0, Math.min(a.end, b.end) - Math.max(a.start, b.start))
 
 /**
- * Splits again the lines an edit disturbed: lines with an edited segment, with text outside every
- * segment, or with a segment that runs over a line break. Everything else is returned untouched, so
- * the IDs of segments nobody touched never change. In a re-split line a new segment takes the ID
- * of the old one it overlaps most (the earlier one on a tie); the others have no ID until saved.
+ * Phân đoạn lại các dòng bị xáo trộn do chỉnh sửa: dòng chứa segment đã sửa, dòng có chữ nằm ngoài
+ * mọi segment, hoặc dòng có segment vắt qua dấu xuống dòng. Các phần còn lại được giữ nguyên vẹn,
+ * bảo toàn ID của các segment không bị chạm đến. Trong dòng được phân đoạn lại, segment mới nhận lại ID
+ * của segment cũ có mức độ chồng lấn lớn nhất (ưu tiên đoạn trước khi hòa); các đoạn còn lại không có ID cho đến khi lưu.
  */
 export function resegment(content: string, segs: Seg[], lang: SegmentLanguage): Seg[] {
   const lines = lineBounds(content)
   const dirty = new Set<number>()
 
-  // Segments that cannot be trusted put every line they touch in play.
+  // Các segment không đáng tin cậy sẽ đưa mọi dòng mà chúng chạm vào vào diện cần phân đoạn lại.
   const sound = structuralProblems(content, segs).length === 0
   if (!sound) lines.forEach((_, index) => dirty.add(index))
 
@@ -234,7 +233,7 @@ export function resegment(content: string, segs: Seg[], lang: SegmentLanguage): 
   }
   if (dirty.size === 0) return segs
 
-  // Group the dirty lines into runs of consecutive lines.
+  // Nhóm các dòng cần xử lý thành từng khoảng dòng liên tiếp.
   const ordered = [...dirty].sort((a, b) => a - b)
   const windows: Array<[number, number]> = []
   for (const line of ordered) {
@@ -268,7 +267,7 @@ function splitWindow(
     end: range.end + windowStart
   }))
 
-  // For each old segment, the new one it overlaps most; then each new one keeps the best claimant.
+  // Với mỗi segment cũ, tìm segment mới chồng lấn nhiều nhất; sau đó mỗi segment mới giữ lại ứng viên khớp tốt nhất.
   const claims = new Map<number, { old: number; size: number }>()
   old.forEach((seg, oldIndex) => {
     if (seg.id === null) return

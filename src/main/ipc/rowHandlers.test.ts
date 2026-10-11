@@ -8,7 +8,7 @@ import { LibraryStore } from '../services/library/library'
 import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
 
-/** The row channels as the app calls them: checked input, results, and the error codes. */
+/** Các kênh dòng theo cách ứng dụng gọi: kiểm tra đầu vào, kết quả và mã lỗi. */
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
 afterEach(() => {

@@ -3,29 +3,29 @@ import { idSchema, type ChapterSummary, type WorkSummary } from './library'
 
 export const CHAPTER_TITLE_MAX = 200
 
-/** A chapter as listed on the work detail screen. `number` is derived from position, never stored. */
+/** Thông tin chương hiển thị trên màn hình chi tiết tác phẩm. `number` tính từ vị trí, không lưu vào kho. */
 export interface ChapterItem extends ChapterSummary {
-  /** Milliseconds since the Unix epoch, UTC. */
+  /** Thời điểm tạo (mili-giây epoch, UTC). */
   createdAt: number
   updatedAt: number
-  /** The source / translated text is not empty. Computed by the store, so the text is not loaded. */
+  /** Đã có nội dung gốc / bản dịch hay chưa (do kho tính toán, không nạp toàn bộ văn bản). */
   hasSource: boolean
   hasTarget: boolean
 }
 
-/** Every change returns the new work summary so the header and library need no second round trip. */
+/** Kết quả thay đổi chương, trả kèm tóm tắt tác phẩm mới để cập nhật giao diện. */
 export interface ChapterChange {
   work: WorkSummary
   chapter: ChapterItem
 }
 
-/** Moves and deletes renumber many chapters at once, so they return the whole list. */
+/** Thao tác di chuyển hoặc xóa tác động nhiều chương, trả về danh sách toàn bộ chương. */
 export interface ChaptersChange {
   work: WorkSummary
   chapters: ChapterItem[]
 }
 
-/** Titles are one line: line breaks become spaces, then the ends are trimmed. Empty is allowed. */
+/** Tên chương nằm trên một dòng: chuyển ngắt dòng thành dấu cách và cắt khoảng trắng hai đầu. */
 export const chapterTitleSchema = v.pipe(
   v.string('Tên chương phải là chữ.'),
   v.transform((value) => value.replace(/\s*[\r\n]+\s*/g, ' ')),
@@ -46,7 +46,7 @@ export const renameChapterSchema = v.strictObject({
   chapterId,
   title: chapterTitleSchema
 })
-/** `to` is the 1-based position the chapter should end up at; the upper bound is checked in storage. */
+/** `to` là vị trí kết quả 1-indexed của chương sau khi di chuyển; giới hạn trên do kho kiểm tra. */
 export const moveChapterSchema = v.strictObject({
   workId,
   chapterId,

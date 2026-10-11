@@ -8,7 +8,7 @@
  *
  * Hàm thuần: không đọc tệp, không gọi git; hàm băm được truyền vào để dùng được ở mọi tiến trình.
  *
- * Schema 2 (change `lab-completion-quality-report`): lần chạy trỏ tới tệp kết cục từng đoạn và mang
+ * Schema 2: lần chạy trỏ tới tệp kết cục từng đoạn và mang
  * `contextHash`; lần đo mang `basis` (tập đoạn đã đo). Bản ghi schema 1 vẫn đọc được: thiếu kết cục
  * thì nhãn “không có kết cục từng đoạn”.
  */
@@ -200,7 +200,7 @@ export interface RunMeta {
 }
 
 /**
- * Ngân sách lời gọi của các lượt dịch chương trong lần chạy (change `translation-call-budget`):
+ * Ngân sách lời gọi của các lượt dịch chương trong lần chạy:
  * `modelCalls` là lời gọi model đã trừ vào ngân sách, `budgetExhausted` là số đoạn không được gửi vì hết
  * ngân sách, `maxCalls` là quỹ phụ mỗi chương đặt bằng `--max-calls` (`null`: mặc định). Số request HTTP
  * thật là `calls` của bản ghi.
@@ -212,7 +212,7 @@ export interface RunBudget {
 }
 
 /**
- * Chế độ đầu ra của lần chạy (change `translate-structured-output-trial`): `requested` là chế độ Lab xin
+ * Chế độ đầu ra của lần chạy: `requested` là chế độ Lab yêu cầu
  * (`object` khi chạy với `--schema`), `fallbacks` là số lô có schema bị từ chối và gửi lại không schema.
  * Lỗi cấu trúc của câu trả lời lượt chính, cộng qua các lô: mục lạ, mục lặp, đoạn phải hỏi lại. Lần chạy
  * trước khi có trường này là `text` (mảng, không schema).

@@ -10,33 +10,31 @@ import {
 } from '../../infra/providers/transports/transportFactory'
 
 /**
- * Checks an OpenAI-compatible endpoint the way Hermes Desktop does before saving one
- * (hermes_cli/web_routers/config_env.py:852-1053, change `hermes-settings-modal` design D5):
+ * Kiểm tra tính khả dụng của endpoint tương thích API trước khi lưu:
  *
- *  1. `GET {base}/models`, then the variant with `/v1` added or removed. The variant that answers with a
- *     model list is the base URL to keep, because chat calls append `/chat/completions` to it verbatim.
- *  2. A one-token `POST {base}/chat/completions`. Only 404, 405 and 501 mean "this host does not serve the
- *     chat API"; any other answer (400 for a wrong model, 429, …) means the route is there.
+ *  1. Gửi `GET {base}/models`, sau đó thử biến thể có hoặc không có `/v1`. Biến thể trả về
+ *     danh sách model sẽ được giữ lại làm URL cơ sở, vì các lệnh gọi chat sẽ nối tiếp đường dẫn API vào sau.
+ *  2. Gửi thử yêu cầu 1 token tới endpoint chat. Chỉ các mã lỗi 404, 405 và 501 biểu thị máy chủ
+ *     không cung cấp route API này; các mã khác (kể cả 400 hoặc 429) cho thấy route API tồn tại.
  *
- * A 200 that is a web page, or a JSON list with no models, is reported as a probably wrong address. A
- * network failure says nothing about the key: the caller may still save, with a warning.
+ * Phản hồi 200 trả về trang web HTML hoặc danh sách rỗng được xem là sai địa chỉ.
+ * Lỗi kết nối mạng không khẳng định khóa sai: người dùng vẫn có thể lưu kèm cảnh báo.
  */
 
 export interface ProbeOptions {
   baseUrl: string
   apiKey?: string
-  /** The model for the route check; the first listed model when absent. */
+  /** Model dùng để kiểm tra route; dùng model đầu tiên nếu để trống. */
   model?: string
   fetchImpl: typeof fetch
   timeoutMs?: number
   /**
-   * Which protocol to check (change `subscription-providers`, task 6.5): the route probed is
-   * `/chat/completions`, `/responses` or `/v1/messages`. `auto` decides from the address.
+   * Giao thức API cần kiểm tra (`/chat/completions`, `/responses` hoặc `/v1/messages`). Giá trị `auto` tự suy đoán từ địa chỉ.
    */
   apiMode?: ApiMode
 }
 
-/** The route a mode serves, as the messages name it. */
+/** Tên route tương ứng với từng chế độ API. */
 const ROUTE_NAME: Record<ResolvedApiMode, string> = {
   chat_completions: '/chat/completions',
   responses: '/responses',
@@ -74,7 +72,7 @@ function headers(
   return apiKey ? { Authorization: 'Bearer ' + apiKey } : {}
 }
 
-/** A one-token request in the mode's own shape. */
+/** Tạo payload yêu cầu 1 token theo định dạng riêng của từng chế độ. */
 function routeBody(mode: ResolvedApiMode, model: string): Record<string, unknown> {
   if (mode === 'responses') return { model, input: 'ping', max_output_tokens: 16, stream: false }
   if (mode === 'anthropic_messages') {
@@ -83,7 +81,7 @@ function routeBody(mode: ResolvedApiMode, model: string): Record<string, unknown
   return { model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1, stream: false }
 }
 
-/** `http://host` → `http://host/v1`, and `http://host/v1` → `http://host`; the one other place a list may live. */
+/** Đổi giữa `http://host` và `http://host/v1` để tìm đường dẫn thay thế khả dụng. */
 export function alternateBase(baseUrl: string): string | null {
   const base = baseUrl.replace(/\/+$/, '')
   if (/\/v1$/i.test(base)) {
@@ -164,7 +162,7 @@ async function routeServed(
 export async function probeEndpoint(options: ProbeOptions): Promise<EndpointProbeResult> {
   const normalized = normalizeBaseUrl(options.baseUrl).replace(/\/+$/, '')
   const mode = modeOf(options, normalized)
-  // Anthropic's routes carry their own `/v1`, so its base is kept without one and has no alternative.
+  // Anthropic tự mang tiền tố `/v1` trong route, nên giữ nguyên base không có `/v1`.
   const base = mode === 'anthropic_messages' ? anthropicBase(normalized) : normalized
   const candidates =
     mode === 'anthropic_messages'
@@ -217,7 +215,7 @@ export async function probeEndpoint(options: ProbeOptions): Promise<EndpointProb
         message: 'Địa chỉ trả về trang web chứ không phải danh sách model; kiểm lại URL.'
       }
     }
-    // No list anywhere: the endpoint may still serve chat (some gateways hide /models), so try the route.
+    // Không tìm thấy danh sách model: endpoint có thể vẫn hỗ trợ chat (một số gateway ẩn /models), nên thử route trực tiếp.
     const model = options.model?.trim()
     if (model) {
       const route = await routeServed(base, model, options)

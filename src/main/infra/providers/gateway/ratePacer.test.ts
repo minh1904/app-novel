@@ -5,8 +5,7 @@ import { RatePacer } from './ratePacer'
 const NOW = 1_700_000_000_000
 
 /**
- * A clock that only moves when somebody sleeps, so a test can say "this call started 10 seconds after
- * that one" without waiting for it. `sleeps` is what each call was told to wait.
+ * Đồng hồ giả lập chỉ trôi thời gian khi có lệnh chờ, giúp kiểm thử khoảng cách thời gian giữa các cuộc gọi mà không cần chờ thật.
  */
 function fakeClock(): {
   clock: { now: number }
@@ -26,9 +25,7 @@ function fakeClock(): {
 }
 
 /**
- * A sleep that never finishes by itself and ends with `cancelled` when its signal aborts, and records how
- * long each call was told to wait. The clock does not move, so every call looks like it was made at the
- * same moment, the way concurrent callers are.
+ * Hàm sleep ghi nhận thời gian chờ và kết thúc bằng lỗi `cancelled` khi signal bị hủy, giữ nguyên mốc thời gian để mô phỏng gọi đồng thời.
  */
 function waitingSleep(waits: number[]): (ms: number, signal?: AbortSignal) => Promise<void> {
   return (ms, signal) => {
@@ -57,7 +54,7 @@ describe('RatePacer', () => {
       await pacer.wait()
       startedAt.push(clock.now)
     }
-    // 6 per minute is one every 10 seconds.
+    // 6 yêu cầu/phút tương ứng 10 giây mỗi yêu cầu.
     expect(startedAt[1]! - startedAt[0]!).toBe(10_000)
     expect(startedAt[2]! - startedAt[1]!).toBe(10_000)
     expect(sleeps).toEqual([10_000, 10_000])
@@ -67,7 +64,7 @@ describe('RatePacer', () => {
     const { clock, sleeps, sleep } = fakeClock()
     const pacer = new RatePacer(6, () => clock.now, sleep)
     await pacer.wait()
-    clock.now += 25_000 // the person was away; the next call has nothing to wait for
+    clock.now += 25_000 // thời gian đã trôi qua; cuộc gọi tiếp theo không cần phải chờ
     await pacer.wait()
     expect(sleeps).toEqual([])
   })
@@ -76,7 +73,7 @@ describe('RatePacer', () => {
     const waits: number[] = []
     const pacer = new RatePacer(12, () => NOW, waitingSleep(waits))
     void [pacer.wait(), pacer.wait(), pacer.wait()]
-    // 12 per minute is one every 5 seconds: the first goes at once, the second waits 5, the third 10.
+    // 12 yêu cầu/phút tương ứng 5 giây mỗi yêu cầu: cuộc gọi 1 chạy ngay, cuộc gọi 2 chờ 5s, cuộc gọi 3 chờ 10s.
     expect(waits).toEqual([5_000, 10_000])
   })
 
@@ -104,10 +101,10 @@ describe('RatePacer', () => {
     it('applies a new RPM from the next call on, and keeps the turn already promised', async () => {
       const { clock, sleeps, sleep } = fakeClock()
       const pacer = new RatePacer(6, () => clock.now, sleep)
-      await pacer.wait() // goes at once; the next turn is 10 s out
+      await pacer.wait() // chạy ngay; lượt tiếp theo cách 10s
       pacer.setRpm(12)
-      await pacer.wait() // keeps the turn it was promised under the old pace: 10 s
-      await pacer.wait() // and the one after it is spaced at the new pace: 5 s
+      await pacer.wait() // giữ nguyên lượt đã hứa theo tốc độ cũ: 10s
+      await pacer.wait() // lượt sau đó được giãn cách theo tốc độ mới: 5s
       expect(sleeps).toEqual([10_000, 5_000])
     })
 
@@ -128,7 +125,7 @@ describe('RatePacer', () => {
   describe('cancel', () => {
     it('ends a call that is waiting for its turn with `cancelled`, and it is never sent', async () => {
       const pacer = new RatePacer(6, () => NOW, waitingSleep([]))
-      await pacer.wait() // the first call: no wait
+      await pacer.wait() // cuộc gọi đầu tiên: không phải chờ
       const controller = new AbortController()
       let sent = false
       const second = pacer.wait(controller.signal).then(() => {
@@ -150,14 +147,13 @@ describe('RatePacer', () => {
     it('hands the slot back when the cancelled call was the last one, so nobody waits for nothing', async () => {
       const waits: number[] = []
       const pacer = new RatePacer(6, () => NOW, waitingSleep(waits))
-      await pacer.wait() // takes the slot at NOW; the next is at NOW + 10 s
+      await pacer.wait() // lấy slot tại NOW; slot tiếp theo tại NOW + 10s
       const controller = new AbortController()
-      const cancelled = pacer.wait(controller.signal) // reserves NOW + 10 s ... NOW + 20 s
+      const cancelled = pacer.wait(controller.signal) // đặt chỗ từ NOW + 10s đến NOW + 20s
       controller.abort()
       await expect(cancelled).rejects.toMatchObject({ kind: 'cancelled' })
 
-      // The next call must wait for the first call's interval and for nothing more. Without the slot being
-      // returned it would wait 20 s, for a call that never happened.
+      // Cuộc gọi tiếp theo chỉ cần chờ khoảng cách của cuộc gọi đầu tiên (10s), không bị chờ thêm 20s.
       void pacer.wait()
       expect(waits).toEqual([10_000, 10_000])
     })
@@ -165,14 +161,14 @@ describe('RatePacer', () => {
     it('leaves the gap when another call reserved after the cancelled one, so spacing never narrows', async () => {
       const waits: number[] = []
       const pacer = new RatePacer(6, () => NOW, waitingSleep(waits))
-      await pacer.wait() // slot at NOW
+      await pacer.wait() // slot tại NOW
       const controller = new AbortController()
-      const middle = pacer.wait(controller.signal) // slot at NOW + 10 s
-      void pacer.wait() // slot at NOW + 20 s
+      const middle = pacer.wait(controller.signal) // slot tại NOW + 10s
+      void pacer.wait() // slot tại NOW + 20s
       controller.abort()
       await expect(middle).rejects.toMatchObject({ kind: 'cancelled' })
 
-      // The call after it keeps its slot, and a new call goes after that one: 30 s out, not 20.
+      // Cuộc gọi sau đó vẫn giữ slot của mình, cuộc gọi mới sẽ đặt sau cuộc gọi đó: mốc 30s.
       void pacer.wait()
       expect(waits).toEqual([10_000, 20_000, 30_000])
     })

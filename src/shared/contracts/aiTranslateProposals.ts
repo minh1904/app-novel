@@ -30,7 +30,7 @@ export interface ParagraphTranslationPlan {
   batches: Array<{ sourceIds: string[]; sourceChars: number }>
   hasTranslation: boolean
   estimate: TranslateEstimate
-  /** The work context this run was frozen with: every batch builds its prompt from it. */
+  /** Ảnh chụp ngữ cảnh tác phẩm tại thời điểm bắt đầu phiên dịch. */
   context: { hash: string; glossary: number; dyads: number; characters: number }
 }
 
@@ -52,7 +52,7 @@ export const paragraphBatchSchema = v.strictObject({
   targetBaseContent: v.pipe(v.string(), v.maxLength(2_000_000)),
   policy: v.picklist(['review', 'auto']),
   sourceIds: v.pipe(v.array(idSchema), v.minLength(1), v.maxLength(2000)),
-  /** The person asked to retry failed segments: the run gets a fresh share of its call budget. */
+  /** Yêu cầu thử lại các đoạn thất bại: phiên được cấp lại phần ngân sách gọi. */
   retry: v.optional(v.boolean())
 })
 export type ParagraphBatchInput = v.InferOutput<typeof paragraphBatchSchema>
@@ -64,18 +64,15 @@ export interface ParagraphBatchResult {
   /** Những đoạn trong `failed` bị bộ lọc nội dung chặn, kèm lý do. */
   refusals: SegmentRefusal[]
   /**
-   * The approved context in the store no longer matches the run's snapshot. The batch still used the
-   * snapshot; planning again is how the change gets applied.
+   * Ngữ cảnh đã duyệt trong kho lưu trữ không còn khớp với ảnh chụp ban đầu của phiên.
    */
   contextChanged: boolean
-  /** Segments in `failed` that were not tried because the run's call budget ran out. */
+  /** Các đoạn trong `failed` chưa được gọi do hết ngân sách lượt gọi. */
   budgetIds: string[]
-  /** The run's call budget after this batch. */
+  /** Ngân sách lượt gọi còn lại của phiên sau lô này. */
   budget: BudgetReport
   /**
-   * How the answer was asked for (change `translate-structured-output-trial`): `array` (default),
-   * `object` with a JSON schema, or `object→fallback` when the provider rejected the schema and the batch
-   * was sent again without. `structure`: unknown ids, repeated ids and ids asked again in the main answer.
+   * Định dạng kết quả yêu cầu: `array` (mặc định), `object` kèm JSON schema, hoặc `object→fallback` khi bị từ chối schema.
    */
   output: {
     mode: 'array' | 'object' | 'object→fallback'

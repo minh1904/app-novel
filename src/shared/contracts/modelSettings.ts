@@ -2,7 +2,7 @@ import * as v from 'valibot'
 
 /**
  * Cài đặt của một mục model: những gì người dùng đặt để điều khiển cách model sinh văn bản và cách Mira
- * gọi nó (design D3 của change `ai-model-settings`).
+ * gọi nó.
  *
  * Ba nhóm, đúng ba hộp thoại: **Cơ bản** (mức suy luận; tên hiển thị và tên model thật là cột của mục
  * chứ không nằm ở đây), **Tác vụ** (giới hạn token, đồng thời, RPM) và **Nâng cao** (nhiệt độ, `top_p`,
@@ -38,7 +38,7 @@ export const SETTINGS_LIMITS = {
 
 /**
  * Các trường mà phần còn lại của Mira dựa vào để đọc phản hồi. `extra_body` được gộp sau cùng nên người dùng
- * có tiếng nói cuối với tham số riêng của hãng, nhưng **không** ghi đè được những trường này (design D8).
+ * có tiếng nói cuối với tham số riêng của hãng, nhưng **không** ghi đè được những trường này.
  */
 export const FORBIDDEN_BODY_FIELDS = [
   'model',
@@ -99,9 +99,7 @@ export interface ModelCapabilityView {
   /** `false` chỉ khi bảng dữ liệu nói rõ model không nhận nhiệt độ. */
   temperature: boolean
   /**
-   * Model nhận `response_format` có JSON schema: catalog khai, hoặc dòng đo thật thêm vào. Chỉ là điều
-   * kiện để Lab thử chế độ đầu ra có schema; sản phẩm mặc định không bật (change
-   * `translate-structured-output-trial`).
+   * Model nhận `response_format` có JSON schema: catalog khai, hoặc dòng đo thật thêm vào.
    */
   structuredOutput: boolean
 }
@@ -177,7 +175,7 @@ function jsonBytes(value: unknown): number {
   return new TextEncoder().encode(JSON.stringify(value)).length
 }
 
-/** Tên header hợp lệ theo RFC 9110 (một "token"). Tên sai làm `fetch` ném giữa lượt dịch, nên chặn lúc lưu. */
+/** Tên header hợp lệ dạng token HTTP. Tên sai làm `fetch` ném giữa lượt dịch, nên chặn lúc lưu. */
 const HEADER_NAME = /^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/
 
 /**
@@ -329,7 +327,7 @@ export function applySettingsPatch(
 
 /**
  * Khóa cấu hình của một mục model, do main tính (SHA-256 của dạng chuẩn tắc của những gì ảnh hưởng nội dung
- * hay cách chia lô; design D5–D6). Renderer chỉ mang nó đi và đưa lại: lô nào gửi lên mà khóa không còn khớp
+ * hay cách chia lô). Renderer chỉ mang nó đi và đưa lại: lô nào gửi lên mà khóa không còn khớp
  * với mục hiện tại thì không được gửi. Là mã băm chứ không phải chính cấu hình để IPC không phải chở cả
  * `extra_body` ở mỗi lô.
  */

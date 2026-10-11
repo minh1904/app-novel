@@ -1,8 +1,8 @@
 import type { TextSide } from '../../../shared/contracts/text'
 
 /**
- * The paging arithmetic behind the chat tools: paragraphs with their offsets, the cursor a page hands
- * back, and one page cut out of a chapter. Pure functions, so the tool runner and its tests share them.
+ * Thuật toán phân trang cho các công cụ trò chuyện: xác định đoạn văn kèm vị trí offset,
+ * con trỏ trả về cho mỗi trang, và trích xuất từng trang văn bản từ chương.
  */
 
 export {
@@ -13,8 +13,8 @@ export {
 import { paragraphAt, type ParagraphSpan } from '../../../shared/text/paragraphSpans'
 
 /**
- * Where to read on from, as an opaque string the model copies back: chapter, side, paragraph (1-based),
- * offset inside that paragraph, and the text revision it was read at. `c3.target.p81.o0.r12`.
+ * Vị trí tiếp tục đọc dưới dạng chuỗi: chương, phía (gốc/dịch), đoạn (bắt đầu từ 1),
+ * offset trong đoạn đó, và phiên bản văn bản (revision) tại thời điểm đọc. Ví dụ: `c3.target.p81.o0.r12`.
  */
 export interface Cursor {
   chapter: number
@@ -42,20 +42,20 @@ export function decodeCursor(text: string): Cursor | null {
 
 export interface Page {
   text: string
-  /** 1-based paragraphs the page touches. */
+  /** Các đoạn (đánh số từ 1) nằm trong trang. */
   fromParagraph: number
   toParagraph: number
   total: number
-  /** The page stops inside `toParagraph`. */
+  /** Đánh dấu trang kết thúc ở giữa `toParagraph`. */
   cutInParagraph: boolean
-  /** Where the next page starts; `null` when the chapter is done. */
+  /** Vị trí bắt đầu của trang kế tiếp; `null` khi đã đọc hết chương. */
   next: { paragraph: number; offset: number } | null
 }
 
 /**
- * One page of at most `limit` characters starting at `paragraph` (1-based) + `offset`. A page ends on a
- * paragraph bound whenever one lies inside the limit; only a paragraph longer than the whole limit is cut
- * in the middle, and then the next page starts exactly where this one stopped.
+ * Đọc một trang tối đa `limit` ký tự bắt đầu từ `paragraph` (đoạn thứ 1 trở đi) + `offset`. Trang sẽ kết thúc
+ * tại ranh giới đoạn nếu nằm trong giới hạn; chỉ khi đoạn dài hơn giới hạn trang mới bị cắt ở giữa,
+ * và trang kế tiếp sẽ tiếp tục chính xác từ vị trí dừng lại.
  */
 export function readPage(
   content: string,
@@ -68,7 +68,7 @@ export function readPage(
   const begin = spans[first].start + offset
   let end = Math.min(content.length, begin + limit)
   if (end < content.length) {
-    // Back off to the last paragraph bound inside the page, if there is one past the start.
+    // Lùi về ranh giới đoạn cuối cùng trong trang nếu có ranh giới sau điểm bắt đầu.
     const bound = paragraphAt(spans, end)
     if (spans[bound].start > begin) end = spans[bound].start
   }
@@ -85,7 +85,7 @@ export function readPage(
   }
 }
 
-/** `19640` → `19.640`, the way the panel writes counts, without depending on the runtime's locale data. */
+/** Định dạng số với dấu chấm phân tách hàng nghìn: `19640` → `19.640`. */
 export function formatCount(value: number): string {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }

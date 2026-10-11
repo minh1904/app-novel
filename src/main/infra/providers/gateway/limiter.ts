@@ -1,16 +1,10 @@
 import { ProviderError } from '../types'
 
 /**
- * At most `limit` calls in flight; the rest wait their turn, in the order they came.
+ * Giới hạn số lượng yêu cầu tối đa thực thi đồng thời (`limit`), các yêu cầu vượt quá sẽ xếp hàng chờ.
  *
- * There is one per **model entry** (design D9 of change `ai-model-settings`), shared by the translation and
- * the chat that use that entry. The key quota behind it is a different thing, kept per connection by the
- * key scheduler, so two entries of one connection queue separately but still see each other's 429s.
- *
- * Today every caller works one call at a time, so the limit is rarely reached. It exists so that the
- * job runner, which will run several at once, cannot overrun a free tier by accident, and so that the
- * guarantee is already tested when it arrives (design D6 of change `ai-gateway`). The person can set it
- * per entry, and change it while calls are running: see `setLimit`.
+ * Mỗi cấu hình mô hình (model entry) dùng một bộ giới hạn riêng, được chia sẻ giữa các tác vụ (như dịch thuật và trò chuyện).
+ * Hạn mức của khóa được quản lý độc lập theo kết nối thông qua bộ điều phối khóa (key scheduler).
  */
 export class Limiter {
   private active = 0
@@ -32,9 +26,9 @@ export class Limiter {
   }
 
   /**
-   * Changes the limit while calls may be running or waiting. Lowering it **never cuts a call that is already
-   * running**: nothing new is let in until the number running falls below the new limit. Raising it lets
-   * the ones waiting in at once, in the order they came.
+   * Thay đổi giới hạn đồng thời khi đang có yêu cầu chạy hoặc chờ.
+   * Giảm giới hạn sẽ không ngắt các yêu cầu đang chạy mà chỉ chặn yêu cầu mới cho đến khi số lượng giảm xuống.
+   * Tăng giới hạn sẽ giải phóng ngay các yêu cầu đang xếp hàng theo thứ tự đến trước.
    */
   setLimit(limit: number): void {
     Limiter.check(limit)
@@ -42,7 +36,7 @@ export class Limiter {
     this.drain()
   }
 
-  /** The limit in force now. For tests and for showing; not for decisions. */
+  /** Giới hạn hiện tại đang áp dụng (dùng cho kiểm thử và hiển thị). */
   get current(): number {
     return this.limit
   }
@@ -51,20 +45,19 @@ export class Limiter {
     while (this.active < this.limit && this.waiting.length > 0) this.waiting.shift()?.grant()
   }
 
-  /** Calls running right now. For tests and for showing progress; not for decisions. */
+  /** Số lượng yêu cầu đang thực thi hiện tại. */
   get inFlight(): number {
     return this.active
   }
 
-  /** Calls waiting for a place. */
+  /** Số lượng yêu cầu đang chờ trong hàng đợi. */
   get queued(): number {
     return this.waiting.length
   }
 
   /**
-   * Resolves with the function that gives the place back, once there is one. Rejects with `cancelled` if
-   * the signal aborts **while waiting**: such a call is taken out of the line and never sent. Once the
-   * place is granted, aborting is the caller's business (its own request is what gets aborted).
+   * Xin cấp phát một slot thực thi, trả về hàm giải phóng slot khi hoàn tất.
+   * Ném lỗi `cancelled` nếu tín hiệu bị hủy trong lúc đang chờ.
    */
   acquire(signal?: AbortSignal): Promise<() => void> {
     if (signal?.aborted) return Promise.reject(new ProviderError('cancelled', 'Yêu cầu đã bị hủy.'))
@@ -90,7 +83,7 @@ export class Limiter {
     })
   }
 
-  /** A release that can be called twice without giving away two places. */
+  /** Hàm giải phóng bảo đảm an toàn khi gọi nhiều lần mà không trừ thừa slot. */
   private releaser(): () => void {
     let released = false
     return () => {

@@ -38,16 +38,16 @@ describe('contextMatching', () => {
     const entries = [
       makeEntry('天蓝', 'Thiên Lam'),
       makeEntry('天蓝宗', 'Thiên Lam Tông'),
-      makeEntry('剑', 'Kiếm') // 1 char, filtered by default minLengthCJK = 2
+      makeEntry('剑', 'Kiếm') // 1 ký tự, bị lọc do minLengthCJK mặc định là 2
     ]
 
     const text = '天蓝宗的弟子手握一柄神剑，前往天蓝峰。'
     const matched = matchContextEntries(text, entries, 'zh-Hans')
 
     expect(matched.map((m) => m.entry.source)).toEqual(['天蓝宗', '天蓝'])
-    // '剑' has length 1, so excluded
+    // '剑' có độ dài 1 nên bị loại trừ
     expect(matched.find((m) => m.entry.source === '剑')).toBeUndefined()
-    // Longest match '天蓝宗' (length 3) is sorted before '天蓝' (length 2)
+    // Khớp dài nhất '天蓝宗' (độ dài 3) được xếp trước '天蓝' (độ dài 2)
     expect(matched[0].entry.source).toBe('天蓝宗')
   })
 
@@ -66,13 +66,13 @@ describe('contextMatching', () => {
     const entries = [
       makeEntry('Ash', 'Tro Tàn'),
       makeEntry('Flash', 'Tia Chớp'),
-      makeEntry('No', 'Không') // length 2 < 3
+      makeEntry('No', 'Không') // độ dài 2 < 3
     ]
 
     const text = 'A sudden flash lit up the sky, leaving only ash behind.'
     const matched = matchContextEntries(text, entries, 'en')
 
-    // 'Ash' should match 'ash', but NOT trigger on 'flash'
+    // 'Ash' khớp với 'ash', nhưng không được kích hoạt nhầm trên 'flash'
     const ashMatch = matched.find((m) => m.entry.source === 'Ash')
     expect(ashMatch).toBeDefined()
     expect(ashMatch?.count).toBe(1)
@@ -81,7 +81,7 @@ describe('contextMatching', () => {
     expect(flashMatch).toBeDefined()
     expect(flashMatch?.count).toBe(1)
 
-    // 'No' excluded because length < 3
+    // 'No' bị loại trừ vì độ dài < 3
     expect(matched.find((m) => m.entry.source === 'No')).toBeUndefined()
   })
 

@@ -1,25 +1,20 @@
 import { ProviderError } from '../types'
 
 /**
- * When to try a call again, and after how long. Pure decisions, no I/O: the only waiting in here is
- * `abortableSleep`, and tests replace that.
+ * Chính sách quyết định khi nào cần thử lại và khoảng thời gian chờ (delay) trước khi thử lại.
  *
- * Only **transient trouble on the wire** is retried here: `network` (which already covers HTTP 408 and
- * 5xx) and `timeout`. Trouble that belongs to the *key* — a rate limit, an empty account, a wrong key —
- * is not retried by waiting at all: the gateway moves to another key at once. Trouble in the *content* —
- * an answer that does not parse, ids missing — is the translation code's to retry, with its own count.
- * One owner per kind is the point (design D4 of change `ai-gateway`); the numbers are opencode's
- * (2 retries, 0.5 s doubling, 10 s ceiling), and pi-ai's reason for writing this by hand is the reason
- * here too: a retry timer buried in a library ignores the caller's AbortSignal, so Cancel would hang.
+ * Chỉ thử lại đối với các sự cố tạm thời trên đường truyền: `network` (gồm HTTP 408, 5xx) và `timeout`.
+ * Lỗi liên quan đến khóa (hết hạn mức, sai khóa) sẽ chuyển khóa ngay lập tức thay vì chờ thử lại.
+ * Hỗ trợ `AbortSignal` để có thể hủy bỏ thời gian chờ bất cứ lúc nào.
  */
 
 export interface RetryOptions {
-  /** Tries after the first one. */
+  /** Số lần thử lại tối đa sau lần gọi đầu tiên thất bại. */
   maxRetries: number
   baseDelayMs: number
-  /** No single wait is longer than this, and a provider that asks for more is not obeyed (see `decideRetry`). */
+  /** Thời gian chờ tối đa cho mỗi lần thử lại (ms). */
   maxDelayMs: number
-  /** Spread applied to the backoff, as a fraction: 0.2 is ±20%, so a crowd of retries does not arrive together. */
+  /** Tỷ lệ dao động ngẫu nhiên (jitter) áp dụng vào thời gian chờ (ví dụ: 0.2 là ±20%). */
   jitter: number
 }
 
@@ -33,13 +28,10 @@ export const DEFAULT_RETRY: RetryOptions = {
 export type RetryDecision = { retry: true; delayMs: number } | { retry: false }
 
 /**
- * Should this failure be tried again, and how long to wait first?
+ * Quyết định xem có nên thử lại yêu cầu hay không và tính toán thời gian chờ.
  *
- * `retriesDone` is how many retries already happened (0 after the first failure).
- *
- * A provider that says how long to wait (`Retry-After`) can only **lengthen** the wait. If it asks for
- * longer than the ceiling, the answer is "do not retry": sleeping that long inside a call would freeze a
- * button for minutes, so the error goes up carrying the wait, and the layer above decides what to do.
+ * `retriesDone` là số lần thử lại đã thực hiện trước đó.
+ * Nếu nhà cung cấp yêu cầu thời gian chờ (`Retry-After`) vượt quá mức trần `maxDelayMs`, hệ thống sẽ từ chối thử lại.
  */
 export function decideRetry(
   error: unknown,
@@ -49,9 +41,7 @@ export function decideRetry(
   { keyless = false }: { keyless?: boolean } = {}
 ): RetryDecision {
   if (!(error instanceof ProviderError)) return { retry: false }
-  // A rate limit is normally the *key's* trouble and is answered by moving to another key. A connection
-  // with no key at all (a local runtime, or a gateway of the user's own that rotates its keys itself) has
-  // nothing to move to, so for it a rate limit is waited out like any other transient trouble.
+  // Kết nối không dùng khóa (máy chủ cục bộ hoặc gateway riêng) không thể đổi khóa nên rate limit được xử lý như lỗi tạm thời.
   const transient =
     error.kind === 'network' ||
     error.kind === 'timeout' ||
@@ -68,7 +58,7 @@ export function decideRetry(
   return { retry: true, delayMs }
 }
 
-/** Waits `ms`, or ends at once with `cancelled` if the signal aborts first. */
+/** Chờ `ms` mili-giây, hoặc dừng ngay lập tức với lỗi `cancelled` nếu signal bị hủy trước. */
 export function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const cancelled = (): ProviderError => new ProviderError('cancelled', 'Yêu cầu đã bị hủy.')

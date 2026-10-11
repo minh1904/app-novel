@@ -3,10 +3,9 @@
 //
 //   node scripts/refresh-model-catalog.mjs
 //
-// Chạy bằng tay, không tự động: giá đổi chậm hơn nhịp phát hành, và Mira phải chạy được khi
-// không có mạng nên bảng này nằm trong repo chứ không gọi lúc chạy (ADR-004, D8 của change
-// `ai-connection`). Script in ra provider nào thiếu để người chạy sửa danh sách thay vì im lặng
-// bỏ qua.
+// Chạy bằng tay, không tự động: bảng giá thay đổi chậm hơn nhịp phát hành, và ứng dụng phải hoạt động
+// được khi không có mạng nên danh mục này được lưu sẵn trong kho mã nguồn thay vì gọi mạng lúc khởi động.
+// Script in ra nhà cung cấp nào còn thiếu để người chạy cập nhật danh sách thay vì âm thầm bỏ qua.
 
 import { writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -28,9 +27,9 @@ const OUT = join(
 const PROVIDERS = ['google', 'openrouter', 'deepseek', 'openai', 'anthropic', 'alibaba', 'lmstudio']
 
 /**
- * Cách một model nhận mức suy luận, giữ đúng ba dạng models.dev dùng (design D4 của change
- * `ai-model-settings`). Dạng lạ hoặc thiếu trường bắt buộc thì bỏ qua thay vì ghi dữ liệu mà bên đọc phải
- * đoán; một mảng rỗng nghĩa là nguồn không biết, và cũng không ghi.
+ * Cách một mô hình nhận mức độ suy luận, giữ đúng ba dạng theo nguồn cung cấp.
+ * Dạng lạ hoặc thiếu trường bắt buộc sẽ bị bỏ qua thay vì ghi dữ liệu không rõ ràng;
+ * mảng rỗng biểu thị nguồn không cung cấp thông tin và cũng không được ghi.
  */
 function pickReasoningOptions(options) {
   if (!Array.isArray(options)) return undefined
@@ -53,7 +52,7 @@ function pickReasoningOptions(options) {
   return out.length > 0 ? out : undefined
 }
 
-/** Chỉ các trường Mira dùng; bỏ phần còn lại để bảng không phình theo models.dev. */
+/** Chỉ lấy các trường ứng dụng cần dùng; bỏ phần còn lại để danh mục không bị phình to. */
 function pickModel(model) {
   const out = { id: model.id, name: model.name }
   if (model.limit?.context) out.contextLimit = model.limit.context
@@ -75,7 +74,7 @@ function pickModel(model) {
   if (model.reasoning === true) out.reasoning = true
   const reasoningOptions = pickReasoningOptions(model.reasoning_options)
   if (reasoningOptions !== undefined) out.reasoningOptions = reasoningOptions
-  // Chỉ ghi khi nguồn nói rõ `false`: vắng và `true` đều nghĩa là "để mở", nên ghi cả hai chỉ làm bảng phình.
+  // Chỉ ghi khi nguồn chỉ định rõ ràng `false`: không có hoặc mang giá trị `true` đều biểu thị không giới hạn.
   if (model.temperature === false) out.temperature = false
   if (typeof model.status === 'string') out.status = model.status
   return out
@@ -104,14 +103,14 @@ for (const id of PROVIDERS) {
 }
 
 const catalog = {
-  // Ngày đọc đi cùng dữ liệu: giao diện phải nói "giá tham khảo, cập nhật ngày …".
+  // Ngày lấy dữ liệu: giao diện hiển thị "giá tham khảo, cập nhật ngày …".
   readAt: new Date().toISOString().slice(0, 10),
   source: SOURCE,
   license: 'models.dev — MIT',
   providers
 }
 
-// Qua Prettier để file ghi ra khớp `prettier --check` (mảng ngắn trên một dòng, CRLF).
+// Định dạng qua Prettier để tệp đầu ra tuân thủ chuẩn định dạng (mảng ngắn trên một dòng, CRLF).
 const prettierOptions = { ...(await resolveConfig(OUT)), filepath: OUT }
 writeFileSync(OUT, await format(JSON.stringify(catalog, null, 2), prettierOptions), 'utf-8')
 

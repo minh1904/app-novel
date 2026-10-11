@@ -10,9 +10,9 @@ const GROUP_LABEL: Record<RefusalGroup, string> = {
 const GROUP_ORDER: RefusalGroup[] = ['prohibited', 'safety', 'recitation', 'other']
 
 /**
- * The sentence for segments the provider's filter would not let through, counted by reason. Retrying is
- * useless for any of them; the person decides whether to translate by hand or use another model. Shared so
- * the batch message from main and the run summary on screen say the same thing.
+ * Câu thông báo mô tả các đoạn bị bộ lọc của nhà cung cấp từ chối dịch, thống kê theo từng lý do.
+ * Thử lại với cùng cấu hình sẽ không có tác dụng; người dùng có thể tự dịch thủ công hoặc đổi mô hình khác.
+ * Dùng chung giữa thông báo xử lý hàng loạt từ main và màn hình tóm tắt của renderer.
  */
 export function describeRefusals(groups: RefusalGroup[]): string {
   const counts = new Map<RefusalGroup, number>()

@@ -44,18 +44,18 @@ function visibleLength(text: string): number {
 }
 
 /**
- * Checks whether source and target share anchor features:
- * - Common numbers (\d+)
- * - Common capitalized Latin words ([A-Z][a-z]+)
- * - Common scene break characters (＊, ◇)
- * - Matched glossary entry (src in source, tgt in target)
+ * Kiểm tra xem bản gốc và bản dịch có chia sẻ các đặc trưng mỏ neo hay không:
+ * - Các chữ số chung (\d+)
+ * - Các từ chữ Latin viết hoa chung ([A-Z][a-z]+)
+ * - Ký tự phân cảnh chung (＊, ◇)
+ * - Thuật ngữ bảng chú giải trùng khớp (thuật ngữ nguồn trong bản gốc, đích trong bản dịch)
  */
 export function hasSharedAnchors(
   srcText: string,
   tgtText: string,
   glossary?: GlossaryAnchor[]
 ): boolean {
-  // 1. Numbers
+  // 1. Chữ số
   const srcNumbers = srcText.match(/\d+/g)
   if (srcNumbers) {
     const tgtNumbers = new Set(tgtText.match(/\d+/g) ?? [])
@@ -64,7 +64,7 @@ export function hasSharedAnchors(
     }
   }
 
-  // 2. Capitalized Latin words
+  // 2. Từ Latin viết hoa
   const srcLatin = srcText.match(/[A-Z][a-z]+/g)
   if (srcLatin) {
     const tgtLatin = new Set(tgtText.match(/[A-Z][a-z]+/g) ?? [])
@@ -73,7 +73,7 @@ export function hasSharedAnchors(
     }
   }
 
-  // 3. Scene breaks
+  // 3. Dấu ngắt cảnh
   if (
     (srcText.includes('＊') && tgtText.includes('＊')) ||
     (srcText.includes('◇') && tgtText.includes('◇'))
@@ -81,7 +81,7 @@ export function hasSharedAnchors(
     return true
   }
 
-  // 4. Glossary
+  // 4. Thuật ngữ
   if (glossary && glossary.length > 0) {
     for (const entry of glossary) {
       const srcFound =
@@ -107,8 +107,7 @@ interface DpNode {
 }
 
 /**
- * Align source paragraphs and target paragraphs using Gale-Church dynamic programming.
- * Implements R1, R1a, R1b, R2 of translation-checks spec and D2 of design.md.
+ * Gióng hàng các đoạn văn bản gốc và bản dịch bằng thuật toán quy hoạch động Gale-Church.
  */
 export function alignParagraphs(
   srcParas: string[],
@@ -128,7 +127,7 @@ export function alignParagraphs(
   const anchorDiscount = options?.anchorDiscount ?? 0.6
   const glossary = options?.glossary
 
-  // Precompute visible lengths
+  // Tính trước độ dài ký tự nhìn thấy
   const srcLens = srcParas.map(visibleLength)
   const tgtLens = tgtParas.map(visibleLength)
 
@@ -169,19 +168,19 @@ export function alignParagraphs(
     for (let j = 0; j <= n; j++) {
       if (i === 0 && j === 0) continue
 
-      // 1-0: omission (source paragraph skipped)
+      // 1-0: lược dịch (bỏ sót đoạn nguồn)
       if (i >= 1) {
         const cost10 = penaltySkip
         consider(i, j, i - 1, j, cost10, '1-0')
       }
 
-      // 0-1: addition (extra target paragraph)
+      // 0-1: dịch thêm (thừa đoạn đích)
       if (j >= 1) {
         const cost01 = penaltySkip
         consider(i, j, i, j - 1, cost01, '0-1')
       }
 
-      // 1-1: standard match
+      // 1-1: khớp chuẩn 1-1
       if (i >= 1 && j >= 1) {
         const srcLen = Math.max(1, srcLens[i - 1])
         const tgtLen = Math.max(1, tgtLens[j - 1])
@@ -192,7 +191,7 @@ export function alignParagraphs(
         consider(i, j, i - 1, j - 1, diff, '1-1')
       }
 
-      // 2-1: merge (2 source paragraphs into 1 target paragraph)
+      // 2-1: gộp đoạn (2 đoạn nguồn thành 1 đoạn đích)
       if (i >= 2 && j >= 1) {
         const srcLen = Math.max(1, srcLens[i - 2] + srcLens[i - 1])
         const tgtLen = Math.max(1, tgtLens[j - 1])
@@ -208,7 +207,7 @@ export function alignParagraphs(
         consider(i, j, i - 2, j - 1, diff + penalty, '2-1')
       }
 
-      // 1-2: split (1 source paragraph into 2 target paragraphs)
+      // 1-2: tách đoạn (1 đoạn nguồn thành 2 đoạn đích)
       if (i >= 1 && j >= 2) {
         const srcLen = Math.max(1, srcLens[i - 1])
         const tgtLen = Math.max(1, tgtLens[j - 2] + tgtLens[j - 1])
@@ -224,7 +223,7 @@ export function alignParagraphs(
     }
   }
 
-  // Backtrack from (m, n)
+  // Truy vết ngược từ (m, n)
   const beads: Bead[] = []
   let currI = m
   let currJ = n

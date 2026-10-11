@@ -7,20 +7,16 @@ import { LibraryStore } from '../library/library'
 import { createServices } from '../createServices'
 
 /**
- * **Opt-in**: talks to the real Gemini and spends a few cents of the key's quota. It is skipped unless both
- * `MIRA_LIVE=1` and `GEMINI_API_KEY` are set, so `check.mjs` and CI never run it.
+ * **Tùy chọn (Opt-in)**: Kiểm thử trực tiếp với API Gemini thực tế. Được bỏ qua trừ khi cả hai biến
+ * môi trường `MIRA_LIVE=1` và `GEMINI_API_KEY` được thiết lập, để tránh chạy trong quy trình CI thông thường.
  *
  *   PowerShell:  $env:MIRA_LIVE='1'; $env:GEMINI_API_KEY='…'; node_modules/.bin/vitest run src/main/services/ai/liveGemini.test.ts
- *   Optional:    $env:MIRA_LIVE_MODEL='gemini-3.5-flash'   (default gemini-2.5-flash)
+ *   Tùy chọn:    $env:MIRA_LIVE_MODEL='gemini-3.5-flash'   (mặc định gemini-2.5-flash)
  *
- * It is task 6.4 of change `ai-model-settings`: the **whole path** — connection → model entry with its
- * settings → gateway → provider — for a translation, a chat turn and the "Kiểm tra" button, with a thinking
- * level and a temperature switched on. Everything else about the provider's answers is already held by the
- * recordings in `__fixtures__/live`; what only a live run can show is that the settings an entry carries are
- * the ones that arrive, and that they are accepted.
+ * Kiểm tra toàn bộ luồng hoạt động: kết nối → cấu hình mục mô hình → gateway → nhà cung cấp — cho các chức năng
+ * dịch thuật, lượt trò chuyện và nút kiểm tra kết nối với cấu hình suy nghĩ (thinking) và nhiệt độ (temperature).
  *
- * The key is only ever held in memory here and is never printed. Assertions about it are booleans, so a
- * failure cannot echo it.
+ * Khóa API chỉ được lưu trong bộ nhớ và không bao giờ được ghi log ra ngoài.
  */
 
 const KEY = process.env.GEMINI_API_KEY ?? ''
@@ -82,7 +78,7 @@ async function setup(): Promise<{
   return { library, services, requests, connectionId: connection.id, entries: { quiet, plain } }
 }
 
-describe.skipIf(!LIVE)('live Gemini through connection → entry → gateway (task 6.4)', () => {
+describe.skipIf(!LIVE)('live Gemini qua kết nối → mục mô hình → gateway', () => {
   it('tests an entry with its own settings, and thinking off costs no more output than the default', async () => {
     const { services, requests, entries } = await setup()
 
@@ -93,11 +89,11 @@ describe.skipIf(!LIVE)('live Gemini through connection → entry → gateway (ta
     console.log(
       `[live ${MODEL}] "Tắt + 0,3": ${off.ms} ms, ${JSON.stringify(off.usage)}; "Mặc định": ${plain.ms} ms, ${JSON.stringify(plain.usage)}`
     )
-    // The settings of the entry are what went out…
+    // Các thiết lập cấu hình của mục mô hình đã được gửi đi…
     expect(sent).toMatchObject({ model: MODEL, temperature: 0.3, reasoning_effort: 'none' })
-    // …and the one nobody touched sent nothing extra.
+    // …và mục mô hình không cấu hình thêm gì sẽ không gửi thừa thông tin.
     expect(Object.keys(requests.at(-1)!).sort()).toEqual(['messages', 'model'])
-    // Hidden thinking tokens are counted in the output, so switching thinking off cannot cost more.
+    // Token suy nghĩ ẩn được tính vào đầu ra, nên khi tắt thinking chi phí đầu ra không thể nhiều hơn.
     expect(off.usage).not.toBeNull()
     expect(off.usage!.outputTokens).toBeLessThanOrEqual(plain.usage!.outputTokens)
   }, 120_000)

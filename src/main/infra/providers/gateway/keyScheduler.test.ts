@@ -35,7 +35,7 @@ function leaseOf(pick: ReturnType<KeyScheduler['pick']>): Lease {
   return pick.lease
 }
 
-/** A store in miniature: applies the effects the way the real key source does, so tests read like a run. */
+/** Mô phỏng kho lưu trữ thu nhỏ: áp dụng các hiệu ứng trạng thái khóa tương tự như nguồn khóa thực tế. */
 class Harness {
   readonly keys: KeyRecord[]
   readonly scheduler: KeyScheduler
@@ -111,7 +111,7 @@ describe('a burst of failures on one key (measured: six 429s froze a key for 30 
 
     const a = h.keys[0]!
     expect(a.freezeStrikes).toBe(1)
-    // One blind freeze is a minute, not the 30-minute cap that six strikes in a row reach.
+    // Một lần đóng băng mặc định là 1 phút, không bị cộng dồn lên mức trần 30 phút như khi tính 6 vi phạm liên tiếp.
     expect(a.frozenUntil).toBe(NOW + SHORT_FREEZE_MS)
     expect(a.frozenUntil).toBeLessThan(NOW + MAX_SHORT_FREEZE_MS)
   })
@@ -220,7 +220,7 @@ describe('probation after a freeze runs out', () => {
   })
 
   it('treats a key that ran out of quota an hour ago as on probation after a restart, not as healthy', () => {
-    // A new scheduler knows nothing about epochs; the strikes in storage are what remembers.
+    // Bộ điều phối mới khởi tạo lại epoch; số lần vi phạm lưu trong bộ nhớ duy trì trạng thái trước đó.
     const h = new Harness(record('a', { frozenUntil: NOW - 3_600_000, freezeStrikes: 3 }))
     expect(leaseOf(h.pick()).probe).toBe(true)
   })

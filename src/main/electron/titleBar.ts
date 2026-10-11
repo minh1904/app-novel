@@ -2,33 +2,32 @@ import type { ChromeTheme } from '../../shared/contracts/desktopApi'
 import { ZOOM_FACTOR } from './zoom'
 
 /**
- * The page's own top bar is the title bar: the OS draws only its three window buttons, over the right
- * end of that bar (the window controls overlay), instead of a separate strip above the page. macOS
- * keeps its native frame, which already puts its buttons in a unified bar.
+ * Thanh trên cùng của trang web đóng vai trò là thanh tiêu đề: hệ điều hành chỉ vẽ 3 nút điều khiển cửa sổ
+ * ở góc phải của thanh đó (window controls overlay) thay vì một dải tiêu đề riêng biệt bên trên trang.
+ * macOS giữ khung gốc của hệ thống vì nó đã tích hợp sẵn các nút trên một thanh thống nhất.
  */
 export const OVERLAY_TITLE_BAR = process.platform !== 'darwin'
 
-/** `--mira-header-height` in styles/tokens/foundation.css, before the page zoom. */
+/** `--mira-header-height` trong styles/tokens/foundation.css, trước khi áp dụng tỉ lệ thu phóng (zoom). */
 export const HEADER_HEIGHT = 40
 
 /**
- * Height of the buttons in window pixels: the bar after the page zoom, less its bottom border row, so
- * the hairline under the bar runs on under the buttons.
+ * Chiều cao của các nút theo pixel cửa sổ: chiều cao thanh sau khi thu phóng, trừ đi hàng viền dưới,
+ * để đường viền mảnh bên dưới thanh tiêu đề tiếp tục chạy liền mạch dưới các nút.
  */
 export const TOP_BAR_HEIGHT = Math.round(HEADER_HEIGHT * ZOOM_FACTOR) - 1
 
 /**
- * A see-through background for the window buttons, as Hermes Desktop uses: the page's own top bar shows
- * through, so a dialog's backdrop (its fade and blur included) covers the buttons' corner like the rest
- * of the bar. An opaque colour sat on top of the backdrop as a bright box and changed in one step while
- * the backdrop faded. Fully transparent black is read as "no colour" by Electron, hence the red channel.
+ * Nền trong suốt cho các nút cửa sổ: thanh trên cùng của trang sẽ hiển thị xuyên qua, nhờ đó nền làm mờ
+ * của hộp thoại (backdrop) sẽ che phủ góc chứa các nút giống như phần còn lại của thanh. Màu đen trong suốt
+ * hoàn toàn bị Electron hiểu là "không có màu", do đó kênh màu đỏ được gán giá trị 1.
  */
 export const TRANSPARENT_OVERLAY = 'rgba(1, 0, 0, 0)'
 
 /**
- * What the window buttons wear, per theme: the see-through background, and `--mira-text-subtle` for the
- * glyphs, as the bar's icon buttons use. The glyph colour is copied from styles/tokens/ because the OS
- * paints it and cannot read a CSS variable; `titleBar.test.ts` fails when the copies drift apart.
+ * Màu sắc của các nút cửa sổ theo từng theme: nền trong suốt và `--mira-text-subtle` cho các biểu tượng
+ * nút (glyph), tương tự các nút icon trên thanh công cụ. Màu glyph được sao chép trực tiếp vì hệ điều hành
+ * vẽ biểu tượng này và không đọc được biến CSS.
  */
 export const CHROME_COLORS: Record<ChromeTheme, { color: string; symbolColor: string }> = {
   dark: { color: TRANSPARENT_OVERLAY, symbolColor: '#a3a3a3' },
@@ -36,8 +35,8 @@ export const CHROME_COLORS: Record<ChromeTheme, { color: string; symbolColor: st
 }
 
 /**
- * The window's colour before the page paints: the surface (`--mira-bg-surface`), so opening Mira
- * does not flash a different colour.
+ * Màu của cửa sổ trước khi trang được vẽ: màu bề mặt (`--mira-bg-surface`), để khi mở ứng dụng không bị
+ * chớp nháy màu khác.
  */
 export const BOOT_BACKGROUND: Record<ChromeTheme, string> = {
   dark: '#1a1a1a',

@@ -23,7 +23,7 @@ const utf16 = (text: string, little: boolean, bom: boolean): Uint8Array => {
   return Uint8Array.from(out)
 }
 
-// Real bytes written by each legacy encoding, not produced by the code under test.
+// Byte thực tế từ các bảng mã cũ, không do mã nguồn kiểm thử tự sinh ra.
 const SJIS_KONNICHIWA = bytes(0x82, 0xb1, 0x82, 0xf1, 0x82, 0xc9, 0x82, 0xbf, 0x82, 0xcd) // こんにちは
 const EUCJP_KONNICHIWA = bytes(0xa4, 0xb3, 0xa4, 0xf3, 0xa4, 0xcb, 0xa4, 0xc1, 0xa4, 0xcf)
 const GBK_NIHAO = bytes(0xc4, 0xe3, 0xba, 0xc3) // 你好
@@ -189,7 +189,7 @@ describe('normalizeRaw', () => {
     ['a decomposed accent', 'é'],
     ['an emoji sequence', '👨‍👩‍👧']
   ])('leaves %s untouched', (_name, text) => {
-    // Only the whole-text trim could apply, and these have nothing to trim at the ends.
+    // Chỉ bước cắt tỉa hai đầu văn bản có thể áp dụng, và các chuỗi này không có gì để cắt ở hai đầu.
     const result = normalizeRaw(text)
     const expected = text.replace(/\s+$/, '')
     expect(result.text).toBe(expected)

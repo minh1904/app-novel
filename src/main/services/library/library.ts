@@ -361,6 +361,10 @@ export class LibraryStore {
     return this.files.withWork(workId, fn)
   }
 
+  withWorkAsync<T>(workId: string, fn: (db: Db) => Promise<T>): Promise<T> {
+    return this.files.withWorkAsync(workId, fn)
+  }
+
   getEffectiveGlossary(
     workId: string,
     chapterId: string,

@@ -1,6 +1,6 @@
 import type { ImageMime } from '../../shared/contracts/images'
 
-/** Byte sequences with the right magic numbers for each accepted format, for `sniffMime` to read. */
+/** Các chuỗi byte có đúng magic number cho từng định dạng được chấp nhận, để `sniffMime` nhận diện. */
 const SIGNATURES: Record<ImageMime, number[]> = {
   'image/png': [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
   'image/jpeg': [0xff, 0xd8, 0xff, 0xe0],

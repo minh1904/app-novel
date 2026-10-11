@@ -2,30 +2,30 @@ import * as v from 'valibot'
 import { idSchema } from './library'
 
 /**
- * Account logins over IPC (change `subscription-providers`, design D8). Tokens never cross: the renderer
- * gets the code to show, the state of the login, and the account's limits.
+ * Đăng nhập tài khoản qua IPC. Token không bao giờ gửi qua IPC: renderer
+ * chỉ nhận mã hiển thị, trạng thái đăng nhập và hạn mức tài khoản.
  */
 
 export const ACCOUNT_PROVIDERS = ['codex', 'copilot'] as const
 export type AccountProvider = (typeof ACCOUNT_PROVIDERS)[number]
 
-/** What the login screen shows once a code was issued. */
+/** Thông tin màn hình đăng nhập hiển thị khi mã xác thực được cấp. */
 export interface LoginStart {
   sessionId: string
   userCode: string
   verificationUrl: string
-  /** When the code is given up (ms epoch). */
+  /** Thời điểm mã hết hạn (tính bằng mili-giây epoch). */
   expiresAt: number
 }
 
-/** Where a login stands. `detail` is the original message with any token taken out. */
+/** Trạng thái tiến trình đăng nhập. `detail` là thông điệp gốc sau khi đã loại bỏ token. */
 export type LoginStatus =
   | { state: 'pending' }
   | { state: 'approved'; connectionId: string }
   | { state: 'denied' | 'expired' | 'cancelled'; message?: string }
   | { state: 'error'; message: string; detail?: string }
 
-/** One window of a Codex account's limits. */
+/** Một khung thời gian giới hạn mức sử dụng của tài khoản. */
 export interface UsageWindowView {
   kind: 'session' | 'week' | 'other'
   remainingPercent: number
@@ -38,11 +38,11 @@ export const startLoginSchema = v.strictObject({
 export const loginRefSchema = v.strictObject({ sessionId: idSchema })
 export const accountRefSchema = v.strictObject({ connectionId: idSchema })
 
-/** The chip shows only below this many percent left, and warns below the second. */
+/** Huy hiệu chỉ hiển thị khi dung lượng còn lại dưới mức phần trăm này, và cảnh báo dưới mức thứ hai. */
 export const USAGE_CHIP_BELOW = 20
 export const USAGE_WARN_BELOW = 10
 
-/** The window to show on a chip: the one with the least left, if it is under the threshold. */
+/** Khung thời gian hiển thị trên huy hiệu: khung có mức còn lại thấp nhất nếu dưới ngưỡng quy định. */
 export function usageChip(windows: UsageWindowView[]): UsageWindowView | null {
   const lowest = [...windows].sort((a, b) => a.remainingPercent - b.remainingPercent)[0]
   return lowest && lowest.remainingPercent < USAGE_CHIP_BELOW ? lowest : null

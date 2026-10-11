@@ -29,16 +29,12 @@ import { ProviderError } from '../types'
 import type { Usage } from '../usage'
 
 /**
- * The OpenAI Responses API: `POST {base}/responses`, streamed (change `subscription-providers`, design D2).
- * Codex speaks only this, and Copilot uses it for `gpt-5` and later.
- *
- * Mira's messages and tools are turned into Responses items **at the edge**, here, and the stream is read
- * back into the same `ChatStreamEvent`s Chat Completions gives, so chat, translation and the chat tools do
- * not know which transport ran. Protocol details follow Hermes (`agent/codex_responses_adapter.py`,
- * `agent/codex_runtime.py`, commit `bf871a5943`).
+ * Giao vận OpenAI Responses API: gọi `POST {base}/responses` dạng stream.
+ * Chuyển đổi tin nhắn và công cụ sang định dạng Responses items,
+ * và giải mã luồng sự kiện SSE thành các sự kiện `ChatStreamEvent` chuẩn.
  */
 
-/** Which Responses endpoint: Codex wants a few things the public API does not, and refuses `max_output_tokens`. */
+/** Biến thể endpoint Responses (`codex` hoặc `standard`). */
 export type ResponsesFlavor = 'codex' | 'standard'
 
 export interface ResponsesOptions {
@@ -49,26 +45,25 @@ export interface ResponsesOptions {
   timeouts?: Partial<TransportTimeouts>
   headers?: (call: CallOptions, request?: ChatRequest) => Record<string, string>
   /**
-   * What the prompt cache key is scoped to (the connection), so two accounts never share one. Codex only.
+   * Phạm vi định danh bộ nhớ đệm prompt cache (theo kết nối).
    */
   cacheScope?: string
-  /** The model takes `reasoning.effort: "none"`; when it does not, "off" sends no `reasoning` at all. */
+  /** Mô hình có hỗ trợ giá trị `reasoning.effort: "none"` hay không (nếu không hỗ trợ sẽ bỏ qua trường reasoning). */
   supportsNoReasoning?: boolean
   refreshWhen?: (status: number, body: string) => boolean
 }
 
-/** Longest `call_id` the API takes. */
+/** Độ dài tối đa của `call_id` mà API chấp nhận. */
 export const CALL_ID_MAX = 64
 
-/** A `call_id` within the limit: long ones become a stable hash, so the same id always maps the same way. */
+/** Rút gọn `call_id` vượt quá giới hạn thành chuỗi băm ổn định. */
 export function shortCallId(id: string): string {
   if (id.length <= CALL_ID_MAX) return id
   return 'call_' + createHash('sha256').update(id).digest('hex').slice(0, 40)
 }
 
 /**
- * Text the Responses API rejects: the harmony control tokens. They are replaced by the same characters with
- * a fullwidth bar, so the text reads the same and the request goes through (`adapter.py:88`).
+ * Chuẩn hóa các ký tự điều khiển đặc biệt bị API từ chối sang ký tự tương đương an toàn.
  */
 export function sanitizeText(text: string): string {
   return text.replace(/<\|(start|end|channel|message)\|>/g, '<｜$1｜>')
@@ -82,7 +77,7 @@ interface FunctionTool {
   parameters: unknown
 }
 
-/** A Chat Completions tool (`{type, function:{…}}`) as a Responses tool. */
+/** Chuyển đổi công cụ từ định dạng Chat Completions sang định dạng Responses. */
 function toResponsesTool(tool: unknown): FunctionTool | null {
   const fn = (
     tool as { function?: { name?: unknown; description?: unknown; parameters?: unknown } }
@@ -97,7 +92,7 @@ function toResponsesTool(tool: unknown): FunctionTool | null {
   }
 }
 
-/** Mira's turns as Responses `input` items, and the system turns as `instructions`. */
+/** Chuyển đổi các lượt tin nhắn thành các mục `input` của Responses và trích xuất system prompt thành `instructions`. */
 export function toResponsesInput(messages: ChatMessage[]): {
   instructions: string
   input: Array<Record<string, unknown>>
@@ -140,7 +135,7 @@ export function toResponsesInput(messages: ChatMessage[]): {
   return { instructions: system.join('\n\n'), input }
 }
 
-/** `pck_` + 24 hex: the same instructions and tools in the same scope reuse the same cache. */
+/** Tạo khóa prompt cache từ phạm vi, chỉ dẫn và danh sách công cụ. */
 export function promptCacheKey(scope: string, instructions: string, tools: FunctionTool[]): string {
   const sorted = [...tools].sort((a, b) => a.name.localeCompare(b.name))
   const digest = createHash('sha256')
@@ -149,7 +144,7 @@ export function promptCacheKey(scope: string, instructions: string, tools: Funct
   return 'pck_' + digest.slice(0, 24)
 }
 
-/** The request body. Like Chat Completions, a field appears only when somebody set it. */
+/** Tạo body yêu cầu gửi tới Responses API (chỉ thêm các trường đã được cấu hình). */
 export function buildResponsesBody(
   request: ChatRequest,
   options: Pick<ResponsesOptions, 'flavor' | 'cacheScope' | 'supportsNoReasoning'>

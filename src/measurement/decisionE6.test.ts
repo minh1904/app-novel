@@ -13,7 +13,7 @@ describe('decisionE6', () => {
   it('concludes no-keep when T0 structural errors increase', () => {
     const candidateT0 = {
       ...baseT0,
-      omissions: 3 // increased from 1 to 3!
+      omissions: 3 // tăng từ 1 lên 3
     }
     const res = evaluateE6Decision({
       baselineT0: baseT0,
@@ -27,7 +27,7 @@ describe('decisionE6', () => {
   it('concludes no-keep when strict glossary rate drops significantly', () => {
     const candidateT0 = {
       ...baseT0,
-      strictGlossaryRate: 80.0 // dropped by 5%
+      strictGlossaryRate: 80.0 // giảm 5%
     }
     const res = evaluateE6Decision({
       baselineT0: baseT0,
@@ -64,7 +64,7 @@ describe('decisionE6', () => {
     const res = evaluateE6Decision({
       baselineT0: baseT0,
       candidateT0,
-      nonTieCount: 30, // < 50
+      nonTieCount: 30, // nhỏ hơn 50
       winRateCI: {
         mean: 0.7,
         lower: 0.6,
@@ -86,7 +86,7 @@ describe('decisionE6', () => {
       nonTieCount: 100,
       winRateCI: {
         mean: 0.52,
-        lower: 0.44, // overlaps 50%
+        lower: 0.44, // bao trùm mốc 50%
         upper: 0.6
       }
     })

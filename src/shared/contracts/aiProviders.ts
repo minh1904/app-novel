@@ -1,15 +1,14 @@
 /**
- * How Settings › Kết nối AI groups what the person has connected, after Hermes Desktop's four Providers
- * pages (change `hermes-settings-modal`, design D4). Data only: the connection records themselves are
- * unchanged; this decides where each one is shown.
+ * Nhóm các kết nối AI trong Cài đặt › Kết nối AI.
+ * Quyết định cách hiển thị danh sách các kết nối theo từng nhóm nhà cung cấp.
  */
 
 export interface ProviderCard {
-  /** The preset's `providerId`, which is also the price-catalog id. */
+  /** Id cấu hình sẵn của nhà cung cấp, dùng làm khóa tra cứu bảng giá. */
   id: string
   label: string
   description: string
-  /** Where the person gets a key. */
+  /** Địa chỉ trang lấy khóa API. */
   keyUrl: string
 }
 
@@ -51,7 +50,7 @@ export const LOCAL_PROVIDERS = ['ollama', 'lmstudio'] as const
 
 export type ConnectionSection = 'accounts' | 'keys' | 'endpoints' | 'local'
 
-/** The Settings page a connection belongs on. */
+/** Xác định mục trong trang Cài đặt mà kết nối này thuộc về. */
 export function connectionSection(connection: {
   providerId: string | null
   authKind?: 'api_key' | 'oauth'
@@ -64,8 +63,7 @@ export function connectionSection(connection: {
 }
 
 /**
- * Hosts a page may ask main to open in the browser (`app:open-external`). Only https and only these: the
- * renderer never gets a general "open any URL" door.
+ * Danh sách host được phép mở trên trình duyệt bên ngoài qua `app:open-external`. Chỉ cho phép giao thức https.
  */
 export const EXTERNAL_LINK_HOSTS: readonly string[] = [
   ...new Set(PROVIDER_CARDS.map((card) => new URL(card.keyUrl).host)),

@@ -40,7 +40,7 @@ describe('addressing IPC handlers', () => {
     const { library, call } = setup()
     const work = library.create({ title: 'Truyện Tu Tiên', sourceLang: 'zh-Hans' })
 
-    // Create
+    // Tạo mới nhân vật
     const char = value<CharacterItem>(
       call(CHANNELS.addressingCharactersCreate, {
         workId: work.id,
@@ -55,19 +55,19 @@ describe('addressing IPC handlers', () => {
     expect(char.id).toBeDefined()
     expect(char.target).toBe('Hàn Lập')
 
-    // Get
+    // Lấy thông tin nhân vật
     const fetched = value<CharacterItem>(
       call(CHANNELS.addressingCharactersGet, { workId: work.id, characterId: char.id })
     )
     expect(fetched.id).toBe(char.id)
 
-    // List
+    // Danh sách nhân vật
     const listRes = value<{ characters: CharacterItem[] }>(
       call(CHANNELS.addressingCharactersList, { workId: work.id, query: 'Hàn' })
     )
     expect(listRes.characters).toHaveLength(1)
 
-    // Update
+    // Cập nhật nhân vật
     const updated = value<CharacterItem>(
       call(CHANNELS.addressingCharactersUpdate, {
         workId: work.id,
@@ -77,14 +77,14 @@ describe('addressing IPC handlers', () => {
     )
     expect(updated.role).toBe('Đại tu sĩ')
 
-    // Delete
+    // Xóa nhân vật
     const delRes = call(CHANNELS.addressingCharactersDelete, {
       workId: work.id,
       characterId: char.id
     })
     expect(delRes.ok).toBe(true)
 
-    // Get after delete returns not_found
+    // Lấy sau khi xóa trả về not_found
     const getDeleted = call(CHANNELS.addressingCharactersGet, {
       workId: work.id,
       characterId: char.id
@@ -118,7 +118,7 @@ describe('addressing IPC handlers', () => {
       })
     )
 
-    // Set dyad
+    // Thiết lập xưng hô (dyad)
     const dyad = value<AddressingDyadItem>(
       call(CHANNELS.addressingDyadsSet, {
         workId: work.id,
@@ -131,19 +131,19 @@ describe('addressing IPC handlers', () => {
     )
     expect(dyad.id).toBeDefined()
 
-    // Get dyad
+    // Lấy thông tin xưng hô
     const fetchedDyad = value<AddressingDyadItem>(
       call(CHANNELS.addressingDyadsGet, { workId: work.id, dyadId: dyad.id })
     )
     expect(fetchedDyad.speakerPronoun).toBe('ta')
 
-    // List dyads
+    // Danh sách xưng hô
     const dyadsList = value<{ dyads: AddressingDyadItem[] }>(
       call(CHANNELS.addressingDyadsList, { workId: work.id })
     )
     expect(dyadsList.dyads).toHaveLength(1)
 
-    // Effective dyads for chapter 1 (empty) & chapter 2 (has dyad)
+    // Xưng hô hiệu lực cho chương 1 (trống) & chương 2 (có xưng hô)
     const eff1 = value<{ dyads: AddressingDyadResolved[] }>(
       call(CHANNELS.addressingDyadsEffective, { workId: work.id, chapterId: c1.chapter.id })
     )
@@ -155,7 +155,7 @@ describe('addressing IPC handlers', () => {
     expect(eff2.dyads).toHaveLength(1)
     expect(eff2.dyads[0].sourceCharacter.target).toBe('Hàn Lập')
 
-    // Check compliance
+    // Kiểm tra độ tuân thủ xưng hô
     const complianceRes = value(
       call(CHANNELS.addressingCheckCompliance, {
         workId: work.id,
@@ -168,7 +168,7 @@ describe('addressing IPC handlers', () => {
       checkedParagraphsCount: 1
     })
 
-    // Delete dyad
+    // Xóa xưng hô
     const delDyadRes = call(CHANNELS.addressingDyadsDelete, {
       workId: work.id,
       dyadId: dyad.id

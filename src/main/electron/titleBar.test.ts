@@ -14,14 +14,14 @@ const TOKENS = resolve(__dirname, '../../renderer/src/styles/tokens')
 const FOUNDATION = readFileSync(resolve(TOKENS, 'foundation.css'), 'utf8')
 const SEMANTIC = readFileSync(resolve(TOKENS, 'semantic.css'), 'utf8')
 
-/** The value of a foundation token (a hex colour or a px length). */
+/** Giá trị của một foundation token (mã màu hex hoặc độ dài px). */
 function foundation(property: string): string {
   const match = new RegExp(property + ': *(#[0-9a-fA-F]{3,8}|[0-9.]+px) *;').exec(FOUNDATION)
   expect(match, property + ' in foundation.css').not.toBeNull()
   return (match as RegExpExecArray)[1].toLowerCase()
 }
 
-/** A semantic token of one theme, resolved through the foundation token it points at. */
+/** Một semantic token của theme, được giải quyết thông qua foundation token mà nó trỏ tới. */
 function semantic(theme: 'light' | 'dark', property: string): string {
   const selector = theme === 'dark' ? "html[data-theme='dark']" : "html[data-theme='light']"
   const start = SEMANTIC.indexOf(selector)
@@ -33,8 +33,8 @@ function semantic(theme: 'light' | 'dark', property: string): string {
 }
 
 describe('window button colours', () => {
-  // The OS paints these glyphs, so they cannot read a CSS variable; if the token changes and this copy
-  // does not, the buttons stop matching the icons around them and nothing else notices.
+  // Hệ điều hành vẽ các biểu tượng này nên không thể đọc biến CSS; nếu token thay đổi mà bản sao này
+  // không đổi, các nút sẽ lệch màu so với các icon xung quanh.
   it('dark glyphs match the dark subtle text', () => {
     expect(CHROME_COLORS.dark.symbolColor).toBe(semantic('dark', '--mira-text-subtle'))
   })

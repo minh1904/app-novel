@@ -4,25 +4,25 @@ import { idSchema } from './library'
 export const TEXT_SIDES = ['source', 'target'] as const
 export type TextSide = (typeof TEXT_SIDES)[number]
 
-/** Limits are a guard against pasting a whole book by mistake, not a working size (see design D5). */
+/** Giới hạn ký tự và đoạn văn tối đa cho một phía văn bản của chương. */
 export const TEXT_MAX_UNITS = 2_000_000
 export const SEGMENTS_MAX = 50_000
 
 export type SegmentStatus = 'ok' | 'dirty' | 'orphaned'
 
-/** A region of a chapter text. `start` and `end` count UTF-16 code units, like JavaScript strings. */
+/** Một đoạn văn bản trong chương. `start` và `end` tính theo UTF-16 code units. */
 export interface SegmentRecord {
   id: string
   start: number
   end: number
-  /** The text revision this region was valid for. */
+  /** Revision của văn bản mà đoạn này có hiệu lực. */
   textRev: number
   status: SegmentStatus
 }
 
 export interface TextRecord {
   content: string
-  /** 0 until the side is first saved. */
+  /** Bằng 0 cho đến khi phía văn bản được lưu lần đầu. */
   rev: number
   segments: SegmentRecord[]
 }

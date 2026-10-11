@@ -28,7 +28,7 @@ describe('fixtureCheck', () => {
         { src: 'イレーヌ・フォン・シュテルンハイム', tgt: 'Irene von Sternheim' },
         { src: 'シュテルンハイム', tgt: 'Sternheim' }
       ]
-      // Source text only contains the full name
+      // Văn bản gốc chỉ chứa tên đầy đủ
       const source = ['イレーヌ・フォン・シュテルンハイムは微笑んだ。']
       const unmatched = findUnmatchedGlossaryEntries(entries, source, 'ja')
       expect(unmatched).toContain('シュテルンハイム')
@@ -120,7 +120,7 @@ describe('fixtureCheck', () => {
             ...validFixture.chapters[0],
             meta: {
               ...validFixture.chapters[0].meta,
-              paragraphs: 5 // Expected 2
+              paragraphs: 5 // Dự kiến là 2
             }
           }
         ]

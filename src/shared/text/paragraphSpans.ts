@@ -1,18 +1,18 @@
 /**
- * Paragraphs as ADR-005 defines them: each non-blank line is one. Shared by the chat tools in main, which
- * count paragraphs for the model, and by the renderer, which says where the caret is in the same numbers.
+ * Định nghĩa đoạn văn: mỗi dòng không trống được coi là một đoạn.
+ * Dùng chung giữa các công cụ chat ở main (đếm đoạn) và renderer (định vị con trỏ).
  */
 
-/** One paragraph: a non-blank line, as ADR-005 defines it (`paragraphUnits`). */
+/** Một đoạn văn: một dòng không trống (`paragraphUnits`). */
 export interface ParagraphSpan {
   /**
-   * The slice of `content` this paragraph owns: from the start of its line to the start of the next
-   * paragraph's line (the first one also owns any blank lines before it, the last one runs to the end).
-   * Pages cut on these bounds join back into exactly `content`.
+   * Phần cắt của `content` thuộc về đoạn này: từ đầu dòng của đoạn đến đầu dòng của đoạn tiếp theo
+   * (đoạn đầu tiên bao gồm các dòng trống trước nó, đoạn cuối cùng kéo dài đến hết văn bản).
+   * Các trang được cắt theo các mốc này khi ghép lại sẽ khôi phục chính xác `content`.
    */
   start: number
   end: number
-  /** Where the line itself sits inside `content`, for excerpts. */
+  /** Vị trí của chính dòng đó trong `content`, dùng cho trích đoạn. */
   lineStart: number
   lineEnd: number
 }
@@ -33,7 +33,7 @@ export function splitParagraphs(content: string): ParagraphSpan[] {
   }))
 }
 
-/** The 0-based paragraph whose span holds `offset`; the last one for an offset at the very end. */
+/** Chỉ số đoạn văn (bắt đầu từ 0) chứa vị trí `offset`; trả về đoạn cuối cùng nếu offset ở cuối văn bản. */
 export function paragraphAt(spans: ParagraphSpan[], offset: number): number {
   let low = 0
   let high = spans.length - 1

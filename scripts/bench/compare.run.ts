@@ -1,7 +1,7 @@
 /**
- * Comparison runner for measurement runs (spec measure-runs).
- * Raw metrics are the default output. The historical E6 rule is available only
- * as an explicitly selected advisory profile; it is not a product decision.
+ * Trình chạy so sánh cho các lượt đo đạc.
+ * Chỉ số thô là đầu ra mặc định. Quy tắc E6 lịch sử chỉ đóng vai trò
+ * khuyến nghị tham khảo khi được chọn một cách tường minh; không phải quyết định sản phẩm.
  */
 
 import { existsSync, readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs'
@@ -82,7 +82,7 @@ function extractT0FromRun(runDir: string, chapters: string[]): T0Metrics {
     const workDir = join(runDir, workId)
     if (!existsSync(workDir)) continue
 
-    // Find all repeats
+    // Tìm tất cả các lần lặp
     for (let rep = 1; rep <= 10; rep++) {
       let resPath = ''
       const pathA = join(workDir, chId, `rep-${rep}.rescore.json`)
@@ -139,7 +139,7 @@ describe('Bộ đo — So sánh hai lần chạy', () => {
       throw new Error(`Thư mục chạy không tồn tại: ${dirBase} hoặc ${dirCand}`)
     }
 
-    // Find chapters present in both runs
+    // Tìm các chương xuất hiện ở cả hai lần chạy
     const chaptersBase = new Set<string>()
     const chaptersCand = new Set<string>()
 
@@ -180,7 +180,7 @@ describe('Bộ đo — So sánh hai lần chạy', () => {
     const baseT0 = extractT0FromRun(dirBase, commonChapters)
     const candT0 = extractT0FromRun(dirCand, commonChapters)
 
-    // Check if T1 judge file exists
+    // Kiểm tra xem tệp đánh giá của trọng tài T1 có tồn tại không
     let judgeData: any = null
     const judgeFile1 = join(RUNS, `judge-${BASELINE_ID}-vs-${CANDIDATE_ID}.json`)
     const judgeFile2 = join(RUNS, `judge-${CANDIDATE_ID}-vs-${BASELINE_ID}.json`)
@@ -213,7 +213,7 @@ describe('Bộ đo — So sánh hai lần chạy', () => {
         if (judgeData.runA === CANDIDATE_ID) {
           winRateCI = rawCI
         } else {
-          // Stored CI is for run A; mirror it when the candidate is run B.
+          // Khoảng tin cậy lưu cho lượt chạy A; lấy đối xứng khi ứng viên là lượt chạy B.
           winRateCI = {
             mean: 1 - rawCI.mean,
             lower: 1 - rawCI.upper,

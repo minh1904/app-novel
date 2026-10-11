@@ -2,13 +2,10 @@ import type { ModelRef } from '../../../shared/contracts/aiPreferences'
 import { ProviderError } from '../../infra/providers/types'
 
 /**
- * When Mira moves on to the next model of Settings › Model › Dự phòng (spec `model-defaults`, design D7 of
- * change `hermes-settings-modal`). Only failures another model can fix: the quota of every key is spent, the
- * model is missing or not allowed, or the provider stays unreachable after the gateway's own retries. A
- * refusal, a wrong key (fix the key, not the model), a malformed request or a cancel never does.
- *
- * Kept as a function over `ProviderError` rather than a field on it, so the transport stays unaware of a
- * product rule.
+ * Xác định khi nào cần chuyển sang model tiếp theo trong danh sách dự phòng.
+ * Chỉ áp dụng cho các lỗi mà model khác có thể khắc phục: hết hạn mức mọi khóa API,
+ * model không tồn tại hoặc không có quyền truy cập, hoặc nhà cung cấp mất kết nối sau khi đã thử lại.
+ * Không dự phòng đối với khóa sai (cần sửa khóa), yêu cầu sai định dạng hoặc bị hủy.
  */
 const MODEL_GONE =
   /model[^.]{0,40}(not[ _]?found|does not exist|not exist|not supported|not available|unknown|no access|permission)|no such model|invalid model/i
@@ -34,7 +31,7 @@ export function shouldFallback(error: unknown): boolean {
   }
 }
 
-/** Why the model was left, in a few words for the line on the turn. */
+/** Lý do chuyển sang model khác, dùng hiển thị ngắn gọn trên lượt AI hoặc tiến trình. */
 export function fallbackReason(error: unknown): string {
   if (!(error instanceof ProviderError)) return 'lỗi không rõ'
   switch (error.kind) {
@@ -55,7 +52,7 @@ export function fallbackReason(error: unknown): string {
   }
 }
 
-/** The fallbacks to try after `primary`, without the primary itself and without repeats. */
+/** Danh sách model dự phòng thử tiếp theo sau model chính, loại bỏ chính nó và các mục trùng lặp. */
 export function fallbackChain(primary: ModelRef, fallbacks: readonly ModelRef[]): ModelRef[] {
   const seen = new Set([primary.entryId])
   return fallbacks.filter((ref) => {
@@ -65,7 +62,7 @@ export function fallbackChain(primary: ModelRef, fallbacks: readonly ModelRef[])
   })
 }
 
-/** "Đã chuyển sang Y vì X hết hạn mức": the line a turn or a batch keeps when it moved on. */
+/** Tạo câu thông báo khi chuyển đổi model: 'Đã chuyển sang Y vì X hết hạn mức.'. */
 export function fallbackLine(from: string, to: string, error: unknown): string {
   return 'Đã chuyển sang ' + to + ' vì ' + from + ' ' + fallbackReason(error) + '.'
 }

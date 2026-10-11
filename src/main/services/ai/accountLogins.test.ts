@@ -12,8 +12,8 @@ import { AccountCredentials } from './accountCredentials'
 import { AccountLogins, isLoginUrl, QUIET_RETRIES } from './accountLogins'
 
 /**
- * Logging in with a device code in main (change `subscription-providers`, task 6.1). Polling is driven by a
- * sleep the test controls, so each round happens when the test says.
+ * Đăng nhập bằng mã thiết bị (device code) trong main. Thăm dò trạng thái được điều khiển
+ * bởi hàm sleep kiểm thử để đảm bảo tính tuần tự.
  */
 
 const tempDir = createTempDirs()
@@ -34,7 +34,7 @@ const ACCESS =
   ).toString('base64url') +
   '.s'
 
-/** A sleep that resolves only when the test lets the next round run. */
+/** Hàm sleep giả lập chỉ giải quyết khi bài kiểm thử kích hoạt vòng lặp tiếp theo. */
 function rounds(): { sleep: () => Promise<void>; next(): Promise<void> } {
   const waiting: Array<() => void> = []
   return {

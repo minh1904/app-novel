@@ -3,7 +3,7 @@ import { idSchema } from './library'
 
 const chapterId = idSchema
 
-/** Where one part of a proposal stands. */
+/** Trạng thái của một phần trong đề xuất. */
 export type ProposalPartStatus =
   | 'pending'
   | 'applied'

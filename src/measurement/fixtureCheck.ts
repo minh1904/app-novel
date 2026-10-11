@@ -38,9 +38,9 @@ export interface FixtureIssue {
 }
 
 /**
- * Splits text into paragraphs according to ADR-005 Q3:
- * A paragraph is every non-empty line after normalizing line breaks to LF.
- * Lines containing only whitespace (including U+3000 ideographic space) are empty.
+ * Tách văn bản thành các đoạn:
+ * Một đoạn là mỗi dòng không rỗng sau khi chuẩn hóa dấu ngắt dòng thành LF.
+ * Các dòng chỉ chứa khoảng trắng (bao gồm cả khoảng trắng ideographic U+3000) được coi là rỗng.
  */
 export function extractParagraphs(text: string): string[] {
   return text
@@ -51,7 +51,7 @@ export function extractParagraphs(text: string): string[] {
 }
 
 /**
- * Normalizes text for comparison (CRLF/CR -> LF, trims whitespace/U+3000 from ends).
+ * Chuẩn hóa văn bản để so sánh (CRLF/CR -> LF, cắt tỉa khoảng trắng/U+3000 ở hai đầu).
  */
 export function trimLine(line: string): string {
   return line.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '')
@@ -63,9 +63,10 @@ interface TermCandidate {
 }
 
 /**
- * Checks whether all glossary entries appear in the source text of the work using
- * longest-match-first. If a shorter term only appears inside a longer term, it is not counted.
- * For English works ('en'), matching is case-insensitive.
+ * Kiểm tra xem các mục thuật ngữ có xuất hiện trong văn bản nguồn của tác phẩm hay không
+ * bằng thuật toán ưu tiên khớp chuỗi dài nhất trước. Nếu một mục ngắn hơn chỉ xuất hiện
+ * bên trong một mục dài hơn, nó sẽ không được tính.
+ * Đối với tác phẩm tiếng Anh ('en'), so khớp không phân biệt hoa thường.
  */
 export function findUnmatchedGlossaryEntries(
   entries: GlossaryEntry[],
@@ -88,14 +89,14 @@ export function findUnmatchedGlossaryEntries(
     }
   }
 
-  // Sort longest term first. If equal length, stable order.
+  // Sắp xếp thuật ngữ dài nhất lên trước. Giữ nguyên thứ tự nếu cùng độ dài.
   allTerms.sort((a, b) => b.term.length - a.term.length)
 
   const matchedEntries = new Set<number>()
 
   for (const rawText of allSourceTexts) {
     const text = isEn ? rawText.toLowerCase() : rawText
-    // Keep track of masked/covered character ranges
+    // Theo dõi các dải ký tự đã được bao phủ/khớp
     const covered = new Array<boolean>(text.length).fill(false)
 
     for (const cand of allTerms) {
@@ -106,7 +107,7 @@ export function findUnmatchedGlossaryEntries(
         if (idx === -1) break
 
         const endIdx = idx + cand.term.length
-        // Check if this range is already covered by a longer match
+        // Kiểm tra xem dải này đã bị khớp bởi một chuỗi dài hơn trước đó chưa
         let isOccupied = false
         for (let k = idx; k < endIdx; k++) {
           if (covered[k]) {
@@ -138,13 +139,13 @@ export function findUnmatchedGlossaryEntries(
 }
 
 /**
- * Pure validation function that inspects a loaded work fixture and returns all issues.
+ * Hàm kiểm tra tính hợp lệ của fixture tác phẩm đã tải và trả về danh sách các vấn đề phát hiện được.
  */
 export function checkWorkFixture(fixture: LoadedWorkFixture): FixtureIssue[] {
   const issues: FixtureIssue[] = []
   const { work, isPublic, glossary, pronouns, chapters } = fixture
 
-  // 1. Check license/rights for public fixture
+  // 1. Kiểm tra bản quyền/giấy phép cho fixture công khai
   if (isPublic && !work.rights && !work.license) {
     issues.push({
       severity: 'error',
@@ -153,20 +154,20 @@ export function checkWorkFixture(fixture: LoadedWorkFixture): FixtureIssue[] {
     })
   }
 
-  // 2. Prepare pronouns pairs set for anchor checking
+  // 2. Chuẩn bị tập hợp các cặp xưng hô để kiểm tra điểm neo
   const pronounPairs = new Set<string>()
   for (const pair of pronouns.pairs) {
     pronounPairs.add(`${pair.speaker} -> ${pair.listener}`)
   }
 
-  // 3. Check each chapter
+  // 3. Kiểm tra từng chương
   const allSourceTexts: string[] = []
 
   for (const chapter of chapters) {
     allSourceTexts.push(chapter.sourceText)
     const paragraphs = extractParagraphs(chapter.sourceText)
 
-    // Check paragraph count matches meta.paragraphs
+    // Kiểm tra số lượng đoạn khớp với meta.paragraphs
     if (paragraphs.length !== chapter.meta.paragraphs) {
       issues.push({
         severity: 'error',
@@ -176,7 +177,7 @@ export function checkWorkFixture(fixture: LoadedWorkFixture): FixtureIssue[] {
       })
     }
 
-    // Check reference.vi.txt paragraph count if present
+    // Kiểm tra số lượng đoạn của reference.vi.txt nếu có
     if (chapter.referenceViText !== undefined) {
       const refParagraphs = extractParagraphs(chapter.referenceViText)
       if (refParagraphs.length !== paragraphs.length) {
@@ -189,12 +190,12 @@ export function checkWorkFixture(fixture: LoadedWorkFixture): FixtureIssue[] {
       }
     }
 
-    // Check assertions
+    // Kiểm tra các quy tắc kiểm thử (assertions)
     const normalizedAssertions = normalizeAssertionRules(chapter.assertions)
     for (let ruleIdx = 0; ruleIdx < normalizedAssertions.rules.length; ruleIdx++) {
       const rule = normalizedAssertions.rules[ruleIdx]
 
-      // Check where anchor
+      // Kiểm tra điểm neo where
       if (rule.where !== undefined) {
         let matchCount = 0
         for (const p of paragraphs) {
@@ -213,7 +214,7 @@ export function checkWorkFixture(fixture: LoadedWorkFixture): FixtureIssue[] {
         }
       }
 
-      // Check line anchor
+      // Kiểm tra điểm neo line
       if (rule.line !== undefined) {
         if (typeof rule.line === 'string') {
           const expectedTrimmed = trimLine(rule.line)
@@ -240,7 +241,7 @@ export function checkWorkFixture(fixture: LoadedWorkFixture): FixtureIssue[] {
         }
       }
 
-      // Check pronoun pair
+      // Kiểm tra cặp đại từ xưng hô
       if (rule.pair) {
         const [speaker, listener] = rule.pair
         const pairKey = `${speaker} -> ${listener}`
@@ -257,7 +258,7 @@ export function checkWorkFixture(fixture: LoadedWorkFixture): FixtureIssue[] {
     }
   }
 
-  // 4. Check glossary entries appearance across all chapters
+  // 4. Kiểm tra sự xuất hiện của các mục thuật ngữ trên tất cả các chương
   const normalizedGlossary = normalizeGlossaryEntries(glossary)
   const unmatched = findUnmatchedGlossaryEntries(
     normalizedGlossary.entries,

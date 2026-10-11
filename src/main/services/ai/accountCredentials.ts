@@ -23,19 +23,17 @@ import type { SecretStore } from '../../infra/storage/secretStore'
 import type { Db } from '../../infra/storage/sqlite'
 
 /**
- * The tokens of account connections, from the sealed store to a credential a call can use (change
- * `subscription-providers`, design D3–D5).
+ * Quản lý token xác thực của các kết nối tài khoản thuê bao, chuyển từ kho lưu trữ mã hóa thành chứng thực có thể gọi API.
  *
- * Three rules this class exists for:
- *  - a token is used fresh: Codex refreshes 120 s before `exp`, Copilot exchanges its short token again
- *    120 s before it runs out;
- *  - **one refresh at a time per account**: a refresh token is good once, so a second refresh racing the
- *    first would spend it and break the login; later callers wait for the refresh already running;
- *  - a refresh refused for good (`invalid_grant`, `refresh_token_reused`, 401/403) marks the connection
- *    "Cần đăng nhập lại", and every call after it fails at once with that, instead of trying again.
+ * Các nguyên tắc chính:
+ *  - Đảm bảo token luôn mới: Codex làm mới trước 120 giây so với `exp`, Copilot đổi token ngắn hạn mới trước khi hết hạn 120 giây;
+ *  - Mỗi tài khoản chỉ thực hiện một tác vụ làm mới tại một thời điểm: refresh token chỉ có giá trị dùng một lần,
+ *    nếu nhiều yêu cầu tranh chấp sẽ làm hỏng phiên đăng nhập; các yêu cầu sau sẽ chờ tác vụ đang chạy;
+ *  - Nếu làm mới bị từ chối dứt điểm (`invalid_grant`, `refresh_token_reused`, 401/403), kết nối sẽ được đánh dấu
+ *    "Cần đăng nhập lại" và các lệnh gọi tiếp theo sẽ báo lỗi ngay lập tức thay vì thử lại.
  */
 
-/** What is sealed for an account. Codex keeps its OAuth pair; Copilot keeps the GitHub token. */
+/** Dữ liệu bí mật được mã hóa của tài khoản: Codex lưu cặp OAuth; Copilot lưu GitHub token. */
 export interface AccountSecret {
   access?: string
   refresh?: string
@@ -52,7 +50,7 @@ export interface AccountRef {
   oauthProvider: OAuthProvider
 }
 
-/** The error a call gets once a login needs to be done again; `account` lets the panel offer the card. */
+/** Lỗi trả về khi tài khoản cần đăng nhập lại để tiếp tục sử dụng. */
 export function reloginError(provider: OAuthProvider): ProviderError {
   return new ProviderError(
     'auth',
@@ -77,7 +75,7 @@ export class AccountCredentials {
 
   constructor(private readonly options: AccountCredentialsOptions) {}
 
-  /** The sealed secret of an account, opened; `null` when none is stored. */
+  /** Giải mã và đọc thông tin bí mật đã lưu của tài khoản; trả về `null` nếu không có. */
   async read(connectionId: string): Promise<AccountSecret | null> {
     const stored = readToken(this.options.db, connectionId)
     if (!stored) return null
@@ -89,7 +87,7 @@ export class AccountCredentials {
     }
   }
 
-  /** Seals and stores an account's secret. Refuses (via `SecretStore`) when the OS cannot encrypt. */
+  /** Mã hóa và lưu trữ thông tin bí mật của tài khoản. */
   async save(
     connectionId: string,
     secret: AccountSecret,
@@ -108,7 +106,7 @@ export class AccountCredentials {
     this.usage.delete(connectionId)
   }
 
-  /** Drops what is kept in memory for a connection that is gone. */
+  /** Xóa thông tin lưu trong bộ nhớ tạm khi một kết nối bị xóa. */
   forget(connectionId: string): void {
     this.copilotTokens.delete(connectionId)
     this.frozenUntil.delete(connectionId)
@@ -117,8 +115,7 @@ export class AccountCredentials {
   }
 
   /**
-   * A credential that is good now. `force` refreshes even a token that has not run out: that is what a 401
-   * asks for.
+   * Lấy chứng thực hợp lệ hiện tại. Cờ `force` kích hoạt làm mới ngay cả khi token chưa hết hạn (dùng khi gặp lỗi 401).
    */
   credential(account: AccountRef, force = false): Promise<Credential> {
     const running = this.refreshing.get(account.id)
@@ -173,7 +170,7 @@ export class AccountCredentials {
     if (force || expiresAt === null || expiresAt - now() < CODEX.refreshSkewMs) {
       tokens = await refreshCodex(fetchImpl, tokens.refresh)
       const account = codexAccount(tokens.access)
-      // The new refresh token is written at once, with the access token, before anything can use it.
+      // Ghi ngay refresh token mới cùng access token vào kho lưu trữ trước khi sử dụng.
       await this.save(connectionId, tokens, {
         expiresAt: account.expiresAt,
         accountLabel: account.email ?? null
@@ -210,8 +207,8 @@ export class AccountCredentials {
   }
 
   /**
-   * The key source of an account connection: one credential, refreshed on demand, and a cooldown after a
-   * rate limit the way a single key would get one.
+   * Nguồn cấp khóa API cho kết nối tài khoản: cung cấp một chứng thực được làm mới theo yêu cầu,
+   * và áp dụng thời gian chờ làm nguội khi bị giới hạn tốc độ tương tự như một API key riêng lẻ.
    */
   keySource(account: AccountRef): KeySource {
     return {
@@ -239,7 +236,7 @@ export class AccountCredentials {
     }
   }
 
-  /** The Codex account's limits, read at most once every 5 minutes. */
+  /** Đọc thông tin hạn mức tài khoản Codex, lưu đệm tối đa 5 phút giữa các lần đọc. */
   async codexUsage(account: AccountRef): Promise<UsageWindow[]> {
     const { fetchImpl, now } = this.options
     const cached = this.usage.get(account.id)

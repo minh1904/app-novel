@@ -6,9 +6,8 @@ import { LibraryStore } from '../library/library'
 import { ConnectionService } from './connectionService'
 
 /**
- * What the service does with a model entry when it builds a provider for it: the entry's settings reach
- * the request, its pace and its concurrency are applied, and an entry that is not this connection's is
- * refused. Run on a real SQLite file with a fake endpoint, as the handlers are.
+ * Kiểm tra cách dịch vụ khởi tạo provider từ mục cấu hình model: cài đặt của mục được áp dụng vào request,
+ * tốc độ gọi (RPM) và giới hạn đồng thời được thực thi, và từ chối mục không thuộc kết nối này.
  */
 
 const tempDir = createTempDirs()
@@ -75,7 +74,7 @@ function setup(handle: (sent: Sent, index: number) => Promise<Response> | Respon
     now: () => NOW,
     newId: () => fakeId(++counter),
     fetchImpl,
-    // The same fake sleep serves retries and the pace, and records both; none of it waits for real.
+    // Hàm sleep giả lập dùng chung cho thử lại và điều phối nhịp gọi; không tốn thời gian thực.
     retry: {
       sleep: async (ms) => {
         sleeps.push(ms)
@@ -139,7 +138,7 @@ describe('ConnectionService.translator, for a model entry', () => {
     const after = service.translator(connectionId, entryIds[0]!)
     expect(after.entry.settings).toEqual({ thinking: 'low' })
     expect(after.settingsKey).not.toBe(before.settingsKey)
-    // The same configuration read again gives the same key: it is a fingerprint, not a counter.
+    // Đọc lại cùng một cấu hình sẽ sinh ra cùng một mã khóa: đây là chữ ký nhận diện, không phải bộ đếm.
     expect(service.translator(connectionId, entryIds[0]!).settingsKey).toBe(after.settingsKey)
   })
 
@@ -187,7 +186,7 @@ describe('the pace of an entry', () => {
     for (let call = 0; call < 3; call++) {
       await service.translator(connectionId, entryIds[0]!).provider.probe()
     }
-    // 6 a minute is 10 s apart. The fake clock does not move, so each call waits for its slot in full.
+    // 6 lượt một phút tương ứng 10 giây một lượt. Đồng hồ giả lập không tự tăng, mỗi lượt gọi chờ đúng khoảng thời gian quy định.
     expect(sleeps).toEqual([10_000, 20_000])
   })
 
@@ -215,7 +214,7 @@ describe('the pace of an entry', () => {
   it('shares the pace between the translation and the chat that use one entry', async () => {
     const { service, sleeps, connectionId, entryIds } = setup()
     service.updateEntry(entryIds[0]!, { settings: { rpmLimit: 6 } })
-    // Two providers built separately, as a translation batch and a chat turn would be.
+    // Hai provider được dựng độc lập, tương tự như một lô dịch thuật và một lượt chat.
     await service.translator(connectionId, entryIds[0]!).provider.probe()
     await service.translator(connectionId, entryIds[0]!).provider.probe()
     expect(sleeps).toEqual([10_000])
@@ -225,14 +224,14 @@ describe('the pace of an entry', () => {
     const { service, sleeps, connectionId, entryIds } = setup()
     service.updateEntry(entryIds[0]!, { settings: { rpmLimit: 6 } })
     await service.translator(connectionId, entryIds[0]!).provider.probe()
-    // The other entry has no RPM, so it is not held up by the first one's pace.
+    // Mục còn lại không bị giới hạn RPM nên không bị giữ chậm bởi nhịp gọi của mục đầu tiên.
     await service.translator(connectionId, entryIds[1]!).provider.probe()
     expect(sleeps).toEqual([])
   })
 })
 
 describe('the concurrency of an entry', () => {
-  /** A fetch that answers a call only when told to, so a test can hold calls in flight. */
+  /** Giả lập fetch chỉ phản hồi khi được kích hoạt, cho phép kiểm thử giữ các yêu cầu đang bay. */
   function gated(): {
     handle: (sent: Sent, index: number) => Promise<Response>
     release: (index: number) => void
@@ -274,7 +273,7 @@ describe('the concurrency of an entry', () => {
   it('does not hold an entry up for the calls of another entry of the same connection', async () => {
     const gate = gated()
     const { service, connectionId, entryIds } = setup(gate.handle)
-    // Both at 1, so that if they shared one queue the second would have to wait for the first.
+    // Cả hai đều đặt mức đồng thời bằng 1; nếu dùng chung hàng đợi thì lượt thứ hai phải chờ lượt thứ nhất.
     service.updateEntry(entryIds[0]!, { settings: { concurrencyLimit: 1 } })
     service.updateEntry(entryIds[1]!, { settings: { concurrencyLimit: 1 } })
 
@@ -297,7 +296,7 @@ describe('the concurrency of an entry', () => {
     await tick()
     expect(gate.started()).toBe(1)
 
-    // The person raises the limit; the next provider built for this entry carries the new limit in.
+    // Người dùng tăng giới hạn; provider dựng tiếp theo cho mục này sẽ mang giới hạn mới.
     service.updateEntry(entryIds[0]!, { settings: { concurrencyLimit: 2 } })
     service.translator(connectionId, entryIds[0]!)
     await tick()
@@ -327,7 +326,7 @@ describe('the concurrency of an entry', () => {
 describe("keys are the connection's, whichever entry asks", () => {
   it('lets an entry see that another entry of the same connection found a key rate limited', async () => {
     const { service, sent, connectionId, entryIds } = setup((one, index) => {
-      // The first request, made with the first key, is rate limited; everything else is fine.
+      // Lệnh gọi đầu tiên dùng khóa thứ nhất bị giới hạn tốc độ; các lệnh gọi còn lại thành công.
       if (index === 0) {
         return new Response(
           JSON.stringify({ error: { code: 429, message: 'Resource has been exhausted' } }),
@@ -340,15 +339,15 @@ describe("keys are the connection's, whichever entry asks", () => {
     await service.addApiKey(connectionId, 'KEY-ONE-0001')
     await service.addApiKey(connectionId, 'KEY-TWO-0002')
 
-    // Entry A: the first key is rate limited, so the call moves on to the second and succeeds.
+    // Mục A: khóa thứ nhất bị rate limit, tự động chuyển sang khóa thứ hai và thành công.
     await service.translator(connectionId, entryIds[0]!).provider.probe()
     expect(sent.map((one) => one.authorization)).toEqual([
       'Bearer KEY-ONE-0001',
       'Bearer KEY-TWO-0002'
     ])
 
-    // Entry B has its own queue and pace, but it asks the same key scheduler, so it starts with the key
-    // that still works instead of walking into the same 429.
+    // Mục B có hàng đợi và nhịp gọi riêng, nhưng dùng chung bộ điều phối khóa, nên bắt đầu ngay với khóa
+    // còn hoạt động thay vì lặp lại lỗi 429.
     await service.translator(connectionId, entryIds[1]!).provider.probe()
     expect(sent[2]!.authorization).toBe('Bearer KEY-TWO-0002')
   })

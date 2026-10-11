@@ -55,7 +55,7 @@ describe('glossary IPC handlers', () => {
   it('tạo, lấy, cập nhật, liệt kê và xóa thuật ngữ qua IPC channels', async () => {
     const { call, workId } = setup()
 
-    // 1. Create
+    // 1. Tạo mới
     const createRes = await call<ContextEntryItem>(CHANNELS.glossaryCreate, {
       workId,
       source: '韩立',
@@ -68,7 +68,7 @@ describe('glossary IPC handlers', () => {
     expect(created.source).toBe('韩立')
     expect(created.aliases).toEqual(['Lập Ca'])
 
-    // 2. Get
+    // 2. Lấy chi tiết
     const getRes = await call<ContextEntryItem>(CHANNELS.glossaryGet, {
       workId,
       entryId: created.id
@@ -76,7 +76,7 @@ describe('glossary IPC handlers', () => {
     expect(getRes.ok).toBe(true)
     expect(value(getRes).target).toBe('Hàn Lập')
 
-    // 3. List
+    // 3. Danh sách
     const listRes = await call<{ entries: ContextEntryItem[] }>(CHANNELS.glossaryList, {
       workId,
       query: '韩立'
@@ -84,7 +84,7 @@ describe('glossary IPC handlers', () => {
     expect(listRes.ok).toBe(true)
     expect(value(listRes).entries).toHaveLength(1)
 
-    // 4. Update
+    // 4. Cập nhật
     const updateRes = await call<ContextEntryItem>(CHANNELS.glossaryUpdate, {
       workId,
       entryId: created.id,
@@ -93,14 +93,14 @@ describe('glossary IPC handlers', () => {
     expect(updateRes.ok).toBe(true)
     expect(value(updateRes).target).toBe('Hàn Lập (sửa)')
 
-    // 5. Delete
+    // 5. Xóa
     const deleteRes = await call<void>(CHANNELS.glossaryDelete, {
       workId,
       entryId: created.id
     })
     expect(deleteRes.ok).toBe(true)
 
-    // Get after delete should return not_found
+    // Lấy sau khi xóa phải trả về not_found
     const getAfterDelete = await call<ContextEntryItem>(CHANNELS.glossaryGet, {
       workId,
       entryId: created.id
@@ -111,7 +111,7 @@ describe('glossary IPC handlers', () => {
   it('từ chối dữ liệu đầu vào không hợp lệ hoặc xung đột trùng lặp', async () => {
     const { call, workId } = setup()
 
-    // Validation failure: missing target
+    // Lỗi xác thực: thiếu target
     const invalidRes = await call(CHANNELS.glossaryCreate, {
       workId,
       source: '韩立',
@@ -119,14 +119,14 @@ describe('glossary IPC handlers', () => {
     })
     expect(codeOf(invalidRes)).toBe('validation')
 
-    // Create entry
+    // Tạo mục
     await call(CHANNELS.glossaryCreate, {
       workId,
       source: '筑基',
       target: 'Trúc Cơ'
     })
 
-    // Conflict failure: duplicate source
+    // Lỗi xung đột: trùng lặp source
     const dupRes = await call(CHANNELS.glossaryCreate, {
       workId,
       source: '筑基',
@@ -138,7 +138,7 @@ describe('glossary IPC handlers', () => {
   it('nhập tệp Names.txt và kiểm tra tuân thủ bản dịch qua IPC', async () => {
     const { call, workId, chapterId } = setup()
 
-    // Import names
+    // Nhập tệp names
     const importRes = await call<ImportNamesResult>(CHANNELS.glossaryImportNames, {
       workId,
       content: `
@@ -152,7 +152,7 @@ describe('glossary IPC handlers', () => {
     expect(importVal.importedCount).toBe(2)
     expect(importVal.skippedCount).toBe(0)
 
-    // Check compliance
+    // Kiểm tra độ tuân thủ
     const complianceRes = await call<GlossaryComplianceReport>(CHANNELS.glossaryCheckCompliance, {
       workId,
       chapterId,

@@ -9,15 +9,14 @@ import type { TokenUsage } from './usage'
  * đây. **Một**, câu trả lời về theo dòng, nên một lượt là `send` → nhiều `ChatChunk` → đúng một
  * `done` hoặc `error`, chứ không phải một lời gọi trả một kết quả. **Hai**, không có segment ID nào
  * đi theo: phản hồi là chữ tự do, không bị kiểm theo tập ID. **Ba**, chat không bao giờ ghi bản
- * dịch: tool ghi chỉ tạo đề xuất chờ duyệt (change `agentic-chat`).
+ * dịch: tool ghi chỉ tạo đề xuất chờ duyệt.
  *
  * Lượt gửi **không** mang văn bản chương. Nó mang vị trí người dùng (`ChatLocation`), còn nội dung
- * thì model tự đọc bằng tool. Trước change `agentic-chat` renderer dựng sẵn ngữ cảnh và người dùng
- * phải chọn chế độ và phạm vi; các kiểu `ChatMode`, `ChatContextBlock`, `ChatRange` còn lại chỉ để
- * đọc lượt cũ đã lưu.
+ * thì model tự đọc bằng tool. Các kiểu `ChatMode`, `ChatContextBlock`, `ChatRange` dùng để đọc các
+ * lượt cũ đã lưu.
  */
 
-/** Chế độ của lượt cũ (trước `agentic-chat`). Lượt mới không có chế độ và lưu là `chat`. */
+/** Chế độ của lượt cũ. Lượt mới không có chế độ và lưu là `chat`. */
 export const CHAT_MODES = ['ask', 'edit', 'apply'] as const
 export type ChatMode = (typeof CHAT_MODES)[number]
 /** Loại của một lượt đã lưu: chế độ cũ, hoặc `chat` cho lượt không chế độ. */
@@ -46,7 +45,7 @@ export interface ChatRange {
 }
 
 /**
- * Người dùng đang đứng ở đâu trong chương của lượt (D1 của change `agentic-chat`).
+ * Người dùng đang đứng ở đâu trong chương của lượt.
  *
  * Chỉ là vị trí, không bao giờ là chữ: số đoạn đếm từ 1 theo cùng cách tách đoạn mà tool dùng
  * (`splitParagraphs`), nên "đoạn 5" trong vị trí và "đoạn 5" trong `read_chapter` là một.
@@ -59,7 +58,7 @@ export interface ChatLocation {
 }
 
 export interface ChatSendInput {
-  /** Existing work-scoped session; omitted for the first turn of a new conversation. */
+  /** Phiên hội thoại hiện có trong phạm vi tác phẩm; bỏ qua ở lượt đầu tiên của hội thoại mới. */
   sessionId?: string
   droppedTurns?: number
   /**
@@ -151,7 +150,7 @@ export interface ChatToolStep {
  */
 export type ChatChunk =
   | { requestId: string; kind: 'delta'; text: string }
-  /** What the model thought before answering; shown as "Thought", never part of the answer. */
+  /** Suy nghĩ của mô hình trước khi trả lời; hiển thị dưới dạng khối suy nghĩ, không thuộc nội dung câu trả lời. */
   | { requestId: string; kind: 'reasoning'; text: string }
   /**
    * Model vừa gọi một tool. Chỉ để panel nói rõ đã làm gì — `detail` là một dòng mô tả phạm vi,
@@ -184,8 +183,8 @@ export type ChatChunk =
 
 /**
  * Trần kích thước. Lịch sử là văn bản do renderer gửi lên, nên nếu không chặn thì một hội thoại dài đi
- * qua IPC mỗi lượt. Các số này là trần chống hỏng, không phải ngân sách token — ngân sách là việc của
- * `historyFor` (D10 của change `ai-chat`).
+ * qua IPC mỗi lượt. Các số này là trần chống hỏng, không phải ngân sách token — ngân sách do
+ * `historyFor` quản lý.
  */
 export const CHAT_QUESTION_MAX = 4_000
 export const CHAT_HISTORY_TURNS_MAX = 40

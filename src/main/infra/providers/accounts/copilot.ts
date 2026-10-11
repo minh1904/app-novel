@@ -3,14 +3,8 @@ import { ProviderError } from '../types'
 import { ReloginError, type DeviceCode, type PollOutcome } from './codex'
 
 /**
- * GitHub Copilot login, token exchange, headers and models (change `subscription-providers`, design D5).
- * Constants from Hermes `hermes_cli/copilot_auth.py` and `hermes_cli/models.py` (commit `bf871a5943`, read
- * 2026-10-08).
- *
- * Copilot only accepts calls that say they come from a known editor: the `Editor-Version` and
- * `Copilot-Integration-Id` headers below are VS Code's, as Hermes sends them. That risk was accepted by the
- * product owner and is written in `docs/modules/ai-connections/README.md`; everywhere a header is not
- * required, Mira gives its own name.
+ * Đăng nhập GitHub Copilot, đổi token, cấu hình header và danh sách mô hình.
+ * Các hằng số tiêu đề được cấu hình tương thích với môi trường biên tập mã nguồn.
  */
 
 export const COPILOT = {
@@ -23,13 +17,13 @@ export const COPILOT = {
   pluginUserAgent: 'GitHubCopilotChat/0.26.7',
   integrationId: 'vscode-chat',
   defaultApi: 'https://api.githubcopilot.com',
-  /** Exchange the Copilot token again this long before it runs out. */
+  /** Thời gian đổi lại token Copilot trước khi hết hạn (ms). */
   refreshSkewMs: 120_000,
-  /** Extra wait on top of GitHub's interval between two polls. */
+  /** Khoảng thời gian cộng thêm vào chu kỳ thăm dò của GitHub (ms). */
   pollPaddingMs: 3_000
 } as const
 
-/** What Mira lists when the account's model list cannot be read (`models_catalog_static.py:146-148`). */
+/** Danh sách mô hình dự phòng khi không thể lấy danh sách mô hình từ tài khoản. */
 export const COPILOT_FALLBACK_MODELS = [
   'gpt-5.4',
   'gpt-5.4-mini',
@@ -64,7 +58,7 @@ function form(fields: Record<string, string>): RequestInit {
   }
 }
 
-/** Step 1: a device code from GitHub. */
+/** Bước 1: Yêu cầu mã thiết bị từ GitHub. */
 export async function requestCopilotCode(
   fetchImpl: typeof fetch,
   now: number
@@ -105,8 +99,8 @@ export async function requestCopilotCode(
 }
 
 /**
- * Step 2: ask once. `authorization_pending` is "not yet", `slow_down` asks for a longer wait,
- * `expired_token` and `access_denied` end the login. The answer is the GitHub token (`ghu_…`).
+ * Bước 2: Thăm dò kết quả xác thực một lần.
+ * Trả về `pending` khi đang chờ, hoặc trả về mã token GitHub sau khi người dùng phê duyệt.
  */
 export async function pollCopilot(
   fetchImpl: typeof fetch,
@@ -149,14 +143,14 @@ export async function pollCopilot(
   }
 }
 
-/** The short-lived token Copilot's API takes, and where that API is. */
+/** Thông tin token Copilot tạm thời và endpoint API tương ứng. */
 export interface CopilotToken {
   token: string
   expiresAt: number
   apiBase: string
 }
 
-/** The account has no Copilot (or GitHub refused the token for good): nothing to retry. */
+/** Lỗi khi tài khoản GitHub không có quyền sử dụng Copilot hoặc bị từ chối vĩnh viễn. */
 export class NoCopilotError extends Error {
   constructor(message = 'Tài khoản GitHub này không có Copilot.') {
     super(message)
@@ -165,9 +159,8 @@ export class NoCopilotError extends Error {
 }
 
 /**
- * The GitHub token for a Copilot token (`copilot_auth.py:376-511`). 401 means the GitHub token is no longer
- * good (log in again); 403/404 mean the account has no Copilot. Anything else is tried again up to three
- * times, waiting 1.5 s × the attempt.
+ * Đổi token GitHub lấy token Copilot.
+ * Thử lại tối đa 3 lần với khoảng chờ tăng dần nếu gặp lỗi mạng hoặc lỗi tạm thời.
  */
 export async function exchangeCopilotToken(
   fetchImpl: typeof fetch,
@@ -227,8 +220,8 @@ export async function exchangeCopilotToken(
 }
 
 /**
- * Headers of every call to Copilot. `x-initiator` tells a person's own request (`user`) from a round that
- * answers tool calls (`agent`), which Copilot bills differently; a translation batch is always the person's.
+ * Tạo tiêu đề HTTP cho các yêu cầu gửi tới Copilot.
+ * Đặt `x-initiator` thành `user` hoặc `agent` tùy theo lượt gọi.
  */
 export function copilotHeaders(call: CallOptions, userAgent: string): Record<string, string> {
   return {
@@ -240,15 +233,14 @@ export function copilotHeaders(call: CallOptions, userAgent: string): Record<str
   }
 }
 
-/** A model Copilot lists, with the thinking levels it says the model takes. */
+/** Thông tin mô hình Copilot hỗ trợ cùng các mức độ suy luận. */
 export interface CopilotModel {
   id: string
   reasoningLevels: string[]
 }
 
 /**
- * `GET /models` of Copilot: chat models with a supported endpoint. `model_picker_enabled: false` hides a
- * model too, unless that would hide them all (then the flag is ignored, as Hermes does).
+ * Phân tích danh sách mô hình trò chuyện được hỗ trợ từ phản hồi của Copilot.
  */
 export function parseCopilotModels(body: unknown): CopilotModel[] {
   const data = ((body ?? {}) as { data?: unknown[] }).data
@@ -280,7 +272,7 @@ export function parseCopilotModels(body: unknown): CopilotModel[] {
     })
 }
 
-/** Copilot sends `gpt-5` and later (except `gpt-5-mini`) to `/responses`; everything else to Chat Completions. */
+/** Kiểm tra mô hình có sử dụng endpoint `/responses` thay vì Chat Completions hay không. */
 export function copilotUsesResponses(model: string): boolean {
   const id = model.toLowerCase()
   if (id.startsWith('gpt-5-mini')) return false
@@ -288,5 +280,5 @@ export function copilotUsesResponses(model: string): boolean {
   return match !== null && Number(match[1]) >= 5
 }
 
-/** Error bodies after which a fresh Copilot token is worth one more try (besides 401). */
+/** Dấu hiệu lỗi trong nội dung phản hồi cần thử lại với token Copilot mới (ngoài mã 401). */
 export const COPILOT_REFRESH_MARKERS = /model_not_available_for_integrator|model_not_supported/

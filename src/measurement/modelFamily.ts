@@ -1,12 +1,12 @@
 /**
- * Model family resolution and "different family judge" validation (spec translation-judging R3).
- * Pure function with no Node/DOM dependencies.
+ * Xác định họ của mô hình và kiểm tra tính độc lập giữa họ của giám khảo và người dịch.
+ * Hàm thuần túy không phụ thuộc Node/DOM.
  */
 
 export function getModelFamily(modelId: string): string {
   const lower = modelId.toLowerCase().trim()
 
-  // OpenRouter vendor prefix
+  // Tiền tố nhà cung cấp qua OpenRouter
   if (lower.startsWith('google/') || lower.includes('gemini')) {
     return 'google'
   }
@@ -34,7 +34,7 @@ export function getModelFamily(modelId: string): string {
     return 'qwen'
   }
 
-  // Fallback: prefix before '/' if available
+  // Phương án dự phòng: tiền tố trước dấu '/' nếu có
   if (lower.includes('/')) {
     return lower.split('/')[0]
   }
@@ -50,8 +50,8 @@ export interface JudgeFamilyCheckResult {
 }
 
 /**
- * Validates that the judge model belongs to a strictly different family from all translator models.
- * If two translation conditions have two different families, the judge must belong to a 3rd family.
+ * Kiểm tra xem mô hình giám khảo có thuộc họ hoàn toàn khác biệt so với tất cả các mô hình dịch hay không.
+ * Nếu hai cấu hình dịch thuộc hai họ khác nhau, giám khảo bắt buộc phải thuộc họ thứ ba.
  */
 export function checkJudgeFamily(
   judgeModel: string,

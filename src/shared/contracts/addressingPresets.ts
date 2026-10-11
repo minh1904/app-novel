@@ -7,7 +7,7 @@
  * gốc là tín hiệu giọng điệu (お前 so với 君, 你 so với 您), không phải bảng đổi từng đại từ.
  *
  * Phân loại theo **bối cảnh**, không theo thể loại: truyện tình cảm và trinh thám cùng đặt ở học đường
- * Nhật dùng chung một bộ. Căn cứ và nguồn của từng dòng: [xưng hô tiếng Việt](../../../docs/modules/context/vietnamese-addressing.md).
+ * Nhật dùng chung một bộ.
  */
 
 export const REGISTER_PRESET_IDS = [
@@ -50,8 +50,8 @@ export const NAME_ADDRESSING_RULE =
   'Khi bản gốc gọi tên hoặc chức danh thì giữ cách gọi tương ứng theo quy ước tên; có thể lược đại từ nếu câu vẫn rõ và tự nhiên, không nhét đủ cặp xưng hô vào mọi câu.'
 
 /**
- * Giáo viên hạn chế "mày/tao" (chốt 2026-10-06), cho học đường hiện đại nguồn Nhật lẫn Trung. Luật gắn
- * với đại từ tiếng Nhật nằm riêng trong `ja-modern`.
+ * Quy tắc giáo viên hạn chế dùng "mày/tao", áp dụng cho bối cảnh học đường hiện đại nguồn Nhật lẫn Trung.
+ * Quy tắc gắn với đại từ tiếng Nhật nằm riêng trong `ja-modern`.
  */
 const MODERN_TEACHER_RULES = [
   'Giáo viên nói với học trò: hạn chế "mày/tao"; chỉ dùng khi cặp xưng hô đã duyệt hoặc quy ước người dịch cho phép rõ. Ngoại lệ đã duyệt có ưu tiên cao hơn mặc định này.',
@@ -59,7 +59,7 @@ const MODERN_TEACHER_RULES = [
   'Giữ độ gắt, lời chửi và đe dọa của giáo viên bằng từ ngữ, nhịp câu đúng mức bản gốc; không làm nhẹ tình tiết, không thêm lời xúc phạm.'
 ]
 
-/** Luật chung cho mọi bộ: chốt bởi chủ sản phẩm ngày 2026-10-05. */
+/** Quy tắc xưng hô chung cho mọi bộ bối cảnh. */
 export const ADDRESSING_RULES = [
   'Cặp xưng hô đã duyệt trong <addressing> là bắt buộc, kể cả khi nhân vật nói gắt; bảng mặc định chỉ dùng cho cặp chưa có ở đó.',
   'Quan hệ giữa hai người quyết định cặp xưng hô; đại từ của bản gốc chỉ quyết định mức thô hay lịch sự.',

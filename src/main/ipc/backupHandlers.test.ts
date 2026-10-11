@@ -38,7 +38,7 @@ function fakePicker(): FakePicker {
 
 function setup(): {
   library: LibraryStore
-  /** The data directory the library was opened on. */
+  /** Thư mục dữ liệu mà thư viện được mở tại đó. */
   dataDir: string
   picker: FakePicker
   workId: string

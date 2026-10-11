@@ -5,12 +5,10 @@ import type { TextRecord, TextSide } from '../../../shared/contracts/text'
 import { createChatTools, TOOL_TEXT_MAX, type ChatToolLibrary } from './chatTools'
 
 /**
- * What the model may look up for itself.
+ * Kiểm tra các công cụ tra cứu dữ liệu của model trong lượt hội thoại.
  *
- * The test that matters most is the scoping one: `workId` is bound when the tools are built and is
- * not a parameter, so reaching into another work is not something the model can even ask for. The
- * rest check that a wrong answer comes back as text the model can recover from, rather than as an
- * exception that kills the turn.
+ * Kiểm tra phạm vi dữ liệu: `workId` được cố định khi khởi tạo, model không thể truy cập sang tác phẩm khác.
+ * Đồng thời kiểm tra các lỗi gọi sai tham số được trả về dưới dạng thông báo văn bản để model có thể tự khắc phục.
  */
 
 const WORK = 'work-1'
@@ -128,9 +126,8 @@ describe('read_chapter', () => {
   })
 
   /**
-   * The scoping property, stated as a test: the work is bound at construction and the model has no
-   * parameter for it, so another work cannot be reached even by asking for a chapter that exists
-   * there. The read that does happen carries the bound id, never one the model chose.
+   * Kiểm tra phạm vi truy cập: tác phẩm được liên kết cố định khi khởi tạo và mô hình không có
+   * tham số để thay đổi, do đó không thể truy cập tác phẩm khác ngay cả khi yêu cầu chương tồn tại ở đó.
    */
   it('cannot reach another work, because there is no way to name one', () => {
     const library = libraryOf({ 'ch-1/source': 'bí mật của tác phẩm khác' })

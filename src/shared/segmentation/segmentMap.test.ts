@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { applyEdits, checkSegments, resegment, type Edit, type Seg } from './segmentMap'
 import { segment, type SegmentLanguage } from './segmenter'
 
-/** A text with segments named s0, s1, … as the store would have them after an import. */
+/** Văn bản kèm các segment tên s0, s1, … giống như trạng thái kho lưu trữ sau khi nhập. */
 function load(content: string, lang: SegmentLanguage): { content: string; segs: Seg[] } {
   const segs = segment(content, lang).map((range, index) => ({
     id: 's' + index,
@@ -235,7 +235,7 @@ describe('checkSegments', () => {
   })
 })
 
-// A small seeded generator, so a failure can be reproduced from the seed.
+// Bộ sinh ngẫu nhiên nhỏ dựa trên seed để có thể tái hiện lỗi kiểm thử.
 function random(seed: number): () => number {
   let a = seed >>> 0
   return () => {
@@ -309,10 +309,10 @@ describe('random edits', () => {
           doc = { content: moved.content, segs: split }
 
           expect(checkSegments(doc.content, doc.segs), 'seed ' + seed + ' step ' + step).toEqual([])
-          // Nothing is lost or repeated: the text of the segments is the text, less white space.
+          // Không mất hoặc lặp ký tự: nội dung các segment ghép lại đúng bằng nội dung văn bản (bỏ khoảng trắng).
           expect(stripped(texts(doc).join(''))).toBe(stripped(doc.content))
           for (const seg of doc.segs) if (seg.id !== null) expect(known.has(seg.id)).toBe(true)
-          // Lines the edit did not reach keep their IDs and text.
+          // Các dòng không bị chỉnh sửa chạm đến sẽ giữ nguyên ID và nội dung văn bản.
           const delta = edit.insert.length - (edit.to - edit.from)
           for (const seg of old.segs) {
             if (seg.id === null) continue

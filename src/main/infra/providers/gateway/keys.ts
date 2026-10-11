@@ -2,8 +2,8 @@ import type { ClassifiedError } from '../classifyError'
 import type { Credential } from '../transports/transportShared'
 
 /**
- * What the gateway needs from wherever keys live. The provider knows nothing about a database; the
- * source is built over one (`connectionKeySource.ts`) and handed in.
+ * Giao diện cung cấp khóa cho cổng kết nối (gateway).
+ * Tách biệt logic quản lý khóa trong cơ sở dữ liệu khỏi tầng gọi API.
  */
 
 export interface KeyLease {

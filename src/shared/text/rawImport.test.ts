@@ -75,7 +75,7 @@ describe('prepareImport: files', () => {
   })
 
   it('reads Shift_JIS for a Japanese work and tells the user which encoding it used', () => {
-    // こんにちは。 in Shift_JIS
+    // こんにちは。 trong bảng mã Shift_JIS
     const bytes = Uint8Array.from([
       0x82, 0xb1, 0x82, 0xf1, 0x82, 0xc9, 0x82, 0xbf, 0x82, 0xcd, 0x81, 0x42
     ])
@@ -85,7 +85,7 @@ describe('prepareImport: files', () => {
   })
 
   it('re-reads the same bytes when the user picks another encoding', () => {
-    const bytes = Uint8Array.from([0xc4, 0xe3, 0xba, 0xc3, 0xa1, 0xa3]) // 你好。 in GBK
+    const bytes = Uint8Array.from([0xc4, 0xe3, 0xba, 0xc3, 0xa1, 0xa3]) // 你好。 trong bảng mã GBK
     const first = ok(prepareImport(file(bytes), 'zh-Hans'))
     expect(first.text).toBe('你好。')
     const forced = ok(prepareImport(file(bytes), 'zh-Hans', 'big5'))

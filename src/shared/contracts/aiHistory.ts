@@ -26,7 +26,7 @@ export interface AiTurnView {
   action: ChatAction
   question: string
   answer: string
-  /** What the model thought before answering; empty when it said nothing of it. */
+  /** Suy nghĩ của model trước khi trả lời; rỗng nếu model không trả về phần suy luận. */
   reasoning: string
   status: 'sending' | 'running' | 'done' | 'cancelled' | 'error' | 'interrupted'
   /** Khối đã gửi kèm; chỉ lượt cũ có. */

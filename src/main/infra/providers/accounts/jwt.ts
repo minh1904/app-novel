@@ -1,7 +1,6 @@
 /**
- * The claims of a JWT, read **without checking its signature**. Mira only uses them to route a call (which
- * ChatGPT account, which residency) and to know when a token runs out; the provider checks the token itself
- * on every call, so a forged claim gets nothing but a refused request.
+ * Đọc payload claims của JWT **không kiểm tra chữ ký**.
+ * Dùng để điều hướng cuộc gọi (ID tài khoản, vùng dữ liệu) và xác định thời điểm hết hạn của token.
  */
 export function jwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split('.')
@@ -19,7 +18,7 @@ export function jwtClaims(token: string): Record<string, unknown> | null {
   }
 }
 
-/** `exp` as ms epoch, when the token has one. */
+/** Lấy thời điểm hết hạn `exp` dưới dạng epoch ms nếu có trong token. */
 export function jwtExpiry(token: string): number | null {
   const exp = jwtClaims(token)?.exp
   return typeof exp === 'number' && Number.isFinite(exp) ? exp * 1000 : null

@@ -27,14 +27,14 @@ describe('paragraphAlign', () => {
       const src = [
         '第1段，开篇故事。',
         '第2段，描述内容。',
-        '「あっ」', // skipped
+        '「あっ」', // bỏ qua
         '第4段，长长的正常内容，讲述了许多事情。',
         '第5段，很长的内容，包含前一句和后一句的叙述。'
       ]
       const tgt = [
         'Đoạn 1, câu chuyện mở đầu.',
         'Đoạn 2, nội dung miêu tả.',
-        // index 2 skipped
+        // chỉ số 2 bị bỏ qua
         'Đoạn 4, nội dung bình thường rất dài, kể lại nhiều chuyện.',
         'Đoạn 5, phần thứ nhất của câu chuyện.',
         'Và đây là phần thứ hai của đoạn 5.'
@@ -62,7 +62,7 @@ describe('paragraphAlign', () => {
         '長い説明がここに続きます。二人は顔を見合わせた。'
       ]
       const tgt = [
-        '「A! Có tiếng nói nhỏ vang lên.」', // merged 0 and 1
+        '「A! Có tiếng nói nhỏ vang lên.」', // gộp đoạn 0 và 1
         'Lời giải thích dài dòng tiếp tục ở đây. Hai người nhìn nhau.'
       ]
 

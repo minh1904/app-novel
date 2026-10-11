@@ -13,8 +13,7 @@ import {
 import { ProviderError } from '../types'
 
 /**
- * The Anthropic Messages transport (change `subscription-providers`, tasks 5.1–5.2). The SSE fixtures in
- * `__fixtures__/anthropic` are written by hand from the documented event shapes.
+ * Kiểm thử giao vận Anthropic Messages với dữ liệu mẫu SSE mô phỏng.
  */
 
 const fixture = (name: string): string =>
@@ -55,7 +54,7 @@ describe('toAnthropicMessages', () => {
       { type: 'tool_use', id: 'toolu_1', name: 'read_segments', input: { chapter: 4 } },
       { type: 'tool_use', id: 'toolu_2', name: 'list_glossary', input: {} }
     ])
-    // Two tool answers and the next question share one user turn.
+    // Hai kết quả công cụ và câu hỏi tiếp theo được gộp chung vào một lượt của user.
     expect(messages[2].content).toEqual([
       { type: 'tool_result', tool_use_id: 'toolu_1', content: '[1] 一。' },
       { type: 'tool_result', tool_use_id: 'toolu_2', content: 'Thuật ngữ: 0 mục' },

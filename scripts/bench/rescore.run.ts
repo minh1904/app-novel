@@ -1,7 +1,7 @@
 /**
- * Re-scores a saved measurement run using current T0 deterministic checks without calling API.
- * Preserves original usage, elapsed time, and errors.
- * Writes rescore.json and report-rescore.md alongside the original report.
+ * Chấm điểm lại một lượt đo đạc đã lưu bằng các kiểm tra tất định T0 hiện tại mà không gọi API.
+ * Giữ nguyên số token đã dùng, thời gian thực thi và lỗi ban đầu.
+ * Ghi tệp kết quả chấm điểm lại định dạng JSON và báo cáo tóm tắt bên cạnh báo cáo gốc.
  */
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -39,7 +39,7 @@ const RUN = pickRun()
 
 describe.skipIf(RUN === null)(`Bộ đo — chấm lại lượt ${RUN}`, () => {
   it('chấm lại mọi bản dịch đã lưu mà không gọi API', () => {
-    // Safety: ensure fetch is NOT called during rescoring
+    // An toàn: đảm bảo không gọi fetch trong quá trình chấm lại
     const originalFetch = globalThis.fetch
     globalThis.fetch = (() => {
       throw new Error('rescore không được phép gọi mạng!')
@@ -75,9 +75,9 @@ describe.skipIf(RUN === null)(`Bộ đo — chấm lại lượt ${RUN}`, () => 
           const srcParas = extractParagraphs(chapter.sourceText)
           const normAssertions = normalizeAssertionRules(chapter.assertions)
 
-          // Find repeats in either layout:
-          // Layout A: workRunDir/<chapter>/rep-<rep>.vi.txt
-          // Layout B: workRunDir/ch<chapter>_r<rep>/translation.txt
+          // Tìm các lần lặp ở một trong hai cấu trúc thư mục:
+          // Cấu trúc A: workRunDir/<chapter>/rep-<rep>.vi.txt
+          // Cấu trúc B: workRunDir/ch<chapter>_r<rep>/translation.txt
           let rep = 1
           while (true) {
             let translationPath = ''
@@ -179,7 +179,7 @@ describe.skipIf(RUN === null)(`Bộ đo — chấm lại lượt ${RUN}`, () => 
       assertNoSecret(rescoreJsonText)
       writeFileSync(join(runDir, 'rescore.json'), rescoreJsonText, 'utf8')
 
-      // Write report-rescore.md without story text (R6)
+      // Ghi tệp báo cáo tổng kết không kèm văn bản truyện
       const mdLines: string[] = [
         `# Rescore: ${RUN}`,
         '',

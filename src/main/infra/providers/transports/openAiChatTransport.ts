@@ -30,60 +30,46 @@ export {
 } from './transportShared'
 
 /**
- * One call to an OpenAI-compatible `/chat/completions` endpoint, and nothing else.
+ * Thực thi cuộc gọi tới endpoint `/chat/completions` tương thích OpenAI.
  *
- * This is the bottom layer of the connection stack (design D2 of change `ai-gateway`). It does **not**
- * pick a key, retry, split work into batches or know what a prompt is about: the key is handed in per
- * call, and everything that is a *policy* belongs to the layer above. What it does own is the part
- * that is the same for every caller and easy to get wrong:
- *
- *  - building the request body so that a parameter nobody set is **not sent**;
- *  - reading the answer — text, tool calls, why it ended, usage — in one shape, in both the plain and
- *    the streaming form;
- *  - deadlines and cancel, and telling the two apart (cancel wins);
- *  - turning every failure into a typed `ProviderError` that carries what was learned (status, wait
- *    time, quota scope, a scrubbed excerpt of the body) and never the key that was sent.
- *
- * Errors are **thrown**, as everywhere in this repo, rather than returned as values the way
- * LinguaGacha's client does. The facts LinguaGacha returns (status, retry-after, retryable) travel on
- * the error instead; text received before a mid-stream error has already been yielded by then.
+ * Chức năng:
+ * - Xây dựng body yêu cầu, chỉ gửi các tham số đã được thiết lập.
+ * - Phân tích dữ liệu phản hồi (văn bản, gọi công cụ, lý do kết thúc, mức sử dụng token) ở cả hai chế độ thông thường và streaming.
+ * - Quản lý thời hạn (deadline) và hủy bỏ yêu cầu (cancel).
+ * - Chuyển đổi lỗi thành `ProviderError` có phân loại cụ thể và che giấu bí mật (secret scrubbing).
  */
 
-/** A turn in the conversation, in the shape an OpenAI-compatible endpoint takes. */
+/** Lượt tin nhắn trong hội thoại theo định dạng tương thích OpenAI. */
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool'
   content: string
-  /** An `assistant` turn that asked for tools; it must be sent back unchanged on the next round. */
+  /** Lượt của `assistant` chứa yêu cầu gọi công cụ (cần gửi lại nguyên vẹn ở vòng tiếp theo). */
   tool_calls?: Array<{
     id: string
     type: 'function'
     function: { name: string; arguments: string }
   }>
-  /** A `tool` turn answers exactly this call. */
+  /** Lượt của `tool` trả lời chính xác cho lệnh gọi này. */
   tool_call_id?: string
 }
 
-/** A tool call after its fragments were put back together. */
+/** Cuộc gọi công cụ hoàn chỉnh sau khi ghép các mảnh phân đoạn lại với nhau. */
 export interface AssembledToolCall {
   id: string
   name: string
   arguments: string
 }
 
-/** Why the answer ended. `unknown` is what an endpoint that did not say gets, and is not an error. */
+/** Lý do kết thúc phản hồi (`unknown` khi máy chủ không trả về lý do). */
 export type FinishReason = 'stop' | 'length' | 'tool_calls' | 'filter' | 'unknown'
 
 /**
- * What a streamed turn produces: any number of `delta`, then **exactly one** ending — `done` when the
- * model finished answering, or `tool-calls` when it wants to read something first.
- *
- * Failures are not an event: they are thrown, after the `delta`s that came before them.
+ * Các sự kiện phát ra từ luồng stream: các sự kiện `delta`/`reasoning` và kết thúc bằng `done` hoặc `tool-calls`.
  */
 export type ChatStreamEvent =
   | { kind: 'delta'; text: string }
   /**
-   * The model thinking out loud before it answers (`reasoning_content`, a Responses reasoning summary,
-   * Anthropic `thinking`). Shown as "Thought", never part of the answer.
+   * Nội dung suy luận của mô hình trước khi trả lời (`reasoning_content` hoặc `reasoning`).
    */
   | { kind: 'reasoning'; text: string }
   | {
@@ -94,63 +80,50 @@ export type ChatStreamEvent =
     }
   | { kind: 'done'; usage: Usage | null; finishReason: FinishReason; filter?: FilterReason }
 
-/** What to ask for. Generation parameters are optional and are sent only when set. */
+/** Cấu trúc yêu cầu tạo văn bản (các tham số sinh là tùy chọn và chỉ gửi khi được chỉ định). */
 export interface ChatRequest {
   model: string
   messages: ChatMessage[]
   tools?: readonly unknown[]
-  /** Output-token cap. The field it goes in is the endpoint's (`Compat.maxTokensField`). */
+  /** Giới hạn số token đầu ra (tên trường tương ứng theo cấu hình `Compat.maxTokensField`). */
   maxTokens?: number
   temperature?: number
   topP?: number
-  /** Sent whenever it is set, to any endpoint: a parameter the person chose is never dropped here. */
+  /** Mức độ nỗ lực suy luận (được gửi đi khi có thiết lập). */
   reasoningEffort?: string
-  /**
-   * `response_format` of this one call (a task's, not the model entry's). Written before `extraBody` is
-   * spread, so a value the person set there still has the last word.
-   */
+  /** Định dạng phản hồi mong muốn (`response_format`) cho cuộc gọi này. */
   responseFormat?: unknown
-  /**
-   * Fields merged into the body last, so the caller has the final say with a vendor's own parameters. Not
-   * the final say over the fields Mira reads the answer by: those are removed (`FORBIDDEN_BODY_FIELDS`).
-   */
+  /** Các trường bổ sung gộp vào body yêu cầu (loại bỏ các trường bị cấm trong `FORBIDDEN_BODY_FIELDS`). */
   extraBody?: Record<string, unknown>
-  /**
-   * Headers added to the call. They go in **under** the ones Mira sets, and any that would carry the key or
-   * describe the body is removed (`FORBIDDEN_HEADERS`), so the key still travels by the one path that
-   * schedules and scrubs it.
-   */
+  /** Các tiêu đề HTTP bổ sung gửi kèm yêu cầu (loại bỏ các tiêu đề thuộc `FORBIDDEN_HEADERS`). */
   extraHeaders?: Record<string, string>
 }
 
-/** The result of a plain (non-streaming) call. */
+/** Kết quả của một cuộc gọi thông thường (không streaming). */
 export interface CompleteResult {
   text: string
   finishReason: FinishReason
-  /** When `finishReason` is `filter`: the block reason the provider gave, grouped. */
+  /** Lý do chặn từ bộ lọc nội dung khi `finishReason` là `filter`. */
   filter?: FilterReason
   usage: Usage | null
-  /** HTTP status of the answer. */
+  /** Mã trạng thái HTTP của phản hồi. */
   status: number
 }
 
 export interface TransportOptions {
-  /** The base address; it is normalized here as well as when saved, so old connections still work. */
+  /** Địa chỉ URL cơ sở. */
   baseUrl: string
   compat: Compat
   fetchImpl: typeof fetch
   now: () => number
   timeouts?: Partial<TransportTimeouts>
-  /**
-   * Headers a provider needs on every call besides the key (Copilot's editor and initiator headers). Added
-   * under Mira's own, like a request's `extraHeaders`.
-   */
+  /** Hàm tạo các tiêu đề bổ sung cho nhà cung cấp trên mỗi cuộc gọi. */
   headers?: (call: CallOptions, request?: ChatRequest) => Record<string, string>
-  /** An error answer after which a fresh token is worth one more try (see `sendWithRefresh`). */
+  /** Điều kiện kiểm tra lỗi để thử làm mới token một lần (ngoài mã 401). */
   refreshWhen?: (status: number, body: string) => boolean
 }
 
-/** The request body. A field appears only when somebody set it. */
+/** Tạo nội dung body của yêu cầu; chỉ bao gồm các trường đã được cấu hình. */
 export function buildChatBody(
   request: ChatRequest,
   compat: Compat,
@@ -159,8 +132,7 @@ export function buildChatBody(
   const body: Record<string, unknown> = { model: request.model, messages: request.messages }
   if (stream) {
     body.stream = true
-    // Asked for out loud even though some sources say Gemini sends usage anyway: those are forum posts,
-    // and the same call also runs against gateways. Saying it is right on both.
+    // Bật tùy chọn trả về thông tin sử dụng token trong luồng stream nếu được hỗ trợ.
     if (compat.streamUsage) body.stream_options = { include_usage: true }
   }
   if (request.tools !== undefined && request.tools.length > 0) body.tools = request.tools
@@ -173,10 +145,7 @@ export function buildChatBody(
 }
 
 /**
- * The caller's `extraBody` minus the fields the rest of Mira depends on. They are refused when the setting
- * is saved too (`modelSettingsSchema`); this is the second fence, for a value that reached here some other
- * way, because spreading `stream: false` over a streamed call would leave the reader waiting for events
- * that never come.
+ * Lọc bỏ các trường bị cấm khỏi `extraBody` để tránh ghi đè các tham số điều khiển cốt lõi (như stream).
  */
 function withoutForbiddenFields(
   extra: Record<string, unknown> | undefined
@@ -189,7 +158,7 @@ function withoutForbiddenFields(
   return allowed
 }
 
-/** `finish_reason` of an OpenAI-compatible answer, in the app's words. Anything unrecognized is `unknown`. */
+/** Ánh xạ giá trị `finish_reason` sang định dạng chuẩn của ứng dụng. */
 export function mapFinishReason(raw: unknown): FinishReason {
   switch (raw) {
     case 'stop':
@@ -208,7 +177,7 @@ export function mapFinishReason(raw: unknown): FinishReason {
   }
 }
 
-/** A piece of a tool call. The name arrives once; the arguments trickle in over several frames. */
+/** Một mảnh phân đoạn của lệnh gọi công cụ trong luồng stream. */
 export interface ToolCallFragment {
   index: number
   id?: string
@@ -216,18 +185,18 @@ export interface ToolCallFragment {
   arguments?: string
 }
 
-/** One `data:` frame of a streamed turn, taken out of its JSON. */
+/** Khung dữ liệu sự kiện từ luồng SSE sau khi phân tích JSON. */
 export interface ChatFrame {
-  /** The new text of this frame; empty is normal (the opening frame carries only the role). */
+  /** Đoạn văn bản mới trong khung sự kiện này. */
   text: string
-  /** New reasoning text of this frame (`reasoning_content` or `reasoning`), empty when none. */
+  /** Đoạn văn bản suy luận mới trong khung sự kiện này. */
   reasoning: string
   usage: Usage | null
-  /** The tool-call fragments of this frame, if any. */
+  /** Các phân đoạn gọi công cụ trong khung này (nếu có). */
   toolCalls: ToolCallFragment[]
-  /** Raw `finish_reason`, present on the frame that closes the choice. */
+  /** Lý do kết thúc thô trả về từ máy chủ. */
   finishReason?: string
-  /** The error body, when the provider reports a failure **mid-stream** instead of with an HTTP status. */
+  /** Đối tượng lỗi khi nhà cung cấp báo lỗi ở giữa luồng stream. */
   error?: Record<string, unknown>
 }
 
@@ -240,7 +209,7 @@ function readToolFragments(raw: unknown): ToolCallFragment[] {
       id?: unknown
       function?: { name?: unknown; arguments?: unknown }
     }
-    // A missing `index` is the first call: some endpoints leave it out when there is only one.
+    // Mặc định index là 0 nếu thiếu (một số endpoint bỏ qua khi chỉ có một lệnh gọi).
     const index = typeof item?.index === 'number' ? item.index : 0
     const fragment: ToolCallFragment = { index }
     if (typeof item?.id === 'string') fragment.id = item.id
@@ -252,11 +221,8 @@ function readToolFragments(raw: unknown): ToolCallFragment[] {
 }
 
 /**
- * Reads one `data:` frame.
- *
- * Returns `null` for a frame it cannot read and does **not** throw: one odd line is not worth killing a
- * turn whose other frames are fine. An error frame is different — it is real news, so it is passed out
- * for the caller to classify.
+ * Phân tích một khung dữ liệu `data:` từ SSE.
+ * Trả về `null` nếu khung không hợp lệ (không ném lỗi để tránh ngắt cả luồng); trả về đối tượng lỗi nếu là khung báo lỗi.
  */
 export function parseChatFrame(data: string): ChatFrame | null {
   let parsed: unknown
@@ -292,7 +258,7 @@ export function parseChatFrame(data: string): ChatFrame | null {
 
   const choice = payload.choices?.[0]
   const content = choice?.delta?.content
-  // DeepSeek and most gateways send `reasoning_content`; OpenRouter sends `reasoning`.
+  // Trích xuất nội dung suy luận từ trường `reasoning_content` hoặc `reasoning`.
   const thinking = choice?.delta?.reasoning_content ?? choice?.delta?.reasoning
   const frame: ChatFrame = {
     text: typeof content === 'string' ? content : '',
@@ -304,7 +270,7 @@ export function parseChatFrame(data: string): ChatFrame | null {
   return frame
 }
 
-/** What a chat request sends, as far as it can be shown: no `extra_body` values, no headers. */
+/** Tổng hợp các tham số đã gửi trong yêu cầu (dùng để chẩn đoán lỗi). */
 export function sentParameters(request: ChatRequest): SentParameters {
   const sent: SentParameters = {
     extraBodyKeys: Object.keys(withoutForbiddenFields(request.extraBody)).sort(),
@@ -325,7 +291,7 @@ export class OpenAiChatTransport implements ChatTransport {
     this.timeouts = { ...DEFAULT_TIMEOUTS, ...options.timeouts }
   }
 
-  /** The ids the endpoint lists under `GET /models` (a leading `models/` is dropped). Throws when it cannot. */
+  /** Lấy danh sách định danh mô hình từ `GET /models`. */
   async listModels(call: CallOptions): Promise<string[]> {
     const attempt = new Attempt(call.signal)
     attempt.deadline.arm(this.timeouts.totalMs)
@@ -344,7 +310,7 @@ export class OpenAiChatTransport implements ChatTransport {
     }
   }
 
-  /** A plain call: one request, one answer. */
+  /** Thực thi yêu cầu thông thường (không streaming): một yêu cầu, một phản hồi. */
   async complete(request: ChatRequest, call: CallOptions): Promise<CompleteResult> {
     const attempt = new Attempt(call.signal)
     attempt.deadline.arm(this.timeouts.totalMs)
@@ -395,10 +361,8 @@ export class OpenAiChatTransport implements ChatTransport {
   }
 
   /**
-   * A streamed call. Yields `delta`s as they arrive and ends with exactly one `done` or `tool-calls`.
-   *
-   * Closing the generator early (the consumer stops reading) releases the connection: `finish()` runs in
-   * the `finally`, and it aborts whatever is still open.
+   * Thực thi yêu cầu dạng luồng stream. Phát ra các sự kiện delta và kết thúc bằng `done` hoặc `tool-calls`.
+   * Đóng generator sớm sẽ tự động hủy yêu cầu và giải phóng kết nối trong khối `finally`.
    */
   async *stream(request: ChatRequest, call: CallOptions): AsyncGenerator<ChatStreamEvent> {
     const { signal } = call
@@ -423,21 +387,18 @@ export class OpenAiChatTransport implements ChatTransport {
       let usage: Usage | null = null
       let finishReason: FinishReason = 'unknown'
       let filter: FilterReason | undefined
-      // Fragments of a tool call are gathered by `index`: the name comes once, the arguments over many frames.
+      // Gom các phân đoạn gọi công cụ theo `index`.
       const pending = new Map<number, { id: string; name: string; arguments: string }>()
       try {
         for await (const event of parseSseStream(response.body)) {
-          // The first event ends the wait for a first byte; from here on the limit is silence between events.
+          // Sự kiện đầu tiên kết thúc thời gian chờ byte đầu; chuyển sang tính thời gian im lặng giữa các sự kiện.
           attempt.deadline.arm(this.timeouts.idleMs)
-          // Checked inside the loop and not left to the body stream failing by itself: a real fetch does
-          // abort its body, but a proxy or another endpoint may not, and Cancel must never depend on that.
+          // Kiểm tra hủy bỏ trong vòng lặp để đảm bảo dừng ngay lập tức ngay cả khi body stream chưa ngắt.
           if (signal?.aborted) throw new ProviderError('cancelled', 'Yêu cầu đã bị hủy.')
           const frame = parseChatFrame(event.data)
           if (frame === null) continue
           if (frame.error !== undefined) {
-            // An error in the middle of a stream has no HTTP status of its own, so take the `code` it
-            // carries and fall back to 500: "line trouble, worth trying again" is a safer default than
-            // `refused`, which would stop a person from retrying something temporary.
+            // Lỗi ở giữa luồng stream: lấy mã lỗi trong payload hoặc mặc định là 500 để phân loại.
             throw toProviderError(
               classifyHttpError({
                 status: typeof frame.error.code === 'number' ? frame.error.code : 500,
@@ -471,7 +432,7 @@ export class OpenAiChatTransport implements ChatTransport {
         throw new ProviderError('network', 'Mất kết nối: ' + errorMessage(error, apiKey))
       }
 
-      // A call without a name is a broken fragment, not a call: drop it rather than hand it on to be run.
+      // Bỏ qua các lệnh gọi công cụ thiếu tên hàm hợp lệ.
       const calls = [...pending.entries()]
         .sort(([a], [b]) => a - b)
         .map(([, call]) => call)
@@ -497,9 +458,7 @@ export class OpenAiChatTransport implements ChatTransport {
   }
 
   /**
-   * One request, and the key it was finally made with. A failure to even get an answer is `network`, or
-   * `timeout`/`cancelled` when that is why. A 401 on an account login fetches a fresh token and tries
-   * **once** more (design D3 of change `subscription-providers`).
+   * Gửi yêu cầu HTTP kèm khóa API, tự động làm mới token và thử lại một lần nếu gặp lỗi xác thực 401.
    */
   private async send(
     path: string,
@@ -529,8 +488,7 @@ export class OpenAiChatTransport implements ChatTransport {
   }
 
   /**
-   * An answer that was not a success, as a typed error. The raw body is read **before** it is parsed, so
-   * nothing is lost when it is not JSON, and the key is scrubbed from everything that comes out of it.
+   * Chuyển đổi phản hồi HTTP lỗi thành đối tượng `ProviderError` và lọc bỏ các khóa bí mật.
    */
   private async failure(
     response: Response,
@@ -542,7 +500,7 @@ export class OpenAiChatTransport implements ChatTransport {
     try {
       body = await response.text()
     } catch {
-      // A body that cannot be read must not hide the status. If the call was stopped, say that instead.
+      // Kiểm tra xem yêu cầu có bị ngắt giữa chừng trong lúc đọc nội dung hay không.
       const stop = attempt.interruption()
       if (stop !== null) return stop
       body = ''

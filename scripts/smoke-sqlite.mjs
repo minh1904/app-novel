@@ -1,5 +1,5 @@
-// Smoke test: node:sqlite must work inside the Electron main process.
-// Run with `pnpm smoke:sqlite` after every Electron upgrade.
+// Kiểm thử thực tế (smoke test): node:sqlite phải hoạt động được bên trong tiến trình chính của Electron.
+// Chạy bằng `pnpm smoke:sqlite` sau mỗi lần nâng cấp Electron.
 import { app } from 'electron'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'

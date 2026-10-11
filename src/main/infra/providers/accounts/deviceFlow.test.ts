@@ -16,8 +16,7 @@ import {
 import { ProviderError } from '../types'
 
 /**
- * The device-code logins against a fake server (change `subscription-providers`, tasks 3.2, 3.4, 3.5, 4.1,
- * 4.4): each answer the provider can give, and what Mira makes of it.
+ * Kiểm thử luồng đăng nhập bằng mã thiết bị với máy chủ giả lập, bao gồm các kịch bản phản hồi từ nhà cung cấp.
  */
 
 const NOW = 1_800_000_000_000
@@ -251,7 +250,7 @@ describe('Copilot token and models', () => {
       { id: 'gpt-5.4', reasoningLevels: ['low', 'high'] },
       { id: 'claude-sonnet-4.6', reasoningLevels: [] }
     ])
-    // When the flag would hide every model, it is ignored.
+    // Khi cờ ẩn áp dụng cho tất cả mô hình, cờ này sẽ được bỏ qua.
     expect(
       parseCopilotModels({
         data: [{ id: 'only', capabilities: { type: 'chat' }, model_picker_enabled: false }]

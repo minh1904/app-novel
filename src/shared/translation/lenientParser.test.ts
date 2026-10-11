@@ -104,8 +104,7 @@ Chúc bạn một ngày tốt lành!`
     expect(parseTranslationResponse(raw)).toEqual([])
   })
 
-  // Các mẫu dưới đây lấy từ phản hồi thật của gemini-3.5-flash-lite (Lab n4696dd, 2026-10-07): 163/544
-  // phản hồi hỏng cả mảng vì một object, và regex dự phòng làm mất mọi câu thoại có nhãn.
+  // Trường hợp phản hồi bị lỗi toàn bộ mảng do một object, khiến regex dự phòng có thể bỏ sót các câu thoại có nhãn.
   it('một object hỏng không làm mất các câu thoại có nhãn còn lại', () => {
     const raw =
       '[{"id":"[1]","speaker_to_listener":"Milly→Rion","self_ref":"tôi","addr_ref":"cậu","dst":"“Xin lỗi cậu.”"},' +

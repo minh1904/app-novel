@@ -16,7 +16,7 @@ import {
   type ModelSettings
 } from './modelSettings'
 
-/** The first message a rejected value gives, or `null` when it is accepted. */
+/** Trả về thông báo lỗi đầu tiên khi giá trị không hợp lệ, hoặc `null` nếu hợp lệ. */
 function rejection(input: unknown): string | null {
   const result = v.safeParse(modelSettingsSchema, input)
   return result.success ? null : (result.issues[0]?.message ?? null)
@@ -122,12 +122,12 @@ describe('modelSettingsSchema', () => {
 
     it('rejects more than 4 KB, counted in bytes rather than characters', () => {
       const at = SETTINGS_LIMITS.jsonBytes
-      // `{"a":"…"}` is 8 bytes of frame; fill the rest with ASCII to land exactly on the limit.
+      // `{"a":"…"}` chiếm 8 byte khung; điền phần còn lại bằng ASCII để đạt đúng giới hạn.
       const fits = { a: 'x'.repeat(at - 8) }
       const over = { a: 'x'.repeat(at - 7) }
       expect(rejection({ extraBody: { enabled: true, value: fits } })).toBeNull()
       expect(rejection({ extraBody: { enabled: true, value: over } })).toMatch(/4 KB/)
-      // Two-byte characters: 2,100 of them are 2,100 characters but 4,200 bytes.
+      // Ký tự 2 byte: 2.100 ký tự tương đương 4.200 byte.
       expect(rejection({ extraBody: { enabled: true, value: { a: 'đ'.repeat(2100) } } })).toMatch(
         /4 KB/
       )
@@ -196,8 +196,7 @@ describe('modelSettingsSchema', () => {
 })
 
 describe('what may not be overridden', () => {
-  // Spelled out on purpose. The `it.each` tests above walk these constants, so they cannot notice a name
-  // being removed from one; this is what pins the lists to the spec (design D8).
+  // Liệt kê rõ ràng để đảm bảo các trường cấm không bị vô tình gỡ bỏ.
   it('keeps the body fields Mira reads the answer by', () => {
     expect([...FORBIDDEN_BODY_FIELDS]).toEqual([
       'model',

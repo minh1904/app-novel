@@ -18,15 +18,15 @@ import { ACCOUNT_NAMES, type AccountCredentials, type AccountSecret } from './ac
 import { redactSecrets } from '../../infra/providers/redact'
 
 /**
- * Logging in to an account with a device code, run in the main process (change `subscription-providers`,
- * design D8). The renderer starts a login, then reads its status every two seconds; the polling of the
- * provider, the tokens and the storing of them all stay here.
+ * Quy trình đăng nhập tài khoản bằng mã thiết bị (device code) trong tiến trình main.
+ * Renderer khởi tạo đăng nhập và thăm dò trạng thái định kỳ; việc gửi yêu cầu đến nhà cung cấp,
+ * nhận và lưu trữ token được quản lý tập trung tại đây.
  *
- * Cancel and store are tied together: a login cancelled while its tokens are being sealed stores nothing,
- * because the check happens again inside the transaction that writes them.
+ * Tác vụ hủy và lưu trữ được đồng bộ chặt chẽ: nếu phiên đăng nhập bị hủy trong khi token đang được mã hóa,
+ * dữ liệu sẽ không được ghi vào cơ sở dữ liệu.
  */
 
-/** Hosts a login may open in the browser. Nothing else, whatever a provider answers. */
+/** Danh sách máy chủ được phép mở trên trình duyệt khi xác thực đăng nhập. */
 export const LOGIN_HOSTS = ['auth.openai.com', 'github.com']
 
 export function isLoginUrl(url: string): boolean {
@@ -38,7 +38,7 @@ export function isLoginUrl(url: string): boolean {
   }
 }
 
-/** Network errors in a row that are retried without a word before the login is said to have failed. */
+/** Số lần thử lại tối đa trong im lặng khi gặp lỗi mạng trước khi báo lỗi phiên đăng nhập. */
 export const QUIET_RETRIES = 6
 
 const ACCOUNT_BASES: Record<OAuthProvider, { baseUrl: string; providerId: string | null }> = {
@@ -62,14 +62,14 @@ export interface AccountLoginsOptions {
   fetchImpl: typeof fetch
   now: () => number
   newId: () => string
-  /** Opens the verification page; main passes Electron's `shell.openExternal`. */
+  /** Hàm mở trang xác minh trên trình duyệt mặc định. */
   openExternal?: (url: string) => Promise<void>
   sleep?: (ms: number) => Promise<void>
-  /** After tokens are stored: the account's models are listed and added as entries. */
+  /** Hàm gọi lại sau khi token được lưu: nạp danh sách model và thêm vào danh sách cấu hình. */
   onConnected?: (connectionId: string) => Promise<void>
 }
 
-/** The message of an error, with whatever token it might carry taken out. */
+/** Loại bỏ các chuỗi nhạy cảm (token) khỏi thông báo lỗi. */
 function scrub(error: unknown, secrets: string[]): string {
   return redactSecrets(error instanceof Error ? error.message : String(error), secrets)
 }
@@ -82,7 +82,7 @@ export class AccountLogins {
   async start(provider: OAuthProvider): Promise<LoginStart> {
     const { fetchImpl, now, newId } = this.options
     this.sweep()
-    // One login per provider at a time: a new start replaces an old one still waiting.
+    // Mỗi nhà cung cấp chỉ có một phiên đăng nhập tại một thời điểm: hủy phiên cũ nếu còn chờ.
     for (const session of this.sessions.values()) {
       if (session.provider === provider && session.status.state === 'pending')
         this.cancel(session.id)
@@ -129,7 +129,7 @@ export class AccountLogins {
     if (session.status.state === 'pending') session.status = { state: 'cancelled' }
   }
 
-  /** Opens the verification page again (the "Mở lại trang xác minh" link). */
+  /** Mở lại trang xác minh trên trình duyệt. */
   async reopen(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId)
     if (session && isLoginUrl(session.code.verificationUrl)) {
@@ -137,7 +137,7 @@ export class AccountLogins {
     }
   }
 
-  /** Sessions past their code's lifetime are dropped when a new login starts. */
+  /** Dọn dẹp các phiên đăng nhập đã quá hạn mã xác thực khi bắt đầu phiên mới. */
   private sweep(): void {
     const now = this.options.now()
     for (const [id, session] of this.sessions) {
@@ -201,7 +201,7 @@ export class AccountLogins {
     if (!session.cancelled) session.status = status
   }
 
-  /** Seals the tokens, then writes them and the connection in one transaction, unless the login was cancelled. */
+  /** Mã hóa token và ghi vào cơ sở dữ liệu trong cùng một transaction nếu phiên chưa bị hủy. */
   private async store(
     session: Session,
     result: CodexTokens | { githubToken: string }
@@ -263,7 +263,7 @@ export class AccountLogins {
   }
 }
 
-/** The GitHub login of a token, for the card; `null` when GitHub does not say. */
+/** Lấy tên tài khoản GitHub (username) từ token để hiển thị; trả về `null` nếu không lấy được. */
 async function githubLogin(fetchImpl: typeof fetch, token: string): Promise<string | null> {
   try {
     const response = await fetchImpl('https://api.github.com/user', {

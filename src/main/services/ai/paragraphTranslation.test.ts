@@ -588,7 +588,7 @@ describe('the context snapshot of a run', () => {
     expect(h.messages[1][1].content).toContain('đoạn cũ')
     expect(h.messages[1][1].content).not.toContain('đoạn mới')
 
-    // Both batches point at the same snapshot.
+    // Cả hai lô đều trỏ tới cùng một bản chụp ngữ cảnh.
     const proposal = h.library.withWork(h.workId, (db) => getProposal(db, first.proposalId!))
     const traces = proposal.context as Array<{ snapshot: { runKey: string; hash: string } }>
     expect(traces).toHaveLength(2)
@@ -800,7 +800,7 @@ describe('the output mode of a run', () => {
       },
       { outputSchema: true }
     )
-    // A limit of 1 token: one batch per paragraph.
+    // Giới hạn 1 token: mỗi lô xử lý một đoạn.
     h.translator['options'].connections.updateEntry(h.entryId, { settings: { inputTokenLimit: 1 } })
     const results = await runAll(h)
     expect(results.map((result) => result.output.mode)).toEqual([
@@ -809,7 +809,7 @@ describe('the output mode of a run', () => {
       'array'
     ])
     expect(results[1].output.reason).toBe('run_fell_back')
-    // One rejected call, then every call without schema.
+    // Một lệnh gọi bị từ chối, sau đó các lệnh gọi tiếp theo đều không gửi kèm schema.
     expect(h.bodies.filter((body) => 'response_format' in body)).toHaveLength(1)
     const proposal = h.library.withWork(h.workId, (db) => getProposal(db, results[0].proposalId!))
     expect(proposal.context[0]).toMatchObject({ outputMode: 'object→fallback', fallbacks: 1 })

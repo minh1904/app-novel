@@ -1,10 +1,10 @@
 /**
- * Statistical algorithms for measurement harness (Cohen's Kappa, bootstrap CI, seeded PRNG).
- * Pure functions with no Node/DOM dependencies.
+ * Các thuật toán thống kê cho hệ thống đo đạc (Cohen's Kappa, khoảng tin cậy bootstrap, PRNG có seed).
+ * Các hàm thuần túy không phụ thuộc Node/DOM.
  */
 
 /**
- * Seeded PRNG using mulberry32 for deterministic random numbers.
+ * Bộ sinh số ngẫu nhiên giả (PRNG) sử dụng thuật toán mulberry32 với seed cố định để đảm bảo tính tất định.
  */
 export function createPrng(seed: number): () => number {
   let s = seed >>> 0
@@ -17,7 +17,7 @@ export function createPrng(seed: number): () => number {
 }
 
 /**
- * Computes Cohen's Kappa coefficient between two raters over categories ['A', 'B', 'tie'].
+ * Tính hệ số Cohen's Kappa giữa hai người chấm trên các phân loại ['A', 'B', 'tie'].
  */
 export function computeCohenKappa(
   rater1: Array<'A' | 'B' | 'tie'>,
@@ -43,7 +43,7 @@ export function computeCohenKappa(
 
   const pO = agreeCount / n
 
-  // Expected agreement pE
+  // Tỷ lệ đồng thuận kỳ vọng pE
   const pE =
     (counts1.A / n) * (counts2.A / n) +
     (counts1.B / n) * (counts2.B / n) +
@@ -62,8 +62,8 @@ export function computeCohenKappa(
 }
 
 /**
- * Bootstrap confidence interval for chapter-level resampled win rate (design D5, D6).
- * 2000 resamples by default, seed = 42 for determinism.
+ * Khoảng tin cậy bootstrap cho tỷ lệ thắng tái lấy mẫu ở cấp độ chương.
+ * Mặc định 2000 lần tái lấy mẫu, seed = 42 để đảm bảo tính tất định.
  */
 export function bootstrapWinRateCI(
   chapterStats: Array<{ aWins: number; bWins: number }>,

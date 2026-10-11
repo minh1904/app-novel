@@ -1,6 +1,5 @@
 /**
- * Kết cục từng đoạn của một lần dịch Lab, và hai trục báo cáo dựng trên đó (change
- * `lab-completion-quality-report`).
+ * Kết cục từng đoạn của một lần dịch Lab, và hai trục báo cáo dựng trên đó.
  *
  * - **Hoàn thành** tính trên toàn tập định dịch, không loại đoạn nào.
  * - **Chất lượng** chỉ tính trên các đoạn `translated` ở mọi biến thể đang so: một đoạn bị chặn ở một
@@ -10,9 +9,8 @@
  */
 
 /**
- * `budget_exhausted`: đoạn không được gửi hoặc không được hỏi lại vì ngân sách lời gọi của lượt đã hết
- * (change `translation-call-budget`). Tách khỏi `missing` vì thử lại có ích và vì nó nói về cấu hình
- * ngân sách, không về model.
+ * `budget_exhausted`: đoạn không được gửi hoặc không được hỏi lại vì ngân sách lời gọi của lượt đã hết.
+ * Tách khỏi `missing` vì thử lại có ích và vì nó nói về cấu hình ngân sách, không về model.
  */
 export const OUTCOMES = [
   'translated',

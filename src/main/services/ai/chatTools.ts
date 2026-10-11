@@ -28,41 +28,35 @@ import {
 import { addressingLines, approvedDyads, glossaryLines } from './translate/translatePrompt'
 
 /**
- * What the model may look up for itself, and what it may **propose**.
+ * Các công cụ AI có thể dùng để tra cứu dữ liệu và đề xuất sửa đổi.
  *
- * One rule decides everything in this file: **tool được đọc, được trỏ và được đề xuất; chỉ người dùng
- * mới được ghi** (change `agentic-chat`, which replaced D12 of `ai-chat`). Reading tools change nothing.
- * Writing tools create a proposal that waits for review, or a glossary entry that waits for approval; no
- * tool here changes the text of a chapter or an approved entry, so a translation still never changes
- * without its owner seeing the change first.
+ * Nguyên tắc bất biến: tool chỉ được đọc, được trỏ và được đề xuất; chỉ người dùng
+ * mới có quyền áp dụng vào văn bản. Các công cụ đọc không làm thay đổi dữ liệu.
+ * Các công cụ ghi chỉ tạo đề xuất chờ duyệt hoặc thuật ngữ chờ duyệt; không công cụ nào
+ * tự ý thay đổi văn bản của chương hay thuật ngữ đã duyệt.
  *
- * Scope is bound, not asked for. `workId` is fixed when the tools are built, so the model has no
- * parameter with which to name a different work: reaching outside the current one is not refused at
- * runtime, it is unsayable. Writing tools are further bound to the chapter the user has open.
+ * Phạm vi hoạt động gắn chặt với tác phẩm (`workId`) và chương hiện tại mà người dùng đang mở.
  */
 
-/** The parts of `LibraryStore` (and the context store) that the tools read. */
+/** Các phần của kho lưu trữ mà các công cụ có quyền đọc. */
 export interface ChatToolLibrary {
   listChapters(workId: string): ChapterItem[]
   readText(workId: string, chapterId: string, side: TextSide): TextRecord
-  /** The alignment links of a chapter: the only way a tool names the other side of a paragraph. */
+  /** Các liên kết gióng hàng của chương: phương tiện duy nhất để đối chiếu hai phía của đoạn văn. */
   listLinks(workId: string, chapterId: string): LinkRecord[]
-  /**
-   * One side of every chapter in one read. Optional: without it `search_work` reads chapter by chapter,
-   * which on a 242-chapter work was most of a 700 ms search.
-   */
+  /** Đọc nội dung một phía của toàn bộ các chương trong một lần đọc để tối ưu tìm kiếm. */
   readSideContents?(workId: string, side: TextSide): Map<string, string>
-  /** Glossary terms of the work, every status; the tool keeps only the approved ones. */
+  /** Thuật ngữ ngữ cảnh của tác phẩm; công cụ chỉ giữ lại các mục đã duyệt. */
   listGlossary?(workId: string): ContextEntryItem[]
-  /** Addressing pairs in effect at a chapter, every status; the tool keeps only the approved ones. */
+  /** Cặp xưng hô có hiệu lực tại chương; công cụ chỉ giữ lại các mục đã duyệt. */
   listAddressing?(workId: string, chapterId: string): AddressingDyadResolved[]
 }
 
-/** A text proposal as the writing tools hand it over: one part, anchored at the revision read now. */
+/** Đề xuất chỉnh sửa văn bản do công cụ ghi tạo ra, neo vào bản sửa đổi hiện tại. */
 export interface ToolProposalInput {
   turnId: string
   chapterId: string
-  /** `turnId:n`, so a call that runs twice makes one proposal. */
+  /** Định danh lệnh dạng `turnId:n` để tránh tạo trùng đề xuất khi gọi lại. */
   commandId: string
   sourceRev: number
   sourceContent: string
@@ -80,8 +74,8 @@ export interface ToolProposalInput {
 }
 
 /**
- * The only writes the tools can reach. Both create something that waits for the user; neither changes the
- * text of a chapter or an approved entry. Absent, the writing tools answer that they are not available.
+ * Các quyền ghi duy nhất của công cụ: tạo đề xuất hoặc thuật ngữ chờ duyệt.
+ * Nếu không có, các công cụ ghi sẽ thông báo không khả dụng.
  */
 export interface ChatToolWrites {
   createProposal(
@@ -94,7 +88,7 @@ export interface ChatToolWrites {
   ): { entryId: string }
 }
 
-/** The turn the tools serve: where the user is, and which turn a proposal belongs to. */
+/** Phạm vi của lượt hội thoại: vị trí hiện tại của người dùng và lượt mà đề xuất thuộc về. */
 export interface ChatTurnScope {
   chapterId: string
   location: ChatLocation
@@ -102,49 +96,42 @@ export interface ChatTurnScope {
   writes?: ChatToolWrites
 }
 
-/** A request from the model, as it comes off the wire. */
+/** Yêu cầu gọi tool từ model gửi về. */
 export interface ToolCall {
   id: string
   name: string
-  /** Raw JSON; models do get this wrong, so it is parsed defensively. */
+  /** Tham số JSON thô từ model, cần xử lý an toàn phòng trường hợp sai định dạng. */
   args: string
 }
 
 export interface ToolResult {
   id: string
   name: string
-  /** One line for the panel: what was read or proposed, never the content itself. */
+  /** Tóm tắt một dòng hiển thị trên giao diện: tóm tắt thao tác đọc hoặc đề xuất. */
   detail: string
-  /** What goes back to the model. */
+  /** Nội dung phản hồi gửi lại cho model. */
   content: string
   status: 'ok' | 'error'
-  /** Set when a writing tool created something. */
+  /** Gắn kèm khi công cụ ghi tạo ra đề xuất mới. */
   proposal?: ChatToolProposal
-  /**
-   * Characters this call costs the turn's budget: what it returned, plus the text a writing tool took in.
-   * Absent means `content.length`.
-   */
+  /** Số ký tự tiêu tốn vào ngân sách của lượt hội thoại. */
   charge?: number
 }
 
-/** Longest text a single read may return. A longer chapter is read in pages, never cut silently. */
+/** Độ dài văn bản tối đa cho một lần đọc; chương dài hơn sẽ đọc theo trang. */
 export const TOOL_TEXT_MAX = 20_000
-/** Most entries one glossary lookup returns; the model narrows with `query` for the rest. */
+/** Số lượng mục thuật ngữ tối đa trả về cho một lần tra cứu. */
 export const GLOSSARY_LIMIT_MAX = 50
-/**
- * Proposals one turn may create, terms included (D7 of change `agentic-chat`). Ten covers a turn that
- * reviews a whole chapter and still fits on one screen of cards to review.
- */
+/** Số lượng đề xuất tối đa một lượt hội thoại có thể tạo ra. */
 export const MAX_PROPOSALS_PER_TURN = 10
 
 const PARAGRAPH_RULE = 'Một đoạn là một dòng không trống, đếm từ 1 như read_chapter.'
 
 /**
- * The tool list sent to the provider, in OpenAI's shape.
+ * Danh sách định nghĩa công cụ gửi cho nhà cung cấp theo định dạng OpenAI.
  *
- * `get_current_chapter` comes first: "this chapter" and "this paragraph" in a question mean the user's
- * position, and the model should look that up before guessing. Writing tools say in their description
- * that they only propose.
+ * `get_current_chapter` đứng đầu tiên để model tra cứu vị trí người dùng trước khi phỏng đoán.
+ * Các công cụ ghi nêu rõ trong mô tả rằng chúng chỉ tạo đề xuất chứ không tự ý sửa đổi.
  */
 export const CHAT_TOOL_DEFINITIONS = [
   {
@@ -369,7 +356,7 @@ const isInteger = (value: unknown): value is number =>
 const span = (from: number, to: number): string =>
   from === to ? `đoạn ${from}` : `đoạn ${from}–${to}`
 
-/** Non-blank lines of what the model wrote, each one paragraph. */
+/** Từng dòng không trống do model viết, mỗi dòng là một đoạn văn bản. */
 function paragraphsOf(text: string): string[] {
   return text
     .split(/\r?\n/)
@@ -377,18 +364,17 @@ function paragraphsOf(text: string): string[] {
     .filter((line) => line !== '')
 }
 
-/** What stands between two paragraphs of `content`: the doc's own habit, `\n\n` when it has none yet. */
+/** Chuỗi phân tách giữa các đoạn văn bản trong `content` (mặc định là `\n\n`). */
 function separatorOf(content: string, spans: ParagraphSpan[]): string {
   return spans.length > 1 ? content.slice(spans[0].lineEnd, spans[1].lineStart) : '\n\n'
 }
 
 export interface ToolRunOptions {
   /**
-   * Characters the turn may still spend on tools (`chatService` keeps the count). A read is cut to fit;
-   * at zero, reading tools answer that the turn's budget is spent instead of reading.
+   * Số ký tự còn lại mà lượt hội thoại có thể dùng cho tool.
    */
   remainingChars?: number
-  /** The turn's whole budget, named in the message once it is spent. */
+  /** Tổng ngân sách ký tự của lượt hội thoại. */
   turnBudget?: number
 }
 
@@ -396,7 +382,7 @@ export interface ChatToolRunner {
   run(call: ToolCall, options?: ToolRunOptions): ToolResult
 }
 
-/** What a reading tool answers once the turn has received all the text it may. */
+/** Phản hồi trả về khi lượt hội thoại đã sử dụng hết ngân sách ký tự đọc. */
 export function budgetSpent(call: ToolCall, budget: number): ToolResult {
   const message = `Hết ngân sách đọc của lượt (${formatCount(budget)} ký tự)`
   return {
@@ -424,13 +410,13 @@ export function createChatTools(
   workId: string,
   scope?: ChatTurnScope
 ): ChatToolRunner {
-  /** The revision each chapter side was last read at in this turn: a write against an older one is refused. */
+  /** Bản sửa đổi gần nhất của từng phía văn bản chương được đọc trong lượt này; từ chối ghi đè lên bản cũ. */
   const readAt = new Map<string, number>()
   const noteRead = (chapterId: string, side: TextSide, rev: number): void => {
     readAt.set(chapterId + ':' + side, rev)
   }
   let proposals = 0
-  /** Write calls so far, numbering the command id of each (`turnId:n`). */
+  /** Số lệnh gọi ghi đã thực hiện, dùng đánh số định danh lệnh `turnId:n`. */
   let writeCount = 0
 
   function chapterByNumber(call: ToolCall, number: unknown): ChapterItem | ToolResult {
@@ -698,7 +684,7 @@ export function createChatTools(
       }
     }
 
-    // Links only for the chapters that are shown: reading every chapter's alignment would be wasted.
+    // Chỉ đọc liên kết cho các chương có kết quả hiển thị để tránh lãng phí hiệu năng.
     const shown = hits.slice(0, SEARCH_RESULTS_MAX)
     const sides = new Map<string, { source: TextRecord; target: TextRecord; links: LinkRecord[] }>()
     const otherSide = sideName(side === 'source' ? 'target' : 'source')
@@ -730,7 +716,7 @@ export function createChatTools(
       (dropped > 0
         ? `; trả ${shown.length}, bỏ ${formatCount(dropped)} — thu hẹp chuỗi tìm để xem phần còn lại.`
         : '.')
-    // Keep under the turn's budget by showing fewer results rather than cutting one in half.
+    // Giữ trong ngân sách lượt bằng cách giảm số lượng kết quả thay vì cắt ngang một kết quả.
     let kept = lines.length
     const size = (count: number): number =>
       header.length + lines.slice(0, count).reduce((sum, line) => sum + line.length + 1, 0)
@@ -890,7 +876,7 @@ export function createChatTools(
     const baseFrom = spans[from - 1].lineStart
     const baseTo = spans[to - 1].lineEnd
     const before = target.content.slice(baseFrom, baseTo)
-    // Keep the doc's own blank lines: the same separators when the count matches, its habit otherwise.
+    // Giữ nguyên các dòng trống của tài liệu: dùng cùng ký tự phân cách khi số lượng khớp.
     const separators = spans
       .slice(from - 1, to - 1)
       .map((line, index) => target.content.slice(line.lineEnd, spans[from + index].lineStart))
@@ -985,9 +971,8 @@ export function createChatTools(
       .map((line) => source.content.slice(line.lineStart, line.lineEnd))
       .join('\n\n')
 
-    // Where the new paragraphs go. An empty translation takes them as the translate path does; otherwise
-    // they sit next to the nearest source paragraph that is linked, before if none comes earlier. With no
-    // linked neighbour at all the part needs placing by hand, as a chapter translation part would.
+    // Xác định vị trí chèn đoạn dịch mới: bản dịch trống thì chèn vào đầu; nếu không thì đặt cạnh
+    // đoạn gốc gần nhất đã có liên kết. Nếu không có lân cận liên kết nào thì để người dùng tự đặt vị trí.
     let part: ToolProposalInput['part'] = {
       baseFrom: null,
       baseTo: null,

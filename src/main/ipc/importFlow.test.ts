@@ -15,8 +15,8 @@ import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
 
 /**
- * The import path end to end on a real store: text prepared by the shared functions, saved through
- * the same handler the app uses, read back after closing and reopening the library.
+ * Toàn bộ luồng import trên kho lưu trữ thật: văn bản chuẩn bị bằng hàm dùng chung, lưu qua
+ * handler mà ứng dụng sử dụng, và đọc lại sau khi đóng rồi mở lại thư viện.
  */
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -116,7 +116,7 @@ describe('importing a source into a chapter', () => {
   it('refuses a stale revision, keeps the old source, and explains', async () => {
     const { library, workId, chapterId, api } = setup()
     await saveImport(api, { workId, chapterId }, 0, plan('最初の文。'))
-    // The dialog was opened when the chapter was empty (revision 0); someone saved in between.
+    // Hộp thoại được mở khi chương còn trống (revision 0); có người đã lưu trong khoảng thời gian đó.
     const result = await saveImport(api, { workId, chapterId }, 0, plan('二番目の文。'))
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -176,15 +176,15 @@ describe('replacing a source that already has a translation and links', () => {
     )
     expect(replaced.ok).toBe(true)
 
-    // The translation is exactly as it was, ids included.
+    // Bản dịch giữ nguyên hoàn toàn như cũ, bao gồm cả các id.
     expect(library.readText(workId, chapterId, 'target')).toEqual(target)
-    // The source is new, with new segment ids.
+    // Bản gốc là nội dung mới, với các segment id mới.
     const newSource = library.readText(workId, chapterId, 'source')
     expect(newSource.content).toBe('丙。丁。戊。')
     expect(newSource.segments).toHaveLength(3)
     const oldIds = new Set(oldSource.segments.map((s) => s.id))
     expect(newSource.segments.some((s) => oldIds.has(s.id))).toBe(false)
-    // The link survives, flagged for review, with only its translation member left.
+    // Liên kết vẫn còn, được đánh dấu cần xem lại, và chỉ còn lại phần tử thuộc bản dịch.
     const after = library.listLinks(workId, chapterId).find((l) => l.id === link.id)
     expect(after?.status).toBe('needs_review')
     expect(after?.members).toEqual([target.segments[0].id])

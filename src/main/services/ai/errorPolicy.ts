@@ -2,32 +2,28 @@ import type { TranslateErrorKind, TranslateFailure } from '../../../shared/contr
 import type { ProviderError, RequestProblem, SentParameters } from '../../infra/providers/types'
 
 /**
- * What each task does with each kind of failure, decided in one place in main (D5 of change
- * `provider-error-reasons`).
+ * Quy định xử lý tập trung cho từng loại lỗi phát sinh trong các tác vụ AI (dịch thuật, chat, probe).
  *
- * The provider's classification says **what happened**; this table says **what the task may do about it**.
- * The renderer follows `haltsRun` and `retryable` as given and does not judge by `kind` itself, so the
- * policy can change without touching the screens, and it is tested here.
+ * Phân loại của nhà cung cấp xác định chuyện gì đã xảy ra; bảng này quy định tác vụ phản ứng thế nào.
+ * Giao diện tuân thủ các cờ `haltsRun` và `retryable` do chính sách trả về mà không tự xét theo `kind`.
  */
 
 export type ErrorTask = 'translate' | 'chat' | 'probe'
 
 /**
- * A provider or translation failure kind, plus the two batch outcomes that are not a thrown error: some
- * segments blocked by the filter, some segments missing after the repair round.
+ * Các loại lỗi từ nhà cung cấp hoặc tiến trình dịch thuật, bao gồm cả các kết quả phân đoạn bị chặn hoặc bị thiếu sau sửa lỗi.
  */
 export type PolicyKind = TranslateErrorKind | 'refused_segments' | 'missing_segments'
 
 export interface ErrorPolicy {
-  /** Translation: stop the rest of the chapter's batches. */
+  /** Dịch thuật: dừng toàn bộ các lô còn lại của chương. */
   haltsRun: boolean
-  /** Chat: asking the same thing again can succeed. */
+  /** Chat: có thể thử lại với cùng nội dung câu hỏi. */
   retryable: boolean
-  /** Connection check: which storage error code the failure becomes; `null` when it never reaches there. */
+  /** Kiểm tra kết nối: mã lỗi lưu trữ tương ứng; `null` nếu không liên quan. */
   probeCode: 'validation' | 'io' | null
   /**
-   * Another model could get past it: the dialog offers "Dịch tiếp bằng …" with the first fallback of
-   * Settings (change `hermes-settings-modal`, task 4.6). The chapter is not switched on its own.
+   * Có thể khắc phục bằng model dự phòng: hiển thị gợi ý tiếp tục bằng model khác.
    */
   fallback: boolean
 }
@@ -40,24 +36,23 @@ const TABLE: Record<PolicyKind, ErrorPolicy> = {
   network: { haltsRun: false, retryable: true, probeCode: 'io', fallback: true },
   timeout: { haltsRun: false, retryable: true, probeCode: 'io', fallback: true },
   invalid_response: { haltsRun: false, retryable: true, probeCode: 'io', fallback: true },
-  // The whole call blocked: retrying the same content is pointless, but other batches may pass.
+  // Toàn bộ lệnh gọi bị chặn: thử lại cùng nội dung sẽ vô ích, nhưng các lô khác vẫn có thể tiếp tục.
   refused: { haltsRun: false, retryable: false, probeCode: 'validation', fallback: false },
-  // A few segments of a batch blocked: the rest of the chapter goes on.
+  // Một vài phân đoạn trong lô bị từ chối: phần còn lại của chương vẫn tiếp tục dịch.
   refused_segments: { haltsRun: false, retryable: false, probeCode: null, fallback: false },
   missing_segments: { haltsRun: false, retryable: true, probeCode: null, fallback: false },
   conflict: { haltsRun: true, retryable: false, probeCode: null, fallback: false },
-  // The run's call budget is spent: the other batches keep their reserved main call, and a retry of the
-  // failed segments is granted a fresh share, so neither stopping nor "no use retrying" is right.
+  // Hết ngân sách lượt gọi: các lô khác vẫn giữ lượt gọi chính đã cấp trước, cho phép thử lại phân đoạn lỗi.
   budget_exhausted: { haltsRun: false, retryable: true, probeCode: null, fallback: false },
   cancelled: { haltsRun: true, retryable: false, probeCode: null, fallback: false }
 }
 
-/** The policy for one failure in one task. The table is the same for every task; the task picks its field. */
+/** Lấy chính sách xử lý lỗi cho từng loại sự cố. */
 export function taskErrorPolicy(_task: ErrorTask, kind: PolicyKind): ErrorPolicy {
   return TABLE[kind]
 }
 
-/** A translation batch failure with main's decision on whether it stops the chapter's run. */
+/** Gắn chính sách tương ứng vào thông tin lỗi của lô dịch thuật. */
 export function withPolicy(
   core: Omit<TranslateFailure, 'haltsRun' | 'fallback'>
 ): TranslateFailure {
@@ -77,9 +72,7 @@ function describeSent(sent: SentParameters): string[] {
 }
 
 /**
- * The person-facing sentence for a request the provider would not take: its own words, what Mira sent, and
- * where to look. Names only what is not secret (`SentParameters` carries no values of `extra_body` and no
- * headers).
+ * Tạo câu thông báo thân thiện cho lỗi yêu cầu bị từ chối: hiển thị phản hồi từ nhà cung cấp và tham số đã gửi (không chứa dữ liệu nhạy cảm).
  */
 export function describeInvalidRequest(
   providerMessage: string,
@@ -104,7 +97,7 @@ export function describeInvalidRequest(
   )
 }
 
-/** The message a provider error is shown with. Only a request error is reworded. */
+/** Chuỗi mô tả lỗi từ nhà cung cấp; chuẩn hóa lại thông báo đối với lỗi invalid_request. */
 export function describeProviderError(error: ProviderError): string {
   if (error.kind !== 'invalid_request') return error.message
   return describeInvalidRequest(error.message, error.sent, error.requestProblem)

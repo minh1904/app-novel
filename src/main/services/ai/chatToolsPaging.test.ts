@@ -9,8 +9,8 @@ import { SEARCH_RESULTS_MAX } from './chatSearch'
 import { TOOL_TEXT_MAX, createChatTools, type ChatToolLibrary } from './chatTools'
 
 /**
- * Paged reads and work-wide search (change `chat-tools-paging-search`), through the tool runner as the
- * model sees it: the text it gets back and the one line the panel shows.
+ * Đọc phân trang và tìm kiếm toàn bộ tác phẩm qua trình thực thi công cụ
+ * theo góc nhìn của mô hình: văn bản trả về và dòng tóm tắt hiển thị trên giao diện.
  */
 
 const WORK = 'work-1'
@@ -27,7 +27,7 @@ function chapter(number: number): ChapterItem {
   }
 }
 
-/** A work whose texts and revisions can change between calls, and which records every read. */
+/** Tác phẩm giả lập có nội dung và phiên bản thay đổi giữa các lần gọi, đồng thời ghi nhận mọi lượt đọc. */
 function fakeWork(chapters: number): ChatToolLibrary & {
   texts: Map<string, { content: string; rev: number }>
   writes: number
@@ -52,7 +52,7 @@ const call = (name: string, args: unknown): { id: string; name: string; args: st
   args: JSON.stringify(args)
 })
 
-/** The page text of a `read_chapter` answer: everything after the one-line header. */
+/** Nội dung trang văn bản của kết quả `read_chapter`: toàn bộ nội dung phía sau dòng tiêu đề đầu tiên. */
 const pageOf = (content: string): string => content.slice(content.indexOf('\n') + 1)
 const cursorOf = (content: string): string | undefined => /con trỏ: (\S+)/.exec(content)?.[1]
 

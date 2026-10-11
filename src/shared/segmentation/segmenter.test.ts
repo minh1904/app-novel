@@ -56,7 +56,7 @@ describe('longSegments', () => {
 })
 
 describe('segment: invariants on random text', () => {
-  /** Small deterministic PRNG so a failing run can be replayed from its seed. */
+  /** Bộ sinh số ngẫu nhiên giả lập đơn giản, xác định để có thể phát lại chuỗi kiểm thử bị lỗi từ seed. */
   function rng(seed: number): () => number {
     let state = seed >>> 0
     return () => {
@@ -138,19 +138,19 @@ describe('segment: invariants on random text', () => {
           expect(range.end, label).toBeLessThanOrEqual(input.length)
           expect(/\s/.test(input[range.start]), label).toBe(false)
           expect(/\s/.test(input[range.end - 1]), label).toBe(false)
-          // A segment never spans two lines.
+          // Một segment không bao giờ trải rộng trên hai dòng.
           expect(input.slice(range.start, range.end).includes('\n'), label).toBe(false)
-          // Never between the halves of a surrogate pair.
+          // Không bao giờ cắt giữa hai nửa của một cặp surrogate pair.
           expect(/[\uD800-\uDBFF]$/.test(input.slice(range.start, range.end)), label).toBe(false)
           expect(/^[\uDC00-\uDFFF]/.test(input.slice(range.start, range.end)), label).toBe(false)
           previousEnd = range.end
         }
 
-        // No letter lost or repeated: the pieces, minus white space, are the text, minus white space.
+        // Không mất hoặc lặp ký tự nào: các đoạn ghép lại (bỏ khoảng trắng) đúng bằng văn bản ban đầu (bỏ khoảng trắng).
         const joined = ranges.map((r) => input.slice(r.start, r.end)).join('')
         expect(joined.replace(/\s/g, ''), label).toBe(input.replace(/\s/g, ''))
 
-        // Same input, same answer.
+        // Cùng đầu vào, kết quả luôn đồng nhất.
         expect(segment(input, lang), label).toEqual(ranges)
       }
     })
@@ -164,7 +164,7 @@ describe('segment: speed', () => {
     ['en', 'Mr. Smith went to Washington. He said, "Hello." It cost $3.50 today.\n']
   ] as const)('splits 300,000 characters of %s in under 500 ms', (lang, paragraph) => {
     const input = paragraph.repeat(Math.ceil(300_000 / paragraph.length)).slice(0, 300_000)
-    segment(input, lang) // warm the segmenter, whose first use loads its data
+    segment(input, lang) // làm nóng bộ phân đoạn (lần gọi đầu tiên sẽ nạp dữ liệu)
     const started = performance.now()
     const ranges = segment(input, lang)
     const elapsed = performance.now() - started

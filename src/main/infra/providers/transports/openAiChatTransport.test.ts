@@ -25,7 +25,7 @@ afterEach(() => {
 
 type Handler = (url: string, init: RequestInit) => Promise<Response> | Response
 
-/** A `fetch` that records what it was asked and answers with `handler`. */
+/** Triển khai `fetch` giả lập ghi nhận các yêu cầu và trả về kết quả qua `handler`. */
 function fetchFake(
   handler: Handler
 ): typeof fetch & { calls: Array<{ url: string; init: RequestInit }> } {
@@ -38,7 +38,7 @@ function fetchFake(
   return fake
 }
 
-/** Rejects the way a real `fetch` does when its signal aborts. */
+/** Từ chối yêu cầu tương tự như `fetch` thật khi signal bị hủy. */
 function untilAborted(signal: AbortSignal | null | undefined): Promise<never> {
   return new Promise((_resolve, reject) => {
     const fail = (): void => reject(new DOMException('The operation was aborted.', 'AbortError'))
@@ -53,7 +53,7 @@ const json = (body: unknown, status = 200, headers: Record<string, string> = {})
     headers: { 'content-type': 'application/json', ...headers }
   })
 
-/** An SSE body that sends `chunks` at once and then stays silent until the call is aborted. */
+/** Thân luồng SSE phát các khối dữ liệu ngay lập tức rồi giữ im lặng cho đến khi bị hủy. */
 function sseThenSilence(chunks: string[], signal?: AbortSignal | null): Response {
   const encoder = new TextEncoder()
   const body = new ReadableStream<Uint8Array>({
@@ -67,7 +67,7 @@ function sseThenSilence(chunks: string[], signal?: AbortSignal | null): Response
   return new Response(body, { status: 200, headers: { 'content-type': 'text/event-stream' } })
 }
 
-/** An SSE body that sends every chunk and then ends. */
+/** Thân luồng SSE phát toàn bộ các khối dữ liệu rồi kết thúc. */
 function sse(chunks: string[]): Response {
   const encoder = new TextEncoder()
   let index = 0
@@ -106,7 +106,7 @@ async function collect(stream: AsyncGenerator<ChatStreamEvent>): Promise<ChatStr
   return events
 }
 
-/** What a stream produced before it failed, and the error it failed with. */
+/** Dữ liệu luồng stream phát ra trước khi gặp lỗi cùng với lỗi tương ứng. */
 async function collectUntilError(
   stream: AsyncGenerator<ChatStreamEvent>
 ): Promise<{ events: ChatStreamEvent[]; error: unknown }> {
@@ -177,8 +177,7 @@ describe('buildChatBody', () => {
   })
 
   it('sends the reasoning effort the person chose to every endpoint, and never drops it', () => {
-    // It used to be dropped where a compat flag said the endpoint did not take it. Now the person's
-    // choice is sent, and an endpoint that dislikes it says so (design D7 of change `ai-model-settings`).
+    // Tham số cấu hình được gửi đi trực tiếp đến endpoint thay vì bị lược bỏ trước.
     for (const compat of [STANDARD, GEMINI, resolveCompat('some-gateway')]) {
       expect(buildChatBody({ ...ask, reasoningEffort: 'none' }, compat, false)).toMatchObject({
         reasoning_effort: 'none'
@@ -225,7 +224,7 @@ describe('buildChatBody', () => {
     expect(body.stream).toBe(true)
     expect(body.stream_options).toEqual({ include_usage: true })
     expect(body.tools).toEqual(tools)
-    // What is not protected still goes through.
+    // Các trường không thuộc danh sách bảo vệ vẫn được truyền qua.
     expect(body.top_k).toBe(5)
   })
 
@@ -333,7 +332,7 @@ describe('complete', () => {
   })
 
   it('returns a filtered answer with no text as "filter", not as a broken response', async () => {
-    // Gemini, OpenAI-compatible endpoint, when its content filter blocks the answer.
+    // Trường hợp endpoint tương thích OpenAI của Gemini chặn phản hồi bằng bộ lọc nội dung.
     const t = transport(
       fetchFake(() =>
         json({
@@ -430,13 +429,13 @@ describe('complete', () => {
     expect(error).toBeInstanceOf(ProviderError)
     expect((error as ProviderError).kind).toBe('invalid_request')
     expect((error as ProviderError).message).toContain('Unsupported parameter: temperature')
-    // The error carries what was sent, so the message can name it.
+    // Lỗi ghi nhận các tham số đã gửi để có thể thông báo chi tiết trong thông điệp.
     expect((error as ProviderError).sent).toEqual({
       temperature: 0.3,
       extraBodyKeys: [],
       responseFormat: false
     })
-    // No second call without the parameter: dropping it is the person's decision, not the app's.
+    // Không tự ý gọi lại lần hai mà thiếu tham số: việc bỏ tham số do người dùng quyết định.
     expect(fake.calls).toHaveLength(1)
     expect(JSON.parse(String(fake.calls[0]!.init.body))).toMatchObject({ temperature: 0.3 })
   })
@@ -673,7 +672,7 @@ describe('stream', () => {
     )
     const stream = t.stream(ask, { apiKey: null })
     await stream.next()
-    // The reader walks away after the first event.
+    // Bên đọc ngừng nhận dữ liệu sau sự kiện đầu tiên.
     await stream.return(undefined)
     expect(seen?.aborted).toBe(true)
   })
@@ -727,7 +726,7 @@ describe('deadlines', () => {
     )
     const pending = collectUntilError(t.stream(ask, { apiKey: null }))
     await vi.advanceTimersByTimeAsync(9_000)
-    // 9s in: past the idle limit but inside the first-byte limit, so still waiting.
+    // Tại giây thứ 9: đã quá giới hạn im lặng nhưng vẫn trong hạn byte đầu nên tiếp tục chờ.
     let settled = false
     void pending.then(() => (settled = true))
     await vi.advanceTimersByTimeAsync(0)
@@ -739,7 +738,7 @@ describe('deadlines', () => {
   it('answers `cancelled`, not `timeout`, when Cancel and the deadline both happened by the time the call fails', async () => {
     vi.useFakeTimers()
     const controller = new AbortController()
-    // A fetch that ignores its signal and fails only when told to, so that by then both reasons are true.
+    // `fetch` giả lập bỏ qua tín hiệu hủy cho đến khi được chỉ định.
     let failNow!: () => void
     const t = transport(
       fetchFake(

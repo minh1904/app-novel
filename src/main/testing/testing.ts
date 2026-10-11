@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach } from 'vitest'
 
-/** Creates temp directories that are removed after each test. Import only from test files. */
+/** Tạo thư mục tạm và tự động xóa sau mỗi test. Chỉ import từ các tệp test. */
 export function createTempDirs(): () => string {
   const dirs: string[] = []
   afterEach(() => {

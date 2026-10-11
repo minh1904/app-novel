@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { ProviderError } from '../types'
 import { Limiter } from './limiter'
 
-/** Lets queued promise callbacks run. */
+/** Cho phép các callback promise trong hàng đợi được thực thi. */
 const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('Limiter', () => {
@@ -70,7 +70,7 @@ describe('Limiter', () => {
 
     release()
     await next
-    // The place went to the call behind the cancelled one, not to the cancelled one.
+    // Slot được trao cho cuộc gọi xếp sau cuộc gọi bị hủy.
     expect(nextStarted).toBe(true)
     expect(limiter.inFlight).toBe(1)
   })
@@ -127,7 +127,7 @@ describe('Limiter.setLimit', () => {
 
     limiter.setLimit(3)
     await Promise.all([a, b])
-    // Raised from 1 to 3 with one running: two places were free, so a and b go in, and c still waits.
+    // Tăng từ 1 lên 3 khi đang có 1 cuộc gọi chạy: có thêm 2 slot trống nên a và b vào chạy, c tiếp tục chờ.
     expect(order).toEqual(['a', 'b'])
     expect(limiter.inFlight).toBe(3)
     expect(limiter.queued).toBe(1)
@@ -138,7 +138,7 @@ describe('Limiter.setLimit', () => {
     const limiter = new Limiter(4)
     const releases = await Promise.all([1, 2, 3].map(() => limiter.acquire()))
     limiter.setLimit(1)
-    expect(limiter.inFlight).toBe(3) // all three keep their place
+    expect(limiter.inFlight).toBe(3) // cả 3 yêu cầu đều giữ nguyên slot đang chạy
     expect(limiter.current).toBe(1)
 
     let started = false
@@ -148,8 +148,7 @@ describe('Limiter.setLimit', () => {
     await tick()
     expect(started).toBe(false)
 
-    // Nothing new gets in until fewer than the new limit are running: two of the three finishing is not
-    // enough (one is still running, and the limit is one).
+    // Không có yêu cầu mới nào được chạy cho đến khi số lượng đang chạy nhỏ hơn giới hạn mới.
     releases[0]!()
     releases[1]!()
     await tick()

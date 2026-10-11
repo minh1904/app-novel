@@ -1,11 +1,8 @@
 /**
- * Human evaluation (T3) tool:
- * 1. Generation mode: builds a self-contained offline HTML page for blind rating with shuffled candidates.
- * 2. Import mode: reads answered evaluations, un-shuffles them, reports flagged
- *    and hard-case subgroups without silently excluding them, and computes win
- *    rate + bootstrap CI + Cohen's Kappa with T1.
- *
- * Spec translation-judging R6, R7, R8.
+ * Công cụ đánh giá bởi con người (T3):
+ * 1. Chế độ tạo: tạo trang HTML ngoại tuyến độc lập để chấm mù với các ứng viên đã được xáo trộn ngẫu nhiên.
+ * 2. Chế độ nhập: đọc kết quả đánh giá, hoàn tác việc xáo trộn, thống kê các phân nhóm có cờ và trường hợp khó
+ *    thay vì âm thầm loại bỏ, đồng thời tính toán tỷ lệ thắng, khoảng tin cậy bootstrap và hệ số Cohen's Kappa với T1.
  */
 
 import { createHash } from 'node:crypto'
@@ -329,7 +326,7 @@ describe('rate.run.ts', () => {
     const pairLabel = `${RUN_A_ID}-vs-${RUN_B_ID}`
     const blindLabel = createHash('sha256').update(pairLabel).digest('hex').slice(0, 12)
 
-    // Mode 1: Import results if ANSWERS_FILE is present
+    // Chế độ 1: Nhập kết quả nếu có ANSWERS_FILE
     if (ANSWERS_FILE && existsSync(ANSWERS_FILE)) {
       const keyPath = join(RUNS, `rating-${pairLabel}.key.json`)
       if (!existsSync(keyPath)) {
@@ -394,7 +391,7 @@ describe('rate.run.ts', () => {
         if (flagged) subgroup.flagged++
         subgroupStats.set(stratum, subgroup)
 
-        // Kappa comparison if T1 verdict exists
+        // So sánh chỉ số Kappa nếu có kết luận của T1
         if (item.t1Verdict && !item.inconsistentT1) {
           humanChoicesForKappa.push(winner)
           judgeChoicesForKappa.push(item.t1Verdict)
@@ -465,7 +462,7 @@ describe('rate.run.ts', () => {
       return
     }
 
-    // Mode 2: Generate rating HTML page
+    // Chế độ 2: Tạo trang HTML để chấm
     const dirA = join(RUNS, RUN_A_ID)
     const dirB = join(RUNS, RUN_B_ID)
     const { works } = loadFixtures()
@@ -570,7 +567,7 @@ describe('rate.run.ts', () => {
       }
     }
 
-    // Deterministic, chapter-interleaved sampling across the available strata.
+    // Lấy mẫu tất định, xen kẽ theo chương trên các phân tầng có sẵn.
     const sampleSize = Math.min(candidatesPool.length, 70)
     const selected = selectStratified(candidatesPool, sampleSize, rng)
 
@@ -607,7 +604,7 @@ describe('rate.run.ts', () => {
     const htmlContent = buildHtmlPage(sampleItems, blindLabel)
     assertNoSecret(htmlContent)
 
-    // Verification check R6: no condition labels in HTML!
+    // Kiểm tra xác thực: không để lộ nhãn điều kiện trong HTML
     expect(htmlContent.includes(RUN_A_ID)).toBe(false)
     expect(htmlContent.includes(RUN_B_ID)).toBe(false)
 

@@ -23,33 +23,33 @@ import { pinZoom } from './electron/zoom'
 import { LibraryStore } from './services/library/library'
 
 app.enableSandbox()
-// Wheel and touchpad scrolling glides instead of jumping a step per notch, whatever the Windows
-// "smooth-scroll" setting says. Chromium reads switches before the app is ready, so this sits here.
+// Cuộn chuột và touchpad mượt mà thay vì nhảy từng nấc, bất kể cài đặt "smooth-scroll"
+// của Windows như thế nào. Chromium đọc cờ lệnh trước khi ứng dụng sẵn sàng nên cờ này đặt ở đây.
 app.commandLine.appendSwitch('enable-smooth-scrolling')
 
 /**
- * No File/Edit/View menu bar: Mira is one window with its own chrome, and the default menu only
- * offered things the app already does or must not do (new window, reload mid-edit). On macOS the
- * menu lives in the system bar instead of the window, so it is left alone.
+ * Không dùng thanh menu File/Edit/View: Mira là ứng dụng một cửa sổ với giao diện riêng, và menu mặc định
+ * chỉ cung cấp những thứ ứng dụng đã có hoặc không được phép làm (mở cửa sổ mới, tải lại trang khi đang sửa).
+ * Trên macOS, thanh menu nằm trên thanh hệ thống thay vì trong cửa sổ nên được giữ nguyên.
  *
- * Cut, copy, paste, undo and select-all in a text field keep working without it — Chromium handles
- * those itself. What the menu did provide are the developer shortcuts, re-bound below.
+ * Các thao tác cắt, sao chép, dán, hoàn tác và chọn tất cả trong ô nhập văn bản vẫn hoạt động bình thường
+ * vì Chromium tự xử lý. Menu trước đây chỉ cung cấp các phím tắt cho nhà phát triển, được gán lại bên dưới.
  */
 const MENU_IS_IN_THE_WINDOW = process.platform !== 'darwin'
 
 let mainWindow: BrowserWindow | null = null
 let library: LibraryStore | null = null
 
-/** Where the library lives; `MIRA_DATA_DIR` points tests and the Lab elsewhere. */
+/** Nơi lưu trữ thư viện; `MIRA_DATA_DIR` dùng để trỏ đến thư mục khác khi chạy test hoặc Lab. */
 const dataDir = (): string => process.env.MIRA_DATA_DIR ?? app.getPath('userData')
 
 /**
- * The theme the page last reported, for the colour of the window buttons. A new window starts in the
- * system theme, as the page does (see useTheme).
+ * Theme mà trang báo về gần nhất, dùng cho màu của các nút cửa sổ. Cửa sổ mới bắt đầu theo theme hệ thống,
+ * tương tự như trang giao diện khởi động.
  */
 let chromeTheme: ChromeTheme = 'dark'
 
-/** Only the top frame of our own window may call the main process. */
+/** Chỉ khung hình trên cùng (top frame) của cửa sổ ứng dụng mới được phép gọi tiến trình main. */
 function isTrustedSender(event: IpcMainInvokeEvent): boolean {
   return (
     mainWindow !== null &&
@@ -67,11 +67,11 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     title: 'Mira',
-    // The installed exe carries icon.ico, but `pnpm dev` runs electron.exe, whose icon would show.
+    // Bản cài đặt mang icon.ico, nhưng `pnpm dev` chạy electron.exe nên icon này sẽ hiển thị icon tương ứng.
     icon,
     backgroundColor: BOOT_BACKGROUND[chromeTheme],
-    // The page starts in the system theme (see useTheme), so the buttons start in it too and are
-    // corrected through `app:chrome-theme` if the page then picks the other one.
+    // Trang bắt đầu với theme hệ thống nên các nút cũng bắt đầu theo đó, sau đó được
+    // cập nhật qua `app:chrome-theme` nếu trang chọn theme khác.
     ...(OVERLAY_TITLE_BAR && {
       titleBarStyle: 'hidden' as const,
       titleBarOverlay: {
@@ -95,8 +95,8 @@ function createWindow(): void {
   })
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   window.webContents.on('will-navigate', (event) => event.preventDefault())
-  // The page holds back a close while there is typing it has not saved. Saving cannot be waited
-  // for while a window is closing, so the choice is to stay or to close and lose it.
+  // Trang chặn đóng cửa sổ khi có nội dung đang gõ chưa được lưu. Không thể chờ lưu
+  // trong khi cửa sổ đang đóng, nên người dùng phải chọn ở lại hoặc đóng và chấp nhận mất thay đổi.
   window.webContents.on('will-prevent-unload', (event) => {
     const choice = dialog.showMessageBoxSync(window, {
       type: 'warning',
@@ -112,8 +112,8 @@ function createWindow(): void {
 
   const rendererUrl = process.env.ELECTRON_RENDERER_URL
 
-  // The menu used to carry F12 and Ctrl+Shift+I; keep them while developing, and only then, so a
-  // shipped build has no way in. Reload is deliberately not re-bound: it would drop unsaved typing.
+  // Menu trước đây chứa F12 và Ctrl+Shift+I; chỉ giữ lại khi đang ở môi trường phát triển, để bản
+  // đóng gói thương mại không mở được DevTools. Tải lại trang (Reload) cố ý không gán lại để tránh mất dữ liệu chưa lưu.
   if (rendererUrl) {
     window.webContents.on('before-input-event', (_event, input) => {
       if (input.type !== 'keyDown') return
@@ -135,7 +135,7 @@ app.whenReady().then(() => {
   try {
     library = LibraryStore.open({ dataDir: dataDir() })
   } catch (error) {
-    // Refusing to start is safer than running without storage; the message says what to do.
+    // Từ chối khởi động sẽ an toàn hơn là chạy mà không có bộ lưu trữ; thông báo sẽ hướng dẫn cần làm gì.
     dialog.showErrorBox(
       'Mira không mở được dữ liệu',
       error instanceof Error ? error.message : String(error)
@@ -157,7 +157,7 @@ app.whenReady().then(() => {
     }
   })
 
-  // A provider's key page, opened in the browser. Only https links to listed hosts (aiProviders.ts).
+  // Trang lấy khóa API của nhà cung cấp, mở trong trình duyệt. Chỉ cho phép liên kết https đến các máy chủ trong danh sách.
   ipcMain.handle('app:open-external', async (event, url: unknown): Promise<void> => {
     if (!isTrustedSender(event)) throw new Error('Untrusted IPC sender')
     if (typeof url !== 'string' || !isAllowedExternalLink(url)) throw new Error('Link not allowed')

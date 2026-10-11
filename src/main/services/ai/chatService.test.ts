@@ -16,7 +16,7 @@ import type { ChatTransport } from '../../infra/providers/transports/transportSh
 /**
  * Vòng đời một lượt, chạy qua provider thật trên một endpoint giả.
  *
- * Ba luật bất biến là nội dung chính của tệp này (D3 của change `ai-chat`): một `requestId` nhận
+ * Ba luật bất biến là nội dung chính của tệp này: một `requestId` nhận
  * **đúng một** `done` hoặc `error`, không bao giờ cả hai, và không `delta` nào sau khi kết thúc. Hai
  * lượt chồng nhau có test riêng vì đó là ca mà `requestId` tồn tại để xử lý — nếu nó sai thì chữ của
  * hai câu trả lời trộn vào nhau, một lỗi người dùng thấy ngay nhưng test "đường thẳng" không bắt.
@@ -68,7 +68,7 @@ function sseResponse(
 
 const keys: KeySource = {
   acquire: () => Promise.resolve({ id: 'k1', secret: 'SECRET' }),
-  // Nothing recorded: these tests are about a turn's lifecycle, and key bookkeeping has its own.
+  // Không ghi nhận số liệu: các bài kiểm tra này tập trung vào vòng đời của lượt hội thoại.
   report: () => Promise.resolve()
 }
 
@@ -169,8 +169,7 @@ function collector(): {
     chunks,
     emit(chunk) {
       chunks.push(chunk)
-      // `tool` is a progress report, not an ending: a turn that read something is still going, and
-      // treating it as the end makes every tool test stop waiting one round early.
+      // 'tool' là báo cáo tiến trình, không phải kết thúc: lượt hội thoại vẫn đang tiếp tục.
       if (
         chunk.kind === 'delta' ||
         chunk.kind === 'tool' ||
@@ -217,7 +216,6 @@ const endingsOf = (chunks: ChatChunk[], requestId: string): string[] =>
     .map((c) => c.kind)
 
 describe('ChatService', () => {
-  // Task 5.1
   it('trả requestId ngay và phát chữ rồi đúng một done', async () => {
     const sink = collector()
     const conns = connections(async () =>
@@ -370,7 +368,6 @@ describe('ChatService', () => {
     expect(failure && failure.kind === 'error' && failure.error.recoverAt).toBe(NOW + 30_000)
   })
 
-  // Task 5.2
   it('từ chối ngay khi kết nối đang tắt, không gọi ra ngoài', async () => {
     const sink = collector()
     let called = false
@@ -389,7 +386,7 @@ describe('ChatService', () => {
     expect(chat.activeCount).toBe(0)
   })
 
-  // Task 5.3 — hai lượt chồng nhau.
+  // Hai lượt hội thoại chạy chồng nhau.
   it('giữ chữ của hai lượt tách biệt', async () => {
     const sink = collector()
     // Lượt đầu bị giữ ở cổng cho tới khi lượt hai xong, nên hai lượt thật sự chồng nhau.
@@ -491,7 +488,6 @@ describe('ChatService', () => {
     expect(sink.chunks).toEqual([])
   })
 
-  // Task 5.4
   it('usd là null khi model không có giá, không phải 0', async () => {
     const sink = collector()
     const chat = service(
@@ -530,12 +526,10 @@ describe('ChatService', () => {
 })
 
 /**
- * Reading its way to an answer.
+ * Quy trình gọi công cụ để đọc dữ liệu trước khi trả lời.
  *
- * Two things carry the weight here. Arguments arrive **split across frames**, so a loop that reads
- * one frame and calls the tool gets truncated JSON — the symptom being a model that always claims
- * bad parameters. And the round limit has to actually stop the loop: without it one vague question
- * can read a whole work, and the bill says so afterwards.
+ * Các tham số gọi tool có thể truyền thành nhiều frame chia nhỏ, cần ghép đầy đủ trước khi thực thi.
+ * Giới hạn số vòng gọi tool đảm bảo vòng lặp luôn dừng lại và kiểm soát chi phí token.
  */
 const toolFrame = (fragment: unknown): string =>
   'data: ' + JSON.stringify({ choices: [{ delta: { tool_calls: [fragment] } }] }) + '\n\n'
@@ -614,7 +608,7 @@ describe('đọc bằng công cụ', () => {
     expect(textOf(sink.chunks, requestId)).toBe('Chương 2 nói về...')
     expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
 
-    // The second request carries the tool result, which is what lets the model answer at all.
+    // Lệnh gọi thứ hai truyền kết quả tool để model dựa vào đó trả lời.
     expect(bodies[1]).toContain('Nội dung chương hai.')
     expect(bodies[1]).toContain('call_1')
   })
@@ -658,7 +652,7 @@ describe('đọc bằng công cụ', () => {
     }
     const bodies: Array<{ tools?: unknown[] }> = []
     let round = 0
-    // A model that keeps asking for the next page for as long as it is offered tools.
+    // Model liên tục yêu cầu đọc trang tiếp theo chừng nào còn được cung cấp tool.
     const conns = connections(async (_url, init) => {
       const sent = JSON.parse(String(init?.body ?? '{}')) as {
         tools?: unknown[]
@@ -686,12 +680,12 @@ describe('đọc bằng công cụ', () => {
 
     const details = sink.chunks.flatMap((chunk) => (chunk.kind === 'tool' ? [chunk.detail] : []))
     expect(details).toHaveLength(MAX_TOOL_ROUNDS)
-    // Pages end on paragraph bounds, so four reach just under the budget and a short fifth takes the rest.
+    // Các trang ngắt theo ranh giới đoạn văn bản.
     expect(details.slice(0, -1).every((detail) => detail.includes('còn tiếp'))).toBe(true)
     expect(details.at(-1)).toBe(`Hết ngân sách đọc của lượt (80.000 ký tự)`)
     expect(textOf(sink.chunks, requestId)).toBe('trả lời từ phần đã đọc')
     expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
-    // The last request offers no tools, so the model has to answer.
+    // Yêu cầu cuối cùng không cung cấp tool, buộc model phải đưa ra câu trả lời.
     expect(bodies).toHaveLength(MAX_TOOL_ROUNDS + 1)
     expect(bodies.at(-1)!.tools).toBeUndefined()
     expect(bodies.slice(0, -1).every((body) => Array.isArray(body.tools))).toBe(true)
@@ -729,7 +723,7 @@ describe('đọc bằng công cụ', () => {
     const sink = collector()
     const library = fakeLibrary()
     let round = 0
-    // A model that would keep reading forever if nothing stopped it.
+    // Model liên tục yêu cầu đọc dữ liệu nếu không bị chặn lại.
     const conns = connections(async (_url, init) => {
       round += 1
       const sent = JSON.parse(String(init?.body ?? '{}')) as { tools?: unknown[] }
@@ -750,7 +744,7 @@ describe('đọc bằng công cụ', () => {
 
     expect(endingsOf(sink.chunks, requestId)).toEqual(['done'])
     expect(textOf(sink.chunks, requestId)).toBe('đành trả lời vậy')
-    // MAX_TOOL_ROUNDS offered rounds, then one final round with no tools on the table.
+    // Cung cấp tool tối đa MAX_TOOL_ROUNDS vòng, sau đó là vòng cuối cùng không cung cấp tool.
     expect(round).toBe(MAX_TOOL_ROUNDS + 1)
   })
 
@@ -763,7 +757,7 @@ describe('đọc bằng công cụ', () => {
       async (_url, init) => {
         bodies.push(JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>)
         round += 1
-        // Two reads, then the answer: three calls to the provider in one turn.
+        // Hai vòng đọc, sau đó là câu trả lời: tổng cộng 3 lần gọi provider trong một lượt.
         if (round <= 2) {
           return sseResponse([
             toolFrame({
@@ -787,7 +781,7 @@ describe('đọc bằng công cụ', () => {
     for (const body of bodies) {
       expect(body).toMatchObject({ temperature: 0.3, reasoning_effort: 'none', top_k: 5 })
     }
-    // The entry was read once, for the turn. A setting edited while the turn runs belongs to the next one.
+    // Cấu hình mục được đọc một lần cho cả lượt; thay đổi cài đặt giữa chừng chỉ áp dụng cho lượt kế tiếp.
     expect(conns.calls).toBe(1)
     expect(conns.asked).toEqual([ENTRY_ID])
   })
@@ -849,7 +843,7 @@ describe('tool ghi và vị trí (agentic-chat)', () => {
           DONE
         ])
       }
-      // The answer also carries a fenced block: it must not become a proposal.
+      // Phản hồi có chứa khối code markdown nhưng không phải là đề xuất chỉnh sửa.
       return sseResponse([delta('Đã đề xuất.\n\n```\nHai khác.\n```'), finish('stop'), DONE])
     })
   }
@@ -1015,10 +1009,10 @@ describe('suy luận của model', () => {
   })
 })
 
-describe('ChatService fallbacks (hermes-settings-modal)', () => {
+describe('Chuyển đổi model dự phòng trong ChatService', () => {
   const FALLBACK_ID = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d'
 
-  /** Main entry answers with `primary`; the fallback entry with a working stream. */
+  /** Mục chính phản hồi bằng `primary`; mục dự phòng phản hồi bằng stream hợp lệ. */
   function withFallback(primary: () => Response): ChatConnections & { asked: string[] } {
     const asked: string[] = []
     const make = (

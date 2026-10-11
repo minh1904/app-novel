@@ -1,8 +1,8 @@
 /**
- * LLM Judge (T1) pairwise blind comparison runner (spec translation-judging).
- * Compares two runs paragraph-by-paragraph in both directions (A/B and B/A).
- * Uses an independent OpenAI-compatible development adapter, enforces a
- * different model family, and records usage. This is not the app runtime path.
+ * Trình chạy so sánh mù từng cặp của trọng tài LLM (T1).
+ * So sánh hai lần chạy theo từng đoạn theo cả hai chiều (A/B và B/A).
+ * Sử dụng adapter tương thích OpenAI độc lập trong môi trường phát triển,
+ * bắt buộc khác họ mô hình và ghi nhận mức sử dụng token. Không thuộc luồng runtime của ứng dụng.
  */
 
 import { createHash } from 'node:crypto'
@@ -93,7 +93,7 @@ describe('Bộ đo — Giám khảo LLM (T1)', () => {
     const configA = JSON.parse(readFileSync(join(dirA, 'config.json'), 'utf8'))
     const configB = JSON.parse(readFileSync(join(dirB, 'config.json'), 'utf8'))
 
-    // Family check (R3)
+    // Kiểm tra tính độc lập về họ của mô hình
     const familyCheck = checkJudgeFamily(
       JUDGE_MODEL,
       [configA.model, configB.model],
@@ -127,7 +127,7 @@ describe('Bộ đo — Giám khảo LLM (T1)', () => {
       isInconsistent: boolean
     }> = []
 
-    // One retry for invalid output; each HTTP request has bounded transient retries.
+    // Thử lại một lần nếu đầu ra không hợp lệ; mỗi request HTTP có số lần thử lại giới hạn đối với lỗi tạm thời.
     async function queryJudge(promptContent: string): Promise<JudgeOutput | null> {
       for (let formatAttempt = 0; formatAttempt < 2; formatAttempt++) {
         let resp: Response | undefined
@@ -168,14 +168,14 @@ describe('Bộ đo — Giám khảo LLM (T1)', () => {
       return null
     }
 
-    // Process chapters common to both runs
+    // Xử lý các chương chung xuất hiện ở cả hai lần chạy
     for (const [workId, fixture] of workMap.entries()) {
       const workDirA = join(dirA, workId)
       const workDirB = join(dirB, workId)
       if (!existsSync(workDirA) || !existsSync(workDirB)) continue
 
       for (const chapter of fixture.chapters) {
-        // Read translation A rep 1 and B rep 1 (or matching rep)
+        // Đọc bản dịch lượt 1 của A và lượt 1 của B (hoặc lượt tương ứng)
         const pathA = existsSync(join(workDirA, chapter.id, 'rep-1.vi.txt'))
           ? join(workDirA, chapter.id, 'rep-1.vi.txt')
           : join(workDirA, `ch${chapter.id}_r1`, 'translation.txt')
@@ -192,7 +192,7 @@ describe('Bộ đo — Giám khảo LLM (T1)', () => {
         const beadsA = alignParagraphs(srcParas, tgtParasA, { sourceLang: fixture.work.lang })
         const beadsB = alignParagraphs(srcParas, tgtParasB, { sourceLang: fixture.work.lang })
 
-        // Find common paragraphs (present on both sides)
+        // Tìm các đoạn chung (xuất hiện ở cả hai phía)
         const commonPairs: Array<{
           n: number
           sourceIndex: number
@@ -224,7 +224,7 @@ describe('Bộ đo — Giám khảo LLM (T1)', () => {
 
         if (commonPairs.length === 0) continue
 
-        // Build Pass 1 prompt (Candidate A = A, Candidate B = B)
+        // Dựng prompt lượt 1 (Ứng viên A = A, Ứng viên B = B)
         const pass1User = [
           `# Chapter Source Text:\n${chapter.sourceText}\n`,
           '# Pairs to evaluate:'
@@ -233,7 +233,7 @@ describe('Bộ đo — Giám khảo LLM (T1)', () => {
           pass1User.push(`[${p.n}]\nSource: ${p.srcText}\nCandidate A: ${p.textA}\nCandidate B: ${p.textB}\n`)
         }
 
-        // Build Pass 2 prompt (SWAPPED: Candidate A = B, Candidate B = A)
+        // Dựng prompt lượt 2 (ĐẢO VỊ TRÍ: Ứng viên A = B, Ứng viên B = A)
         const pass2User = [
           `# Chapter Source Text:\n${chapter.sourceText}\n`,
           '# Pairs to evaluate:'

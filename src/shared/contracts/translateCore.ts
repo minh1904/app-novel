@@ -43,14 +43,14 @@ export interface ModelCompletionResult {
   /** Khi `finishReason` là `filter`: lý do nhà cung cấp nêu, đã gộp nhóm. */
   filter?: { group: RefusalGroup; raw: string }
   status?: number
-  /** HTTP requests the call took, gateway retries included; absent when the caller does not know. */
+  /** Số lượt yêu cầu HTTP thực hiện (bao gồm cả thử lại). */
   attempts?: number
 }
 
 export interface TranslationModelCaller {
   complete(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-    /** `responseFormat`: a JSON schema for this call's answer (`response_format`); absent, none is sent. */
+    /** `responseFormat`: JSON schema cho kết quả trả về của lượt gọi (`response_format`). */
     options?: { signal?: AbortSignal; responseFormat?: unknown }
   ): Promise<ModelCompletionResult>
 }

@@ -1,19 +1,18 @@
-// One command that runs every check and cannot pass without proof that it ran.
+// Lệnh chạy toàn bộ kiểm tra chất lượng mã nguồn và bắt buộc phải có bằng chứng đã chạy thực tế.
 //
-//   node scripts/check.mjs            typecheck (node + web), tests (two phases), Biome (lint + format)
-//   node scripts/check.mjs --build    the same, then electron-vite build
-//   node scripts/check.mjs --self-test  prove that a silent step is rejected
+//   node scripts/check.mjs            kiểm tra kiểu (node + web), chạy tests (hai giai đoạn), Biome (lint + format)
+//   node scripts/check.mjs --build    tương tự như trên, sau đó build electron-vite
+//   node scripts/check.mjs --self-test  chứng minh bước chạy không in kết quả sẽ bị từ chối
 //
-// Why this exists: on this machine `pnpm test`, `pnpm lint` and `pnpm typecheck` print a warning about
-// the `pnpm` field of package.json and exit 0 without running anything. A step that prints nothing and
-// exits 0 is therefore never read as a pass here: every step must show evidence that it did its work
-// (a file count, a test count, built files that are newer than the step). The tools are called through
-// node and the package's own entry file, so neither pnpm nor a .cmd shim is involved.
+// Lý do tồn tại: tránh trường hợp câu lệnh thoát mã 0 nhưng không thực sự thực thi các bài kiểm tra.
+// Mỗi bước phải đưa ra bằng chứng đã hoàn thành nhiệm vụ (số tệp đã duyệt, số bài test đã pass,
+// các tệp build mới hơn thời điểm bắt đầu). Các công cụ được gọi trực tiếp qua node và tệp thực thi
+// tương ứng của từng gói.
 //
-// Tests run in two phases. Five files assert on wall-clock time or kill child processes on a timer, and
-// they fail intermittently when 60 files compete for the CPU (measured: see openspec/changes/archive/
-// 2026-10-03-refactor-electron-structure/baseline.md). Phase A runs everything else in parallel; phase B runs those
-// five one at a time. Every test still runs exactly once and has to pass.
+// Kiểm thử chạy qua hai giai đoạn: Giai đoạn A chạy song song các bài kiểm tra thông thường;
+// giai đoạn B chạy tuần tự từng tệp đối với năm tệp nhạy cảm với thời gian thực thi (wall-clock time
+// hoặc dừng tiến trình con theo timer) để tránh lỗi chập chờn khi tranh chấp CPU. Mọi bài test đều
+// chạy đúng một lần và phải vượt qua.
 import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { basename, dirname, join, relative } from 'node:path'
@@ -21,10 +20,10 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
-/** Raise this when tests are removed on purpose; it must never drop by accident. */
+/** Tăng mốc này khi xóa bớt bài kiểm thử có chủ đích; mốc này không được giảm ngoài ý muốn. */
 const BASELINE_TESTS = 1523
 
-/** Matched by file name, not by path, so the list survives files being moved. */
+/** Khớp theo tên tệp để không bị ảnh hưởng khi tệp được di chuyển thư mục. */
 const TIMING_SENSITIVE = [
   'rows.test.ts',
   'segmenter.test.ts',
@@ -40,7 +39,7 @@ function seconds(ms) {
   return (ms / 1000).toFixed(1) + 's'
 }
 
-/** Runs `node <script> ...args` in the repo root and keeps what it printed. */
+/** Thực thi `node <script> ...args` tại thư mục gốc của kho mã nguồn và thu thập đầu ra. */
 function node(script, args = []) {
   const started = Date.now()
   const result = spawnSync(process.execPath, [script, ...args], {
@@ -54,8 +53,8 @@ function node(script, args = []) {
 }
 
 /**
- * A step passes only when the tool exited 0 *and* `proof` found evidence in what it printed.
- * `proof` returns `{ ok, note }`; a missing proof is a failure, never a pass.
+ * Một bước chỉ được coi là đạt khi công cụ trả về mã thoát 0 VÀ hàm `proof` tìm thấy bằng chứng thực thi trong đầu ra.
+ * Hàm `proof` trả về `{ ok, note }`; nếu thiếu bằng chứng sẽ tính là thất bại.
  */
 function step(name, run, proof) {
   const result = run()
@@ -70,7 +69,7 @@ function step(name, run, proof) {
       : 'exit code ' + String(result.code) + (verdict.note ? '  ' + verdict.note : '')
   console.log((ok ? 'ok    ' : 'FAIL  ') + name.padEnd(24) + seconds(result.ms).padStart(7) + '  ' + note)
   if (!ok) {
-    // A step that can describe its own failures does so; otherwise show the tail of what it printed.
+    // Hiển thị chi tiết lỗi nếu bước đó tự mô tả được; nếu không, hiển thị phần cuối của đầu ra.
     const lines =
       verdict.lines !== undefined && verdict.lines.length > 0
         ? verdict.lines
@@ -128,7 +127,7 @@ function rendererBoundaries() {
   )
 }
 
-/** Reads vitest's summary lines; both counts have to be present, and nothing may have failed. */
+/** Đọc dòng tổng kết của vitest: cả hai số lượng đều phải tồn tại và không có bài test nào thất bại. */
 function readVitest(text) {
   const tests = /^\s*Tests\s+(.+?)\s*\((\d+)\)\s*$/m.exec(text)
   const files = /^\s*Test Files\s+(.+?)\s*\((\d+)\)\s*$/m.exec(text)
@@ -167,7 +166,7 @@ function vitestPhase(name, args) {
   return { ...outcome, passed: counted }
 }
 
-// `biome ci` lints and checks formatting without writing; an unformatted file is an error.
+// `biome ci` thực hiện lint và kiểm tra định dạng mà không ghi tệp; tệp sai định dạng được coi là lỗi.
 function lint() {
   return step(
     'biome',
@@ -218,7 +217,7 @@ function build(startedAt) {
   )
 }
 
-/** Proves the harness itself: a step that prints nothing and exits 0 has to be rejected. */
+/** Kiểm tra cơ chế kiểm thử: một bước không in kết quả nhưng thoát mã 0 phải bị coi là không hợp lệ. */
 function selfTest() {
   const silent = step(
     'self-test (silent step)',
@@ -247,8 +246,7 @@ function main() {
   outcomes.push(typecheck('web'))
   outcomes.push(typecheck('scripts'))
 
-  // Exact base name, not a suffix: `segmenter.test.ts` must not also catch `resegmenter.test.ts`, or
-  // that file would run in both phases and be counted twice.
+  // Khớp chính xác tên tệp gốc, không dùng hậu tố: tránh trường hợp tệp bị chạy ở cả hai giai đoạn và bị đếm trùng.
   const sources = walk(join(root, 'src'))
   const timing = TIMING_SENSITIVE.map((name) => ({
     name,

@@ -7,54 +7,44 @@ import { RatePacer } from './ratePacer'
 import { DEFAULT_RETRY, abortableSleep, decideRetry, type RetryOptions } from './retryPolicy'
 
 /**
- * Everything about *how* a call gets made that is not the call itself: which key, how many at once,
- * when to try again, and what each result says about the key. One owner for all of it (design D3–D5 of
- * change `ai-gateway`), so the layers around it do not each retry on their own and multiply the tries.
+ * Quản lý quy trình thực thi yêu cầu gọi API: điều phối khóa (key), giới hạn đồng thời,
+ * giãn cách tốc độ (RPM), thử lại khi gặp lỗi và cập nhật trạng thái khóa.
  *
- * It does not know what is being asked. The caller gives it a function that makes one attempt with a key;
- * the gateway decides when that function runs, with which key, and how often.
- *
- * The rules, in the order a call meets them:
- *  1. Take a place from the entry's limiter. A call that is cancelled while it waits is never sent.
- *  2. Wait for its turn by the entry's RPM, if one is set; and again before every later attempt, because
- *     each attempt is a real request. Cancel ends the wait. Done before taking a key, so a call that is
- *     only waiting for its turn holds no key (and no probe).
- *  3. Take a key. If every key is frozen, say so with the earliest time one comes back (or, for a caller
- *     that opted in with `waitForKeys`, wait for it).
- *  4. Make the call. Its result is reported against the key **exactly once**, whatever happens.
- *  4. On failure: trouble that belongs to the key (rate limit, empty account, wrong key) moves to the
- *     next key **at once, without waiting**; transient trouble on the wire (network, timeout) is retried
- *     with a backoff that Cancel can interrupt; anything else goes straight to the caller.
- *  5. A stream is never retried or moved once it has produced anything: the reader already has that
- *     text, and starting over would repeat it.
+ * Trình tự xử lý yêu cầu:
+ *  1. Xin slot từ bộ giới hạn đồng thời (limiter).
+ *  2. Chờ theo tốc độ giới hạn (RPM pacer) trước mỗi lần gọi nếu được cấu hình.
+ *  3. Mượn khóa hợp lệ (hoặc chờ/báo lỗi nếu tất cả khóa đang bị đóng băng).
+ *  4. Thực thi yêu cầu và ghi nhận kết quả cho khóa chính xác một lần.
+ *  5. Khi thất bại: lỗi thuộc về khóa (rate limit, hạn mức, xác thực) sẽ chuyển ngay sang khóa khác;
+ *     lỗi đường truyền tạm thời (mạng, timeout) sẽ được thử lại có giãn cách.
+ *  6. Đối với stream: không thử lại sau khi dữ liệu đã bắt đầu được phát đi.
  */
 
-/** How many calls one connection runs at the same time. Callers work one at a time today, so this is a guard, not a throttle. */
+/** Số lượng yêu cầu tối đa thực thi đồng thời mặc định trên một kết nối. */
 export const DEFAULT_CONCURRENCY = 4
 
-/** Safety stop on key switching. Each failure freezes or retires a key, so the loop ends on its own; this covers a bug. */
+/** Giới hạn số lần chuyển khóa tối đa để tránh vòng lặp vô tận khi xử lý lỗi. */
 const MAX_KEY_SWITCHES = 16
 
 export interface GatewayOptions {
   keys: KeySource
   limiter: Limiter
-  /** Spaces the attempts by the entry's RPM. Without one, attempts are not paced. */
+  /** Điều phối giãn cách các yêu cầu theo giới hạn RPM của cấu hình mô hình. */
   pacer?: RatePacer
   now: () => number
   retry?: Partial<RetryOptions>
-  /** Tests replace these two so a backoff takes no real time and the jitter is exact. */
+  /** Hàm sinh số ngẫu nhiên phục vụ tính toán jitter khi thử lại. */
   random?: () => number
   sleep?: (ms: number, signal?: AbortSignal) => Promise<void>
   /**
-   * When every key is frozen: wait until one comes back (`true`) or fail at once (`false`, the default).
-   * Failing is what the interactive features want. A long job will want to wait; it passes `true`.
+   * Khi toàn bộ khóa bị đóng băng: chờ đến khi có khóa phục hồi (`true`) hoặc ném lỗi ngay lập tức (`false`).
    */
   waitForKeys?: boolean
 }
 
 /**
- * An error as the key layer reads it. Cancel and timeout are **neutral**: a call that did not finish
- * proves nothing about the key, so blaming it is unfair and calling it good is untrue (D4 of `ai-chat`).
+ * Chuyển đổi lỗi nhà cung cấp thành kết quả đánh giá trạng thái khóa.
+ * Yêu cầu bị hủy hoặc quá thời gian được coi là trung lập (`neutral`).
  */
 export function outcomeFor(error: ProviderError): KeyOutcome {
   if (error.kind === 'cancelled' || error.kind === 'timeout') return 'neutral'
@@ -68,9 +58,8 @@ export function outcomeFor(error: ProviderError): KeyOutcome {
 }
 
 /**
- * Holds a lease until it is reported once. A lease that ends without anyone reporting it (the reader
- * walked away from a stream, something unexpected was thrown) is reported `neutral` in a `finally` —
- * otherwise an abandoned probe would leave its key "being probed" for good.
+ * Bảo đảm lượt mượn khóa được ghi nhận kết quả chính xác một lần,
+ * tự động báo cáo trạng thái `neutral` nếu phiên kết thúc bất thường.
  */
 class LeaseGuard {
   private settled = false
@@ -91,7 +80,7 @@ class LeaseGuard {
   }
 }
 
-/** Trouble that is about the key and not about the request: another key may well succeed. */
+/** Kiểm tra lỗi có xuất phát từ khóa hay không (hết hạn mức, xác thực) để chuyển khóa khác. */
 function isKeyTrouble(error: ProviderError): boolean {
   return error.kind === 'rate_limited' || error.kind === 'quota' || error.kind === 'auth'
 }
@@ -113,8 +102,8 @@ export class Gateway {
   }
 
   /**
-   * One call with a key, retried and moved between keys as the rules say. `onAttempt` hears of every
-   * request actually sent, retries included, so a caller can report them; it changes no decision.
+   * Thực thi yêu cầu với khóa, tự động thử lại hoặc đổi khóa khi gặp lỗi.
+   * `onAttempt` được gọi mỗi lần gửi yêu cầu thực tế để theo dõi tiến độ.
    */
   async call<T>(
     attempt: (lease: KeyLease) => Promise<T>,
@@ -145,9 +134,9 @@ export class Gateway {
   }
 
   /**
-   * A streamed call. `isFinal` names the event that proves the answer finished cleanly, so the key is
-   * reported good *before* that last event is handed over; without it the key is reported when the
-   * stream ends. Once any event has gone out, nothing is retried or moved.
+   * Thực thi yêu cầu dạng luồng (stream).
+   * `isFinal` xác định sự kiện kết thúc thành công để ghi nhận khóa trước khi trả về sự kiện cuối cùng.
+   * Khi luồng đã bắt đầu phát dữ liệu sẽ không thử lại hay chuyển khóa.
    */
   async *stream<E>(
     attempt: (lease: KeyLease) => AsyncGenerator<E>,
@@ -171,7 +160,7 @@ export class Gateway {
           return
         } catch (error) {
           await guard.settleFailure(error)
-          // The reader already has text from this attempt. Trying again would send it twice.
+          // Dữ liệu đã bắt đầu được gửi đi, không thể thử lại để tránh lặp nội dung.
           if (started) throw error
           lease = await this.next(error, lease, progress, signal)
         } finally {
@@ -184,8 +173,7 @@ export class Gateway {
   }
 
   /**
-   * After a failed attempt: the lease for the next attempt, or throw. Throwing is the default; the only
-   * ways out of it are moving to another key and waiting out a transient failure.
+   * Xử lý sau khi một lượt gọi thất bại: đổi sang khóa khác hoặc chờ thử lại nếu là lỗi tạm thời.
    */
   private async next(
     error: unknown,
@@ -195,18 +183,15 @@ export class Gateway {
   ): Promise<KeyLease> {
     if (!(error instanceof ProviderError)) throw error
 
-    // Trouble about the key: another key at once, no waiting. A connection with no key at all has nothing
-    // to switch to, and the same call would just fail the same way.
+    // Lỗi thuộc về khóa: chuyển sang khóa khác ngay lập tức nếu còn khóa khả dụng.
     if (isKeyTrouble(error) && lease.id !== null && progress.switches < MAX_KEY_SWITCHES) {
       progress.switches++
       try {
         return await this.acquireKey(signal)
       } catch (exhausted) {
-        // Something other than "no key is left" (a store that failed): that is the real news, not the old error.
+        // Ném lỗi mới nếu không phải lỗi hết khóa khả dụng (ví dụ lỗi truy xuất cơ sở dữ liệu).
         if (!(exhausted instanceof ProviderError)) throw exhausted
-        // No other key. A rate limit is reported as "every key is out of quota, until …": that tells the
-        // person when to come back. A wrong key or an empty account has nothing to wait for, so the
-        // real error is the useful one.
+        // Khi không còn khóa nào khác, ưu tiên trả về lỗi hết hạn mức kèm thời gian chờ nếu có.
         if (error.kind === 'rate_limited' && exhausted.kind === 'rate_limited') throw exhausted
         throw exhausted.kind === 'cancelled' ? exhausted : error
       }
@@ -222,11 +207,10 @@ export class Gateway {
   }
 
   /**
-   * A key for a call, or the error that says every key is frozen and when the first comes back. For a
-   * caller that chose `waitForKeys` this waits instead, and Cancel interrupts the wait.
+   * Lấy khóa khả dụng cho yêu cầu, hoặc ném lỗi nếu tất cả khóa đang đóng băng (trừ khi bật `waitForKeys`).
    */
   private async acquireKey(signal: AbortSignal | undefined): Promise<KeyLease> {
-    // Once per attempt, and before the key: the wait is for a turn, not for a key.
+    // Giãn cách theo tốc độ trước khi lấy khóa cho mỗi lượt gọi.
     await this.options.pacer?.wait(signal)
     for (;;) {
       const lease = await this.options.keys.acquire()
@@ -247,15 +231,13 @@ export class Gateway {
   }
 }
 
-/** What one connection keeps between calls: what each of its keys has been through. The quota is the key's. */
+/** Trạng thái runtime lưu trữ giữa các yêu cầu của một kết nối (lịch trình sử dụng khóa). */
 export class ConnectionRuntime {
   constructor(readonly scheduler: KeyScheduler) {}
 }
 
 /**
- * What one model entry keeps between calls: who is in flight and when the next call may start. These belong
- * to the entry, not to the connection, because a person sets concurrency and RPM per entry (design D9 of
- * change `ai-model-settings`) — and the translation and the chat that use the same entry must share them.
+ * Trạng thái runtime lưu trữ của một mục cấu hình mô hình (giới hạn đồng thời và giãn cách tốc độ).
  */
 export class EntryRuntime {
   constructor(
@@ -264,21 +246,15 @@ export class EntryRuntime {
   ) {}
 }
 
-/** What a person set on an entry for the two things this registry applies. `0` or absent is "the default". */
+/** Cấu hình giới hạn áp dụng cho mục mô hình (số lượng đồng thời và RPM). */
 export interface EntryLimits {
   concurrency?: number
   rpm?: number
 }
 
 /**
- * The state that has to outlive a single call: one key scheduler per connection, one limiter and pacer per
- * model entry.
- *
- * Providers are built fresh for each call, which is fine for what they hold (the address, the model) but
- * not for this: a limiter, a pacer and a key scheduler only mean something if every call that should
- * share them meets the same one. Settings are read from the store on every call, so editing a connection
- * or an entry still takes effect at once; only this runtime state is kept, and each call hands the current
- * limits to it.
+ * Đăng ký và quản lý trạng thái runtime tồn tại qua các phiên gọi:
+ * mỗi kết nối dùng chung một bộ điều phối khóa, mỗi cấu hình mô hình dùng chung bộ giới hạn và giãn cách.
  */
 export class GatewayRegistry {
   private readonly runtimes = new Map<string, ConnectionRuntime>()
@@ -300,9 +276,7 @@ export class GatewayRegistry {
   }
 
   /**
-   * The limiter and pacer of an entry, with `limits` applied. Called on every call with what the entry says
-   * now, so a change takes effect on the next call without anything being restarted; calls already running
-   * are not cut (see `Limiter.setLimit`).
+   * Lấy runtime (limiter và pacer) của một mục cấu hình mô hình và cập nhật giới hạn mới nhất.
    */
   entryRuntimeFor(connectionId: string, entryId: string, limits: EntryLimits = {}): EntryRuntime {
     const concurrency =
@@ -327,12 +301,12 @@ export class GatewayRegistry {
     return held.runtime
   }
 
-  /** A deleted entry takes its limiter and pacer with it. */
+  /** Xóa trạng thái runtime của một mục mô hình khi bị xóa bỏ. */
   forgetEntry(entryId: string): void {
     this.entries.delete(entryId)
   }
 
-  /** A deleted connection takes its runtime state with it, and that of every entry it had. */
+  /** Xóa trạng thái runtime của kết nối cùng toàn bộ các mục mô hình liên quan. */
   forget(connectionId: string): void {
     this.runtimes.delete(connectionId)
     for (const [entryId, held] of this.entries) {

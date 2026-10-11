@@ -87,7 +87,7 @@ describe('describeRefusals', () => {
   })
 })
 
-describe('fallback offer for a stopped translation (hermes-settings-modal 4.6)', () => {
+describe('gợi ý model dự phòng khi bản dịch bị dừng', () => {
   it('marks failures another model could get past, and nothing else', async () => {
     const { withPolicy } = await import('./errorPolicy')
     const failure = (kind: Parameters<typeof withPolicy>[0]['kind']): boolean | undefined =>

@@ -8,8 +8,8 @@ import { createAsyncHandler, createHandler } from '../handler'
 import { connectionsOf, type AreaHandlers, type HandlerDeps } from './deps'
 
 /**
- * Account logins (change `subscription-providers`, design D8): start, read the state, cancel, open the page
- * again, disconnect, and the account's limits. Tokens never travel on any of these.
+ * Đăng nhập tài khoản: bắt đầu, đọc trạng thái, hủy, mở lại trang đăng nhập, ngắt kết nối
+ * và xem hạn mức tài khoản. Token không bao giờ truyền qua bất kỳ kênh nào trong số này.
  */
 export function accountHandlers(deps: HandlerDeps): AreaHandlers<'ai:accounts'> {
   return {

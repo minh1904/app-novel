@@ -62,7 +62,7 @@ export function extractDialogueQuotes(text: string): string[] {
   const quotes: string[] = []
   if (!text) return quotes
 
-  // Double quotes or smart double quotes
+  // Dấu ngoặc kép thông thường hoặc ngoặc kép cong
   const doubleQuoteRegex = /["“]([^"”]+)["”]/g
   let match: RegExpExecArray | null
   while ((match = doubleQuoteRegex.exec(text)) !== null) {
@@ -70,7 +70,7 @@ export function extractDialogueQuotes(text: string): string[] {
     if (q) quotes.push(q)
   }
 
-  // Dialogue dash lines: - ... or — ...
+  // Dòng thoại bắt đầu bằng gạch ngang: - ... hoặc — ...
   const lines = text.split('\n')
   for (const line of lines) {
     const trimmed = line.trim()
@@ -91,8 +91,8 @@ function characterMatches(text: string, names: string[]): boolean {
 }
 
 /**
- * Pure rule-based algorithm evaluating addressing compliance on translated paragraphs.
- * Detects pronouns that deviate from the active chapter dyad matrix.
+ * Thuật toán thuần quy tắc đánh giá mức độ tuân thủ xưng hô trên các đoạn dịch.
+ * Phát hiện các đại từ lệch khỏi ma trận xưng hô đang hoạt động của chương.
  */
 export function evaluateAddressingCompliance(
   paragraphs: (string | ParagraphAddressingCheckItem)[],
@@ -132,7 +132,7 @@ export function evaluateAddressingCompliance(
           isRelevant = true
         }
       } else {
-        // Inferred relevance: speaker mentioned with speaking verb or both mentioned
+        // Suy luận mức độ liên quan: người nói đi kèm động từ dẫn thoại hoặc cả hai nhân vật cùng xuất hiện
         const srcMentioned = characterMatches(text, srcNames)
         const tgtMentioned = characterMatches(text, tgtNames)
 
@@ -151,7 +151,7 @@ export function evaluateAddressingCompliance(
       const tgtDisplayName = tgtChar.target || tgtChar.source
 
       for (const quote of quotes) {
-        // 1. Check for inconsistent self-pronouns within the same quote
+        // 1. Kiểm tra đại từ tự xưng không nhất quán trong cùng một câu thoại
         const usedSelfPronouns = COMMON_SELF_PRONOUNS.filter((p) => containsPronoun(quote, p))
         if (usedSelfPronouns.includes(expectedSpeaker) && usedSelfPronouns.length > 1) {
           const conflicting = usedSelfPronouns.filter((p) => p !== expectedSpeaker)
@@ -169,7 +169,7 @@ export function evaluateAddressingCompliance(
           }
         }
 
-        // 2. Check unexpected self-pronoun
+        // 2. Kiểm tra đại từ tự xưng bất thường không theo quy ước
         if (!containsPronoun(quote, expectedSpeaker) && usedSelfPronouns.length > 0) {
           for (const actual of usedSelfPronouns) {
             issues.push({
@@ -185,12 +185,12 @@ export function evaluateAddressingCompliance(
           }
         }
 
-        // 3. Check unexpected recipient-pronoun
+        // 3. Kiểm tra đại từ gọi đối phương bất thường không theo quy ước
         const usedRecipientPronouns = COMMON_RECIPIENT_PRONOUNS.filter((p) =>
           containsPronoun(quote, p)
         )
         if (!containsPronoun(quote, expectedRecipient) && usedRecipientPronouns.length > 0) {
-          // Avoid reporting if the recipient pronoun is already accounted for as expected self-pronoun
+          // Tránh báo lỗi nếu đại từ đối phương trùng với đại từ tự xưng đã dự kiến
           const unexpected = usedRecipientPronouns.filter((p) => p !== expectedSpeaker)
           for (const actual of unexpected) {
             issues.push({

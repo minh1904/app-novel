@@ -2,24 +2,17 @@ import { ProviderError } from '../types'
 import { abortableSleep } from './retryPolicy'
 
 /**
- * Spaces requests so that no two start closer together than a minute divided by the RPM the person set
- * (design D9 of change `ai-model-settings`). It answers a provider's requests-per-minute limit *before* the
- * provider does, which is kinder than a 429: the key is not frozen for a limit that was always going to be
- * hit.
+ * Giãn cách các yêu cầu để đảm bảo khoảng cách giữa hai yêu cầu liên tiếp tuân thủ giới hạn RPM đã cấu hình.
+ * Cơ chế này chủ động kiểm soát tốc độ gửi yêu cầu nhằm tránh bị nhà cung cấp trả về lỗi 429.
  *
- * It works by **reserving the time slot** of each call: a call takes the later of "now" and "when the last
- * reserved slot ends", pushes that end forward by one interval, and sleeps until its own slot. Two calls
- * made at once therefore queue one interval apart without anyone coordinating, and nothing is checked in a
- * loop. The reservation outlives a single run of translation, so a chat sent right after a translation
- * batch waits its turn too.
+ * Hoạt động bằng cách đặt trước khung thời gian (time slot) cho từng yêu cầu:
+ * Mỗi yêu cầu lấy thời điểm lớn hơn giữa "thời điểm hiện tại" và "thời điểm kết thúc của slot trước đó",
+ * sau đó dời mốc kết thúc thêm một khoảng thời gian (`60_000 / rpm`) và chờ đến lượt của mình.
  *
- * `0` means no pacing at all: `wait` returns at once and keeps no state.
- *
- * One per model entry. The key scheduler (per connection) still reacts to a real 429; this only keeps the
- * app from provoking one by being impatient.
+ * Giá trị `0` nghĩa là không giới hạn tốc độ: `wait` trả về ngay lập tức.
  */
 export class RatePacer {
-  /** The earliest time the next call may start, in ms. Meaningful only while `rpm` is above 0. */
+  /** Thời điểm sớm nhất yêu cầu tiếp theo được phép bắt đầu (ms epoch). Chỉ có ý nghĩa khi `rpm` > 0. */
   private nextAt = 0
 
   constructor(
@@ -37,32 +30,26 @@ export class RatePacer {
   }
 
   /**
-   * Changes the pace. It applies to the **next** call: slots already reserved keep their time, so lowering
-   * the rate never makes a call that was promised a turn wait longer, and raising it does not let calls
-   * overtake the ones already waiting.
+   * Cập nhật giới hạn RPM mới. Áp dụng cho các yêu cầu tiếp theo mà không làm ảnh hưởng các slot đã đặt trước.
    */
   setRpm(rpm: number): void {
     RatePacer.check(rpm)
     this.rpm = rpm
   }
 
-  /** The pace in force now. For tests and for showing; not for decisions. */
+  /** Tốc độ RPM hiện tại đang áp dụng (dùng cho kiểm thử và hiển thị). */
   get current(): number {
     return this.rpm
   }
 
   /**
-   * Resolves when it is this call's turn. Rejects with `cancelled` — and then the call must not be sent —
-   * if the signal aborts first.
-   *
-   * A call cancelled while it waits gives its slot back **if it was the last one reserved**, so cancelling
-   * does not leave a gap that makes the next call wait for nobody. If another call reserved after it, the gap
-   * stays: the spacing between calls only ever gets wider than asked, never narrower.
+   * Chờ đến lượt của yêu cầu theo tốc độ quy định.
+   * Ném lỗi `cancelled` nếu tín hiệu bị hủy trước hoặc trong lúc đang chờ.
+   * Nếu yêu cầu bị hủy là yêu cầu cuối cùng đặt chỗ, slot đó sẽ được hoàn lại để tránh tạo khoảng trống không cần thiết.
    */
   async wait(signal?: AbortSignal): Promise<void> {
     if (this.rpm === 0) return
-    // Checked here and not left to the sleep: a pacer that has to wait for nothing must still not start a
-    // call that was cancelled before its turn came.
+    // Kiểm tra hủy ngay cả khi không phải chờ ngủ để tránh gửi yêu cầu đã bị hủy trước đó.
     if (signal?.aborted === true) throw new ProviderError('cancelled', 'Yêu cầu đã bị hủy.')
 
     const interval = 60_000 / this.rpm

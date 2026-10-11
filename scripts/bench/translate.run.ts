@@ -1,9 +1,7 @@
 /**
- * Translation runner for measurement harness (spec measure-runs).
- * Translates fixture chapters using the app's real translation pipeline:
- * normalizeRaw -> segment -> plan -> gateway -> align -> T0 checks.
- *
- * Replaces baseline.run.ts.
+ * Trình chạy dịch cho hệ thống đo đạc.
+ * Dịch các chương fixture bằng quy trình dịch thực tế của ứng dụng:
+ * normalizeRaw -> segment -> plan -> gateway -> align -> kiểm tra T0.
  */
 
 import { execSync } from 'node:child_process'
@@ -210,7 +208,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
             let translation = ''
             const callsBefore = httpCodes.length
 
-            // Work setup in temp library
+            // Khởi tạo tác phẩm trong thư viện tạm
             const workRecord = library.create({
               title: fixture.work.title ?? workId,
               sourceLang: fixture.work.lang
@@ -220,7 +218,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
             const raw = segment(normalized, fixture.work.lang)
             library.saveText(workRecord.id, chapterRecord.id, 'source', normalized, 0, raw)
 
-            // Execute translation through app pipeline
+            // Thực hiện dịch qua luồng xử lý của ứng dụng
             const plan = services.translator.plan({
               workId: workRecord.id,
               chapterId: chapterRecord.id,
@@ -248,7 +246,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
                 }
               }
 
-              // Retry failed segments once
+              // Thử lại các đoạn bị lỗi một lần
               if (result.failed.length > 0) {
                 const retryResult = await services.translator.runBatch({
                   workId: workRecord.id,
@@ -275,7 +273,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
             const tgtParas = extractParagraphs(translation)
             const elapsed = Date.now() - start
 
-            // Run T0 deterministic checks
+            // Chạy các kiểm tra tất định T0
             const beads = alignParagraphs(srcParas, tgtParas, {
               sourceLang: fixture.work.lang,
               glossary: normGlossary.entries
@@ -313,7 +311,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
               assertions: assertionsEval
             }
 
-            // Write translation and score
+            // Ghi bản dịch và điểm số
             const repDir = join(workId, `ch${chapter.id}_r${rep}`)
             write(join(repDir, 'translation.txt'), translation)
             write(
@@ -364,7 +362,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
 
     const finishedAt = new Date().toISOString()
 
-    // Config record per spec measure-runs R3
+    // Bản ghi cấu hình của lượt chạy
     const config = {
       commitHash: commit,
       model: MODEL,
@@ -399,7 +397,7 @@ describe.skipIf(KEY === '')(`Bộ đo — dịch theo điều kiện (${MODEL})`
     write('config.json', JSON.stringify(config, null, 2))
     write('report.json', JSON.stringify(allResults, null, 2))
 
-    // Build markdown report without story text (R6)
+    // Dựng báo cáo markdown không kèm văn bản truyện
     const mdLines: string[] = [
       `# Translation Run: ${LABEL}`,
       '',

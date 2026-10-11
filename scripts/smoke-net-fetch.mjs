@@ -1,15 +1,14 @@
-// Smoke test: what Electron's `net.fetch` actually does that the AI layer relies on (design D13 of
-// change `ai-gateway`). Run with `pnpm smoke:net` or `electron scripts/smoke-net-fetch.mjs`.
+// Kiểm thử thực tế (smoke test): kiểm tra hành vi thực tế của `net.fetch` trong Electron cho tầng AI.
+// Chạy bằng `pnpm smoke:net` hoặc `electron scripts/smoke-net-fetch.mjs`.
 //
-// The app hands `net.fetch` to the provider layer so that requests follow the system proxy. Three things
-// were assumed and never run:
-//   1. a streamed body arrives piece by piece, not all at the end (chat shows text as it comes);
-//   2. aborting the signal mid-stream ends the read promptly (the Cancel button);
-//   3. a request to this machine goes straight to it, not through a proxy (Ollama, LM Studio, a gateway);
-// plus the reason for using it at all:
-//   4. it follows a proxy that the global `fetch` of Node ignores.
+// Ứng dụng truyền `net.fetch` vào tầng provider để các request tuân thủ cấu hình proxy hệ thống.
+// Các hành vi cốt lõi cần xác minh:
+//   1. Dữ liệu stream trả về từng phần thay vì dồn cục đến cuối (đảm bảo hiển thị bản dịch khi đang stream);
+//   2. Hủy signal giữa chừng sẽ ngắt đọc luồng ngay lập tức (phục vụ nút Hủy);
+//   3. Request đến máy cục bộ được gửi trực tiếp, không đi qua proxy (mô hình cục bộ, gateway nội bộ);
+//   4. Tuân thủ thiết lập proxy mà hàm `fetch` toàn cục của Node bỏ qua.
 //
-// Everything runs against servers started here on 127.0.0.1; nothing leaves the machine.
+// Mọi bài kiểm tra chạy trên các server nội bộ khởi tạo tại 127.0.0.1; không gửi dữ liệu ra ngoài mạng.
 import { app, net, session } from 'electron'
 import http from 'node:http'
 
@@ -20,7 +19,7 @@ function report(name, ok, detail) {
   console.log((ok ? 'ok    ' : 'FAIL  ') + name.padEnd(46) + detail)
 }
 
-/** An SSE server that sends three pieces 400 ms apart, then ends. Records what it was sent. */
+/** Máy chủ SSE gửi 3 phần dữ liệu cách nhau 400 ms rồi kết thúc; ghi nhận các thông tin nhận được. */
 function startSseServer() {
   const seen = []
   const server = http.createServer((request, response) => {
@@ -40,7 +39,7 @@ function startSseServer() {
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve({ server, seen, port: server.address().port })))
 }
 
-/** A server that counts the requests it gets and answers each one, to stand in as a "proxy". */
+/** Máy chủ đếm số lượng request nhận được và phản hồi để đóng vai trò làm proxy giả lập. */
 function startCountingServer(label) {
   const hits = []
   const server = http.createServer((request, response) => {
@@ -80,7 +79,7 @@ async function abortEndsTheReadPromptly(port) {
   const controller = new AbortController()
   const response = await net.fetch(`http://127.0.0.1:${port}/v1/chat/completions`, { signal: controller.signal })
   const reader = response.body.getReader()
-  await reader.read() // the first piece
+  await reader.read() // phần dữ liệu đầu tiên
   const abortedAt = Date.now()
   controller.abort()
   let outcome = 'the read finished without an error'
@@ -93,9 +92,8 @@ async function abortEndsTheReadPromptly(port) {
     outcome = (error?.name ?? 'Error') + ': ' + (error?.message ?? '')
   }
   const took = Date.now() - abortedAt
-  // Quick, and as an error rather than a quiet end: the transport turns an abort into `cancelled`, and
-  // it only can if the read actually fails or stops. 400 ms is the gap between pieces, so waiting for the
-  // next piece would show up as a delay of that size.
+  // Ngắt nhanh chóng và trả về lỗi: tầng truyền tải chuyển thao tác hủy thành `cancelled`.
+  // Khoảng cách giữa các phần là 400 ms, nếu chờ phần tiếp theo sẽ xuất hiện độ trễ tương ứng.
   report('2. aborting mid-stream ends the read', took < 300, `${took} ms after abort; ${outcome}`)
 }
 
@@ -120,7 +118,7 @@ async function loopbackSkipsTheProxy(proxy, target) {
 }
 
 async function followsAProxyWhereNodeFetchDoesNot(proxy) {
-  // `app.test` does not resolve. If the request reaches our fake proxy, it was sent through it.
+  // Tên miền `app.test` không thể phân giải DNS. Nếu request đến được proxy giả lập nghĩa là nó đã đi qua proxy.
   await session.defaultSession.setProxy({ proxyRules: `http=127.0.0.1:${proxy.port}` })
   const before = proxy.hits.length
   let netAnswer = 'no answer'

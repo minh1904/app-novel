@@ -107,8 +107,8 @@ describe('translationChecks', () => {
 
   describe('checkLengthOutliers', () => {
     it('flags outlier length ratios outside the language band', () => {
-      const src = ['一段很长很长的日文小说原文描述内容，超过二十个字。'] // 24 chars
-      const tgt = ['Ngắn.'] // 5 chars -> ratio ~0.2 (below ja band [0.96, 2.71])
+      const src = ['一段很长很长的日文小说原文描述内容，超过二十个字。'] // 24 ký tự
+      const tgt = ['Ngắn.'] // 5 ký tự -> tỷ lệ ~0.2 (dưới dải tiếng Nhật [0.96, 2.71])
       const beads: Bead[] = [{ type: '1-1', srcIdx: [0], tgtIdx: [0] }]
 
       const issues = checkLengthOutliers(src, tgt, beads, { sourceLang: 'ja' })
@@ -117,7 +117,7 @@ describe('translationChecks', () => {
     })
 
     it('ignores source paragraphs shorter than 20 visible characters', () => {
-      const src = ['短句'] // 2 chars
+      const src = ['短句'] // 2 ký tự
       const tgt = ['Dòng ngắn dịch ra cũng ngắn']
       const beads: Bead[] = [{ type: '1-1', srcIdx: [0], tgtIdx: [0] }]
 
@@ -149,7 +149,7 @@ describe('translationChecks', () => {
   describe('checkGlossaryCompliance', () => {
     it('handles hoà/hòa tone mark equivalence (both count as strict hit)', () => {
       const src = ['咸亨酒店']
-      const tgt = ['quán rượu Hàm Hoà'] // alternative tone mark for Hòa
+      const tgt = ['quán rượu Hàm Hoà'] // kiểu đặt dấu thanh biến thể cho Hòa
       const beads: Bead[] = [{ type: '1-1', srcIdx: [0], tgtIdx: [0] }]
       const glossary: GlossaryEntry[] = [{ src: '咸亨酒店', tgt: 'quán rượu Hàm Hòa' }]
 
@@ -163,14 +163,14 @@ describe('translationChecks', () => {
       expect(containsWord('chào dì Irene nhé', 'dì')).toBe(true)
 
       const src = ['わたくしをおば様と呼ぶ']
-      const tgt = ['cô bé dìu tôi đi'] // contains "dìu", not "dì"
+      const tgt = ['cô bé dìu tôi đi'] // chứa "dìu", không chứa từ "dì"
       const beads: Bead[] = [{ type: '1-1', srcIdx: [0], tgtIdx: [0] }]
       const glossary: GlossaryEntry[] = [{ src: 'おば様', tgt: 'mợ', forbidden: ['dì'] }]
 
       const res = checkGlossaryCompliance(src, tgt, beads, glossary)
       expect(res.forbiddenHits).toBe(0)
 
-      // When "dì" is used directly as word:
+      // Khi từ "dì" được dùng trực tiếp như một từ độc lập:
       const tgtWithForbidden = ['chào dì nhé']
       const res2 = checkGlossaryCompliance(src, tgtWithForbidden, beads, glossary)
       expect(res2.forbiddenHits).toBe(1)
@@ -189,8 +189,8 @@ describe('translationChecks', () => {
       ]
 
       const res = checkGlossaryCompliance(src, tgt, beads, glossary)
-      expect(res.strictHits).toBe(0) // not "núi Hoa Quả"
-      expect(res.lenientHits).toBe(1) // accepted via alternatives
+      expect(res.strictHits).toBe(0) // không khớp "núi Hoa Quả"
+      expect(res.lenientHits).toBe(1) // chấp nhận thông qua danh sách từ thay thế
     })
 
     it('counts occurrences in omitted source paragraphs (1-0) as missed', () => {
@@ -220,12 +220,12 @@ describe('translationChecks', () => {
         }
       ]
 
-      // Pass case
+      // Trường hợp đạt
       const tgtPass = ['cô bé gọi tôi là mợ']
       const resPass = evaluateAssertions(src, tgtPass, beads, rules)
       expect(resPass[0].result).toBe('pass')
 
-      // Fail case (uses "dì")
+      // Trường hợp không đạt (chứa từ "dì")
       const tgtFail = ['cô bé gọi tôi là dì Irene']
       const resFail = evaluateAssertions(src, tgtFail, beads, rules)
       expect(resFail[0].result).toBe('fail')

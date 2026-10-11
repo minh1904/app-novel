@@ -1,19 +1,19 @@
 /**
- * Historical E6 advisory algorithm (spec measure-runs).
- * Pure function with no Node/DOM dependencies.
+ * Thuật toán khuyến nghị E6 lịch sử.
+ * Hàm thuần túy không phụ thuộc Node/DOM.
  *
- * Kept to reproduce older benchmark reports. Callers must select it explicitly
- * and must not treat its output as an automatic product decision.
+ * Giữ lại để tái lập các báo cáo đo đạc trước đây. Nơi gọi phải chọn hàm này
+ * một cách tường minh và không được coi kết quả trả về là quyết định tự động.
  */
 
 export type E6Decision = 'keep' | 'no-keep' | 'insufficient'
 
 export interface T0Metrics {
-  omissions: number // 1-0
-  additions: number // 0-1
-  merges: number // 2-1
-  splits: number // 1-2
-  strictGlossaryRate: number // 0..100
+  omissions: number // Bỏ sót (1->0)
+  additions: number // Thêm mới (0->1)
+  merges: number // Gộp (2->1)
+  splits: number // Tách (1->2)
+  strictGlossaryRate: number // Tỷ lệ tuân thủ thuật ngữ nghiêm ngặt (0..100)
 }
 
 export interface ComparisonMetrics {
@@ -44,10 +44,10 @@ export interface E6Result {
 }
 
 /**
- * Evaluates the E6 decision rule:
- * - keep: T0 not worse, winRate CI lower > 0.50, human does not contradict.
- * - no-keep: T0 worsened OR winRate CI upper < 0.50.
- * - insufficient: otherwise, or < 50 non-tie pairs.
+ * Đánh giá quy tắc quyết định E6:
+ * - keep: T0 không tệ hơn, cận dưới CI của tỷ lệ thắng > 0.50, đánh giá của con người không mâu thuẫn.
+ * - no-keep: T0 tệ hơn HOẶC cận trên CI của tỷ lệ thắng < 0.50.
+ * - insufficient: trường hợp khác, hoặc < 50 cặp đoạn không hòa.
  */
 export function evaluateE6Decision(metrics: ComparisonMetrics): E6Result {
   const { baselineT0, candidateT0, winRateCI, humanWinRateCI, nonTieCount } = metrics
@@ -58,7 +58,7 @@ export function evaluateE6Decision(metrics: ComparisonMetrics): E6Result {
     candidateT0.omissions + candidateT0.additions + candidateT0.merges + candidateT0.splits
   const glossDiff = candidateT0.strictGlossaryRate - baselineT0.strictGlossaryRate
 
-  // T0 worsened if structural issues increased or strict glossary dropped by more than 1.0%
+  // T0 tệ hơn nếu lỗi cấu trúc tăng hoặc tỷ lệ tuân thủ thuật ngữ nghiêm ngặt giảm hơn 1.0%
   const t0Worsened = candStruct > baseStruct || glossDiff < -1.0
 
   const details = {
@@ -67,7 +67,7 @@ export function evaluateE6Decision(metrics: ComparisonMetrics): E6Result {
     strictGlossaryDiff: Number(glossDiff.toFixed(2))
   }
 
-  // Check 1: no-keep
+  // Bước 1: kiểm tra điều kiện không giữ (no-keep)
   if (t0Worsened) {
     let reason = 'Kiểm tất định T0 xấu đi: '
     if (candStruct > baseStruct) {
@@ -87,7 +87,7 @@ export function evaluateE6Decision(metrics: ComparisonMetrics): E6Result {
     }
   }
 
-  // Check 2: insufficient data
+  // Bước 2: kiểm tra dữ liệu chưa đủ (insufficient)
   if (nonTieCount !== undefined && nonTieCount < 50) {
     return {
       decision: 'insufficient',
@@ -97,7 +97,7 @@ export function evaluateE6Decision(metrics: ComparisonMetrics): E6Result {
     }
   }
 
-  // Check 3: keep
+  // Bước 3: kiểm tra điều kiện giữ lại (keep)
   if (winRateCI && winRateCI.lower > 0.5) {
     if (humanWinRateCI && humanWinRateCI.upper < 0.5) {
       return {

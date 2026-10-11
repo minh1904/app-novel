@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProviderError, type ProviderErrorKind } from '../types'
 import { DEFAULT_RETRY, abortableSleep, decideRetry } from './retryPolicy'
 
-const middle = (): number => 0.5 // a jitter of exactly 0
+const middle = (): number => 0.5 // mức jitter chính xác bằng 0
 
 const error = (kind: ProviderErrorKind, retryAfterMs?: number): ProviderError =>
   new ProviderError(kind, 'x', { retryAfterMs })
@@ -106,7 +106,7 @@ describe('abortableSleep', () => {
     await vi.advanceTimersByTimeAsync(10)
     controller.abort()
     expect(await sleeping).toMatchObject({ kind: 'cancelled' })
-    // The timer was cleared, so nothing is left to fire a minute later.
+    // Bộ hẹn giờ đã bị hủy, không còn hàm nào bị kích hoạt sau đó.
     expect(vi.getTimerCount()).toBe(0)
   })
 

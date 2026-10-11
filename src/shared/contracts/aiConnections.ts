@@ -33,7 +33,7 @@ export interface ConnectionKeyView {
   frozenScope: QuotaScope | null
 }
 
-/** Which wire protocol a connection speaks; `auto` decides from the address. */
+/** Giao thức kết nối sử dụng; `auto` tự suy đoán từ địa chỉ. */
 export const API_MODES = ['auto', 'chat_completions', 'responses', 'anthropic_messages'] as const
 export type ApiMode = (typeof API_MODES)[number]
 
@@ -42,11 +42,11 @@ export interface ConnectionView {
   name: string
   baseUrl: string
   enabled: boolean
-  /** A pasted API key, or an account login (change `subscription-providers`). */
+  /** Khóa API hoặc đăng nhập tài khoản. */
   authKind: 'api_key' | 'oauth'
   oauthProvider: 'codex' | 'copilot' | null
   apiMode: ApiMode
-  /** The login of an account connection: who, and whether it must be done again. Never a token. */
+  /** Thông tin đăng nhập tài khoản: tên tài khoản và trạng thái cần đăng nhập lại. Không bao giờ chứa token. */
   account: { label: string | null; state: 'ok' | 'relogin'; expiresAt: number | null } | null
   providerId: string | null
   /** Id của **mục** model mặc định (không phải tên model); `null` khi chưa chọn. */
@@ -204,25 +204,25 @@ export const addConnectionKeySchema = v.strictObject({
 export const removeConnectionKeySchema = v.strictObject({ id: connectionId, keyId })
 
 /**
- * The two-step check of an endpoint (change `hermes-settings-modal`, design D5). `resolvedBaseUrl` is the
- * variant that listed models (with or without `/v1`), the one to keep.
+ * Kết quả kiểm tra endpoint qua hai bước. `resolvedBaseUrl` là biến thể
+ * liệt kê được danh sách model (có hoặc không có `/v1`).
  */
 export interface EndpointProbeResult {
   ok: boolean
-  /** `false` only when nothing answered at all; a wrong key or a web page is still "reachable". */
+  /** `false` khi hoàn toàn không có phản hồi; sai key hoặc trả về trang web vẫn tính là kết nối được. */
   reachable: boolean
   keyRejected: boolean
   resolvedBaseUrl: string | null
   models: string[]
-  /** Whether the one-token chat call was made and answered. */
+  /** Đã gửi và nhận thành công lượt gọi thử với 1 token hay chưa. */
   routeChecked: boolean
-  /** One sentence for the person, in Vietnamese. */
+  /** Thông điệp giải thích ngắn gọn bằng tiếng Việt. */
   message: string
 }
 
 /**
- * Probe an address before or after saving it. The key is either typed now (`secret`, never stored by this
- * call) or the first key of an existing connection.
+ * Kiểm tra kết nối địa chỉ trước hoặc sau khi lưu. Khóa có thể được nhập trực tiếp (`secret`, không lưu lại)
+ * hoặc dùng khóa đầu tiên của kết nối hiện có.
  */
 export const probeEndpointSchema = v.strictObject({
   baseUrl,
@@ -240,8 +240,7 @@ export const probeEndpointSchema = v.strictObject({
 export type ProbeEndpointInput = v.InferOutput<typeof probeEndpointSchema>
 
 /**
- * Paste a key into a provider card that has no connection yet: the connection is created from the preset
- * and the key added, in one call, so a card never ends up half-made.
+ * Tạo kết nối từ cấu hình sẵn và thêm khóa API trong cùng một lượt gọi.
  */
 export const ensureWithKeySchema = v.strictObject({
   providerId: v.pipe(

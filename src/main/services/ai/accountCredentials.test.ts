@@ -11,8 +11,8 @@ import { ProviderError } from '../../infra/providers/types'
 import { AccountCredentials } from './accountCredentials'
 
 /**
- * Account tokens (change `subscription-providers`, tasks 3.1, 3.3, 4.2): sealed or not stored at all, used
- * fresh, refreshed once at a time, and marked "Cần đăng nhập lại" when a refresh is refused for good.
+ * Quản lý token tài khoản: mã hóa an toàn, đảm bảo token mới, chỉ làm mới một tác vụ tại một thời điểm
+ * và đánh dấu 'Cần đăng nhập lại' khi làm mới bị từ chối dứt điểm.
  */
 
 const tempDir = createTempDirs()

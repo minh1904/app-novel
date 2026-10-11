@@ -17,7 +17,7 @@ describe('splitParagraphs', () => {
       'Hai.',
       'Ba.'
     ])
-    // The spans cover the whole text with no gap and no overlap.
+    // Các khoảng đoạn bao phủ toàn bộ văn bản, không bị gián đoạn hay chồng lấn.
     expect(spans.map((span) => content.slice(span.start, span.end)).join('')).toBe(content)
   })
 

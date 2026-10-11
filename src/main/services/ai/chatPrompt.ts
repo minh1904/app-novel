@@ -11,8 +11,8 @@ import {
  *
  * Hàm thuần, không gọi mạng, không đọc kho: cùng đầu vào cho cùng đầu ra.
  *
- * Một system prompt cho mọi lượt (D2 của change `agentic-chat`): không còn Hỏi/Sửa. Model tự đọc bằng
- * tool đọc và tự đề xuất bằng tool ghi; câu trả lời bằng chữ không bao giờ thành đề xuất.
+ * Một system prompt dùng chung cho mọi lượt: mô hình tự đọc bằng
+ * công cụ đọc và tự tạo đề xuất bằng công cụ ghi; câu trả lời bằng văn bản không trực tiếp sửa bản dịch.
  */
 
 const ROLE = [
@@ -21,12 +21,10 @@ const ROLE = [
 ].join(' ')
 
 /**
- * Luật dùng tool.
+ * Quy tắc sử dụng công cụ.
  *
- * Câu "không được ghi ≠ không được giúp" là bài học của change `ai-chat`: khi chế độ Hỏi bị viết thành
- * "chỉ giải thích, không viết lại", hỏi "dịch chương này" thì model đáp *"tôi không thể dịch toàn bộ
- * chương"*. Model vẫn được viết bản dịch trong câu trả lời để người dùng đọc; điều duy nhất nó không được
- * làm là nói đã sửa khi chưa gọi tool ghi.
+ * Mô hình vẫn được viết bản dịch trong câu trả lời để người dùng đọc khi được yêu cầu;
+ * điều duy nhất cần đảm bảo là chỉ xác nhận đã thay đổi khi đã thực sự gọi công cụ ghi đề xuất.
  */
 const TOOLS = [
   'Bạn không thấy văn bản nào cho tới khi đọc bằng công cụ.',
@@ -65,8 +63,8 @@ export interface LocationChapter {
 const side = (value: 'source' | 'target'): string => (value === 'source' ? 'bản gốc' : 'bản dịch')
 
 /**
- * Người dùng đang đứng ở đâu (D1): chỉ vị trí, không có chữ. Đặt **cuối** system prompt, vì đây là phần
- * duy nhất đổi giữa các lượt; phần trước nó giữ nguyên để cache trúng.
+ * Thông tin vị trí người dùng: chỉ cung cấp vị trí, không đính kèm nội dung văn bản.
+ * Đặt ở cuối system prompt để tối ưu bộ nhớ đệm (prompt cache) cho phần hướng dẫn cố định phía trước.
  */
 export function locationBlock(location: ChatLocation, chapter: LocationChapter | null): string {
   const parts: string[] = []

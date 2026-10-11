@@ -130,7 +130,7 @@ export class ChapterTranslator {
     const { workId, chapterId, connectionId, entryId, settingsKey, sourceIds, expectedRev } = input
     // Mục bị xóa giữa chừng thì ném `not_found` ở đây, trước khi gửi gì.
     const translator = connections.translator(connectionId, entryId)
-    // Cấu hình của mục phải còn y như lúc lập kế hoạch (design D6). Provider vừa dựng và khóa vừa so cùng đọc
+    // Cấu hình của mục phải còn y như lúc lập kế hoạch. Provider vừa dựng và khóa vừa so cùng đọc
     // từ một lần đọc mục, nên lô gửi đi dùng đúng bộ cấu hình có khóa khớp, không có kẽ hở giữa hai việc.
     if (translator.settingsKey !== settingsKey) {
       throw new StorageError(
@@ -192,7 +192,7 @@ export class ChapterTranslator {
             .slice(Math.max(0, first - PREVIOUS_PARAGRAPHS), Math.max(0, first))
             .map((row) => row.sourceText)
         } catch {
-          // If context loading fails, continue translation without layers
+          // Nếu nạp ngữ cảnh thất bại, tiếp tục dịch mà không kèm ngữ cảnh bổ sung
         }
 
         const outcome = await executeTranslateBatch({

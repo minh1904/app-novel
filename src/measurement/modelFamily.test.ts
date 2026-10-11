@@ -19,18 +19,18 @@ describe('modelFamily', () => {
   })
 
   it('requires a 3rd family when 2 translators belong to 2 different families', () => {
-    // Translators: Gemini and Claude
+    // Người dịch: Gemini và Claude
     const translators = ['gemini-2.5-flash', 'claude-3-5-sonnet']
 
-    // Judge: Claude (conflicts with 2nd translator)
+    // Giám khảo: Claude (xung đột với người dịch thứ 2)
     const judgeClaude = checkJudgeFamily('claude-3-7-sonnet', translators)
     expect(judgeClaude.valid).toBe(false)
 
-    // Judge: Gemini (conflicts with 1st translator)
+    // Giám khảo: Gemini (xung đột với người dịch thứ 1)
     const judgeGemini = checkJudgeFamily('gemini-2.5-pro', translators)
     expect(judgeGemini.valid).toBe(false)
 
-    // Judge: GPT-4o (3rd independent family) -> Passes!
+    // Giám khảo: GPT-4o (họ thứ 3 độc lập) -> Hợp lệ
     const judgeGpt = checkJudgeFamily('gpt-4o', translators)
     expect(judgeGpt.valid).toBe(true)
   })

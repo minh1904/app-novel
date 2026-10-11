@@ -14,7 +14,7 @@ import { ExportService } from '../services/export/exportService'
 
 const MIRA_FILTER = { name: 'Tác phẩm Mira', extensions: ['mira'] }
 
-/** The real dialogs, parented to the main window so they stay on top of it. */
+/** Các hộp thoại thật của hệ thống, gắn với cửa sổ chính để luôn hiển thị phía trên. */
 function electronFilePicker(): FilePicker {
   const parent = (): BrowserWindow | undefined =>
     BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
@@ -55,7 +55,7 @@ export function registerLibraryHandlers(
     crypto: electronSafeStorage,
     fetch: electronFetch,
     userAgent: 'Mira/' + app.getVersion(),
-    // The login service checks the host itself (auth.openai.com, github.com) before asking for this.
+    // Dịch vụ đăng nhập tự kiểm tra host (auth.openai.com, github.com) trước khi yêu cầu mở URL này.
     openExternal: (url) => shell.openExternal(url)
   })
   const exportService = new ExportService(
@@ -63,7 +63,7 @@ export function registerLibraryHandlers(
     electronExportFilePicker(),
     electronPdfPrinter(),
     writeFile,
-    // A folder (chapters exported one file each) opens; a file is shown selected in its folder.
+    // Nếu là thư mục (xuất mỗi chương một tệp) thì mở thư mục; nếu là tệp thì hiển thị và chọn tệp trong thư mục.
     (path) => {
       if (statSync(path, { throwIfNoEntry: false })?.isDirectory()) void shell.openPath(path)
       else shell.showItemInFolder(path)

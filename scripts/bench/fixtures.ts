@@ -30,8 +30,8 @@ export interface LoadFixturesResult {
 }
 
 /**
- * Loads all fixtures from fixtures/public and fixtures/private (if present).
- * Validates schemas and rules.
+ * Tải toàn bộ fixture từ fixtures/public và fixtures/private (nếu có).
+ * Xác thực cấu trúc schema và các quy tắc kiểm tra.
  */
 export function loadFixtures(options?: {
   fixturesRoot?: string
@@ -50,7 +50,7 @@ export function loadFixtures(options?: {
     for (const dirName of fs.readdirSync(scopeDir)) {
       const workDir = path.join(scopeDir, dirName)
       if (!fs.statSync(workDir).isDirectory()) continue
-      if (dirName === 'runs') continue // skip runs directory under private
+      if (dirName === 'runs') continue // bỏ qua thư mục runs trong private
 
       const workJsonPath = path.join(workDir, 'work.json')
       if (!fs.existsSync(workJsonPath)) continue

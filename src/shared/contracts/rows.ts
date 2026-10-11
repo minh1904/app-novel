@@ -4,21 +4,19 @@ import type { LinkRecord } from './links'
 import { TEXT_MAX_UNITS, type SegmentRecord, type TextRecord } from './text'
 
 /**
- * Rows of the sentence mode: one row per source segment, with the translated segments linked to
- * it. Pure functions over what the store holds, so the screen and the main process agree on what
- * a row is.
+ * Các hàng trong chế độ dịch theo câu: mỗi hàng ứng với một đoạn nguồn và các đoạn dịch được liên kết.
  */
 
 export type RowState = 'untranslated' | 'ai' | 'reviewed' | 'check'
 
 export interface Row {
-  /** 0-based position of the source segment. */
+  /** Vị trí 0-indexed của đoạn nguồn. */
   index: number
   sourceId: string
   sourceText: string
-  /** Translated segments of the row, in the order of the translation. */
+  /** Danh sách ID đoạn dịch thuộc hàng theo thứ tự bản dịch. */
   targetIds: string[]
-  /** The translation from the start of the first translated segment to the end of the last one. */
+  /** Văn bản dịch từ đầu đoạn dịch đầu tiên đến cuối đoạn dịch cuối cùng. */
   targetText: string
   state: RowState
   linkIds: string[]
@@ -26,7 +24,7 @@ export interface Row {
 
 export interface RowsView {
   rows: Row[]
-  /** Translated segments that belong to no link: written in full-text mode and not matched yet. */
+  /** Các đoạn dịch chưa thuộc về liên kết nào. */
   unlinkedTargets: SegmentRecord[]
   counts: Record<RowState, number>
 }
@@ -34,9 +32,7 @@ export interface RowsView {
 const NOTEWORTHY: RowState[] = ['check', 'ai', 'reviewed']
 
 /**
- * The state of a row from its links (not stored): nothing translated; a link that needs another
- * look; an AI translation nobody has confirmed; or confirmed. With several links the most
- * noteworthy wins, in that order.
+ * Xác định trạng thái của hàng dựa trên các liên kết.
  */
 export function rowState(links: LinkRecord[], hasTarget: boolean): RowState {
   if (!hasTarget) return 'untranslated'
@@ -101,7 +97,7 @@ export function buildRows(source: TextRecord, target: TextRecord, links: LinkRec
   }
 }
 
-/** The text of a row is one paragraph: line breaks and the white space around them become one space. */
+/** Chuẩn hóa văn bản của một hàng: gộp ngắt dòng và khoảng trắng xung quanh thành một dấu cách duy nhất. */
 export function normalizeRowText(text: string): string {
   return text.replace(/\s*[\r\n]+\s*/g, ' ').trim()
 }

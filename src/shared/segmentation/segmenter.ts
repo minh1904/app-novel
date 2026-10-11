@@ -7,10 +7,10 @@ import {
 } from './segmenterData'
 
 /**
- * Splits a chapter's source text into sentence segments. Built on the platform's sentence
- * segmenter (ICU), then repaired where it is known to be wrong: an opening quote left at the end of
- * the previous sentence, a split after an abbreviation, and a split inside "wait... what".
- * Ranges are UTF-16 offsets into the text, ready to hand to `text:save`.
+ * Tách văn bản gốc của chương thành các segment câu. Xây dựng dựa trên bộ phân đoạn câu mặc định
+ * của nền tảng (ICU), sau đó hiệu chỉnh các trường hợp thường tách sai: dấu mở ngoặc/mở kép bị kẹt ở cuối
+ * câu trước, tách nhầm sau từ viết tắt, hoặc tách nhầm giữa dấu ba chấm ("khoan đã... cái gì").
+ * Các khoảng range là offset UTF-16 trong văn bản, sẵn sàng truyền vào `text:save`.
  */
 
 export interface SegmentRange {
@@ -18,7 +18,7 @@ export interface SegmentRange {
   end: number
 }
 
-/** The languages text can be split in: the source languages, plus Vietnamese for translations. */
+/** Các ngôn ngữ được hỗ trợ phân đoạn: các ngôn ngữ nguồn cùng tiếng Việt cho bản dịch. */
 export type SegmentLanguage = SourceLanguage | 'vi'
 
 function segmentLocale(lang: SegmentLanguage): string {
@@ -28,7 +28,7 @@ function segmentLocale(lang: SegmentLanguage): string {
 
 const SPACE = /\s/
 
-/** Languages whose sentences use abbreviations with a period that must not split. */
+/** Các ngôn ngữ có câu sử dụng từ viết tắt kèm dấu chấm không được phép ngắt đoạn. */
 function abbreviationKey(lang: SegmentLanguage): 'en' | 'vi' | null {
   return lang === 'en' || lang === 'vi' ? lang : null
 }
@@ -53,7 +53,7 @@ function firstLetter(text: string, from: number, to: number): string {
   return ''
 }
 
-/** The word a piece ends with, without any quote or bracket in front of it. */
+/** Từ kết thúc của một đoạn, sau khi đã loại bỏ dấu ngoặc hoặc dấu kép ở phía trước. */
 function lastWord(text: string, span: Span): string {
   const end = trimEnd(text, span)
   let start = end
@@ -68,7 +68,7 @@ function isLowerOrDigit(char: string): boolean {
 function repair(text: string, spans: Span[], lang: SegmentLanguage): Span[] {
   const result = spans.map((span) => ({ ...span }))
 
-  // 1. An opening bracket or quote at the end of a piece starts the next sentence.
+  // 1. Dấu mở ngoặc hoặc mở kép ở cuối đoạn được chuyển sang đầu câu tiếp theo.
   for (let i = 0; i < result.length - 1; i++) {
     const end = trimEnd(text, result[i])
     let k = 0
@@ -79,8 +79,8 @@ function repair(text: string, spans: Span[], lang: SegmentLanguage): Span[] {
     }
   }
 
-  // 2. A period after a known abbreviation does not end the sentence. 3. Neither does "..." or
-  // "…" when the next word starts in lower case ("Wait... what?").
+  // 2. Dấu chấm sau từ viết tắt đã biết không ngắt câu.
+  // 3. Tương tự, "..." hoặc "…" không ngắt câu khi từ kế tiếp bắt đầu bằng chữ thường ("Khoan đã... cái gì?").
   const key = abbreviationKey(lang)
   for (let i = 0; i < result.length - 1; ) {
     const word = lastWord(text, result[i])
@@ -101,8 +101,8 @@ function repair(text: string, spans: Span[], lang: SegmentLanguage): Span[] {
 }
 
 /**
- * The segments of `text`, in order. Every non-empty line starts a new segment, blank lines make
- * none, and a range covers a sentence from its first to its last character that is not white space.
+ * Các segment của `text`, theo thứ tự xuất hiện. Mỗi dòng không trống bắt đầu một segment mới,
+ * dòng trống không tạo segment, và mỗi khoảng range bao phủ một câu từ ký tự đầu tiên đến ký tự cuối cùng không phải khoảng trắng.
  */
 export function segment(text: string, lang: SegmentLanguage): SegmentRange[] {
   const segmenter = new Intl.Segmenter(segmentLocale(lang), { granularity: 'sentence' })
@@ -139,7 +139,7 @@ export function segment(text: string, lang: SegmentLanguage): SegmentRange[] {
   return ranges
 }
 
-/** Indices of segments longer than the limit; flagged in the preview, never cut. */
+/** Chỉ số của các segment dài hơn giới hạn cho phép; được đánh dấu cảnh báo ở bản xem trước chứ không tự ý cắt ngắn. */
 export function longSegments(ranges: SegmentRange[]): number[] {
   const flagged: number[] = []
   ranges.forEach((range, index) => {

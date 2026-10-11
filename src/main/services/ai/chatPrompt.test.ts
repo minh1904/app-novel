@@ -3,12 +3,7 @@ import type { ChatSendInput } from '../../../shared/contracts/aiChat'
 import { buildChatMessages, locationBlock, systemPrompt } from './chatPrompt'
 
 /**
- * The prompt is behaviour, so it gets tests like any other behaviour.
- *
- * This file exists because of a bug that reached the screen with every other test green: the Hỏi
- * prompt said "không viết lại bản dịch", so asking "dịch chương này" got back *"tôi không thể dịch
- * toàn bộ chương"*. The model was obeying. Nothing in the suite looked at what we were telling it,
- * which is how an instruction can be wrong for as long as nobody reads it again.
+ * Kiểm thử cho việc tạo câu nhắc hệ thống (prompt) và cấu trúc tin nhắn trò chuyện.
  */
 
 const WORK = '11111111-2222-4333-8444-555555555555'
@@ -53,7 +48,7 @@ describe('systemPrompt', () => {
     }
   })
 
-  // The regression. "Không được ghi" and "không được giúp" are different instructions.
+  // Đảm bảo phân biệt giữa "không ghi đè trực tiếp" và "vẫn hỗ trợ dịch trong câu trả lời".
   it('lets the model translate on screen; it only may not claim a change it did not propose', () => {
     const prompt = systemPrompt()
     expect(prompt).toContain('cứ trả lời và viết bản dịch ra trong câu trả lời')
@@ -112,7 +107,7 @@ describe('buildChatMessages', () => {
     expect(system.content).toBe(systemPrompt(null) + '\n\n' + locationBlock(input().location, OPEN))
   })
 
-  // Two turns in the same work differ only in the location block: the rest is a cache prefix.
+  // Hai lượt trong cùng tác phẩm chỉ khác nhau ở khối vị trí: phần còn lại là tiền tố chung cho bộ nhớ đệm.
   it('keeps the system prompt identical between two turns except for the location', () => {
     const first = buildChatMessages(input(), 'ja-modern', OPEN)[0].content as string
     const second = buildChatMessages(

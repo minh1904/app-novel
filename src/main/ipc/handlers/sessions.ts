@@ -11,10 +11,10 @@ import { createHandler } from '../handler'
 import type { AreaHandlers, HandlerDeps } from './deps'
 
 /**
- * The proposals a turn made, in the order it made them. A tool's own record comes first, because it alone
- * knows a term proposal (glossary entries carry no turn). Proposals stored against the turn that no tool
- * step names are those of an old Edit or Apply turn, made from its fenced answer; they are shown the same
- * way, so an old session still reads with its proposals.
+ * Các đề xuất do một lượt tạo ra, theo đúng thứ tự đã tạo. Bản ghi của tool được ưu tiên trước
+ * vì chỉ tool mới biết đề xuất thuật ngữ (mục thuật ngữ không lưu turn_id). Các đề xuất lưu theo lượt
+ * mà không có tool step nào nhắc tới là của lượt Edit hoặc Apply cũ; chúng được hiển thị tương tự
+ * để phiên cũ vẫn đọc được các đề xuất tương ứng.
  */
 function proposalsOf(db: Db, turn: StoredTurn): ChatToolProposal[] {
   const fromTools = turn.tools.flatMap((step) => (step.proposal ? [step.proposal] : []))

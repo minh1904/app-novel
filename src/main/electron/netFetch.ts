@@ -2,11 +2,11 @@ import { net } from 'electron'
 import { asFetch } from '../infra/providers/fetchAdapter'
 
 /**
- * The `fetch` the AI layer uses inside the app: Electron's `net.fetch`, so calls follow the system proxy
- * and certificate store instead of going straight out the way Node's `fetch` does.
+ * `fetch` mà tầng AI sử dụng bên trong ứng dụng: `net.fetch` của Electron, giúp các yêu cầu tuân theo proxy
+ * hệ thống và kho chứng chỉ thay vì gửi trực tiếp như `fetch` mặc định của Node.
  *
- * Imports `electron`, so it only runs in the main process; tests hand `createServices` an ordinary `fetch`.
- * `net.fetch` may only be called once the app is ready, which is true by the time any call is made: the
- * handlers that use it are registered after `whenReady`.
+ * Tệp này import `electron` nên chỉ chạy trong main process; các bài test truyền `fetch` thông thường cho `createServices`.
+ * `net.fetch` chỉ được gọi sau khi ứng dụng đã sẵn sàng (`whenReady`), điều này luôn đảm bảo vì các handler sử dụng
+ * nó chỉ được đăng ký sau khi app đã sẵn sàng.
  */
 export const electronFetch: typeof fetch = asFetch((url, init) => net.fetch(url, init))

@@ -1,11 +1,11 @@
 import type { SegmentLanguage } from './segmenter'
 
 /**
- * Regression corpus: every row is a promise made in the segmentation spec. A change to the rules or
- * the abbreviation list must keep every row passing, or change a row with a reason.
+ * Tập dữ liệu kiểm thử hồi quy: xác minh hành vi phân đoạn câu qua các ngôn ngữ và trường hợp biên.
+ * Mọi cập nhật quy tắc phân đoạn hoặc danh sách từ viết tắt đều phải vượt qua các ca kiểm thử này.
  */
 export const CORPUS: ReadonlyArray<[string, SegmentLanguage, string, string[]]> = [
-  // --- English
+  // --- Tiếng Anh
   [
     'abbreviation titles',
     'en',
@@ -66,7 +66,7 @@ export const CORPUS: ReadonlyArray<[string, SegmentLanguage, string, string[]]> 
     'It rained. He stayed in.\n\nShe went out.',
     ['It rained.', 'He stayed in.', 'She went out.']
   ],
-  // --- Vietnamese
+  // --- Tiếng Việt
   [
     'Vietnamese abbreviations',
     'vi',
@@ -79,7 +79,7 @@ export const CORPUS: ReadonlyArray<[string, SegmentLanguage, string, string[]]> 
     'Anh ấy đi... rồi quay lại.',
     ['Anh ấy đi... rồi quay lại.']
   ],
-  // --- Japanese
+  // --- Tiếng Nhật
   [
     'dialogue with narration',
     'ja',
@@ -102,7 +102,7 @@ export const CORPUS: ReadonlyArray<[string, SegmentLanguage, string, string[]]> 
     '𠮷野家は旨い。😀そうだ。',
     ['𠮷野家は旨い。', '😀そうだ。']
   ],
-  // --- Chinese
+  // --- Tiếng Trung
   [
     'simplified, quoted speech',
     'zh-Hans',
@@ -121,7 +121,7 @@ export const CORPUS: ReadonlyArray<[string, SegmentLanguage, string, string[]]> 
     '他說：「你好。」然後離開了。',
     ['他說：「你好。」', '然後離開了。']
   ],
-  // --- Edges for every language
+  // --- Trường hợp biên cho mọi ngôn ngữ
   ['Windows line endings are just white space', 'zh-Hans', '甲。\r\n乙。', ['甲。', '乙。']],
   ['nothing but white space', 'en', ' \n\n \t \n', []],
   ['empty text', 'ja', '', []]

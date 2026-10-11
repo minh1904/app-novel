@@ -48,7 +48,7 @@ export type ChatEmit = (chunk: ChatChunk) => void
  */
 export interface ChatConnections {
   translator(id: string, entryId: string): ConnectionTranslator
-  /** Settings › Model › Dự phòng; absent in tests that do not care, which means no fallbacks. */
+  /** Danh sách model dự phòng trong cài đặt; để trống trong các bài kiểm thử không cần dự phòng. */
   preferences?(): { fallbacks: ModelRef[] }
 }
 
@@ -65,14 +65,14 @@ export interface ChatServiceOptions {
       workId: string,
       patch: {
         answer: string
-        /** What the model thought so far; absent leaves the stored reasoning as it is. */
+        /** Nội dung suy luận của model tính đến thời điểm hiện tại; bỏ trống nếu giữ nguyên suy luận đã lưu. */
         reasoning?: string
         status: 'running' | 'done' | 'error' | 'cancelled'
         tools: ChatToolStep[]
         usage?: ChatUsage | null
         costUsd?: number | null
         finishReason?: ChatFinishReason | null
-        /** Set when a fallback answered: the model that really did. */
+        /** Ghi nhận model dự phòng thực tế đã phản hồi nếu xảy ra chuyển đổi model. */
         provider?: string | null
         model?: string | null
       }
@@ -99,8 +99,7 @@ export interface ChatServiceOptions {
  * có câu trả lời, chỉ là nó dựa trên ít dữ liệu hơn model muốn.
  *
  * Sáu vòng: đọc một chương 60.000 ký tự là ba trang, cộng một vòng tìm và một vòng liệt kê. Thứ chặn
- * chi phí là ngân sách ký tự bên dưới; số vòng chỉ chặn lặp vô ích. Cả hai là giá trị khởi đầu
- * (change `chat-tools-paging-search`), chỉnh khi có dữ liệu dùng thật.
+ * chi phí là ngân sách ký tự bên dưới; số vòng chỉ chặn lặp vô ích.
  */
 export const MAX_TOOL_ROUNDS = 6
 
@@ -118,7 +117,7 @@ function toChatError(error: unknown, now: number): ChatChunk & { kind: 'error' }
       error: {
         kind: error.kind,
         message: describeProviderError(error),
-        // Whether asking again can help is the chat policy's call (`errorPolicy.ts`), not the transport's.
+        // Việc hỏi lại có giải quyết được lỗi hay không tuân theo chính sách lỗi của chat, không phụ thuộc vào transport.
         retryable: taskErrorPolicy('chat', error.kind).retryable,
         recoverAt,
         ...(error.account ? { account: error.account } : {})
@@ -198,8 +197,8 @@ export class ChatService {
     emit: ChatEmit
   ): Promise<void> {
     let session = first
-    // The fallbacks of Settings, tried in order when a round fails before any text arrived (design D7 of
-    // change `hermes-settings-modal`). Built once per turn; an entry that cannot be called is passed over.
+    // Danh sách model dự phòng trong cài đặt, thử lần lượt khi một vòng gặp sự cố trước khi có phản hồi văn bản.
+    // Thiết lập một lần cho mỗi lượt; bỏ qua các mục không thể gọi được.
     const chain = fallbackChain(
       { connectionId: first.connection.id, entryId: first.entry.id },
       this.options.connections.preferences?.().fallbacks ?? []
@@ -219,7 +218,7 @@ export class ChatService {
 
     try {
       const { library, writes } = this.options
-      // Bound to this turn: where the user is, and the turn a proposal belongs to (its id is the request id).
+      // Gắn với lượt này: vị trí người dùng đang xem và lượt mà đề xuất thuộc về.
       const tools = library
         ? createChatTools(library, input.workId, {
             chapterId: input.chapterId,
@@ -247,7 +246,7 @@ export class ChatService {
             for await (const event of session.provider.chat(messages, {
               signal: controller.signal,
               tools: offer,
-              // Round 0 is the person's own request; later rounds answer tool calls (Copilot bills them apart).
+              // Vòng 0 là yêu cầu trực tiếp của người dùng; các vòng sau phản hồi các lệnh gọi tool.
               turnRound: round,
               ...(input.sessionId ? { sessionId: input.sessionId } : {})
             })) {
@@ -255,7 +254,7 @@ export class ChatService {
               // chỗ sinh ra lỗi "object has been destroyed" khó lần.
               if (!this.running.has(requestId)) return
               if (event.kind === 'reasoning') {
-                // Thinking already reached the screen: like text, it may not be swapped for another model's.
+                // Suy luận đã hiển thị trên màn hình: tương tự như văn bản trả về, không hoán đổi sang model khác khi đang suy luận.
                 partial = true
                 reasoning += event.text
                 emit({ requestId, kind: 'reasoning', text: event.text })
@@ -285,7 +284,7 @@ export class ChatService {
             }
             break
           } catch (error) {
-            // Never mid-answer: a reply that already streamed text is not swapped for another model's.
+            // Không dự phòng khi đang trả lời dở dang: phản hồi đã stream văn bản sẽ không hoán đổi sang model khác.
             if (partial || controller.signal.aborted || !shouldFallback(error)) throw error
             const next = this.nextFallback(chain)
             if (!next) throw error
@@ -337,7 +336,7 @@ export class ChatService {
             detail: result.detail,
             status: result.status
           })
-          // The card goes out as soon as the proposal exists, while the turn is still running.
+          // Thẻ đề xuất được phát ra ngay khi đề xuất được tạo, trong khi lượt hội thoại vẫn đang chạy.
           if (result.proposal) emit({ requestId, kind: 'proposal', proposal: result.proposal })
           toolSteps.push({
             name: result.name,
@@ -385,7 +384,7 @@ export class ChatService {
           tools: toolSteps
         })
       } catch {
-        // The original failure is still reported; a later startup marks any unfinished row interrupted.
+        // Vẫn báo cáo lỗi gốc; lần khởi động sau sẽ đánh dấu ngắt quãng cho hàng chưa hoàn tất.
       }
       emit({ ...chunk, requestId, partial })
     } finally {
@@ -393,14 +392,14 @@ export class ChatService {
     }
   }
 
-  /** The next fallback that can be called now; the ones that cannot (disabled, no key, deleted) are skipped. */
+  /** Model dự phòng tiếp theo khả dụng; bỏ qua các mục bị tắt, thiếu khóa hoặc đã xóa. */
   private nextFallback(chain: ModelRef[]): ConnectionTranslator | null {
     while (chain.length > 0) {
       const ref = chain.shift()!
       try {
         return this.options.connections.translator(ref.connectionId, ref.entryId)
       } catch {
-        // Not callable right now; try the next one.
+        // Không thể gọi tại thời điểm này; thử mục tiếp theo.
       }
     }
     return null

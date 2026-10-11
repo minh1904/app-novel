@@ -222,7 +222,7 @@ function parseOrNull(text: string): unknown {
 }
 
 /**
- * Hình dạng object `{"items":[…]}` của chế độ có schema (change `translate-structured-output-trial`):
+ * Hình dạng object `{"items":[…]}` của chế độ đầu ra có cấu trúc (schema):
  * cả chuỗi, rồi phần từ `{` đầu tới `}` cuối khi có lời dẫn. Đọc trước đường mảng để object không phụ
  * thuộc vào việc phần cắt `[`…`]` tình cờ trùng mảng `items`. `null` khi không phải hình dạng đó.
  */

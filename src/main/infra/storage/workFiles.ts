@@ -73,6 +73,22 @@ export class WorkFiles {
     }
   }
 
+  async withWorkAsync<T>(id: string, fn: (db: Db) => Promise<T>): Promise<T> {
+    assertWorkId(id)
+    const path = this.workPath(id)
+    if (!existsSync(path)) throw new StorageError('not_found', 'Không tìm thấy tác phẩm.')
+    try {
+      const db = openWorkFile(path)
+      try {
+        return await fn(db)
+      } finally {
+        db.close()
+      }
+    } catch (error) {
+      throw toStorageError(error)
+    }
+  }
+
   /**
    * Builds a new work file in `.tmp` with `build`, then moves it into place. The rename is the commit
    * point: a work file is either complete or absent, and a failure leaves nothing behind.

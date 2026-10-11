@@ -15,12 +15,11 @@ import {
 } from './chatTools'
 
 /**
- * The tools of change `agentic-chat`: where the user is, paragraphs with their counterpart, the approved
- * glossary and addressing, and the three writing tools that only ever propose.
+ * Công cụ cho trợ lý AI trò chuyện: thông tin vị trí người dùng, các đoạn văn kèm bản dịch tương ứng,
+ * bảng thuật ngữ và xưng hô đã duyệt, cùng các công cụ ghi dữ liệu dưới dạng đề xuất.
  *
- * The rules these tests hold: reading changes nothing; a write is anchored at the revision read now and
- * refused when the model read an older one; a translation is refused where one is already linked; and a
- * turn stops proposing at the cap.
+ * Quy tắc kiểm thử: thao tác đọc không thay đổi dữ liệu; thao tác ghi gắn liền với phiên bản (revision) hiện tại
+ * và từ chối nếu mô hình đọc phiên bản cũ; từ chối dịch nếu đoạn đã được liên kết; và dừng đề xuất khi đạt giới hạn.
  */
 
 const WORK = 'work-1'
@@ -126,7 +125,7 @@ interface Fixture {
   links: LinkRecord[]
 }
 
-/** Four source paragraphs; the first two are translated and linked, the last two are not. */
+/** Bốn đoạn gốc; hai đoạn đầu đã dịch và liên kết, hai đoạn sau chưa dịch. */
 function fixture(): Fixture {
   return {
     source: record('一。\n\n二。\n\n三。\n\n四。', [
@@ -343,7 +342,7 @@ describe('propose_edit', () => {
     const [input] = writes.proposals
     expect(input).toMatchObject({ turnId: 'turn', commandId: 'turn:1', targetBaseRev: 5 })
     expect(input.part.beforeText).toBe('Đoạn 7.\n\nĐoạn 8.\n\nĐoạn 9.')
-    // The blank lines between paragraphs stay as they were.
+    // Giữ nguyên các dòng trống giữa các đoạn văn.
     expect(input.part.afterText).toBe('Bảy mới.\n\nTám mới.\n\nChín mới.')
     const applied =
       content.slice(0, input.part.baseFrom!) +

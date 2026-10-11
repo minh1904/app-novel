@@ -38,8 +38,8 @@ function failureOf(error: unknown): Result<never> {
 }
 
 /**
- * Like createHandler, for work that has to wait (system dialogs). Input is validated the same way
- * and every failure still comes back as data.
+ * Tương tự như `createHandler`, dùng cho các tác vụ bất đồng bộ cần chờ đợi (như hiển thị hộp thoại hệ thống).
+ * Dữ liệu đầu vào được xác thực tương tự và mọi lỗi đều được trả về dưới dạng dữ liệu có cấu trúc.
  */
 export function createAsyncHandler<S extends v.GenericSchema, O>(
   schema: S | null,
@@ -74,7 +74,7 @@ export function createAsyncHandler<S extends v.GenericSchema, O>(
  */
 export function createSinkHandler<S extends v.GenericSchema, O>(
   schema: S | null,
-  handler: (input: v.InferOutput<S>, sink: ChunkSink) => O
+  handler: (input: v.InferOutput<S>, sink: ChunkSink) => O | Promise<O>
 ): RawHandler<O> {
   return (raw, sink) => {
     let input: v.InferOutput<S>
@@ -92,7 +92,8 @@ export function createSinkHandler<S extends v.GenericSchema, O>(
       input = parsed.output
     }
     try {
-      return ok(handler(input, sink ?? noChunkSink))
+      const result = handler(input, sink ?? noChunkSink)
+      return result instanceof Promise ? result.then(ok).catch(failureOf) : ok(result)
     } catch (error) {
       return failureOf(error)
     }
@@ -100,9 +101,9 @@ export function createSinkHandler<S extends v.GenericSchema, O>(
 }
 
 /**
- * Wraps a handler so that whatever the renderer sends is validated first and every failure comes
- * back as data. Electron would otherwise flatten thrown errors to a bare message string.
- * Pass `null` as the schema for channels that take no input.
+ * Bọc một handler để mọi dữ liệu renderer gửi lên đều được xác thực trước và mọi lỗi đều trả về
+ * dưới dạng dữ liệu có cấu trúc. Nếu ném exception trực tiếp, Electron sẽ biến chúng thành chuỗi thông báo trần.
+ * Truyền `null` cho schema đối với các kênh không nhận dữ liệu đầu vào.
  */
 export function createHandler<S extends v.GenericSchema, O>(
   schema: S | null,

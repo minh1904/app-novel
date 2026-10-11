@@ -1,4 +1,4 @@
-/** Error categories that cross the IPC boundary. Electron drops custom error classes, so failures travel as data. */
+/** Các phân loại mã lỗi truyền qua IPC. */
 export type ErrorCode =
   | 'validation'
   | 'not_found'
@@ -11,7 +11,7 @@ export type ErrorCode =
   | 'internal'
 
 export interface FieldError {
-  /** Dot-separated path of the offending input field, e.g. "title" or "patch.status". */
+  /** Đường dẫn phân cấp trường lỗi (dấu chấm ngăn cách), ví dụ "title" hoặc "patch.status". */
   path: string
   message: string
 }

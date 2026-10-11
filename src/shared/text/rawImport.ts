@@ -13,7 +13,7 @@ import { segment, longSegments, type SegmentRange } from '../segmentation/segmen
 import type { Result } from '../contracts/result'
 import { SEGMENTS_MAX, TEXT_MAX_UNITS, type TextRecord } from '../contracts/text'
 
-/** Largest file taken in; bigger is almost certainly the wrong file. */
+/** Kích thước tệp lớn nhất được chấp nhận; lớn hơn mức này gần như chắc chắn là chọn nhầm tệp. */
 export const FILE_MAX_BYTES = 8 * 1024 * 1024
 
 export type ImportSource =
@@ -22,13 +22,13 @@ export type ImportSource =
 
 export interface ImportPlan {
   fileName: string | null
-  /** Null for pasted text, which is already text and has no encoding. */
+  /** Null đối với văn bản dán vào vì đã là chuỗi ký tự và không có bảng mã tệp. */
   encoding: { id: EncodingId; reason: DetectionReason | 'chosen'; replacements: number } | null
-  /** The text that will be stored: normalised, with the changes listed in `changes`. */
+  /** Văn bản sẽ được lưu: đã chuẩn hóa, với các thay đổi được liệt kê trong `changes`. */
   text: string
   changes: NormalizeChange[]
   segments: SegmentRange[]
-  /** Indices of segments flagged as unusually long. */
+  /** Chỉ số của các segment bị đánh dấu là dài bất thường. */
   longSegments: number[]
   warnings: string[]
 }
@@ -38,9 +38,10 @@ export type PrepareResult = { ok: true; plan: ImportPlan } | { ok: false; messag
 const refuse = (message: string): PrepareResult => ({ ok: false, message })
 
 /**
- * Everything the preview shows and the save needs, from pasted text or file bytes: encoding,
- * normalisation, segments, and the reasons to refuse. Pure, so every refusal is easy to test.
- * `encoding` overrides the detected one (the user picked another in the preview).
+ * Toàn bộ thông tin bản xem trước hiển thị và bước lưu cần, từ văn bản dán hoặc byte tệp:
+ * bảng mã, chuẩn hóa, phân đoạn segment và lý do từ chối nếu có.
+ * Hàm thuần túy giúp kiểm thử mọi trường hợp từ chối một cách độc lập.
+ * Tham số `encoding` cho phép ghi đè bảng mã tự động phát hiện (khi người dùng chọn bảng mã khác trong bản xem trước).
  */
 export function prepareImport(
   source: ImportSource,
@@ -133,9 +134,9 @@ export function prepareImport(
 }
 
 /**
- * Stores a prepared source in a chapter: text and segments in one save, conditional on the revision
- * the user was looking at. Segments carry no ids, so a replaced source gets new segments and the
- * store flags any link that used the old ones; the translation side is never touched.
+ * Lưu văn bản gốc đã chuẩn bị vào chương: văn bản và các segment trong cùng một lần lưu,
+ * dựa trên số bản sửa đổi (revision) hiện tại. Segment không mang id riêng, nên khi thay thế văn bản gốc
+ * sẽ tạo ra các segment mới và kho lưu trữ sẽ đánh dấu các liên kết cũ; phía bản dịch không bị thay đổi.
  */
 export async function saveImport(
   api: Pick<TextApi, 'save'>,
@@ -153,7 +154,7 @@ export async function saveImport(
   )
 }
 
-/** What to tell the user when a save failed, by the error the store gave. */
+/** Thông báo lỗi hiển thị cho người dùng khi lưu thất bại, dựa theo mã lỗi từ kho lưu trữ. */
 export function describeSaveFailure(error: { code: string; message: string }): string {
   switch (error.code) {
     case 'conflict':

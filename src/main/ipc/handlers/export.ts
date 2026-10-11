@@ -20,7 +20,7 @@ export function exportHandlers(deps: HandlerDeps): AreaHandlers<'export'> {
         return await service.exportChapter(input)
       }
     ),
-    // Progress goes back to the window that asked, so the handler needs the sink as well.
+    // Tiến trình được gửi về đúng cửa sổ đã yêu cầu, nên handler cần cả đối tượng sink.
     [CHANNELS.exportWork]: (raw, sink) =>
       createAsyncHandler(exportWorkSchema, async (input: ExportWorkInput) => {
         const service = exportServiceOf(deps)

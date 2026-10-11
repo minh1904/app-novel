@@ -17,8 +17,8 @@ import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
 
 /**
- * The editor's save path against a real store: what is typed, saved through the handler the app
- * uses, and read back after the library is closed and opened again.
+ * Luồng lưu của trình soạn thảo trên kho lưu trữ thật: nội dung được gõ, lưu thông qua handler mà ứng dụng
+ * sử dụng, và đọc lại sau khi thư viện được đóng rồi mở lại.
  */
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -26,7 +26,7 @@ afterEach(() => {
   for (const store of stores.splice(0)) store.close()
 })
 
-/** An editor view with no browser behind it. */
+/** Khung nhìn editor không cần trình duyệt phía sau. */
 class FakeView implements SessionView {
   state: EditorState
   composing = false
@@ -71,7 +71,7 @@ interface Rig {
   store: TextStore & { saves: number; lastResult: Result<TextRecord> | null }
   handlers: ReturnType<typeof createLibraryHandlers>
   open(): { view: FakeView; session: EditorSession }
-  /** Replaces what the store holds, as another window or "Thay bản gốc" would. */
+  /** Thay thế nội dung trong kho lưu trữ, tương tự như cửa sổ khác hoặc chức năng "Thay bản gốc" thực hiện. */
   replaceElsewhere(content: string): Promise<void>
 }
 
@@ -277,7 +277,7 @@ describe('typing while a save is under way', () => {
 
     const real = rig.store.save
     rig.store.save = async (...args) => {
-      // The user keeps typing in the first sentence while the write is in flight.
+      // Người dùng tiếp tục gõ vào câu đầu tiên trong khi tiến trình ghi đang diễn ra.
       view.type(5, 'rất ')
       return real(...args)
     }
@@ -303,7 +303,7 @@ describe('typing while a save is under way', () => {
     const real = rig.store.save
     let asked: ReturnType<typeof session.save> | null = null
     rig.store.save = async (...args) => {
-      // While the first write is in flight the user types and asks to save again.
+      // Trong khi lần ghi đầu tiên đang diễn ra, người dùng gõ thêm và yêu cầu lưu tiếp.
       if (asked === null) {
         view.type(0, 'b')
         asked = session.save()
@@ -349,7 +349,7 @@ describe('undo after a save', () => {
   })
 })
 
-/** The translation side: it starts empty (revision 0) and is saved apart from the source. */
+/** Phía bản dịch: bắt đầu trống (revision 0) và được lưu độc lập với bản gốc. */
 async function setupTarget(): Promise<{
   library: LibraryStore
   workId: string
@@ -463,7 +463,7 @@ describe('saving the translation', () => {
     const rig = await setupTarget()
     const { view, session } = rig.open()
     view.type(0, 'Bản của tôi.')
-    // Another writer creates the translation first.
+    // Một tiến trình ghi khác tạo bản dịch trước.
     const other = (await rig.handlers[CHANNELS.textSave]({
       workId: rig.workId,
       chapterId: rig.chapterId,

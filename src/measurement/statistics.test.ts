@@ -22,7 +22,7 @@ describe('statistics algorithms', () => {
     })
 
     it('returns ~0 for random chance agreement', () => {
-      // 50 A, 50 B vs 50 A, 50 B uncorrelated
+      // Phân bố không tương quan
       const rater1: Array<'A' | 'B' | 'tie'> = ['A', 'A', 'B', 'B']
       const rater2: Array<'A' | 'B' | 'tie'> = ['A', 'B', 'A', 'B']
       const res = computeCohenKappa(rater1, rater2)

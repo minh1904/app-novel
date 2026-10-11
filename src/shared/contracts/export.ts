@@ -41,12 +41,12 @@ export interface ExportResult {
   canceled?: boolean
   filePath?: string
   count?: number
-  /** Chapters in the range left out because they have no translation. */
+  /** Số chương bị bỏ qua do chưa có bản dịch. */
   skipped?: number
   error?: string
 }
 
-/** How far an export of several chapters is; sent while it runs. */
+/** Tiến trình xuất nhiều chương. */
 export interface ExportProgress {
   workId: string
   done: number

@@ -172,7 +172,7 @@ describe('runRegistry', () => {
     const result = compareSnapshots(a, b)
     const row = (start: string): Comparison['rows'][number] | undefined =>
       result.rows.find((r) => r.metric.startsWith(start))
-    // One run a side: numbers are shown, but nothing is called better.
+    // Mỗi bên một lần chạy: số liệu được hiển thị, nhưng không bên nào được coi là tốt hơn.
     expect(row('Đoạn thiếu')).toMatchObject({
       a: '2',
       b: '0',

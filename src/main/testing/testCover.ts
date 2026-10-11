@@ -1,6 +1,6 @@
 import { COVER_DATA_URL_PREFIX } from '../../shared/contracts/library'
 
-/** A byte sequence that looks like a JPEG to the guards (start and end markers) without being one. */
+/** Chuỗi byte trông giống JPEG đối với bộ kiểm tra (có byte đánh dấu bắt đầu và kết thúc) nhưng không phải ảnh thật. */
 export function fakeJpegBytes(size = 64, fill = 0x11): Uint8Array {
   const bytes = new Uint8Array(size).fill(fill)
   bytes.set([0xff, 0xd8, 0xff], 0)

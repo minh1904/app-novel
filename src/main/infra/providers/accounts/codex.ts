@@ -3,10 +3,8 @@ import { ProviderError } from '../types'
 import { jwtClaims, jwtExpiry } from './jwt'
 
 /**
- * ChatGPT / Codex login and the facts its calls need (change `subscription-providers`, design D4). Every
- * constant comes from Hermes (`hermes_cli/auth_constants.py`, `web_routers/oauth.py`, `auth_codex.py`,
- * `codex_headers.py`, `account_usage.py`, `codex_models.py`, commit `bf871a5943`, read 2026-10-08). They are
- * the provider's internal endpoints, not a public API: if one changes, this file is the one place to fix.
+ * Đăng nhập ChatGPT / Codex và các cấu hình cần thiết cho phiên gọi.
+ * Các hằng số endpoint nội bộ phục vụ xác thực và kiểm tra mức sử dụng.
  */
 
 export const CODEX = {
@@ -19,13 +17,13 @@ export const CODEX = {
   redirectUri: 'https://auth.openai.com/deviceauth/callback',
   base: 'https://chatgpt.com/backend-api/codex',
   usageUrl: 'https://chatgpt.com/backend-api/wham/usage',
-  /** Refresh this long before `exp`. */
+  /** Thời gian làm mới trước khi `exp` hết hạn (ms). */
   refreshSkewMs: 120_000,
-  /** A device code is given up after this long, counted on our side. */
+  /** Thời hạn tối đa của mã thiết bị tính từ phía ứng dụng (ms). */
   codeLifetimeMs: 15 * 60_000
 } as const
 
-/** What Mira lists when the account's model list cannot be read (`codex_models.py:22-35`). */
+/** Danh sách mô hình dự phòng khi không thể lấy danh sách mô hình từ tài khoản. */
 export const CODEX_FALLBACK_MODELS = [
   'gpt-6-sol',
   'gpt-6-luna',
@@ -38,15 +36,15 @@ export const CODEX_FALLBACK_MODELS = [
   'gpt-5.3-codex-spark'
 ]
 
-/** A device code, as the login screen shows it. */
+/** Thông tin mã thiết bị hiển thị cho màn hình đăng nhập. */
 export interface DeviceCode {
   userCode: string
   verificationUrl: string
-  /** How long to wait between two polls. */
+  /** Khoảng thời gian chờ giữa hai lần thăm dò (ms). */
   intervalMs: number
-  /** When the code is given up (ms epoch). */
+  /** Thời điểm mã hết hạn (epoch ms). */
   expiresAt: number
-  /** What the next poll sends back; never shown. */
+  /** Dữ liệu nội bộ gửi kèm trong các lần thăm dò tiếp theo. */
   handle: Record<string, string>
 }
 
@@ -60,7 +58,7 @@ export type PollOutcome<T> =
   | { status: 'approved'; result: T }
   | { status: 'denied' | 'expired'; message: string }
 
-/** The login was refused for good: the refresh token is spent or revoked. */
+/** Lỗi khi phiên đăng nhập bị từ chối vĩnh viễn (token làm mới đã hết hạn hoặc bị thu hồi). */
 export class ReloginError extends Error {
   constructor(message = 'Cần đăng nhập lại.') {
     super(message)
@@ -85,7 +83,7 @@ function networkError(error: unknown): ProviderError {
   )
 }
 
-/** Step 1: ask for a device code. */
+/** Bước 1: Yêu cầu cấp mã thiết bị. */
 export async function requestCodexCode(fetchImpl: typeof fetch, now: number): Promise<DeviceCode> {
   let response: Response
   try {
@@ -118,9 +116,8 @@ export async function requestCodexCode(fetchImpl: typeof fetch, now: number): Pr
 }
 
 /**
- * Step 2: ask once whether the person has confirmed. 403/404 mean "not yet"; 200 carries an authorization
- * code, which is exchanged for tokens at once (step 3). A network failure is thrown as `network`, so the
- * caller can retry it quietly a few times before saying anything.
+ * Bước 2: Thăm dò xem người dùng đã xác nhận đăng nhập chưa.
+ * Trả về `pending` nếu chưa xác nhận, hoặc trả về mã xác thực để đổi lấy token.
  */
 export async function pollCodex(
   fetchImpl: typeof fetch,
@@ -186,7 +183,7 @@ function tokensOf(body: Record<string, unknown>, previousRefresh?: string): Code
   return { access, refresh }
 }
 
-/** Step 3: the authorization code for an access and a refresh token. */
+/** Bước 3: Đổi mã xác thực lấy access token và refresh token. */
 export async function exchangeCodexCode(
   fetchImpl: typeof fetch,
   authorizationCode: string,
@@ -219,8 +216,8 @@ const RELOGIN_ERRORS = new Set([
 ])
 
 /**
- * A new access token from the refresh token. A refused refresh (`invalid_grant`, `refresh_token_reused`,
- * 401/403…) is a `ReloginError`; 429 is a rate limit, not a reason to log in again.
+ * Lấy access token mới từ refresh token.
+ * Ném `ReloginError` nếu token không hợp lệ hoặc bị thu hồi.
  */
 export async function refreshCodex(
   fetchImpl: typeof fetch,
@@ -255,7 +252,7 @@ export async function refreshCodex(
   )
 }
 
-/** What an access token says about its account: where calls go, and who it is. */
+/** Thông tin tài khoản trích xuất từ access token. */
 export interface CodexAccount {
   accountId?: string
   residency?: string
@@ -277,10 +274,7 @@ export function codexAccount(accessToken: string): CodexAccount {
   }
 }
 
-/**
- * Headers of a call to Codex. Mira names itself (`originator: mira`, its own User-Agent) instead of posing
- * as the Codex CLI, as design D4 decided.
- */
+/** Tạo tiêu đề HTTP cho yêu cầu gửi tới Codex. */
 export function codexHeaders(call: CallOptions, userAgent: string): Record<string, string> {
   const credential = call.credential
   const headers: Record<string, string> = { originator: 'mira', 'User-Agent': userAgent }
@@ -292,16 +286,16 @@ export function codexHeaders(call: CallOptions, userAgent: string): Record<strin
   return headers
 }
 
-/** One window of the account's limits, as the chip shows it. */
+/** Cửa sổ giới hạn mức sử dụng của tài khoản. */
 export interface UsageWindow {
   kind: 'session' | 'week' | 'other'
-  /** Percent still left, 0–100. */
+  /** Phần trăm hạn mức còn lại (0–100). */
   remainingPercent: number
-  /** When the window resets (ms epoch), when known. */
+  /** Thời điểm đặt lại hạn mức (epoch ms), nếu có. */
   resetsAt: number | null
 }
 
-/** `reset_at` comes as epoch seconds or as an ISO date. */
+/** Chuyển đổi thời gian đặt lại hạn mức từ giây epoch hoặc chuỗi ngày ISO. */
 function resetTime(raw: unknown, now: number, seconds: unknown): number | null {
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw > 1e12 ? raw : raw * 1000
   if (typeof raw === 'string') {
@@ -313,8 +307,8 @@ function resetTime(raw: unknown, now: number, seconds: unknown): number | null {
 }
 
 /**
- * `GET /wham/usage` (`account_usage.py:316-493`). A window of 18 000 s is "Phiên", 604 800 s is "Tuần";
- * any other length is kept as `other`.
+ * Phân tích dữ liệu hạn mức sử dụng từ phản hồi của máy chủ.
+ * Cửa sổ 18 000 giây tương ứng phiên ngắn hạn, 604 800 giây tương ứng chu kỳ tuần.
  */
 export function parseCodexUsage(body: unknown, now: number): UsageWindow[] {
   const limits = ((body ?? {}) as Record<string, unknown>).rate_limit as

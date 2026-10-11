@@ -37,7 +37,7 @@ describe('connection address', () => {
     expect(v.parse(updateConnectionSchema, { id, patch: { defaultEntryId: null } })).toMatchObject({
       patch: { defaultEntryId: null }
     })
-    // The old way, by model name, is gone: a name no longer says which entry.
+    // Không dùng tên model trực tiếp nữa; phải dùng ID của entry.
     expect(() =>
       v.parse(updateConnectionSchema, { id, patch: { defaultModel: 'gemini' } })
     ).toThrow()

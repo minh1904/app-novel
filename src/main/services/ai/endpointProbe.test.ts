@@ -3,7 +3,7 @@ import { alternateBase, probeEndpoint } from './endpointProbe'
 
 type Route = (init: RequestInit | undefined) => Response | Promise<Response>
 
-/** A fetch that answers by URL; anything not listed is a 404. `network` throws like a refused socket. */
+/** Giả lập fetch phản hồi theo URL; trả về 404 cho URL không khai báo. 'network' giả lập lỗi socket/kết nối mạng. */
 function fakeFetch(routes: Record<string, Route | 'network'>): {
   fetch: typeof fetch
   calls: string[]
@@ -126,7 +126,7 @@ describe('endpoint probe', () => {
   })
 })
 
-describe('endpoint probe by API mode (subscription-providers, 6.5)', () => {
+describe('endpoint probe theo chế độ API', () => {
   it('checks /responses for a gateway set to Responses', async () => {
     const { fetch, calls } = fakeFetch({
       'http://127.0.0.1:8317/v1/models': () => json({ data: [{ id: 'gpt-5.5' }] }),

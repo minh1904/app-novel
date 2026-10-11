@@ -64,7 +64,7 @@ export interface AssertionEvaluation {
   reason?: string
 }
 
-// Default ratio bands per language: [min, max]
+// Dải tỷ lệ độ dài mặc định theo ngôn ngữ: [tối thiểu, tối đa]
 const DEFAULT_BANDS: Record<string, [number, number]> = {
   'zh-Hans': [1.36, 3.76],
   'zh-Hant': [1.36, 3.76],
@@ -73,16 +73,15 @@ const DEFAULT_BANDS: Record<string, [number, number]> = {
 }
 
 /**
- * Normalizes Vietnamese text:
- * 1. Unicode NFC
- * 2. Unifies the two tone mark placements (hòa/hoà, thúy/thuý, v.v.)
- * 3. Lowercases for comparison
+ * Chuẩn hóa văn bản tiếng Việt:
+ * 1. Định dạng Unicode NFC
+ * 2. Thống nhất hai kiểu đặt dấu thanh (hòa/hoà, thúy/thuý, v.v.)
+ * 3. Chuyển sang chữ thường để so sánh
  */
 export function normalizeVietnamese(text: string): string {
   let s = text.normalize('NFC').toLowerCase()
 
-  // Map old tone mark style (òa, óa, ỏa, õa, ọa) to unified modern style
-  // oà -> hòa/hoà
+  // Quy đổi kiểu đặt dấu thanh cũ (oà, oá, oả, oã, oạ) về kiểu mới thống nhất (òa, óa, ỏa, õa, họa)
   s = s
     .replace(/oà/g, 'òa')
     .replace(/oá/g, 'óa')
@@ -104,21 +103,21 @@ export function normalizeVietnamese(text: string): string {
 }
 
 /**
- * Checks whole-word presence using Unicode letter boundary.
- * Prevents "dì" from matching inside "dìu".
+ * Kiểm tra sự xuất hiện của từ nguyên vẹn bằng ranh giới ký tự Unicode.
+ * Tránh trường hợp "dì" bị khớp nhầm bên trong "dìu".
  */
 export function containsWord(text: string, word: string): boolean {
   const normText = normalizeVietnamese(text)
   const normWord = normalizeVietnamese(word)
-  // Escape special regex chars
+  // Thoát ký tự đặc biệt của biểu thức chính quy
   const escaped = normWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  // Unicode word boundary: not preceded or followed by letters or marks
+  // Ranh giới từ Unicode: không đứng trước hoặc sau bởi ký tự chữ hoặc dấu phụ
   const re = new RegExp(`(?<![\\p{L}\\p{M}])${escaped}(?![\\p{L}\\p{M}])`, 'gu')
   return re.test(normText)
 }
 
 /**
- * R3: Structural counts from alignment beads
+ * Thống kê cấu trúc đoạn từ các cặp gióng hàng (bead).
  */
 export function checkStructure(srcCount: number, tgtCount: number, beads: Bead[]): StructuralScore {
   const beadCounts: Record<string, number> = {
@@ -147,15 +146,15 @@ export function checkStructure(srcCount: number, tgtCount: number, beads: Bead[]
   }
 }
 
-// CJK scripts: Han characters, Hiragana, Katakana (excluding ー U+30FC)
+// Ký tự CJK: Chữ Hán, Hiragana, Katakana (không bao gồm gạch nối ー U+30FC)
 const CJK_CHARS_RE = /[\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FB\u30FD-\u30FF]/g
-// CJK brackets: 「」『』
+// Dấu ngoặc CJK: 「」『』
 const CJK_BRACKETS_RE = /[「」『』]/g
-// CJK fullwidth punctuation: 、。！？：；，
+// Dấu câu toàn phần CJK: 、。！？：；，
 const CJK_PUNCT_RE = /[、。！？：；，]/g
 
 /**
- * R4: Residual source characters and punctuation in translation
+ * Kiểm tra các ký tự và dấu câu ngôn ngữ nguồn còn sót lại trong bản dịch.
  */
 export function checkResidualSourceChars(
   srcParas: string[],
@@ -170,7 +169,7 @@ export function checkResidualSourceChars(
     const bead = beads[bIdx]
     if (bead.tgtIdx.length === 0) continue
 
-    // Check if source matches exemptWhere
+    // Kiểm tra nếu đoạn nguồn thuộc danh sách miễn trừ
     const isExempt = bead.srcIdx.some((idx) => {
       const srcText = srcParas[idx] ?? ''
       return exempt.some((ex) => srcText.includes(ex))
@@ -181,15 +180,15 @@ export function checkResidualSourceChars(
       const tgtText = tgtParas[tIdx] ?? ''
       const residual: string[] = []
 
-      // Check Han & Kana
+      // Kiểm tra chữ Hán & Kana
       const cjkMatches = tgtText.match(CJK_CHARS_RE)
       if (cjkMatches) residual.push(...cjkMatches)
 
-      // Check brackets
+      // Kiểm tra dấu ngoặc
       const bracketMatches = tgtText.match(CJK_BRACKETS_RE)
       if (bracketMatches) residual.push(...bracketMatches)
 
-      // Check punctuation
+      // Kiểm tra dấu câu
       const punctMatches = tgtText.match(CJK_PUNCT_RE)
       if (punctMatches) residual.push(...punctMatches)
 
@@ -207,7 +206,7 @@ export function checkResidualSourceChars(
 }
 
 /**
- * R5: Unbalanced dialogue quotes in target paragraphs
+ * Kiểm tra dấu ngoặc thoại không cân xứng trong các đoạn dịch.
  */
 export function checkUnbalancedQuotes(tgtParas: string[]): UnbalancedQuoteIssue[] {
   const issues: UnbalancedQuoteIssue[] = []
@@ -215,14 +214,14 @@ export function checkUnbalancedQuotes(tgtParas: string[]): UnbalancedQuoteIssue[
   for (let idx = 0; idx < tgtParas.length; idx++) {
     const text = tgtParas[idx]
 
-    // 1. Odd count of ASCII double quotes
+    // 1. Số dấu ngoặc kép ASCII " là số lẻ
     const asciiQuotes = (text.match(/"/g) || []).length
     if (asciiQuotes % 2 !== 0) {
       issues.push({ paragraphIndex: idx, reason: 'Số dấu ngoặc kép ASCII " là số lẻ' })
       continue
     }
 
-    // 2. Curly quotes “”
+    // 2. Ngoặc kép cong “”
     const openCurly = (text.match(/“/g) || []).length
     const closeCurly = (text.match(/”/g) || []).length
     if (openCurly !== closeCurly) {
@@ -230,7 +229,7 @@ export function checkUnbalancedQuotes(tgtParas: string[]): UnbalancedQuoteIssue[
       continue
     }
 
-    // 3. CJK corner brackets 「」
+    // 3. Ngoặc vuông CJK 「」
     const openCorner = (text.match(/「/g) || []).length
     const closeCorner = (text.match(/」/g) || []).length
     if (openCorner !== closeCorner) {
@@ -238,7 +237,7 @@ export function checkUnbalancedQuotes(tgtParas: string[]): UnbalancedQuoteIssue[
       continue
     }
 
-    // 4. CJK double corner brackets 『』
+    // 4. Ngoặc vuông kép CJK 『』
     const openDCorner = (text.match(/『/g) || []).length
     const closeDCorner = (text.match(/』/g) || []).length
     if (openDCorner !== closeDCorner) {
@@ -246,7 +245,7 @@ export function checkUnbalancedQuotes(tgtParas: string[]): UnbalancedQuoteIssue[
       continue
     }
 
-    // 5. Guillemets «»
+    // 5. Ngoặc tam giác «»
     const openGuill = (text.match(/«/g) || []).length
     const closeGuill = (text.match(/»/g) || []).length
     if (openGuill !== closeGuill) {
@@ -258,7 +257,7 @@ export function checkUnbalancedQuotes(tgtParas: string[]): UnbalancedQuoteIssue[
 }
 
 /**
- * R6: Dialogue style classification for the chapter
+ * Phân loại phong cách dấu thoại cho toàn chương.
  */
 export function classifyDialogueStyle(tgtParas: string[]): DialogueStyleResult {
   let viCount = 0
@@ -295,7 +294,7 @@ export function classifyDialogueStyle(tgtParas: string[]): DialogueStyleResult {
 }
 
 /**
- * R7: Length ratio outliers on 1-1 beads with source length >= 20 characters
+ * Phát hiện bất thường về tỷ lệ độ dài trên các cặp 1-1 có độ dài nguồn >= 20 ký tự.
  */
 export function checkLengthOutliers(
   srcParas: string[],
@@ -337,7 +336,7 @@ export function checkLengthOutliers(
 }
 
 /**
- * R8: Repetition / loop detection
+ * Phát hiện lặp từ hoặc lặp đoạn bất thường trong bản dịch.
  */
 export function checkRepetitions(tgtParas: string[]): RepetitionIssue[] {
   const issues: RepetitionIssue[] = []
@@ -345,7 +344,7 @@ export function checkRepetitions(tgtParas: string[]): RepetitionIssue[] {
   for (let i = 0; i < tgtParas.length; i++) {
     const text = tgtParas[i].trim()
 
-    // 1. Identical to previous paragraph
+    // 1. Trùng lặp hoàn toàn với đoạn ngay trước
     if (i > 0 && text.length > 10 && text === tgtParas[i - 1].trim()) {
       issues.push({
         paragraphIndex: i,
@@ -355,7 +354,7 @@ export function checkRepetitions(tgtParas: string[]): RepetitionIssue[] {
       continue
     }
 
-    // 2. 4-word gram repeated 4+ times in the same paragraph
+    // 2. Cụm 4 từ lặp lại từ 4 lần trở lên trong cùng một đoạn
     const words = text.split(/\s+/).filter(Boolean)
     if (words.length >= 16) {
       const gramCounts = new Map<string, number>()
@@ -382,7 +381,7 @@ export function checkRepetitions(tgtParas: string[]): RepetitionIssue[] {
 }
 
 /**
- * R9: Glossary compliance checking
+ * Kiểm tra mức độ tuân thủ bảng thuật ngữ trong bản dịch.
  */
 export function checkGlossaryCompliance(
   srcParas: string[],
@@ -400,7 +399,7 @@ export function checkGlossaryCompliance(
   const missedMap = new Map<string, number>()
   const forbiddenViolations: Array<{ term: string; paragraphIndex: number }> = []
 
-  // Check forbidden terms across all target paragraphs
+  // Kiểm tra các thuật ngữ bị cấm trên toàn bộ các đoạn đích
   for (let tIdx = 0; tIdx < tgtParas.length; tIdx++) {
     const tgtText = tgtParas[tIdx]
     for (const entry of glossary) {
@@ -414,7 +413,7 @@ export function checkGlossaryCompliance(
     }
   }
 
-  // Check glossary occurrence in source and compliance in target
+  // Kiểm tra xuất hiện thuật ngữ ở nguồn và tuân thủ ở đích
   for (const bead of beads) {
     if (bead.srcIdx.length === 0) continue
 
@@ -423,7 +422,7 @@ export function checkGlossaryCompliance(
     const normTgt = normalizeVietnamese(combinedTgt)
 
     for (const entry of glossary) {
-      // Find whether entry appears in source (longest match / case-insensitive for en)
+      // Kiểm tra mục thuật ngữ có xuất hiện trong nguồn không (không phân biệt hoa thường với tiếng Anh)
       const srcTerms = [entry.src]
       if (entry.aliases) {
         for (const a of entry.aliases) {
@@ -442,17 +441,17 @@ export function checkGlossaryCompliance(
 
       totalChecks++
 
-      // If source paragraph was omitted (1-0), count as missed
+      // Nếu đoạn nguồn bị bỏ qua (1-0), tính là bị sót thuật ngữ
       if (bead.type === '1-0' || bead.tgtIdx.length === 0) {
         missedMap.set(entry.src, (missedMap.get(entry.src) || 0) + 1)
         continue
       }
 
-      // Check strict hit
+      // Kiểm tra khớp chính xác
       const normTgtWord = normalizeVietnamese(entry.tgt)
       const isStrict = normTgt.includes(normTgtWord)
 
-      // Check lenient hit (strict or alternatives)
+      // Kiểm tra khớp nới lỏng (chính xác hoặc dạng thay thế)
       let isLenient = isStrict
       if (!isLenient && entry.alternatives) {
         for (const alt of entry.alternatives) {
@@ -491,7 +490,7 @@ export function checkGlossaryCompliance(
 }
 
 /**
- * R10: Handcrafted assertions evaluation
+ * Đánh giá các quy tắc khẳng định (assertion) được định nghĩa sẵn.
  */
 export function evaluateAssertions(
   srcParas: string[],
@@ -504,7 +503,7 @@ export function evaluateAssertions(
   for (let rIdx = 0; rIdx < rules.length; rIdx++) {
     const rule = rules[rIdx]
 
-    // 1. Locate anchor source paragraph index
+    // 1. Xác định vị trí chỉ số đoạn nguồn làm mỏ neo
     let anchorSrcIdx = -1
     if (rule.where !== undefined) {
       for (let s = 0; s < srcParas.length; s++) {
@@ -536,7 +535,7 @@ export function evaluateAssertions(
       continue
     }
 
-    // 2. Find corresponding bead
+    // 2. Tìm cặp bead tương ứng
     const matchedBead = beads.find((b) => b.srcIdx.includes(anchorSrcIdx))
     if (!matchedBead || matchedBead.type === '1-0' || matchedBead.tgtIdx.length === 0) {
       evaluations.push({
@@ -547,11 +546,11 @@ export function evaluateAssertions(
       continue
     }
 
-    // Get combined target text for this bead
+    // Lấy nội dung đoạn đích kết hợp cho cặp bead này
     const tgtText = matchedBead.tgtIdx.map((t) => tgtParas[t] ?? '').join(' ')
     const normTgt = normalizeVietnamese(tgtText)
 
-    // Check if rule only has note / pair (no string conditions)
+    // Kiểm tra nếu quy tắc chỉ có ghi chú hoặc cặp xưng hô (không có điều kiện chuỗi)
     const hasStringConditions =
       rule.expect !== undefined ||
       rule.reject !== undefined ||
@@ -569,7 +568,7 @@ export function evaluateAssertions(
       continue
     }
 
-    // Evaluate string conditions
+    // Đánh giá các điều kiện chuỗi
     let pass = true
     const failReasons: string[] = []
 

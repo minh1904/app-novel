@@ -10,8 +10,9 @@ Chủ sản phẩm chốt:
 1. Mira phải hỗ trợ **nhiều nguồn novel**, không thiết kế quanh một vài website cố định.
 2. Màn chọn nguồn phải cho lọc rõ ít nhất **Trung Quốc**, **Nhật Bản** và **Hàn Quốc**.
 3. Thiết kế phải mở rộng được sang quốc gia và ngôn ngữ khác mà không đổi schema cốt lõi.
-4. Nguồn mạng ưu tiên đầu tiên: **Syosetu và Kakuyomu** (Nhật), **Novelpia** (Hàn), **Qidian và
-   Fanqie** (Trung). Đây là thứ tự triển khai/nghiên cứu, không phải cam kết mọi nội dung đều lấy được.
+4. Nguồn mạng ưu tiên nghiên cứu: **Kakuyomu** (Nhật; release gate đóng), **Novelpia** (Hàn), **Qidian và
+   Fanqie** (Trung). Syosetu HTML scraping bị loại trừ hoàn toàn khỏi phát hành hiện tại và cần proposal riêng
+   dựa trên API metadata chính thức. Đây là định hướng nghiên cứu, không cam kết mọi nội dung đều lấy được.
 5. Bản đầu chỉ dùng adapter do Mira phát hành; chưa cho cài adapter cộng đồng.
 6. Khi phát hiện chương mới, mặc định **chỉ thông báo**; không tự tải raw và không tự xếp hàng dịch.
 7. Raw của chương đã dịch bị sửa thì chỉ gắn cờ để người dùng quyết định; không tự dịch lại.

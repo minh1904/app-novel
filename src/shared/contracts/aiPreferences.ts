@@ -3,8 +3,8 @@ import { idSchema } from './library'
 import { THINKING_LEVELS } from './modelSettings'
 
 /**
- * The app-wide model choices of Settings › Model (change `hermes-settings-modal`, spec `model-defaults`):
- * the main model, and the ordered fallbacks tried when it cannot answer.
+ * Lựa chọn model toàn ứng dụng trong Cài đặt › Model:
+ * model chính và danh sách model dự phòng thử theo thứ tự khi model chính không phản hồi.
  */
 
 export const MAX_FALLBACKS = 8
@@ -18,7 +18,7 @@ export type ModelRef = v.InferOutput<typeof modelRefSchema>
 export const mainModelSchema = v.strictObject({
   connectionId: idSchema,
   entryId: idSchema,
-  /** The thinking level picked together with the main model; absent = the entry's own setting. */
+  /** Mức suy luận chọn cùng model chính; không có nghĩa là dùng cài đặt riêng của mục. */
   thinking: v.optional(v.picklist(THINKING_LEVELS))
 })
 export type MainModel = v.InferOutput<typeof mainModelSchema>

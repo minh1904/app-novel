@@ -1,16 +1,9 @@
 /**
- * Brings an address a person typed or pasted to the base the app appends paths to.
+ * Chuẩn hóa địa chỉ endpoint URL về dạng base URL.
  *
- * People paste whatever their provider's docs show, and that is often the full endpoint
- * (`https://api.example.com/v1/chat/completions`), not the base. Appending `/chat/completions`
- * to that gives a doubled path and a 404 that reads like a wrong key. So the endpoint suffix is cut
- * off, and a trailing slash with it.
- *
- * Idempotent on purpose: it runs when a connection is saved and again when a request is sent, so a
- * connection stored before this existed is repaired without a migration.
- *
- * Only `/chat/completions` is cut. `/v1` and `/v1beta/openai` are part of a vendor's base, and
- * cutting them would break exactly the Gemini address this app ships as a preset.
+ * Người dùng thường dán toàn bộ URL (`https://api.example.com/v1/chat/completions`) thay vì base URL.
+ * Việc nối thêm `/chat/completions` vào URL đó sẽ gây trùng lặp đường dẫn và lỗi 404.
+ * Hàm này loại bỏ phần đuôi `/chat/completions` và các dấu gạch chéo ở cuối.
  */
 export function normalizeBaseUrl(url: string): string {
   return url

@@ -9,9 +9,9 @@ import { containsWord } from '../translation/translationChecks'
 export type { GlossaryComplianceIssue, GlossaryComplianceReport }
 
 /**
- * Checks whether translated target text complies with the active glossary.
- * - Missing target: When an approved term appears in the source text, but its target form is missing in translation.
- * - Forbidden used: When a forbidden term's target appears anywhere in the translated text.
+ * Kiểm tra xem bản dịch có tuân thủ bảng thuật ngữ đang hoạt động hay không.
+ * - Thiếu bản dịch: Khi một thuật ngữ đã duyệt xuất hiện trong bản gốc nhưng thiếu dạng dịch tương ứng ở bản dịch.
+ * - Dùng từ bị cấm: Khi dạng dịch của một thuật ngữ bị cấm xuất hiện trong bản dịch.
  */
 export function evaluateGlossaryCompliance(
   sourceText: string,
@@ -21,7 +21,7 @@ export function evaluateGlossaryCompliance(
 ): GlossaryComplianceReport {
   const issues: GlossaryComplianceIssue[] = []
 
-  // Privacy & relevance: only check approved entries
+  // Chỉ kiểm tra các mục đã được phê duyệt
   const approvedEntries = entries.filter((e) => e.status === 'approved')
 
   const regularEntries: ContextEntryItem[] = []
@@ -35,7 +35,7 @@ export function evaluateGlossaryCompliance(
     }
   }
 
-  // 1. Check forbidden terms in target text
+  // 1. Kiểm tra các thuật ngữ bị cấm trong bản dịch
   for (const forbidden of forbiddenEntries) {
     if (containsWord(targetText, forbidden.target)) {
       issues.push({
@@ -48,7 +48,7 @@ export function evaluateGlossaryCompliance(
     }
   }
 
-  // 2. Check source occurrences and expected targets
+  // 2. Kiểm tra các lần xuất hiện ở bản gốc và bản dịch tương ứng
   const matched = matchContextEntries(sourceText, regularEntries, sourceLang)
 
   for (const item of matched) {

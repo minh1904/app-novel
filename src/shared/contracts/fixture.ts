@@ -2,11 +2,8 @@ import * as v from 'valibot'
 import { SOURCE_LANGUAGES, sourceLanguageSchema, type SourceLanguage } from './library'
 
 /**
- * Contracts and Valibot schemas for measurement fixtures (measure-fixtures spec).
- * Used by the evaluation harness to validate work, glossary, pronouns, chapter meta,
- * and assertions.
- *
- * Pure schema definition with no Node.js or DOM dependencies.
+ * Khế ước và schema Valibot cho các fixture dữ liệu đo lường.
+ * Dùng để kiểm tra tính hợp lệ của tác phẩm, thuật ngữ, xưng hô và các khẳng định kiểm thử.
  */
 
 export const FIXTURE_LANGUAGES = SOURCE_LANGUAGES
@@ -51,7 +48,7 @@ export const WorkFixtureSchema = v.pipe(
 
 export type WorkFixture = v.InferOutput<typeof WorkFixtureSchema>
 
-// Helper to get work ID/slug
+// Lấy ID hoặc slug của tác phẩm
 export function getWorkId(work: { slug?: string; id?: string }): string {
   return work.id ?? work.slug ?? ''
 }

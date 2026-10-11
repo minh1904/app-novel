@@ -43,7 +43,7 @@ describe('glossaryCompliance', () => {
     ]
 
     const src = '韩立成功突破到了筑基期。'
-    // Target misses 'Trúc Cơ'
+    // Bản dịch thiếu 'Trúc Cơ'
     const tgt = 'Hàn Lập đã đột phá thành công cảnh giới mới.'
 
     const report = evaluateGlossaryCompliance(src, tgt, entries, 'zh-Hans')
@@ -108,7 +108,7 @@ describe('glossaryCompliance', () => {
     ]
 
     const src = '厉飞雨拔出长剑。'
-    const tgt = 'Người nọ rút ra trường kiếm.' // does not say Hàn Lập
+    const tgt = 'Người nọ rút ra trường kiếm.' // không chứa Hàn Lập
 
     const report = evaluateGlossaryCompliance(src, tgt, entries, 'zh-Hans')
     expect(report.hasIssues).toBe(true)

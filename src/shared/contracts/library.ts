@@ -2,7 +2,7 @@ import * as v from 'valibot'
 import type { ErrorCode } from './result'
 
 export const BUILTIN_SOURCE_LANGUAGES = ['en', 'zh-Hans', 'zh-Hant', 'ja', 'ko'] as const
-/** Presets shown by Mira. Persistence accepts every valid BCP-47 language tag. */
+/** Danh sách ngôn ngữ nguồn cài sẵn. */
 export const SOURCE_LANGUAGES = BUILTIN_SOURCE_LANGUAGES
 export type BuiltinSourceLanguage = (typeof BUILTIN_SOURCE_LANGUAGES)[number]
 
@@ -35,7 +35,7 @@ const GRANDFATHERED_LANGUAGE_TAGS = new Set([
   'zh-xiang'
 ])
 
-/** Validate the complete tags accepted by ECMA-402 plus BCP-47 private-use and grandfathered tags. */
+/** Xác thực thẻ ngôn ngữ BCP-47 hợp lệ theo chuẩn ECMA-402. */
 export function isLanguageTag(value: string): boolean {
   if (value.length === 0 || value.length > 255 || value.includes('_')) return false
   const lower = value.toLowerCase()
@@ -68,7 +68,7 @@ const BUILTIN_LANGUAGE_PROFILES: Record<BuiltinSourceLanguage, BuiltinLanguagePr
   ko: { id: 'ko', locale: 'ko' }
 }
 
-/** Returns null for a valid persisted tag which has no Mira-specific profile. */
+/** Trả về hồ sơ ngôn ngữ mặc định nếu thẻ ngôn ngữ nằm trong danh sách cài sẵn. */
 export function builtinLanguageProfile(tag: string): BuiltinLanguageProfile | null {
   return BUILTIN_LANGUAGE_PROFILES[tag as BuiltinSourceLanguage] ?? null
 }
@@ -78,14 +78,14 @@ export type WorkStatus = (typeof WORK_STATUSES)[number]
 
 export const TITLE_MAX = 200
 
-/** Covers are normalised to JPEG by the renderer and re-checked by the main process. */
+/** Ảnh bìa được renderer chuẩn hóa sang JPEG và được main process kiểm tra lại. */
 export const COVER_MAX_BYTES = 1024 * 1024
 export const COVER_DATA_URL_PREFIX = 'data:image/jpeg;base64,'
 export const DESCRIPTION_MAX = 2000
 
 export interface ChapterSummary {
   id: string
-  /** 1-based position derived from order, never stored. */
+  /** Vị trí 1-indexed tính theo thứ tự sắp xếp, không lưu vào kho. */
   number: number
   title: string
 }
@@ -96,21 +96,21 @@ export interface WorkSummary {
   originalTitle: string | null
   description: string | null
   author: string | null
-  /** Free text such as "Tiên hiệp, cổ đại"; later used as context for the translator model. */
+  /** Thể loại văn bản (ví dụ "Tiên hiệp, cổ đại"), dùng làm ngữ cảnh cho model dịch. */
   genre: string | null
-  /** Changes whenever the cover does; null when the work has no cover. Used as a cache key. */
+  /** Thay đổi mỗi khi ảnh bìa được cập nhật; null khi không có ảnh bìa. Dùng làm cache key. */
   coverVersion: number | null
   sourceLang: SourceLanguage
   status: WorkStatus
   archived: boolean
   chapterCount: number
   lastChapter: ChapterSummary | null
-  /** Milliseconds since the Unix epoch, UTC. */
+  /** Thời điểm tạo/cập nhật (mili-giây epoch, UTC). */
   createdAt: number
   updatedAt: number
 }
 
-/** A work file that could not be opened; the rest of the library stays usable. */
+/** Thông tin về tệp tác phẩm không thể mở; các tác phẩm khác trong thư viện vẫn hoạt động bình thường. */
 export interface WorkProblem {
   fileName: string
   code: ErrorCode
@@ -153,7 +153,7 @@ const description = v.pipe(
   v.maxLength(DESCRIPTION_MAX, 'Mô tả tối đa ' + DESCRIPTION_MAX + ' ký tự.')
 )
 
-// base64 inflates by 4/3; the exact byte limit is enforced again after decoding.
+// Chuỗi base64 tăng kích thước khoảng 4/3; giới hạn byte chính xác được kiểm tra lại sau khi giải mã.
 const cover = v.pipe(
   v.string('Ảnh bìa không hợp lệ.'),
   v.startsWith(COVER_DATA_URL_PREFIX, 'Ảnh bìa phải là ảnh JPEG.'),
@@ -179,8 +179,8 @@ export const createWorkSchema = v.strictObject({
 export type CreateWorkInput = v.InferInput<typeof createWorkSchema>
 
 /**
- * `null` clears an optional text field or removes the cover; an absent key leaves it unchanged.
- * The cover travels in the same patch so details and cover save atomically.
+ * `null` để xóa một trường văn bản tùy chọn hoặc xóa ảnh bìa; trường vắng mặt sẽ giữ nguyên giá trị cũ.
+ * Ảnh bìa được truyền cùng bản vá để lưu nguyên tử cùng với thông tin tác phẩm.
  */
 export const workPatchSchema = v.strictObject({
   title: v.optional(title),

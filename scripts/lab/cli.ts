@@ -792,7 +792,7 @@ async function translateChapter(
 ): Promise<{
   failed: number
   skipped: boolean
-  /** Chế độ đầu ra và lỗi cấu trúc của các lô chương này (change `translate-structured-output-trial`). */
+  /** Chế độ đầu ra và lỗi cấu trúc của các lô chương này. */
   output?: RunOutput
   /** Lời gọi model lượt dịch chương đã trừ vào ngân sách (`budget.used` sau lô cuối). */
   modelCalls?: number
@@ -2350,7 +2350,7 @@ const POLISH_FILTER_CALLS = 8
 /**
  * Trau chuốt bản dịch của bản `--from` thành bản mới `--to` (biến thể "soát rồi sửa"): model gắn nhãn
  * lỗi rồi sửa, code kiểm từng đoạn sửa, đoạn không sửa giữ nguyên bản nháp. Mỗi đoạn sửa, nhận hay bị
- * loại, ghi vào `polish/<ncode>-<to>.jsonl` và một tệp đọc `export/<…> — thay đổi.md`.
+ * loại, ghi vào tệp nhật ký `polish` và tệp đọc thay đổi trong `export`.
  */
 async function polish(manifest: Manifest, args: Args): Promise<void> {
   const key = env('GEMINI_API_KEY')

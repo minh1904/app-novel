@@ -73,7 +73,7 @@ describe('counterpartOf', () => {
   })
 
   it('says unaligned when the segment has no link, and never pairs by paragraph number', () => {
-    // s1 and t1 are both "paragraph 1", and that must not count as evidence.
+    // s1 và t1 đều là "đoạn 1", nhưng việc trùng số thứ tự đoạn không được tính là liên kết.
     expect(counterpartOf('source', 0, SOURCE, TARGET, [])).toEqual({ kind: 'unaligned' })
     expect(counterpartOf('source', 0, SOURCE, TARGET, [link('l', ['s2', 't2'])])).toEqual({
       kind: 'unaligned'
