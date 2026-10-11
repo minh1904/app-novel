@@ -11,6 +11,8 @@ của một lượt.
 | --- | --- |
 | Sản phẩm đã chốt điều gì? | [Quyết định](decisions.md) |
 | Làm agent theo thứ tự nào và gate hoàn thành là gì? | [Roadmap agent](agent-roadmap.md) |
+| Agent được tách thành những lát/spec nào, dựa trên nghiên cứu gì? | [Chương trình đặc tả Agent](agent-spec-program.md) — 7 change độc lập, chưa triển khai |
+| Gemini CLI, Gemini web hoặc web app riêng có thể điều khiển Mira thế nào? | [Tích hợp agent bên ngoài](external-agent-integration.md) |
 | Session, turn, operation và task khác nhau thế nào? | [Phiên và tác vụ](sessions-and-jobs.md) |
 | Ghi dữ liệu và hoàn tác phải an toàn ra sao? | [Dữ liệu và an toàn](data-and-safety.md) |
 | Proposal cũ được duyệt thế nào? | [Luồng duyệt proposal legacy](review-flow.md) |
