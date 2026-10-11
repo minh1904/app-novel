@@ -127,7 +127,7 @@ describe('AgentService (Module 5)', () => {
     }
   }
 
-  it('rejects concurrent sends in the same session with turn_in_progress', async () => {
+  it('rejects concurrent sends before starting another stream', async () => {
     const { agentService, repository } = setup()
 
     const session = agentService.createSession('Test Session')
@@ -149,10 +149,7 @@ describe('AgentService (Module 5)', () => {
       })
     ).rejects.toMatchObject({ code: 'conflict' })
 
-    // Verify stream received turn_in_progress error
-    const errEv = streamEvents.find((e) => e.kind === 'error')
-    expect(errEv).toBeDefined()
-    expect(errEv?.error).toMatchObject({ code: 'turn_in_progress' })
+    expect(streamEvents).toEqual([])
   })
 
   it('Scenario 1: Questions do not create write operations and produce stream ending in done', async () => {

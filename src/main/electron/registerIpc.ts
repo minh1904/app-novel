@@ -49,8 +49,8 @@ function electronFilePicker(): FilePicker {
 export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
-): void {
-  const { connections, translator, paragraphTranslator, chat, sources } = createServices({
+): () => void {
+  const { connections, translator, paragraphTranslator, chat, sources, agent } = createServices({
     library,
     crypto: electronSafeStorage,
     fetch: electronFetch,
@@ -80,7 +80,8 @@ export function registerLibraryHandlers(
       undefined,
       paragraphTranslator,
       exportService,
-      sources
+      sources,
+      agent
     ),
     isTrustedSender,
     // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để
@@ -94,4 +95,5 @@ export function registerLibraryHandlers(
   for (const channel of Object.values(CHANNELS)) {
     ipcMain.handle(channel, (event, raw: unknown) => handlers[channel](event, raw))
   }
+  return () => agent.shutdown()
 }

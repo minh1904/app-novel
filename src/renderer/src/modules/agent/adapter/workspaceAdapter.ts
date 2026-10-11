@@ -8,7 +8,8 @@ export interface TargetRef {
 
 export interface TargetEditorHandler {
   isDirty: () => boolean
-  flush: () => Promise<{ ok: boolean; error?: string }>
+  flush: () => Promise<{ ok: boolean; error?: string; revision?: number }>
+  revision?: () => number
   setReadOnly: (readOnly: boolean) => void
   reload: (rev?: number) => Promise<void>
 }
@@ -62,7 +63,8 @@ export class WorkspaceAgentAdapter {
    * Flushes dirty edits for the target editor before write-intent ack.
    * If flush fails, returns { ok: false, error }.
    */
-  async flushDirty(target: TargetRef): Promise<{ ok: boolean; error?: string }> {
+  async flushDirty(target: TargetRef): Promise<{ ok: boolean; error?: string; revision?: number }> {
+    let revision: number | undefined
     for (const [key, handler] of this.registeredHandlers) {
       const [wId, cId, side] = key.split(':')
       const ref: TargetRef = {
@@ -70,12 +72,35 @@ export class WorkspaceAgentAdapter {
         chapterId: cId === '*' ? undefined : cId,
         side: side === '*' ? undefined : (side as 'source' | 'target')
       }
-      if (isTargetMatch(ref, target) && handler.isDirty()) {
-        const res = await handler.flush()
-        if (!res.ok) return res
+      if (isTargetMatch(ref, target)) {
+        revision = handler.revision?.()
+        if (handler.isDirty()) {
+          const res = await handler.flush()
+          if (!res.ok) return res
+          revision = res.revision ?? handler.revision?.()
+        }
       }
     }
-    return { ok: true }
+    return { ok: true, ...(revision === undefined ? {} : { revision }) }
+  }
+
+  hasEditor(target: TargetRef): boolean {
+    for (const key of this.registeredHandlers.keys()) {
+      const [workId, chapterId, side] = key.split(':')
+      if (
+        isTargetMatch(
+          {
+            workId: workId!,
+            chapterId: chapterId === '*' ? undefined : chapterId,
+            side: side === '*' ? undefined : (side as 'source' | 'target')
+          },
+          target
+        )
+      ) {
+        return true
+      }
+    }
+    return false
   }
 
   /**

@@ -127,11 +127,6 @@ export async function runChapterTranslation(
     sourceLang: work.sourceLang
   })
 
-  const releaseLease = library.acquireTargetWriteLease(
-    { workId, chapterId, side: 'target' },
-    operationId
-  )
-
   let currentRev = targetInit.rev
   let appliedUnits = 0
   const rowMap = new Map(rows.map((r) => [r.sourceId, r]))
@@ -188,7 +183,8 @@ export async function runChapterTranslation(
           caller: translator.provider as unknown as TranslationModelCaller,
           units: batch.units,
           prompt,
-          now
+          now,
+          signal
         })
         translatedItems = outcome.items
         if (outcome.usage) {
@@ -198,11 +194,14 @@ export async function runChapterTranslation(
           hasUsage = true
         }
       } else {
-        const res = await translator.provider.translate({
-          sourceLang: work.sourceLang,
-          targetLang: 'vi',
-          segments: batch.units
-        })
+        const res = await translator.provider.translate(
+          {
+            sourceLang: work.sourceLang,
+            targetLang: 'vi',
+            segments: batch.units
+          },
+          { signal }
+        )
         translatedItems = res.items
         if (res.usage) {
           const wire = toWireUsage(res.usage)
@@ -211,6 +210,8 @@ export async function runChapterTranslation(
           hasUsage = true
         }
       }
+
+      if (signal?.aborted) break
 
       // Filter protected rows per D6: protected row output is dropped, NOT turned into proposal
       const safeBatchRows: Array<{ sourceId: string; text: string }> = []
@@ -230,16 +231,25 @@ export async function runChapterTranslation(
         const batchKey = `batch-${batchIdx + 1}`
         const checksum =
           'sha256:' + createHash('sha256').update(JSON.stringify(safeBatchRows)).digest('hex')
-        const applied = library.applyAgentTranslationBatch(workId, {
-          operationId,
-          batchKey,
-          expectedRev: currentRev,
-          checksum,
-          rows: safeBatchRows,
-          by: batchAuthor
-        })
-        currentRev = applied.afterRev
-        appliedUnits += safeBatchRows.length
+        const releaseLease = library.acquireTargetWriteLease(
+          { workId, chapterId, side: 'target' },
+          operationId
+        )
+        try {
+          if (signal?.aborted) break
+          const applied = library.applyAgentTranslationBatch(workId, {
+            operationId,
+            batchKey,
+            expectedRev: currentRev,
+            checksum,
+            rows: safeBatchRows,
+            by: batchAuthor
+          })
+          currentRev = applied.afterRev
+          appliedUnits += safeBatchRows.length
+        } finally {
+          releaseLease()
+        }
       }
 
       onProgress?.({
@@ -291,7 +301,31 @@ export async function runChapterTranslation(
       summary,
       usage
     }
-  } finally {
-    releaseLease()
+  } catch (error) {
+    if (!signal?.aborted) throw error
+    const usage: TokenUsage | null = hasUsage
+      ? {
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+          source: 'provider',
+          complete: true
+        }
+      : null
+    const summary = `Đã dừng dịch. Đã hoàn thành ${appliedUnits}/${sendable.length} câu trước khi hủy.`
+    library.markAgentOperationTerminal(workId, operationId, 'cancelled', {
+      appliedUnits,
+      totalUnits: sendable.length,
+      protectedCount: protectedRows.length,
+      cancelled: true
+    })
+    return {
+      state: 'cancelled',
+      appliedUnits,
+      totalUnits: sendable.length,
+      protectedCount: protectedRows.length,
+      lastAppliedRev: appliedUnits > 0 ? currentRev : null,
+      summary,
+      usage
+    }
   }
 }

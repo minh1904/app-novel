@@ -15,16 +15,18 @@ export function createWriteCapabilities(options: WriteCapabilitiesOptions) {
   const translateChapterCapability: CapabilityDefinition<{
     connectionId?: string
     entryId?: string
+    settingsKey?: string
   }> = {
     name: 'translate_chapter',
     description: 'Dịch toàn bộ hoặc các câu còn thiếu trong một chương bằng mô hình AI đã chọn.',
     kind: 'reversible-write',
     schema: v.object({
       connectionId: v.optional(v.string()),
-      entryId: v.optional(v.string())
+      entryId: v.optional(v.string()),
+      settingsKey: v.optional(v.string())
     }),
     targetPolicy: 'requires_target',
-    handler: async ({ library, target, args, operationId, now }) => {
+    handler: async ({ library, target, args, operationId, now, signal, onProgress }) => {
       if (target?.kind !== 'chapter') {
         return {
           ok: false,
@@ -57,7 +59,9 @@ export function createWriteCapabilities(options: WriteCapabilitiesOptions) {
           workId: target.workId,
           chapterId: target.chapterId,
           operationId: activeOperationId,
-          modelSelection: { connectionId, entryId },
+          modelSelection: { connectionId, entryId, settingsKey: args.settingsKey },
+          signal,
+          onProgress,
           now: () => now
         })
 
@@ -69,8 +73,15 @@ export function createWriteCapabilities(options: WriteCapabilitiesOptions) {
             totalUnits: result.totalUnits,
             protectedCount: result.protectedCount,
             summary: result.summary,
-            lastAppliedRev: result.lastAppliedRev
+            lastAppliedRev: result.lastAppliedRev,
+            usage: result.usage ?? null
           },
+          error:
+            result.state === 'cancelled'
+              ? { code: 'cancelled', message: result.summary }
+              : result.state === 'conflict'
+                ? { code: 'conflict', message: result.summary }
+                : undefined,
           hasChanges: result.appliedUnits > 0
         }
       } catch (error) {

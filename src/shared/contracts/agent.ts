@@ -153,7 +153,7 @@ export interface AgentOperation {
   target: ResolvedTarget
   state: AgentOperationState
   progress: AgentProgress | null
-  model: ModelRef | null
+  model: (ModelRef & { settingsKey?: string }) | null
   usage: TokenUsage | null
   result: unknown | null
   error: unknown | null
@@ -199,7 +199,8 @@ export const agentStreamEventSchema = v.variant('kind', [
     turnState: v.picklist(['completed', 'waiting_user']),
     usage: v.nullable(v.unknown())
   }),
-  v.strictObject({ ...streamBase, kind: v.literal('error'), error: v.unknown() })
+  v.strictObject({ ...streamBase, kind: v.literal('error'), error: v.unknown() }),
+  v.strictObject({ ...streamBase, kind: v.literal('cancelled'), usage: v.nullable(v.unknown()) })
 ])
 
 export type AgentStreamEvent = v.InferOutput<typeof agentStreamEventSchema>
@@ -214,7 +215,7 @@ export function validateAgentEventSequence(
     if (event.eventSeq <= previous) return { ok: false, reason: 'event_order' }
     if (terminalSeen) return { ok: false, reason: 'event_after_terminal' }
     previous = event.eventSeq
-    if (event.kind === 'done' || event.kind === 'error') {
+    if (event.kind === 'done' || event.kind === 'error' || event.kind === 'cancelled') {
       terminalSeen = true
       terminalCount++
     }
@@ -257,18 +258,32 @@ export interface AgentSessionDetailView {
 
 export interface AgentSendInput {
   sessionId?: string
+  clientCommandId: string
   instruction: string
   context?: AgentContext
+  modelSelection?: {
+    connectionId: string
+    entryId: string
+    settingsKey?: string
+  }
 }
 
 export const agentSendInputSchema = v.strictObject({
   sessionId: v.optional(idSchema),
+  clientCommandId: idSchema,
   instruction: v.pipe(
     v.string('Câu hỏi/lệnh phải là chuỗi ký tự.'),
     v.trim(),
     v.minLength(1, 'Câu hỏi/lệnh không được để trống.')
   ),
-  context: v.optional(agentContextSchema)
+  context: v.optional(agentContextSchema),
+  modelSelection: v.optional(
+    v.strictObject({
+      connectionId: idSchema,
+      entryId: idSchema,
+      settingsKey: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1)))
+    })
+  )
 })
 
 export interface AgentSendResult {
@@ -279,6 +294,10 @@ export interface AgentSendResult {
 
 export interface AgentCancelInput {
   turnId: string
+}
+
+export interface AgentCancelResult {
+  status: AgentTurnState
 }
 
 export const agentCancelInputSchema = v.strictObject({

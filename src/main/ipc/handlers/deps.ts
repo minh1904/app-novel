@@ -11,6 +11,7 @@ import type { LibraryStore } from '../../services/library/library'
 import type { SourceServices } from '../../sources/sourceServices'
 import type { RawHandler } from '../handler'
 import type { FilePicker } from '../filePicker'
+import type { AgentService } from '../../services/agent/agentService'
 
 /** What every area of handlers is built from. The AI services are optional: see `connectionsOf`. */
 export interface HandlerDeps {
@@ -24,6 +25,7 @@ export interface HandlerDeps {
   addressing?: AddressingService
   exportService?: ExportService
   sources?: SourceServices
+  agent?: AgentService
 }
 
 /**
@@ -73,4 +75,8 @@ export function exportServiceOf(deps: HandlerDeps): ExportService {
 
 export function sourcesOf(deps: HandlerDeps): SourceServices {
   return deps.sources ?? unavailable()
+}
+
+export function agentOf(deps: HandlerDeps): AgentService {
+  return deps.agent ?? unavailable()
 }

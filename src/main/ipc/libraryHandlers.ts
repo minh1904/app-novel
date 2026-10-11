@@ -29,6 +29,7 @@ import { sourcesHandlers } from './handlers/sources'
 import { agentHandlers } from './handlers/agent'
 import type { ExportService } from '../services/export/exportService'
 import type { SourceServices } from '../sources/sourceServices'
+import type { AgentService } from '../services/agent/agentService'
 
 /**
  * Channel → handler đã được xác thực dữ liệu. Không import Electron để các bài test có thể gọi trực tiếp.
@@ -46,7 +47,8 @@ export function createLibraryHandlers(
   addressing?: AddressingService,
   paragraphTranslator?: ParagraphTranslator,
   exportService?: ExportService,
-  sources?: SourceServices
+  sources?: SourceServices,
+  agent?: AgentService
 ): Record<Channel, RawHandler<unknown>> {
   const deps: HandlerDeps = {
     library,
@@ -58,7 +60,8 @@ export function createLibraryHandlers(
     addressing,
     paragraphTranslator,
     exportService,
-    sources
+    sources,
+    agent
   }
   return {
     ...worksHandlers(deps),

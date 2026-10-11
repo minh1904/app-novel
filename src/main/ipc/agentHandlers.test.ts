@@ -17,6 +17,9 @@ import { LibraryStore } from '../services/library/library'
 import { createTempDirs } from '../testing/testing'
 import { createLibraryHandlers } from './libraryHandlers'
 import { AgentRepository } from '../infra/storage/agentRepository'
+import { createServices } from '../services/createServices'
+import type { SecretCrypto } from '../infra/storage/secretStore'
+import { segment } from '../../shared/segmentation/segmenter'
 
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -32,7 +35,25 @@ interface Setup {
 function setup(): Setup {
   const library = LibraryStore.open({ dataDir: tempDir() })
   stores.push(library)
-  const handlers = createLibraryHandlers(library)
+  const crypto: SecretCrypto = {
+    isEncryptionAvailable: () => true,
+    encrypt: async (plain) => Buffer.from(plain),
+    decrypt: async (cipher) => ({ value: Buffer.from(cipher).toString(), shouldReEncrypt: false })
+  }
+  const services = createServices({ library, crypto })
+  const handlers = createLibraryHandlers(
+    library,
+    undefined,
+    services.connections,
+    services.translator,
+    services.chat,
+    services.glossary,
+    undefined,
+    services.paragraphTranslator,
+    undefined,
+    services.sources,
+    services.agent
+  )
   return { library, call: (channel, raw) => handlers[channel](raw) as Result<never> }
 }
 
@@ -76,6 +97,7 @@ describe('agent IPC handlers', () => {
 
     const sent = value<AgentSendResult>(
       call<AgentSendResult>(CHANNELS.agentTurnSend, {
+        clientCommandId: randomUUID(),
         instruction: 'Dịch chương 1',
         context: {}
       } satisfies AgentSendInput)
@@ -98,6 +120,9 @@ describe('agent IPC handlers', () => {
   it('gets operation detail and executes undo', () => {
     const { library, call } = setup()
     const repo = new AgentRepository(library.appDb)
+    const work = library.create({ title: 'Test', sourceLang: 'en' })
+    const chapter = library.createChapter(work.id, 'Một').chapter
+    const source = library.saveText(work.id, chapter.id, 'source', 'One.', 0, segment('One.', 'en'))
     const session = repo.createSession({ id: randomUUID(), now: 10 })
     const turn = repo.createTurn({
       id: randomUUID(),
@@ -111,11 +136,38 @@ describe('agent IPC handlers', () => {
       turnId: turn.id,
       commandId: randomUUID(),
       capability: 'translate_chapter',
-      target: { kind: 'work', workId: '00000000-0000-4000-8000-000000000001', workLabel: 'Test' },
+      target: {
+        kind: 'chapter',
+        workId: work.id,
+        workLabel: 'Test',
+        chapterId: chapter.id,
+        chapterLabel: 'Một',
+        side: 'target'
+      },
       now: 10
     })
     repo.transitionOperation(op.id, 'running', { now: 10 })
     repo.transitionOperation(op.id, 'completed', { now: 11, hasChanges: true })
+    library.prepareAgentOperation(work.id, {
+      operationId: op.id,
+      chapterId: chapter.id,
+      side: 'target',
+      totalUnits: 1
+    })
+    const release = library.acquireTargetWriteLease(
+      { workId: work.id, chapterId: chapter.id, side: 'target' },
+      op.id
+    )
+    library.applyAgentTranslationBatch(work.id, {
+      operationId: op.id,
+      batchKey: 'batch-1',
+      expectedRev: 0,
+      checksum: 'sha256:test',
+      rows: [{ sourceId: source.segments[0]!.id, text: 'Một.' }],
+      by: { origin: 'ai', provider: 'fake', model: 'test' }
+    })
+    library.markAgentOperationTerminal(work.id, op.id, 'completed', { translated: 1 })
+    release()
 
     const opDetail = value<AgentOperationDetailView>(
       call(CHANNELS.agentOperationGet, { operationId: op.id })
@@ -126,7 +178,8 @@ describe('agent IPC handlers', () => {
     const undoRes = value<AgentUndoResult>(
       call(CHANNELS.agentOperationUndo, { operationId: op.id } satisfies AgentUndoInput)
     )
-    expect(undoRes.targetRev).toBe(0)
+    expect(undoRes.targetRev).toBe(2)
+    expect(library.readText(work.id, chapter.id, 'target').content).toBe('')
 
     const opAfter = value<AgentOperationDetailView>(
       call(CHANNELS.agentOperationGet, { operationId: op.id })
@@ -134,13 +187,15 @@ describe('agent IPC handlers', () => {
     expect(opAfter.operation.state).toBe('undone')
   })
 
-  it('accepts write ack from coordinator without error', () => {
+  it('rejects a write ack that has no pending intent', () => {
     const { call } = setup()
     const ack = call<void>(CHANNELS.agentTargetWriteAck, {
       intentId: randomUUID(),
       status: 'ack',
       revision: 1
     } satisfies AgentWriteIntentAck)
-    expect(ack.ok).toBe(true)
+    expect(ack.ok).toBe(false)
+    if (ack.ok) return
+    expect(ack.error.code).toBe('not_found')
   })
 })

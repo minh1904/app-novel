@@ -18,6 +18,10 @@ import {
 import { createToolProposalInDb } from './proposals/chatProposalService'
 import { createContextEntry, listContextEntries } from '../infra/storage/contextEntries'
 import { getEffectiveDyadsForChapter } from '../infra/storage/addressingEntries'
+import { AgentRepository } from '../infra/storage/agentRepository'
+import { AgentService } from './agent/agentService'
+import { defaultReadCapabilities } from './agent/capabilities/readCapabilities'
+import { CapabilityRegistry } from './agent/registry'
 
 /** The AI services of the app, built over one library and one way of protecting keys. */
 export interface Services {
@@ -27,6 +31,7 @@ export interface Services {
   chat: ChatService
   glossary: GlossaryService
   sources: SourceServices
+  agent: AgentService
 }
 
 /**
@@ -172,5 +177,15 @@ export function createServices({
   })
   const glossary = new GlossaryService(library, () => library.appNow())
   const sources = createSourceServices(library, crypto)
-  return { connections, translator, paragraphTranslator, chat, glossary, sources }
+  const agentRegistry = new CapabilityRegistry()
+  for (const capability of defaultReadCapabilities) agentRegistry.register(capability)
+  const agent = new AgentService({
+    library,
+    connections,
+    repository: new AgentRepository(library.appDb),
+    registry: agentRegistry,
+    now: () => library.appNow()
+  })
+  agent.reconcileOnStartup()
+  return { connections, translator, paragraphTranslator, chat, glossary, sources, agent }
 }

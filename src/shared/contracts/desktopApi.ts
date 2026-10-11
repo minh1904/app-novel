@@ -13,6 +13,7 @@ import type {
 } from './aiConnections'
 import type {
   AgentCancelInput,
+  AgentCancelResult,
   AgentOperationDetailView,
   AgentSendInput,
   AgentSendResult,
@@ -457,7 +458,7 @@ export interface AgentApi {
   }
   turn: {
     send(input: AgentSendInput): Promise<Result<AgentSendResult>>
-    cancel(input: AgentCancelInput): Promise<Result<void>>
+    cancel(input: AgentCancelInput): Promise<Result<AgentCancelResult>>
   }
   operations: {
     get(operationId: string): Promise<Result<AgentOperationDetailView>>

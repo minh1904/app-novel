@@ -323,6 +323,13 @@ CREATE TABLE agent_legacy_turn_import (
 );
 `
 
+const version10 = `
+ALTER TABLE agent_turn ADD COLUMN client_command_id TEXT;
+ALTER TABLE agent_turn ADD COLUMN payload_digest TEXT;
+CREATE UNIQUE INDEX agent_turn_client_command ON agent_turn (client_command_id)
+  WHERE client_command_id IS NOT NULL;
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -377,6 +384,12 @@ export const librarySchema: SchemaSpec = {
       version: 9,
       up(db) {
         db.exec(version9)
+      }
+    },
+    {
+      version: 10,
+      up(db) {
+        db.exec(version10)
       }
     }
   ]

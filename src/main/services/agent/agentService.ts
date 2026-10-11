@@ -1,9 +1,12 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import type {
   AgentContext,
   AgentOperation,
   AgentStreamEvent,
-  AgentTurnState
+  AgentTargetChanged,
+  AgentTurnState,
+  AgentWriteIntent,
+  AgentWriteIntentAck
 } from '../../../shared/contracts/agent'
 import type { ModelRef } from '../../../shared/contracts/aiPreferences'
 import type { TokenUsage } from '../../../shared/contracts/usage'
@@ -12,12 +15,11 @@ import { lookupModel } from '../../infra/providers/modelCatalog'
 import type { AgentRepository, AgentSession, AgentTurn } from '../../infra/storage/agentRepository'
 import type { LibraryStore } from '../library/library'
 import type { ConnectionService } from '../ai/connectionService'
-import type { WorkFiles } from '../../infra/storage/workFiles'
 import type { CapabilityRegistry } from './registry'
 import { TargetResolver } from './resolver'
-import { reconcileStartupOperations } from './operationReconciler'
 import { calculateTurnCost } from './agentUsage'
 import { createWriteCapabilities } from './capabilities/writeCapabilities'
+import { AgentWriteCoordinator } from './writeCoordinator'
 
 export interface AgentServiceOptions {
   library: LibraryStore
@@ -26,6 +28,7 @@ export interface AgentServiceOptions {
   registry: CapabilityRegistry
   resolver?: TargetResolver
   now?: () => number
+  writeCoordinator?: AgentWriteCoordinator
 }
 
 export interface AgentSendInput {
@@ -37,6 +40,15 @@ export interface AgentSendInput {
   modelSelection?: { connectionId: string; entryId: string; settingsKey?: string }
   onStream?: (event: AgentStreamEvent) => void
   signal?: AbortSignal
+  onWriteIntent?: (intent: AgentWriteIntent) => void
+  onTargetChanged?: (event: AgentTargetChanged) => void
+}
+
+export interface AgentAcceptedTurn {
+  requestId: string
+  sessionId: string
+  turnId: string
+  created: boolean
 }
 
 export interface AgentSendResult {
@@ -48,6 +60,26 @@ export interface AgentSendResult {
   costUsd: number | null
 }
 
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']'
+  if (value !== null && typeof value === 'object') {
+    return (
+      '{' +
+      Object.entries(value)
+        .filter(([, item]) => item !== undefined)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, item]) => JSON.stringify(key) + ':' + canonicalJson(item))
+        .join(',') +
+      '}'
+    )
+  }
+  return JSON.stringify(value)
+}
+
+function digestPayload(value: unknown): string {
+  return 'sha256:' + createHash('sha256').update(canonicalJson(value)).digest('hex')
+}
+
 export class AgentService {
   private readonly library: LibraryStore
   private readonly connections: ConnectionService
@@ -55,7 +87,9 @@ export class AgentService {
   private readonly registry: CapabilityRegistry
   private readonly resolver: TargetResolver
   private readonly now: () => number
+  private readonly writeCoordinator: AgentWriteCoordinator
   private readonly activeControllers = new Map<string, AbortController>()
+  private shuttingDown = false
 
   constructor(options: AgentServiceOptions) {
     this.library = options.library
@@ -64,6 +98,7 @@ export class AgentService {
     this.registry = options.registry
     this.resolver = options.resolver ?? new TargetResolver({ library: options.library })
     this.now = options.now ?? Date.now
+    this.writeCoordinator = options.writeCoordinator ?? new AgentWriteCoordinator()
 
     // Ensure write capabilities are registered
     const writeCaps = createWriteCapabilities({ connections: this.connections })
@@ -112,32 +147,62 @@ export class AgentService {
     return this.repository.listOperations(turnId)
   }
 
-  cancelTurn(turnId: string): void {
+  cancelTurn(turnId: string): AgentTurnState {
     const controller = this.activeControllers.get(turnId)
     if (controller) {
       controller.abort()
-      this.activeControllers.delete(turnId)
     }
     const turn = this.repository.getTurn(turnId)
+    if (!turn) throw new StorageError('not_found', 'Không tìm thấy lượt agent.')
     if (turn && (turn.status === 'queued' || turn.status === 'running')) {
-      this.repository.transitionTurn(turnId, 'cancelled', this.now())
+      return this.repository.transitionTurn(turnId, 'cancelled', this.now()).status
     }
+    return turn.status
+  }
+
+  acknowledgeWriteIntent(ack: AgentWriteIntentAck): void {
+    this.writeCoordinator.acknowledge(ack)
+  }
+
+  undoOperation(operationId: string): { targetRev: number; target: AgentOperation['target'] } {
+    const operation = this.repository.getOperation(operationId)
+    if (!operation) throw new StorageError('not_found', 'Không tìm thấy operation.')
+    if (operation.target.kind !== 'chapter') {
+      throw new StorageError('validation', 'Operation không trỏ tới một chương có thể hoàn tác.')
+    }
+    const undone = this.library.undoAgentOperation(operation.target.workId, operationId)
+    const previousResult =
+      operation.result !== null && typeof operation.result === 'object'
+        ? operation.result
+        : { previousResult: operation.result }
+    this.repository.transitionOperation(operationId, 'undone', {
+      now: this.now(),
+      hasChanges: true,
+      result: { ...previousResult, restoredRev: undone.restoredRev }
+    })
+    return { targetRev: undone.restoredRev, target: operation.target }
+  }
+
+  shutdown(): void {
+    this.shuttingDown = true
+    this.writeCoordinator.close()
+    const now = this.now()
+    for (const [turnId, controller] of this.activeControllers) {
+      controller.abort()
+      const turn = this.repository.getTurn(turnId)
+      if (turn?.status === 'running') {
+        this.repository.transitionTurn(turnId, 'interrupted', now, {
+          answer: 'Phiên làm việc bị gián đoạn do ứng dụng đóng.'
+        })
+      }
+    }
+    this.activeControllers.clear()
   }
 
   reconcileOnStartup(): { reconciledOperations: number; settledTurns: number } {
-    let reconciledCount = 0
-    let recTurnsCount = 0
-    try {
-      const rec = reconcileStartupOperations(
-        this.library.appDb,
-        (this.library as unknown as { files: WorkFiles }).files,
-        this.now()
-      )
-      reconciledCount = rec.reconciledOperations.length
-      recTurnsCount = rec.reconciledTurns.length
-    } catch {
-      // ignore
-    }
+    const rec = this.library.reconcileOperations()
+    const reconciledCount = rec.reconciledOperations.length
+    const recTurnsCount = rec.reconciledTurns.length
 
     let settledTurns = recTurnsCount
     const unsettled = this.repository.listUnsettledTurns()
@@ -151,52 +216,76 @@ export class AgentService {
     return { reconciledOperations: reconciledCount, settledTurns }
   }
 
-  async send(input: AgentSendInput): Promise<AgentSendResult> {
-    const now = this.now()
-    const requestId = randomUUID()
-
-    // 1. Session resolution
+  acceptTurn(input: {
+    sessionId?: string
+    clientCommandId: string
+    instruction: string
+    context?: AgentContext
+    modelSelection?: AgentSendInput['modelSelection']
+  }): AgentAcceptedTurn {
+    if (this.shuttingDown) throw new StorageError('cancelled', 'Runtime agent đang đóng.')
     let session = input.sessionId ? this.repository.getSession(input.sessionId) : null
-    if (!session) {
-      session = this.createSession(input.instruction.slice(0, 30))
+    if (input.sessionId && !session)
+      throw new StorageError('not_found', 'Không tìm thấy phiên agent.')
+    if (!session) session = this.createSession(input.instruction.slice(0, 30))
+    const accepted = this.repository.acceptTurn({
+      id: randomUUID(),
+      sessionId: session.id,
+      clientCommandId: input.clientCommandId,
+      payloadDigest: digestPayload({
+        sessionId: session.id,
+        instruction: input.instruction.trim(),
+        context: input.context ?? {},
+        modelSelection: input.modelSelection
+      }),
+      instruction: input.instruction.trim(),
+      context: input.context ?? {},
+      now: this.now()
+    })
+    return {
+      requestId: input.clientCommandId,
+      sessionId: accepted.turn.sessionId,
+      turnId: accepted.turn.id,
+      created: accepted.created
     }
+  }
 
-    const sessionId = session.id
-    const turnId = input.turnId ?? randomUUID()
-    let isClarifyResume = false
-
-    // Check if continuing a waiting_user turn
-    if (input.turnId) {
-      const existing = this.repository.getTurn(input.turnId)
-      if (existing && existing.status === 'waiting_user') {
-        isClarifyResume = true
-        this.repository.transitionTurn(input.turnId, 'running', now)
-      }
-    }
-
-    if (!isClarifyResume) {
-      try {
-        this.repository.createTurn({
-          id: turnId,
-          sessionId,
-          instruction: input.instruction,
-          context: input.context ?? {},
-          now
-        })
-        this.repository.transitionTurn(turnId, 'running', now)
-      } catch (error) {
-        if (error instanceof StorageError && error.code === 'conflict') {
-          // Emit error event to stream if present
-          input.onStream?.({
-            requestId,
-            turnId,
-            eventSeq: 1,
-            kind: 'error',
-            error: { code: 'turn_in_progress', message: 'Đã có lượt đang chạy trong cùng phiên.' }
-          })
-          throw new StorageError('conflict', 'Đã có lượt đang chạy trong cùng phiên.')
+  async send(input: AgentSendInput): Promise<AgentSendResult> {
+    const accepted = input.turnId
+      ? {
+          requestId: input.commandId ?? randomUUID(),
+          turnId: input.turnId,
+          sessionId: this.repository.getTurn(input.turnId)?.sessionId ?? '',
+          created: false
         }
-        throw error
+      : this.acceptTurn({
+          sessionId: input.sessionId,
+          clientCommandId: input.commandId ?? randomUUID(),
+          instruction: input.instruction,
+          context: input.context,
+          modelSelection: input.modelSelection
+        })
+    return this.runExistingTurn({ ...input, ...accepted })
+  }
+
+  async runExistingTurn(
+    input: AgentSendInput & { requestId: string; turnId: string; sessionId: string }
+  ): Promise<AgentSendResult> {
+    const { requestId, turnId, sessionId } = input
+    const existing = this.repository.getTurn(turnId)
+    if (!existing) throw new StorageError('not_found', 'Không tìm thấy lượt agent.')
+    if (existing.status === 'queued') {
+      this.repository.transitionTurn(turnId, 'running', this.now())
+    } else if (existing.status === 'waiting_user') {
+      this.repository.transitionTurn(turnId, 'running', this.now())
+    } else if (existing.status !== 'running') {
+      return {
+        sessionId,
+        turnId,
+        status: existing.status,
+        answer: existing.answer,
+        usage: existing.usage,
+        costUsd: existing.costUsd
       }
     }
 
@@ -214,6 +303,7 @@ export class AgentService {
         | { kind: 'operation'; operation: unknown }
         | { kind: 'done'; turnState: 'completed' | 'waiting_user'; usage: unknown }
         | { kind: 'error'; error: unknown }
+        | { kind: 'cancelled'; usage: unknown }
     ) => {
       if (terminalEmitted) return
       eventSeq++
@@ -224,7 +314,11 @@ export class AgentService {
         ...eventData
       } as AgentStreamEvent
 
-      if (fullEvent.kind === 'done' || fullEvent.kind === 'error') {
+      if (
+        fullEvent.kind === 'done' ||
+        fullEvent.kind === 'error' ||
+        fullEvent.kind === 'cancelled'
+      ) {
         terminalEmitted = true
       }
       input.onStream?.(fullEvent)
@@ -233,6 +327,7 @@ export class AgentService {
     // Abort controller
     const abortController = new AbortController()
     this.activeControllers.set(turnId, abortController)
+    if (this.shuttingDown) abortController.abort()
     if (input.signal) {
       input.signal.addEventListener('abort', () => abortController.abort())
     }
@@ -243,6 +338,9 @@ export class AgentService {
     let finalAnswer = ''
     let collectedUsage: TokenUsage | null = null
     let turnStatus: AgentTurnState = 'completed'
+    let activeOperationId: string | null = null
+    let activeTarget: AgentTargetChanged['target'] | null = null
+    let selectedModelEntryId: string | null = null
 
     try {
       const instruction = input.instruction.trim()
@@ -364,6 +462,9 @@ export class AgentService {
 
         // Exact target resolved!
         const target = resolveResult.target
+        if (target.kind !== 'chapter') {
+          throw new StorageError('validation', 'Lệnh dịch cần target là một chương.')
+        }
         this.repository.putActivity({
           id: actId,
           turnId,
@@ -371,7 +472,7 @@ export class AgentService {
           stepSeq,
           kind: 'resolve',
           state: 'completed',
-          label: `Đích: "${target.kind === 'chapter' ? target.chapterLabel : target.workLabel}"`,
+          label: `Đích: "${target.chapterLabel}"`,
           detail: null,
           now: this.now()
         })
@@ -384,13 +485,39 @@ export class AgentService {
 
         // Create write operation in DB & emit snapshot
         const opId = randomUUID()
+        activeOperationId = opId
         const commandId = input.commandId ?? `cmd-${opId}`
-        const modelRef: ModelRef | undefined = input.modelSelection
-          ? {
-              connectionId: input.modelSelection.connectionId,
-              entryId: input.modelSelection.entryId
-            }
-          : undefined
+        const selected: AgentSendInput['modelSelection'] =
+          input.modelSelection ??
+          (() => {
+            const connection = this.connections
+              .list()
+              .connections.find((item) => item.enabled && item.models.length > 0)
+            const entry =
+              connection?.models.find((item) => item.id === connection.defaultEntryId) ??
+              connection?.models[0]
+            return connection && entry
+              ? { connectionId: connection.id, entryId: entry.id }
+              : undefined
+          })()
+        if (!selected) {
+          throw new StorageError('validation', 'Chưa có cấu hình kết nối AI nào khả dụng.')
+        }
+        const translator = this.connections.translator(selected.connectionId, selected.entryId)
+        if (selected.settingsKey && selected.settingsKey !== translator.settingsKey) {
+          throw new StorageError('conflict', 'Cấu hình model đã đổi. Vui lòng gửi lại lệnh.')
+        }
+        const modelRef: ModelRef & { settingsKey: string } = {
+          connectionId: selected.connectionId,
+          entryId: selected.entryId,
+          settingsKey: translator.settingsKey
+        }
+        selectedModelEntryId = modelRef.entryId
+        activeTarget = {
+          workId: target.workId,
+          chapterId: target.chapterId,
+          side: 'target'
+        }
 
         this.repository.createOperation({
           id: opId,
@@ -403,6 +530,11 @@ export class AgentService {
         })
         this.repository.transitionOperation(opId, 'running', { now: this.now() })
         emit({ kind: 'operation', operation: this.repository.getOperation(opId) })
+        await this.writeCoordinator.request(opId, target, input.onWriteIntent)
+        if (abortController.signal.aborted) {
+          this.repository.transitionOperation(opId, 'cancelled', { now: this.now() })
+          throw new StorageError('cancelled', 'Lượt agent đã được hủy.')
+        }
 
         // Create write activity
         stepSeq++
@@ -414,7 +546,7 @@ export class AgentService {
           stepSeq,
           kind: 'write',
           state: 'running',
-          label: `Dịch chương "${target.kind === 'chapter' ? target.chapterLabel : ''}"`,
+          label: `Dịch chương "${target.chapterLabel}"`,
           detail: null,
           now: this.now()
         })
@@ -429,8 +561,9 @@ export class AgentService {
         const capRes = await this.registry.execute(
           'translate_chapter',
           {
-            connectionId: input.modelSelection?.connectionId,
-            entryId: input.modelSelection?.entryId
+            connectionId: modelRef.connectionId,
+            entryId: modelRef.entryId,
+            settingsKey: modelRef.settingsKey
           },
           {
             turnId,
@@ -438,7 +571,15 @@ export class AgentService {
             operationId: opId,
             target,
             library: this.library,
-            now: this.now()
+            now: this.now(),
+            signal: abortController.signal,
+            onProgress: (progress) => {
+              const operation = this.repository.transitionOperation(opId, 'running', {
+                now: this.now(),
+                progress
+              })
+              emit({ kind: 'operation', operation })
+            }
           }
         )
 
@@ -449,22 +590,27 @@ export class AgentService {
               totalUnits: number
               summary: string
               lastAppliedRev: number | null
+              usage?: TokenUsage | null
             }
           | undefined
 
-        finalAnswer = capVal?.summary ?? 'Đã hoàn tất thao tác.'
+        finalAnswer = capVal?.summary ?? capRes.error?.message ?? 'Không thể hoàn tất thao tác.'
         if (capVal && 'usage' in capVal && capVal.usage) {
           collectedUsage = capVal.usage as TokenUsage
         }
 
-        const finalOpState =
+        const finalOpState: AgentOperation['state'] =
           capVal?.state === 'completed'
             ? 'completed'
             : capVal?.state === 'partially_completed'
               ? 'partially_completed'
               : capVal?.state === 'cancelled'
                 ? 'cancelled'
-                : 'conflict'
+                : capVal?.state === 'conflict' || capRes.error?.code === 'conflict'
+                  ? 'conflict'
+                  : capRes.error?.code === 'cancelled'
+                    ? 'cancelled'
+                    : 'failed'
 
         this.repository.transitionOperation(opId, finalOpState, {
           now: this.now(),
@@ -473,7 +619,9 @@ export class AgentService {
             total: capVal?.totalUnits ?? 0,
             unit: 'segments'
           },
-          result: capVal
+          result: capVal,
+          error: capRes.ok ? undefined : capRes.error,
+          usage: collectedUsage
         })
         emit({ kind: 'operation', operation: this.repository.getOperation(opId) })
 
@@ -483,8 +631,13 @@ export class AgentService {
           operationId: opId,
           stepSeq,
           kind: 'write',
-          state: finalOpState === 'conflict' ? 'failed' : 'completed',
-          label: `Dịch chương "${target.kind === 'chapter' ? target.chapterLabel : ''}"`,
+          state:
+            finalOpState === 'conflict' || finalOpState === 'failed'
+              ? 'failed'
+              : finalOpState === 'cancelled'
+                ? 'cancelled'
+                : 'completed',
+          label: `Dịch chương "${target.chapterLabel}"`,
           detail: null,
           now: this.now()
         })
@@ -492,10 +645,24 @@ export class AgentService {
           kind: 'activity-finish',
           activityId: writeActId,
           stepSeq,
-          activity: { ...writeAct, state: 'completed' }
+          activity: {
+            ...writeAct,
+            state:
+              finalOpState === 'conflict' || finalOpState === 'failed'
+                ? 'failed'
+                : finalOpState === 'cancelled'
+                  ? 'cancelled'
+                  : 'completed'
+          }
         })
 
-        turnStatus = 'completed'
+        if (!capRes.ok && finalOpState !== 'cancelled') {
+          throw new StorageError(
+            finalOpState === 'conflict' ? 'conflict' : 'io',
+            capRes.error?.message ?? 'Capability thất bại.'
+          )
+        }
+        turnStatus = finalOpState === 'cancelled' ? 'cancelled' : 'completed'
       } else {
         // Read / question scenario: no write operation created!
         stepSeq++
@@ -531,6 +698,9 @@ export class AgentService {
               now: this.now()
             }
           )
+          if (!listRes.ok) {
+            throw new StorageError('io', listRes.error?.message ?? 'Không thể đọc danh mục chương.')
+          }
           const chList = (listRes.value as Array<{ id: string; title: string }>) ?? []
           finalAnswer = `Tác phẩm có ${chList.length} chương: ${chList
             .map((c) => c.title)
@@ -547,6 +717,9 @@ export class AgentService {
               now: this.now()
             }
           )
+          if (!worksRes.ok) {
+            throw new StorageError('io', worksRes.error?.message ?? 'Không thể đọc thư viện.')
+          }
           const wList = (worksRes.value as Array<{ id: string; title: string }>) ?? []
           finalAnswer = `Thư viện hiện có ${wList.length} tác phẩm.`
         }
@@ -574,24 +747,34 @@ export class AgentService {
 
       // Calculate cost
       let costUsd: number | null = null
-      if (collectedUsage && input.modelSelection) {
-        const modelInfo = lookupModel(input.modelSelection.entryId)
+      if (collectedUsage && selectedModelEntryId) {
+        const modelInfo = lookupModel(selectedModelEntryId)
         costUsd = calculateTurnCost(collectedUsage, modelInfo).costUsd
       }
 
-      // Update turn in DB
-      this.repository.transitionTurn(turnId, turnStatus, this.now(), {
-        answer: finalAnswer,
-        usage: collectedUsage,
-        costUsd
-      })
-
-      emit({ kind: 'answer-delta', text: finalAnswer })
-      emit({
-        kind: 'done',
-        turnState: 'completed',
-        usage: collectedUsage
-      })
+      const currentTurn = this.repository.getTurn(turnId)
+      if (turnStatus === 'cancelled') {
+        if (currentTurn?.status === 'running') {
+          this.repository.transitionTurn(turnId, 'cancelled', this.now(), {
+            answer: finalAnswer,
+            usage: collectedUsage,
+            costUsd
+          })
+        }
+        emit({ kind: 'cancelled', usage: collectedUsage })
+      } else {
+        this.repository.transitionTurn(turnId, turnStatus, this.now(), {
+          answer: finalAnswer,
+          usage: collectedUsage,
+          costUsd
+        })
+        emit({ kind: 'answer-delta', text: finalAnswer })
+        emit({
+          kind: 'done',
+          turnState: 'completed',
+          usage: collectedUsage
+        })
+      }
 
       return {
         sessionId,
@@ -602,19 +785,81 @@ export class AgentService {
         costUsd
       }
     } catch (error) {
-      if (!terminalEmitted) {
-        try {
-          this.repository.transitionTurn(turnId, 'failed', this.now())
-        } catch {
-          // ignore transition error if already terminal
+      const cancelled =
+        (error instanceof StorageError && error.code === 'cancelled') ||
+        abortController.signal.aborted
+      if (activeOperationId) {
+        const operation = this.repository.getOperation(activeOperationId)
+        if (operation?.state === 'queued' || operation?.state === 'running') {
+          this.repository.transitionOperation(
+            activeOperationId,
+            cancelled ? 'cancelled' : 'failed',
+            {
+              now: this.now(),
+              error: cancelled
+                ? { code: 'cancelled', message: 'Lượt agent đã được hủy.' }
+                : {
+                    code: error instanceof StorageError ? error.code : 'internal',
+                    message: error instanceof Error ? error.message : String(error)
+                  }
+            }
+          )
         }
-        emit({
-          kind: 'error',
-          error: error instanceof Error ? { message: error.message } : error
+      }
+      for (const activity of this.repository.listActivities(turnId)) {
+        if (activity.state !== 'running') continue
+        this.repository.putActivity({
+          id: activity.id,
+          turnId,
+          operationId: activity.operationId,
+          stepSeq: activity.stepSeq,
+          kind: activity.kind,
+          state: cancelled ? 'cancelled' : 'failed',
+          label: activity.label,
+          detail: activity.detail,
+          now: this.now()
         })
+      }
+      const currentTurn = this.repository.getTurn(turnId)
+      if (!this.shuttingDown && currentTurn?.status === 'running') {
+        this.repository.transitionTurn(turnId, cancelled ? 'cancelled' : 'failed', this.now())
+      }
+      const persistedTurn = this.repository.getTurn(turnId)
+      if (
+        !this.shuttingDown &&
+        !terminalEmitted &&
+        (persistedTurn?.status === 'cancelled' || persistedTurn?.status === 'failed')
+      ) {
+        emit(
+          persistedTurn.status === 'cancelled'
+            ? { kind: 'cancelled', usage: collectedUsage }
+            : {
+                kind: 'error',
+                error: {
+                  code: error instanceof StorageError ? error.code : 'internal',
+                  message: error instanceof Error ? error.message : String(error)
+                }
+              }
+        )
       }
       throw error
     } finally {
+      if (activeOperationId && activeTarget && input.onTargetChanged) {
+        try {
+          const lastAppliedRev = this.library.readText(
+            activeTarget.workId,
+            activeTarget.chapterId,
+            activeTarget.side
+          ).rev
+          input.onTargetChanged({
+            target: activeTarget,
+            lastAppliedRev,
+            operationId: activeOperationId
+          })
+        } catch {
+          // Target reload is best effort after the durable operation state has been written.
+        }
+      }
       this.activeControllers.delete(turnId)
     }
   }

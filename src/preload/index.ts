@@ -526,8 +526,7 @@ const desktopApi: DesktopApi = {
     turn: {
       send: (input) =>
         ipcRenderer.invoke(CHANNELS.agentTurnSend, input) as Promise<Result<AgentSendResult>>,
-      cancel: (input) =>
-        ipcRenderer.invoke(CHANNELS.agentTurnCancel, input) as Promise<Result<void>>
+      cancel: (input) => ipcRenderer.invoke(CHANNELS.agentTurnCancel, input)
     },
     operations: {
       get: (operationId) =>

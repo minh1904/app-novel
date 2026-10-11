@@ -152,11 +152,12 @@ export const useAgentStore = create<AgentState>((set, get) => {
 
       const res = await window.mira.agent.turn.send({
         sessionId,
+        clientCommandId: crypto.randomUUID(),
         instruction,
         context
       })
 
-      if (res.ok) {
+      if (res.ok && get().isStreaming) {
         set({ streamingTurnId: res.value.turnId })
       } else {
         resetBuffers()
@@ -278,6 +279,19 @@ export const useAgentStore = create<AgentState>((set, get) => {
           resetBuffers()
           break
         }
+
+        case 'cancelled': {
+          answerBuffer?.flush()
+          reasoningBuffer?.flush()
+          set(() => ({
+            isStreaming: false,
+            streamingTurnId: null,
+            streamingAnswer: '',
+            streamingReasoning: ''
+          }))
+          resetBuffers()
+          break
+        }
       }
     },
 
@@ -294,15 +308,23 @@ export const useAgentStore = create<AgentState>((set, get) => {
           side: intent.target.side
         }
 
+        if (!adapter.hasEditor(target)) {
+          await window.mira.agent.coordinator.ackWriteIntent({
+            intentId: intent.intentId,
+            status: 'not-open'
+          })
+          return
+        }
+
         // Flush dirty target before ack
         const flushRes = await adapter.flushDirty(target)
-        // Lock editor during write operation
-        adapter.setLocked(target, true)
+        if (flushRes.ok) adapter.setLocked(target, true)
 
         // Send acknowledgement to main coordinator
         await window.mira.agent.coordinator.ackWriteIntent({
           intentId: intent.intentId,
-          status: flushRes.ok ? 'ack' : 'flush-failed'
+          status: flushRes.ok ? 'ack' : 'flush-failed',
+          revision: flushRes.revision
         })
       })
 

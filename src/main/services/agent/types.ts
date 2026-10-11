@@ -25,6 +25,8 @@ export interface CapabilityExecutionInput<TArgs = unknown> {
   args: TArgs
   library: LibraryStore
   now: number
+  signal?: AbortSignal
+  onProgress?: (progress: AgentProgress) => void
 }
 
 export interface CapabilityExecutionResult<TResult = unknown> {

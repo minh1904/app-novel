@@ -42,6 +42,8 @@ export interface AgentTurn {
   usage: TokenUsage | null
   costUsd: number | null
   legacyRef: AgentLegacyRef | null
+  clientCommandId: string | null
+  payloadDigest: string | null
   createdAt: number
   updatedAt: number
 }
@@ -64,6 +66,8 @@ interface TurnRow {
   usage_json: string | null
   cost_usd: number | null
   legacy_ref_json: string | null
+  client_command_id: string | null
+  payload_digest: string | null
   created_at: number
   updated_at: number
 }
@@ -115,6 +119,8 @@ const turnFrom = (row: TurnRow): AgentTurn => ({
   usage: row.usage_json ? JSON.parse(row.usage_json) : null,
   costUsd: row.cost_usd,
   legacyRef: row.legacy_ref_json ? JSON.parse(row.legacy_ref_json) : null,
+  clientCommandId: row.client_command_id,
+  payloadDigest: row.payload_digest,
   createdAt: row.created_at,
   updatedAt: row.updated_at
 })
@@ -181,6 +187,8 @@ export class AgentRepository {
     context: AgentContext
     now: number
     legacyRef?: AgentLegacyRef
+    clientCommandId?: string
+    payloadDigest?: string
   }): AgentTurn {
     const active = this.db
       .prepare("SELECT id FROM agent_turn WHERE session_id = ? AND status IN ('queued', 'running')")
@@ -193,8 +201,9 @@ export class AgentRepository {
       this.db
         .prepare(
           `INSERT INTO agent_turn
-            (id, session_id, instruction, answer, reasoning, context_json, status, legacy_ref_json, created_at, updated_at)
-           VALUES (?, ?, ?, '', '', ?, 'queued', ?, ?, ?)`
+            (id, session_id, instruction, answer, reasoning, context_json, status, legacy_ref_json,
+             client_command_id, payload_digest, created_at, updated_at)
+           VALUES (?, ?, ?, '', '', ?, 'queued', ?, ?, ?, ?, ?)`
         )
         .run(
           input.id,
@@ -202,6 +211,8 @@ export class AgentRepository {
           input.instruction,
           JSON.stringify(input.context ?? {}),
           input.legacyRef ? JSON.stringify(input.legacyRef) : null,
+          input.clientCommandId ?? null,
+          input.payloadDigest ?? null,
           input.now,
           input.now
         )
@@ -222,7 +233,8 @@ export class AgentRepository {
     const row = this.db
       .prepare(
         `SELECT id, session_id, instruction, answer, reasoning, context_json, status,
-                usage_json, cost_usd, legacy_ref_json, created_at, updated_at
+                usage_json, cost_usd, legacy_ref_json, client_command_id, payload_digest,
+                created_at, updated_at
          FROM agent_turn WHERE id = ?`
       )
       .get<TurnRow>(id)
@@ -233,7 +245,8 @@ export class AgentRepository {
     return this.db
       .prepare(
         `SELECT id, session_id, instruction, answer, reasoning, context_json, status,
-                usage_json, cost_usd, legacy_ref_json, created_at, updated_at
+                usage_json, cost_usd, legacy_ref_json, client_command_id, payload_digest,
+                created_at, updated_at
          FROM agent_turn WHERE session_id = ? ORDER BY created_at ASC, id ASC`
       )
       .all<TurnRow>(sessionId)
@@ -244,11 +257,56 @@ export class AgentRepository {
     return this.db
       .prepare(
         `SELECT id, session_id, instruction, answer, reasoning, context_json, status,
-                usage_json, cost_usd, legacy_ref_json, created_at, updated_at
+                usage_json, cost_usd, legacy_ref_json, client_command_id, payload_digest,
+                created_at, updated_at
          FROM agent_turn WHERE status IN ('queued', 'running') ORDER BY created_at ASC, id ASC`
       )
       .all<TurnRow>()
       .map(turnFrom)
+  }
+
+  findTurnByClientCommandId(clientCommandId: string): AgentTurn | null {
+    const row = this.db
+      .prepare(
+        `SELECT id, session_id, instruction, answer, reasoning, context_json, status,
+                usage_json, cost_usd, legacy_ref_json, client_command_id, payload_digest,
+                created_at, updated_at
+         FROM agent_turn WHERE client_command_id = ?`
+      )
+      .get<TurnRow>(clientCommandId)
+    return row ? turnFrom(row) : null
+  }
+
+  acceptTurn(input: {
+    id: string
+    sessionId: string
+    clientCommandId: string
+    payloadDigest: string
+    instruction: string
+    context: AgentContext
+    now: number
+  }): { turn: AgentTurn; created: boolean } {
+    return this.db.transaction(() => {
+      const existing = this.findTurnByClientCommandId(input.clientCommandId)
+      if (existing) {
+        if (existing.payloadDigest !== input.payloadDigest) {
+          throw new StorageError('conflict', 'Mã lệnh đã được dùng với nội dung khác.')
+        }
+        return { turn: existing, created: false }
+      }
+      return {
+        turn: this.createTurn({
+          id: input.id,
+          sessionId: input.sessionId,
+          clientCommandId: input.clientCommandId,
+          payloadDigest: input.payloadDigest,
+          instruction: input.instruction,
+          context: input.context,
+          now: input.now
+        }),
+        created: true
+      }
+    })
   }
 
   transitionTurn(
@@ -298,7 +356,7 @@ export class AgentRepository {
     capability: string
     target: ResolvedTarget
     now: number
-    model?: ModelRef
+    model?: ModelRef & { settingsKey?: string }
   }): AgentOperation {
     const existing = this.db
       .prepare('SELECT id FROM agent_operation WHERE command_id = ?')
@@ -369,11 +427,15 @@ export class AgentRepository {
       result?: unknown
       error?: unknown
       hasChanges?: boolean
+      usage?: TokenUsage | null
     }
   ): AgentOperation {
     const current = this.getOperation(id)
     if (!current) throw new StorageError('not_found', 'Không tìm thấy operation.')
-    if (!canTransitionOperation(current.state, state, options.hasChanges ?? false)) {
+    if (
+      current.state !== state &&
+      !canTransitionOperation(current.state, state, options.hasChanges ?? false)
+    ) {
       throw new StorageError(
         'conflict',
         `Không thể chuyển trạng thái operation từ ${current.state} sang ${state}.`
@@ -383,16 +445,18 @@ export class AgentRepository {
     const progress = options.progress !== undefined ? options.progress : current.progress
     const result = options.result !== undefined ? options.result : current.result
     const error = options.error !== undefined ? options.error : current.error
+    const usage = options.usage !== undefined ? options.usage : current.usage
 
     this.db
       .prepare(
         `UPDATE agent_operation
-         SET state = ?, progress_json = ?, result_json = ?, error_json = ?, updated_at = ?
+         SET state = ?, progress_json = ?, usage_json = ?, result_json = ?, error_json = ?, updated_at = ?
          WHERE id = ?`
       )
       .run(
         state,
         progress ? JSON.stringify(progress) : null,
+        usage ? JSON.stringify(usage) : null,
         result ? JSON.stringify(result) : null,
         error ? JSON.stringify(error) : null,
         options.now,

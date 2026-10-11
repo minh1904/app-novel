@@ -140,6 +140,7 @@ export function ChapterWorkspace({
   const [targetStatus, setTargetStatus] = useState<SessionStatus>(IDLE)
   const [translation, setTranslation] = useState(target.content)
   const [unlocked, setUnlocked] = useState(false)
+  const [agentLocked, setAgentLocked] = useState(false)
   const [mode, setMode] = useState<'full' | 'sentence'>('full')
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Đặt lại trạng thái cục bộ mỗi khi chuyển sang chương khác.
@@ -171,9 +172,13 @@ export function ChapterWorkspace({
         isDirty: () => targetStatus.dirty,
         flush: async () => {
           const res = await targetEditor.current?.save()
-          return { ok: res?.kind === 'saved' || res?.kind === 'unchanged' }
+          return {
+            ok: res?.kind === 'saved' || res?.kind === 'unchanged',
+            revision: res?.kind === 'saved' ? res.record.rev : target.rev
+          }
         },
-        setReadOnly: (_ro) => {},
+        revision: () => target.rev,
+        setReadOnly: setAgentLocked,
         reload: async () => {
           const res = await targetStore.get()
           if (res.ok) {
@@ -183,7 +188,7 @@ export function ChapterWorkspace({
         }
       }
     )
-  }, [work.id, chapter.id, targetStatus.dirty, targetStore, onTargetReplaced])
+  }, [work.id, chapter.id, target.rev, targetStatus.dirty, targetStore, onTargetReplaced])
   const sentence = useRef<SentenceModeHandle>(null)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiWidth, setAiWidth] = useState(420)
@@ -865,6 +870,7 @@ export function ChapterWorkspace({
                   livePreview
                   images={imageStore}
                   emptyHint="Chưa có bản dịch. Gõ bản dịch vào đây, hoặc dán bản dịch có sẵn."
+                  readOnly={agentLocked}
                   onSaved={onTargetSaved}
                   onStatusChange={setTargetStatus}
                   onTargetChange={onTargetCaret}

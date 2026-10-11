@@ -196,9 +196,9 @@ describe('WorkFiles library.db lifecycle', () => {
 
     expect(existsSync(backupsDir)).toBe(false)
 
-    // Open via WorkFiles — should detect userVersion 8 < 9, create backup, then migrate to 9
+    // Open via WorkFiles — should detect userVersion 8 < 10, create backup, then migrate to 10
     const files = WorkFiles.open({ dataDir: dir, now: () => 1500 })
-    expect(readPragmas(files.index).userVersion).toBe(9)
+    expect(readPragmas(files.index).userVersion).toBe(10)
 
     // Verify backup exists in backups/
     const backups = readdirSync(backupsDir).filter((f) => f.endsWith('.db'))

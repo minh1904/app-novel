@@ -39,6 +39,7 @@ const MENU_IS_IN_THE_WINDOW = process.platform !== 'darwin'
 
 let mainWindow: BrowserWindow | null = null
 let library: LibraryStore | null = null
+let stopServices: (() => void) | null = null
 
 /** Nơi lưu trữ thư viện; `MIRA_DATA_DIR` dùng để trỏ đến thư mục khác khi chạy test hoặc Lab. */
 const dataDir = (): string => process.env.MIRA_DATA_DIR ?? app.getPath('userData')
@@ -143,7 +144,7 @@ app.whenReady().then(() => {
     app.exit(1)
     return
   }
-  registerLibraryHandlers(library, isTrustedSender)
+  stopServices = registerLibraryHandlers(library, isTrustedSender)
 
   ipcMain.handle('app:info', (event): AppInfo => {
     if (!isTrustedSender(event)) {
@@ -183,6 +184,8 @@ app.whenReady().then(() => {
 })
 
 app.on('will-quit', () => {
+  stopServices?.()
+  stopServices = null
   library?.close()
   library = null
 })
