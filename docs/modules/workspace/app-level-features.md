@@ -72,10 +72,10 @@ Tần suất là đánh giá cho một người dịch làm một mình với nh
 | --- | --- | --- | --- | --- |
 | **Trang chủ** | GalTransl, Notion, Readwise, Trados | Tiếp tục chương dở, tác vụ đang chạy hoặc lỗi, chi phí tuần này, hoạt động gần đây | Cao, màn mở app mỗi ngày | Chưa có |
 | **Thư viện** | Tất cả | Lưới tác phẩm, tiến độ, bộ lọc lưu sẵn (Đang dịch, Có chương mới, Tạm dừng, Lưu trữ) | Cao | Dữ liệu có, giao diện đang dựng lại |
-| **Tác vụ** | Mihon, Calibre, GalTransl, Cursor | Hàng đợi chung mọi truyện: dịch nhiều chương, trích thuật ngữ, nhập/xuất; tạm dừng, thử lại, lỗi, chi phí từng việc | Cao khi dịch hàng loạt; số trên icon có ích cả khi không bấm | Mock trong từng tác phẩm; Module 7 trong [phiên và tác vụ](../proposals/sessions-and-jobs.md) |
+| **Tác vụ** | Mihon, Calibre, GalTransl, Cursor | Hàng đợi chung mọi truyện: dịch nhiều chương, trích thuật ngữ, nhập/xuất; tạm dừng, thử lại, lỗi, chi phí từng việc | Cao khi dịch hàng loạt; số trên icon có ích cả khi không bấm | Chưa triển khai; xem [roadmap agent](../proposals/agent-roadmap.md#2-tác-vụ-dịch-nhiều-chương) |
 | **Kho dùng chung** | GalTransl, AiNiee, Novelcrafter, memoQ, Crowdin | Thuật ngữ, tên, bảng thay thế dùng cho nhiều truyện (cùng tác giả, cùng thể loại tu tiên); thấy "đang dùng ở truyện nào"; nhập Names.txt / VietPhrase.txt | Trung bình, sửa theo đợt nhưng là tài sản tích luỹ | Chưa có; glossary hiện theo từng tác phẩm |
 | **Prompt & văn phong** | Novelcrafter, AiNiee, LinguaGacha, GalTransl, Sudowrite | Hồ sơ văn phong (cổ trang, đô thị, xưng hô), mẫu prompt, hướng dẫn chung mà tác phẩm kế thừa rồi ghi đè | Trung bình đến thấp: nhiều lúc đầu, sau hiếm | Văn phong theo tác phẩm đang mock |
-| **Trợ lý AI** | GalTransl, Notion | Chat ngoài tác phẩm: hỏi điển cố, thành ngữ; nhờ agent làm việc trên cả thư viện | Cao | **Đã triển khai** nền tảng app-wide agent (`app-agent-foundation`) |
+| **Trợ lý AI** | GalTransl, Notion | Chat ngoài tác phẩm: hỏi điển cố, thành ngữ; nhờ agent làm việc trên cả thư viện | Cao | Có foundation trong mã; đường chạy đầu-cuối đang ở [giai đoạn 0–1](../proposals/agent-roadmap.md) |
 | **Cập nhật** | Mihon, Readwise, lncrawl | Chương gốc mới của các truyện đang theo dõi; đưa vào hàng đợi dịch | Rất cao nếu có nguồn, không có nguồn thì bỏ | Nguồn đang mock |
 | Thống kê & chi phí | Mihon, Sudowrite, Smartcat | Token và tiền theo model, truyện, ngày; số chương đã dịch | Trung bình; thẻ trên Trang chủ đủ cho hằng ngày | Chưa có |
 | Nhật ký | AiNiee, LinguaGacha | Request, lỗi API, rate limit | Thấp, mở khi có sự cố | Chưa có |
@@ -96,7 +96,7 @@ Tần suất là đánh giá cho một người dịch làm một mình với nh
 | | **Cập nhật** | Chỉ khi có Nguồn; có số chương mới |
 | Tài nguyên | **Kho dùng chung** | Thuật ngữ và tên chung; muốn gọn thì gộp với mục dưới thành "Tài nguyên" có tab, như Resource Console của memoQ |
 | | **Prompt & văn phong** | |
-| | **Trợ lý AI** | Khi agent làm được việc cấp thư viện |
+| | **Trợ lý AI** | Hiện khi vòng chat đầu-cuối đạt gate foundation |
 | Giữa (tuỳ chọn) | Tác phẩm đang mở | Theo GalTransl: vài tác phẩm gần nhất, chấm đang dịch hoặc có đề xuất chờ; thay dải tab đã gỡ |
 | Đáy | Cài đặt, theme | Chấm cảnh báo trên Cài đặt khi chưa có kết nối AI |
 
@@ -163,16 +163,16 @@ Mỗi dòng là một tính năng sẽ có OpenSpec riêng trước khi làm. Xo
 
 | Tính năng | Màn minh hoạ cho thấy | Cần có trước | Liên quan |
 | --- | --- | --- | --- |
-| **Hàng đợi tác vụ toàn app** | Tác vụ của mọi tác phẩm: tiến độ, tốc độ, token, chi phí, thời gian còn lại; thử lại, tạm dừng, huỷ, chạy trước; lỗi hết hạn mức tự thử lại; biểu đồ tốc độ; số việc đang chạy và chấm lỗi trên thanh bên | `JobRunner` bền trong main, chia lô, retry, ghi chi phí | Module 7 trong [phiên và tác vụ](../proposals/sessions-and-jobs.md); khu vực Tác vụ của từng tác phẩm |
+| **Hàng đợi tác vụ toàn app** | Tác vụ của mọi tác phẩm: tiến độ, tốc độ, token, chi phí, thời gian còn lại; thử lại, tạm dừng, huỷ, chạy trước; lỗi hết hạn mức tự thử lại; biểu đồ tốc độ; số việc đang chạy và chấm lỗi trên thanh bên | Task bền trong main, chia item, retry, ghi usage | [Giai đoạn tác vụ nhiều chương](../proposals/agent-roadmap.md#2-tác-vụ-dịch-nhiều-chương) |
 | **Số liệu ở Trang chủ** | Chương dịch tuần này, chi phí tuần này, đề xuất chờ duyệt, lỗi kiểm tra; hoạt động gần đây | Ghi usage theo lượt gọi; đếm đề xuất theo tác phẩm (đã có theo chương); kiểm tra chất lượng | [Tính năng của đối thủ](competitor-features.md) hạng 2–3 |
 | **Cập nhật chương mới** (Đã xong nền tảng) | Chương gốc mới của các truyện đang theo dõi, gom theo ngày; xem diff trước khi áp dụng; nguồn lỗi | **Đã triển khai** cho tệp/thư mục cục bộ (`source-system-foundation`); adapter mạng là follow-up | [Thiết kế nguồn đa quốc gia](../sources/system-design.md); [nghiên cứu cơ chế](../sources/updates-research.md) |
 | **Kho dùng chung** | Bộ thuật ngữ dùng cho nhiều tác phẩm, số lần khớp, mục bị tác phẩm ghi đè, nhập Names.txt / VietPhrase.txt, bảng thay thế | Mô hình kế thừa kho → tác phẩm; trình đọc Names.txt / VietPhrase.txt | [Glossary](../context/glossary.md); câu hỏi còn mở ở phần 5 |
 | **Prompt & văn phong** | Hồ sơ văn phong: giọng văn, xưng hô mặc định, cách phiên âm tên, câu mẫu; tác phẩm kế thừa rồi ghi đè; ước lượng token gửi kèm | Lắp ngữ cảnh đọc được hồ sơ; khu vực Văn phong của tác phẩm | Lát 5 của [lộ trình Ngữ cảnh](../context/roadmap.md) |
-| **Trợ lý AI toàn ứng dụng** | Chat không gắn chương/tác phẩm, đọc được cả thư viện, resolve target và thao tác trực tiếp có undo | **Đã triển khai** (`app-agent-foundation`): module agent, `library.db` session, target resolver, write lease, checkpoint | [Báo cáo nghiệm thu](../proposals/acceptance-app-agent-foundation.md) |
+| **Trợ lý AI toàn ứng dụng** | Chat không gắn chương/tác phẩm, đọc được cả thư viện, resolve target và thao tác trực tiếp có Undo | Có các khối foundation; còn nối và kiểm chứng runtime | [Roadmap agent](../proposals/agent-roadmap.md) |
 | **Tìm và lệnh (Ctrl K)** | Một ô tìm cho tác phẩm, chương, thuật ngữ, câu trong bản dịch, và lệnh có phím tắt | Chỉ mục tìm kiếm toàn thư viện; danh sách lệnh | [Tính năng của đối thủ](competitor-features.md) hạng 10–11 |
 
-Thứ tự gợi ý: Tìm và lệnh (nhảy tới tác phẩm, chương là làm được ngay bằng dữ liệu đang có) → hàng đợi
-tác vụ → số liệu Trang chủ → Kho dùng chung → Prompt & văn phong → Trợ lý AI → Cập nhật (sau khi có Nguồn).
+Thứ tự cho Trợ lý và tác vụ theo [roadmap agent](../proposals/agent-roadmap.md). Các mục toàn ứng dụng
+khác được ưu tiên riêng theo nhu cầu sản phẩm.
 
 ---
 

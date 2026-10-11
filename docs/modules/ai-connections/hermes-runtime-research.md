@@ -97,7 +97,7 @@ bên. Các mục còn lại dựa trên đọc mã có ghi file:dòng nhưng ch�
 - **Hermes:** `agent/fallback_cooldown.py` chuyển sang model dự phòng và ghi thời điểm model chính mở
   lại (`_arm_rate_limit_cooldown`, `_provider_reset_delay`), rồi quay lại khi hết hạn.
 - **Đã chốt khác:** dịch chương không tự đổi model mà mời "Dịch tiếp bằng Y" (mục 10). Ý tưởng
-  cooldown của Hermes chỉ còn dùng cho Module 7.
+  cooldown của Hermes chỉ còn là đầu vào cho tác vụ nhiều chương.
 
 ### 3b. Đánh dấu cache cho Claude qua OpenRouter
 
@@ -122,10 +122,10 @@ bên. Các mục còn lại dựa trên đọc mã có ghi file:dòng nhưng ch�
 - **Đề xuất:** khi vượt ngân sách, tóm tắt "các quy ước đã thống nhất" (cách gọi, tên giữ nguyên) bằng
   model rẻ. Chỉ chạy khi thật sự vượt, để không phá cache.
 
-## 4. Tác vụ dài và chi phí (đề xuất, cho Module 7)
+## 4. Tác vụ dài và chi phí (nghiên cứu đầu vào)
 
-[Phiên và nhiều chương](../proposals/sessions-and-jobs.md) đã đặt hàng chờ theo chương nhưng chưa có bảng
-tác vụ. Hermes có ba mẫu đáng lấy:
+[Phiên và tác vụ](../proposals/sessions-and-jobs.md) đã chốt vòng đời task nhưng chưa có bảng lưu trữ.
+Hermes có ba mẫu đáng lấy:
 
 - **Sổ ghi lần chạy** (`cron/executions.py:56-97`): trạng thái `claimed → running →
   completed|failed|unknown`, trạng thái cuối không đổi được, có cột heartbeat. `batch_runner.py:532-600`
@@ -230,7 +230,7 @@ cho huấn luyện, gateway và nhắn tin. Tự cập nhật (`electron-updater
 1. Mục 2a–2f và 5b: nhỏ, sửa lỗi thật hoặc giảm rủi ro mất dữ liệu.
 2. Khóa một instance, nhớ cửa sổ, tín hiệu "đang chạy" (phần 6), error boundary và log.
 3. Mục 3b: tác động lớn lên chi phí. Mục 3a đã chốt theo cách khác (mục 10).
-4. Phần 4 cùng với Module 7.
+4. Phần 4 cùng với [giai đoạn tác vụ nhiều chương](../proposals/agent-roadmap.md#2-tác-vụ-dịch-nhiều-chương).
 5. Mục 5a, 5c, phím tắt và command palette: cần chủ sản phẩm chọn.
 
 ## Câu hỏi cần chốt
@@ -253,7 +253,7 @@ cho huấn luyện, gateway và nhắn tin. Tự cập nhật (`electron-updater
 - **B:** tự chuyển theo danh sách Dự phòng, cho phép một chương do hai model dịch.
 - **C:** như B, kèm công tắc riêng cho việc dịch.
 
-**Còn lại từ Hermes cho Module 7 (đề xuất).** Cách A cần người bấm. Khi dịch nhiều chương không có người
+**Còn lại cho tác vụ nhiều chương (đề xuất).** Cách A cần người bấm. Khi dịch nhiều chương không có người
 trông, có thể dùng hai ý của Hermes (`agent/fallback_cooldown.py`, `cron/quota_hold.py`):
 
 - giữ tác vụ lại tới khi quota mở lại, rồi chạy tiếp bằng model chính;
@@ -288,4 +288,4 @@ Panel chat của Mira ngắn, nên lợi ích cache không bù được việc m
 ---
 
 [Kết nối AI](README.md) · [Cài đặt và lớp provider của Hermes](hermes-settings-and-adapters.md) ·
-[Học UI chat của Hermes Desktop](../proposals/hermes-chat-research.md) · [Mục lục module](../README.md)
+[Roadmap Trợ lý](../proposals/agent-roadmap.md) · [Mục lục module](../README.md)

@@ -43,8 +43,9 @@ và chương chưa dịch bị bỏ mà không báo. Chủ sản phẩm chọn l
 
 ## Chưa làm
 
-- **Dịch bằng AI cho nhiều chương** chưa có trên thanh chọn: thuộc Module 7 Tác vụ (hàng đợi bền). Thanh
-  chọn là chỗ đặt nút đó khi Module 7 xong.
+- **Dịch bằng AI cho nhiều chương** chưa có trên thanh chọn: thuộc
+  [giai đoạn tác vụ nhiều chương](../proposals/agent-roadmap.md#2-tác-vụ-dịch-nhiều-chương). Thanh chọn
+  là một lối tạo task sau khi workflow bền đã có.
 - **Chuyển nhiều chương tới vị trí khác** chưa có; vị trí đích của một nhóm không liền nhau cần chốt.
 
 Nguồn triển khai: [`ExportDialog`](../../../src/renderer/src/features/export/ExportDialog.tsx),

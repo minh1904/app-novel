@@ -1,6 +1,7 @@
 # Những gì nên đặt ở thanh bên
 
-Cập nhật: 2026-10-08 · Trạng thái: **Quan sát** (phần 1–3), **Đề xuất** (phần 4–5), **Đã chốt** (phần 6).
+Cập nhật: 2026-10-11 · Trạng thái: **Nghiên cứu lịch sử**. Kết luận về chat gắn chương đã bị
+[quyết định Trợ lý toàn ứng dụng](../proposals/decisions.md) thay thế.
 Chủ trì: chủ sản phẩm.
 
 ## Câu hỏi chương này trả lời
@@ -80,12 +81,12 @@ trường tên vào glossary, chuyển phồn/giản).
 | --- | --- | --- |
 | Thư viện tác phẩm | Giao diện đã gỡ để dựng lại; dữ liệu còn | Toàn app |
 | Chương (danh sách + editor) | Chạy | Theo tác phẩm |
-| Chat AI, đề xuất sửa | Chạy, nằm cạnh editor của từng chương | Theo chương |
+| Trợ lý AI | Có foundation cấp ứng dụng; tích hợp đầu-cuối chưa nghiệm thu lại | Toàn ứng dụng; lượt có thể mang context chương |
 | Thuật ngữ | Chạy | Theo tác phẩm |
 | Nhân vật và xưng hô | Chạy | Theo tác phẩm |
 | Văn phong | Ảnh mẫu | Theo tác phẩm |
 | Nguồn (truyện gốc, tải chương) | Ảnh mẫu | Theo tác phẩm |
-| Tác vụ (hàng đợi dịch nhiều chương) | Ảnh mẫu; thiết kế ở [phiên và tác vụ](../proposals/sessions-and-jobs.md) | Theo tác phẩm |
+| Tác vụ (hàng đợi dịch nhiều chương) | Ảnh mẫu; xem [roadmap agent](../proposals/agent-roadmap.md) | Toàn ứng dụng; mỗi task có target tác phẩm/chương |
 | Hàng duyệt trích xuất (AI đề xuất thuật ngữ, nhân vật) | Lộ trình, lát 4 của [Ngữ cảnh](../context/roadmap.md) | Theo tác phẩm |
 | Nhập .txt, Xuất | Xuất chạy; nhập một phần | Theo tác phẩm |
 | Model, kết nối AI | Chạy, nằm trong Cài đặt | Toàn app |
@@ -99,7 +100,7 @@ Theo mẫu hai tầng: Thư viện là màn chính; khi mở một tác phẩm, 
 | Vị trí | Mục | Ghi chú |
 | --- | --- | --- |
 | Đầu rail | **Thư viện** | Về danh sách tác phẩm; có thể kèm ô chuyển nhanh tác phẩm (như đổi vault của Obsidian), thay cho dải tab đã gỡ |
-| Nhóm làm việc | **Chương** | Danh sách chương + editor + chat AI. Không tách Chat thành mục riêng vì chat của Mira gắn với chương đang mở |
+| Nhóm làm việc | **Chương** | Danh sách chương + editor; Trợ lý và Ngữ cảnh mở trong side panel dùng chung |
 | | **Duyệt** | Tất cả đề xuất AI chưa duyệt của tác phẩm, gom từ mọi chương (tương đương 校对 của LinguaGacha và Review của Novelcrafter) |
 | | **Tác vụ** | Hàng đợi dịch nhiều chương, tiến độ, lỗi (tương đương 工作台) |
 | Nhóm ngữ cảnh | **Thuật ngữ** | |
@@ -136,14 +137,14 @@ Lý do:
 
 - **Ngoài một tác phẩm chỉ có hai đích:** Thư viện và Cài đặt. Cài đặt và đổi theme là nút ở cuối
   thanh trên; đường về Thư viện nằm trong từng màn (nút quay lại), vì breadcrumb cũng đã gỡ. Một cột 44 px cho hai ba icon là thừa.
-- **Mọi việc còn lại nằm trong một tác phẩm.** Màn tác phẩm đã có các khu vực Chương, Ngữ cảnh, Nguồn,
-  Tác vụ; đưa chúng lên rail chỉ là chuyển chỗ cùng một menu.
+- Các khu vực Chương, Ngữ cảnh và Nguồn thuộc tác phẩm. Trợ lý và danh sách task có vòng đời toàn ứng
+  dụng nên có thể cần lối vào chung ngoài tác phẩm.
 - **Người dịch ở trong màn Chương gần như suốt.** Thứ họ cần là thuật ngữ, xưng hô, đề xuất AI ngay
   cạnh editor, tức là panel bên cạnh, không phải nút rời khỏi chương.
 
-Giữ lại: thanh trên (nút riêng của màn, theme, Cài đặt), cột danh
-sách chương ở màn Chương, panel phải cho chat AI. Cân lại rail khi có thứ dùng chung vượt khỏi một
-truyện và hay mở, như hàng đợi dịch cho nhiều truyện, nhật ký hay kho thuật ngữ dùng chung.
+Giữ lại kết luận về mật độ rail và tooltip. Bố cục Trợ lý hiện hành theo
+[quyết định side panel](../proposals/decisions.md#giao-diện-chương); tài liệu này không còn quyết định
+vị trí của chat.
 
 Đã triển khai trong [`AppShell.tsx`](../../../src/renderer/src/app/AppShell.tsx).
 

@@ -45,8 +45,8 @@ dùng có thể chịu rủi ro điều khoản. App phải nói rõ điều nà
   (`generativelanguage.googleapis.com`) như hiện nay.
 
 Phần giao diện được triển khai qua change `hermes-settings-modal`; đăng nhập thuê bao và transport qua
-`subscription-providers`. Phần chat tự gọi tool nằm ở
-[Học UI chat của Hermes](../proposals/hermes-chat-research.md), mục "Quyết định 2026-10-08".
+`subscription-providers`. Vòng agent dùng provider và capability theo
+[roadmap Trợ lý](../proposals/agent-roadmap.md).
 
 ## Đã triển khai (change `hermes-settings-modal`, 2026-10-08)
 
@@ -400,5 +400,5 @@ backend thì bấm được; phần chưa có backend chỉ hiện giao diện. 
 [Cài đặt và lớp provider của Hermes](hermes-settings-and-adapters.md) ·
 [Rà flow Kết nối AI so với Hermes](hermes-ux-flow-review.md) ·
 [Học thêm từ Hermes: lõi gọi model, dữ liệu, vỏ app](hermes-runtime-research.md) · [Mục lục module](../README.md) ·
-[Nghiên cứu chat theo Hermes](../proposals/hermes-chat-research.md) ·
+[Roadmap Trợ lý](../proposals/agent-roadmap.md) ·
 [Design system theo Hermes](../design-system/hermes-comparison.md)

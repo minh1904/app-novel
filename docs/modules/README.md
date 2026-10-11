@@ -12,7 +12,7 @@ và cách vận hành được viết tại module liên quan.
 | [Kết nối AI](ai-connections/README.md) | Provider, khóa API, chọn model, onboarding và trạng thái kết nối subscription |
 | [Ngữ cảnh dịch](context/README.md) | Glossary, nhân vật, xưng hô, văn phong, ký ức và cách lắp ngữ cảnh |
 | [Bộ đo chất lượng](measurement/README.md) | Fixture, phép kiểm, chạy thí nghiệm, chấm mù và báo cáo |
-| [Đề xuất và phiên AI](proposals/README.md) | Duyệt thay đổi tại editor, lịch sử phiên và hàng chờ theo chương |
+| [Trợ lý AI và đề xuất](proposals/README.md) | Chat toàn ứng dụng, capability, tác vụ dài, thao tác có Undo và proposal legacy |
 | [Nguồn và cập nhật](sources/README.md) | Chương gốc đến từ đâu, phát hiện chương mới và raw bị sửa, trang Cập nhật; nghiên cứu cách làm và rủi ro pháp lý |
 | [Phiên làm việc theo tác phẩm](workspace/README.md) | Tab truyện, khôi phục vị trí và bảo vệ bản sửa chưa lưu |
 

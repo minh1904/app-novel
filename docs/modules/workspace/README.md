@@ -16,7 +16,8 @@ Chương này trả lời cách Mira mở nhiều truyện trong cùng cửa s�
 - Chuyển tab giữ editor có chữ chưa lưu cùng selection/undo trong bộ nhớ. Tab ẩn không nhận focus
   hoặc phím tắt; editor chương sạch có thể được tháo và dựng lại từ kho khi chọn. Đóng tab hoặc rời chương
   trong cùng tab hỏi lưu/bỏ/ở lại cho bản sửa liên quan. Thoát cửa sổ kiểm tra mọi tab còn dirty.
-- Danh sách chương bỏ phản hồi IPC đến muộn của truyện khác. Phiên trợ lý AI được quản lý ở cấp ứng dụng (OpenSpec `app-agent-foundation`), không bị mất khi chuyển tab; chunk stream gắn theo requestId và duy trì xuyên suốt.
+- Danh sách chương bỏ phản hồi IPC đến muộn của truyện khác. Phiên Trợ lý được quản lý ở cấp ứng dụng,
+  không bị mất khi chuyển tab; chunk stream gắn theo request ID.
 - Thanh tab nằm trong titlebar, cuộn ngang khi nhiều truyện. Ctrl+Tab và Ctrl+Shift+Tab chuyển
   tab; tác vụ trong editor đã nhận phím trước được ưu tiên.
 
@@ -30,8 +31,8 @@ Nguồn triển khai: [`uiStore`](../../../src/renderer/src/stores/uiStore.ts),
 Bản sửa chưa lưu chỉ được giữ khi app vẫn chạy; sau crash, Mira khôi phục vị trí tab nhưng không
 khôi phục chữ chưa lưu. Một tab thuộc một truyện, không có tab riêng cho từng chương hoặc chia
 pane. Đóng tab không hủy yêu cầu AI/tác vụ Main. Hàng đợi dịch bền, batch translation, usage và
-trần chi phí thuộc [Module 7: Tác vụ](https://github.com/minh1904/app-novel/blob/501be2a/docs/handbook/delivery/roadmap.md#7-tác-vụ), chưa triển
-khai trong change này.
+trần chi phí thuộc [giai đoạn tác vụ nhiều chương](../proposals/agent-roadmap.md#2-tác-vụ-dịch-nhiều-chương),
+chưa triển khai.
 
 ## Nghiên cứu liên quan
 
