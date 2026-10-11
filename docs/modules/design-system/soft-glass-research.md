@@ -169,7 +169,7 @@ bán kính ngoài − khe*:
 
 ## 6. Bộ token đề xuất (đề xuất)
 
-Viết theo đúng ba tầng của [`tokens.css`](../../../src/renderer/src/styles/tokens.css) để có thể thêm
+Viết theo đúng ba tầng trong [`styles/tokens/`](../../../src/renderer/src/styles/tokens/) để có thể thêm
 thành skin thứ hai (`data-skin="paper"`). Theme sáng lấy từ ảnh A, đã chỉnh chữ phụ cho đạt quy tắc của
 Mira. **Theme tối không có trong ảnh**; giá trị bên dưới là suy ra, phải dựng thử mới chốt được.
 

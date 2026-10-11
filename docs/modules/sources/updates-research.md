@@ -179,7 +179,7 @@ Thứ tự theo giá trị; mỗi dòng ghi cách nào ở phần 5 làm đượ
 | 14 | Lỗi theo nguồn: ổn / lỗi tạm / hỏng; log nhóm theo lỗi → nguồn → truyện, nút thử lại | Mihon, Legado | B–D |
 | 15 | Một thông báo Windows gộp mỗi lượt ("3 truyện, 12 chương mới"), tuỳ chọn ẩn tên truyện | Mihon | C–D |
 
-Màn minh hoạ hiện tại ([`UpdatesScreenMock`](../../../src/renderer/src/features/updates/UpdatesScreenMock.tsx))
+Màn minh hoạ hiện tại ([`UpdatesScreenMock`](../../../src/renderer/src/modules/sources/updates/UpdatesScreenMock.tsx))
 thể hiện tự kiểm theo lịch và có thể tải/dịch chương từ website. UI không cho biết nguồn do Mira kèm sẵn
 hay do người dùng cấu hình, nên chưa thể phân loại chắc chắn là D hay E. Đây là concept cũ, không phải
 target đã chốt. Nếu chọn A/B/C, cần OpenSpec riêng rồi mới sửa mock và data model.

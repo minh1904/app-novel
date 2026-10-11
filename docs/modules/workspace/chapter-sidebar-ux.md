@@ -100,7 +100,7 @@ Chuyển đổi hoàn toàn hàng đầu tiên của Sidebar thành **Thanh côn
 ```
 
 #### A. Ô tìm kiếm & nhảy chương (`SearchInput`)
-- Tận dụng hàm `parseQuery` và `filterChapters` đã có sẵn trong [`chapterList.ts`](../../src/renderer/src/features/work/chapterList.ts):
+- Tận dụng hàm `parseQuery` và `filterChapters` đã có sẵn trong [`chapterList.ts`](../../../src/renderer/src/modules/workspace/work-detail/chapterList.ts):
   - **Nhập số (ví dụ `12`)**: Chế độ **Nhảy chương (Jump)**. Tự động cuộn đến Chương 12 và highlight (nhấn `Enter` để mở ngay). Với tiểu thuyết, độc giả và dịch giả nhớ số chương nhiều hơn nhớ tên chương.
   - **Nhập chữ (ví dụ `đại chiến`)**: Chế độ **Lọc (Filter)**. Lọc danh sách tức thì theo tên chương (không dấu, không phân biệt hoa thường).
   - Có nút `✕` xóa nhanh khi có nội dung; phím tắt kích hoạt nhanh: `/` hoặc `Ctrl+F` khi đang mở sidebar.

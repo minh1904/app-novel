@@ -21,9 +21,9 @@ Chương này trả lời cách Mira mở nhiều truyện trong cùng cửa s�
 - Thanh tab nằm trong titlebar, cuộn ngang khi nhiều truyện. Ctrl+Tab và Ctrl+Shift+Tab chuyển
   tab; tác vụ trong editor đã nhận phím trước được ưu tiên.
 
-Nguồn triển khai: [`uiStore`](../../../src/renderer/src/stores/uiStore.ts),
+Nguồn triển khai: [`workspaceStore`](../../../src/renderer/src/modules/workspace/store/workspaceStore.ts),
 [`AppShell`](../../../src/renderer/src/app/AppShell.tsx),
-[`LeaveGuard`](../../../src/renderer/src/features/editor/leaveGuard.tsx),
+[`LeaveGuard`](../../../src/renderer/src/modules/workspace/chapter-editor/leaveGuard.tsx),
 [`WorkspaceService`](../../../src/main/services/workspace/workspaceService.ts).
 
 ## Giới hạn và phần tiếp theo

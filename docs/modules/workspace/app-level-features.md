@@ -138,16 +138,16 @@ cách truy cập cụ thể vẫn theo [thiết kế nguồn đa quốc gia](../
 - **Hai tầng thanh trên** ([`AppShell`](../../../src/renderer/src/app/AppShell.tsx)): thanh tiêu đề cửa sổ
   chạy hết chiều ngang app và mang tên Mira; bên dưới, thanh bên chung và thanh của màn mới bắt đầu.
   Thanh của màn giữ tên màn ở bên trái
-  ([`TopBarTitle`](../../../src/renderer/src/app/TopBarActions.tsx)), nút riêng của màn ở bên phải.
-- **Trang chủ** ([`HomeScreen`](../../../src/renderer/src/features/home/HomeScreen.tsx)) là màn mở app khi
+  ([`TopBarTitle`](../../../src/renderer/src/components/ui/TopBarActions.tsx)), nút riêng của màn ở bên phải.
+- **Trang chủ** ([`HomeScreen`](../../../src/renderer/src/app/screens/home/HomeScreen.tsx)) là màn mở app khi
   không có tab tác phẩm nào để khôi phục. Thẻ "Tiếp tục dịch" là thật: tác phẩm sửa gần nhất, nút Dịch
   tiếp mở chương đang làm dở (hoặc mở tác phẩm khi chưa có chương), kèm tối đa ba tác phẩm khác. Thư viện
   trống thì hiện danh sách bước bắt đầu, bước kết nối AI tự đánh dấu xong khi đã có kết nối.
-- **Thư viện** ([`LibraryScreen`](../../../src/renderer/src/features/library/LibraryScreen.tsx)) là thật,
+- **Thư viện** ([`LibraryScreen`](../../../src/renderer/src/modules/library/catalog/LibraryScreen.tsx)) là thật,
   thay chỗ placeholder "đang dựng lại": lưới thẻ tác phẩm mới sửa trước, lọc Tất cả / Đang dịch / Chưa
   bắt đầu / Tạm dừng / Lưu trữ (tác phẩm lưu trữ chỉ hiện ở bộ lọc của nó), tìm theo tên và tên gốc, báo
   số tệp tác phẩm không mở được.
-- **Màn minh hoạ** (`MOCK_FEATURES` trong [`mockFeatures.ts`](../../../src/renderer/src/features/work/mockFeatures.ts)):
+- **Màn minh hoạ** (`MOCK_FEATURES` trong [`mockFeatures.ts`](../../../src/renderer/src/lib/mockFeatures.ts)):
   Tác vụ, Kho dùng chung, Prompt & văn phong, Trợ lý AI, bảng Tìm và lệnh (Ctrl K), và các thẻ
   số liệu, tác vụ, chương mới, hoạt động ở Trang chủ. Dữ liệu là chữ cố định, không đọc tệp, không gọi
   main, mọi nút bị khoá. (Màn **Cập nhật** và khu vực **Bản raw** đã được triển khai thật qua nền tảng

@@ -48,11 +48,11 @@ và chương chưa dịch bị bỏ mà không báo. Chủ sản phẩm chọn l
   là một lối tạo task sau khi workflow bền đã có.
 - **Chuyển nhiều chương tới vị trí khác** chưa có; vị trí đích của một nhóm không liền nhau cần chốt.
 
-Nguồn triển khai: [`ExportDialog`](../../../src/renderer/src/features/export/ExportDialog.tsx),
-[`exportScope`](../../../src/renderer/src/features/export/exportScope.ts),
+Nguồn triển khai: [`ExportDialog`](../../../src/renderer/src/modules/export/ExportDialog.tsx),
+[`exportScope`](../../../src/renderer/src/modules/export/exportScope.ts),
 [`ExportService`](../../../src/main/services/export/exportService.ts),
-[`ChaptersArea`](../../../src/renderer/src/features/work/ChaptersArea.tsx),
-[`ChapterWorkspace`](../../../src/renderer/src/features/chapter/ChapterWorkspace.tsx).
+[`ChaptersArea`](../../../src/renderer/src/modules/workspace/work-detail/ChaptersArea.tsx),
+[`ChapterWorkspace`](../../../src/renderer/src/modules/workspace/chapter-navigation/ChapterWorkspace.tsx).
 
 ---
 

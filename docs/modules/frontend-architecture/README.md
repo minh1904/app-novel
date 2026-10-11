@@ -77,7 +77,7 @@ khảo, không phải framework kiến trúc bắt buộc.
 
 ## Kế hoạch và trạng thái
 
-OpenSpec [`refactor-renderer-domain-architecture`](../../../openspec/changes/refactor-renderer-domain-architecture/)
+OpenSpec [`refactor-renderer-domain-architecture`](../../../openspec/changes/archive/2026-10-10-refactor-renderer-domain-architecture/)
 đã có proposal, design và checklist triển khai; không có delta spec vì đây là refactor giữ nguyên hành vi.
 
 | Giai đoạn | Trạng thái |
@@ -105,5 +105,5 @@ Lệnh kiểm tra: `node scripts/check.mjs --build`
 ---
 
 [Mục lục module](../README.md) · [Kiến trúc repository](../../../ARCHITECTURE.md) ·
-[OpenSpec refactor](../../../openspec/changes/refactor-renderer-domain-architecture/)
+[OpenSpec refactor](../../../openspec/changes/archive/2026-10-10-refactor-renderer-domain-architecture/)
 

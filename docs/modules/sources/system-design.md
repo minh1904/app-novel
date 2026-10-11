@@ -42,7 +42,7 @@ Cơ sở nghiên cứu: [repo crawler Nhật–Hàn–Trung](repository-survey.m
 - Ngôn ngữ nguồn đang giới hạn ở `en`, `zh-Hans`, `zh-Hant`, `ja`; schema và contract đều chưa có `ko`
   ([`library.ts`](../../../src/shared/contracts/library.ts)).
 - Trang Cập nhật và khu vực “Nguồn raw” vẫn là mock. Mock dùng ngôn ngữ làm key nên không biểu diễn được
-  hai bản raw cùng ngôn ngữ ([`SourcesAreaMock.tsx`](../../../src/renderer/src/features/work/SourcesAreaMock.tsx)).
+  hai bản raw cùng ngôn ngữ ([`SourcesAreaMock.tsx`](../../../src/renderer/src/modules/workspace/work-detail/SourcesAreaMock.tsx)).
 - Main/preload/renderer đã có IPC typed và validation; service mới nên đi theo ranh giới đó, không cho
   renderer gọi adapter hay SQL trực tiếp.
 
