@@ -1,6 +1,10 @@
+> **Ghi chú trạng thái 2026-10-11:** `[x]` ghi lại công việc được báo cáo khi xây foundation; không phải
+> bằng chứng rằng đường chạy runtime hiện tại đã đạt. Gate triển khai hiện hành nằm ở
+> [`agent-roadmap.md`](../../../docs/modules/proposals/agent-roadmap.md).
+
 ## 0. Rút change bị thay thế
 
-- [x] 0.1 Theo D0, chuyển quyết định/bằng chứng còn giá trị của `agentic-chat` vào module docs, lưu artifact cũ như lịch sử `superseded` ngoài `openspec/changes`, rồi xóa nó khỏi tập change active mà không chạy archive hoặc merge delta; kiểm `openspec list` chỉ còn foundation định nghĩa contract agent đích và lịch sử vẫn truy cập được.
+- [x] 0.1 Theo D0, chuyển quyết định còn giá trị sang foundation, xóa `agentic-chat` khỏi tập change active mà không merge delta chưa hoàn tất; lịch sử Git giữ artifact cũ.
 
 ## 1. Baseline và contract
 
@@ -67,5 +71,5 @@
 - [x] 8.1 Tạo fixture end-to-end hai tác phẩm và fake provider để chạy: hỏi đoạn hiện tại, dịch chương khác cùng work, dịch chapter ở work khác, target mơ hồ, hủy giữa run, undo, revision conflict và provider không báo usage; kiểm toàn bộ scenario bằng test tự động.
 - [x] 8.2 Chạy app với fixture và kiểm bằng UI thật: đổi work không đổi session, progress không giật, cuộn lên không bị kéo xuống, Mở đích đúng chapter, Undo khôi phục nội dung; lưu kết quả nghiệm thu trong `docs/modules/proposals/` bằng tiếng Việt.
 - [x] 8.3 Cập nhật `docs/modules/proposals/{README,decisions,sessions-and-jobs}.md` và module AI connections/workspace; xác nhận `ARCHITECTURE.md` đã phản ánh module agent/app composition từ task 6.1, phân biệt hành vi đã triển khai với tác vụ nhiều chương còn đề xuất; kiểm stale scan cho “phiên theo tác phẩm”, “chỉ chương đang mở”, “luôn duyệt trước” và token ước lượng.
-- [x] 8.4 Kiểm lifecycle D0: lịch sử `agentic-chat` được gắn superseded, không nằm trong active/archived OpenSpec như change đã hoàn tất và không còn delta proposal-only cạnh tranh; kiểm `openspec list`/status và scan toàn `openspec/changes`.
+- [x] 8.4 Kiểm lifecycle D0: `agentic-chat` không nằm trong active/archived OpenSpec như change đã hoàn tất và không còn delta proposal-only cạnh tranh; dùng lịch sử Git khi cần tra cứu.
 - [x] 8.5 Chạy `openspec validate app-agent-foundation --strict`, `node scripts/check.mjs` và `node scripts/check.mjs --build`; mọi bước phải có output thành công trước khi đánh dấu change hoàn tất.

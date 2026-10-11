@@ -1,3 +1,7 @@
+> **Trạng thái 2026-10-11:** tài liệu này giữ các quyết định kỹ thuật của foundation. Các dấu hiệu
+> hoàn thành trong checklist không thay cho gate đầu-cuối ở
+> [`agent-roadmap.md`](../../../docs/modules/proposals/agent-roadmap.md).
+
 ## Context
 
 Xem `proposal.md` cho động cơ. Hiện trạng tạo các ràng buộc kỹ thuật sau:

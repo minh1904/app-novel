@@ -1,3 +1,7 @@
+> **Trạng thái 2026-10-11:** đây là thiết kế foundation, không phải báo cáo nghiệm thu runtime.
+> Trạng thái triển khai và thứ tự follow-up nằm ở
+> [`docs/modules/proposals/agent-roadmap.md`](../../../docs/modules/proposals/agent-roadmap.md).
+
 ## Why
 
 Panel AI hiện bị khóa vào tác phẩm và chương đang mở, chỉ tạo đề xuất chờ duyệt và có thể trả cả bản dịch dài vào transcript thay vì thực hiện công việc. Mira cần một agent cấp ứng dụng: vị trí hiện tại chỉ là ngữ cảnh ưu tiên, còn mỗi yêu cầu được giải quyết thành đích và capability rõ ràng, thực hiện an toàn, có tiến độ và hoàn tác.
