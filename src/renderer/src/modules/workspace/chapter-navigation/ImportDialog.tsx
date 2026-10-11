@@ -45,20 +45,20 @@ export interface ImportDialogProps {
   workId: string
   chapterId: string
   sourceLang: SourceLanguage
-  /** The revision of the source when the screen was opened; the save is refused if it moved on. */
+  /** Phiên bản của bản gốc khi mở màn hình; từ chối lưu nếu bản gốc đã bị sửa đổi ở nơi khác. */
   baseRev: number
-  /** The chapter already has a source, so this import replaces it. */
+  /** Đánh dấu chương đã có bản gốc và thao tác này sẽ thay thế bản gốc cũ. */
   replacing: boolean
-  /** The chapter has a translation, which a replacement leaves alone but whose links it flags. */
+  /** Đánh dấu chương đã có bản dịch. */
   hasTarget: boolean
-  /** A file the user already chose on the chapter screen; the dialog opens on its preview. */
+  /** Tệp đã được chọn trước đó trên màn hình chương để mở thẳng vào bước xem trước. */
   initialFile: File | null
-  /** The control that opened the dialog, so closing returns focus to it. */
+  /** Phần tử kích hoạt mở hộp thoại để trả lại focus khi đóng. */
   finalFocus?: RefObject<HTMLElement | null>
   onSaved(record: TextRecord): void
 }
 
-/** Paste or choose a file, look at the result, then save. Closing at any step changes nothing. */
+/** Hộp thoại nhập hoặc dán bản gốc cho chương, xem trước kết quả chuẩn hóa trước khi lưu. */
 export function ImportDialog(props: ImportDialogProps): JSX.Element {
   const { open, onOpenChange } = props
   const [saving, setSaving] = useState(false)
@@ -66,7 +66,7 @@ export function ImportDialog(props: ImportDialogProps): JSX.Element {
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        // A save in flight cannot be taken back, so the dialog stays until it answers.
+        // Không đóng hộp thoại khi đang trong quá trình lưu dữ liệu.
         if (!saving) onOpenChange(next)
       }}
       size="lg"
@@ -74,7 +74,7 @@ export function ImportDialog(props: ImportDialogProps): JSX.Element {
       title={props.replacing ? 'Thay bản gốc của chương' : 'Nhập bản gốc cho chương'}
       description="Văn bản được đọc ngay trên máy bạn và chưa lưu gì cho tới khi bạn xác nhận ở bước xem trước."
     >
-      {/* Mounted only while open, so every opening starts from an empty form. */}
+      {/* Chỉ mount khi mở để mỗi lần mở đều bắt đầu với biểu mẫu mới. */}
       {open && <ImportBody {...props} saving={saving} setSaving={setSaving} />}
     </Dialog>
   )
@@ -125,7 +125,7 @@ function ImportBody({
     setStep('preview')
   }
 
-  // A file chosen on the chapter screen opens straight on its preview.
+  // Nếu đã chọn tệp từ trước, mở thẳng bước xem trước.
   // biome-ignore lint/correctness/useExhaustiveDependencies: Once per opening; the dialog is remounted each time it opens.
   useEffect(() => {
     if (initialFile) void takeFile(initialFile)
@@ -140,7 +140,7 @@ function ImportBody({
     )
   }, [step, file, pasted, sourceLang, encoding])
 
-  // Moving to the preview unmounts the field that had focus; land on the action instead.
+  // Chuyển focus sang nút xác nhận khi chuyển sang bước xem trước.
   const previewing = step === 'preview' && prepared?.ok === true
   useEffect(() => {
     if (previewing) confirmButton.current?.focus()
@@ -431,7 +431,7 @@ function ImportBody({
 
 type SampleItem = { kind: 'row'; index: number } | { kind: 'gap'; after: number; count: number }
 
-/** The first few and last few segments, with a marker for how many lie between. */
+/** Tạo danh sách hiển thị mẫu các đoạn đầu và đoạn cuối, kèm số lượng đoạn ở giữa. */
 function sampleOf(total: number): SampleItem[] {
   const rows = (from: number, to: number): SampleItem[] =>
     Array.from({ length: to - from }, (_, i) => ({ kind: 'row' as const, index: from + i }))

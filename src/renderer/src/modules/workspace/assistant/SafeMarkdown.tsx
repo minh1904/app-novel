@@ -6,7 +6,7 @@ type Block =
   | { kind: 'code'; text: string; language: string }
   | { kind: 'list'; ordered: boolean; items: string[] }
 
-/** A deliberately small Markdown subset. HTML is always text and images never load. */
+/** Phân tích cú pháp tập con Markdown cơ bản: HTML luôn hiển thị dạng văn bản thô và không tải ảnh ngoài. */
 function parseSafeMarkdown(markdown: string): Block[] {
   const lines = markdown.replace(/\r\n/g, '\n').split('\n')
   const blocks: Block[] = []

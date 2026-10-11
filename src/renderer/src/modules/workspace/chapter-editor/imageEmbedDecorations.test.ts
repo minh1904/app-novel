@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { EMBED_RE } from './imageEmbedDecorations'
 
 /**
- * `build()` needs a real `EditorView` (DOM), which the `node` test environment does not provide
- * (same limitation as `livePreviewDecorations.test.ts`), so this tests the token syntax itself: what
- * counts as a complete, parseable image embed.
+ * `build()` cần một `EditorView` (DOM) thực tế mà môi trường test `node` không cung cấp
+ * (tương tự như `livePreviewDecorations.test.ts`), do đó phần này kiểm tra cú pháp token:
+ * những định dạng nào được coi là một mã nhúng ảnh hoàn chỉnh, hợp lệ.
  */
 
 function matches(text: string): Array<{ id: string; width: number | null }> {

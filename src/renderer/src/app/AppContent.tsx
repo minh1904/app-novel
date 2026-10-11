@@ -72,7 +72,7 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
 
   const showLibrary = (): void => {
     go({ name: 'library' })
-    // The detail screen already hands changes to the library; this also catches anything missed.
+    // Màn hình chi tiết đã cập nhật thay đổi sang thư viện; thao tác này giúp tải lại dữ liệu mới nhất.
     void library.reload()
   }
   const openChapterView = (workId: string, chapterId: string): void =>
@@ -91,7 +91,7 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
   }
 
   let content: JSX.Element = <div />
-  // Only the chapter screen has a second column (its chapter list).
+  // Chỉ riêng màn hình chương có cột thứ hai (danh sách chương).
   let sidebar: JSX.Element | null = null
 
   switch (view.name) {
@@ -216,12 +216,12 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
   }
 
   const visibleWorkId = view.name === 'work' || view.name === 'chapter' ? view.workId : null
-  // The sidebar marks the page on screen; a work and the create form belong to the library.
+  // Thanh bên đánh dấu trang hiển thị; màn hình tác phẩm và tạo mới thuộc về mục thư viện.
   const navPage: AppPage =
     view.name === 'work' || view.name === 'create' || view.name === 'chapter'
       ? 'library'
       : view.name
-  // The chapter screen keeps its width for the editors (docs/modules/workspace/app-level-features.md).
+  // Màn hình chương giữ toàn bộ chiều rộng cho trình soạn thảo.
   const nav =
     view.name === 'chapter' ? null : (
       <AppNav

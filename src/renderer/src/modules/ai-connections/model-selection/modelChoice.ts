@@ -4,7 +4,7 @@ import type { MainModel } from '../../../../../shared/contracts/aiPreferences'
 export interface ModelChoice {
   connectionId: string
   entryId: string
-  /** Where the choice came from: picked for this chat or dialog, the main model, or the old default. */
+  /** Nguồn gốc lựa chọn: được chỉ định riêng, từ model chính trong Cài đặt, hoặc từ mặc định của kết nối. */
   source: 'picked' | 'main' | 'default'
 }
 
@@ -24,10 +24,9 @@ function has(
 }
 
 /**
- * Which model a chat turn or a translation uses (spec `model-defaults`, design D6 of change
- * `hermes-settings-modal`): what was picked for it, else the main model of Settings, else the default entry
- * of the first enabled connection that has one, as before there was a main model. A pick or a main model that
- * points at a disabled connection or a deleted entry is passed over.
+ * Xác định model sử dụng cho lượt dịch hoặc hội thoại: ưu tiên model được chọn riêng,
+ * tiếp theo là model chính trong Cài đặt, cuối cùng là model mặc định của kết nối khả dụng đầu tiên.
+ * Nếu model trỏ đến kết nối bị vô hiệu hóa hoặc mục đã bị xóa thì sẽ tự động bỏ qua.
  */
 export function resolveModelChoice(
   connections: readonly ConnectionView[],
@@ -41,7 +40,7 @@ export function resolveModelChoice(
   if (main && has(live, main.connectionId, main.entryId)) {
     return { connectionId: main.connectionId, entryId: main.entryId, source: 'main' }
   }
-  // A connection picked without an entry keeps its own default.
+  // Nếu chọn kết nối mà không có mục cụ thể thì sử dụng mục mặc định của kết nối đó.
   const first =
     (picked.connectionId && live.find((connection) => connection.id === picked.connectionId)) ||
     live[0]

@@ -7,29 +7,24 @@ import {
 import { segmentsField } from './editorState'
 
 /**
- * Which stretch of the translation an AI turn is about, and how its answer gets in.
- *
- * Pure functions over `EditorState`, so both rules can be tested without a browser — and both are
- * rules worth testing, because each one has a failure mode that costs the user real work: a range
- * that silently means "the whole chapter", and a replacement written over text they typed after
- * asking.
+ * Xác định đoạn văn bản áp dụng cho lượt trao đổi AI và quy tắc đưa nội dung thay thế vào tài liệu.
  */
 
-/** `auto` follows the selection or the caret; `chapter` is only ever an explicit request. */
+/** `auto` bám theo vùng chọn hoặc con trỏ; `chapter` áp dụng cho toàn bộ chương. */
 export type TargetScope = 'auto' | 'chapter'
 
 export interface TargetRange {
   from: number
   to: number
-  /** The text as it was when the question was sent. Kept verbatim: it is the anchor on apply. */
+  /** Văn bản gốc tại thời điểm gửi câu hỏi để dùng làm neo đối chiếu. */
   text: string
-  /** Translation segments overlapping the range, in document order. */
+  /** Danh sách ID các segment bị ảnh hưởng theo thứ tự trong tài liệu. */
   targetIds: string[]
-  /** The range is a real selection, not the paragraph around a caret or the whole chapter. */
+  /** Đánh dấu xem phạm vi này là vùng chọn thực sự hay là cả đoạn/cả chương. */
   selected?: boolean
 }
 
-/** The paragraph around `pos`: up and down to a blank line. A blank line is its own empty range. */
+/** Xác định đoạn văn bản chứa `pos`: mở rộng lên và xuống cho đến khi gặp dòng trống. */
 function paragraphAt(state: EditorState, pos: number): { from: number; to: number } {
   const line = state.doc.lineAt(pos)
   if (line.text.trim() === '') return { from: line.from, to: line.from }
@@ -43,11 +38,8 @@ function paragraphAt(state: EditorState, pos: number): { from: number; to: numbe
 }
 
 /**
- * The stretch a turn is about.
- *
- * Three rules, in order: a selection wins; with no selection it is the paragraph holding the caret;
- * the whole chapter happens only when asked for by name. The missing fourth rule is deliberate —
- * defaulting to the whole pane would turn "this line reads stiffly" into a full-chapter rewrite.
+ * Xác định phạm vi áp dụng cho lượt trao đổi AI:
+ * Ưu tiên vùng chọn -> đoạn chứa con trỏ -> toàn bộ chương nếu được yêu cầu rõ ràng.
  */
 export function targetRange(state: EditorState, scope: TargetScope = 'auto'): TargetRange {
   const selection = state.selection.main
@@ -65,19 +57,19 @@ export function targetRange(state: EditorState, scope: TargetScope = 'auto'): Ta
     text: state.doc.sliceString(span.from, span.to),
     targetIds: state
       .field(segmentsField)
-      // A zero-length range still belongs to the segment it sits inside, so touching counts.
+      // Phạm vi độ dài 0 vẫn thuộc về segment chứa nó nếu chạm vào ranh giới
       .filter((seg) => seg.id !== null && seg.from <= span.to && seg.to >= span.from)
       .map((seg) => seg.id as string)
   }
 }
 
 export type ApplyResult =
-  /** Dispatch this and the replacement is in, as one undoable step. */
+  /** Transaction sẵn sàng áp dụng thành một bước có thể hoàn tác. */
   | { kind: 'ready'; spec: TransactionSpec }
-  /** The anchored text is gone or ambiguous: say so, write nothing. */
+  /** Văn bản neo đã bị thay đổi hoặc không xác định rõ vị trí: từ chối áp dụng. */
   | { kind: 'stale' }
 
-/** Every offset where `needle` occurs, capped at two — only "exactly one" matters. */
+/** Tìm tất cả vị trí xuất hiện của `needle`, giới hạn tối đa 2 kết quả để nhận biết tính duy nhất. */
 function occurrences(haystack: string, needle: string): number[] {
   const found: number[] = []
   let at = haystack.indexOf(needle)
@@ -89,27 +81,17 @@ function occurrences(haystack: string, needle: string): number[] {
 }
 
 /**
- * How a proposal gets into the text, and when it must not.
- *
- * Anchored by **content, not position**: the panel never sees the editor's `ChangeSet`, so offsets
- * it captured when the question was sent mean nothing once the user has typed above them. Three
- * tiers, and the last one refuses:
- *
- *   1. The text at `[from, to]` is still what was sent — replace it.
- *   2. It moved but still occurs **exactly once** — replace it there. (Typing above shifted it.)
- *   3. Gone, changed, or now ambiguous — `stale`. Never guess.
- *
- * This is the only place in the chat feature that can destroy the user's writing, so it is the one
- * place that prefers doing nothing over doing something reasonable.
+ * Đưa đề xuất AI vào văn bản dựa trên nội dung neo (thay vì chỉ dựa vào chỉ số vị trí):
+ * 1. Văn bản tại [from, to] vẫn khớp -> thay thế tại chỗ.
+ * 2. Vị trí bị dịch chuyển nhưng chỉ xuất hiện duy nhất 1 lần -> thay thế tại vị trí mới.
+ * 3. Văn bản đã bị sửa đổi hoặc xuất hiện nhiều lần -> trả về `stale` để tránh ghi đè sai.
  */
 export function applyProposal(
   state: EditorState,
   range: TargetRange,
   replacement: string
 ): ApplyResult {
-  // An empty anchor matches everywhere and therefore nowhere — except in an empty document, where
-  // there is nothing it could be confused with and nothing to lose. That is the first translation of
-  // a chapter, which is exactly the case this feature exists for.
+  // Neo rỗng chỉ áp dụng được khi tài liệu hoàn toàn trống
   if (range.text === '') {
     if (state.doc.length > 0) return { kind: 'stale' }
     return {
@@ -129,8 +111,7 @@ export function applyProposal(
       changes: { from, to, insert: replacement },
       selection: EditorSelection.cursor(from + replacement.length),
       scrollIntoView: true,
-      // One transaction, one history entry: a single undo puts the chapter back as it was. Naming
-      // the event `input.chat` also keeps it out of the way of CodeMirror's input-grouping.
+      // Đánh dấu userEvent là input.chat để gộp vào lịch sử hoàn tác
       annotations: Transaction.userEvent.of('input.chat')
     }
   })

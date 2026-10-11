@@ -7,14 +7,17 @@ import {
   type JSX,
   type KeyboardEvent
 } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { CloseIcon } from '@solar-icons/react/linear/close'
-import { FolderOpenIcon } from '@solar-icons/react/linear/folder-open'
-import { HashtagIcon } from '@solar-icons/react/linear/hashtag'
-import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
-import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
-import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
-import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
+import {
+  AddIcon,
+  CloseIcon,
+  FolderOpenIcon,
+  HashtagIcon,
+  MenuDotsIcon,
+  PenNewSquareIcon,
+  TrashBinMinimalisticIcon,
+  UploadMinimalisticIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import type { WorkSummary } from '../../../../../shared/contracts/library'
 import { Badge } from '../../../components/ui/Badge'
@@ -52,7 +55,7 @@ import {
 } from '../work-detail/chapterList'
 import { useChapters } from '../work-detail/useChapters'
 
-/** The same colours as the status column of the chapter list (ChapterRow). */
+/** Màu sắc tương ứng với các trạng thái của chương (đã dịch, chưa dịch, trống). */
 const STATE_DOTS: Record<ChapterState, string> = {
   translated: 'bg-success',
   untranslated: 'bg-warning',
@@ -60,10 +63,9 @@ const STATE_DOTS: Record<ChapterState, string> = {
 }
 
 /**
- * Left sidebar while a chapter is open: quick search, jump by chapter number, and the list of
- * chapters of the current work.
- * Supports right-click context menu and hover ⋮ button for renaming, inserting, moving, exporting,
- * and deleting chapters.
+ * Thanh điều hướng danh sách chương bên trái khi đang mở một chương:
+ * hỗ trợ tìm kiếm nhanh, nhảy số chương, menu chuột phải và menu thao tác để đổi tên,
+ * chèn, di chuyển vị trí, xuất và xóa chương.
  */
 export function ChapterNavSidebar({
   workId,
@@ -86,7 +88,7 @@ export function ChapterNavSidebar({
   const inputRef = useRef<HTMLInputElement>(null)
   const navRef = useRef<HTMLElement>(null)
 
-  // Dialog and inline edit states
+  // Trạng thái các hộp thoại và chỉnh sửa tên trực tiếp
   const [editingId, setEditingId] = useState<string | null>(null)
   const [movingChapter, setMovingChapter] = useState<ChapterItem | null>(null)
   const [deletingChapter, setDeletingChapter] = useState<ChapterItem | null>(null)
@@ -136,7 +138,7 @@ export function ChapterNavSidebar({
     )
   }, [chapters, parsed])
 
-  // Scroll active chapter into view when opened or when filter changes
+  // Tự động cuộn đến chương đang chọn khi mở hoặc khi bộ lọc thay đổi
   useEffect(() => {
     if (!activeChapterId) return
     const activeEl = navRef.current?.querySelector<HTMLElement>(
@@ -152,7 +154,7 @@ export function ChapterNavSidebar({
     }
   }, [create, onOpenChapter])
 
-  // Global hotkeys: '/' to focus search, Alt+N to add chapter, F2 to rename active chapter
+  // Phím tắt toàn cục: '/' để tìm kiếm, Alt+N để thêm chương, F2 để đổi tên chương đang chọn
   useEffect(() => {
     function onKeyDown(event: globalThis.KeyboardEvent): void {
       const isInput =
@@ -472,7 +474,7 @@ export function ChapterNavSidebar({
   )
 }
 
-/** One-line input for renaming a chapter inline in the sidebar. */
+/** Ô nhập liệu đổi tên chương trực tiếp trên thanh điều hướng. */
 function RenameInlineInput({
   chapter,
   onCommit,

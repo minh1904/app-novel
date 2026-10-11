@@ -40,25 +40,19 @@ import { idleResegment } from './resegmenter'
 import { segmentDecorations } from './segmentDecorations'
 
 /**
- * The text of one chapter side in CodeMirror 6, for the source and the translation alike. Plain
- * editing only: no auto-indent or auto-closing, because the text is prose (a full-width space at
- * the start of a line must not be copied onto the next one), and Tab leaves the field instead of
- * inserting a character. The saving, conflicts and the undo history belong to the editor; what
- * surrounds it (title, status line, save button) belongs to the screen.
+ * Trình soạn thảo CodeMirror 6 cho một bên chương (bản gốc hoặc bản dịch).
  */
 const theme = EditorView.theme({
-  // No border or radius of its own: the pane is square and flush against the one next to it.
+  // Khung viền và nền trong suốt, hiển thị liền mạch với các khung bên cạnh
   '&': {
     height: '100%',
     fontSize: 'var(--mira-font-text)',
     color: 'var(--mira-text)',
     backgroundColor: 'transparent'
   },
-  // No ring on focus: the blinking caret is the focus signal here, same as a code editor's pane
-  // (unlike a button or field, where a ring is the only way to tell focus moved there at all).
+  // Không vẽ viền outline khi focus: con trỏ nhấp nháy là dấu hiệu focus chính
   '&.cm-focused': { outline: 'none' },
-  // Scrolling stays enabled; only the visible track/thumb are suppressed, so the pane keeps its
-  // flush edge instead of a bar fighting the border next to it.
+  // Giữ tính năng cuộn nhưng ẩn thanh cuộn mặc định để giao diện gọn gàng
   '.cm-scroller': {
     fontFamily: 'var(--mira-font-editor)',
     lineHeight: 'var(--mira-line-height-text)',
@@ -74,20 +68,20 @@ const theme = EditorView.theme({
   }
 })
 
-// Enter must add a bare line break; the standard binding would copy the indentation of the line above.
+// Enter chỉ thêm dòng mới đơn thuần, không tự thụt lề theo dòng trên
 const bindings = [
   { key: 'Enter', run: insertNewline },
   ...standardKeymap.filter((binding) => binding.key !== 'Enter'),
   ...historyKeymap
 ]
 
-/** Read only keeps the caret, selection, copy and scrolling, and stops typing, pasting and dropping. */
+/** Chế độ chỉ đọc: giữ con trỏ, vùng chọn, sao chép và cuộn; chặn gõ phím, dán hoặc kéo thả. */
 const lockExtension = (readOnly: boolean): Extension => [
   EditorState.readOnly.of(readOnly),
   EditorView.contentAttributes.of({ 'aria-readonly': String(readOnly) })
 ]
 
-/** Only attached when `images` is set (the translation pane): paste or drop a file to embed it. */
+/** Gắn thêm khi có cấu hình `images` (khung bản dịch): dán hoặc thả tệp để chèn ảnh. */
 function imagePasteDrop(images: ImageStore, onResult: (message: string | null) => void): Extension {
   function firstImageFile(list: FileList | null | undefined): File | null {
     if (!list) return null
@@ -129,21 +123,17 @@ function imagePasteDrop(images: ImageStore, onResult: (message: string | null) =
 }
 
 export interface TextEditorHandle {
-  /** Saves now, waiting out an input method; used before leaving the screen. */
+  /** Lưu ngay nội dung hiện tại, chờ bộ gõ IME hoàn tất trước khi lưu. */
   save(): Promise<SaveOutcome>
   isDirty(): boolean
-  /** Throws the unsaved typing away and shows the stored text again. */
+  /** Hủy các chỉnh sửa chưa lưu và nạp lại văn bản đã lưu. */
   discard(): Promise<void>
-  /** The text as it is now, saved or not. */
+  /** Trả về văn bản hiện tại trong trình soạn thảo. */
   getText(): string
-  /** The stretch an AI turn would be about: the selection, else the paragraph at the caret. */
+  /** Phạm vi áp dụng cho lượt trao đổi AI: vùng chọn hoặc đoạn tại con trỏ. */
   targetRange(scope?: TargetScope): TargetRange | null
   /**
-   * Puts a proposal into the pane as a **reviewable layer**: the changed stretches are marked in
-   * place, each with its own accept and reject control, instead of being written outright.
-   *
-   * Same staleness rules as `applyProposal` — a proposal whose anchor moved on is refused here too,
-   * because showing a diff against text the question was never about is its own kind of wrong.
+   * Hiển thị đề xuất AI vào trình soạn thảo dạng lớp xem trước có thể chấp nhận hoặc từ chối từng phần.
    */
   reviewProposal(
     range: TargetRange,
@@ -152,42 +142,41 @@ export interface TextEditorHandle {
     onDeny: () => void,
     label?: string
   ): 'reviewing' | 'stale'
-  /** Drops an unfinished review, leaving whatever the translator has already accepted. */
+  /** Hủy lớp xem trước đề xuất, giữ nguyên những phần đã được chấp nhận trước đó. */
   endReview(): void
-  /** Marks paragraph `index` as the one the other pane is on; null clears the mark. */
+  /** Đánh dấu đoạn tương ứng với con trỏ của khung bên cạnh; null để xóa đánh dấu. */
   linkParagraph(index: number | null): void
-  /** Scrolls so the top of the pane is at `anchor`, the other pane's position. */
+  /** Cuộn để mép trên của khung khớp với vị trí của khung bên cạnh. */
   scrollToAnchor(anchor: ParagraphAnchor): void
 }
 
 export interface TextEditorProps {
-  /** The text and segments to open; read once when mounted, so remount (key) to load another. */
+  /** Bản ghi văn bản và segment để mở trong trình soạn thảo. */
   record: TextRecord
-  /** BCP 47 tag of the text, so the browser picks the right font and the sentences split right. */
+  /** Mã ngôn ngữ BCP 47 của văn bản. */
   lang: SegmentLanguage
-  /** Accessible name of the text field. */
+  /** Tên nhãn hỗ trợ khả năng tiếp cận (ARIA) của ô văn bản. */
   label: string
   store: TextStore
-  /** Locks the text without rebuilding the editor, so history, caret and unsaved typing stay. */
+  /** Chế độ chỉ đọc. */
   readOnly?: boolean
-  /** Shown over the empty text; it is not part of the text and goes when the first character does. */
+  /** Gợi ý hiển thị khi văn bản còn trống. */
   emptyHint?: string
-  /** Styles `#` headings and `**bold**` inline while still editable; read once like `lang`. */
+  /** Bật tính năng định dạng tiêu đề và chữ đậm trực tiếp khi soạn thảo. */
   livePreview?: boolean
-  /** When set, this pane accepts pasted/dropped images and shows `![[id]]` embeds as pictures. */
+  /** Cấu hình lưu trữ ảnh để cho phép dán hoặc thả ảnh vào trình soạn thảo. */
   images?: ImageStore
-  /** A save went through (or the stored text was reloaded): the figures on the screen follow it. */
+  /** Gọi khi lưu thành công (hoặc khi nạp lại dữ liệu đã lưu). */
   onSaved(record: TextRecord): void
   onStatusChange?(status: SessionStatus): void
-  /** The caret or selection moved: the stretch an AI turn would be about changed with it. */
+  /** Gọi khi con trỏ hoặc vùng chọn thay đổi. */
   onTargetChange?(range: TargetRange): void
-  /** The text changed, saved or not; also called once with the opened text. */
+  /** Gọi khi nội dung văn bản thay đổi. */
   onTextChange?(text: string): void
-  /** The caret moved into another paragraph, or onto a blank line (null). */
+  /** Gọi khi con trỏ di chuyển sang đoạn khác, hoặc sang dòng trống (null). */
   onParagraphChange?(index: number | null): void
-  /** The pane scrolled; the anchor is the paragraph at its top. */
+  /** Gọi khi khung nhìn cuộn; neo là đoạn nằm ở mép trên cùng. */
   onScroll?(anchor: ParagraphAnchor): void
-  /** Every chunk of a review has been accepted or rejected, so the review is over. */
   handleRef?: Ref<TextEditorHandle>
 }
 
@@ -309,7 +298,7 @@ export function TextEditor({
     [save]
   )
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: The text is read once; the screen remounts this component (key) to load another.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Văn bản chỉ đọc một lần lúc khởi tạo; màn hình sẽ remount component (key) khi chuyển chương.
   useEffect(() => {
     if (!host.current) return
     const makeState = (opened: TextRecord): EditorState =>
@@ -319,7 +308,7 @@ export function TextEditor({
         extensions: [
           keymap.of(bindings),
           EditorView.lineWrapping,
-          // The page turns text selection off for the app chrome (tokens.css); story text keeps it.
+          // Giao diện chung tắt tính năng bôi đen văn bản; vùng soạn thảo truyện bật lại class này để cho phép bôi đen.
           EditorView.editorAttributes.of({ class: 'selectable' }),
           EditorState.allowMultipleSelections.of(false),
           EditorView.contentAttributes.of({
@@ -339,9 +328,7 @@ export function TextEditor({
               setEmpty(update.state.doc.length === 0)
               latest.current.onTextChange?.(update.state.doc.toString())
             }
-            // The AI panel has to follow the caret to be about anything at all, and only the editor
-            // knows when it moved. Fired on selection as well as text, because moving the caret
-            // changes which paragraph a question is about without changing a character.
+            // Khung trợ lý AI bám theo vị trí con trỏ; kích hoạt khi con trỏ hoặc vùng chọn di chuyển
             if (update.selectionSet || update.docChanged) {
               latest.current.onTargetChange?.(targetRange(update.state))
               const paragraph = caretParagraph(update.state)

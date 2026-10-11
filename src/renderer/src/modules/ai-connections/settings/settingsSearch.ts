@@ -7,7 +7,7 @@ export interface SettingsIndexEntry {
   location: SettingsLocation
 }
 
-/** Every row and card the search can jump to. Kept next to the pages it names; a test checks the keys exist. */
+/** Danh mục tĩnh các hàng và thẻ cài đặt có thể điều hướng tới khi tìm kiếm. */
 export const STATIC_INDEX: SettingsIndexEntry[] = [
   {
     title: 'Model chính',
@@ -79,7 +79,7 @@ function fold(text: string): string {
     .toLowerCase()
 }
 
-/** Entries whose title or description contains every word of the query, ignoring case and Vietnamese marks. */
+/** Tìm kiếm các mục cài đặt có tiêu đề hoặc mô tả chứa toàn bộ từ khóa truy vấn (không phân biệt hoa thường và dấu tiếng Việt). */
 export function searchSettings(query: string, index = SETTINGS_INDEX): SettingsIndexEntry[] {
   const words = fold(query).split(/\s+/).filter(Boolean)
   if (words.length === 0) return []

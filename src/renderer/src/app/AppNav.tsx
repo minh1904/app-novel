@@ -1,17 +1,20 @@
 import type { JSX, ReactNode } from 'react'
-import { Book2Icon } from '@solar-icons/react/linear/book-2'
-import { ChatRoundLineIcon } from '@solar-icons/react/linear/chat-round-line'
-import { ChecklistMinimalisticIcon } from '@solar-icons/react/linear/checklist-minimalistic'
-import { CompassIcon } from '@solar-icons/react/linear/compass'
-import { FeedIcon } from '@solar-icons/react/linear/feed'
-import { Home2Icon } from '@solar-icons/react/linear/home-2'
-import { LibraryIcon } from '@solar-icons/react/linear/library'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
-import { MoonIcon } from '@solar-icons/react/linear/moon'
-import { Pen2Icon } from '@solar-icons/react/linear/pen-2'
-import { SettingsIcon } from '@solar-icons/react/linear/settings'
-import { SidebarMinimalisticIcon } from '@solar-icons/react/linear/sidebar-minimalistic'
-import { SunIcon } from '@solar-icons/react/linear/sun'
+import {
+  Book2Icon,
+  ChatRoundLineIcon,
+  ChecklistMinimalisticIcon,
+  CompassIcon,
+  FeedIcon,
+  Home2Icon,
+  LibraryIcon,
+  MinimalisticMagnifierIcon,
+  MoonIcon,
+  Pen2Icon,
+  SettingsIcon,
+  SidebarMinimalisticIcon,
+  SunIcon
+} from '@renderer/components/ui/reicon'
+
 import { CompactButton } from '../components/ui/CompactButton'
 import { ICON } from '../components/ui/icon'
 import { Kbd } from '../components/ui/Input'
@@ -29,7 +32,7 @@ interface NavEntry {
 
 const icon = (Icon: typeof Home2Icon): ReactNode => <Icon size={ICON.sm} aria-hidden="true" />
 
-/** Daily work first, then what every work shares (app-level-features.md, phương án A). */
+/** Danh mục điều hướng cho công việc hàng ngày, tiếp theo là tài nguyên dùng chung. */
 const MAIN: NavEntry[] = [
   { page: 'home', label: 'Trang chủ', icon: icon(Home2Icon) },
   { page: 'library', label: 'Thư viện', icon: icon(LibraryIcon) },
@@ -44,25 +47,25 @@ const RESOURCES: NavEntry[] = [
 ]
 
 export interface AppNavProps {
-  /** The page on screen; inside a work that is the library, where works are opened from. */
+  /** Trang hiện tại trên màn hình; khi mở tác phẩm thì thuộc về mục thư viện. */
   page: AppPage | null
   collapsed: boolean
   onNavigate(page: AppPage): void
   onToggleCollapsed(): void
   onOpenPalette(): void
-  /** Works in the library, shown beside its row; null while it loads. */
+  /** Số tác phẩm trong thư viện, hiển thị cạnh mục tương ứng; null khi đang tải. */
   libraryCount: number | null
   theme: Theme
   onToggleTheme(): void
   onOpenSettings(): void
   settingsOpen: boolean
-  /** A connection problem shown on Settings; null while healthy or still loading. */
+  /** Cảnh báo lỗi kết nối hiển thị tại nút Cài đặt; null khi kết nối ổn định hoặc đang tải. */
   connectionNotice: string | null
 }
 
 /**
- * The app sidebar below the window title bar: pages outside any one work, 224px with labels or folded
- * to a 48px rail of icons with tooltips. Settings and the theme sit at the bottom.
+ * Thanh điều hướng ứng dụng phía dưới tiêu đề cửa sổ: chiều rộng 224px có nhãn hoặc thu gọn còn 48px chỉ hiển thị biểu tượng.
+ * Nút Cài đặt và chuyển đổi giao diện nằm ở dưới cùng.
  */
 export function AppNav({
   page,
@@ -182,7 +185,7 @@ export function AppNav({
   )
 }
 
-/** One row: icon and label, or only the icon with its label as a tooltip on the rail. */
+/** Một mục điều hướng: hiển thị biểu tượng cùng nhãn chữ, hoặc chỉ biểu tượng kèm tooltip khi thanh bên thu gọn. */
 function Item({
   collapsed,
   label,

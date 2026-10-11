@@ -1,20 +1,19 @@
 import type { AccountProvider, LoginStart } from '../../../../../shared/contracts/aiAccounts'
 
 /**
- * The first-connection flow (spec `ai-onboarding`, design D9 of change `hermes-settings-modal`), after
- * Hermes Desktop's onboarding store (apps/desktop/src/store/onboarding.ts). Pure: the component dispatches
- * events and renders the state; nothing here touches IPC.
+ * Máy trạng thái quản lý quy trình kết nối AI ban đầu.
+ * Hàm reducer thuần túy: component gửi sự kiện và hiển thị theo trạng thái nhận được, không gọi trực tiếp IPC.
  *
- * Account logins (change `subscription-providers`) add `starting` (asking for a device code) and `polling`
- * (the code is shown, waiting for the person to confirm it in the browser). A failed login comes back to an
- * `error` whose form is the account, so "Thử lại" starts the same login again.
+ * Hỗ trợ các trạng thái đăng nhập tài khoản: `starting` (yêu cầu mã thiết bị) và `polling`
+ * (hiển thị mã chờ người dùng xác nhận trên trình duyệt). Khi gặp lỗi, lưu lại form để nút "Thử lại"
+ * có thể thực hiện lại đúng quy trình trước đó.
  */
 
 export type OnboardingForm =
   | { step: 'idle'; showAll: boolean }
   | { step: 'key_form'; providerId: string }
   | { step: 'endpoint_form'; baseUrl: string; label: string }
-  /** Not shown by itself: where "Thử lại" goes back to after a failed login. */
+  /** Trạng thái nội bộ để nút "Thử lại" quay lại sau khi đăng nhập tài khoản thất bại. */
   | { step: 'account'; provider: AccountProvider }
 
 export type OnboardingState =
@@ -95,7 +94,7 @@ export function onboardingReducer(state: OnboardingState, event: OnboardingEvent
       return state
     case 'retry':
       if (state.step !== 'error') return state
-      // A login starts again; a form comes back with what was chosen still chosen.
+      // Đăng nhập lại từ đầu; với form nhập thì giữ nguyên thông tin đã chọn trước đó.
       return state.form.step === 'account'
         ? { step: 'starting', provider: state.form.provider }
         : state.form

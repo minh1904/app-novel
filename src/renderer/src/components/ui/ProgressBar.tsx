@@ -10,8 +10,8 @@ const FILLS = {
 } as const
 
 /**
- * How far something has got: a 6px track with a fill. The tone states what the fill means (running is
- * info, finished success, stopped error); neutral is plain progress, such as chapters translated.
+ * Thanh tiến trình: thanh rãnh 6px kèm dải màu biểu thị mức độ hoàn thành. Sắc thái màu
+ * thể hiện trạng thái (đang chạy là info, xong là success, lỗi là error, neutral là tiến trình thông thường).
  */
 export function ProgressBar({
   value,
@@ -19,10 +19,10 @@ export function ProgressBar({
   label,
   className
 }: {
-  /** 0–100; values outside are clamped. */
+  /** Giá trị từ 0–100; các giá trị ngoài khoảng sẽ được giới hạn lại. */
   value: number
   tone?: keyof typeof FILLS
-  /** Names the bar for assistive technology, e.g. "Đã dịch 412 trên 1.430 chương". */
+  /** Tên nhãn cho công nghệ hỗ trợ tiếp cận, ví dụ "Đã dịch 412 trên 1.430 chương". */
   label: string
   className?: string
 }): JSX.Element {

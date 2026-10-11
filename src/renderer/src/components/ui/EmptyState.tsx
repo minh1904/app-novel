@@ -2,8 +2,8 @@ import type { JSX, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
 /**
- * Nothing here yet: one sentence on why, one thing to do next. Someone opening a screen for the first
- * time must see the next step, not an empty table.
+ * Trạng thái trống (chưa có dữ liệu): gồm một câu giải thích lý do và gợi ý hành động tiếp theo.
+ * Giúp người dùng biết cần làm gì tiếp theo thay vì nhìn thấy bảng trống.
  */
 export function EmptyState({
   icon,
@@ -14,7 +14,7 @@ export function EmptyState({
 }: {
   icon?: ReactNode
   title: string
-  /** One sentence, not a paragraph. */
+  /** Một câu ngắn gọn, không viết thành đoạn văn dài. */
   children: ReactNode
   actions?: ReactNode
   className?: string

@@ -12,7 +12,7 @@ export interface ChapterRef {
   id: string
   number: number
   title: string
-  /** Last translated line the translator touched. Absent until the editor records one. */
+  /** Dòng dịch gần nhất mà người dịch chỉnh sửa. Không có cho đến khi trình soạn thảo ghi nhận. */
   excerpt?: string
 }
 
@@ -22,9 +22,9 @@ export interface Work {
   originalTitle?: string
   description?: string
   author?: string
-  /** Free text such as "Tiên hiệp, cổ đại". */
+  /** Thể loại dạng văn bản tự do, ví dụ "Tiên hiệp, cổ đại". */
   genre?: string
-  /** Changes with the cover; absent when the work has none (the source-language mark stands in). */
+  /** Phiên bản ảnh bìa, thay đổi mỗi khi cập nhật bìa; không có khi tác phẩm chưa có ảnh bìa. */
   coverVersion?: number
   sourceLanguage: SourceLanguage
   chapterCount: number
@@ -79,7 +79,7 @@ export function byUpdated(a: Work, b: Work): number {
   return b.updatedAt.getTime() - a.updatedAt.getTime()
 }
 
-/** Converts a work as stored by the main process into the shape the screens use. */
+/** Chuyển đổi dữ liệu tác phẩm lưu từ tiến trình chính sang định dạng dùng trong các màn hình giao diện. */
 export function toWork(summary: WorkSummary): Work {
   return {
     id: summary.id,

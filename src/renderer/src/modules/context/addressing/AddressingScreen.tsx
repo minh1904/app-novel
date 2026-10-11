@@ -1,11 +1,14 @@
 import { useEffect, useState, type JSX } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { CheckIcon } from '@solar-icons/react/linear/check'
-import { CloseCircleIcon } from '@solar-icons/react/linear/close-circle'
-import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
-import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
-import { UsersGroupRoundedIcon } from '@solar-icons/react/linear/users-group-rounded'
-import { UserRoundedIcon } from '@solar-icons/react/linear/user-rounded'
+import {
+  AddIcon,
+  CheckIcon,
+  CloseCircleIcon,
+  PenNewSquareIcon,
+  TrashBinMinimalisticIcon,
+  UsersGroupRoundedIcon,
+  UserRoundedIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import type { AddressingDyadItem, CharacterItem } from '../../../../../shared/contracts/addressing'
 import type { ContextStatus } from '../../../../../shared/contracts/glossary'
@@ -60,7 +63,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
   const [activeTab, setActiveTab] = useState<'dyads' | 'characters'>('dyads')
   const [chapters, setChapters] = useState<ChapterItem[]>([])
 
-  // Dialog states
+  // Trạng thái các hộp thoại
   const [editingCharacter, setEditingCharacter] = useState<CharacterItem | null | 'new'>(null)
   const [deletingCharacter, setDeletingCharacter] = useState<CharacterItem | null>(null)
   const [editingDyad, setEditingDyad] = useState<AddressingDyadItem | null | 'new'>(null)
@@ -122,7 +125,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Top Toolbar */}
+      {/* Thanh công cụ trên cùng */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
@@ -172,7 +175,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
         onValueChange={(value) => setActiveTab(value as 'dyads' | 'characters')}
         className="flex flex-col gap-4"
       >
-        {/* Subtab selection */}
+        {/* Danh sách tab con */}
         <TabsList className="flex">
           <TabsTab value="dyads">
             <UsersGroupRoundedIcon size={ICON.sm} />
@@ -190,7 +193,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
           </div>
         )}
 
-        {/* Dyads Tab Content */}
+        {/* Nội dung tab Quan hệ xưng hô */}
         <TabsPanel value="dyads">
           <div className="overflow-hidden rounded-lg border border-default bg-surface">
             <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_110px_90px] items-center border-b border-default bg-subtle px-3.5 py-2.5 text-body-xs font-medium text-subtle">
@@ -250,7 +253,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                         dyad.status === 'rejected' && 'opacity-60 bg-line/10'
                       )}
                     >
-                      {/* Speaker -> Recipient */}
+                      {/* Người nói -> Người nghe */}
                       <div className="flex flex-col gap-0.5">
                         <span className="font-semibold text-default flex items-center gap-1.5">
                           <span>{srcChar?.target ?? '?'}</span>
@@ -262,7 +265,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                         </span>
                       </div>
 
-                      {/* Pronouns */}
+                      {/* Đại từ xưng hô */}
                       <div className="flex flex-col gap-0.5">
                         <span className="font-medium text-default">
                           &ldquo;{dyad.speakerPronoun}&rdquo; &ndash; &ldquo;{dyad.recipientPronoun}
@@ -280,10 +283,10 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                         )}
                       </div>
 
-                      {/* Scope */}
+                      {/* Phạm vi áp dụng */}
                       <span className="text-body-xs text-subtle">{formatChapterScope(dyad)}</span>
 
-                      {/* Status */}
+                      {/* Trạng thái */}
                       <div>
                         {dyad.status === 'approved' && (
                           <Badge variant="outline" dot color="success">
@@ -302,7 +305,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                         )}
                       </div>
 
-                      {/* Actions */}
+                      {/* Các thao tác */}
                       <div className="flex items-center justify-end gap-1">
                         {dyad.status === 'pending' && (
                           <>
@@ -344,7 +347,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
           </div>
         </TabsPanel>
 
-        {/* Characters Tab Content */}
+        {/* Nội dung tab Nhân vật */}
         <TabsPanel value="characters">
           <div className="overflow-hidden rounded-lg border border-default bg-surface">
             <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_90px_minmax(0,1.2fr)_110px_90px] items-center border-b border-default bg-subtle px-3.5 py-2.5 text-body-xs font-medium text-subtle">
@@ -457,7 +460,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
         </TabsPanel>
       </TabsRoot>
 
-      {/* Character Dialogs */}
+      {/* Các hộp thoại quản lý nhân vật */}
       <EditCharacterDialog
         open={editingCharacter !== null}
         onOpenChange={(open) => !open && setEditingCharacter(null)}
@@ -482,7 +485,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
         }}
       />
 
-      {/* Dyad Dialogs */}
+      {/* Các hộp thoại quản lý quan hệ xưng hô */}
       <EditDyadDialog
         open={editingDyad !== null}
         onOpenChange={(open) => !open && setEditingDyad(null)}

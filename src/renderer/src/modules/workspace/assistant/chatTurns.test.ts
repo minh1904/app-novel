@@ -14,10 +14,9 @@ import {
 } from './chatTurns'
 
 /**
- * Conversation state in the panel.
- *
- * Two groups carry the weight: two turns in flight must not mix text, and a closed turn must not gain
- * more. A proposal now arrives as its own chunk from a writing tool; the answer's text never becomes one.
+ * Trạng thái hội thoại trong bảng trợ lý AI.
+ * Đảm bảo các lượt hỏi đang chạy không bị trộn lẫn văn bản, lượt đã đóng không nhận thêm chunk mới,
+ * và các đề xuất từ công cụ được cập nhật độc lập.
  */
 
 const delta = (requestId: string, text: string): ChatChunk => ({ requestId, kind: 'delta', text })
@@ -36,7 +35,7 @@ const failure = (requestId: string, kind: ChatError['kind'], partial = true): Ch
   partial
 })
 
-/** A session with one started turn already matched to `requestId`. */
+/** Tạo phiên với một lượt hỏi đã bắt đầu và liên kết sẵn với `requestId`. */
 function started(
   requestId = 'r1',
   options: { question?: string; localId?: string } = {},
@@ -137,7 +136,7 @@ describe('a closed turn gains nothing more', () => {
   })
 })
 
-// The case position-based matching gets wrong half the time.
+// Kiểm thử trường hợp hai lượt hỏi chạy đồng thời không bị gán nhầm nội dung cho nhau.
 describe('two turns in flight', () => {
   it('keeps their text apart', () => {
     let session = started('r1', { question: 'Câu một' })
@@ -337,7 +336,7 @@ describe('history sent with the next question', () => {
     const result = historyFor(session, 250)
 
     expect(result.dropped).toBe(2)
-    // The two kept are the newest, and the question text proves which.
+    // Giữ lại hai lượt mới nhất phù hợp với ngân sách ký tự lịch sử.
     expect(
       result.history.map((turn) => turn.text).filter((text) => text.startsWith('Câu'))
     ).toEqual(['Câu 3', 'Câu 4'])

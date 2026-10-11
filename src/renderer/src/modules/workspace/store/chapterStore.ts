@@ -27,7 +27,7 @@ export interface ChapterState {
   loadError: string | null
   notice: string | null
 
-  // Actions
+  // Thao tác
   initWork(workId: string): Promise<void>
   reload(): Promise<void>
   dismissNotice(): void

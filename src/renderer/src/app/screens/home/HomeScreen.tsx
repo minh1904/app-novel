@@ -1,11 +1,14 @@
 import type { JSX, ReactNode } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
-import { ChecklistMinimalisticIcon } from '@solar-icons/react/linear/checklist-minimalistic'
-import { PlayIcon } from '@solar-icons/react/linear/play'
-import { ShieldWarningIcon } from '@solar-icons/react/linear/shield-warning'
-import { WalletIcon } from '@solar-icons/react/linear/wallet'
+import {
+  AddIcon,
+  CheckCircleIcon,
+  DocumentTextIcon,
+  ChecklistMinimalisticIcon,
+  PlayIcon,
+  ShieldWarningIcon,
+  WalletIcon
+} from '@renderer/components/ui/reicon'
+
 import { PageFrame, SoonTitle } from '../../../components/ui/PageFrame'
 import { Badge } from '../../../components/ui/Badge'
 import { Button, LinkButton } from '../../../components/ui/Button'
@@ -20,7 +23,7 @@ import { byUpdated, statusLabels, type Work } from '../../../modules/library/pub
 
 export interface HomeScreenProps {
   works: Work[]
-  /** True only after the connection list loaded and contains at least one connection. */
+  /** True khi danh sách kết nối đã tải xong và có ít nhất một kết nối AI sẵn sàng. */
   connected: boolean
   onContinue(work: Work): void
   onOpenWork(workId: string): void
@@ -31,8 +34,8 @@ export interface HomeScreenProps {
 }
 
 /**
- * Where the app opens: carry on with the work touched last. The figures, jobs, new chapters and
- * activity under it are pictures of features still to come (MOCK_FEATURES.homeOverview).
+ * Màn hình chính khi mở ứng dụng: cho phép tiếp tục thao tác với tác phẩm làm việc gần nhất.
+ * Các phần số liệu, tác vụ, cập nhật chương mới và lịch sử hoạt động bên dưới là giao diện mẫu minh họa.
  */
 export function HomeScreen({
   works,
@@ -217,7 +220,7 @@ function StartSteps({
   )
 }
 
-/* ───────────── Pictures of features to come (fixed sample data) ───────────── */
+/* ───────────── Giao diện mẫu tính năng (dữ liệu minh họa cố định) ───────────── */
 
 function StatsMock(): JSX.Element {
   const stats = [

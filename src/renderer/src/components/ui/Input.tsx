@@ -1,31 +1,32 @@
 import type { InputHTMLAttributes, JSX, ReactNode, Ref } from 'react'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
+import { MinimalisticMagnifierIcon } from '@renderer/components/ui/reicon'
+
 import { cn } from '../../lib/cn'
 import { inputFrameVariants } from './variants'
 
-// w-0: the field takes its width from the frame, never from the browser's 20-character default, which
-// would stop a narrow frame from shrinking and push a fieldset or a dialog wider than it is.
+// w-0: ô nhập lấy độ rộng từ khung bao thay vì độ rộng mặc định 20 ký tự của trình duyệt,
+// giúp khung có thể co nhỏ lại và không làm tràn hộp thoại hay bố cục cha.
 export const inputElementClass =
   'h-full w-0 min-w-0 flex-1 bg-transparent outline-none placeholder:text-placeholder disabled:cursor-not-allowed'
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   size?: 'md' | 'sm'
-  /** Classes for the frame (width, margin). */
+  /** Lớp CSS cho khung bao ngoài (độ rộng, khoảng cách viền). */
   className?: string
   inputClassName?: string
   leftIcon?: ReactNode
-  /** An icon, a short hint or a compact button after the text. */
+  /** Vị trí hiển thị sau chữ: biểu tượng, gợi ý ngắn hoặc nút thu gọn. */
   rightSlot?: ReactNode
   ref?: Ref<HTMLInputElement>
 }
 
 /**
- * A frame fills its row unless the caller gives it a width: `cn` only joins classes, so `w-full` and a
- * caller's `w-24` would both apply and the stylesheet order, not the caller, would decide.
+ * Khung tự động lấp đầy dòng trừ khi được chỉ định độ rộng: kiểm tra xem className có chứa
+ * tiền tố định chiều rộng hay không trước khi áp dụng `w-full`.
  */
 const SETS_WIDTH = /(^|\s)(w-|flex-1|basis-)/
 
-/** A one-line field without a label; put it in a Field, or give it an aria-label. */
+/** Trường nhập liệu một dòng chưa có nhãn: nên bọc trong Field hoặc cung cấp aria-label. */
 export function Input({
   size,
   className,
@@ -52,13 +53,13 @@ export function Input({
 }
 
 export interface SearchInputProps extends Omit<InputProps, 'type' | 'leftIcon'> {
-  /** Names the field for assistive technology. */
+  /** Đặt tên trường nhập liệu cho công nghệ hỗ trợ tiếp cận. */
   label: string
-  /** A keyboard shortcut shown at the end, e.g. "Ctrl F". */
+  /** Phím tắt hiển thị ở cuối trường nhập liệu, ví dụ "Ctrl F". */
   shortcut?: string
 }
 
-/** A search box: a magnifier, the field and an optional shortcut hint. */
+/** Hộp tìm kiếm: biểu tượng kính lúp, trường nhập dữ liệu và gợi ý phím tắt tùy chọn. */
 export function SearchInput({ label, shortcut, size, ...props }: SearchInputProps): JSX.Element {
   return (
     <Input
@@ -73,7 +74,7 @@ export function SearchInput({ label, shortcut, size, ...props }: SearchInputProp
   )
 }
 
-/** A keyboard key or shortcut, e.g. in a search box or a menu row. */
+/** Phím bàn phím hoặc phím tắt, hiển thị trong ô tìm kiếm hoặc hàng menu. */
 export function Kbd({ children }: { children: ReactNode }): JSX.Element {
   return (
     <kbd className="pointer-events-none inline-flex h-5 shrink-0 items-center rounded-xs border border-default px-1.5 font-sans text-body-xs whitespace-nowrap text-muted">

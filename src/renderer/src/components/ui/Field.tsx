@@ -10,27 +10,27 @@ import { Input, type InputProps } from './Input'
 import { Textarea } from './Textarea'
 
 export interface FieldIds {
-  /** The control's id, for the label. */
+  /** ID của phần tử điều khiển, dùng liên kết với thẻ label. */
   id: string
-  /** Space-separated ids of the hint and the error, for aria-describedby. */
+  /** Các ID phân tách bằng dấu cách của gợi ý và lỗi, dùng cho aria-describedby. */
   describedBy: string | undefined
   invalid: boolean
 }
 
 export interface FieldProps {
   label: string
-  /** What the field is for; shown under it until there is an error. */
+  /** Gợi ý giải thích mục đích của trường; hiển thị bên dưới cho đến khi có lỗi. */
   hint?: ReactNode
-  /** Validation message; also marks the control invalid for assistive technology. */
+  /** Thông báo lỗi kiểm tra hợp lệ; đồng thời đánh dấu trường không hợp lệ cho công nghệ hỗ trợ. */
   error?: string
-  /** Use an existing id for the control. */
+  /** Sử dụng ID có sẵn cho phần tử điều khiển. */
   id?: string
   className?: string
-  /** Renders the control with the ids it needs. */
+  /** Hàm render phần tử điều khiển với các thuộc tính ID cần thiết. */
   children(ids: FieldIds): ReactNode
 }
 
-/** A label above a control, a hint or an error under it. Labels are always visible. */
+/** Khung trường nhập liệu: nhãn phía trên, gợi ý hoặc thông báo lỗi phía dưới. Nhãn luôn hiển thị. */
 export function Field({ label, hint, error, id, className, children }: FieldProps): JSX.Element {
   const generated = useId()
   const controlId = id ?? generated
@@ -65,11 +65,11 @@ export interface TextFieldProps extends Omit<InputProps, 'children'> {
   label: string
   hint?: ReactNode
   error?: string
-  /** Classes for the frame of the field itself; `className` goes on the outer block. */
+  /** Lớp CSS cho khung của trường nhập liệu; `className` áp dụng cho khối bao ngoài. */
   frameClassName?: string
 }
 
-/** A labelled one-line field. */
+/** Trường nhập một dòng có sẵn nhãn, gợi ý và thông báo lỗi. */
 export function TextField({
   label,
   hint,
@@ -100,7 +100,7 @@ export interface TextareaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaE
   error?: string
 }
 
-/** A labelled multi-line field. */
+/** Trường nhập nhiều dòng (textarea) có sẵn nhãn, gợi ý và thông báo lỗi. */
 export function TextareaField({
   label,
   hint,

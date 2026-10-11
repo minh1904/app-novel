@@ -1,6 +1,6 @@
 /**
- * The time under an answer, as Hermes writes it ("Yesterday, 11:48 PM"), in Vietnamese: "Hôm nay, 23:48",
- * "Hôm qua, 23:48", or the date for anything older.
+ * Định dạng thời gian hiển thị dưới câu trả lời bằng tiếng Việt: "Hôm nay, 23:48",
+ * "Hôm qua, 23:48", hoặc ngày tháng nếu cũ hơn.
  */
 export function turnTime(at: number, now: number = Date.now()): string {
   const date = new Date(at)
@@ -22,7 +22,7 @@ export function turnTime(at: number, now: number = Date.now()): string {
   )
 }
 
-/** How long the model thought, for "Đã suy nghĩ 12 giây"; `null` when there is no end yet. */
+/** Tính thời gian suy nghĩ của model theo giây; trả về `null` nếu lượt chạy chưa kết thúc. */
 export function thoughtSeconds(startedAt: number, endedAt: number | null): number | null {
   if (endedAt === null) return null
   return Math.max(0, Math.round((endedAt - startedAt) / 1000))

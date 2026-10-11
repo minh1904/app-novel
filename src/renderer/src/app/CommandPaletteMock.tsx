@@ -1,7 +1,6 @@
 import { useState, type JSX, type ReactNode } from 'react'
-import { Book2Icon } from '@solar-icons/react/linear/book-2'
-import { CommandIcon } from '@solar-icons/react/linear/command'
-import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
+import { Book2Icon, CommandIcon, DocumentTextIcon } from '@renderer/components/ui/reicon'
+
 import { Badge } from '../components/ui/Badge'
 import { Dialog } from '../components/ui/Dialog'
 import { ICON } from '../components/ui/icon'
@@ -19,7 +18,7 @@ const term = <Book2Icon size={ICON.sm} aria-hidden="true" />
 const line = <DocumentTextIcon size={ICON.sm} aria-hidden="true" />
 const command = <CommandIcon size={ICON.sm} aria-hidden="true" />
 
-/** Fixed sample results for "hàn": what one search across the library would bring back. */
+/** Dữ liệu mẫu kết quả tìm kiếm cho từ khóa "hàn" trên toàn thư viện. */
 const GROUPS: { label: string; results: Result[] }[] = [
   {
     label: 'Thuật ngữ và nhân vật',
@@ -49,9 +48,8 @@ const GROUPS: { label: string; results: Result[] }[] = [
 ]
 
 /**
- * Picture of the search and command palette (MOCK_FEATURES.commandPalette): one box over works,
- * chapters, terms, translated text and commands. It opens with Ctrl K and from the sidebar; the
- * results are fixed and choosing one does nothing.
+ * Giao diện mẫu của bảng lệnh và tìm kiếm (Ctrl K): tìm kiếm tác phẩm, chương, thuật ngữ, câu dịch và câu lệnh.
+ * Dữ liệu hiển thị mang tính minh họa giao diện.
  */
 export function CommandPaletteMock({
   open,

@@ -11,9 +11,8 @@ import { cn } from '../../../lib/cn'
 import { isOpenPart, PART_STATUS_LABEL, proposalStatus } from './proposalStatus'
 
 /**
- * One proposal, shown the same way wherever it appears: in the chapter's queue and under the chat turn
- * that made it (change `agentic-chat`). Its status is always read from the queue (or the glossary, for a
- * term), never kept by the card, so the two places cannot disagree.
+ * Thẻ hiển thị đề xuất thay đổi nội dung hoặc thuật ngữ.
+ * Trạng thái của đề xuất luôn được đồng bộ trực tiếp từ hàng chờ chương hoặc glossary.
  */
 
 const TONE: Record<ProposalPartStatus, string> = {
@@ -25,7 +24,7 @@ const TONE: Record<ProposalPartStatus, string> = {
   'needs-placement': 'text-warning'
 }
 
-/** The card itself: a title, a status, the text before and after, and what can be done with it. */
+/** Thẻ đề xuất: hiển thị tiêu đề, trạng thái, văn bản trước/sau và các nút thao tác. */
 export function ProposalCard({
   title,
   status,
@@ -40,7 +39,7 @@ export function ProposalCard({
 }: {
   title: string
   status: ProposalPartStatus | null
-  /** Overrides the label of `status`, for a term whose states are named differently. */
+  /** Nhãn trạng thái tùy chỉnh thay thế cho nhãn mặc định của `status`. */
   statusLabel?: string
   before: string
   after: string
@@ -102,21 +101,21 @@ export function ProposalCard({
   )
 }
 
-/** What the panel does with a text proposal; the same functions serve the queue and the turn cards. */
+/** Các thao tác người dùng có thể thực hiện trên một đề xuất văn bản. */
 export interface ProposalActions {
   accept(partIds: string[]): void
   deny(partIds: string[]): void
   show(part: ProposalPartView): void
 }
 
-/** A text proposal under a turn, read from the queue by id. */
+/** Thẻ hiển thị đề xuất chỉnh sửa văn bản bên dưới lượt hỏi, lấy dữ liệu từ hàng chờ theo ID. */
 export function TextProposalCard({
   proposal,
   item,
   actions
 }: {
   proposal: Extract<ChatToolProposal, { type: 'edit' | 'translation' }>
-  /** The proposal as the queue has it; absent while the queue reloads or when it is no longer listed. */
+  /** Dữ liệu đề xuất lấy từ hàng chờ; `undefined` khi đang tải lại hoặc không còn trong danh sách. */
   item: ProposalQueueItem | undefined
   actions: ProposalActions
 }): JSX.Element {
@@ -161,7 +160,7 @@ const TERM_TONE: Record<ContextStatus, ProposalPartStatus> = {
   rejected: 'rejected'
 }
 
-/** A term proposal: a pending glossary entry, approved or rejected right here. */
+/** Thẻ hiển thị đề xuất thuật ngữ glossary: cho phép duyệt hoặc từ chối trực tiếp. */
 export function TermProposalCard({
   workId,
   proposal

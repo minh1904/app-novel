@@ -9,8 +9,8 @@ const sizes = {
 }
 
 /**
- * Stands in for a cover: a work is identified by the script it is translated from.
- * `lang` lets Windows pick a CJK font for the glyph, since Inter has none.
+ * Biểu tượng đại diện khi chưa có ảnh bìa: nhận diện tác phẩm theo chữ cái ngôn ngữ nguồn.
+ * Thuộc tính `lang` giúp hệ điều hành chọn đúng phông chữ CJK phù hợp cho ký tự.
  */
 export function LanguageMark({
   language,

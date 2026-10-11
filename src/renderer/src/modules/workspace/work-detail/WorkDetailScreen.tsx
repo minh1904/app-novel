@@ -1,5 +1,6 @@
 import { useState, type JSX } from 'react'
-import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
+import { AltArrowLeftIcon } from '@renderer/components/ui/reicon'
+
 import type { WorkSummary } from '../../../../../shared/contracts/library'
 import { TopBarTitle } from '../../../components/ui/TopBarActions'
 import { Alert } from '../../../components/ui/Alert'
@@ -19,13 +20,13 @@ export interface WorkDetailScreenProps {
   onAreaChange?(areaId: string): void
   onBackToLibrary(): void
   onOpenChapter(workId: string, chapterId: string): void
-  /** Every change made on this screen, so the library list and sidebar stay in step. */
+  /** Nhận mọi thay đổi trên màn hình này để danh sách và thanh bên thư viện đồng bộ. */
   onWorkChanged(summary: WorkSummary): void
 }
 
 /**
- * One work: its header, then the areas (today only Chapters). The screen is keyed by work, so
- * moving to another work always starts from a clean state.
+ * Màn hình chi tiết tác phẩm: phần đầu thông tin và các khu vực chức năng.
+ * Màn hình có key theo workId để luôn khởi tạo trạng thái mới khi chuyển tác phẩm.
  */
 export function WorkDetailScreen({
   workId,
@@ -41,7 +42,7 @@ export function WorkDetailScreen({
   const areaId = controlledAreaId ?? localAreaId
   const [editing, setEditing] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
-  // The chapters picked in the list when the export was opened from there; none for the header.
+  // Các chương được chọn trong danh sách khi mở hộp thoại xuất từ danh sách
   const [exportSelection, setExportSelection] = useState<ReadonlySet<string> | undefined>()
   const [addChapterSignal, setAddChapterSignal] = useState(0)
   const [saved, setSaved] = useState<string | null>(null)

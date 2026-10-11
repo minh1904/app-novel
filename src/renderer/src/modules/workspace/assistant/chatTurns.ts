@@ -15,38 +15,32 @@ import {
 import type { AiTurnView } from '../../../../../shared/contracts/aiHistory'
 
 /**
- * The state of a conversation in the panel, as pure functions.
- *
- * Separated from the component on purpose: the rules worth getting right are not about pixels. Two
- * turns must never mix their text, and a closed turn must never gain more. Those are the ways this
- * feature could quietly show one answer inside another, and here they are ordinary functions with
- * ordinary tests.
- *
- * A turn no longer has a mode or a range (change `agentic-chat`): what it proposes comes from the
- * writing tools, as `proposals`, and their status is read from the proposal queue, not kept here.
+ * Quản lý trạng thái hội thoại của trợ lý AI dưới dạng hàm thuần túy.
+ * Đảm bảo các lượt hỏi không bị lẫn văn bản, lượt đã đóng không nhận thêm chunk mới,
+ * và các đề xuất được cập nhật độc lập thông qua hàng chờ.
  */
 
 export type TurnStatus = 'sending' | 'running' | 'done' | 'cancelled' | 'error' | 'interrupted'
 
-/** One tool call. `detail` describes the scope; it is never the text that was read. */
+/** Một bước gọi công cụ của model; `detail` mô tả phạm vi thực hiện. */
 export type ToolStep = ChatToolStep
 
 export interface TurnView {
-  /** Stable React key, assigned before the request exists. */
+  /** Khóa định danh React nội bộ, gán trước khi có request id. */
   localId: string
-  /** Set once main answers the send call; chunks are matched on it. */
+  /** ID yêu cầu từ tiến trình chính dùng để đối soát các chunk stream trả về. */
   requestId: string | null
   question: string
-  /** The chapter that was open when it was sent. */
+  /** Chương đang mở khi gửi câu hỏi. */
   chapterId?: string
-  /** `chat` for a turn without a mode; an old turn keeps the mode it was sent with. */
+  /** Chế độ hành động của lượt hỏi. */
   mode: ChatAction
   answer: string
-  /** What the model thought before answering, shown as "Thought"; empty when it said nothing of it. */
+  /** Quá trình suy nghĩ của model trước khi trả lời. */
   reasoning: string
-  /** When the question was sent (ms epoch). */
+  /** Thời điểm gửi câu hỏi (ms epoch). */
   createdAt: number
-  /** When the turn ended; `null` while it runs. */
+  /** Thời điểm kết thúc lượt hỏi; `null` khi đang chạy. */
   finishedAt: number | null
   status: TurnStatus
   error: ChatError | null
@@ -54,21 +48,21 @@ export interface TurnView {
   usd: number | null
   keyTail: string | null
   finishReason: ChatFinishReason | null
-  /** What the model did with tools, in order. Scope lines only, never content. */
+  /** Danh sách các thao tác công cụ theo thứ tự thực hiện. */
   tools: ToolStep[]
-  /** What the writing tools proposed (or an old turn's fenced proposal), in order. */
+  /** Danh sách các đề xuất thay đổi nội dung từ công cụ. */
   proposals: ChatToolProposal[]
-  /** Where the user was when it was sent; absent on an old turn. */
+  /** Vị trí con trỏ của người dùng khi gửi câu hỏi. */
   location?: ChatLocation | null
-  /** What an old turn sent along with the question; empty for a `chat` turn. */
+  /** Khối ngữ cảnh đính kèm (nếu có). */
   context: ChatContextBlock[]
-  /** The stretch an old Sửa turn was about. */
+  /** Phạm vi đoạn văn bản liên quan. */
   range: ChatRange | null
 }
 
 export interface Session {
   turns: TurnView[]
-  /** Older turns left out of the last send because of the budget; 0 when none were. */
+  /** Số lượt hỏi cũ bị lược bỏ do vượt quá ngân sách ký tự lịch sử; bằng 0 nếu giữ toàn bộ. */
   dropped: number
 }
 
@@ -102,7 +96,7 @@ export function restoredSession(turns: AiTurnView[]): Session {
   }
 }
 
-/** A turn still waiting for its ending. Only these accept chunks. */
+/** Kiểm tra lượt hỏi đang chờ phản hồi để tiếp nhận các chunk mới. */
 const isOpen = (turn: TurnView): boolean => turn.status === 'sending' || turn.status === 'running'
 
 export function beginTurn(
@@ -137,7 +131,7 @@ export function beginTurn(
   }
 }
 
-/** Main answered the send call. Until this lands the turn cannot be matched to any chunk. */
+/** Gán request ID từ tiến trình chính vào lượt hỏi để liên kết với luồng chunk dữ liệu. */
 export function attachRequestId(session: Session, localId: string, requestId: string): Session {
   return mapTurn(
     session,
@@ -146,7 +140,7 @@ export function attachRequestId(session: Session, localId: string, requestId: st
   )
 }
 
-/** The send call itself failed, so no chunk will ever arrive for this turn. */
+/** Xử lý khi yêu cầu gửi thất bại ngay từ đầu, kết thúc lượt hỏi và ghi nhận lỗi. */
 export function failTurn(
   session: Session,
   localId: string,
@@ -166,12 +160,8 @@ export function failTurn(
 }
 
 /**
- * One chunk into the session.
- *
- * Matched by `requestId`, never by "the last turn": with two turns in flight, position is wrong half
- * the time, and the symptom is one answer's words appearing inside the other. A chunk for a turn that
- * already ended is dropped rather than applied — main guarantees it will not send one, and this side
- * does not rely on that guarantee holding.
+ * Áp dụng một chunk dữ liệu từ luồng stream vào phiên hội thoại.
+ * Khớp lượt hỏi chính xác theo `requestId` và bỏ qua chunk nếu lượt hỏi đã kết thúc.
  */
 export function applyChunk(session: Session, chunk: ChatChunk, now: number = Date.now()): Session {
   const matches = (turn: TurnView): boolean => turn.requestId === chunk.requestId && isOpen(turn)
@@ -191,7 +181,7 @@ export function applyChunk(session: Session, chunk: ChatChunk, now: number = Dat
     }))
   }
   if (chunk.kind === 'tool') {
-    // A tool call is progress, not an ending: the turn stays open and the step is appended in order.
+    // Bước gọi công cụ biểu thị tiến trình đang chạy, ghi nhận bước mới và giữ lượt hỏi tiếp tục.
     return mapTurn(session, matches, (turn) => ({
       ...turn,
       status: 'running',
@@ -225,8 +215,7 @@ export function applyChunk(session: Session, chunk: ChatChunk, now: number = Dat
   }
   return mapTurn(session, matches, (turn) => ({
     ...turn,
-    // Cancelling is a decision, not a failure: it reads differently and offers "ask again", not a
-    // retry of something that broke.
+    // Trạng thái hủy do người dùng chủ động dừng, phân biệt với lỗi kỹ thuật.
     status: chunk.error.kind === 'cancelled' ? 'cancelled' : 'error',
     error: chunk.error,
     finishedAt: now
@@ -247,7 +236,7 @@ function mapTurn(
   return changed ? { ...session, turns } : session
 }
 
-/** Turns still waiting for an ending; the panel cancels these when it closes. */
+/** Danh sách request ID của các lượt hỏi đang chạy; dùng để hủy khi đóng bảng trợ lý. */
 export function openRequestIds(session: Session): string[] {
   return session.turns
     .filter((turn) => isOpen(turn) && turn.requestId !== null)
@@ -255,11 +244,8 @@ export function openRequestIds(session: Session): string[] {
 }
 
 /**
- * The turns to send as history, newest-last, within the budget.
- *
- * Only completed turns go: a truncated answer fed back as the assistant's words would have the model
- * continue from something it never finished saying. Trimming reports how many were left out, because
- * a conversation that silently forgets is worse than one that says it forgot (D10).
+ * Trích xuất lịch sử các lượt hỏi đáp hoàn tất để gửi kèm câu hỏi tiếp theo,
+ * ưu tiên các lượt gần nhất trong giới hạn ngân sách ký tự và báo cáo số lượt bị lược bỏ.
  */
 export function historyFor(
   session: Session,
@@ -269,7 +255,7 @@ export function historyFor(
 
   const kept: TurnView[] = []
   let spent = 0
-  // Newest first so the turns closest to the question are the ones that survive.
+  // Duyệt từ mới nhất đến cũ nhất để ưu tiên giữ lại ngữ cảnh gần nhất.
   for (let i = complete.length - 1; i >= 0; i--) {
     const turn = complete[i]
     const cost = turn.question.length + turn.answer.length

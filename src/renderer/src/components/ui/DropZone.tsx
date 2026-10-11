@@ -4,23 +4,23 @@ import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 
 export interface DropZoneProps {
-  /** Opens the file picker (the hidden file input of the screen). */
+  /** Kích hoạt hộp thoại chọn tệp tin (thông qua input tệp ẩn). */
   onBrowse(): void
-  /** The files dropped on the zone. */
+  /** Xử lý danh sách tệp tin được kéo thả vào vùng nhận. */
   onDrop(files: FileList): void
-  /** A preview fills the zone: the border turns solid and the hint is gone. */
+  /** Đã có nội dung xem trước lấp đầy vùng nhận: viền chuyển nét liền và ẩn gợi ý. */
   filled?: boolean
   disabled?: boolean
   'aria-label': string
-  /** Size and shape, e.g. `aspect-2/3 w-full` for a cover. */
+  /** Kích thước và hình dạng, ví dụ: `aspect-2/3 w-full` cho ảnh bìa. */
   className?: string
-  /** The preview, or an icon and a hint. */
+  /** Nội dung xem trước, hoặc biểu tượng kèm dòng gợi ý. */
   children: ReactNode
 }
 
 /**
- * A place to drop a file or click to pick one: a dashed box that lights up while a file is dragged over
- * it. The screen keeps the hidden file input and reads the file.
+ * Vùng kéo thả tệp tin hoặc nhấp chuột để chọn tệp: khung viền nét đứt và sáng lên khi kéo
+ * tệp qua. Màn hình quản lý thẻ input tệp ẩn và xử lý tệp được chọn.
  */
 export function DropZone({
   onBrowse,

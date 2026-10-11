@@ -1,13 +1,12 @@
 /*
- * Tier 1: foundation. Raw values only; nothing on a screen reads these directly. The semantic tier
- * (semantic.css) picks from them per theme, and the component tier (component.css) picks from the
- * semantic tier. Organised as in the IZONE LMS design system (docs/modules/design-system/README.md).
+ * Tầng 1: foundation. Chỉ chứa các giá trị thô, không dùng trực tiếp trên màn hình giao diện.
+ * Tầng ngữ nghĩa (semantic.css) chọn giá trị từ tầng này theo từng theme, và tầng component (component.css)
+ * chọn tiếp từ tầng ngữ nghĩa.
  *
- * Neutrals and state colours follow the Acme reference shot: white surfaces, a near-white window,
- * hairline greys, and vivid green / sky / orange / red / pink for meaning only.
+ * Màu trung tính và màu trạng thái gồm nền trắng, xám nhạt và các màu sắc mang ý nghĩa thông tin cụ thể.
  */
 :root {
-  /* colour: neutral */
+  /* Màu sắc: trung tính */
   --mira-neutral-0: #ffffff;
   --mira-neutral-25: #fcfcfc;
   --mira-neutral-50: #fafafa;
@@ -15,13 +14,13 @@
   --mira-neutral-150: #f0f0f0;
   --mira-neutral-200: #ebebeb;
   --mira-neutral-300: #dedede;
-  /* 3.0:1 on white: the edge of a field or a switch track, which WCAG 1.4.11 needs at 3:1. */
+  /* Độ tương phản 3.0:1 trên nền trắng: viền ô nhập liệu hoặc rãnh gạt công tắc. */
   --mira-neutral-350: #949494;
   --mira-neutral-400: #a3a3a3;
-  /* 4.9:1 on the dark surface, where 500 is too dim for meta text. */
+  /* Độ tương phản 4.9:1 trên nền tối: dùng cho văn bản phụ khi mức 500 quá mờ. */
   --mira-neutral-450: #8a8a8a;
   --mira-neutral-500: #737373;
-  /* 3.0:1 on the dark surface: the dark-theme edge of a field or a switch track. */
+  /* Độ tương phản 3.0:1 trên nền tối: viền ô nhập liệu hoặc rãnh gạt công tắc ở theme tối. */
   --mira-neutral-550: #666666;
   --mira-neutral-600: #5c5c5c;
   --mira-neutral-700: #404040;
@@ -31,7 +30,7 @@
   --mira-neutral-950: #141414;
   --mira-neutral-1000: #000000;
 
-  /* colour: states (50 · 100 · 300 · 500 · 600 · 700) */
+  /* Màu sắc: trạng thái (50 · 100 · 300 · 500 · 600 · 700) */
   --mira-green-50: #f0fdf4;
   --mira-green-100: #dcfce7;
   --mira-green-300: #4ade80;
@@ -62,12 +61,11 @@
   --mira-pink-500: #ec4899;
   --mira-pink-600: #be185d;
   --mira-pink-700: #9d174d;
-  /* The old story-text highlighter; unused while Mira is greyscale (2026-10-08). */
+  /* Màu đánh dấu nổi bật đoạn văn. */
   --mira-yellow-300: #ffd24a;
 
-  /* radius: the IZONE LMS names on a desktop scale, about a quarter of a control's height or less
-     (sm 24 → xs 4 · md 32 → sm 6 · lg 40 → md 8); cards lg 12, dialogs xl 16. A rounded box inside
-     another takes the outer radius minus the gap between them. */
+  /* Bo góc: các mức bo góc trên giao diện; thẻ dùng lg (12px), hộp thoại dùng xl (16px).
+     Phần tử bo góc lồng bên trong lấy bán kính ngoài trừ đi khoảng cách giữa hai phần tử. */
   --mira-radius-none: 0;
   --mira-radius-xs: 0.25rem;
   --mira-radius-sm: 0.375rem;
@@ -76,7 +74,7 @@
   --mira-radius-xl: 1rem;
   --mira-radius-full: 9999px;
 
-  /* spacing (IZONE LMS scale): p-md, gap-xs… Tailwind's numeric scale stays available. */
+  /* Khoảng cách: p-md, gap-xs… Thang đo số của Tailwind vẫn có thể sử dụng song song. */
   --mira-space-none: 0;
   --mira-space-3xs: 0.125rem;
   --mira-space-2xs: 0.25rem;
@@ -89,11 +87,11 @@
   --mira-space-3xl: 2.5rem;
   --mira-space-4xl: 3rem;
 
-  /* typography (Obsidian 1.13: four interface sizes, one reading size, two line heights) */
-  /* Inter everywhere (bundled); Chinese and Japanese glyphs fall back to the system's CJK fonts. */
+  /* Kiểu chữ: gồm 4 cỡ cho giao diện, 1 cỡ cho nội dung đọc và 2 mức độ cao dòng */
+  /* Phông chữ Inter tích hợp sẵn; ký tự tiếng Trung và Nhật dự phòng qua phông CJK của hệ thống. */
   --mira-font-ui:
     'Inter', 'Segoe UI', system-ui, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol', emoji;
-  /* The story text reads in Obsidian's default font, the system one (Segoe UI Variable on Windows). */
+  /* Phông chữ đọc nội dung truyện, dùng phông mặc định của hệ thống. */
   --mira-font-editor:
     ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', Roboto,
     'Inter', 'Microsoft YaHei', 'Yu Gothic UI', sans-serif, 'Segoe UI Emoji', emoji;
@@ -105,21 +103,20 @@
   --mira-font-text: 16px;
   --mira-line-height-normal: 1.5;
   --mira-line-height-tight: 1.3;
-  /* Obsidian's editor line height (2026-10-08: the owner chose it over 1.65 for Vietnamese marks). */
+  /* Độ cao dòng cho trình soạn thảo, tối ưu cho dấu thanh tiếng Việt. */
   --mira-line-height-text: 1.5;
   --mira-weight-regular: 400;
   --mira-weight-medium: 500;
   --mira-weight-semibold: 600;
 
-  /* icon sizes (Obsidian: xs 14 · s 16 · m 18; 12 for a close mark in a tab, 24 for an empty state).
-     Solar icons take a pixel size, so components read the same scale from components/ui/icon.ts. */
+  /* Kích thước biểu tượng: 12px cho nút đóng thẻ, 14–18px cho điều khiển, 24px cho trạng thái rỗng. */
   --mira-icon-2xs: 12px;
   --mira-icon-xs: 14px;
   --mira-icon-sm: 16px;
   --mira-icon-md: 18px;
   --mira-icon-lg: 24px;
 
-  /* shadow (IZONE LMS custom shadows) */
+  /* Đổ bóng */
   --mira-shadow-xs:
     0 1px 2px 0 rgb(10 10 10 / 0.04), 0 2px 4px 0 rgb(10 10 10 / 0.03),
     0 4px 8px -2px rgb(10 10 10 / 0.04);
@@ -133,7 +130,7 @@
     0 96px 96px -32px rgb(10 10 10 / 0.06), 0 48px 48px -24px rgb(10 10 10 / 0.06),
     0 24px 24px -12px rgb(10 10 10 / 0.06), 0 12px 12px -6px rgb(10 10 10 / 0.06);
 
-  /* motion */
+  /* Hiệu ứng chuyển động */
   --mira-duration-fast: 120ms;
   --mira-duration-base: 200ms;
   --mira-duration-slow: 300ms;
@@ -141,7 +138,7 @@
   --mira-ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --mira-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
-  /* z-index: sticky < backdrop < modal < dropdown < toast < tooltip */
+  /* Thứ tự lớp hiển thị z-index: sticky < backdrop < modal < dropdown < toast < tooltip */
   --mira-z-sticky: 100;
   --mira-z-backdrop: 1000;
   --mira-z-modal: 1100;
@@ -149,8 +146,8 @@
   --mira-z-toast: 1300;
   --mira-z-tooltip: 1400;
 
-  /* window chrome */
-  /* Obsidian's tab bar is 40px. */
+  /* Khung cửa sổ ứng dụng */
+  /* Chiều cao thanh tiêu đề ứng dụng */
   --mira-header-height: 40px;
   --mira-sidebar-width: 260px;
 }

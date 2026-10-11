@@ -5,7 +5,7 @@ import { Dialog } from '../../../components/ui/Dialog'
 import { TextField } from '../../../components/ui/Field'
 import { displayTitle, lossNote } from './chapterList'
 
-/** Asks for a position from 1 to the number of chapters and says why when the answer is not one. */
+/** Hộp thoại yêu cầu nhập vị trí từ 1 đến tổng số chương để di chuyển thứ tự. */
 export function MoveChapterDialog({
   chapter,
   total,
@@ -26,7 +26,7 @@ export function MoveChapterDialog({
       title="Chuyển tới vị trí"
       description="Các chương nằm giữa sẽ dồn lên hoặc xuống một bậc; số thứ tự tự đổi theo."
     >
-      {/* Keyed so the field starts from the current position each time the dialog opens. */}
+      {/* Gắn key để biểu mẫu luôn lấy lại vị trí hiện tại mỗi khi mở hộp thoại */}
       {chapter && (
         <MoveForm
           key={chapter.id}
@@ -97,14 +97,14 @@ function MoveForm({
   )
 }
 
-/** "Chương 7" for an untitled chapter, otherwise “its name” (vị trí 7). */
+/** Trả về chuỗi mô tả tên chương và vị trí. */
 function describeChapter(chapter: ChapterItem): string {
   return chapter.title === ''
     ? 'Chương ' + chapter.number
     : '“' + chapter.title + '” (vị trí ' + chapter.number + ')'
 }
 
-/** Names the chapter and says that deleting cannot be undone. */
+/** Hộp thoại xác nhận xóa một chương. */
 export function DeleteChapterDialog({
   chapter,
   onClose,
@@ -115,8 +115,7 @@ export function DeleteChapterDialog({
   onClose(): void
   onDelete(chapter: ChapterItem): void
   /**
-   * Offered when the chapter holds text: backs the work up without deleting anything. Resolves to
-   * a sentence about how it went, shown in the dialog.
+   * Tùy chọn sao lưu tác phẩm trước khi xóa khi chương có nội dung văn bản.
    */
   onBackup?: () => Promise<string | null>
 }): JSX.Element {
@@ -212,8 +211,7 @@ function DeleteBody({
 }
 
 /**
- * Deletes the chapters picked in the list. Says how many hold text that will be lost, offers a
- * backup first, and names the count on the button so a slip of the Shift key shows before it costs.
+ * Hộp thoại xác nhận xóa nhiều chương được chọn trong danh sách.
  */
 export function DeleteChaptersDialog({
   chapters,
@@ -221,7 +219,7 @@ export function DeleteChaptersDialog({
   onDelete,
   onBackup
 }: {
-  /** Empty closes the dialog. */
+  /** Mảng rỗng sẽ đóng hộp thoại. */
   chapters: ChapterItem[]
   onClose(): void
   onDelete(chapters: ChapterItem[]): void

@@ -19,12 +19,10 @@ import { savedTextsOf, segmentsField, setSaved, setSegments } from './editorStat
 import { afterComposition, resegmentNow, type ViewLike } from './resegmenter'
 
 /**
- * Saving the text of one chapter side from an editor: what is sent, what is taken from the answer,
- * and what the editor says about it. It touches the editor only through `ViewLike`, so it runs the
- * same against a real view and against a stand-in.
+ * Quản lý phiên lưu trữ và trạng thái chỉnh sửa văn bản của một bên chương từ trình soạn thảo.
  */
 
-/** The store for one chapter side; the IDs of work, chapter and side are already bound. */
+/** Kho lưu trữ cho một bên văn bản của chương. */
 export interface TextStore {
   save(content: string, expectedRev: number, segments: SegmentInput[]): Promise<Result<TextRecord>>
   get(): Promise<Result<TextRecord>>
@@ -38,9 +36,9 @@ export type SaveState = 'saved' | 'dirty' | 'saving' | 'conflict' | 'error'
 
 export interface SessionStatus {
   state: SaveState
-  /** What went wrong, for `conflict` and `error`. */
+  /** Thông báo lỗi chi tiết khi ở trạng thái conflict hoặc error. */
   message: string | null
-  /** The text differs from what was last saved or loaded. */
+  /** Đánh dấu văn bản hiện tại có khác với bản lưu gần nhất hay không. */
   dirty: boolean
 }
 
@@ -68,7 +66,7 @@ export class EditorSession {
   private busy = false
   private queued = false
   private inFlight: Promise<SaveOutcome> | null = null
-  /** The changes made since the text that is being saved was taken; only kept while saving. */
+  /** Các thay đổi diễn ra trong lúc đang gửi yêu cầu lưu; chỉ giữ khi đang lưu. */
   private since: ChangeSet | null = null
   private snapshot: SessionStatus
   private readonly listeners = new Set<() => void>()
@@ -86,7 +84,7 @@ export class EditorSession {
     this.snapshot = { state: 'saved', message: null, dirty: false }
   }
 
-  /** True while a save is under way, so splitting again must wait (it would move what is being saved). */
+  /** Trả về true khi đang trong tiến trình lưu dữ liệu. */
   get saving(): boolean {
     return this.busy
   }
@@ -102,7 +100,7 @@ export class EditorSession {
     return () => this.listeners.delete(listener)
   }
 
-  /** Feed every editor update here (an `updateListener`). */
+  /** Nhận mọi cập nhật từ trình soạn thảo (updateListener). */
   onUpdate(update: { docChanged: boolean; changes: ChangeSet }): void {
     if (!update.docChanged) return
     if (this.busy && this.since) this.since = this.since.compose(update.changes)
@@ -123,7 +121,7 @@ export class EditorSession {
     this.listeners.forEach((listener) => listener())
   }
 
-  /** Saves now, or once the save under way is done; resolves with how the last one went. */
+  /** Thực hiện lưu ngay, hoặc xếp hàng nếu đang có một lượt lưu khác đang chạy. */
   save(): Promise<SaveOutcome> {
     if (this.busy && this.inFlight) {
       this.queued = true
@@ -150,7 +148,7 @@ export class EditorSession {
   }
 
   private async once(): Promise<SaveOutcome> {
-    // Nothing is written while an input method holds text it has not committed.
+    // Không ghi dữ liệu khi bộ gõ IME đang soạn thảo ký tự chưa hoàn tất
     do {
       await afterComposition(this.view)
     } while (resegmentNow(this.view, this.lang) === 'composing')
@@ -166,7 +164,7 @@ export class EditorSession {
     const refusal = this.refusal(content, segs)
     if (refusal !== null) return this.fail('error', refusal)
 
-    // An ID the store no longer has (undo brought a deleted segment back) goes as a new segment.
+    // Nếu ID không còn tồn tại trong kho (ví dụ hoàn tác mang lại segment đã xóa), gửi như segment mới
     const sent: Seg[] = segs.map((seg) =>
       seg.id !== null && !this.knownIds.has(seg.id) ? { ...seg, id: null } : seg
     )
@@ -223,9 +221,7 @@ export class EditorSession {
   }
 
   /**
-   * Takes from the answer what the editor does not know: the IDs the store gave to new segments,
-   * the revision, and what the store now holds. The text is not touched, and neither is the
-   * caret or the scroll position; typing done while the save ran stays and stays unsaved.
+   * Cập nhật lại các thông tin ID và revision trả về từ kho lưu trữ sau khi lưu thành công.
    */
   private adopt(
     snapshot: { doc: Text; content: string; sent: Seg[] },
@@ -237,7 +233,7 @@ export class EditorSession {
       id: record.segments[index]?.id ?? seg.id,
       edited: false
     }))
-    // Where those segments are now, after the typing that happened in the meantime.
+    // Ánh xạ lại vị trí segment theo các thay đổi người dùng vừa gõ trong lúc đang lưu
     const mapped = applyEdits(given, since ? editsOf(since) : [])
     const byRange = new Map(mapped.map((seg) => [seg.from + ':' + seg.to, seg]))
     const kept = new Set(record.segments.map((seg) => seg.id))
@@ -262,7 +258,7 @@ export class EditorSession {
     this.set(this.dirty ? 'dirty' : 'saved')
   }
 
-  /** Throws away the editor's text and loads what the store holds; the undo history starts over. */
+  /** Hủy bỏ các nội dung chưa lưu và tải lại văn bản từ kho lưu trữ. */
   async reload(): Promise<TextRecord | null> {
     const result = await this.store.get()
     if (!result.ok) {

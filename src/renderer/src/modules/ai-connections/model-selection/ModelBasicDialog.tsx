@@ -1,9 +1,12 @@
 import { useState, type JSX, type RefObject } from 'react'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { CloseCircleIcon } from '@solar-icons/react/linear/close-circle'
-import { PenIcon } from '@solar-icons/react/linear/pen'
-import { PlayIcon } from '@solar-icons/react/linear/play'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import {
+  CheckCircleIcon,
+  CloseCircleIcon,
+  PenIcon,
+  PlayIcon,
+  RefreshIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ModelEntryTestResult } from '../../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../../shared/contracts/modelSettings'
 import { Button } from '../../../components/ui/Button'
@@ -22,11 +25,11 @@ import {
 import { SettingRow } from '../../../components/ui/Setting'
 
 /**
- * Hộp thoại **Cơ bản** của một mục model: tên hiển thị, tên model thật (với ba nút Nhập / Lấy / Kiểm tra)
- * và mức suy luận. Cấu trúc theo LinguaGacha; URL và khóa không có ở đây vì ở Mira chúng thuộc kết nối.
+ * Hộp thoại **Cơ bản** của một mục model: cấu hình tên hiển thị, tên model thật (với ba nút Nhập / Lấy / Kiểm tra)
+ * và mức suy luận.
  *
- * Mỗi ô lưu ngay khi đổi xong (chọn xong, hoặc rời ô), không có nút Lưu: nút **Kiểm tra** gửi cài đặt
- * **đã lưu** của mục, nên cái đang hiện trên màn luôn là cái được kiểm.
+ * Mỗi ô lưu ngay khi thay đổi xong (chọn xong hoặc rời ô). Nút **Kiểm tra** gửi cài đặt
+ * đã lưu của mục để kiểm tra kết nối thực tế.
  */
 
 function Result({
@@ -174,8 +177,7 @@ function BasicForm({
   const [thinkingError, setThinkingError] = useState<string | undefined>()
   const [typing, setTyping] = useState(false)
   const [testing, setTesting] = useState(false)
-  // A result is only about the settings it was made with: the entry changing makes it stale, so it is
-  // keyed by what the entry looked like and hidden once that no longer matches.
+  // Kết quả kiểm tra gắn liền với cấu hình lúc kiểm tra: khi cấu hình thay đổi, kết quả cũ sẽ bị ẩn.
   const [tested, setTested] = useState<{
     signature: string
     result: Awaited<ReturnType<ModelEntryActions['test']>>

@@ -1,25 +1,25 @@
 /*
- * Tier 2: semantic. What a colour is for, per theme; every value points at the foundation tier.
- * Screens reach these only through the Tailwind names in theme.css (bg-surface, text-subtle,
- * border-default…). States come in four steps, as in the IZONE LMS system:
- * {state}-emphasis (text on a light fill) · {state} (text, icon, dot) · {state}-muted · {state}-subtle.
+ * Tầng 2: semantic. Xác định mục đích sử dụng màu sắc theo từng theme; mọi giá trị đều trỏ về tầng foundation.
+ * Giao diện tiếp cận các giá trị này qua các tên lớp Tailwind trong theme.css (bg-surface, text-subtle,
+ * border-default…). Màu trạng thái gồm 4 cấp độ:
+ * {state}-emphasis (chữ trên nền nhạt) · {state} (chữ, biểu tượng, chấm trạng thái) · {state}-muted · {state}-subtle.
  *
- * Contrast, light / dark, on the surface: text 17.4 / 16.0, subtle 6.7 / 6.9, muted 4.7 / 5.0.
+ * Độ tương phản trên bề mặt ở theme sáng / tối: text 17.4 / 16.0, subtle 6.7 / 6.9, muted 4.7 / 5.0.
  */
 :root,
 html[data-theme='light'] {
   color-scheme: light;
 
-  /* ── Backgrounds ── */
-  /* The window behind the work area; also the quiet second tone (Acme #fafafa). */
+  /* ── Màu nền ── */
+  /* Nền cửa sổ phía sau không gian làm việc. */
   --mira-bg: var(--mira-neutral-50);
-  /* The sheet, cards, bars, popovers. */
+  /* Bề mặt khung làm việc, thẻ, thanh điều khiển, popover. */
   --mira-bg-surface: var(--mira-neutral-0);
-  /* A second tone inside the sheet: table heads, side panels. */
+  /* Tông màu nền phụ: tiêu đề bảng, panel bên. */
   --mira-bg-subtle: var(--mira-neutral-25);
-  /* Fills that are not surfaces: chips, tracks, a user's chat bubble. */
+  /* Nền cho các phần tử nhỏ: nhãn tag, rãnh trượt, bong bóng tin nhắn. */
   --mira-bg-muted: var(--mira-neutral-100);
-  /* Row states are overlays, so they work on any background (Obsidian's modifier-hover). */
+  /* Lớp phủ tương tác khi rê chuột hoặc chọn, hoạt động trên mọi màu nền. */
   --mira-bg-hover: color-mix(in srgb, var(--mira-neutral-1000) 4%, transparent);
   --mira-bg-selected: color-mix(in srgb, var(--mira-neutral-1000) 6%, transparent);
   --mira-bg-inverted: var(--mira-neutral-900);
@@ -27,35 +27,35 @@ html[data-theme='light'] {
   --mira-bg-disabled: var(--mira-neutral-150);
   --mira-bg-backdrop: color-mix(in srgb, var(--mira-neutral-1000) 32%, transparent);
 
-  /* ── Text ── */
+  /* ── Màu chữ ── */
   --mira-text: var(--mira-neutral-900);
   --mira-text-emphasis: var(--mira-neutral-1000);
   --mira-text-subtle: var(--mira-neutral-600);
-  /* Meta, timestamps, counts: still readable (≥ 4.5:1). */
+  /* Thông tin phụ, thời gian, số đếm (đảm bảo độ tương phản ≥ 4.5:1). */
   --mira-text-muted: var(--mira-neutral-500);
-  /* Decoration only: separators drawn as text, shortcut hints. Never for text people must read. */
+  /* Chỉ dùng trang trí: ký tự phân cách, gợi ý phím tắt; không dùng cho nội dung cần đọc. */
   --mira-text-faint: var(--mira-neutral-400);
   --mira-text-placeholder: var(--mira-neutral-500);
   --mira-text-disabled: var(--mira-neutral-400);
   --mira-text-inverted: var(--mira-neutral-0);
-  /* Mira is greyscale for now (2026-10-08): a link is the strongest text and an underline. */
+  /* Màu liên kết văn bản dạng gạch chân nổi bật. */
   --mira-text-link: var(--mira-neutral-1000);
 
-  /* ── Borders ── */
+  /* ── Đường viền ── */
   --mira-border: var(--mira-neutral-200);
   --mira-border-subtle: var(--mira-neutral-150);
   --mira-border-strong: var(--mira-neutral-300);
   --mira-border-input: var(--mira-neutral-350);
 
-  /* ── Focus and selection ── */
-  /* 4.7:1 on white, above the 3:1 a focus mark needs. */
+  /* ── Tiêu điểm và vùng chọn ── */
+  /* Độ tương phản 4.7:1 trên nền trắng, đáp ứng chuẩn viền tiêu điểm. */
   --mira-ring: var(--mira-neutral-500);
   --mira-ring-error: var(--mira-red-500);
   --mira-selection: color-mix(in srgb, var(--mira-neutral-1000) 12%, transparent);
   --mira-text-selection: color-mix(in srgb, var(--mira-neutral-1000) 16%, transparent);
   --mira-code-inline: color-mix(in srgb, var(--mira-neutral-1000) 5%, transparent);
 
-  /* ── States ── */
+  /* ── Trạng thái ── */
   --mira-success-emphasis: var(--mira-green-700);
   --mira-success: var(--mira-green-600);
   --mira-success-muted: var(--mira-green-100);
@@ -107,7 +107,7 @@ html[data-theme='dark'] {
   --mira-border-strong: var(--mira-neutral-700);
   --mira-border-input: var(--mira-neutral-550);
 
-  /* 5.0:1 on the dark surface. */
+  /* Độ tương phản 5.0:1 trên nền tối. */
   --mira-ring: var(--mira-neutral-450);
   --mira-ring-error: var(--mira-red-300);
   --mira-selection: color-mix(in srgb, var(--mira-neutral-0) 14%, transparent);

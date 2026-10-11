@@ -3,17 +3,16 @@ import { useConnectionStore } from '../store/connectionStore'
 import type { OnboardingEvent, OnboardingState } from './onboardingMachine'
 
 /**
- * The driver of an account login (change `subscription-providers`): it talks to main while the panel in
- * `AccountFlow.tsx` shows the code.
+ * Điều phối quy trình đăng nhập tài khoản: giao tiếp với tiến trình chính trong khi bảng giao diện hiển thị mã xác nhận.
  */
 
-/** How often the renderer reads the login's state; main polls the provider on its own clock. */
+/** Tần suất renderer kiểm tra trạng thái đăng nhập; tiến trình chính thăm dò nhà cung cấp theo chu kỳ riêng. */
 export const POLL_MS = 2000
 
 /**
- * Drives a login through the machine: asks main for a code when the state is `starting`, then reads the
- * login's status every two seconds while it is `polling`. Leaving `polling` any other way (Hủy, closing)
- * cancels the login in main, so no token is stored after the person walked away.
+ * Quản lý vòng đời đăng nhập tài khoản: yêu cầu mã khi ở trạng thái `starting`,
+ * sau đó kiểm tra trạng thái mỗi 2 giây khi ở trạng thái `polling`.
+ * Rời khỏi `polling` (hủy, đóng) sẽ gửi yêu cầu hủy sang tiến trình chính.
  */
 export function useAccountLogin(
   state: OnboardingState,
@@ -74,7 +73,7 @@ export function useAccountLogin(
     }, POLL_MS)
     return () => {
       clearInterval(timer)
-      // Unmounted or moved on while still waiting: stop main from storing a token nobody wants now.
+      // Đã unmount hoặc chuyển màn hình khi đang chờ: yêu cầu hủy phiên để không lưu token thừa.
       if (!finished) void window.mira.ai.accounts.cancel(sessionId)
     }
   }, [sessionId, dispatch])

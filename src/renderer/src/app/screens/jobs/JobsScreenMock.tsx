@@ -1,7 +1,6 @@
 import type { JSX } from 'react'
-import { ArrowUpIcon } from '@solar-icons/react/linear/arrow-up'
-import { CloseCircleIcon } from '@solar-icons/react/linear/close-circle'
-import { PauseIcon } from '@solar-icons/react/linear/pause'
+import { ArrowUpIcon, CloseCircleIcon, PauseIcon } from '@renderer/components/ui/reicon'
+
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { Alert } from '../../../components/ui/Alert'
 import { Button } from '../../../components/ui/Button'
@@ -14,7 +13,7 @@ import { MOCK_WORKS, MockCover, type MockWork } from '../../../components/ui/moc
 
 type JobState = 'running' | 'error' | 'queued'
 
-/** Fixed sample data: what the queue across every work would hold. */
+/** Dữ liệu mẫu cố định: thông tin hàng đợi tác vụ trên toàn bộ tác phẩm. */
 const JOBS: {
   work: MockWork
   task: string
@@ -77,7 +76,7 @@ const JOBS: {
   }
 ]
 
-/** Bar heights of the speed chart, in percent of its height. */
+/** Chiều cao cột biểu đồ tốc độ (tính theo phần trăm chiều cao). */
 const SPEED = Array.from(
   { length: 60 },
   (_, i) => 18 + Math.round(52 * Math.abs(Math.sin(i / 6))) + (i % 7) * 3
@@ -86,9 +85,9 @@ const SPEED = Array.from(
 const HEAD = ['Tác phẩm và việc', 'Tiến độ', 'Tốc độ', 'Token', 'Chi phí', 'Còn lại', '']
 
 /**
- * Picture of the app-wide job queue (MOCK_FEATURES.jobsPage; Module 7 in
- * docs/modules/proposals/sessions-and-jobs.md): every translation, extraction and export of every
- * work, with speed, tokens, cost and errors. Nothing is read or run; every control is disabled.
+ * Giao diện mẫu của hàng đợi tác vụ toàn ứng dụng: theo dõi các tác vụ dịch thuật, trích xuất và xuất dữ liệu,
+ * đi kèm thông số tốc độ, token, chi phí và trạng thái lỗi.
+ * Hiện hiển thị giao diện minh họa.
  */
 export function JobsScreenMock(): JSX.Element {
   return (
@@ -227,7 +226,7 @@ export function JobsScreenMock(): JSX.Element {
         <div aria-hidden="true" className="flex h-28 items-end gap-3xs px-md py-sm">
           {SPEED.map((height, index) => (
             <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: a fixed picture, never reordered
+              // biome-ignore lint/suspicious/noArrayIndexKey: biểu đồ mẫu cố định, không thay đổi thứ tự
               key={index}
               className="flex-1 rounded-t-xs bg-line-strong"
               style={{ height: `${height}%` }}

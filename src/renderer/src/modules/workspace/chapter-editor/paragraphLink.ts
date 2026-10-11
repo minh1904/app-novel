@@ -13,19 +13,16 @@ import {
 } from '../../../../../shared/text/paragraphSpans'
 
 /**
- * What ties the source pane to the translation pane: the paragraph number (ADR-005, one non-blank line
- * is one paragraph). Nothing else matches the two texts, so when the translation splits or joins
- * paragraphs the link drifts; that is the price of not aligning rows, and the panes still work on
- * their own.
+ * Liên kết vị trí giữa khung bản gốc và khung bản dịch theo số thứ tự đoạn (mỗi dòng không rỗng là một đoạn).
  */
 
-/** Where a pane is: a paragraph and how far down it the top of the view sits, 0 to 1. */
+/** Vị trí tương đối của khung nhìn: chỉ số đoạn và tỷ lệ cuộn trong đoạn từ 0 đến 1. */
 export interface ParagraphAnchor {
   index: number
   fraction: number
 }
 
-// The text is immutable per version, so the spans are worked out once per version, not per scroll.
+// Văn bản không thay đổi theo từng phiên bản, cache spans theo đối tượng Text
 const spansCache = new WeakMap<Text, ParagraphSpan[]>()
 
 export function paragraphSpans(doc: Text): ParagraphSpan[] {
@@ -37,7 +34,7 @@ export function paragraphSpans(doc: Text): ParagraphSpan[] {
   return spans
 }
 
-/** The paragraph the caret sits in, or null on a blank line or in an empty text. */
+/** Chỉ số đoạn chứa con trỏ soạn thảo, hoặc null nếu ở dòng trống hoặc văn bản rỗng. */
 export function caretParagraph(state: EditorState): number | null {
   const head = state.selection.main.head
   if (state.doc.lineAt(head).text.trim() === '') return null
@@ -67,7 +64,7 @@ const linkedTheme = EditorView.baseTheme({
   '.cm-linked-paragraph': { backgroundColor: 'var(--mira-bg-selected)' }
 })
 
-/** Marks the paragraph the other pane's caret is in. */
+/** Đánh dấu đoạn tương ứng với con trỏ của khung bên cạnh. */
 export const paragraphLink = (): Extension => [linkedField, linkedTheme]
 
 export function linkParagraph(view: EditorView, index: number | null): void {
@@ -75,12 +72,12 @@ export function linkParagraph(view: EditorView, index: number | null): void {
   view.dispatch({ effects: setLinked.of(index) })
 }
 
-/** Height inside the document, from its top, that sits at the top of the visible pane. */
+/** Chiều cao từ đỉnh tài liệu đến mép trên của khung nhìn hiển thị. */
 function viewTop(view: EditorView): number {
   return view.scrollDOM.getBoundingClientRect().top - view.documentTop
 }
 
-/** The heights inside the document where paragraph `index` starts and where the next one starts. */
+/** Tọa độ y bắt đầu của đoạn hiện tại và đoạn tiếp theo trong tài liệu. */
 function paragraphBand(view: EditorView, spans: ParagraphSpan[], index: number): [number, number] {
   const top = view.lineBlockAt(spans[index].lineStart).top
   const next = spans[index + 1]
@@ -98,7 +95,7 @@ export function topAnchor(view: EditorView): ParagraphAnchor | null {
   return { index, fraction }
 }
 
-/** Scrolls so the top of the pane sits at `anchor`; past the last paragraph it stops at the end. */
+/** Cuộn để mép trên của khung nhìn khớp với neo đoạn; dừng ở cuối tài liệu nếu vượt quá. */
 export function scrollToAnchor(view: EditorView, anchor: ParagraphAnchor): void {
   const spans = paragraphSpans(view.state.doc)
   if (spans.length === 0) return

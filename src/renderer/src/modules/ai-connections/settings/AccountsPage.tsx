@@ -1,9 +1,12 @@
 import { useCallback, useReducer, useState, type JSX } from 'react'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
-import { TrashBinTrashIcon } from '@solar-icons/react/linear/trash-bin-trash'
-import { UserCircleIcon } from '@solar-icons/react/linear/user-circle'
+import {
+  CheckCircleIcon,
+  DangerCircleIcon,
+  RefreshIcon,
+  TrashBinTrashIcon,
+  UserCircleIcon
+} from '@renderer/components/ui/reicon'
+
 import {
   USAGE_WARN_BELOW,
   usageChip,
@@ -32,9 +35,8 @@ import {
 } from '../onboarding/onboardingMachine'
 
 /**
- * Cài đặt › Kết nối AI › Tài khoản (change `subscription-providers`, spec `subscription-login`): log in with
- * a ChatGPT or Copilot plan by device code, see who is logged in, log in again when a refresh was refused,
- * and disconnect. Claude is not a login here: it leads to the Anthropic key card.
+ * Cài đặt › Kết nối AI › Tài khoản: đăng nhập bằng gói ChatGPT hoặc Copilot qua mã thiết bị,
+ * xem thông tin tài khoản đã kết nối, đăng nhập lại khi phiên hết hạn, và ngắt kết nối.
  */
 
 const ACCOUNT_CARDS: ReadonlyArray<{ id: AccountProvider; flow: string }> = [
@@ -64,7 +66,7 @@ function formatReset(at: number | null): string {
   )
 }
 
-/** "Còn 8 % · đặt lại …", only below 20 %, in warning colours below 10 %. */
+/** Hiển thị phần trăm hạn mức còn lại và thời gian đặt lại khi dưới ngưỡng 20%. */
 export function UsageChip({ windows }: { windows: UsageWindowView[] }): JSX.Element | null {
   const chip = usageChip(windows)
   if (!chip) return null
@@ -85,7 +87,7 @@ export function UsageChip({ windows }: { windows: UsageWindowView[] }): JSX.Elem
   )
 }
 
-/** The chip of an account connection, for the model menu's group header; nothing for other connections. */
+/** Nhãn thông tin hạn mức tài khoản hiển thị trên tiêu đề nhóm của menu model. */
 export function AccountUsageChip({
   connection
 }: {
@@ -95,7 +97,7 @@ export function AccountUsageChip({
   return <UsageChip windows={windows} />
 }
 
-/** An account that is logged in: who, its limits, and the ways to log in again or disconnect. */
+/** Thẻ tài khoản đã kết nối: thông tin người dùng, hạn mức sử dụng, nút đăng nhập lại hoặc ngắt kết nối. */
 export function ConnectedCard({
   provider,
   connection,

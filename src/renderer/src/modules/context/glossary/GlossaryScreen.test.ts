@@ -7,7 +7,7 @@ const WORK_ID = '11111111-1111-4111-8111-111111111111'
 
 describe('GlossaryScreen component', () => {
   beforeEach(() => {
-    // Mock globalThis.window
+    // Giả lập đối tượng globalThis.window
     const mockMira = {
       chapters: {
         list: vi.fn().mockResolvedValue({

@@ -2,7 +2,7 @@ import type { JSX, Ref, TextareaHTMLAttributes } from 'react'
 import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 
-/** A multi-line field on the same frame as Input. */
+/** Trường nhập nhiều dòng (textarea) có kiểu dáng khung tương đồng với Input. */
 export function Textarea({
   className,
   ref,

@@ -1,8 +1,11 @@
 import type { JSX } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { BookBookmarkIcon } from '@solar-icons/react/linear/book-bookmark'
-import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
-import { UsersGroupRoundedIcon } from '@solar-icons/react/linear/users-group-rounded'
+import {
+  AddIcon,
+  BookBookmarkIcon,
+  PenNewSquareIcon,
+  UsersGroupRoundedIcon
+} from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { cn } from '../../../lib/cn'
 import { TabsList, TabsPanel, TabsRoot, TabsTab } from '../../../components/ui/Tabs'
@@ -10,7 +13,7 @@ import { GlossaryScreen } from '../../context/public'
 import { AddressingScreen } from '../../context/public'
 import { SOON_LABEL } from '../../../lib/mockFeatures'
 
-/** Fixed sample data: what the Context area would hold, not anything read from this work. */
+/** Dữ liệu mẫu cố định: hiển thị minh họa nội dung khu vực ngữ cảnh. */
 interface HonorificRow {
   from: string
   to: string
@@ -57,9 +60,8 @@ const TERMS: TermRow[] = [
 ]
 
 /**
- * The Context area: terminology, addressing and style voice. With a work, the first two are the real
- * glossary and addressing screens; Văn phong, and both tables without a work, are still pictures
- * whose controls are disabled. See delivery/backlog.md, `context-area`.
+ * Giao diện khu vực ngữ cảnh: thuật ngữ, xưng hô và văn phong. Khi có tác phẩm, hai phần đầu
+ * là màn hình thực tế của thuật ngữ và xưng hô; phần văn phong là giao diện mẫu tạm thời.
  */
 export function ContextAreaMock({ workId }: { workId?: string } = {}): JSX.Element {
   return (

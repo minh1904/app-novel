@@ -1,14 +1,12 @@
 import type { JSX } from 'react'
-import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
+import { AltArrowLeftIcon, AltArrowRightIcon } from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { Select } from '../../../components/ui/Select'
 import { PAGE_SIZES, pageCount, pageRange, pageWindow, type PageSize } from './chapterList'
 
 /**
- * Range, page buttons and page size under the chapter list. Every control is a real button. A list
- * that fits on one page keeps only the range: the buttons would have nowhere to go, and the size
- * only matters once the list is longer than the smallest page.
+ * Hiển thị khoảng mục, nút chuyển trang và lựa chọn số mục mỗi trang ở cuối danh sách.
  */
 export function ChapterPager({
   page,
@@ -20,12 +18,12 @@ export function ChapterPager({
 }: {
   page: number
   pageSize: number
-  /** Items in the current result (after filtering). */
+  /** Tổng số mục trong danh sách hiện tại (sau khi lọc). */
   total: number
   onPage(page: number): void
-  /** Leave out to hide the page-size choice, for lists with a fixed page size. */
+  /** Để trống nếu muốn ẩn tùy chọn kích thước trang. */
   onPageSize?: (size: PageSize) => void
-  /** What is being paged, for the labels: "chương", "segment". */
+  /** Tên đơn vị mục đang phân trang, ví dụ: "chương", "segment". */
   unit?: string
 }): JSX.Element {
   const pages = pageCount(total, pageSize)

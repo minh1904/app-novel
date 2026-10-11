@@ -95,7 +95,7 @@ describe('undo and redo bring back the IDs', () => {
     const undone = step(split, undo)
     expect(undone.doc.toString()).toBe('Trời mưa to.')
     expect(segs(undone)).toEqual([['s0', 'Trời mưa to.']])
-    // One step was enough: there is nothing left to undo.
+    // Một bước hoàn tác là đủ: không còn thao tác nào để hoàn tác
     expect(step(undone, undo)).toBe(undone)
   })
 
@@ -113,7 +113,7 @@ describe('undo and redo bring back the IDs', () => {
     })
     const undone = step(saved, undo)
     expect(segs(undone)).toEqual(segs(before))
-    // Redo gets the segments as they were when undo started, with the ID the save gave.
+    // Redo nhận lại các segment cùng với ID được cấp khi lưu
     expect(segs(step(undone, redo))).toEqual(segs(saved))
   })
 })

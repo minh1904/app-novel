@@ -2,12 +2,11 @@ import type { JSX, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
 /**
- * One setting (Obsidian's setting item): what it is and what it does on the left, the control on the
- * right. The row is a container query, so in a narrow pane the control drops under the description.
- * `wide` keeps the control on the title line and gives `below` the full width (a list, an editor).
+ * Hàng cài đặt: tên và mô tả ở bên trái, phần tử điều khiển ở bên phải. Sử dụng truy vấn khung
+ * chứa (container query) để tự động đẩy phần tử điều khiển xuống dưới mô tả khi khung hiển thị hẹp.
+ * `wide` giữ phần tử điều khiển cùng hàng tiêu đề và dành toàn bộ chiều rộng cho phần `below`.
  *
- * The hint is part of the row, not a tooltip: what a field does is what a person reads before touching
- * it, and a tooltip is not there for keyboard or touch.
+ * Gợi ý hiển thị trực tiếp trên hàng để người dùng dễ đọc trước khi tương tác.
  */
 export function SettingRow({
   title,
@@ -22,7 +21,7 @@ export function SettingRow({
   children?: ReactNode
   below?: ReactNode
   wide?: boolean
-  /** The anchor a deep link scrolls to and highlights. */
+  /** Điểm neo định danh (ID) để liên kết sâu có thể cuộn tới và làm nổi bật. */
   id?: string
 }): JSX.Element {
   return (
@@ -39,8 +38,8 @@ export function SettingRow({
           <span className="text-label-sm text-default">{title}</span>
           {hint && <span className="text-body-xs text-muted">{hint}</span>}
         </div>
-        {/* The control box fills its column (no justify-self-end): a field takes its width from its
-            frame, never from its text, so a box sized to its content would shrink a field to nothing. */}
+        {/* Khung điều khiển lấp đầy cột của nó: ô nhập lấy độ rộng từ khung bao ngoài thay vì
+            độ dài văn bản bên trong, tránh làm ô nhập bị co lại quá mức. */}
         {children && (
           <div className="flex min-w-0 flex-wrap items-center gap-xs @2xl:justify-end">
             {children}
@@ -52,7 +51,7 @@ export function SettingRow({
   )
 }
 
-/** A heading over a group of rows, with room for a count or an action. */
+/** Tiêu đề phần cho một nhóm hàng, có chỗ hiển thị số lượng hoặc nút hành động phụ. */
 export function SectionHeading({
   icon,
   children,
@@ -71,7 +70,7 @@ export function SectionHeading({
   )
 }
 
-/** A group of setting rows: a heading, then the rows. Space parts them, not hairlines (Hermes' ListRow). */
+/** Nhóm các hàng cài đặt: gồm tiêu đề và các hàng nội dung, phân cách bằng khoảng trắng. */
 export function SettingsSection({
   title,
   icon,

@@ -20,12 +20,10 @@ import {
 } from './modelSettingsForm'
 
 /**
- * Hộp thoại **Nâng cao**: nhiệt độ và Top P (thanh trượt), header thêm và `extra_body` (JSON). Mỗi tham số
- * có một công tắc; tắt thì **không gửi** nhưng giá trị được giữ, để bật lại là thấy con số cũ. Cấu trúc
- * theo LinguaGacha.
+ * Hộp thoại **Nâng cao**: điều chỉnh nhiệt độ và Top P (thanh trượt), header thêm và `extra_body` (JSON).
+ * Mỗi tham số có công tắc riêng; khi tắt sẽ không gửi nhưng giá trị được lưu giữ để sử dụng lại khi bật.
  *
- * Công tắc và thanh trượt lưu ngay (thanh trượt lưu khi buông). Ô JSON lưu khi rời ô và chỉ khi nó hợp lệ:
- * JSON hỏng, hay một trường bị cấm như `stream`, hiện lý do ngay dưới ô và không được lưu.
+ * Công tắc và thanh trượt lưu ngay khi thao tác. Ô JSON lưu khi rời ô và chỉ lưu khi cú pháp hợp lệ.
  */
 
 function SliderSetting({
@@ -143,7 +141,7 @@ function JsonSetting({
           setError(undefined)
         }}
         onBlur={() => {
-          // Leaving the box with what is already saved is not a write.
+          // Rời ô khi giá trị trùng với nội dung đã lưu thì không thực hiện ghi.
           if (text.trim() === saved.text.trim()) {
             setError(undefined)
             return

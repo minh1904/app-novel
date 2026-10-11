@@ -3,7 +3,7 @@ import type {
   ProposalPartView
 } from '../../../../../shared/contracts/aiProposals'
 
-/** What a proposal's status is called, in the queue and under a chat turn alike. */
+/** Tên hiển thị tiếng Việt của các trạng thái đề xuất, dùng chung cho hàng chờ và thẻ đề xuất. */
 export const PART_STATUS_LABEL: Record<ProposalPartStatus, string> = {
   pending: 'Chờ duyệt',
   applied: 'Đã áp dụng',
@@ -15,10 +15,10 @@ export const PART_STATUS_LABEL: Record<ProposalPartStatus, string> = {
 
 const OPEN_STATUSES: ProposalPartStatus[] = ['pending', 'conflict', 'stale', 'needs-placement']
 
-/** A part still waiting for a decision. */
+/** Kiểm tra một phần đề xuất có đang ở trạng thái chờ duyệt hay không. */
 export const isOpenPart = (part: ProposalPartView): boolean => OPEN_STATUSES.includes(part.status)
 
-/** One status for a proposal of several parts: the first still open, else what they all became. */
+/** Xác định trạng thái tổng thể cho đề xuất gồm nhiều phần: lấy trạng thái mở đầu tiên, hoặc trạng thái chung khi tất cả đã đóng. */
 export function proposalStatus(parts: ProposalPartView[]): ProposalPartStatus | null {
   if (parts.length === 0) return null
   const open = parts.find(isOpenPart)

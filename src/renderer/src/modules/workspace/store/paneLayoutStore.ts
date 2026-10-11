@@ -2,15 +2,13 @@ import { create } from 'zustand'
 import { registerStoreReset } from '../../../lib/testing/resetStores'
 
 /**
- * How the translator arranged the chapter panes: which of them are folded away, how wide the
- * source is,
- * and whether the two panes scroll together. One arrangement for every chapter and work, kept on this
- * device, because it follows the translator's screen and habits rather than the text.
+ * Trạng thái bố cục các khung soạn thảo chương: thu gọn khung nguồn/đích, tỷ lệ độ rộng
+ * và trạng thái cuộn đồng bộ. Lưu trữ theo thiết bị để phù hợp với thói quen và kích thước màn hình.
  */
 export interface PaneLayout {
   sourceCollapsed: boolean
   targetCollapsed: boolean
-  /** Share of the editors' width the source pane takes when open, 0.2 to 0.8. */
+  /** Tỷ lệ chiều rộng của khung bản gốc (từ 0.2 đến 0.8). */
   sourceRatio: number
   syncScroll: boolean
 }
@@ -35,7 +33,7 @@ const DEFAULTS: PaneLayout = {
 export const clampRatio = (ratio: number): number =>
   Math.min(MAX_SOURCE_RATIO, Math.max(MIN_SOURCE_RATIO, ratio))
 
-/** A per-device convenience: storage that throws, is empty or holds junk means the defaults. */
+/** Đọc cấu hình bố cục từ localStorage; nếu lỗi hoặc chưa có dữ liệu thì dùng giá trị mặc định. */
 function read(): PaneLayout {
   try {
     const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(KEY)
@@ -66,7 +64,7 @@ function write(layout: PaneLayout): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(layout))
   } catch {
-    // Not saved: the arrangement still holds until the app closes.
+    // Bỏ qua lỗi ghi localStorage; bố cục vẫn duy trì trong phiên làm việc hiện tại.
   }
 }
 

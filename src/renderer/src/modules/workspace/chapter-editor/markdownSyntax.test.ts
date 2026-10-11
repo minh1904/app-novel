@@ -5,9 +5,8 @@ import { describe, expect, it } from 'vitest'
 import { markdownSupport, scanMarkdown, type MarkdownScan } from './markdownSyntax'
 
 /**
- * `scanMarkdown` is pure, so everything the parser decides can be tested here without a DOM. These
- * cover the cases the old line-by-line regexes got wrong — each of those made Live Preview hide
- * characters that were not delimiters — plus the cases it already handled.
+ * `scanMarkdown` là hàm thuần túy, do đó toàn bộ kết quả phân tích cú pháp có thể được kiểm thử
+ * độc lập mà không cần DOM.
  */
 
 function parse(text: string): { state: EditorState; scan: MarkdownScan } {
@@ -96,7 +95,7 @@ describe('what is not emphasis', () => {
   })
 
   it('ignores an escaped asterisk', () => {
-    // Built from the character code so the backslash survives however this file is written out.
+    // Khởi tạo từ mã ký tự để đảm bảo ký tự gạch chéo ngược không bị ảnh hưởng bởi bộ gõ hoặc mã hóa file.
     const backslash = String.fromCharCode(92)
     expect(spans('use ' + backslash + '*x' + backslash + '* here')).toEqual([])
   })
@@ -120,8 +119,8 @@ describe('what is not emphasis', () => {
   })
 
   it('reports a half-typed **chữ* as the italic *chữ*, with a stray * before it', () => {
-    // The caret sits right after the closing `*` while this is being typed, so Live Preview keeps
-    // the delimiters visible; the parser is simply honest about what is complete.
+    // Khi đang gõ dở, con trỏ nằm ngay sau dấu `*` đóng, Live Preview giữ hiển thị các ký tự phân cách;
+    // bộ phân tích phản ánh chính xác phần cú pháp đã hoàn chỉnh.
     expect(spans('**chữ*')).toEqual([{ kind: 'italic', text: '*chữ*', inner: 'chữ' }])
   })
 })

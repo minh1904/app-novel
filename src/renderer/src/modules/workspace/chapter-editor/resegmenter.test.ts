@@ -4,7 +4,7 @@ import { segment } from '../../../../../shared/segmentation/segmenter'
 import { createEditorState, segmentsField } from './editorState'
 import { IdleResegmenter, afterComposition, resegmentNow, type ViewLike } from './resegmenter'
 
-/** A view with no browser behind it, which records every transaction it is given. */
+/** View giả lập không cần trình duyệt thực tế, ghi lại mọi transaction được gửi đến. */
 class FakeView implements ViewLike {
   state: EditorState
   composing = false

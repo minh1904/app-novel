@@ -1,7 +1,10 @@
 import { useMemo, useRef, useState, type JSX } from 'react'
-import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
-import { ClipboardTextIcon } from '@solar-icons/react/linear/clipboard-text'
-import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
+import {
+  AltArrowLeftIcon,
+  ClipboardTextIcon,
+  DocumentAddIcon
+} from '@renderer/components/ui/reicon'
+
 import type { WorkSummary } from '../../../../../shared/contracts/library'
 import type { TextSide } from '../../../../../shared/contracts/text'
 import { TopBarTitle } from '../../../components/ui/TopBarActions'
@@ -27,19 +30,18 @@ export interface ChapterScreenProps {
   workId: string
   chapterId: string
   onBackToWork(): void
-  /** Called with the work after the chapter changed, so the library list follows. */
+  /** Gọi khi tác phẩm thay đổi để đồng bộ danh sách thư viện. */
   onWorkChanged(summary: WorkSummary): void
   /** Nơi khai kết nối AI; hộp thoại "Dịch bằng AI" dẫn tới đây khi chưa có kết nối nào. */
   onOpenSettings(): void
-  /** True while the sidebar is hidden to give the editor room. */
+  /** Trạng thái ẩn thanh bên để mở rộng không gian soạn thảo. */
   focused: boolean
   onToggleFocus(): void
 }
 
 /**
- * One chapter. Without a source it offers the two ways to bring one in; with one it is the
- * full-text editor, source and translation side by side. Keyed by chapter in the app, so moving to
- * another chapter always starts clean.
+ * Màn hình làm việc của một chương: khi chưa có bản gốc thì hiển thị giao diện nhập văn bản,
+ * khi đã có bản gốc thì mở trình soạn thảo song ngữ song song.
  */
 export function ChapterScreen({
   workId,
@@ -159,7 +161,7 @@ export function ChapterScreen({
     )
   }
 
-  /** Keeps the chapter inside the same frame as a chapter that has a source, so only the middle changes. */
+  // Giữ nguyên khung giao diện đồng nhất với màn hình đã có bản gốc.
   return (
     <div className="flex h-full min-h-0 flex-col">
       <TopBarTitle onBack={onBackToWork} backLabel={`Về tác phẩm: ${work.title}`} size="sm">
@@ -181,7 +183,7 @@ export function ChapterScreen({
 
       {fileInput}
 
-      {/* Two ways in, side by side: each says what it is for, so the first time is not a guess. */}
+      {/* Hai phương thức nạp bản gốc: dán trực tiếp hoặc tải tệp lên. */}
       <div className="@container flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6">
         <div className="text-center">
           <p className="text-body-sm font-semibold">Chương này chưa có bản gốc</p>

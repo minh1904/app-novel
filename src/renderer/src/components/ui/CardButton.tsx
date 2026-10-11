@@ -4,8 +4,8 @@ import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 
 /**
- * A card the whole of which opens something (a work in the library grid): the bordered surface of Card,
- * a stronger border on hover, and the focus mark. Put no other control inside it.
+ * Thẻ có thể nhấp toàn bộ để mở nội dung (như một tác phẩm trong lưới thư viện): giao diện viền
+ * như Card, viền đậm hơn khi hover và có viền focus. Không đặt control tương tác khác bên trong.
  */
 export function CardButton({
   onClick,

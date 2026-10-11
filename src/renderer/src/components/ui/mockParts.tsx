@@ -2,11 +2,11 @@ import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
 
 /**
- * Pieces shared by the pictures of features that do not exist yet (MOCK_FEATURES). Nothing here reads
- * a work or calls the main process: the sample works are fixed text.
+ * Các thành phần mẫu dùng cho giao diện minh họa tính năng chưa hoàn thiện. Dữ liệu là văn bản
+ * cố định, không truy vấn tác phẩm hay gọi tiến trình chính.
  */
 
-/** A sample work: the first character of its source title stands in for a cover, as WorkCover does. */
+/** Dữ liệu tác phẩm mẫu: ký tự đầu tiên của tiêu đề gốc được dùng làm ảnh bìa đại diện. */
 export interface MockWork {
   char: string
   lang: 'zh' | 'ja'

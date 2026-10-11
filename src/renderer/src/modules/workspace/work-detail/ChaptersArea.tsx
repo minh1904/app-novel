@@ -7,11 +7,14 @@ import {
   type JSX,
   type KeyboardEvent
 } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { DocumentTextIcon } from '@solar-icons/react/linear/document-text'
-import { ImportIcon } from '@solar-icons/react/linear/import'
-import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
-import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
+import {
+  AddIcon,
+  DocumentTextIcon,
+  ImportIcon,
+  TrashBinMinimalisticIcon,
+  UploadMinimalisticIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import { Button } from '../../../components/ui/Button'
 import { Checkbox } from '../../../components/ui/Checkbox'
@@ -40,11 +43,11 @@ const HIGHLIGHT_MS = 2500
 
 interface Highlight {
   id: string
-  /** Also move keyboard focus to the chapter's name (after a move or a rename). */
+  /** Đồng thời chuyển tiêu điểm bàn phím tới tên chương (sau khi di chuyển hoặc đổi tên). */
   focus: boolean
 }
 
-/** The Chapters area: add, rename, reorder and delete chapters, find one, and open it. */
+/** Khu vực Chương: thêm, đổi tên, sắp xếp lại và xóa chương, tìm kiếm và mở chương. */
 export function ChaptersArea({
   workId,
   onWork,
@@ -68,15 +71,15 @@ export function ChaptersArea({
   const [importOpen, setImportOpen] = useState(false)
   const [highlight, setHighlight] = useState<Highlight | null>(null)
   const [announcement, setAnnouncement] = useState('')
-  // Picked chapters, kept across pages and filters; the anchor is where a Shift-click range starts.
+  // Các chương được chọn, giữ lại qua các trang và bộ lọc; anchor là điểm bắt đầu khi chọn bằng Shift
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set())
-  /** A bulk delete is running: the selection bar waits, so the same chapters are not deleted twice. */
+  /** Đang thực hiện xóa hàng loạt: thanh chọn chờ để tránh xóa trùng lặp. */
   const [bulkBusy, setBulkBusy] = useState(false)
   const anchor = useRef<string | null>(null)
   const [deletingMany, setDeletingMany] = useState<ChapterItem[]>([])
   const listRef = useRef<HTMLUListElement>(null)
 
-  // The header's "Thêm chương" asks this area to open the add row (derived during render, no effect).
+  // Tín hiệu "Thêm chương" từ phần đầu yêu cầu mở hàng nhập chương mới
   if (addChapterSignal !== seenSignal) {
     setSeenSignal(addChapterSignal)
     setAdding(true)
@@ -84,17 +87,17 @@ export function ChaptersArea({
   }
 
   const parsed = parseQuery(query)
-  // Typing stays responsive on thousands of chapters: the filter follows a beat behind the input.
+  // Giữ phản hồi mượt mà khi gõ với hàng nghìn chương bằng useDeferredValue
   const filterText = useDeferredValue(parsed.kind === 'filter' ? parsed.text : '')
   const filtered = useMemo(() => filterChapters(all, filterText), [all, filterText])
   const translated = useMemo(
     () => all.filter((chapter) => chapterState(chapter) === 'translated').length,
     [all]
   )
-  // Deleted chapters drop out of the selection without an effect: the selection is read through the list.
+  // Các chương bị xóa sẽ tự động bị loại khỏi danh sách chọn
   const selected = useMemo(() => all.filter((chapter) => picked.has(chapter.id)), [all, picked])
   const selectedIds = useMemo(() => new Set(selected.map((chapter) => chapter.id)), [selected])
-  // The rows' actions are memoised; they read the current filter order through this ref.
+  // Lưu danh sách đã lọc vào ref để các hàm hành động ghi nhớ đọc được thứ tự hiện tại
   const filteredRef = useRef(filtered)
   filteredRef.current = filtered
   const currentPage = clampPage(page, filtered.length, pageSize)
@@ -103,7 +106,7 @@ export function ChaptersArea({
     [filtered, currentPage, pageSize]
   )
 
-  // Scroll the highlighted chapter into view, move focus to it when asked, then let the mark fade.
+  // Cuộn chương được đánh dấu vào tầm nhìn, chuyển tiêu điểm nếu cần, sau đó ẩn vệt đánh dấu
   useEffect(() => {
     if (!highlight) return
     const row = listRef.current?.querySelector<HTMLElement>(
@@ -119,7 +122,7 @@ export function ChaptersArea({
     id === null ? null : (all.find((chapter) => chapter.id === id) ?? null)
 
   const showPositionOf = (number: number, id: string, focus: boolean): void => {
-    // The new place may be hidden by the filter, so clear it, then open the page that holds it.
+    // Vị trí mới có thể bị ẩn bởi bộ lọc, nên xóa bộ lọc và mở trang chứa chương đó
     setQuery('')
     setSearchError(null)
     setPage(pageOfPosition(number, pageSize))
@@ -444,7 +447,7 @@ export function ChaptersArea({
         onDelete={(doomed) => {
           setBulkBusy(true)
           void (async () => {
-            // One at a time: each delete renumbers the rest, and the first failure stops the run.
+            // Xóa từng chương một: mỗi lần xóa sẽ đánh lại số các chương còn lại, dừng khi gặp lỗi
             let deleted = 0
             let failure: string | null = null
             for (const chapter of doomed) {
@@ -455,7 +458,7 @@ export function ChaptersArea({
               }
               deleted += 1
             }
-            // What failed and what came after it stays picked, so it can be retried.
+            // Những chương chưa xóa được hoặc sau đó sẽ giữ trạng thái chọn để thử lại
             setPicked(new Set(doomed.slice(deleted).map((chapter) => chapter.id)))
             anchor.current = null
             setBulkBusy(false)
@@ -478,7 +481,7 @@ export function ChaptersArea({
   )
 }
 
-/** One-line input at the top of the list. Enter adds and stays open for the next; Escape closes. */
+/** Ô nhập một dòng ở đầu danh sách: Enter để thêm chương mới, Escape để đóng. */
 function AddChapterRow({
   onAdd,
   onClose
@@ -530,7 +533,7 @@ function AddChapterRow({
   )
 }
 
-/** How many chapters have a translation, as a count and a thin bar; the count says it for screen readers. */
+/** Hiển thị tiến độ dịch các chương dạng số lượng và thanh tiến trình mỏng. */
 function TranslatedProgress({ done, total }: { done: number; total: number }): JSX.Element {
   return (
     <span className="flex items-center gap-2 text-body-xs text-subtle tabular-nums">
@@ -545,7 +548,7 @@ function TranslatedProgress({ done, total }: { done: number; total: number }): J
   )
 }
 
-/** Ticks or unticks every chapter on the page; shows a dash when only some of them are ticked. */
+/** Chọn hoặc bỏ chọn toàn bộ chương trên trang hiện tại. */
 function PageCheckbox({
   visible,
   selectedIds,
@@ -574,8 +577,7 @@ function PageCheckbox({
 }
 
 /**
- * What can be done to the picked chapters at once. Sits under the list and stays in view while the
- * list scrolls, so the count is always on screen once something is ticked.
+ * Thanh thao tác hàng loạt cho các chương được chọn, nằm dưới danh sách.
  */
 function SelectionBar({
   count,
@@ -585,7 +587,7 @@ function SelectionBar({
   onDelete
 }: {
   count: number
-  /** A bulk delete is running. */
+  /** Đang trong tiến trình xóa hàng loạt. */
   busy: boolean
   onClear(): void
   onExport(): void

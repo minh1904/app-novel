@@ -6,9 +6,7 @@ import {
 import { fail, ok, type Result } from '../../../../../shared/contracts/result'
 
 /**
- * Turns a pasted or dropped file into the data URL that gets stored as an embedded image. Mirrors
- * `coverImage.ts`: decoding happens here because Chromium reads more formats than the main process
- * can; the main process re-checks whatever arrives by its actual bytes, not by this file's say-so.
+ * Chuyển tệp ảnh kéo thả hoặc dán thành Data URL để lưu trữ dưới dạng ảnh đính kèm.
  */
 
 const MAX_SOURCE_BYTES = 30 * 1024 * 1024
@@ -38,7 +36,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   })
 }
 
-/** PNG/GIF ignore the quality argument (lossless); only JPEG and WebP shrink by quality. */
+/** PNG/GIF giữ nguyên không nén giảm chất lượng; JPEG và WebP nén theo mức chất lượng. */
 function outputMimeFor(sourceMime: string): string {
   return sourceMime === 'image/jpeg' || sourceMime === 'image/webp' ? sourceMime : 'image/png'
 }
@@ -64,7 +62,7 @@ export interface PreparedImage {
   height: number
 }
 
-/** Resizes to fit the storage limits and re-encodes only when the original does not already fit. */
+/** Thu nhỏ kích thước ảnh cho phù hợp giới hạn lưu trữ và mã hóa lại nếu cần. */
 export async function fileToImageDataUrl(file: File): Promise<PreparedImage> {
   if (!file.type.startsWith('image/')) {
     throw new ImageEmbedError('Hãy chọn một tệp ảnh (PNG, JPEG, GIF, WebP).')
@@ -110,8 +108,8 @@ export async function fileToImageDataUrl(file: File): Promise<PreparedImage> {
 }
 
 /**
- * Compresses, uploads and returns the Markdown embed syntax to insert (`![[id]]`), or why it could
- * not be. The caller inserts the text at the caret or drop position; it never touches storage itself.
+ * Nén, lưu trữ và trả về cú pháp nhúng Markdown (`![[id]]`), hoặc thông báo lỗi nếu thất bại.
+ * Hàm gọi sẽ chèn cú pháp này vào vị trí con trỏ hoặc vị trí thả chuột.
  */
 export async function insertImageEmbed(workId: string, file: File): Promise<Result<string>> {
   let prepared: PreparedImage

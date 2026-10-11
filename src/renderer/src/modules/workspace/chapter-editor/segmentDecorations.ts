@@ -10,16 +10,10 @@ import type { Seg } from '../../../../../shared/segmentation/segmentMap'
 import { savedField, segmentsField } from './editorState'
 
 /**
- * How segments show in the text. Only the lines on screen are looked at, and nothing is ever
- * inserted into a line (no widgets): an element next to the caret is a known way to disturb an
- * input method, so segments are marked by background classes on the text only — no line-number
- * gutter, to keep the pane for prose rather than code.
- *
- * The background shows only under the pointer. Tinting every other segment all the time read as
- * stray highlighting across the whole chapter, with nothing on screen to say what it meant.
+ * Hiển thị các segment trong văn bản thông qua lớp đánh dấu nền khi di chuột.
  */
 
-/** Index of the first segment that starts at or after `offset`, or segs.length. */
+/** Chỉ số của segment đầu tiên bắt đầu tại hoặc sau vị trí `offset`. */
 export function firstStartingAt(segs: readonly Seg[], offset: number): number {
   let low = 0
   let high = segs.length
@@ -31,13 +25,13 @@ export function firstStartingAt(segs: readonly Seg[], offset: number): number {
   return low
 }
 
-/** A segment is edited when it is new or its text is not what the store holds for its ID. */
+/** Segment được xem là đã sửa nếu là segment mới hoặc nội dung khác với bản lưu. */
 export function isEdited(state: EditorState, seg: Seg): boolean {
   if (seg.id === null) return true
   return state.field(savedField).texts.get(seg.id) !== state.doc.sliceString(seg.from, seg.to)
 }
 
-/** Whether a change could have moved segment boundaries or edited-state, not just scrolled. */
+/** Kiểm tra xem thay đổi có ảnh hưởng đến ranh giới hoặc trạng thái đã sửa của segment hay không. */
 const segmentsChanged = (update: ViewUpdate): boolean =>
   update.docChanged ||
   update.startState.field(segmentsField) !== update.state.field(segmentsField) ||
@@ -54,7 +48,7 @@ function build(view: EditorView): DecorationSet {
   let covered = 0
   for (const { from, to } of view.visibleRanges) {
     let index = firstStartingAt(segs, Math.max(from, covered))
-    // A segment that begins before the first visible position but runs into it.
+    // Segment bắt đầu trước khoảng hiển thị nhưng kéo dài vào trong khoảng
     if (index > 0 && segs[index - 1].to > Math.max(from, covered)) index--
     for (; index < segs.length && segs[index].from < to; index++) {
       const seg = segs[index]
@@ -77,7 +71,7 @@ const segmentMarks = ViewPlugin.fromClass(
     }
 
     update(update: ViewUpdate): void {
-      // While an input method composes, leave the marks where they are (only moved with the text).
+      // Khi bộ gõ IME đang soạn thảo, giữ nguyên vị trí đánh dấu và chỉ dịch chuyển theo văn bản
       if (update.view.composing || update.view.compositionStarted) {
         this.decorations = this.decorations.map(update.changes)
         return

@@ -2,7 +2,7 @@ import type { JSX } from 'react'
 import { Button } from './Button'
 import { Dialog } from './Dialog'
 
-/** What a confirm asks: the question, what happens, and the word on the button that does it. */
+/** Dữ liệu yêu cầu xác nhận: câu hỏi, mô tả kết quả và nhãn nút bấm thực hiện hành động. */
 export interface ConfirmRequest {
   title: string
   description?: string
@@ -11,8 +11,8 @@ export interface ConfirmRequest {
 }
 
 /**
- * A question before something that cannot be undone. Keeping is the quiet choice; the action is the danger
- * button, named for what it does ("Xóa", "Ngắt"), never "OK". `request` null keeps it closed.
+ * Hộp thoại xác nhận trước thao tác không thể hoàn tác. Nút hủy là lựa chọn an toàn; nút hành
+ * động là nút nguy hiểm (danger) với nhãn cụ thể ("Xóa", "Ngắt"). Giá trị `request` là null khi đóng.
  */
 export function ConfirmDialog({
   request,

@@ -267,8 +267,9 @@ vai trò trong một control. Màn feature chỉ dùng tên semantic như `bg-su
 - Control 24/32/40 px lần lượt dùng radius 4/6/8 px. Card dùng 12 px; dialog dùng 16 px.
 - Phần tử nằm trong phần tử khác dùng radius nhỏ hơn theo khoảng cách inset; tránh nhiều đường cong cạnh
   nhau không đồng tâm.
-- Icon dùng thang 12/14/16/18/24 px. Icon tương tác phải nằm trong hit target của component, không tự
-  quyết định kích thước vùng bấm.
+- Icon dùng Reicon Outline với nét mặc định 1,5 px và thang 12/14/16/18/24 px. Chỉ dùng Filled để biểu
+  thị trạng thái đang chọn hoặc đã đánh dấu. Icon tương tác phải nằm trong hit target của component,
+  không tự quyết định kích thước vùng bấm.
 
 ## Components
 

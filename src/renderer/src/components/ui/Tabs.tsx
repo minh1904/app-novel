@@ -4,9 +4,9 @@ import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 
 /*
- * Tabs in two styles:
- *   line  a row of labels over a hairline, the open one underlined (sections of a screen)
- *   pill  a muted track with the open tab lifted onto the surface (a few views of one list, in a bar)
+ * Tab chuyển đổi với hai kiểu dáng:
+ *   line  dãy nhãn phía trên đường kẻ mảnh, tab đang mở có đường gạch chân (phân chia khu vực trên màn hình)
+ *   pill  thanh rãnh nền mờ với tab đang mở nổi lên trên bề mặt (chuyển đổi chế độ xem trong thanh công cụ)
  */
 export type TabsVariant = 'line' | 'pill'
 
@@ -28,9 +28,8 @@ export function TabsList({
       className={cn(
         'inline-flex items-center',
         variant === 'line'
-          ? // The hairline is drawn inside the list (::before, under the tabs) rather than as a border the
-            // tabs overlap with a negative margin: that 1px overhang made a scrolling tab bar scroll
-            // vertically too.
+          ? // Đường kẻ mảnh được vẽ bên trong danh sách (::before, dưới các tab) thay vì làm viền mà
+            // các tab đè lên bằng lề âm (negative margin), tránh việc thanh tab cuộn bị cuộn dọc.
             'relative gap-md before:pointer-events-none before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-line'
           : 'h-8 gap-3xs rounded-sm bg-muted p-3xs',
         className

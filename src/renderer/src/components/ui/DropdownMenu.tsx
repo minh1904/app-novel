@@ -1,17 +1,18 @@
 import type { JSX, ReactNode } from 'react'
+import { CheckIcon } from '@renderer/components/ui/reicon'
 import { Menu as BaseMenu } from '@base-ui/react/menu'
-import { CheckIcon } from '@solar-icons/react/linear/check'
+
 import { cn } from '../../lib/cn'
 
-/** The floating surface every menu and select list sits on. */
+/** Bề mặt nổi (floating surface) dùng chung cho các menu và danh sách chọn. */
 export const menuSurfaceClass =
   'rounded-md border border-default bg-surface p-2xs text-body-sm text-default shadow-sm outline-none transition-[opacity,scale] duration-(--mira-duration-base) ease-enter data-ending-style:scale-98 data-ending-style:opacity-0 data-starting-style:scale-98 data-starting-style:opacity-0'
 
-/** One row of a menu or a select list: 32px, the selection is a soft overlay. */
+/** Một hàng trong menu hoặc danh sách chọn: chiều cao 32px, hiển thị hiệu ứng hover mềm mại. */
 export const menuItemClass =
   'flex h-8 cursor-default items-center gap-xs rounded-sm px-xs outline-none select-none data-disabled:text-disabled data-highlighted:bg-hover'
 
-/** Menus open from whatever layer shows them, dialogs included, so they sit on the dropdown rung. */
+/** Lớp z-index định vị menu để luôn hiển thị phía trên các lớp giao diện khác bao gồm cả hộp thoại. */
 const positionerClass = 'z-(--mira-z-dropdown)'
 
 export function MenuRoot(props: BaseMenu.Root.Props): JSX.Element {
@@ -54,7 +55,7 @@ export function MenuItem({
   )
 }
 
-/** A small heading over a group of rows. */
+/** Tiêu đề nhỏ phía trên một nhóm hàng. */
 export function MenuLabel({ children }: { children: ReactNode }): JSX.Element {
   return <div className="px-xs pt-xs pb-2xs text-label-xs text-muted">{children}</div>
 }
@@ -63,7 +64,7 @@ export function MenuSeparator(): JSX.Element {
   return <BaseMenu.Separator className="-mx-2xs my-2xs h-px bg-(--mira-border)" />
 }
 
-/** A menu inside a menu: `MenuSubmenuTrigger` is the row that opens it, `MenuSubmenuPopup` is what opens. */
+/** Menu con lồng bên trong menu: `MenuSubmenuTrigger` là hàng kích hoạt, `MenuSubmenuPopup` là menu mở ra. */
 export function MenuSubmenu(props: BaseMenu.SubmenuRoot.Props): JSX.Element {
   return <BaseMenu.SubmenuRoot {...props} />
 }
@@ -94,7 +95,7 @@ export function MenuRadioGroup(props: BaseMenu.RadioGroup.Props): JSX.Element {
   return <BaseMenu.RadioGroup {...props} />
 }
 
-/** A choice among several, marked with a check. The check is the only thing that says which is chosen. */
+/** Tùy chọn trong nhóm radio menu, đánh dấu bằng biểu tượng dấu tích khi được chọn. */
 export function MenuRadioItem({
   className,
   children,

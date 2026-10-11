@@ -1,8 +1,6 @@
 import { useEffect, useState, type JSX } from 'react'
-import { AddCircleIcon } from '@solar-icons/react/linear/add-circle'
-import { CloseIcon } from '@solar-icons/react/linear/close'
-import { CpuIcon } from '@solar-icons/react/linear/cpu'
-import { RestartIcon } from '@solar-icons/react/linear/restart'
+import { AddCircleIcon, CloseIcon, CpuIcon, RestartIcon } from '@renderer/components/ui/reicon'
+
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
 import { connectionSection } from '../../../../../shared/contracts/aiProviders'
 import { MAX_FALLBACKS, type ModelRef } from '../../../../../shared/contracts/aiPreferences'
@@ -46,7 +44,7 @@ export function MainModelPage(): JSX.Element {
   const live = usable(connections)
   const current = resolveModelChoice(connections, { connectionId: null, entryId: null }, main)
 
-  // What the person picked here; until then the saved choice shows, also once it finishes loading.
+  // Lựa chọn tạm thời của người dùng tại giao diện; mặc định hiển thị giá trị đã lưu.
   const [picked, setPicked] = useState<{ connectionId: string; entryId: string | null } | null>(
     null
   )
@@ -86,7 +84,7 @@ export function MainModelPage(): JSX.Element {
   async function activate(): Promise<void> {
     if (!connection || !key.trim()) return
     setActivating(true)
-    // A provider connection goes through the same check as the key card; a gateway only stores the key.
+    // Kết nối nhà cung cấp đi qua bước kiểm tra khóa; gateway chỉ lưu khóa trực tiếp.
     const outcome = connection.providerId
       ? await store.connectKey(connection.providerId, key.trim())
       : (await store.addKey(connection.id, key.trim()))
@@ -250,7 +248,7 @@ export function FallbacksPage(): JSX.Element {
   const { connections } = useConnections()
   const store = useConnectionStore()
   const saved = store.preferences?.fallbacks ?? []
-  // The list being saved shows at once; the saved one takes over when the save is back.
+  // Danh sách đang cập nhật hiển thị ngay lập tức (optimistic UI); dữ liệu lưu sẽ đồng bộ sau khi hoàn tất.
   const [draft, setDraft] = useState<ModelRef[] | null>(null)
   const list = draft ?? saved
   const live = usable(connections)

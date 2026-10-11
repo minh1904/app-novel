@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react'
 import { Dialog as BaseDialog } from '@base-ui/react/dialog'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
-import { CloseIcon } from '@solar-icons/react/linear/close'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
+import {
+  AltArrowRightIcon,
+  CloseIcon,
+  MinimalisticMagnifierIcon
+} from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { CompactButton } from '../../../components/ui/CompactButton'
 import { cn } from '../../../lib/cn'
@@ -22,10 +25,10 @@ import {
 } from './settingsNav'
 import { searchSettings, type SettingsIndexEntry } from './settingsSearch'
 
-/** How long a row a deep link points at stays lit (Hermes: 1.6s). */
+/** Thời gian một hàng được làm sáng nổi bật khi điều hướng từ liên kết sâu (1.6 giây). */
 const HIGHLIGHT_MS = 1_600
 
-/** Same balanced vertical clearance as Hermes Desktop's overlay card. */
+/** Khoảng đệm dọc cân đối cho khung hộp thoại. */
 export const SETTINGS_MODAL_INSET = 'inset-y-[calc(var(--mira-header-height)+0.875rem)]'
 
 export type SettingsPages = Record<string, () => ReactNode>
@@ -50,7 +53,7 @@ function Nav({
             <NavItem
               strong
               active={active}
-              // A group with pages is not itself a page: only a one-page group is the current page.
+              // Nhóm có nhiều trang không phải là trang đơn: chỉ nhóm một trang mới được xem là trang hiện tại.
               aria-current={active && group.pages.length === 1 ? 'page' : undefined}
               onClick={() => onGo({ group: group.id, page: group.pages[0].id })}
             >
@@ -76,7 +79,7 @@ function Nav({
   )
 }
 
-/** The narrow layout: one dropdown in place of the rail (Hermes, under 47.5rem). */
+/** Bố cục màn hình hẹp: dùng một menu thả xuống thay thế cho thanh điều hướng bên (chiều rộng dưới 47.5rem). */
 function NavDropdown({
   location,
   onGo
@@ -117,7 +120,7 @@ function Breadcrumb({ location }: { location: SettingsLocation }): JSX.Element {
   )
 }
 
-/** The pill that straddles the top edge of the card; it opens a filtered list of every row. */
+/** Nút tìm kiếm nằm ở mép trên của hộp thoại; mở danh sách tìm kiếm trên toàn bộ các hàng cài đặt. */
 function SearchPill({
   query,
   onQuery,
@@ -142,7 +145,7 @@ function SearchPill({
           <SearchInput
             ref={inputRef}
             autoFocus
-            // The field opens already focused inside its own popover, so a ring adds nothing.
+            // Ô nhập đã được focus sẵn khi mở popover, không cần thêm viền ring focus.
             className="outline-none!"
             label="Tìm trong cài đặt"
             placeholder="Tìm trong cài đặt"
@@ -208,9 +211,8 @@ function SearchPill({
 }
 
 /**
- * The Settings modal, after Hermes Desktop's settings overlay (change `hermes-settings-modal`): a card over
- * the app with a 13rem rail, a breadcrumb in place of a page title, a search pill on the top edge, and deep
- * links that land on a row and light it up.
+ * Hộp thoại Cài đặt: khung overlay chứa thanh điều hướng bên, breadcrumb chỉ mục trang,
+ * thanh tìm kiếm ở mép trên và hỗ trợ liên kết sâu tự động cuộn đến và làm sáng hàng mục tiêu.
  */
 export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element {
   const location = useAiOverlayStore((state) => state.settings)
@@ -221,7 +223,7 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
   const searchInput = useRef<HTMLInputElement | null>(null)
   const content = useRef<HTMLDivElement | null>(null)
 
-  // A deep link's key: scroll its row into view and light it for a moment.
+  // Khóa liên kết sâu: cuộn hàng tương ứng vào tầm nhìn và làm sáng trong chốc lát.
   const key = location?.key
   const page = location ? pageKey(location) : null
   useEffect(() => {
@@ -263,7 +265,7 @@ export function SettingsModal({ pages }: { pages: SettingsPages }): JSX.Element 
           aria-label="Cài đặt"
           initialFocus={content}
           onKeyDown={(event) => {
-            // Type to search, as in Hermes: a printable key outside a field opens the search with that key.
+            // Gõ phím để tìm kiếm: nhấn một phím ký tự bất kỳ bên ngoài ô nhập sẽ tự động mở tìm kiếm.
             const target = event.target as HTMLElement
             const inField = target.closest('input, textarea, select, [contenteditable="true"]')
             if (

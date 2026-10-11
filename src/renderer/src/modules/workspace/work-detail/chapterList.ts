@@ -1,23 +1,23 @@
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 
-/** Pure rules of the chapter list: names, search, jumping and paging. No React, no IPC. */
+/** Các quy tắc xử lý danh sách chương: tên gọi, tìm kiếm, nhảy tới chương và phân trang. */
 
 export const PAGE_SIZES = [50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
 export const DEFAULT_PAGE_SIZE: PageSize = 50
 
-/** What the list shows for a chapter: its name, or "Chương N" when it has none. */
+/** Tên hiển thị của chương: tiêu đề thực tế hoặc "Chương N" nếu để trống. */
 export function displayTitle(chapter: Pick<ChapterItem, 'number' | 'title'>): string {
   return chapter.title === '' ? 'Chương ' + chapter.number : chapter.title
 }
 
-/** The heading of the chapter screen: "Chương N: name", unless the name already starts with "Chương". */
+/** Tiêu đề đầu trang: "Chương N: tiêu đề", trừ khi tiêu đề đã bắt đầu bằng "Chương". */
 export function headingTitle(chapter: Pick<ChapterItem, 'number' | 'title'>): string {
   if (chapter.title === '' || /^chương\s/i.test(chapter.title)) return displayTitle(chapter)
   return 'Chương ' + chapter.number + ': ' + chapter.title
 }
 
-/** Lower-cases and strips Vietnamese tone and vowel marks, so "gap go" finds "Cuộc gặp gỡ". */
+/** Chuyển thành chữ thường và bỏ dấu tiếng Việt để tìm kiếm không dấu. */
 export function fold(text: string): string {
   return text
     .normalize('NFD')
@@ -27,7 +27,7 @@ export function fold(text: string): string {
     .toLowerCase()
 }
 
-/** What deleting a chapter would destroy beyond its name, or null when it holds no text. */
+/** Ghi chú nội dung sẽ bị mất khi xóa chương, hoặc null nếu không có nội dung. */
 export function lossNote(chapter: Pick<ChapterItem, 'hasSource' | 'hasTarget'>): string | null {
   if (chapter.hasSource && chapter.hasTarget) {
     return 'Chương này có cả bản gốc lẫn bản dịch; cả hai sẽ mất.'
@@ -37,10 +37,7 @@ export function lossNote(chapter: Pick<ChapterItem, 'hasSource' | 'hasTarget'>):
   return null
 }
 
-/**
- * How far a chapter has come, from whether its texts are empty. A translation without a source
- * still counts as "no source": the source is what the chapter is translated from.
- */
+/** Trạng thái hoàn thành bản dịch của chương dựa trên sự tồn tại của văn bản gốc và dịch. */
 export type ChapterState = 'translated' | 'untranslated' | 'empty'
 
 export const chapterStateLabels: Record<ChapterState, string> = {
@@ -56,7 +53,7 @@ export function chapterState(chapter: Pick<ChapterItem, 'hasSource' | 'hasTarget
 
 export type SearchQuery =
   | { kind: 'empty' }
-  /** The whole input is a number: confirm to jump to that chapter. */
+  /** Người dùng nhập số nguyên: chuyển trực tiếp tới chương số đó. */
   | { kind: 'jump'; number: number }
   | { kind: 'filter'; text: string }
 
@@ -67,7 +64,7 @@ export function parseQuery(raw: string): SearchQuery {
   return { kind: 'filter', text }
 }
 
-/** Keeps the chapters whose displayed name contains `text`, in their original order. */
+/** Lọc các chương có tên hiển thị chứa chuỗi tìm kiếm, giữ nguyên thứ tự ban đầu. */
 export function filterChapters(chapters: ChapterItem[], text: string): ChapterItem[] {
   const needle = fold(text.trim())
   if (needle === '') return chapters
@@ -78,12 +75,12 @@ export function pageCount(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(total / pageSize))
 }
 
-/** Keeps a page number inside 1..pageCount, so a shrinking list never leaves an empty page. */
+/** Giới hạn số trang hợp lệ trong khoảng từ 1 đến tổng số trang. */
 export function clampPage(page: number, total: number, pageSize: number): number {
   return Math.min(Math.max(1, page), pageCount(total, pageSize))
 }
 
-/** The page that holds the item at 1-based `position` of a list shown in order. */
+/** Xác định số trang chứa mục ở vị trí 1-based trong danh sách đã sắp xếp. */
 export function pageOfPosition(position: number, pageSize: number): number {
   return Math.floor((Math.max(1, position) - 1) / pageSize) + 1
 }
@@ -93,7 +90,7 @@ export function slicePage<T>(items: T[], page: number, pageSize: number): T[] {
   return items.slice(start, start + pageSize)
 }
 
-/** "from–to" of the items on a page, both 1-based; 0–0 for an empty list. */
+/** Khoảng chỉ số bắt đầu và kết thúc của các mục trên một trang (1-based); 0–0 nếu danh sách rỗng. */
 export function pageRange(
   page: number,
   total: number,
@@ -105,8 +102,8 @@ export function pageRange(
 }
 
 /**
- * Page numbers to offer as buttons: always the first and last, the neighbours of the current
- * page, and `null` where a run is skipped (shown as an ellipsis).
+ * Danh sách số trang hiển thị dạng nút: luôn bao gồm trang đầu, trang cuối,
+ * các trang lân cận trang hiện tại, và `null` cho vị trí dấu ba chấm.
  */
 export function pageWindow(page: number, pages: number): Array<number | null> {
   const wanted = new Set([1, pages, page - 1, page, page + 1])

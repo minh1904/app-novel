@@ -26,7 +26,7 @@ export interface AiChatState {
   session: Session
   isListening: boolean
 
-  // Actions
+  // Thao tác
   startListening(): () => void
   selectWork(workId: string): void
   setSessionId(sessionId: string | null): void
@@ -133,7 +133,7 @@ export const useAiChatStore = create<AiChatState>((set, get) => {
           return
         }
       }
-      // A writing tool just made a proposal: the queue and the cards read it from main.
+      // Công cụ vừa tạo đề xuất: phát sự kiện để hàng chờ và các thẻ đề xuất cập nhật từ tiến trình chính.
       if (chunk.kind === 'proposal' && typeof window !== 'undefined') {
         window.dispatchEvent(new Event('mira:proposals-changed'))
       }

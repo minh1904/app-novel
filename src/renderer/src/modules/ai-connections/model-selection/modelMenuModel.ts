@@ -2,16 +2,15 @@ import type { ConnectionView } from '../../../../../shared/contracts/aiConnectio
 import type { ModelEntryView, ThinkingLevel } from '../../../../../shared/contracts/modelSettings'
 
 /**
- * The rows of the model menu (spec `model-picker`): a Favorites group first, then one group per enabled
- * connection that has entries, filtered by the search box. Pure, so the order and the filter are tested
- * without a DOM.
+ * Các hàng hiển thị trong menu chọn model: nhóm Yêu thích ở đầu, tiếp theo là từng nhóm kết nối đang bật,
+ * được lọc theo ô tìm kiếm.
  */
 
 export type MenuRow =
   | { type: 'header'; id: string; label: string; collapsed: boolean; connectionId: string | null }
   | {
       type: 'model'
-      /** `fav:` or `conn:` prefix + connection + entry, unique across groups. */
+      /** Tiền tố `fav:` hoặc `conn:` kết hợp kết nối và mục model, duy nhất giữa các nhóm. */
       id: string
       connection: ConnectionView
       entry: ModelEntryView
@@ -67,7 +66,7 @@ export function buildMenuRows(
   for (const connection of live) {
     const entries = connection.models.filter((entry) => matches(query, connection, entry))
     if (entries.length === 0) continue
-    // A search always shows what it found, even in a group the person folded away.
+    // Khi tìm kiếm, luôn hiển thị kết quả tìm được ngay cả trong nhóm đang thu gọn.
     const isCollapsed = !searching && collapsed.has(connection.id)
     rows.push({
       type: 'header',
@@ -91,7 +90,7 @@ export function buildMenuRows(
   return rows
 }
 
-/** The short tag a row shows for the thinking level set on its entry, as in Hermes ("MED"). */
+/** Nhãn viết tắt hiển thị mức độ suy luận trên hàng model (ví dụ: "MED"). */
 export const THINKING_TAGS: Record<ThinkingLevel, string> = {
   off: 'TẮT',
   minimal: 'MIN',
@@ -102,7 +101,7 @@ export const THINKING_TAGS: Record<ThinkingLevel, string> = {
   max: 'MAX'
 }
 
-/** The next model row from `index` in `direction`, skipping headers; stays put at either end. */
+/** Tìm hàng model tiếp theo từ `index` theo hướng `direction`, bỏ qua hàng tiêu đề nhóm; giữ nguyên khi chạm biên. */
 export function stepModelRow(rows: readonly MenuRow[], index: number, direction: 1 | -1): number {
   for (let at = index + direction; at >= 0 && at < rows.length; at += direction) {
     if (rows[at]!.type === 'model') return at

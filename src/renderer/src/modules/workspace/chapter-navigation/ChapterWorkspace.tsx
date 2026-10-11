@@ -1,17 +1,20 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type JSX } from 'react'
-import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
-import { DocumentAddIcon } from '@solar-icons/react/linear/document-add'
-import { MaximizeSquareIcon } from '@solar-icons/react/linear/maximize-square'
-import { LockKeyholeMinimalisticIcon } from '@solar-icons/react/linear/lock-keyhole-minimalistic'
-import { LockKeyholeMinimalisticUnlockedIcon } from '@solar-icons/react/linear/lock-keyhole-minimalistic-unlocked'
-import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
-import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
-import { MinimizeSquareIcon } from '@solar-icons/react/linear/minimize-square'
-import { LinkMinimalistic2Icon } from '@solar-icons/react/linear/link-minimalistic-2'
-import { SidebarCloseIcon } from '@solar-icons/react/linear/sidebar-close'
-import { SidebarOpenIcon } from '@solar-icons/react/linear/sidebar-open'
-import { StarsIcon } from '@solar-icons/react/linear/stars'
-import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
+import {
+  AltArrowLeftIcon,
+  DocumentAddIcon,
+  MaximizeSquareIcon,
+  LockKeyholeMinimalisticIcon,
+  LockKeyholeMinimalisticUnlockedIcon,
+  MenuDotsIcon,
+  PenNewSquareIcon,
+  MinimizeSquareIcon,
+  LinkMinimalistic2Icon,
+  SidebarCloseIcon,
+  SidebarOpenIcon,
+  StarsIcon,
+  UploadMinimalisticIcon
+} from '@renderer/components/ui/reicon'
+
 import { splitParagraphs } from '../../../../../shared/text/paragraphSpans'
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import type { TextRecord } from '../../../../../shared/contracts/text'
@@ -46,8 +49,8 @@ import { SentenceMode, type SentenceModeHandle } from './SentenceMode'
 const IDLE: SessionStatus = { state: 'saved', message: null, dirty: false }
 
 /**
- * Below this width a pane of prose reads badly. Opening the AI panel folds the source away when the
- * two editors would otherwise drop under it, and brings it back when the panel closes.
+ * Độ rộng tối thiểu cho một khung soạn thảo. Khi mở bảng trợ lý AI, khung bản gốc sẽ tạm thu gọn nếu
+ * tổng độ rộng màn hình không đủ cho cả hai khung soạn thảo.
  */
 const MIN_EDITOR_WIDTH = 420
 
@@ -57,10 +60,7 @@ const SOURCE_SHORTCUT = 'Ctrl+\\'
 const TARGET_SHORTCUT = 'Ctrl+Shift+\\'
 
 /**
- * Tab "Từng câu" bị ẩn khỏi giao diện và sẽ bị gỡ cùng dữ liệu câu (ADR-005, nay chỉ còn trong lịch sử
- * git ở commit 501be2a). Mã của mode còn lại (state,
- * switchMode, SentenceMode) chỉ vì đường dịch hiện vẫn ghi theo hàng; nó bị xóa trong change gỡ segment,
- * không bật lại.
+ * Chế độ "Từng câu" tạm thời vô hiệu hóa trong giao diện.
  */
 const SENTENCE_MODE_ENABLED = false
 
@@ -69,9 +69,9 @@ export interface ChapterWorkspaceProps {
   chapter: ChapterItem
   source: TextRecord
   target: TextRecord
-  /** Changes when the source was replaced from outside, which is when the source editor reopens. */
+  /** Đổi khi bản gốc được thay thế từ bên ngoài, kích hoạt mở lại trình soạn thảo bản gốc. */
   sourceEpoch: number
-  /** Changes when the translation was rewritten from outside (AI dịch chương): the editor reopens. */
+  /** Đổi khi bản dịch được ghi đè từ bên ngoài (AI dịch chương), kích hoạt mở lại trình soạn thảo bản dịch. */
   targetEpoch: number
   sourceStore: TextStore
   targetStore: TextStore
@@ -83,7 +83,7 @@ export interface ChapterWorkspaceProps {
   onTargetReplaced(record: TextRecord): void
   /** Nơi khai kết nối AI, cho hộp thoại dịch khi chưa có kết nối nào. */
   onOpenSettings(): void
-  /** True while the sidebar is hidden to give the panes room. */
+  /** Trạng thái ẩn thanh bên để mở rộng không gian cho các khung soạn thảo. */
   focused: boolean
   onToggleFocus(): void
 }
@@ -91,8 +91,7 @@ export interface ChapterWorkspaceProps {
 const otherSide = (side: Side): Side => (side === 'source' ? 'target' : 'source')
 
 /**
- * How far the chapter is, in the paragraphs the translator sees (ADR-005). The work, the languages and
- * the character counts are left to the breadcrumb, the pane headers and the status bar.
+ * Chuỗi thống kê số lượng đoạn văn bản gốc và bản dịch của chương.
  */
 const paragraphFigures = (source: TextRecord, target: TextRecord): string => {
   const sourceCount = splitParagraphs(source.content).length.toLocaleString('vi')
@@ -102,9 +101,7 @@ const paragraphFigures = (source: TextRecord, target: TextRecord): string => {
 }
 
 /**
- * The full-text mode of a chapter: the source on the left, the translation on the right, each one
- * its own long text that scrolls on its own. Nothing ties the two together (no numbers, no lines,
- * no matching of rows), because they differ in length and in how they are cut.
+ * Chế độ toàn văn của chương: bản gốc bên trái, bản dịch bên phải, mỗi khung cuộn độc lập.
  */
 export function ChapterWorkspace({
   work,
@@ -138,16 +135,15 @@ export function ChapterWorkspace({
   const sourceCollapsed = usePaneLayoutStore((state) => state.sourceCollapsed)
   const sourceRatio = usePaneLayoutStore((state) => state.sourceRatio)
   const syncScroll = usePaneLayoutStore((state) => state.syncScroll)
-  // Folded for the AI panel only, so it is not remembered as the translator's own choice.
+  // Tạm thời thu gọn cho bảng trợ lý AI, không lưu vào cấu hình bố cục lâu dài.
   const [aiFolded, setAiFolded] = useState(false)
   const sourceHidden = sourceCollapsed || aiFolded
-  // The AI panel reads and marks up the translation, so the translation stays open while it is.
+  // Bảng trợ lý AI cần tương tác với bản dịch nên giữ khung bản dịch luôn mở khi bảng trợ lý đang bật.
   const targetHidden = usePaneLayoutStore((state) => state.targetCollapsed) && !aiOpen
   const panes = useRef<HTMLDivElement>(null)
   const editors = useRef<HTMLDivElement>(null)
   const [exportOpen, setExportOpen] = useState(false)
-  // Where the caret is in each pane, and which pane was touched last: the AI panel turns these into the
-  // user's position (change `agentic-chat`), so "đoạn này" means the paragraph the caret is in.
+  // Theo dõi vị trí con trỏ và vùng chọn ở từng khung để cung cấp ngữ cảnh vị trí đoạn văn cho trợ lý AI.
   const [aiSourceRange, setAiSourceRange] = useState<TargetRange | null>(null)
   const [aiRange, setAiRange] = useState<TargetRange | null>(null)
   const [aiSide, setAiSide] = useState<'source' | 'target'>('target')
@@ -160,10 +156,7 @@ export function ChapterWorkspace({
     setAiSide('target')
   }, [])
 
-  /**
-   * The pane the translator last scrolled, clicked or typed in. Only that pane drives the other one,
-   * so the scroll it causes over there does not bounce back.
-   */
+  /** Khung soạn thảo được thao tác gần nhất (cuộn, nhấp chuột hoặc gõ), đóng vai trò điều khiển cuộn đồng bộ. */
   const driver = useRef<Side>('target')
   const caretParagraphs = useRef<Record<Side, number | null>>({ source: null, target: null })
   const editorOf = useCallback(
@@ -172,7 +165,7 @@ export function ChapterWorkspace({
     []
   )
 
-  /** The paragraph the caret is in shows in the other pane; the pane with the caret needs no mark. */
+  /** Đánh dấu liên kết đoạn văn tương ứng ở khung đối diện dựa theo vị trí con trỏ hiện tại. */
   const showLink = useCallback(
     (side: Side): void => {
       editorOf(side)?.linkParagraph(null)
@@ -209,7 +202,7 @@ export function ChapterWorkspace({
     },
     [editorOf]
   )
-  /** Handlers for a pane's wrapper: touching the pane in any way makes it the driver. */
+  /** Xử lý sự kiện để gán khung soạn thảo được tương tác thành khung điều khiển cuộn. */
   const driveFrom = (side: Side) => {
     const drive = (): void => {
       driver.current = side
@@ -242,13 +235,8 @@ export function ChapterWorkspace({
     layout.setTargetCollapsed(!layout.targetCollapsed)
   }, [])
   /**
-   * The two panes as the AI panel sees them: stable objects whose methods reach into the refs when
-   * called.
-   *
-   * Not `targetEditor.current` passed down directly — reading a ref during render is both a React
-   * violation and wrong in practice, because the ref filling in does not cause a re-render, so the
-   * panel could hold `null` for the pane that is right there. Reading **live** also matters on its
-   * own: the panel sends the text on screen, which is not always the text in storage.
+   * Cung cấp giao diện tương tác với hai khung soạn thảo cho bảng trợ lý AI.
+   * Truy cập giá trị trực tiếp qua ref để đảm bảo luôn phản ánh đúng nội dung đang hiển thị trên màn hình.
    */
   const sourceText = useMemo(
     () => ({
@@ -284,7 +272,7 @@ export function ChapterWorkspace({
       (handle): handle is TextEditorHandle => handle !== null
     )
 
-  /** Saves every side that has something unsaved; true when none of them failed. */
+  /** Lưu tất cả các khung đang có thay đổi chưa lưu; trả về true nếu lưu thành công toàn bộ. */
   const saveAll = useCallback(async (): Promise<boolean> => {
     const outcomes = await Promise.all(
       [sourceEditor.current, targetEditor.current].map(async (handle) =>
@@ -294,16 +282,14 @@ export function ChapterWorkspace({
     return outcomes.every((outcome) => outcome.kind !== 'failed')
   }, [])
 
-  /** Saves whatever the current mode holds unsaved: the two texts, or the cells of the rows. */
+  /** Lưu nội dung chưa lưu của chế độ hiện tại (hai văn bản hoặc từng câu). */
   const saveCurrent = useCallback(
     (): Promise<boolean> =>
       mode === 'sentence' ? (sentence.current?.commitAll() ?? Promise.resolve(true)) : saveAll(),
     [mode, saveAll]
   )
 
-  // Ctrl+S (Cmd+S) saves from anywhere on the screen. `defaultPrevented` lets a more specific
-  // handler (inside an editor, a dialog) claim the key first; neither editor binds Mod-S today, but
-  // the check costs nothing and keeps every global shortcut in this file consistent.
+  // Phím tắt Ctrl+S (Cmd+S) lưu nội dung từ bất kỳ vị trí nào trên màn hình.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (!tabActive) return
@@ -317,12 +303,7 @@ export function ChapterWorkspace({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [saveCurrent, tabActive])
 
-  /**
-   * One way in, used by both the button and Ctrl+K.
-   *
-   * Seeds the range on the way in: the caret may not have moved since the editor opened, so without
-   * this the panel would start out about nothing until the translator clicks somewhere.
-   */
+  /** Bật/tắt bảng trợ lý AI và gán vùng chọn hiện tại của khung bản dịch làm ngữ cảnh ban đầu. */
   const toggleAi = useCallback((): void => {
     setAiOpen((open) => {
       if (!open) setAiRange(targetEditor.current?.targetRange() ?? null)
@@ -330,7 +311,7 @@ export function ChapterWorkspace({
     })
   }, [])
 
-  // Ctrl+K (Cmd+K) opens "Hỏi AI" in Toàn văn; Esc closes it.
+  // Phím tắt Ctrl+K (Cmd+K) mở "Hỏi AI" ở chế độ Toàn văn; phím Esc để đóng.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (!tabActive) return
@@ -346,7 +327,7 @@ export function ChapterWorkspace({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [mode, aiOpen, toggleAi, tabActive])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Measured when the panel opens or closes, not while it is dragged wider.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Chỉ tính toán khi mở hoặc đóng bảng, không tính khi đang kéo đổi kích thước.
   useEffect(() => {
     if (!aiOpen) {
       setAiFolded(false)
@@ -356,7 +337,7 @@ export function ChapterWorkspace({
     if (width - aiWidth < 2 * MIN_EDITOR_WIDTH) setAiFolded(true)
   }, [aiOpen])
 
-  // Ctrl+\ (Cmd+\) folds the source pane away or brings it back; with Shift, the translation pane.
+  // Phím tắt Ctrl+\ thu gọn hoặc mở lại khung bản gốc; Ctrl+Shift+\ áp dụng cho khung bản dịch.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (!tabActive || event.defaultPrevented || mode !== 'full') return
@@ -383,11 +364,7 @@ export function ChapterWorkspace({
     }
   })
 
-  /**
-   * The two modes do not share unsaved typing, so changing mode first settles what the current one
-   * holds: ask when the texts are unsaved, write the cells when leaving the rows. The other mode
-   * then opens on what the store has.
-   */
+  /** Chuyển đổi giữa chế độ toàn văn và từng câu, đảm bảo lưu hoặc xác nhận nội dung chưa lưu trước khi đổi. */
   async function switchMode(next: 'full' | 'sentence'): Promise<void> {
     if (next === mode) return
     if (next === 'sentence') {
@@ -415,8 +392,7 @@ export function ChapterWorkspace({
         />
       </TopBarTitle>
 
-      {/* Ask AI, focus and the chapter menu sit in the window's top bar, in the same row as the
-          window buttons. They still belong to this screen: the bar only gives them a place. */}
+      {/* Các nút thao tác Hỏi AI, chế độ tập trung và menu chương hiển thị trên thanh tiêu đề cửa sổ. */}
       <TopBarActions>
         {mode === 'full' && (
           <CompactButton
@@ -456,7 +432,7 @@ export function ChapterWorkspace({
             </MenuItem>
             <MenuItem
               onClick={() => {
-                // Export reads the stored translation, so typing that has not autosaved yet goes first.
+                // Lưu bản dịch mới nhất trước khi mở hộp thoại xuất chương.
                 void (targetEditor.current?.save() ?? Promise.resolve()).finally(() =>
                   setExportOpen(true)
                 )
@@ -473,7 +449,7 @@ export function ChapterWorkspace({
         </MenuRoot>
       </TopBarActions>
 
-      {/* Which chapter, then the mode and the context the translator reads while working. One row, so the panes keep the height. */}
+      {/* Tiêu đề chương kèm thống kê số đoạn và liên kết chuyển đến ngữ cảnh tác phẩm. */}
       <div className="flex h-(--mira-header-height) shrink-0 items-center gap-3 border-b border-default bg-surface px-2.5">
         <h2 className="min-w-0 flex-1 truncate text-body-sm font-semibold">
           {headingTitle(chapter)}{' '}
@@ -498,7 +474,7 @@ export function ChapterWorkspace({
             <span className="h-4 w-px shrink-0 bg-line" aria-hidden="true" />
           </>
         )}
-        {/* Glossary and addressing live in the work's Ngữ cảnh area; this opens it there. */}
+        {/* Mở phân vùng Thuật ngữ và Xưng hô trong chi tiết tác phẩm. */}
         <LinkButton
           color="neutral"
           className="shrink-0"
@@ -572,8 +548,7 @@ export function ChapterWorkspace({
                       onClick={() => usePaneLayoutStore.getState().setSyncScroll(!syncScroll)}
                       icon={<LinkMinimalistic2Icon size={16} />}
                     />
-                    {/* Changing the source is rare and outside the translating work, so both ways
-                        to do it wait in this menu instead of sitting on the bar. */}
+                    {/* Menu tùy chọn sửa hoặc thay thế bản gốc của chương. */}
                     <MenuRoot>
                       <MenuTrigger
                         render={
@@ -696,7 +671,7 @@ export function ChapterWorkspace({
                 />
               </EditorPane>
             </div>
-            {/* Both folded: the space says so and offers both ways back, rather than sitting blank. */}
+            {/* Thông báo khi cả hai khung đều đang thu gọn kèm nút mở lại. */}
             {sourceHidden && targetHidden && (
               <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-3 bg-subtle px-6 text-center">
                 <p className="text-body-sm text-subtle">Bản gốc và bản dịch đang thu gọn.</p>
@@ -780,7 +755,7 @@ export function ChapterWorkspace({
         onOpenChange={setExportOpen}
         workId={work.id}
         workTitle={work.title}
-        // The list may be behind the text on screen, so the pane says whether there is a translation.
+        // Cập nhật trạng thái có bản dịch hay không dựa trên nội dung thực tế trong khung soạn thảo.
         chapter={{ ...chapter, hasTarget: translation.trim() !== '' }}
       />
     </div>
@@ -788,13 +763,9 @@ export function ChapterWorkspace({
 }
 
 /**
- * A pane folded to a 32px strip at the edge it sits on: its name written down the strip and one
- * button to bring it back. The text stays mounted behind it, so nothing typed is lost.
+ * Thanh dải hẹp 32px đại diện cho khung soạn thảo khi bị thu gọn ở mép màn hình.
  */
-/**
- * Set by a fold the person asked for, and read once by the strip that appears: a pane that opens the
- * screen already folded must not take the focus.
- */
+/** Cờ đánh dấu người dùng chủ động thu gọn khung bằng tay để tự động chuyển focus sang nút mở. */
 let foldedByHand = false
 
 function FoldedPane({
@@ -804,13 +775,12 @@ function FoldedPane({
   onOpen
 }: {
   label: string
-  /** The button's name, with its shortcut. */
+  /** Nhãn hành động của nút kèm phím tắt. */
   action: string
   side: 'left' | 'right'
   onOpen(): void
 }): JSX.Element {
-  // Folding hides the pane that held the focus (its fold button, or the editor under Ctrl+), which
-  // drops keyboard focus to <body>. When that happened, the strip's open button takes it instead.
+  // Chuyển focus bàn phím sang nút mở trên thanh dải khi khung soạn thảo bị ẩn.
   const strip = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!foldedByHand) return

@@ -12,8 +12,8 @@ const sizes = {
 }
 
 /**
- * A book-shaped cover. Without an uploaded image the work is identified by the script it is
- * translated from; `lang` lets Windows pick a CJK font, since Inter has none.
+ * Ảnh bìa hình dáng cuốn sách. Nếu chưa tải ảnh lên, tác phẩm được đại diện bằng ký tự ngôn ngữ nguồn;
+ * thuộc tính `lang` giúp hệ điều hành chọn đúng phông chữ CJK phù hợp.
  */
 export function WorkCover({
   work,

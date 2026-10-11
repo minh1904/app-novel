@@ -1,5 +1,6 @@
 import type { JSX, RefObject } from 'react'
-import { StarsIcon } from '@solar-icons/react/linear/stars'
+import { StarsIcon } from '@renderer/components/ui/reicon'
+
 import { describeRefusals } from '../../../../../shared/translation/refusalMessage'
 import type { TranslationPolicy } from '../../../../../shared/contracts/aiTranslateProposals'
 import type { TextRecord } from '../../../../../shared/contracts/text'
@@ -135,7 +136,7 @@ function TranslateFlow({
               )}
               {run.failure.message}
             </span>
-            {/* A key problem is fixed in its card, as Hermes' "Update API key". */}
+            {/* Cập nhật khóa API trực tiếp trong cấu hình kết nối khi gặp sự cố khóa. */}
             {keyProblem(run.failure) && run.selection && (
               <Button onClick={() => openConnectionSettings(run.selection!.connectionId)}>
                 Cập nhật khóa
@@ -143,7 +144,7 @@ function TranslateFlow({
             )}
           </div>
         )}
-        {/* Counted over the whole run, not the last batch: the filter may block segments in several batches. */}
+        {/* Tổng hợp nội dung bị từ chối trong toàn bộ lượt chạy trên tất cả các lô đoạn. */}
         {run.refusals.length > 0 && (
           <p
             role="alert"
@@ -159,7 +160,7 @@ function TranslateFlow({
             </span>
             <span className="ml-auto flex gap-2">
               <Button onClick={() => void run.retryFailed()}>Dịch lại phần lỗi</Button>
-              {/* Another model for the rest, only when asked: a chapter does not change voice on its own. */}
+              {/* Tùy chọn chuyển sang model khác cho các đoạn còn lại theo quyết định của người dùng. */}
               {run.continueTarget && (
                 <Button variant="solid" onClick={run.continueWithFallback}>
                   Dịch tiếp bằng {run.continueTarget.label}
@@ -276,8 +277,7 @@ function TranslateFlow({
         <Button variant="ghost" onClick={onClose}>
           Hủy bỏ
         </Button>
-        {/* One step even when the chapter has a translation: the note above says where the result
-          goes, and it only ever lands in the queue, so there is nothing to acknowledge first. */}
+        {/* Khởi chạy dịch: các đoạn kết quả sẽ được đưa vào hàng chờ đề xuất để người dùng kiểm tra. */}
         <Button
           variant="solid"
           disabled={plan === null}

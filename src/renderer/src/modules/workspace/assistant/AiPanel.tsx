@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import type { ChatLocation } from '../../../../../shared/contracts/aiChat'
-import { CloseIcon } from '@solar-icons/react/linear/close'
-import { PenNewRoundIcon } from '@solar-icons/react/linear/pen-new-round'
-import { SettingsIcon } from '@solar-icons/react/linear/settings'
-import { StarsIcon } from '@solar-icons/react/linear/stars'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
+import {
+  CloseIcon,
+  PenNewRoundIcon,
+  SettingsIcon,
+  StarsIcon,
+  AltArrowDownIcon
+} from '@renderer/components/ui/reicon'
+
 import type { SourceLanguage } from '../../../../../shared/contracts/library'
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import type { ProposalQueueItem } from '../../../../../shared/contracts/aiProposals'
@@ -25,12 +28,10 @@ import { useConnectionStore } from '../../ai-connections/public'
 import { openConnectionSettings } from '../../ai-connections/public'
 
 /**
- * Asking AI about the chapter. A real third column next to the two panes (it never covers the text):
- * the conversation scrolls and the composer stays at the bottom with the model next to the send button.
+ * Bảng trợ lý AI cho chương đang mở: hiển thị dạng cột thứ ba cạnh hai khung soạn thảo,
+ * cuộn nội dung hội thoại và giữ khung nhập liệu cố định ở cạnh dưới.
  *
- * The model reads the work with tools and proposes changes with tools (change `agentic-chat`); every
- * proposal waits here, under the turn that made it and in the chapter's queue, until the translator
- * accepts it, and an accepted one is one undoable step.
+ * Model tự động đọc tác phẩm qua công cụ và gửi đề xuất thay đổi vào hàng chờ để người dịch duyệt từng phần.
  */
 const MIN_WIDTH = 320
 type QueueFilter = 'all' | 'session'
@@ -55,22 +56,22 @@ export function AiPanel({
   onClose,
   onOpenSettings
 }: {
-  /** Which work and chapter the turn is about; the read-only tools stay inside this work. */
+  /** ID tác phẩm cần thao tác. */
   workId: string
   chapterId: string
-  /** Which chapter the panel sits in, e.g. "Chương 12". */
+  /** Nhãn hiển thị của chương, ví dụ "Chương 12". */
   chapterLabel: string
   sourceLang: SourceLanguage
-  /** The source pane, read live so the position matches what is on screen. */
+  /** Khung bản gốc, đọc trực tiếp để đồng bộ vị trí hiển thị. */
   source: { getText(): string; isDirty(): boolean }
-  /** The translation pane: an accepted proposal is shown and reloaded there. */
+  /** Khung bản dịch: nơi tải lại nội dung khi đề xuất được chấp nhận. */
   target: ChatEditor | null
-  /** The caret or selection of each pane, following it as it moves. */
+  /** Vị trí con trỏ hoặc vùng chọn hiện tại của từng khung soạn thảo. */
   sourceCaret: PaneCaret | null
   targetCaret: PaneCaret | null
-  /** The pane touched last, whose selection counts. */
+  /** Khung soạn thảo được tương tác gần nhất để xác định phạm vi chọn. */
   activeSide: 'source' | 'target'
-  /** Current panel width in px; the parent grid's third column follows it. */
+  /** Chiều rộng của bảng trợ lý theo pixel. */
   width: number
   onWidthChange(width: number): void
   onClose(): void
@@ -96,8 +97,7 @@ export function AiPanel({
     }
   }, [workId])
 
-  // Where the user is, in the paragraph numbers the tools use. Read when a turn is sent and shown in the
-  // header, so "đoạn này" means what the header says.
+  // Vị trí con trỏ của người dùng theo số thứ tự đoạn văn để gửi kèm câu hỏi cho AI.
   const location = useMemo<ChatLocation>(
     () =>
       buildLocation({
@@ -121,7 +121,7 @@ export function AiPanel({
     location: () => locationRef.current
   })
 
-  // The first fallback of Settings that is not the model in use: what "Thử bằng …" on a failed turn offers.
+  // Model dự phòng được cấu hình để hiển thị nút "Thử bằng…" khi lượt hỏi bị lỗi.
   const fallbacks = useConnectionStore((state) => state.preferences?.fallbacks)
   const retryTarget = ((): {
     selection: { connectionId: string; entryId: string }
@@ -180,8 +180,7 @@ export function AiPanel({
     return () => window.removeEventListener('mira:proposals-changed', refresh)
   }, [reloadQueue])
 
-  // After a decision here, everything that counts pending proposals reloads: this queue, the status bar
-  // and the chapter list all listen for the same event.
+  // Phát sự kiện cập nhật để đồng bộ số lượng đề xuất chờ trên toàn bộ giao diện.
   const announce = (): void => {
     window.dispatchEvent(new Event('mira:proposals-changed'))
   }
@@ -295,7 +294,7 @@ export function AiPanel({
 
   return (
     <section aria-label="Hỏi AI" className="relative flex h-full min-h-0 flex-col bg-subtle">
-      {/* Drag handle for the panel width: the pane is to the right, so dragging left widens it. */}
+      {/* Tay nắm kéo thả để thay đổi chiều rộng bảng trợ lý. */}
       <span
         role="separator"
         aria-orientation="vertical"

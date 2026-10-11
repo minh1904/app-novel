@@ -31,8 +31,8 @@ export function connectionLive(connection: ConnectionView, now: number): boolean
 }
 
 /**
- * The headline of a failure the person fixes in a key card, as Hermes' "X rejected your API key": a
- * rejected key or a spent quota. `null` for anything a new key would not fix.
+ * Tiêu đề lỗi liên quan đến khóa API mà người dùng cần xử lý: khóa bị từ chối hoặc hết hạn mức.
+ * Trả về `null` đối với các lỗi không liên quan đến khóa.
  */
 export function keyProblem(error: { kind: string }): string | null {
   if (error.kind === 'auth') return 'Nhà cung cấp từ chối khóa API.'

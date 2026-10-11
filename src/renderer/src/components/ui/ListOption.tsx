@@ -4,17 +4,17 @@ import { menuItemClass } from './DropdownMenu'
 import { focusRing } from './focus'
 
 export interface ListOptionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
-  /** The option under the keyboard cursor or the chosen one; it wears the selected overlay. */
+  /** Mục đang được con trỏ bàn phím duyệt qua hoặc được chọn: hiển thị lớp nền đã chọn. */
   selected?: boolean
-  /** Two lines (a title over a description) instead of one 32px row. */
+  /** Hiển thị hai dòng (tiêu đề và mô tả) thay vì một dòng đơn 32px. */
   multiline?: boolean
   ref?: Ref<HTMLButtonElement>
   children: ReactNode
 }
 
 /**
- * One option of a list a field drives itself (a combobox, search results): a menu row as a button with
- * `role="option"`. Menus and selects built on Base UI use MenuItem and Select instead.
+ * Một tùy chọn trong danh sách do trường nhập tự điều khiển (combobox, kết quả tìm kiếm):
+ * hàng menu dạng nút bấm mang `role="option"`.
  */
 export function ListOption({
   selected = false,

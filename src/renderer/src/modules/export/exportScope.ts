@@ -10,20 +10,20 @@ import {
   type ExportWorkMode
 } from '../../../../shared/contracts/export'
 
-/** Which chapters an export of the work takes. */
+/** Phạm vi các chương sẽ xuất trong tác phẩm. */
 export type ExportScope =
   | { kind: 'all' }
   | { kind: 'range'; from: number; to: number }
   | { kind: 'selected'; ids: ReadonlySet<string> }
 
 export interface ScopePlan {
-  /** Chapters that will be written, in order. */
+  /** Danh sách các chương sẽ được ghi, theo thứ tự. */
   included: ChapterItem[]
-  /** Chapters in the scope that are left out for having no translation. */
+  /** Danh sách các chương trong phạm vi bị bỏ qua vì chưa có bản dịch. */
   skipped: ChapterItem[]
 }
 
-/** The chapters of `scope`, split into those with a translation and those without. */
+/** Chia các chương trong `scope` thành nhóm đã có bản dịch và nhóm chưa có bản dịch. */
 export function planScope(chapters: readonly ChapterItem[], scope: ExportScope): ScopePlan {
   const inScope = chapters.filter((chapter) => {
     if (scope.kind === 'all') return true
@@ -38,7 +38,7 @@ export function planScope(chapters: readonly ChapterItem[], scope: ExportScope):
   }
 }
 
-/** "3, 7, 12–15": chapter numbers with runs folded, cut after `limit` pieces. */
+/** Gộp các số chương liên tiếp dạng "3, 7, 12–15", giới hạn hiển thị sau `limit` đoạn. */
 export function foldNumbers(numbers: readonly number[], limit = 8): string {
   const sorted = [...numbers].sort((a, b) => a - b)
   const runs: Array<{ text: string; size: number }> = []
@@ -58,7 +58,7 @@ export function foldNumbers(numbers: readonly number[], limit = 8): string {
   return text + ' và ' + rest + ' chương khác'
 }
 
-/** The export choices that carry over from one export to the next on this device. */
+/** Tùy chọn xuất được ghi nhớ giữa các lần xuất trên thiết bị này. */
 export interface ExportPrefs {
   format: ExportFormat
   workMode: ExportWorkMode
@@ -85,7 +85,7 @@ const pick = <T extends string>(allowed: readonly T[], value: unknown, fallback:
 const flag = (value: unknown, fallback: boolean): boolean =>
   typeof value === 'boolean' ? value : fallback
 
-/** A per-device convenience: storage that throws, is empty or holds junk gives the defaults. */
+/** Đọc tùy chọn xuất lưu trên thiết bị; trả về mặc định nếu bộ nhớ bị lỗi, rỗng hoặc dữ liệu không hợp lệ. */
 export function readExportPrefs(): ExportPrefs {
   try {
     const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(PREFS_KEY)
@@ -110,6 +110,6 @@ export function writeExportPrefs(prefs: ExportPrefs): void {
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
   } catch {
-    // Not saved: the next export starts from the defaults again.
+    // Không lưu được: lần xuất tiếp theo sẽ sử dụng lại giá trị mặc định.
   }
 }

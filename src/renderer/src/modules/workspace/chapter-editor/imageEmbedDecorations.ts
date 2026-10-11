@@ -12,18 +12,16 @@ import { IMAGE_MIN_WIDTH } from '../../../../../shared/contracts/images'
 import { selectionTouches } from './selectionTouches'
 
 /**
- * Images embedded in the translation (`![[id]]`, or `![[id|width]]` once resized) show as the real
- * picture in Live Preview — the one case in this editor that uses a replace/widget decoration instead
- * of a mark. That is safe for IME the way a mark is not: a widget only ever covers a *complete* token
- * (`![[` … `]]`) that the caret and selection are not touching, so it never sits where a character is
- * being composed. Touch the token (click into it, select across it) and it shows as plain text again,
- * the same as any other text the caret is in.
+ * Ảnh nhúng trong bản dịch (`![[id]]` hoặc `![[id|width]]` khi thay đổi kích thước) được hiển thị
+ * thành ảnh thật trong chế độ xem trực tiếp. Sử dụng decoration dạng widget thay vì mark.
+ * Widget chỉ bao phủ token hoàn chỉnh (`![[` … `]]`) khi con trỏ và vùng chọn không chạm vào,
+ * đảm bảo không xung đột với bộ gõ IME. Khi con trỏ chạm vào token, cú pháp hiển thị lại ở dạng văn bản thuần.
  */
 
 export interface ImageStore {
-  /** Compresses, uploads and returns the embed syntax to insert (`![[id]]`), or why it could not be. */
+  /** Nén, tải lên và trả về cú pháp nhúng Markdown (`![[id]]`), hoặc trả về lỗi nếu không thành công. */
   insert(file: File): Promise<Result<string>>
-  /** The image as a data URL, or null when it no longer exists. */
+  /** Trả về dữ liệu ảnh dưới dạng data URL, hoặc null nếu không tồn tại. */
   get(imageId: string): Promise<Result<string | null>>
 }
 
@@ -42,7 +40,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-/** Replaces the `|width` suffix of one embed token (or adds one) and writes it back. */
+/** Thay thế hoặc thêm hậu tố `|width` vào token nhúng ảnh và cập nhật vào tài liệu. */
 function writeWidth(view: EditorView, from: number, to: number, id: string, width: number): void {
   view.dispatch({ changes: { from, to, insert: '![[' + id + '|' + Math.round(width) + ']]' } })
 }

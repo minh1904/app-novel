@@ -43,7 +43,7 @@ export function targetsOf(
       })
     }
   }
-  // The main model of Settings opens the dialog when it is still usable (spec `model-defaults`).
+  // Ưu tiên đưa model chính trong Cài đặt lên đầu danh sách nếu hợp lệ và khả dụng.
   const index = main
     ? targets.findIndex(
         (target) => target.connectionId === main.connectionId && target.entryId === main.entryId
@@ -54,9 +54,8 @@ export function targetsOf(
 }
 
 /**
- * The model "Dịch tiếp bằng …" offers after a run stopped (change `hermes-settings-modal`, task 4.6): the
- * first fallback of Settings that can translate and is not the model that just failed. Only after a failure
- * main's policy marks as one another model could get past, and only with paragraphs left to do.
+ * Xác định model cho tùy chọn "Dịch tiếp bằng…" khi lượt dịch bị dừng giữa chừng:
+ * lấy model dự phòng đầu tiên trong Cài đặt khác với model vừa gặp lỗi.
  */
 export function continueTargetOf(input: {
   stopped: boolean

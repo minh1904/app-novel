@@ -3,18 +3,18 @@ import { focusRing, focusWithinRing } from './focus'
 import { ICON } from './icon'
 
 /*
- * The variant tables of the components in this folder, kept apart from the components so that each
- * component file exports only components (React fast refresh needs that). A screen can style a native
- * element like a component with them: <a className={buttonVariants({ size: 'sm' })}>.
+ * Bảng biến thể của các component trong thư mục, tách riêng để các tệp component chỉ export
+ * component (hỗ trợ React Fast Refresh). Có thể dùng để định kiểu cho phần tử HTML gốc như component:
+ * <a className={buttonVariants({ size: 'sm' })}>.
  */
 
 /*
- * The IZONE LMS button: colour × style × size, on Mira's tokens.
- *   colour  neutral (everything; solid is the screen's primary action) | danger (deletes)
+ * Biến thể nút bấm: màu sắc × kiểu dáng × kích thước.
+ *   colour  neutral (mặc định; solid là hành động chính của màn hình) | danger (thao tác xóa)
  *   style   solid | outline | light | ghost
- *   size    lg 40px (at most one per screen) · md 32px (default) · sm 24px (tables, rows, toolbars)
- * One control scale for buttons, fields and groups: height 24 / 32 / 40, label 12 / 13 / 15 (about 40%
- * of the height), side padding 8 / 12 / 16, radius 4 / 6 / 8 (a quarter of the height or less).
+ *   size    lg 40px (tối đa một nút trên màn hình) · md 32px (mặc định) · sm 24px (bảng, hàng, thanh công cụ)
+ * Thang kích thước chuẩn cho nút, ô nhập và nhóm: chiều cao 24 / 32 / 40, nhãn chữ 12 / 13 / 15,
+ * đệm ngang 8 / 12 / 16, bo góc 4 / 6 / 8.
  */
 export const buttonVariants = variants({
   base: cn(
@@ -81,10 +81,10 @@ export const buttonVariants = variants({
   defaults: { color: 'neutral', variant: 'outline', size: 'md', iconOnly: false }
 })
 
-/** Icon sizes per button size (Solar icons take a pixel size, not a class). */
+/** Kích thước biểu tượng theo từng cỡ nút (biểu tượng Reicon nhận giá trị pixel). */
 export const BUTTON_ICON = { lg: ICON.md, md: ICON.sm, sm: ICON.xs } as const
 
-/** A text action: link colour, underline on hover. */
+/** Nút hành động dạng văn bản: màu liên kết, gạch chân khi hover. */
 export const linkButtonVariants = variants({
   base: cn(
     'inline-flex items-center gap-2xs rounded-xs whitespace-nowrap underline-offset-4 hover:underline',
@@ -96,7 +96,7 @@ export const linkButtonVariants = variants({
     color: {
       link: 'text-link',
       neutral: 'text-subtle hover:text-default',
-      /** Something waits for the reader, e.g. proposals to review. */
+      /** Đang có việc chờ người dùng xử lý, ví dụ các đề xuất cần xem xét. */
       warning: 'text-warning-emphasis'
     },
     size: {
@@ -108,8 +108,8 @@ export const linkButtonVariants = variants({
 })
 
 /*
- * The IZONE LMS compact button: an icon-only button for bars, rows and tags.
- *   style  ghost (default) | light | dark | outline
+ * Biến thể nút thu gọn: nút chỉ chứa biểu tượng dùng cho thanh công cụ, hàng và thẻ nhãn.
+ *   style  ghost (mặc định) | light | dark | outline
  *   size   lg 28px · md 24px · sm 20px
  */
 export const compactButtonVariants = variants({
@@ -136,7 +136,7 @@ export const compactButtonVariants = variants({
       sm: 'size-5 rounded-xs'
     },
     round: { true: 'rounded-full', false: '' },
-    /** A ghost button whose action has a meaning: accept (success) or delete (danger). */
+    /** Nút dạng ghost có ý nghĩa hành động cụ thể: chấp nhận (success) hoặc xóa (danger). */
     tone: {
       neutral: '',
       success: 'hover:bg-success-subtle hover:text-success-emphasis',
@@ -146,14 +146,14 @@ export const compactButtonVariants = variants({
   defaults: { variant: 'ghost', size: 'md', round: false, tone: 'neutral' }
 })
 
-/** Icon sizes per compact size. */
+/** Kích thước biểu tượng theo từng cỡ nút thu gọn. */
 export const COMPACT_ICON = { lg: ICON.md, md: ICON.sm, sm: ICON['2xs'] } as const
 
 /*
- * A short label for a state or a category. Colour states what something is (the IZONE LMS state map):
- * success done · info in progress, new · warning paused, needs a look · error failed · accent stands out
- * without a judgement · neutral not started, not applicable. The text always says it too.
- *   style  light (tinted fill) | outline (border only) | plain (dot and text)
+ * Nhãn ngắn thể hiện trạng thái hoặc danh mục phân loại. Màu sắc biểu thị ý nghĩa:
+ * success đã xong · info đang thực hiện, mới · warning tạm dừng, cần xem xét · error thất bại · accent nổi bật
+ * · neutral chưa bắt đầu, không áp dụng. Nội dung văn bản luôn thể hiện rõ trạng thái.
+ *   style  light (nền màu nhạt) | outline (chỉ viền ngoài) | plain (chấm tròn và chữ)
  */
 export const badgeVariants = variants({
   base: 'inline-flex shrink-0 items-center gap-2xs whitespace-nowrap text-label-xs',
@@ -186,9 +186,9 @@ export const badgeVariants = variants({
 })
 
 /*
- * The frame every one-line field and select trigger shares (IZONE LMS input): a surface box with an
- * input-coloured border, a hover tint, the focus ring around the whole frame, a red border when
- * invalid. Sizes: md 32px · sm 24px (a toolbar, a table row), the heights of the buttons beside it.
+ * Khung dùng chung cho trường nhập một dòng và trigger chọn: hộp bề mặt có viền màu ô nhập,
+ * hiệu ứng hover, viền focus quanh toàn khung và viền đỏ khi không hợp lệ.
+ * Kích thước: md 32px · sm 24px (thanh công cụ, hàng bảng), tương ứng chiều cao các nút cạnh bên.
  */
 export const inputFrameVariants = variants({
   base: cn(

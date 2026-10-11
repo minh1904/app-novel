@@ -7,7 +7,7 @@ export interface WorkFormValues {
   author: string
   genre: string
   description: string
-  /** The cover as a JPEG data URL, or null for none. */
+  /** Ảnh bìa dưới dạng data URL JPEG, hoặc null nếu không có. */
   cover: string | null
 }
 
@@ -21,7 +21,7 @@ export const emptyWorkForm: WorkFormValues = {
   cover: null
 }
 
-/** Only what changed is sent; a blanked optional field is sent as `null` so it is cleared. */
+/** Chỉ gửi các trường có thay đổi; trường tùy chọn bị xóa trắng sẽ gửi giá trị `null` để xóa trong cơ sở dữ liệu. */
 export function buildPatch(before: WorkFormValues, after: WorkFormValues): WorkPatch {
   const patch: WorkPatch = {}
   if (after.title !== before.title) patch.title = after.title

@@ -1,7 +1,7 @@
 import type { JSX, ReactNode } from 'react'
 import { Select as BaseSelect } from '@base-ui/react/select'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
-import { CheckIcon } from '@solar-icons/react/linear/check'
+import { AltArrowDownIcon, CheckIcon } from '@renderer/components/ui/reicon'
+
 import { cn } from '../../lib/cn'
 import { menuItemClass, menuSurfaceClass } from './DropdownMenu'
 import { focusRing } from './focus'
@@ -12,20 +12,20 @@ export interface SelectOption<T extends string> {
 }
 
 export interface SelectProps<T extends string> {
-  /** Names the select for assistive technology. */
+  /** Tên nhãn của hộp chọn cho công nghệ hỗ trợ tiếp cận. */
   label: string
   value: T
   options: ReadonlyArray<SelectOption<T>>
   onChange(value: T): void
   icon?: ReactNode
-  /** md 32px · sm 24px (a toolbar), the same scale as Button and Input. */
+  /** Kích thước: md 32px · sm 24px (thanh công cụ), cùng tỷ lệ với Button và Input. */
   size?: 'md' | 'sm'
   id?: string
   disabled?: boolean
   className?: string
 }
 
-/** One value out of a list, on the input frame; the list opens as a menu. */
+/** Chọn một giá trị từ danh sách trên khung ô nhập; danh sách hiển thị dưới dạng menu. */
 export function Select<T extends string>({
   label,
   value,

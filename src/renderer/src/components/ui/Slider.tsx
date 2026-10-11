@@ -8,16 +8,16 @@ export interface SliderProps {
   value: number
   onChange(value: number): void
   /**
-   * Called once when the person lets go of the thumb or finishes a key press, with the final value. A
-   * form that saves what the slider says saves here, not on every `onChange` (one per pixel of a drag).
+   * Gọi một lần khi người dùng thả con trượt hoặc kết thúc nhấn phím với giá trị cuối cùng.
+   * Biểu mẫu cần lưu giá trị nên lưu tại đây thay vì lưu liên tục trong `onChange`.
    */
   onCommit?(value: number): void
   min?: number
   max?: number
   step?: number
-  /** How the value reads next to the label; the default is a percentage. */
+  /** Định dạng chuỗi hiển thị của giá trị cạnh nhãn; mặc định hiển thị theo phần trăm (%). */
   format?(value: number): string
-  /** Keep the label for assistive technology and show only the value, for a slider titled by its row. */
+  /** Giữ nhãn cho công nghệ hỗ trợ và chỉ hiển thị giá trị số, thích hợp khi thanh trượt đã có tiêu đề ở hàng ngoài. */
   hideLabel?: boolean
   disabled?: boolean
 }

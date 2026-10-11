@@ -1,12 +1,5 @@
 /**
- * A line diff, only as clever as the panel needs.
- *
- * Shown before a proposal may be applied, so the translator sees what changes rather than finding out
- * afterwards. Lines, not words: a prose rewrite usually replaces whole sentences, and a word-level
- * diff of two different phrasings turns into confetti that is harder to read than the two versions.
- *
- * Plain LCS. The texts here are one paragraph to one chapter, so the quadratic table is fine; if that
- * ever stops being true the fix is to cap the input, not to get clever.
+ * So sánh khác biệt theo dòng giữa hai văn bản dựa trên thuật toán LCS.
  */
 
 export type DiffKind = 'same' | 'added' | 'removed'
@@ -17,17 +10,13 @@ export interface DiffLine {
 }
 
 /**
- * A text as its lines, with one contract applied everywhere: **empty text has no lines**.
- *
- * `''.split('\n')` gives `['']`, one empty line, which would show up in the diff as a removed blank —
- * noise above a proposal. Getting this wrong in one path and right in another is what makes a diff
- * lose or invent lines, so the conversion happens in exactly one place.
+ * Tách văn bản thành danh sách dòng: chuỗi rỗng trả về mảng rỗng (không tạo dòng trống).
  */
 function linesOf(text: string): string[] {
   return text === '' ? [] : text.split('\n')
 }
 
-/** Length table of the longest common subsequence of lines. */
+/** Bảng độ dài của dãy con chung dài nhất (LCS) giữa các dòng. */
 function lcsTable(before: string[], after: string[]): number[][] {
   const table: number[][] = Array.from({ length: before.length + 1 }, () =>
     new Array<number>(after.length + 1).fill(0)
@@ -44,10 +33,7 @@ function lcsTable(before: string[], after: string[]): number[][] {
 }
 
 /**
- * The lines of `after` against `before`, in reading order.
- *
- * A removed line and the added line replacing it come out adjacent (removed first), which is what lets
- * the panel show them as one swapped pair instead of two unrelated edits.
+ * Trả về danh sách các dòng diff giữa `after` và `before` theo thứ tự đọc.
  */
 export function diffLines(before: string, after: string): DiffLine[] {
   const left = linesOf(before)
@@ -76,7 +62,7 @@ export function diffLines(before: string, after: string): DiffLine[] {
   return lines
 }
 
-/** How much changes, for a one-line summary above the diff. */
+/** Tóm tắt số dòng được thêm và số dòng bị xóa để hiển thị phía trên phần diff. */
 export function diffSummary(lines: DiffLine[]): { added: number; removed: number } {
   return {
     added: lines.filter((line) => line.kind === 'added').length,

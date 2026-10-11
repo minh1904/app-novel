@@ -1,15 +1,18 @@
 import type { JSX } from 'react'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { DangerTriangleIcon } from '@solar-icons/react/linear/danger-triangle'
-import { HistoryIcon } from '@solar-icons/react/linear/history'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import {
+  CheckCircleIcon,
+  DangerTriangleIcon,
+  HistoryIcon,
+  RefreshIcon
+} from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { cn } from '../../../lib/cn'
 import { SOON_LABEL } from '../../../lib/mockFeatures'
 
 type JobStatus = 'running' | 'error' | 'done'
 
-/** Fixed sample data: what the Jobs area would hold, not anything read from this work. */
+/** Dữ liệu mẫu cố định: hiển thị minh họa nội dung khu vực tác vụ AI. */
 interface JobRow {
   status: JobStatus
   chapter: string
@@ -66,9 +69,8 @@ const jobGrid =
 const hideBelow620 = '@max-[620px]:hidden'
 
 /**
- * Illustration of the Jobs area: running/failed/finished AI translation runs, with cost and
- * provider. No data is read or written; every control is disabled. See delivery/backlog.md,
- * `jobs-area`.
+ * Minh họa khu vực tác vụ AI: các lượt dịch đang chạy, thất bại hoặc hoàn tất,
+ * kèm thông tin chi phí và nhà cung cấp. Không đọc hoặc ghi dữ liệu thực tế.
  */
 export function JobsAreaMock(): JSX.Element {
   return (

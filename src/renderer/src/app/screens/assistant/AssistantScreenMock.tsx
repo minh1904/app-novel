@@ -1,8 +1,11 @@
 import type { JSX } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { ArrowUpIcon } from '@solar-icons/react/linear/arrow-up'
-import { ChecklistMinimalisticIcon } from '@solar-icons/react/linear/checklist-minimalistic'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
+import {
+  AddIcon,
+  ArrowUpIcon,
+  ChecklistMinimalisticIcon,
+  MinimalisticMagnifierIcon
+} from '@renderer/components/ui/reicon'
+
 import { TopBarTitle } from '../../../components/ui/TopBarActions'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
@@ -12,7 +15,7 @@ import { NavItem } from '../../../components/ui/NavItem'
 import { Textarea } from '../../../components/ui/Textarea'
 import { SOON_LABEL } from '../../../lib/mockFeatures'
 
-/** Fixed sample data: earlier conversations that belong to no chapter. */
+/** Dữ liệu mẫu cố định: danh sách các cuộc trò chuyện trước đó không gắn với chương cụ thể nào. */
 const CHATS = [
   { title: 'Cách dịch 道友 ở 3 truyện', time: '10:12' },
   { title: 'Điển cố “nhất nhật bất kiến như cách tam thu”', time: 'Hôm qua' },
@@ -27,9 +30,9 @@ const ROWS = [
 ]
 
 /**
- * Picture of the assistant outside any chapter (MOCK_FEATURES.assistantPage): it reads the whole
- * library, compares how a name was translated across works, explains allusions, and turns fixes into
- * proposals to review. Nothing is sent to a model; every control is disabled.
+ * Giao diện mẫu của trợ lý AI ngoài phạm vi chương: hỗ trợ tra cứu toàn bộ thư viện, so sánh cách dịch,
+ * giải thích điển cố và tạo đề xuất chỉnh sửa.
+ * Hiện hiển thị giao diện minh họa và chưa gửi dữ liệu đến mô hình AI.
  */
 export function AssistantScreenMock(): JSX.Element {
   return (

@@ -12,29 +12,29 @@ export interface ChapterScreenController {
   load: ChapterScreenLoad
   work: Work | null
   chapter: ChapterItem | null
-  /** The source text with its segments; revision 0 and empty when never imported. */
+  /** Văn bản gốc kèm các segment; revision 0 và rỗng nếu chưa từng nhập. */
   source: TextRecord | null
-  /** The translation, the same way: revision 0 and empty until something is saved. */
+  /** Bản dịch; revision 0 và rỗng cho đến khi có nội dung được lưu. */
   target: TextRecord | null
   error: string | null
   reload(): Promise<void>
   /**
-   * Changes whenever the source was replaced from outside the editor (import, replacement), which
-   * is when the editor must be opened again on the new text.
+   * Thay đổi mỗi khi bản gốc bị thay thế từ bên ngoài trình soạn thảo (nhập lại),
+   * yêu cầu mở lại trình soạn thảo với nội dung mới.
    */
   epoch: number
   /**
-   * Changes whenever the translation was rewritten from outside the editor (AI translating the
-   * chapter), which is when the translation editor must be opened again on the new text.
+   * Thay đổi mỗi khi bản dịch được viết lại từ bên ngoài trình soạn thảo (AI dịch cả chương),
+   * yêu cầu mở lại trình soạn thảo với nội dung mới.
    */
   targetEpoch: number
-  /** Takes in a source that was just replaced, and refreshes the work so the library follows. */
+  /** Tiếp nhận bản gốc vừa được thay thế và cập nhật tác phẩm trong thư viện. */
   applySource(record: TextRecord): Promise<void>
-  /** Takes in a translation rewritten from outside the editor, and reopens the editor on it. */
+  /** Tiếp nhận bản dịch được ghi lại từ bên ngoài và mở lại trình soạn thảo. */
   applyTarget(record: TextRecord): Promise<void>
-  /** The editor saved (or reloaded): the figures follow it, and the editor stays as it is. */
+  /** Ghi nhận trình soạn thảo đã lưu (hoặc tải lại) để cập nhật số liệu. */
   noteSaved(record: TextRecord): Promise<void>
-  /** The translation editor saved (or reloaded): the chapter and the work follow it. */
+  /** Ghi nhận trình soạn thảo bản dịch đã lưu (hoặc tải lại) để cập nhật chương và tác phẩm. */
   noteTargetSaved(record: TextRecord): Promise<void>
 }
 
@@ -45,7 +45,7 @@ interface Loaded {
   target: TextRecord
 }
 
-/** Everything the chapter screen shows: the work (for its language), the chapter and its source. */
+/** Quản lý toàn bộ dữ liệu hiển thị trên màn hình chương: tác phẩm, chương, bản gốc và bản dịch. */
 export function useChapterScreen(
   workId: string,
   chapterId: string,

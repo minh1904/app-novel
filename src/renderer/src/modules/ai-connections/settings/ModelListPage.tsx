@@ -1,5 +1,6 @@
 import { useState, type JSX } from 'react'
-import { ChecklistMinimalisticIcon } from '@solar-icons/react/linear/checklist-minimalistic'
+import { ChecklistMinimalisticIcon } from '@renderer/components/ui/reicon'
+
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
 import { connectionSection } from '../../../../../shared/contracts/aiProviders'
 import { Badge } from '../../../components/ui/Badge'
@@ -16,7 +17,7 @@ import { useConnections } from './useConnections'
 
 const SECTION_ORDER = ['accounts', 'keys', 'endpoints', 'local'] as const
 
-/** Accounts first, then keys, endpoints and local models: the order of the Kết nối AI pages. */
+/** Ưu tiên tài khoản, tiếp theo là khóa API, endpoint tùy chỉnh và model trên máy theo thứ tự trang. */
 function ordered(connections: readonly ConnectionView[]): ConnectionView[] {
   return [...connections].sort(
     (a, b) =>
@@ -72,8 +73,7 @@ function ConnectionModels({
 }
 
 /**
- * Cài đặt › Model › Danh sách model: the entries of every connection, which the model menu lists. Hermes
- * keeps models out of the provider cards ("Edit models…"); the cards only hold keys.
+ * Cài đặt › Model › Danh sách model: danh sách model thuộc từng kết nối được hiển thị trong menu chọn model.
  */
 export function ModelListPage(): JSX.Element {
   const { connections } = useConnections()

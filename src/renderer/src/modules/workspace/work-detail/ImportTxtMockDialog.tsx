@@ -3,7 +3,7 @@ import { Button } from '../../../components/ui/Button'
 import { Dialog } from '../../../components/ui/Dialog'
 import { SOON_LABEL } from '../../../lib/mockFeatures'
 
-/** Fixed sample data: what the finished import would show, not anything from the work. */
+/** Dữ liệu mẫu cố định: hiển thị minh họa danh sách chương nhập từ tệp. */
 const SAMPLE_CHAPTERS = [
   'Chương 101: Gặp lại',
   'Chương 102: Cửa núi',
@@ -13,8 +13,8 @@ const SAMPLE_CHAPTERS = [
 ]
 
 /**
- * Illustration of importing many chapters from one .txt file. It reads no file and writes nothing;
- * the rule shown for splitting chapters is a proposal, still to be confirmed (see the backlog).
+ * Hộp thoại minh họa nhập nhiều chương từ một tệp .txt. Không đọc hay ghi tệp;
+ * giao diện hiển thị quy tắc đề xuất tách chương.
  */
 export function ImportTxtMockDialog({
   open,

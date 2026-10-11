@@ -2,19 +2,16 @@ import type { ChatLocation } from '../../../../../shared/contracts/aiChat'
 import { paragraphAt, splitParagraphs } from '../../../../../shared/text/paragraphSpans'
 
 /**
- * Where the user is, in the numbers the chat tools use (D1 of change `agentic-chat`).
+ * Xác định vị trí đoạn văn hiện tại của người dùng để cung cấp ngữ cảnh cho công cụ trợ lý AI.
  *
- * A turn no longer carries text. It carries this: the paragraph each caret is in and the paragraphs
- * selected, counted from 1 with the same split the tools count with (`splitParagraphs`), so "đoạn 5" here
- * and "đoạn 5" in `read_chapter` are the same paragraph. Pure, so the counting can be tested without an
- * editor.
+ * Lưu số thứ tự đoạn văn của con trỏ và vùng chọn theo chỉ số bắt đầu từ 1, tương thích với cách chia đoạn của các công cụ.
  */
 
-/** A caret or selection in one pane, as character offsets into that pane's text. */
+/** Vị trí con trỏ hoặc vùng chọn trong một khung soạn thảo, tính theo chỉ số ký tự. */
 export interface PaneCaret {
   from: number
   to: number
-  /** A real selection, not the paragraph around a caret. */
+  /** Đánh dấu có vùng chọn thực sự thay vì chỉ là vị trí đặt con trỏ. */
   selected: boolean
 }
 
@@ -23,11 +20,11 @@ export interface LocationInput {
   targetText: string
   source: PaneCaret | null
   target: PaneCaret | null
-  /** The pane the user touched last: its selection is the one that counts. */
+  /** Khung soạn thảo được thao tác gần nhất để ưu tiên lấy vùng chọn. */
   active: 'source' | 'target'
 }
 
-/** The 1-based paragraph holding `offset`, or `null` for a pane with no paragraph at all. */
+/** Trả về số thứ tự đoạn văn (bắt đầu từ 1) chứa vị trí `offset`, hoặc `null` nếu không có đoạn nào. */
 function paragraphOf(text: string, offset: number): number | null {
   const spans = splitParagraphs(text)
   if (spans.length === 0) return null
@@ -42,7 +39,7 @@ export function buildLocation(input: LocationInput): ChatLocation {
   let selection: ChatLocation['selection'] = null
   if (pane !== null && pane.selected && pane.to > pane.from) {
     const from = paragraphOf(text, pane.from)
-    // The character just before the end: a selection that stops at the start of a line is not in it.
+    // Xét ký tự ngay trước điểm kết thúc để loại trừ trường hợp vùng chọn dừng ở đầu dòng tiếp theo.
     const to = paragraphOf(text, pane.to - 1)
     if (from !== null && to !== null)
       selection = { side: input.active, from, to: Math.max(from, to) }
@@ -58,7 +55,7 @@ export function buildLocation(input: LocationInput): ChatLocation {
 
 const sideName = (side: 'source' | 'target'): string => (side === 'source' ? 'bản gốc' : 'bản dịch')
 
-/** The panel header's words for a location: what "đoạn này" means right now. */
+/** Tạo chuỗi mô tả vị trí hiện tại hiển thị trên tiêu đề bảng trợ lý. */
 export function locationLabel(location: ChatLocation): string {
   const { selection, caret } = location
   if (selection !== null) {

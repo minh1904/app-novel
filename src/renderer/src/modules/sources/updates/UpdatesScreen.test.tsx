@@ -66,7 +66,7 @@ describe('UpdatesScreen component (Task 9.4)', () => {
   it('renders five distinct event types with labels and descriptions', () => {
     const html = renderToStaticMarkup(createElement(UpdatesScreen, { initialEvents: mockEvents }))
 
-    // All 5 event types are represented
+    // Kiểm tra hiển thị đầy đủ 5 loại sự kiện cập nhật
     expect(html).toContain('Chương 101: Phong khởi Vân Dũng')
     expect(html).toContain('Chương mới')
     expect(html).toContain('Raw sửa đổi')
@@ -74,7 +74,7 @@ describe('UpdatesScreen component (Task 9.4)', () => {
     expect(html).toContain('Vắng từ xa (3 lần)')
     expect(html).toContain('Xuất hiện lại')
 
-    // Verifies notification only: raw_changed has diff preview CTA, does not auto queue translation
+    // Xác minh chỉ thông báo: raw_changed có nút xem trước diff, không tự động xếp hàng dịch
     expect(html).toContain('Xem &amp; Áp dụng')
     expect(html).toContain('Mira không tự tải nội dung hay xếp hàng dịch')
   })

@@ -1,8 +1,6 @@
 import { useEffect, useReducer, useState, type JSX } from 'react'
-import { CheckIcon } from '@solar-icons/react/linear/check'
-import { CloseIcon } from '@solar-icons/react/linear/close'
-import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import { CheckIcon, CloseIcon, DangerCircleIcon, RefreshIcon } from '@renderer/components/ui/reicon'
+
 import { CONNECTION_PRESETS } from '../../../../../shared/contracts/aiConnections'
 import { PROVIDER_CARDS } from '../../../../../shared/contracts/aiProviders'
 import { ActionRow } from '../../../components/ui/ActionRow'
@@ -29,7 +27,7 @@ function openLink(url: string): void {
   void window.mira.openExternal(url).catch(() => undefined)
 }
 
-/** One row of the picker: title, how it connects, and a chevron (Hermes `ProviderRow`). */
+/** Một hàng trong danh sách lựa chọn nhà cung cấp: tiêu đề, mô tả cách kết nối và mũi tên điều hướng. */
 function ProviderRow({
   title,
   subtitle,
@@ -325,9 +323,8 @@ export function ConfirmModel({
 }
 
 /**
- * The first-connection card (spec `ai-onboarding`), after Hermes Desktop's onboarding overlay: it opens by
- * itself when the library has no AI connection and "Để sau" was not chosen, or when the model menu asks for a
- * provider.
+ * Thẻ hướng dẫn kết nối AI ban đầu: tự động mở khi thư viện chưa có kết nối AI nào
+ * và chưa chọn "Để sau", hoặc khi người dùng chọn thêm nhà cung cấp từ menu model.
  */
 export function Onboarding(): JSX.Element | null {
   const store = useConnectionStore()
@@ -336,7 +333,7 @@ export function Onboarding(): JSX.Element | null {
   const [dismissed, setDismissed] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
   const [state, dispatch] = useReducer(onboardingReducer, INITIAL_ONBOARDING)
-  // The models of a new account were added by main; there is nothing more to do before choosing one.
+  // Danh sách model của tài khoản mới được nạp tự động từ tiến trình chính.
   useAccountLogin(state, dispatch, () => undefined)
 
   useEffect(() => {
@@ -350,7 +347,7 @@ export function Onboarding(): JSX.Element | null {
     !store.preferences.onboardingSkipped &&
     store.connections.length === 0 &&
     !dismissed
-  // Once a flow has started it stays until it ends, even though connecting makes the library non-empty.
+  // Khi một quy trình kết nối đã bắt đầu, giữ nguyên hiển thị cho đến khi hoàn tất hoặc đóng lại.
   const visible = manual || auto || state.step !== 'idle'
   if (!visible) return null
 
@@ -364,7 +361,7 @@ export function Onboarding(): JSX.Element | null {
     await store.test(connectionId)
     const test = useConnectionStore.getState().tests[connectionId]
     if (test?.error) {
-      // A key that did not work is taken back out, so "Thử lại" does not pile up dead keys.
+      // Khóa API không hoạt động sẽ được tự động gỡ bỏ để tránh tồn đọng khóa lỗi khi thử lại.
       const added = useConnectionStore
         .getState()
         .connections.find((item) => item.id === connectionId)

@@ -4,21 +4,21 @@ import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 
 export interface NavItemProps extends Omit<BaseButton.Props, 'className' | 'children'> {
-  /** The row of the page or item on screen; it wears the selection and `aria-current`. */
+  /** Hàng trang hoặc mục đang hoạt động: hiển thị trạng thái đã chọn và thuộc tính `aria-current`. */
   active?: boolean
-  /** Bold label, for a group row above its pages. */
+  /** Chữ in đậm, dùng cho hàng tiêu đề nhóm phía trên các trang con. */
   strong?: boolean
-  /** A dot, an icon or a cover before the label. */
+  /** Dấu chấm, biểu tượng hoặc ảnh bìa phía trước nhãn. */
   leading?: ReactNode
-  /** A count, a badge or a chevron at the end. */
+  /** Số lượng, huy hiệu hoặc mũi tên ở cuối hàng. */
   trailing?: ReactNode
   className?: string
   children: ReactNode
 }
 
 /**
- * One row of a list column or a navigation: 32px, subtle text, a hover overlay and the selected overlay
- * on the active row (--mira-nav-*). The label truncates.
+ * Một hàng trong cột danh sách hoặc thanh điều hướng: chiều cao 32px, chữ mờ nhẹ, hiệu ứng hover
+ * và lớp nền nổi bật cho hàng đang hoạt động. Nhãn văn bản tự động cắt ngắn khi quá dài.
  */
 export function NavItem({
   active = false,

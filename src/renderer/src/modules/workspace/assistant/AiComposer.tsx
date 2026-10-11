@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react'
-import { ArrowUpIcon } from '@solar-icons/react/linear/arrow-up'
-import { StopCircleIcon } from '@solar-icons/react/linear/stop-circle'
+import { ArrowUpIcon, StopCircleIcon } from '@renderer/components/ui/reicon'
+
 import { CompactButton } from '../../../components/ui/CompactButton'
 import { ICON } from '../../../components/ui/icon'
 import { ModelSelectionMenu } from '../../ai-connections/public'
@@ -9,18 +9,16 @@ import { openRequestIds } from './chatTurns'
 import type { AiChatController } from './useAiChat'
 
 /**
- * The box the translator types in: the question, which model, and send — or stop while a turn runs.
+ * Khung nhập liệu cho trợ lý AI: nhập câu hỏi, chọn model, gửi câu hỏi hoặc dừng lượt phản hồi đang chạy.
  *
- * Nothing else (change `agentic-chat`). There is no mode to pick and no scope to set: the model reads
- * what it needs with tools, from where the user is, and anything it wants to change comes back as a
- * proposal to review.
+ * Model tự động đọc ngữ cảnh cần thiết qua công cụ và trả về đề xuất thay đổi để người dùng duyệt.
  */
 export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
   const [draft, setDraft] = useState('')
   const [modelMenuOpen, setModelMenuOpen] = useState(false)
   const field = useRef<HTMLTextAreaElement>(null)
 
-  // Ctrl+Shift+M opens the model menu while the panel is open (Hermes's composer.modelPicker).
+  // Phím tắt Ctrl+Shift+M mở menu chọn model khi bảng trợ lý đang mở.
   useEffect(() => {
     function onKey(event: KeyboardEvent): void {
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'm') {
@@ -32,8 +30,7 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Grows with the text up to max-h-40, then scrolls inside. Layout effect, not passive: measuring
-  // after paint makes the box jump a frame behind what was typed.
+  // Tự động co giãn theo nội dung đến chiều cao tối đa, sau đó cuộn bên trong. Dùng useLayoutEffect để tránh giật khung hình khi gõ.
   useLayoutEffect(() => {
     const node = field.current
     if (!node) return
@@ -67,8 +64,7 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
           aria-label="Câu hỏi cho AI"
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
-            // Enter sends; Shift+Enter is a line break. Never send mid-composition: an input method
-            // holding uncommitted text would have it swallowed.
+            // Phím Enter để gửi, Shift+Enter để xuống dòng. Không gửi khi đang gõ bộ gõ IME.
             if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
             event.preventDefault()
             submit()

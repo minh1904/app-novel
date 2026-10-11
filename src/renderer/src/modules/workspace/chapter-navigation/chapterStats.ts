@@ -1,16 +1,16 @@
 import type { SessionStatus } from '../chapter-editor/editorSession'
 
-/** Words are runs of letters and digits; Vietnamese counts each syllable, as a word processor does. */
+/** Biểu thức chính quy nhận diện từ gồm chuỗi chữ và số; với tiếng Việt tính theo từng âm tiết. */
 const WORD = /[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu
 
-/** Words and characters of a text; characters count code points and leave line breaks out. */
+/** Thống kê số từ và số ký tự của văn bản; số ký tự không tính các ký tự xuống dòng. */
 export function textStats(text: string): { words: number; characters: number } {
   let characters = 0
   for (const char of text) if (char !== '\n' && char !== '\r') characters++
   return { words: text.match(WORD)?.length ?? 0, characters }
 }
 
-/** One state for the chapter: unsaved if either side is, saving if either side is. */
+/** Xác định trạng thái lưu tổng hợp của chương: hiển thị chưa lưu hoặc đang lưu nếu có một bên tương ứng. */
 export function combinedSaveLabel(statuses: SessionStatus[]): {
   label: string
   safe: boolean

@@ -71,7 +71,7 @@ function decorations(preview: ProposalPreview | null): DecorationSet {
   return Decoration.set(marks, true)
 }
 
-/** Review is an editor decoration. Opening or closing it never changes the document. */
+/** Xem trước đề xuất là một decoration của trình soạn thảo, không làm thay đổi nội dung tài liệu. */
 export class ProposalReview {
   private readonly set = StateEffect.define<ProposalPreview | null>()
   private readonly field = StateField.define<ProposalPreview | null>({

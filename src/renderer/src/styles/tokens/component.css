@@ -1,11 +1,11 @@
 /*
- * Tier 3: component. Only the component named in each token reads it, through Tailwind's variable
- * syntax (bg-(--mira-button-neutral-solid-bg)); a screen never does. Values point at the semantic tier;
- * both live on <html>, so they follow the theme without a block of their own.
+ * Tầng 3: component. Dành riêng cho component tương ứng, sử dụng cú pháp biến của Tailwind
+ * (bg-(--mira-button-neutral-solid-bg)); màn hình không đọc trực tiếp. Các giá trị trỏ về tầng semantic;
+ * cả hai tầng đều đặt trên <html> để tự động thay đổi theo theme.
  */
 :root {
-  /* Button: colour neutral | danger × style solid | outline | light | ghost. Mira has no brand
-     colour; its primary action is the inverted neutral, as in the Acme shot. */
+  /* Nút bấm (Button): màu sắc trung tính hoặc cảnh báo kết hợp các kiểu hiển thị (solid, outline, light, ghost).
+     Hành động chính sử dụng màu trung tính đảo ngược. */
   --mira-button-neutral-solid-bg: var(--mira-bg-inverted);
   --mira-button-neutral-solid-bg-hover: var(--mira-bg-inverted-hover);
   --mira-button-neutral-solid-fg: var(--mira-text-inverted);
@@ -26,25 +26,25 @@
   --mira-button-bg-disabled: var(--mira-bg-disabled);
   --mira-button-fg-disabled: var(--mira-text-disabled);
 
-  /* Input, select trigger, textarea */
+  /* Ô nhập liệu (Input), trigger chọn (Select), vùng nhập văn bản (Textarea) */
   --mira-input-bg: var(--mira-bg-surface);
   --mira-input-bg-hover: var(--mira-bg-subtle);
   --mira-input-border: var(--mira-border-input);
   --mira-input-fg: var(--mira-text);
 
-  /* Navigation: rows of a list column, open tabs in a bar */
+  /* Điều hướng: hàng danh sách, thẻ đang mở */
   --mira-nav-fg: var(--mira-text-subtle);
   --mira-nav-fg-active: var(--mira-text);
   --mira-nav-bg-hover: var(--mira-bg-hover);
   --mira-nav-bg-active: var(--mira-bg-selected);
 
-  /* Switch */
+  /* Công tắc (Switch) */
   --mira-switch-track: var(--mira-border-input);
   --mira-switch-track-on: var(--mira-bg-inverted);
   --mira-switch-thumb: var(--mira-neutral-0);
   --mira-switch-thumb-on: var(--mira-text-inverted);
 
-  /* Tooltip: colours inverted */
+  /* Chú thích gợi ý (Tooltip): màu đảo ngược */
   --mira-tooltip-bg: var(--mira-bg-inverted);
   --mira-tooltip-fg: var(--mira-text-inverted);
 }

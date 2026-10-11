@@ -1,6 +1,6 @@
 import { useMemo, useState, type JSX } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { LibraryIcon } from '@solar-icons/react/linear/library'
+import { AddIcon, LibraryIcon } from '@renderer/components/ui/reicon'
+
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { Alert } from '../../../components/ui/Alert'
 import { Badge, type BadgeColor } from '../../../components/ui/Badge'
@@ -31,8 +31,8 @@ function matches(work: Work, filter: Filter, query: string): boolean {
 }
 
 /**
- * Every work as a card, newest first, with filters by state and a search on both titles. Archived works
- * only show under their own filter.
+ * Hiển thị tác phẩm dưới dạng thẻ, sắp xếp theo thời gian mới nhất, kèm bộ lọc trạng thái và tìm kiếm theo tên.
+ * Tác phẩm lưu trữ chỉ hiển thị trong bộ lọc Lưu trữ riêng biệt.
  */
 export function LibraryScreen({
   works,
@@ -41,7 +41,7 @@ export function LibraryScreen({
   onCreateWork
 }: {
   works: Work[]
-  /** Work files that could not be opened. */
+  /** Số lượng tệp tác phẩm gặp lỗi không mở được. */
   problems: number
   onOpenWork(workId: string): void
   onCreateWork(): void

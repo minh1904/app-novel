@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { UsageWindowView } from '../../../../../shared/contracts/aiAccounts'
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
 
-/** The limits of a Codex account, read when the card shows (main caches them for 5 minutes). */
+/** Thông tin hạn mức sử dụng của tài khoản Codex, được đọc khi hiển thị thẻ (tiến trình chính lưu cache 5 phút). */
 export function useAccountUsage(connection: ConnectionView | undefined): UsageWindowView[] {
   const [windows, setWindows] = useState<UsageWindowView[]>([])
   const id =

@@ -1,14 +1,12 @@
 import type { ChatToolStep } from '../../../../../shared/contracts/aiChat'
 
 /**
- * One line for every tool call of a turn, as Hermes shows it: "Đã đọc 2 chương, tìm 1 lần, đề xuất 1 sửa".
- * The calls themselves stay one click away; the line is what the reader skims past to the answer.
+ * Tóm tắt các lệnh gọi công cụ trong một lượt hỏi thành một dòng ngắn gọn: ví dụ "Đã đọc 2 chương, tìm 1 lần, đề xuất 1 sửa".
  *
- * A failed call is not counted as done work: it is counted apart, so "đọc 2 chương" never includes the
- * chapter that did not exist. Fallback notices are not tool calls and are shown elsewhere.
+ * Lệnh gọi thất bại được thống kê riêng và không tính vào công việc đã hoàn thành. Thông báo chuyển sang model dự phòng không tính là lệnh gọi công cụ.
  */
 
-/** The steps that are tool calls, in order: everything but fallback notices. */
+/** Lọc danh sách các bước gọi công cụ theo thứ tự thực hiện, loại trừ thông báo chuyển model dự phòng. */
 export function toolCalls(tools: ChatToolStep[]): ChatToolStep[] {
   return tools.filter((step) => step.name !== 'fallback')
 }

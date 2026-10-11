@@ -1,34 +1,34 @@
 import type { JSX, ReactNode } from 'react'
 import { Button as BaseButton } from '@base-ui/react/button'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
+import { AltArrowDownIcon, AltArrowRightIcon } from '@renderer/components/ui/reicon'
+
 import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 import { ICON } from './icon'
 
 export interface ActionRowProps extends Omit<BaseButton.Props, 'className' | 'children' | 'title'> {
   title: ReactNode
-  /** One or more lines under the title. */
+  /** Một hoặc nhiều dòng văn bản dưới tiêu đề. */
   description?: ReactNode
-  /** A badge beside the title. */
+  /** Huy hiệu bên cạnh tiêu đề. */
   tag?: ReactNode
-  /** An icon or a logo before the text. */
+  /** Biểu tượng hoặc logo phía trước văn bản. */
   leading?: ReactNode
   /**
-   * Set for a row that opens a section below it instead of leading away: the chevron points down and
-   * turns up while open, and the row carries aria-expanded.
+   * Đặt khi hàng dùng để mở/đóng một phần bên dưới thay vì điều hướng: mũi tên trỏ xuống và
+   * quay lên khi mở, đồng thời hàng mang aria-expanded.
    */
   expanded?: boolean
-  /** The recommended choice of a list: it rests on the hover tint. */
+  /** Lựa chọn được khuyến nghị trong danh sách: luôn có nền nổi bật nhẹ. */
   featured?: boolean
-  /** Hides the chevron, e.g. for a row that only shows a state. */
+  /** Ẩn mũi tên điều hướng, ví dụ với hàng chỉ hiển thị trạng thái. */
   noChevron?: boolean
   className?: string
 }
 
 /**
- * A choice that leads somewhere: a title, a description and a chevron, the whole row clickable (pick a
- * provider, pick an account). Hover lays the selected overlay; a disabled row loses its chevron.
+ * Hàng hành động có thể nhấn: gồm tiêu đề, mô tả và mũi tên điều hướng (như chọn nhà cung cấp,
+ * chọn tài khoản). Hỗ trợ hiệu ứng hover và ẩn mũi tên khi bị vô hiệu hóa.
  */
 export function ActionRow({
   title,

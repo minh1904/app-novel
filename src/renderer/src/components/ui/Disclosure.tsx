@@ -1,31 +1,32 @@
 import type { JSX, MouseEvent, ReactNode } from 'react'
+import { AltArrowDownIcon } from '@renderer/components/ui/reicon'
 import { Collapsible } from '@base-ui/react/collapsible'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
+
 import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 import { ICON } from './icon'
 
 export interface DisclosureProps {
-  /** The line that opens and closes the body. */
+  /** Dòng nhãn kích hoạt đóng/mở phần nội dung. */
   label: ReactNode
   open: boolean
   onOpenChange(open: boolean): void
-  /** Pulses the label while the thing it describes is still running. */
+  /** Hiệu ứng nhấp nháy nhãn khi tiến trình đang diễn ra. */
   pending?: boolean
-  /** Classes for the trigger row (its text style). */
+  /** Lớp CSS cho hàng kích hoạt (kiểu chữ, khoảng cách). */
   className?: string
-  /** -1 keeps the trigger out of the tab order, for a header inside a list a field drives. */
+  /** Giá trị -1 để loại nút khỏi thứ tự phím Tab, hữu ích cho tiêu đề nằm trong danh sách do trường nhập điều khiển. */
   tabIndex?: number
-  /** E.g. preventDefault, so a click does not take focus from the field that drives the list. */
+  /** Xử lý sự kiện nhấn chuột, ví dụ preventDefault để không làm mất focus của ô nhập liệu. */
   onMouseDown?(event: MouseEvent<HTMLButtonElement>): void
-  /** Controls beside the line (a filter), outside the trigger. */
+  /** Các phần tử điều khiển phụ nằm cạnh dòng nhãn (như bộ lọc), nằm ngoài nút kích hoạt. */
   trailing?: ReactNode
   children?: ReactNode
 }
 
 /**
- * A quiet line that opens into more detail, with a chevron after the label: what the model thought,
- * the tools it called, a group of models. The body is only rendered while open.
+ * Dòng mở rộng thông tin chi tiết, có mũi tên sau nhãn: ví dụ nội dung suy nghĩ của mô hình,
+ * công cụ đã gọi, hoặc nhóm danh mục. Phần thân chỉ render khi mở.
  */
 export function Disclosure({
   label,

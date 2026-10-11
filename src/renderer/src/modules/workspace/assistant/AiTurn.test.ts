@@ -68,7 +68,7 @@ const render = (view: TurnView, retryWith?: { label: string; onClick(): void }):
     })
   )
 
-describe('AiTurn, laid out like Hermes', () => {
+describe('AiTurn layout', () => {
   it('shows the question in its box, the answer as text, and the time with copy and retry', () => {
     const html = render(turn({ answer: 'Chào bạn! Có điều gì mình có thể giúp không?' }))
     expect(html).toContain('Dịch đoạn này')
@@ -76,7 +76,7 @@ describe('AiTurn, laid out like Hermes', () => {
     expect(html).toContain('Hôm nay, ')
     expect(html).toContain('aria-label="Sao chép"')
     expect(html).toContain('aria-label="Hỏi lại"')
-    // The token count is no longer a line of its own.
+    // Số lượng token không còn hiển thị thành dòng riêng.
     expect(html).not.toContain('>Nhà cung cấp không báo lượng dùng<')
   })
 

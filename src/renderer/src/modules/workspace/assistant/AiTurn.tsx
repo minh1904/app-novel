@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type JSX } from 'react'
-import { CopyIcon } from '@solar-icons/react/linear/copy'
-import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
-import { StopCircleIcon } from '@solar-icons/react/linear/stop-circle'
+import {
+  CopyIcon,
+  DangerCircleIcon,
+  RefreshIcon,
+  StopCircleIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ProposalQueueItem } from '../../../../../shared/contracts/aiProposals'
 import { Button } from '../../../components/ui/Button'
 import { CompactButton } from '../../../components/ui/CompactButton'
@@ -18,16 +21,13 @@ import { summarizeTools, toolCalls } from './toolSummary'
 import { thoughtSeconds, turnTime } from './turnTime'
 
 /**
- * One question and its answer, laid out like a Hermes Desktop transcript (apps/desktop thread/*): the
- * question in a full-width box, then quiet scaffold rows — what the model thought, what it did with
- * tools — then the answer as plain text, and a footer with the time and a few icons. Nothing about what
- * was attached or selected: the model reads that for itself.
+ * Hiển thị một lượt hỏi đáp gồm câu hỏi, quá trình suy nghĩ, các lệnh gọi công cụ,
+ * câu trả lời và thanh thông tin thời gian kèm thao tác.
  */
 
 /**
- * What the model thought. While it thinks, the text shows as a live preview that follows new tokens (as
- * Hermes does); a block that was seen live stays open afterwards, so the turn does not jump when it ends.
- * A block restored from history starts closed.
+ * Quá trình suy nghĩ của model: hiển thị xem trước trực tiếp khi đang phản hồi,
+ * giữ mở nếu người dùng đã xem và mặc định thu gọn khi khôi phục từ lịch sử.
  */
 function Thought({ turn, running }: { turn: TurnView; running: boolean }): JSX.Element | null {
   const pending = running && turn.answer === ''
@@ -64,7 +64,7 @@ function Thought({ turn, running }: { turn: TurnView; running: boolean }): JSX.E
   )
 }
 
-/** The tool calls of a turn as one line that opens into the list of calls. */
+/** Danh sách các lệnh gọi công cụ trong lượt hỏi, hiển thị dạng dòng tóm tắt có thể mở rộng. */
 function ToolRow({ turn, running }: { turn: TurnView; running: boolean }): JSX.Element | null {
   const [open, setOpen] = useState(false)
   const calls = toolCalls(turn.tools)
@@ -99,7 +99,7 @@ function usageLine(turn: TurnView): string {
     ' + ' +
     turn.usage.outputTokens +
     ' token · ' +
-    // A missing price means the snapshot has none for this model, which is not the same as free.
+    // Không có giá nghĩa là thông tin mô hình chưa có bảng giá, không đồng nghĩa với miễn phí.
     (turn.usd === null ? 'chưa biết giá' : '$' + turn.usd.toFixed(4))
   )
 }
@@ -120,16 +120,16 @@ export function AiTurn({
   turn: TurnView
   workId: string
   currentChapterId?: string
-  /** The chapter of a turn sent from another chapter, e.g. "Chương 3". */
+  /** Nhãn chương của lượt hỏi được gửi từ chương khác, ví dụ "Chương 3". */
   chapterLabel?: string
   targetChapterExists?: boolean
-  /** The proposal as the chapter's queue has it. */
+  /** Lấy thông tin đề xuất từ hàng chờ của chương. */
   queueItem(proposalId: string): ProposalQueueItem | undefined
   actions: ProposalActions
   onRetry(question: string): void
-  /** The first fallback model of Settings, offered when the turn failed (spec `model-defaults`). */
+  /** Tùy chọn gửi lại câu hỏi bằng model dự phòng khi lượt hỏi bị lỗi. */
   retryWith?: { label: string; onClick(): void }
-  /** Opens the key card of the connection the turn used; offered on a rejected key or a spent quota. */
+  /** Mở cấu hình khóa API của kết nối khi gặp lỗi xác thực hoặc hết hạn mức. */
   onFixKey?: () => void
   onNavigateChapter?(chapterId: string): void
 }): JSX.Element {
@@ -151,7 +151,7 @@ export function AiTurn({
         </span>
       </div>
 
-      {/* A fallback model answered: say which and why, as its own quiet line. */}
+      {/* Thông báo khi câu trả lời được xử lý bởi model dự phòng. */}
       {turn.tools
         .filter((step) => step.name === 'fallback')
         .map((step, index) => (

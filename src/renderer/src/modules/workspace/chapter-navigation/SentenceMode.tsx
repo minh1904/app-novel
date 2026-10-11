@@ -35,10 +35,10 @@ const STATE_DOT: Record<RowState, string> = {
 }
 
 export interface SentenceModeHandle {
-  /** Writes every cell that was changed; true when none of them failed. */
+  /** Ghi tất cả các ô đã chỉnh sửa; trả về true nếu thành công. */
   commitAll(): Promise<boolean>
   hasDrafts(): boolean
-  /** Throws away what was typed and reads the translation and links again. */
+  /** Hủy các nội dung đang soạn thảo và đọc lại bản dịch cùng liên kết. */
   discard(): Promise<void>
 }
 
@@ -47,17 +47,16 @@ export interface SentenceModeProps {
   chapterId: string
   source: TextRecord
   target: TextRecord
-  /** BCP 47 tag of the source, for the font. */
+  /** Mã ngôn ngữ BCP 47 của bản gốc để áp dụng font phù hợp. */
   sourceLang: string
-  /** The translation changed (a row was written, or it was reloaded). */
+  /** Gọi khi bản dịch thay đổi (sau khi ghi một hàng hoặc tải lại). */
   onTargetChanged(target: TextRecord): void
   handleRef?: Ref<SentenceModeHandle>
 }
 
 /**
- * The chapter row by row: each source sentence with the translation of that sentence beside it, how
- * far each row has got, and the way to the next row that needs someone. The translation stays one
- * text; a row is written into it and read back out of it through the links.
+ * Hiển thị chương theo từng hàng câu: mỗi câu bản gốc kèm bản dịch tương ứng bên cạnh,
+ * trạng thái xử lý từng câu và điều hướng tới câu cần duyệt tiếp theo.
  */
 export function SentenceMode({
   workId,
@@ -69,8 +68,7 @@ export function SentenceMode({
   handleRef
 }: SentenceModeProps): JSX.Element {
   const rows = useSentenceRows(workId, chapterId, source, target, onTargetChanged)
-  // The row callbacks read the hook through a ref, so they stay the same function and the rows
-  // that did not change are not drawn again on every key.
+  // Các hàm callback của hàng đọc hook qua ref để tránh vẽ lại các hàng không đổi khi gõ phím
   const latest = useRef(rows)
   useEffect(() => {
     latest.current = rows
@@ -96,7 +94,7 @@ export function SentenceMode({
     setFocus({ index, token: Date.now() })
   }, [])
 
-  /** The first row after `from` that nobody has confirmed, going round to the start. */
+  /** Tìm hàng đầu tiên chưa được duyệt sau vị trí `from`, quay vòng về đầu danh sách nếu cần. */
   const jumpFrom = useCallback(
     (from: number): void => {
       const list = latest.current.getView().rows
@@ -286,9 +284,8 @@ const SentenceRow = memo(function SentenceRow({
   const value = draft ?? row.targetText
   const number = row.index + 1
 
-  // The cell grows with its text, so nothing is hidden behind a scroll bar. The height is worked
-  // out again when the width settles or changes (a window resize, the sidebar, a font arriving),
-  // because the same text takes more lines in a narrower cell.
+  // Chiều cao ô tự co giãn theo nội dung để không bị che khuất bởi thanh cuộn.
+  // Chiều cao được tính toán lại khi chiều rộng thay đổi (đổi kích thước cửa sổ, mở sidebar, nạp font).
   useLayoutEffect(() => {
     const element = field.current
     if (!element) return
@@ -307,7 +304,7 @@ const SentenceRow = memo(function SentenceRow({
       element.style.height = element.scrollHeight + 'px'
     })
     observer.observe(element)
-    // Fonts load after the first layout and change how the text wraps.
+    // Font có thể nạp sau lần render đầu tiên và làm thay đổi ngắt dòng
     void document.fonts?.ready.then(() => {
       element.style.height = 'auto'
       element.style.height = element.scrollHeight + 'px'
@@ -320,7 +317,7 @@ const SentenceRow = memo(function SentenceRow({
   }, [focusToken])
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>): void {
-    // Enter that confirms a composition (Telex, Pinyin) belongs to the input method, not to us.
+    // Phím Enter xác nhận bộ gõ (Telex, Pinyin, v.v.) thuộc về IME, bỏ qua xử lý xuống hàng
     if (event.nativeEvent.isComposing || event.keyCode === 229) return
     if (event.key !== 'Enter' || event.shiftKey) return
     event.preventDefault()

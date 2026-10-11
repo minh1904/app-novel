@@ -1,13 +1,16 @@
 import { useRef, useState, type JSX } from 'react'
-import { ArchiveIcon } from '@solar-icons/react/linear/archive'
-import { GalleryAddIcon } from '@solar-icons/react/linear/gallery-add'
-import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
-import { PauseIcon } from '@solar-icons/react/linear/pause'
-import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
-import { PlayIcon } from '@solar-icons/react/linear/play'
-import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
-import { UploadMinimalisticIcon } from '@solar-icons/react/linear/upload-minimalistic'
-import { AddIcon } from '@solar-icons/react/linear/add'
+import {
+  ArchiveIcon,
+  GalleryAddIcon,
+  MenuDotsIcon,
+  PauseIcon,
+  PenNewSquareIcon,
+  PlayIcon,
+  TrashBinMinimalisticIcon,
+  UploadMinimalisticIcon,
+  AddIcon
+} from '@renderer/components/ui/reicon'
+
 import { Badge, type BadgeColor } from '../../../components/ui/Badge'
 import { Button, LinkButton } from '../../../components/ui/Button'
 import { ICON } from '../../../components/ui/icon'
@@ -23,14 +26,14 @@ import { formatFullDate, formatUpdated } from '../../library/public'
 import { WorkCover } from '../../library/public'
 import { languages, statusLabels, type Work, type WorkStatus } from '../../library/public'
 
-/** Badge colours by meaning (badgeVariants): in progress is info, paused needs a look. */
+/** Màu sắc huy hiệu trạng thái: đang tiến hành là info, tạm dừng là warning. */
 const STATUS_COLORS: Record<WorkStatus, BadgeColor> = {
   'not-started': 'neutral',
   'in-progress': 'info',
   paused: 'warning'
 }
 
-/** Descriptions longer than this are folded to three lines with "Xem thêm". */
+/** Mô tả dài hơn ngưỡng này sẽ được thu gọn hiển thị kèm nút "Xem thêm". */
 const LONG_DESCRIPTION = 220
 
 export interface WorkHeaderActions {
@@ -45,8 +48,7 @@ export interface WorkHeaderActions {
 }
 
 /**
- * Everything about the work above the areas: cover, names, status, description and the main
- * action. Optional fields that are empty leave no gap and no empty label.
+ * Phần đầu thông tin tác phẩm: ảnh bìa, tiêu đề, trạng thái, mô tả và các thao tác chính.
  */
 export function WorkHeader({
   work,

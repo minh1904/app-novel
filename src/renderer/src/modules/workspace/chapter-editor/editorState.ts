@@ -18,11 +18,11 @@ import type { SegmentLanguage } from '../../../../../shared/segmentation/segment
 import type { SegmentRecord } from '../../../../../shared/contracts/text'
 
 /**
- * The editor state around the shared segment rules: one field holds the segments, every edit moves
- * them through `applyEdits`, and the undo history restores the segment set along with the text.
+ * Trạng thái CodeMirror quản lý các segment văn bản: lưu trữ danh sách segment,
+ * cập nhật vị trí khi chỉnh sửa và khôi phục khi hoàn tác.
  */
 
-/** Replaces the whole segment set; what undo, redo, splitting again and a finished save use. */
+/** Thay thế toàn bộ danh sách segment: dùng cho undo, redo, tách lại hoặc sau khi lưu. */
 export const setSegments = StateEffect.define<Seg[]>()
 
 export const segmentsField = StateField.define<Seg[]>({
@@ -40,7 +40,7 @@ export const segmentsField = StateField.define<Seg[]>({
   }
 })
 
-/** What the store holds: the text of each segment by ID, so "edited" means "differs from saved". */
+/** Lưu trữ văn bản của từng segment theo ID tại thời điểm lưu gần nhất để kiểm tra trạng thái sửa đổi. */
 export interface SavedSegments {
   texts: ReadonlyMap<string, string>
 }
@@ -59,11 +59,7 @@ export function savedTextsOf(content: string, segments: SegmentRecord[]): SavedS
   return { texts: new Map(segments.map((seg) => [seg.id, content.slice(seg.start, seg.end)])) }
 }
 
-/**
- * Undo restores the text but cannot know which segment IDs an edit removed or merged, so every
- * change records the segment set it started from as the effect that undoes it. Redo gets the set
- * the undo started from, the same way.
- */
+/** Khôi phục lại trạng thái danh sách segment khi người dùng hoàn tác (undo/redo). */
 const restoreSegmentsOnUndo = invertedEffects.of((tr) =>
   tr.docChanged || tr.effects.some((effect) => effect.is(setSegments))
     ? [setSegments.of(tr.startState.field(segmentsField))]
@@ -92,9 +88,8 @@ export function createEditorState(options: {
 }
 
 /**
- * The transaction that splits again the lines an edit disturbed, or null when nothing needs it. It
- * changes no text and is not an undo step: undoing the edit before it restores text and segments in
- * one go.
+ * Tạo transaction để tách lại các segment bị thay đổi, hoặc null nếu không có thay đổi.
+ * Không thêm bước này vào lịch sử hoàn tác (addToHistory = false).
  */
 export function resegmentSpec(state: EditorState, lang: SegmentLanguage): TransactionSpec | null {
   const segs = state.field(segmentsField)

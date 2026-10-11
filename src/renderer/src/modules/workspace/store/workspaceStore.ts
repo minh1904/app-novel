@@ -5,7 +5,7 @@ import { registerStoreReset } from '../../../lib/testing/resetStores'
 
 const NAV_KEY = 'mira.navCollapsed'
 
-/** Whether the app sidebar was left as a rail; a per-device convenience like the theme. */
+/** Trạng thái thu gọn thanh điều hướng thành thanh biểu tượng; lưu theo từng thiết bị. */
 function readNavCollapsed(): boolean {
   try {
     return typeof localStorage !== 'undefined' && localStorage.getItem(NAV_KEY) === '1'
@@ -18,11 +18,11 @@ function writeNavCollapsed(collapsed: boolean): void {
   try {
     localStorage.setItem(NAV_KEY, collapsed ? '1' : '0')
   } catch {
-    // Not saved: the rail still holds until the app closes.
+    // Bỏ qua lỗi ghi localStorage; thanh điều hướng vẫn duy trì trạng thái trong phiên hiện tại.
   }
 }
 
-/** The app-level screens of the sidebar (docs/modules/workspace/app-level-features.md). */
+/** Các màn hình cấp ứng dụng trên thanh điều hướng chính. */
 export type AppPage =
   | 'home'
   | 'library'
@@ -53,9 +53,9 @@ export interface WorkspaceStateStore {
   workspaceNotice: string | null
 
   sidebarOpen: boolean
-  /** The app sidebar is folded to its icon rail. */
+  /** Thanh điều hướng chính thu gọn thành thanh biểu tượng hẹp. */
   navCollapsed: boolean
-  /** The search and command palette (Ctrl K). */
+  /** Hộp thoại tìm kiếm và bảng lệnh nhanh (Ctrl+K). */
   paletteOpen: boolean
 
   leaveGuardRegistry: LeaveGuardRegistry | null

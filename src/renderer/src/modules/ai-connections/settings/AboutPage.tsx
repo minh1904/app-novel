@@ -4,7 +4,7 @@ import type { AppInfo } from '../../../../../shared/contracts/desktopApi'
 
 const PLATFORM: Record<string, string> = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }
 
-/** Settings › Về Mira. */
+/** Cài đặt › Về Mira. */
 export function AboutPage(): JSX.Element {
   const [info, setInfo] = useState<AppInfo | null>(null)
   useEffect(() => {

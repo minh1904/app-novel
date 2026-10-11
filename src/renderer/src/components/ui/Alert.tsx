@@ -1,8 +1,11 @@
 import type { JSX, ReactNode } from 'react'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { CloseIcon } from '@solar-icons/react/linear/close'
-import { DangerCircleIcon } from '@solar-icons/react/linear/danger-circle'
-import { InfoCircleIcon } from '@solar-icons/react/linear/info-circle'
+import {
+  CheckCircleIcon,
+  CloseIcon,
+  DangerCircleIcon,
+  InfoCircleIcon
+} from '@renderer/components/ui/reicon'
+
 import { cn } from '../../lib/cn'
 import { Button } from './Button'
 import { CompactButton } from './CompactButton'
@@ -29,18 +32,18 @@ const TONES: Record<AlertTone, { box: string; icon: JSX.Element }> = {
 }
 
 export interface AlertProps {
-  /** `error` and `warning` are announced at once; the others politely. */
+  /** Sắc thái thông báo: `error` và `warning` được đọc ngay lập tức; các loại khác thông báo nhẹ nhàng. */
   tone: AlertTone
   title?: string
   children: ReactNode
-  /** An optional extra action, e.g. "Mở tác phẩm". */
+  /** Hành động bổ sung tùy chọn, ví dụ: "Mở tác phẩm". */
   action?: { label: string; onClick(): void }
-  /** Shows a close button. */
+  /** Hiển thị nút đóng khi được truyền hàm xử lý. */
   onDismiss?(): void
   className?: string
 }
 
-/** A message tied to a region of the screen (above a list, inside a form). */
+/** Hộp thông báo gắn với một khu vực cụ thể trên giao diện (phía trên danh sách, bên trong biểu mẫu). */
 export function Alert({
   tone,
   title,

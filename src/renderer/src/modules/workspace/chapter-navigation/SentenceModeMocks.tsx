@@ -1,14 +1,14 @@
 import type { JSX } from 'react'
-import { FilterIcon } from '@solar-icons/react/linear/filter'
+import { FilterIcon } from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { ICON } from '../../../components/ui/icon'
 import { SearchInput } from '../../../components/ui/Input'
 import { MOCK_FEATURES, SOON_LABEL } from '../../../lib/mockFeatures'
 
 /**
- * Illustration of the Từng câu filter toolbar: search boxes for the source and the translation, a
- * status filter, merge and split. No control reads a row, filters the list or changes anything.
- * See delivery/backlog.md, `sentence-mode-toolbar`.
+ * Giao diện minh họa thanh công cụ lọc của chế độ dịch từng câu: các ô tìm kiếm
+ * trong bản gốc và bản dịch, lọc theo trạng thái, gộp và tách câu.
  */
 export function SentenceFilterToolbarMock(): JSX.Element {
   return (
@@ -41,7 +41,7 @@ export function SentenceFilterToolbarMock(): JSX.Element {
   )
 }
 
-/** Fixed sample data: one suggestion, not computed from the row actually selected. */
+/** Dữ liệu mẫu cố định: một gợi ý dịch mẫu. */
 const SUGGESTION = {
   source: 'also warden of the almshouses, if the bishop in each case approved.',
   target: 'cũng là người quản lý nhà tế bần, nếu giám mục trong mỗi trường hợp chấp thuận.',
@@ -49,9 +49,7 @@ const SUGGESTION = {
 }
 
 /**
- * Illustration of the panel below the row table: tabs for Gợi ý / Thuật ngữ / Lịch sử / QA of the
- * selected row. Only the "Gợi ý" tab has sample content; the tabs do not switch. See
- * delivery/backlog.md, `sentence-mode-side-panels`.
+ * Giao diện minh họa bảng phụ trợ bên dưới bảng câu: các tab Gợi ý / Thuật ngữ / Lịch sử / QA.
  */
 export function SentenceSuggestionPanelMock(): JSX.Element {
   return (

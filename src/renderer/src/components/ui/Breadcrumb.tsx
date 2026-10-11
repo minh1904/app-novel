@@ -15,8 +15,8 @@ export interface BreadcrumbProps {
 }
 
 /**
- * Standard breadcrumb navigation path with 13px (text-body-sm) font size.
- * Parent items are subtle and clickable; current item is default text with medium weight.
+ * Thanh điều hướng phân cấp (breadcrumb): các mục cha hiển thị mờ hơn và có thể bấm,
+ * mục hiện tại hiển thị chữ rõ nét với độ đậm trung bình.
  */
 export function Breadcrumb({ items, className }: BreadcrumbProps): JSX.Element {
   return (

@@ -13,8 +13,9 @@ function walk(dir: string, match: RegExp): string[] {
   })
 }
 
-// Working files are CRLF; the checks below match on `\n`.
+// Tập tin làm việc có ký tự CRLF; các kiểm tra bên dưới so khớp theo `\n`.
 const read = (path: string): string => readFileSync(path, 'utf8').replaceAll('\r\n', '\n')
+const PACKAGE = read(resolve(RENDERER, '../../../package.json'))
 const CSS = walk(STYLES, /\.css$/)
   .map(read)
   .join('\n')
@@ -22,7 +23,7 @@ const FOUNDATION = read(resolve(STYLES, 'tokens/foundation.css'))
 const SEMANTIC = read(resolve(STYLES, 'tokens/semantic.css'))
 const COMPONENT = read(resolve(STYLES, 'tokens/component.css'))
 
-/** Covers draw a letter sized to their box; those sizes are illustration, not interface type. */
+/** Bìa sách vẽ ký tự kích thước theo khung; các cỡ đó mang tính minh họa, không phải kiểu chữ giao diện. */
 const ILLUSTRATION = new Set(['WorkCover.tsx', 'LanguageMark.tsx'])
 
 const files = walk(RENDERER, /\.tsx?$/).map((path) => ({
@@ -38,9 +39,15 @@ function offenders(pattern: RegExp, skip: (name: string) => boolean = () => fals
 
 const illustration = (name: string): boolean => ILLUSTRATION.has(name.split('/').pop() ?? '')
 
-// docs/modules/design-system/README.md: a screen takes type, line height, radius, shadow, icon size and
-// stacking from the scales; a one-off value is how 17 font sizes ended up in use where a scale had five.
+// Màn hình giao diện sử dụng kiểu chữ, độ cao dòng, bo góc, đổ bóng, cỡ biểu tượng và thứ tự hiển thị từ thang token chuẩn.
 describe('screens use the scales', () => {
+  it('uses Reicon as the only renderer icon set', () => {
+    expect(offenders(/@solar-icons\/react/g)).toEqual([])
+    expect(files.some(({ text }) => text.includes("from 'reicon-react/icons/"))).toBe(true)
+    expect(PACKAGE).toContain('"reicon-react"')
+    expect(PACKAGE).not.toContain('"@solar-icons/react"')
+  })
+
   it('uses the type styles, not pixel font sizes', () => {
     expect(offenders(/\btext-\[\d+(\.\d+)?px\]/g, illustration)).toEqual([])
     expect(offenders(/(?<![\w-])text-(xs|sm|base|lg|xl|ui-[\w-]+)\b/g)).toEqual([])
@@ -56,7 +63,7 @@ describe('screens use the scales', () => {
   it('sizes icons on the Obsidian scale (12, 14, 16, 18, 24)', () => {
     const sizes = new Set(['12', '14', '16', '18', '24'])
     const off = files.flatMap(({ name, text }) =>
-      // `\s+`: the formatter puts `size` on its own line when the props do not fit on one.
+      // `\s+`: bộ định dạng tách `size` xuống dòng riêng khi props không vừa trên một dòng.
       [...text.matchAll(/Icon\s+size=\{(\d+)\}/g)]
         .filter((match) => !sizes.has(match[1]))
         .map((match) => name + ': ' + match[0].replace(/\s+/, ' '))
@@ -68,7 +75,7 @@ describe('screens use the scales', () => {
     expect(offenders(/(?<![\w-])z-(\d+|\[[^\]]+\])/g)).toEqual([])
   })
 
-  it('does not use the old Hermes and paper names', () => {
+  it('does not use deprecated design token names', () => {
     const old =
       /(?<![\w-])(?:bg-(?:canvas|chrome|raised|elevated|popover|sidebar|bubble|control|tertiary|active|primary)|text-ink[\w-]*|border-line[\w-]*|rounded-(?:item|control|tab|badge|panel|icon|sheet))(?![\w-])/g
     expect(offenders(old)).toEqual([])
@@ -96,7 +103,7 @@ describe('screens use the scales', () => {
   })
 })
 
-/** The opening tag that starts at `start`, skipping `>` inside braces (`onChange={(e) => …}`). */
+/** Thẻ mở bắt đầu tại vị trí `start`, bỏ qua `>` bên trong dấu ngoặc nhọn (`onChange={(e) => …}`). */
 function openingTag(text: string, start: number): string {
   let depth = 0
   for (let i = start + 1; i < text.length; i++) {
@@ -107,7 +114,7 @@ function openingTag(text: string, start: number): string {
   return text.slice(start)
 }
 
-/** Editors whose writing surface is a bare textarea inside a frame of their own. */
+/** Các màn hình soạn thảo sử dụng thẻ textarea bên trong khung giao diện riêng. */
 const EDITOR_SURFACES = new Set([
   'modules/workspace/chapter-navigation/SentenceMode.tsx',
   'modules/workspace/assistant/AiComposer.tsx'
@@ -116,8 +123,7 @@ const EDITOR_SURFACES = new Set([
 const CONTROLS =
   /<(Button|LinkButton|CompactButton|ButtonGroup|Input|SearchInput|TextField|TextareaField|Select)(?=[\s/>])/g
 
-// docs/modules/design-system/README.md: a screen builds controls from components/ui, as in the IZONE LMS
-// system; a hand-styled button is how one bar ended up with four heights. Every control takes md.
+// Các màn hình sử dụng thành phần điều khiển dùng chung từ components/ui thay vì tự viết mã giao diện; kích thước mặc định là md.
 describe('screens use the shared controls', () => {
   const screens = files.filter(
     ({ name }) => !name.startsWith('components/ui/') && !name.includes('.test.')
@@ -148,7 +154,7 @@ describe('screens use the shared controls', () => {
   })
 })
 
-// The three tiers point one way: semantic reads foundation, component reads semantic.
+// Ba tầng token phân cấp một chiều: semantic đọc foundation, component đọc semantic.
 describe('token tiers', () => {
   it('keeps raw colours in the foundation tier', () => {
     expect(SEMANTIC).not.toMatch(/:\s*#[0-9a-f]{3,8}/i)
@@ -174,7 +180,7 @@ describe('token tiers', () => {
   })
 })
 
-// docs/modules/design-system/README.md: chrome text is not selectable; story text and answers are.
+// Văn bản trên khung giao diện không cho phép bôi đen chọn; văn bản truyện và câu trả lời được phép chọn.
 describe('base layer', () => {
   it('keeps chrome text unselectable but lets story text and answers opt back in', () => {
     expect(CSS).toMatch(/body \{[^}]*user-select: none;/)

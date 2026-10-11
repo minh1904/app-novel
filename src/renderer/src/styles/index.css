@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 @import './theme.css';
 
-/* Inter 4.1, SIL OFL 1.1 (assets/fonts/Inter-OFL.txt): the one face for the interface and the story text.
-   Variable, so every weight comes from one file. Bundled because the CSP allows no font CDN. */
+/* Phông chữ Inter cho giao diện và nội dung truyện.
+   Định dạng biến (variable font) tích hợp sẵn do chính sách CSP không dùng CDN. */
 @font-face {
   font-family: 'Inter';
   src: url('../assets/fonts/InterVariable.woff2') format('woff2');
@@ -19,7 +19,7 @@
   font-display: swap;
 }
 
-/* JetBrains Mono 2.304, SIL OFL 1.1 (assets/fonts/OFL.txt). Bundled because the CSP allows no font CDN. */
+/* Phông chữ JetBrains Mono cho khối mã nguồn hoặc định dạng đơn cách, tích hợp sẵn trong ứng dụng. */
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('../assets/fonts/JetBrainsMono-Regular.woff2') format('woff2');
@@ -47,7 +47,7 @@
 @layer base {
   body {
     @apply bg-default font-sans text-body-sm text-default antialiased;
-    /* Chrome text is not selectable; story text and answers opt back in (.selectable). */
+    /* Không cho chọn văn bản trên phần khung giao diện; nội dung truyện và câu trả lời được phép chọn qua lớp .selectable. */
     user-select: none;
   }
 
@@ -68,7 +68,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Tailwind 4 drops the pointer cursor on buttons; put it back on everything pressable. */
+  /* Khôi phục con trỏ chuột dạng pointer cho các phần tử có thể tương tác bấm. */
   button:not(:disabled):not([data-disabled]),
   [role='button']:not([aria-disabled='true']):not([data-disabled]),
   [role='tab']:not([aria-disabled='true']):not([data-disabled]),
@@ -78,7 +78,7 @@
     cursor: pointer;
   }
 
-  /* Spinners and pulses keep running: they say something is still working. */
+  /* Tắt thời gian chuyển cảnh khi người dùng chọn giảm chuyển động; giữ nguyên hoạt ảnh tiến trình đang xử lý. */
   @media (prefers-reduced-motion: reduce) {
     *,
     ::before,
@@ -89,7 +89,7 @@
 }
 
 @layer components {
-  /* Scrollbars show only while the pointer is over the scroller, and never change size. */
+  /* Thanh cuộn chỉ hiển thị khi rê chuột lên vùng cuộn và giữ nguyên kích thước. */
   *::-webkit-scrollbar {
     width: 0.5rem;
     height: 0.5rem;
@@ -116,7 +116,7 @@
   }
 }
 
-/* Widens the hit area by 4px above and below without changing how the control looks. */
+/* Mở rộng vùng tương tác thêm 4px phía trên và dưới mà không làm thay đổi hiển thị. */
 @utility touch-target {
   position: relative;
 
@@ -129,8 +129,8 @@
 }
 
 /*
- * The header is also the window's title bar (Electron window controls overlay), so it is what you grab
- * to move the window. Everything pressable inside it opts out, so a new button needs no extra class.
+ * Thanh tiêu đề cửa sổ đóng vai trò vùng kéo thả để di chuyển cửa sổ.
+ * Các phần tử tương tác bên trong được loại trừ để thao tác bấm bình thường.
  */
 .window-drag {
   -webkit-app-region: drag;
@@ -140,7 +140,7 @@
   -webkit-app-region: no-drag;
 }
 
-/* A settings row a deep link or a search result points at lights up for a moment. */
+/* Hiệu ứng làm nổi bật tạm thời hàng cài đặt khi được điều hướng tới từ liên kết hoặc tìm kiếm. */
 @keyframes setting-highlight {
   from {
     background-color: var(--mira-info-muted);

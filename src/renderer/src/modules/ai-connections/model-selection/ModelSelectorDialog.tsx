@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import { RefreshIcon } from '@renderer/components/ui/reicon'
+
 import type { ModelInfoView } from '../../../../../shared/contracts/aiConnections'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'

@@ -1,6 +1,6 @@
 import type { JSX, ReactNode } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { CopyIcon } from '@solar-icons/react/linear/copy'
+import { AddIcon, CopyIcon } from '@renderer/components/ui/reicon'
+
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { Badge } from '../../../components/ui/Badge'
 import { Button, LinkButton } from '../../../components/ui/Button'
@@ -9,7 +9,7 @@ import { ICON } from '../../../components/ui/icon'
 import { NavItem } from '../../../components/ui/NavItem'
 import { Textarea } from '../../../components/ui/Textarea'
 
-/** Fixed sample data: style profiles a work inherits and then overrides. */
+/** Dữ liệu mẫu cố định: hồ sơ văn phong tác phẩm kế thừa và ghi đè. */
 const PROFILES = [
   { name: 'Cổ trang – tu tiên', meta: '4 tác phẩm' },
   { name: 'Đô thị hiện đại', meta: '1 tác phẩm' },
@@ -53,9 +53,8 @@ function Field({
 }
 
 /**
- * Picture of the style profiles (MOCK_FEATURES.styleProfiles): voice, default addressing, name
- * romanisation and example pairs that every translation sends along, kept once and inherited by works
- * that override what they need. Nothing is read or written; every control is disabled.
+ * Giao diện mẫu của hồ sơ văn phong: giọng văn, xưng hô mặc định, quy tắc phiên âm và các câu dịch mẫu.
+ * Mọi nút điều khiển đều ở trạng thái vô hiệu hóa để minh họa giao diện.
  */
 export function StyleProfilesMock(): JSX.Element {
   return (

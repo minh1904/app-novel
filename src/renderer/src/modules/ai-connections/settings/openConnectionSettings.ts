@@ -3,8 +3,7 @@ import { useConnectionStore } from '../store/connectionStore'
 import { useAiOverlayStore } from '../store/overlayStore'
 
 /**
- * Opens Settings at the card of one connection (its key, address, switch), or the onboarding card when
- * there is none to point at.
+ * Mở Cài đặt tại thẻ của một kết nối cụ thể, hoặc mở thẻ hướng dẫn ban đầu nếu chưa có kết nối.
  */
 export function openConnectionSettings(connectionId: string | null): void {
   const { openSettings } = useAiOverlayStore.getState()
@@ -12,7 +11,7 @@ export function openConnectionSettings(connectionId: string | null): void {
     .getState()
     .connections.find((item) => item.id === connectionId)
   if (!connection) {
-    // Nothing to edit yet: the onboarding card is the way in (model menu "Thêm nhà cung cấp").
+    // Chưa có kết nối nào: mở hướng dẫn ban đầu ("Thêm nhà cung cấp").
     useAiOverlayStore.getState().setOnboardingOpen(true)
     return
   }
@@ -29,8 +28,8 @@ export function openConnectionSettings(connectionId: string | null): void {
 }
 
 /**
- * Opens Settings › Model › Danh sách model at one connection's entries ("Sửa danh sách model…" in the model
- * menu), or the onboarding card when there is no connection yet.
+ * Mở Cài đặt › Model › Danh sách model tại vị trí các mục của một kết nối,
+ * hoặc mở thẻ hướng dẫn ban đầu nếu chưa có kết nối nào.
  */
 export function openModelList(connectionId: string | null): void {
   const known = useConnectionStore.getState().connections.some((item) => item.id === connectionId)

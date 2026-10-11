@@ -30,9 +30,9 @@ export interface ExportDialogProps {
   onOpenChange(open: boolean): void
   workId: string
   workTitle: string
-  /** Set to export this one chapter; otherwise the dialog exports several chapters of the work. */
+  /** Thiết lập nếu chỉ xuất một chương này; nếu không hộp thoại sẽ xuất nhiều chương của tác phẩm. */
   chapter?: ChapterItem
-  /** Chapters picked in the list; the scope starts on them when given. */
+  /** Các chương được chọn trong danh sách; phạm vi xuất sẽ khởi đầu theo các chương này nếu được cung cấp. */
   selectedIds?: ReadonlySet<string>
 }
 
@@ -65,7 +65,7 @@ interface Running {
   total: number
 }
 
-/** Opens what was just written, from the toast that says it is done. */
+/** Mở thư mục chứa tệp vừa xuất từ thông báo hoàn tất. */
 function revealAction(path: string | undefined) {
   if (!path) return undefined
   return {
@@ -77,8 +77,8 @@ function revealAction(path: string | undefined) {
 }
 
 export function ExportDialog(props: ExportDialogProps): JSX.Element {
-  // While an export runs, Escape, the backdrop and the close button leave the dialog open: closing it
-  // would hide the progress and the Stop button while main keeps writing, and invite a second export.
+  // Trong khi đang xuất, phím Escape, lớp nền và nút đóng sẽ không đóng hộp thoại:
+  // việc đóng hộp thoại sẽ ẩn tiến độ và nút Dừng trong khi tiến trình chính vẫn đang ghi, dễ dẫn đến xuất trùng lặp.
   const [busy, setBusy] = useState(false)
   const title = props.chapter
     ? 'Xuất chương ' + props.chapter.number
@@ -94,7 +94,7 @@ export function ExportDialog(props: ExportDialogProps): JSX.Element {
       title={title}
       description={props.chapter?.title || undefined}
     >
-      {/* Mounted only while open, so each opening reads the chapters and the saved choices afresh. */}
+      {/* Chỉ mount khi mở, giúp mỗi lần mở đều đọc lại danh sách chương và tùy chọn đã lưu. */}
       {props.open && <ExportBody {...props} onBusyChange={setBusy} />}
     </Dialog>
   )
@@ -138,7 +138,7 @@ function ExportBody({
   }, [single, workId])
 
   const isRunning = running !== null
-  // Set when the person presses Stop, so a stopped one-file export (nothing written) still says so.
+  // Đánh dấu khi người dùng nhấn Dừng, giúp thông báo rõ ràng trường hợp xuất một tệp bị dừng khi chưa ghi nội dung.
   const stopping = useRef(false)
   useEffect(() => {
     onBusyChange(isRunning)
@@ -195,7 +195,7 @@ function ExportBody({
           })
         : await window.mira.export.exportWork({
             workId,
-            // "All" is sent as no list, so a chapter added meanwhile still goes out.
+            // "Tất cả" được gửi dưới dạng undefined để bao gồm cả chương mới thêm trong lúc xuất.
             chapterIds: scope.kind === 'all' ? undefined : plan?.included.map((item) => item.id),
             format: prefs.format,
             mode: prefs.workMode,
@@ -210,7 +210,7 @@ function ExportBody({
 
   function finish(result: ExportResult): void {
     if (result.canceled) {
-      // Stopped half way: say what is already on disk. A save dialog closed is said by nothing.
+      // Dừng giữa chừng: thông báo các tệp đã ghi vào đĩa. Trường hợp đóng hộp thoại lưu tệp thì không thông báo.
       if (result.count) {
         notify({
           kind: 'info',
@@ -424,7 +424,7 @@ function Toggle({
   )
 }
 
-/** What will happen before it happens: how many chapters go out, which are left out and why. */
+/** Tóm tắt dự kiến trước khi xuất: số chương sẽ xuất, các chương bị bỏ qua và lý do. */
 function ScopeSummary({
   plan,
   loading

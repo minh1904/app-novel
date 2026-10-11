@@ -25,7 +25,7 @@ function writeThemePreference(preference: ThemePreference): void {
   try {
     localStorage.setItem(THEME_KEY, preference)
   } catch {
-    // The choice still holds until the app closes.
+    // Lựa chọn vẫn được áp dụng trong phiên làm việc cho đến khi đóng ứng dụng.
   }
 }
 

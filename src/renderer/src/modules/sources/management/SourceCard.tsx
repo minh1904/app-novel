@@ -1,11 +1,14 @@
 import type { JSX, ReactNode } from 'react'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { DangerTriangleIcon } from '@solar-icons/react/linear/danger-triangle'
-import { CloseCircleIcon } from '@solar-icons/react/linear/close-circle'
-import { QuestionCircleIcon } from '@solar-icons/react/linear/question-circle'
-import { FolderIcon } from '@solar-icons/react/linear/folder'
-import { DocumentIcon } from '@solar-icons/react/linear/document'
-import { GlobalIcon } from '@solar-icons/react/linear/global'
+import {
+  CheckCircleIcon,
+  DangerTriangleIcon,
+  CloseCircleIcon,
+  QuestionCircleIcon,
+  FolderIcon,
+  DocumentIcon,
+  GlobalIcon
+} from '@renderer/components/ui/reicon'
+
 import { Badge, type BadgeColor } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { ICON } from '../../../components/ui/icon'
@@ -105,7 +108,7 @@ export function SourceCard({
       )}
     >
       <div className="flex flex-col gap-sm">
-        {/* Header row: Icon, Name, Health */}
+        {/* Hàng tiêu đề: biểu tượng, tên nguồn và tình trạng hoạt động */}
         <div className="flex items-start justify-between gap-xs">
           <div className="flex min-w-0 items-center gap-xs">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-muted text-subtle">
@@ -133,7 +136,7 @@ export function SourceCard({
           </Badge>
         </div>
 
-        {/* Domains & Country */}
+        {/* Tên miền và quốc gia */}
         <div className="flex flex-wrap items-center gap-2xs text-body-xs text-subtle">
           <span className="font-medium text-default">{countryLabel}</span>
           {source.domains.length > 0 && (
@@ -146,7 +149,7 @@ export function SourceCard({
           <span>{ACCESS_LABELS[source.access] ?? source.access}</span>
         </div>
 
-        {/* Languages */}
+        {/* Ngôn ngữ hỗ trợ */}
         <div className="flex flex-wrap gap-3xs">
           {source.languageTags.map((tag) => (
             <Badge key={tag} color="neutral" variant="outline">
@@ -161,7 +164,7 @@ export function SourceCard({
         </div>
       </div>
 
-      {/* Footer CTA */}
+      {/* Khu vực thao tác ở chân thẻ */}
       <div className="flex items-center justify-between gap-xs border-t border-subtle pt-xs">
         <span className="text-body-xs text-muted">
           {source.health?.checkedAt

@@ -95,7 +95,7 @@ app web, và ba component lệch nhau: nút sm 24 cạnh ô nhập sm 32, Button
 
 - vòng focus 2 px khi dùng bàn phím;
 - chữ truyện và câu trả lời AI chọn được, chữ của khung thì không;
-- icon Solar;
+- icon Reicon (thay Solar ngày 2026-10-11);
 - zoom 100 %;
 - bỏ "Tác phẩm gần đây" và nút "Tạo tác phẩm" khỏi thanh bên.
 
@@ -128,6 +128,13 @@ nằm trên dialog.
 
 **Icon** theo thang Obsidian ở [`icon.ts`](../../../src/renderer/src/components/ui/icon.ts): 12 (dấu
 đóng trong tab), 14 (trong nút nhỏ, menu), 16 (mặc định), 18 (nút lớn), 24 (trạng thái rỗng).
+
+**2026-10-11 — bộ glyph Reicon.** Toàn bộ renderer dùng `reicon-react` qua điểm vào nội bộ
+[`reicon.ts`](../../../src/renderer/src/components/ui/reicon.ts), thay `@solar-icons/react`. Các màn vẫn
+dùng thang cỡ phía trên, màu kế thừa từ `currentColor`, và mặc định dùng Outline 1,5 px. Filled chỉ dùng
+cho trạng thái đang chọn hoặc đã đánh dấu, hiện có ngôi sao yêu thích model. Import trực tiếp từng module
+icon giữ tree-shaking rõ ràng; test token chặn việc đưa Solar trở lại. Reicon phát hành theo giấy phép MIT
+và hỗ trợ thuộc tính SVG/ARIA, theo tài liệu React chính thức tại <https://reicon.dev/docs/react>.
 
 **Tương phản**, tính ngày 2026-10-08:
 

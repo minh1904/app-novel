@@ -5,21 +5,17 @@ import { toggleWrapChanges } from './formatCommands'
 import { markdownSupport, type InlineKind } from './markdownSyntax'
 
 /**
- * `toggleBold`/`toggleItalic` (the `Command`s) need a real `EditorView`, which the `node` test
- * environment does not provide — same limitation as the decoration builders. `toggleWrapChanges` is
- * what they dispatch, and it runs on a plain `EditorState`, so these check the document *and* the
- * selection that come out (the selection is in the coordinates of the edited document, which is the
- * easy part to get wrong).
+ * Kiểm tra hàm `toggleWrapChanges` cho các thao tác bật/tắt định dạng trên văn bản và vùng chọn.
  */
 
 interface Result {
   doc: string
-  /** The text covered by the first resulting range. */
+  /** Văn bản thuộc vùng chọn đầu tiên. */
   selected: string
-  /** The first resulting range. */
+  /** Vị trí bắt đầu và kết thúc của vùng chọn đầu tiên. */
   from: number
   to: number
-  /** The text covered by every resulting range. */
+  /** Văn bản thuộc tất cả các vùng chọn. */
   allSelected: string[]
 }
 
@@ -76,7 +72,7 @@ describe.each([
   })
 
   it('unwraps the whole span when the caret sits in the middle, with no selection', () => {
-    const caret = start + delim.length + 2 // between "wo" and "rd"
+    const caret = start + delim.length + 2 // ở giữa "wo" và "rd"
     const result = toggle(wrapped, [[caret, caret]], delim, kind)
     expect(result.doc).toBe('Một word đẹp')
     expect(result.selected).toBe('word')

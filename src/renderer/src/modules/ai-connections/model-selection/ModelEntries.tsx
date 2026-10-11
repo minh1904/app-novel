@@ -1,5 +1,6 @@
 import { useRef, useState, type JSX } from 'react'
-import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
+import { MenuDotsIcon } from '@renderer/components/ui/reicon'
+
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../../shared/contracts/modelSettings'
 import { Badge } from '../../../components/ui/Badge'
@@ -24,13 +25,11 @@ import { contextOf, priceOf } from './modelInfoText'
 import { thinkingLabelOf } from './modelSettingsForm'
 
 /**
- * Danh sách **mục model** của một kết nối, trong thẻ kết nối ở màn Cài đặt (change `ai-model-settings`).
+ * Danh sách các mục model của một kết nối trong màn hình Cài đặt.
  *
- * Cấu trúc theo LinguaGacha: mỗi mục có menu "…" với Cơ bản / Tác vụ / Nâng cao / Sao chép / Xóa, mỗi nhóm cài
- * đặt là một hộp thoại riêng, và có một hộp thoại chọn model từ danh sách lấy về. Ngoài ra Mira cần hai thứ
- * LinguaGacha không cần ở đây: **đặt mục mặc định** (hộp thoại dịch chọn sẵn nó) và **xếp thứ tự**.
- *
- * Danh sách model chỉ là gợi ý. Người dùng gõ tên model được ngay, kể cả khi endpoint không liệt kê.
+ * Mỗi mục model hỗ trợ các thao tác cấu hình Cơ bản, Tác vụ, Nâng cao, Sao chép, Xóa,
+ * thiết lập mục mặc định và sắp xếp thứ tự ưu tiên.
+ * Danh sách model lấy về dùng làm gợi ý, người dùng cũng có thể nhập tay tên model tùy ý.
  */
 
 type EditDialog = { kind: 'basic' | 'task' | 'advanced'; entryId: string }
@@ -85,7 +84,7 @@ export function ModelEntries({
   const [typed, setTyped] = useState('')
   const [typedError, setTypedError] = useState<string | undefined>()
   const [problem, setProblem] = useState<string | null>(null)
-  // The control that opened a dialog, so closing it puts focus back where the person was.
+  // Phần tử điều khiển đã mở hộp thoại, dùng để khôi phục tiêu điểm khi đóng hộp thoại.
   const returnFocus = useRef<HTMLElement | null>(null)
 
   const entryOf = (id: string | undefined): ModelEntryView | null =>
@@ -173,8 +172,7 @@ export function ModelEntries({
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-body-xs text-subtle">
-                    {/* The model is shown once: as the name when the entry still carries it, and here only when
-                        the person gave the entry a name of their own. */}
+                    {/* Model được hiển thị một lần: ở phần tên nếu người dùng chưa đổi tên, và ở đây nếu đã đặt tên riêng. */}
                     {entry.name !== entry.model && (
                       <span className="font-mono break-all">{entry.model}</span>
                     )}
@@ -310,8 +308,7 @@ export function ModelEntries({
           if (selector?.mode === 'pick' && picking !== null) {
             const model = models[0]
             if (model === undefined) return null
-            // An entry still carrying the name it was born with follows its model, so it does not go on
-            // calling itself by a model it no longer points at.
+            // Mục mang tên mặc định sẽ đổi tên theo model mới để tránh nhầm lẫn.
             const follows = picking.name === picking.model
             const outcome = await actions.update(picking.id, {
               model,

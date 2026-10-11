@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from 'react'
-import { CopyIcon } from '@solar-icons/react/linear/copy'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import { CopyIcon, RefreshIcon } from '@renderer/components/ui/reicon'
+
 import { Button, LinkButton } from '../../../components/ui/Button'
 import { cn } from '../../../lib/cn'
 import { ACCOUNT_LABELS, type OnboardingState } from './onboardingMachine'

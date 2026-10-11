@@ -10,7 +10,7 @@ export interface ButtonGroupOption<T extends string> {
 }
 
 export interface ButtonGroupProps<T extends string> {
-  /** Names the group for assistive technology. */
+  /** Nhãn mô tả nhóm nút cho công nghệ hỗ trợ tiếp cận. */
   label: string
   value: T
   options: ReadonlyArray<ButtonGroupOption<T>>
@@ -20,9 +20,8 @@ export interface ButtonGroupProps<T extends string> {
 }
 
 /**
- * One choice out of a few, side by side: a muted track with the chosen option lifted onto the surface.
- * It is as tall as a button of the same size; an option's radius is the track's minus the 2px inset.
- * Exactly one option is always chosen, so pressing the chosen one again changes nothing.
+ * Nhóm nút chọn một trong nhiều tùy chọn đặt cạnh nhau: thanh nền chứa các tùy chọn,
+ * tùy chọn được chọn sẽ nổi bật trên nền bề mặt. Luôn có đúng một tùy chọn được chọn.
  */
 export function ButtonGroup<T extends string>({
   label,

@@ -6,11 +6,7 @@ import { createEditorState } from './editorState'
 import type { SegmentRecord } from '../../../../../shared/contracts/text'
 
 /**
- * Which stretch a turn is about, and whether a proposal may be written.
- *
- * The staleness tiers get the most tests here on purpose: that function is the only part of the chat
- * feature that can overwrite text the user typed, so "refuses when unsure" has to be proved, not
- * assumed. The ambiguous case (the anchor now appears twice) is the one a naive `indexOf` gets wrong.
+ * Kiểm tra xác định phạm vi áp dụng và kiểm tra tính an toàn khi ghi đề xuất AI.
  */
 
 const DOC = ['Đoạn một câu đầu.', '', 'Đoạn hai câu đầu. Đoạn hai câu sau.', '', 'Đoạn ba.'].join(
@@ -36,8 +32,7 @@ function stateOf(
   const base = createEditorState({
     content,
     segments: options.spans ? segmentsFor(content, options.spans) : [],
-    // Required, and must be a real `Extension`: `undefined` here lands inside the extension array
-    // and `EditorState.create` fails on it. Nothing in these tests needs a view-level extension.
+    // Tham số bắt buộc phải là một Extension hợp lệ
     extensions: []
   })
   const selection = options.selection
@@ -46,7 +41,7 @@ function stateOf(
   return base.update({ selection }).state
 }
 
-/** Apply a ready spec and give back the resulting text, so the tests read as before/after. */
+/** Áp dụng transaction spec và trả về văn bản kết quả để đối chiếu trong test. */
 function applied(state: EditorState, spec: TransactionSpec): string {
   return state.update(spec).state.doc.toString()
 }
@@ -71,9 +66,9 @@ describe('targetRange', () => {
     expect(range.text).toBe('một\nhai')
   })
 
-  // The empty-paragraph case: an empty range is honest, and the panel can say "no paragraph here".
+  // Trường hợp đoạn rỗng: trả về phạm vi rỗng để panel hiển thị trạng thái tương ứng.
   it('a caret on a blank line gives an empty range, not the neighbours', () => {
-    // The offset just after the first newline is the blank line itself.
+    // Vị trí ngay sau dấu xuống dòng đầu tiên là dòng trống.
     const blank = DOC.indexOf('\n\n') + 1
     const range = targetRange(stateOf(DOC, { at: blank }))
     expect(range.text).toBe('')
@@ -83,7 +78,7 @@ describe('targetRange', () => {
   it('the whole chapter only when asked for by name', () => {
     const state = stateOf(DOC, { at: 0 })
     expect(targetRange(state, 'chapter').text).toBe(DOC)
-    // The same caret, left to itself, must not reach past its own paragraph.
+    // Con trỏ ở chế độ tự động không được vượt quá phạm vi đoạn của chính nó.
     expect(targetRange(state, 'auto').text).toBe('Đoạn một câu đầu.')
   })
 
@@ -125,7 +120,7 @@ describe('applyProposal', () => {
     expect(applied(state, result.spec)).not.toContain('Đoạn ba.')
   })
 
-  // Tier two: typing above shifts offsets, but the content is still there exactly once.
+  // Nhập văn bản ở phía trên làm dịch chuyển vị trí, nhưng neo vẫn tồn tại duy nhất.
   it('finds the anchor again after the user typed above it', () => {
     const before = stateOf(DOC, { at: DOC.indexOf('Đoạn ba') })
     const range = targetRange(before)
@@ -149,7 +144,7 @@ describe('applyProposal', () => {
     expect(applyProposal(after, range, 'ĐÃ THAY').kind).toBe('stale')
   })
 
-  // The case a naive indexOf gets wrong: two matches means we cannot know which one was meant.
+  // Khi neo xuất hiện 2 lần, không thể xác định vị trí đích chính xác nên từ chối.
   it('refuses when the anchored text now appears twice', () => {
     const before = stateOf(DOC, { at: DOC.indexOf('Đoạn ba') })
     const range = targetRange(before)
@@ -165,8 +160,7 @@ describe('applyProposal', () => {
     )
   })
 
-  // First translation of a chapter: the pane is empty, so the anchor is too. Nothing can be lost
-  // here, and refusing would block the main thing the feature exists for.
+  // Lần dịch đầu tiên: tài liệu trống thì neo cũng trống, cho phép chèn nội dung trực tiếp.
   it('inserts into an empty document, where an empty anchor is unambiguous', () => {
     const state = stateOf('', { at: 0 })
     const result = applyProposal(state, { from: 0, to: 0, text: '', targetIds: [] }, 'Bản dịch mới')
@@ -201,7 +195,7 @@ describe('applyProposal', () => {
     expect(applyProposal(after, range, 'ĐÃ THAY').kind).toBe('stale')
   })
 
-  // Task 7.2: one dispatch, so one undo puts everything back — even across several paragraphs.
+  // Một lệnh dispatch duy nhất giúp khôi phục (undo) toàn bộ nội dung thay thế qua nhiều đoạn.
   it('one undo reverses a multi-paragraph replacement', () => {
     const state = stateOf(DOC, { at: 0 })
     const range = targetRange(state, 'chapter')
@@ -209,9 +203,7 @@ describe('applyProposal', () => {
     expect(result.kind).toBe('ready')
     if (result.kind !== 'ready') return
 
-    // Drive CodeMirror's own history headlessly rather than asserting "one transaction", which the
-    // spec guarantees by construction and so proves nothing. `history()` is already in
-    // `editorExtensions()`, and `undo` only needs a state plus a dispatch.
+    // Kiểm tra tính năng undo thông qua hệ thống history của editor.
     let current = state.update(result.spec).state
     expect(current.doc.toString()).not.toBe(DOC)
 

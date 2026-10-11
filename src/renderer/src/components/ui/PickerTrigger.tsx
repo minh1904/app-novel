@@ -1,25 +1,26 @@
 import type { ButtonHTMLAttributes, JSX, ReactNode, Ref } from 'react'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
+import { AltArrowDownIcon } from '@renderer/components/ui/reicon'
+
 import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 import { ICON } from './icon'
 import { inputFrameVariants } from './variants'
 
 export interface PickerTriggerProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'value'> {
-  /** field: on the input frame, full width (a form) · ghost: borderless, in a bar (the composer). */
+  /** Kiểu hiển thị: field (khung như ô nhập, chiếm toàn bộ chiều rộng) · ghost (không viền, nằm trên thanh công cụ). */
   variant?: 'field' | 'ghost'
-  /** The chosen value; it truncates. */
+  /** Giá trị đã chọn; tự động cắt ngắn khi quá dài. */
   value: ReactNode
-  /** A short tag after the value, e.g. the thinking level. */
+  /** Thẻ nhãn ngắn sau giá trị, ví dụ mức độ suy nghĩ. */
   tag?: ReactNode
-  /** A mark after the tag, e.g. a dot for "differs from the default". */
+  /** Ký hiệu sau thẻ nhãn, ví dụ dấu chấm báo khác giá trị mặc định. */
   mark?: ReactNode
   ref?: Ref<HTMLButtonElement>
 }
 
 /**
- * The button that opens a picker of our own (a popover list, not a Select): the value, an optional
- * tag, a chevron. It forwards every prop and its ref, so it can be the `render` of a Base UI trigger.
+ * Nút kích hoạt mở bộ chọn dạng popover: hiển thị giá trị, thẻ nhãn tùy chọn và mũi tên.
+ * Chuyển tiếp toàn bộ prop và ref để có thể dùng làm prop `render` cho trigger của Base UI.
  */
 export function PickerTrigger({
   variant = 'field',

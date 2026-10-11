@@ -11,7 +11,7 @@ export interface CreateWorkScreenProps {
   onCancel(): void
 }
 
-/** Optional fields are only sent when filled in, so a work is created with exactly what was typed. */
+/** Chỉ gửi các trường tùy chọn khi có dữ liệu nhập, giúp tạo tác phẩm đúng với thông tin đã nhập. */
 function toCreateInput(values: WorkFormValues): CreateWorkInput {
   return {
     title: values.title,
@@ -24,7 +24,7 @@ function toCreateInput(values: WorkFormValues): CreateWorkInput {
   }
 }
 
-/** Name and source language are all a work needs; everything else can be added later. */
+/** Tên tác phẩm và ngôn ngữ nguồn là thông tin bắt buộc; các trường khác có thể bổ sung sau. */
 export function CreateWorkScreen({
   onSubmit,
   onCreated,
@@ -32,7 +32,7 @@ export function CreateWorkScreen({
 }: CreateWorkScreenProps): JSX.Element {
   const created = useRef<Work | null>(null)
 
-  // Two steps, so creating a work is the name and the language; the rest is a step you can skip.
+  // Quy trình chia làm hai bước: bước đầu chỉ cần tên và ngôn ngữ; bước sau có thể bỏ qua.
   return (
     <div className="flex h-full min-h-0 flex-col">
       <WorkForm

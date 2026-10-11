@@ -102,7 +102,7 @@ describe('targetKey', () => {
   })
 })
 
-describe('continue with a fallback (task 4.6 of hermes-settings-modal)', () => {
+describe('continue with a fallback', () => {
   const targets = [
     { connectionId: 'g', entryId: 'flash', label: 'Gemini · flash' },
     { connectionId: 'd', entryId: 'v4', label: 'DeepSeek · v4' }

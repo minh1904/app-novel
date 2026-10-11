@@ -1,8 +1,6 @@
 import { useState, type JSX } from 'react'
-import { KeyIcon } from '@solar-icons/react/linear/key'
-import { TrashBinTrashIcon } from '@solar-icons/react/linear/trash-bin-trash'
-import { LinkIcon } from '@solar-icons/react/linear/link'
-import { MonitorIcon } from '@solar-icons/react/linear/monitor'
+import { KeyIcon, TrashBinTrashIcon, LinkIcon, MonitorIcon } from '@renderer/components/ui/reicon'
+
 import {
   CONNECTION_PRESETS,
   type ConnectionView
@@ -41,7 +39,7 @@ function openLink(url: string): void {
   void window.mira.openExternal(url).catch(() => undefined)
 }
 
-/** Một dòng mở ra được, như thẻ provider của Hermes: đóng là một hàng, mở ra là toàn bộ phần thân. */
+/** Một dòng mở rộng được: khi đóng là một hàng tóm tắt, khi mở là toàn bộ phần thân chi tiết. */
 function ExpandableCard({
   id,
   open,
@@ -94,14 +92,13 @@ function StatusDot({ on }: { on: boolean }): JSX.Element {
   )
 }
 
-// A resting key field reads as plain text: the frame keeps its size so nothing shifts when it gains
-// its chrome on focus or when the card opens.
+// Ô nhập khóa ở trạng thái nghỉ hiển thị như văn bản thuần: giữ cố định kích thước khung để không bị giật layout khi focus.
 const KEY_BARE = 'border-transparent! bg-transparent! shadow-none! cursor-pointer text-muted'
 
 /**
- * Ô khóa của thẻ provider, như `KeyField` của Hermes: khóa đã có hiện `••••` trong một ô chỉ đọc, bấm vào
- * là sửa tại chỗ. Lưu chỉ hiện khi đã gõ, thùng rác khi có khóa; Enter lưu, Esc hủy mà không đóng Cài đặt.
- * Khóa mới được thêm vào nhóm khóa của kết nối, không thay khóa cũ.
+ * Ô khóa của thẻ nhà cung cấp: khóa đã có hiển thị `••••` trong ô chỉ đọc, nhấn vào để sửa tại chỗ.
+ * Nút Lưu hiển thị khi có thay đổi, nút xóa khi đã có khóa; Enter để lưu, Esc để hủy.
+ * Khóa mới được thêm vào danh sách khóa của kết nối.
  */
 function KeyField({
   card,
@@ -242,8 +239,8 @@ function KeyField({
 }
 
 /**
- * Thẻ provider như `ProviderKeyRows` của Hermes: một lưới hai cột (tên | ô khóa) khớp cột control của các
- * hàng cài đặt; bấm vào thẻ là mở, phần mở ra trải hết hai cột.
+ * Thẻ nhà cung cấp: lưới hai cột (tên | ô khóa) khớp với cột điều khiển của các hàng cài đặt;
+ * nhấn vào thẻ để mở rộng toàn bộ nội dung.
  */
 function ProviderKeyCard({
   id,
@@ -301,11 +298,11 @@ function ProviderKeyCard({
   )
 }
 
-/** Which card is open: the one a deep link points at, until the person opens or closes another. */
+/** Xác định thẻ nào đang mở theo liên kết sâu hoặc lựa chọn của người dùng. */
 function useOpenCard(prefix: string): [string | null, (id: string) => void] {
   const key = useAiOverlayStore((state) => state.settings?.key)
   const [open, setOpen] = useState<string | null>(key?.startsWith(prefix) ? key : null)
-  // A new deep link opens its card; React's "adjust state while rendering" pattern, not an effect.
+  // Liên kết sâu mới sẽ tự động mở thẻ tương ứng.
   const [seenKey, setSeenKey] = useState(key)
   if (key !== seenKey) {
     setSeenKey(key)
@@ -347,8 +344,7 @@ export function KeysPage(): JSX.Element {
       />
       <div className="flex flex-col gap-1">
         {cards.map((card) => {
-          // A provider can have more than one connection (two Gemini projects, say); the card shows them all
-          // and the key field adds to the first.
+          // Một nhà cung cấp có thể có nhiều kết nối; thẻ hiển thị tất cả và ô nhập thêm vào kết nối đầu tiên.
           const own = connections.filter((item) => item.providerId === card.id)
           const connection = own[0]
           const id = 'provider:' + card.id
@@ -402,7 +398,7 @@ export function KeysPage(): JSX.Element {
   )
 }
 
-/** Cài đặt › Kết nối AI › Endpoint tùy chỉnh: a short list as in Hermes; a row loads into the form below. */
+/** Cài đặt › Kết nối AI › Endpoint tùy chỉnh: danh sách các endpoint và biểu mẫu thêm/sửa bên dưới. */
 export function EndpointsPage(): JSX.Element {
   const { connections } = useConnections()
   const store = useConnectionStore()
@@ -508,15 +504,15 @@ const API_MODES = [
 ] as const
 
 /**
- * The endpoint form, as Hermes': empty to add one, filled with a listed endpoint to edit it (the API mode
- * too). Kiểm tra probes `/models` and the chat route, then fills the model and the resolved base URL.
+ * Biểu mẫu endpoint: để trống khi thêm mới, điền sẵn thông tin khi sửa.
+ * Nút Kiểm tra thăm dò danh sách model và route chat, sau đó tự động điền model và URL phân giải.
  */
 function EndpointForm({
   editing,
   onNew
 }: {
   editing: ConnectionView | null
-  /** Leave the endpoint being edited for an empty form. */
+  /** Bỏ chọn endpoint đang sửa để chuyển sang biểu mẫu thêm mới. */
   onNew(): void
 }): JSX.Element {
   const store = useConnectionStore()
@@ -531,7 +527,7 @@ function EndpointForm({
   const [message, setMessage] = useState<{ tone: 'ok' | 'warn' | 'error'; text: string } | null>(
     null
   )
-  // Hermes asks for a model before saving a new endpoint: one without an entry never shows in the menu.
+  // Cần chọn hoặc nhập model trước khi lưu endpoint mới để hiển thị trong menu.
   const canSave = url.trim() !== '' && (editing !== null || model.trim() !== '')
 
   async function check(): Promise<boolean> {
@@ -592,8 +588,7 @@ function EndpointForm({
   const currentKey = editing?.keys[0]
 
   return (
-    // Hermes' form: one bordered box of stacked, labelled fields, not setting rows; the mode switch
-    // needs the whole width for four options.
+    // Khung biểu mẫu: gom các trường có nhãn vào một khối viền; lựa chọn API mode chiếm trọn chiều rộng.
     <SettingsSection title={editing ? 'Sửa ' + editing.name : 'Thêm endpoint'}>
       <div className="@container grid gap-3 rounded-sm border border-subtle p-3">
         <div className="grid gap-3 @lg:grid-cols-2">
@@ -772,7 +767,7 @@ export function LocalPage(): JSX.Element {
                 </>
               }
               description={<span className="font-mono">{preset.baseUrl}</span>}
-              // Once connected, the card's own "Kiểm tra kết nối" checks it; this one only finds and adds it.
+              // Sau khi đã kết nối, nút kiểm tra trong thẻ sẽ đảm nhận; nút này chỉ dò tìm và thêm mới.
               right={
                 connection ? undefined : (
                   <Button loading={busy === presetId} onClick={() => void check(presetId)}>

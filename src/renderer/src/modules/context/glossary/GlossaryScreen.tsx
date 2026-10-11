@@ -1,11 +1,14 @@
 import { useEffect, useState, type JSX } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { BookBookmarkIcon } from '@solar-icons/react/linear/book-bookmark'
-import { CheckIcon } from '@solar-icons/react/linear/check'
-import { CloseCircleIcon } from '@solar-icons/react/linear/close-circle'
-import { ImportIcon } from '@solar-icons/react/linear/import'
-import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
-import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
+import {
+  AddIcon,
+  BookBookmarkIcon,
+  CheckIcon,
+  CloseCircleIcon,
+  ImportIcon,
+  PenNewSquareIcon,
+  TrashBinMinimalisticIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import type { ContextEntryItem, ContextStatus } from '../../../../../shared/contracts/glossary'
 import { Badge } from '../../../components/ui/Badge'
@@ -86,7 +89,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header Toolbar */}
+      {/* Thanh công cụ trên cùng */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
@@ -121,7 +124,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
 
       {error && <div className="rounded-sm bg-error/10 p-3 text-body-xs text-error">{error}</div>}
 
-      {/* Main List */}
+      {/* Danh sách thuật ngữ chính */}
       <div className="overflow-hidden rounded-lg border border-default bg-surface">
         <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_100px_110px_minmax(0,1.2fr)_100px] items-center border-b border-default bg-subtle px-3 py-2 text-body-xs font-medium text-subtle">
           <span>Từ gốc / Biến thể</span>
@@ -163,7 +166,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                   entry.status === 'rejected' && 'opacity-60'
                 )}
               >
-                {/* Source & Aliases */}
+                {/* Thuật ngữ gốc và biến thể */}
                 <div className="flex flex-col items-start gap-1 pr-2">
                   <span className="font-semibold text-default">{entry.source}</span>
                   {entry.aliases.length > 0 && (
@@ -180,7 +183,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                   )}
                 </div>
 
-                {/* Target & Forbidden */}
+                {/* Bản dịch đích và cảnh báo cấm dùng */}
                 <div className="flex flex-col items-start gap-1 pr-2">
                   <span
                     className={cn(
@@ -197,7 +200,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                   )}
                 </div>
 
-                {/* Status */}
+                {/* Trạng thái */}
                 <div>
                   {entry.status === 'approved' && (
                     <Badge variant="outline" dot color="success">
@@ -216,15 +219,15 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                   )}
                 </div>
 
-                {/* Scope */}
+                {/* Phạm vi hiệu lực */}
                 <span className="text-body-xs text-subtle">{formatChapterScope(entry)}</span>
 
-                {/* Notes */}
+                {/* Ghi chú */}
                 <span className="truncate pr-2 text-body-xs text-subtle" title={entry.notes ?? ''}>
                   {entry.notes || '—'}
                 </span>
 
-                {/* Actions */}
+                {/* Các thao tác */}
                 <div className="flex items-center justify-end gap-1">
                   {entry.status === 'pending' && (
                     <>
@@ -273,7 +276,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
         )}
       </div>
 
-      {/* Dialogs */}
+      {/* Các hộp thoại chức năng */}
       <EditGlossaryDialog
         open={editingEntry !== null}
         onOpenChange={(open) => {

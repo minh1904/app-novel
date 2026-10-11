@@ -10,18 +10,14 @@ import {
 } from '../../../../../shared/contracts/modelSettings'
 
 /**
- * Everything the model-entry screens need that is not drawing: what to call each thinking level, which
- * levels a model offers, and how the text a person types becomes a settings patch and back (design D11 of
- * change `ai-model-settings`).
+ * Xử lý dữ liệu cài đặt cho từng mục model: tên hiển thị các mức suy luận, các mức model hỗ trợ,
+ * và chuyển đổi giữa văn bản người dùng nhập với cấu trúc bản vá (patch) cài đặt.
  *
- * Pure on purpose. The dialogs are thin over these functions, so the rules that are easy to get wrong
- * live where a test can reach them without a DOM:
- *  - an empty box is "not set" and `0` is the value 0 (they are not the same thing, and the first is sent
- *    as `null`, which clears the field);
- *  - a switch turned off keeps its value;
- *  - a limit that is out of range is a message beside the box, never a silent correction;
- *  - what is saved is what the provider will be sent, so the limits and the forbidden `extra_body` fields
- *    are the contract's own and are not re-stated here.
+ * Hàm thuần túy để dễ kiểm thử độc lập:
+ *  - Ô trống nghĩa là "chưa đặt" (gửi `null` để xóa), còn `0` là giá trị 0 cụ thể;
+ *  - Công tắc khi tắt vẫn lưu giữ giá trị đã nhập;
+ *  - Giá trị vượt giới hạn hiển thị thông báo lỗi thay vì tự ý điều chỉnh;
+ *  - Dữ liệu lưu sẽ được gửi trực tiếp tới nhà cung cấp theo đúng hợp đồng dữ liệu.
  */
 
 export const THINKING_LABELS: Record<ThinkingLevel, string> = {
@@ -39,13 +35,13 @@ export const DEFAULT_THINKING_LABEL = 'Mặc định'
 export const DEFAULT_THINKING_HINT =
   '“Mặc định” không gửi gì về suy luận: nhà cung cấp dùng mặc định của họ, và mức đó có thể tốn thêm token.'
 
-/** What a person picks in the thinking menu: a level, or "Mặc định", which is the *absence* of one. */
+/** Lựa chọn của người dùng trong menu suy luận: một mức cụ thể hoặc "Mặc định" (không gửi cấu hình suy luận). */
 export type ThinkingChoice = ThinkingLevel | 'default'
 
 export interface ThinkingOption {
   value: ThinkingChoice
   label: string
-  /** Explains the choice where the label alone does not. */
+  /** Giải thích chi tiết cho lựa chọn khi nhãn chưa đủ rõ. */
   hint?: string
 }
 
@@ -54,12 +50,11 @@ export function thinkingLabelOf(level: ThinkingLevel | undefined): string {
 }
 
 /**
- * The options for one model: the levels it supports, then "Mặc định", which every model has. A model the
- * catalog knows nothing about offers only "Mặc định", so a level that model rejects is never offered.
+ * Danh sách lựa chọn cho một model: các mức model hỗ trợ, kèm tùy chọn "Mặc định".
+ * Nếu model chưa có thông tin trong danh mục, chỉ hiển thị tùy chọn "Mặc định".
  *
- * `current` is the level already saved on the entry. If the model no longer supports it (the entry was
- * pointed at another model after the level was set) it is listed anyway and marked, so the screen does
- * not show one level while the entry holds another.
+ * `current` là mức đang được lưu. Nếu model không còn hỗ trợ mức này nữa, tùy chọn vẫn được
+ * liệt kê kèm ghi chú để người dùng nhận biết.
  */
 export function thinkingOptions(
   capability: ModelCapabilityView,
@@ -80,9 +75,8 @@ export function thinkingOptions(
 }
 
 /**
- * The warning for a saved level this model does not take, with the closest one it does; `null` when the
- * saved level is fine. Main blocks such a level before any call, so without this line the entry would just
- * fail to translate.
+ * Cảnh báo khi mức suy luận đang lưu không còn được model hỗ trợ, gợi ý mức gần nhất;
+ * trả về `null` nếu mức đang lưu hợp lệ.
  */
 export function staleThinkingNotice(
   capability: ModelCapabilityView,
@@ -103,27 +97,27 @@ export function thinkingChoiceOf(settings: ModelSettings): ThinkingChoice {
   return settings.thinking ?? 'default'
 }
 
-/** The patch that sets a choice: a level is stored, "Mặc định" clears the field. */
+/** Tạo bản vá cài đặt khi chọn mức suy luận: lưu mức cụ thể, hoặc `null` khi chọn "Mặc định". */
 export function thinkingPatch(choice: ThinkingChoice): ModelSettingsPatch {
   return { thinking: choice === 'default' ? null : choice }
 }
 
-/** "Tên · mức", the form the chat box and the translate dialog show the entry in. */
+/** Định dạng "Tên · mức" hiển thị trên ô soạn chat và hộp thoại dịch. */
 export function entryLabel(entry: Pick<ModelEntryView, 'name' | 'settings'>): string {
   return entry.name + ' · ' + thinkingLabelOf(entry.settings.thinking)
 }
 
-// ---- results and messages -----------------------------------------------------------------------------------
+// ---- Kết quả và thông báo lỗi -----------------------------------------------------------------------------------
 
 export type FieldResult<T> = { ok: true; value: T } | { ok: false; message: string }
 
-/** The first message the contract gives for a patch, or `null` when it takes it. */
+/** Kiểm tra tính hợp lệ của bản vá cài đặt; trả về thông báo lỗi đầu tiên hoặc `null` nếu hợp lệ. */
 export function patchProblem(patch: ModelSettingsPatch): string | null {
   const result = v.safeParse(modelSettingsPatchSchema, patch)
   return result.success ? null : (result.issues[0]?.message ?? 'Giá trị không hợp lệ.')
 }
 
-// ---- the Tác vụ dialog ---------------------------------------------------------------------------------------
+// ---- Hộp thoại Tác vụ ---------------------------------------------------------------------------------------
 
 export const TASK_FIELDS = [
   'inputTokenLimit',
@@ -134,7 +128,7 @@ export const TASK_FIELDS = [
 export type TaskField = (typeof TASK_FIELDS)[number]
 export type TaskForm = Record<TaskField, string>
 
-/** What each box shows. An unset field is an empty box; `0` is shown as `0`. */
+/** Dữ liệu hiển thị trong các ô nhập của hộp thoại Tác vụ. Trường chưa đặt hiển thị ô trống; `0` hiển thị là "0". */
 export function taskFormOf(settings: ModelSettings): TaskForm {
   const text = (value: number | undefined): string => (value === undefined ? '' : String(value))
   return {
@@ -146,9 +140,8 @@ export function taskFormOf(settings: ModelSettings): TaskForm {
 }
 
 /**
- * What a box means. Empty clears the field (`null`, back to the default); digits are the number; anything
- * else, and any number outside the limit, is a message. Nothing is rounded or clamped: a number the person
- * typed is either taken as typed or refused with the range.
+ * Phân tích giá trị ô nhập số: ô trống sẽ xóa trường (về giá trị mặc định);
+ * chuỗi số hợp lệ trả về số tương ứng; giá trị không hợp lệ trả về thông báo lỗi.
  */
 export function parseTaskField(field: TaskField, text: string): FieldResult<number | null> {
   const trimmed = text.trim()
@@ -165,7 +158,7 @@ export function taskPatch(field: TaskField, value: number | null): ModelSettings
   return { [field]: value }
 }
 
-/** Shown under each box: what the box does and what `0` or empty means (the descriptions follow LinguaGacha's). */
+/** Mô tả và placeholder hiển thị dưới mỗi ô nhập giới hạn tác vụ. */
 export const TASK_HINTS: Record<TaskField, { title: string; hint: string; placeholder: string }> = {
   inputTokenLimit: {
     title: 'Giới hạn token đầu vào mỗi lô',
@@ -189,7 +182,7 @@ export const TASK_HINTS: Record<TaskField, { title: string; hint: string; placeh
   }
 }
 
-// ---- the Nâng cao dialog -------------------------------------------------------------------------------------
+// ---- Hộp thoại Nâng cao -------------------------------------------------------------------------------------
 
 export type SliderField = 'temperature' | 'topP'
 export type JsonField = 'extraHeaders' | 'extraBody'
@@ -201,7 +194,7 @@ export interface SliderForm {
 
 export interface JsonForm {
   enabled: boolean
-  /** What is in the box: formatted JSON, or empty for "nothing". */
+  /** Nội dung ô nhập: chuỗi JSON định dạng hoặc chuỗi rỗng. */
   text: string
 }
 
@@ -212,7 +205,7 @@ export interface AdvancedForm {
   extraBody: JsonForm
 }
 
-/** A value to start a slider from when the person switches it on for the first time. */
+/** Giá trị khởi tạo cho thanh trượt khi người dùng bật lần đầu tiên. */
 export const SLIDER_START: Record<SliderField, number> = { temperature: 1, topP: 1 }
 
 export const SLIDER_RANGE: Record<SliderField, { min: number; max: number; step: number }> = {
@@ -244,7 +237,7 @@ export function advancedFormOf(settings: ModelSettings): AdvancedForm {
   }
 }
 
-/** A slider position as a number a person would type: two decimals, no floating-point tail. */
+/** Làm tròn vị trí thanh trượt tới 2 chữ số thập phân để tránh sai số dấu phẩy động. */
 export function roundSlider(value: number): number {
   return Math.round(value * 100) / 100
 }
@@ -258,9 +251,8 @@ export function sliderPatch(field: SliderField, form: SliderForm): ModelSettings
 }
 
 /**
- * What a JSON box means. Empty is an empty object. Anything that is not a JSON **object** is refused, and so
- * is an object the contract would refuse (a forbidden `extra_body` field, a header that would carry the
- * key), with the contract's own message. The message names the field it is about.
+ * Phân tích dữ liệu JSON nâng cao: chuỗi rỗng tương đương đối tượng rỗng `{}`.
+ * Bắt buộc phải là đối tượng JSON hợp lệ và không chứa các trường bị cấm trong hợp đồng dữ liệu.
  */
 export function parseJsonField(
   field: JsonField,

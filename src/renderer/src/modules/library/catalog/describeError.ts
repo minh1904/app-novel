@@ -1,6 +1,6 @@
 import type { IpcError } from '../../../../../shared/contracts/result'
 
-/** An error from the main process in words a user can act on. */
+/** Diễn giải lỗi từ tiến trình chính thành câu thông báo rõ ràng cho người dùng. */
 export function describe(error: IpcError): string {
   switch (error.code) {
     case 'not_found':
@@ -19,8 +19,8 @@ export function describe(error: IpcError): string {
 }
 
 /**
- * Backup and restore errors already carry a full sentence written for the user ("not a Mira backup",
- * "made by a newer version"), so those are shown as they are; file system errors still get context.
+ * Các lỗi sao lưu và phục hồi có sẵn thông điệp rõ ràng thì hiển thị nguyên văn;
+ * các lỗi hệ thống tệp khác được diễn giải qua hàm describe.
  */
 export function describeBackupError(error: IpcError): string {
   return error.code === 'corrupt' ||

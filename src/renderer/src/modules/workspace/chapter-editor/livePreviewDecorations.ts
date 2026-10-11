@@ -17,29 +17,19 @@ import {
 import { selectionTouches } from './selectionTouches'
 
 /**
- * A light, Obsidian-style live preview for the translation. Headings, quotes and lists stay as
- * dimmed-marker mark decorations always (`#`, `>`, list markers never disappear — hiding a list's `-`
- * entirely would leave no sign it is a list at all, and these are block prefixes a line either has or
- * doesn't, not something worth a show/hide transition).
+ * Xem trước trực tiếp (Live Preview) cho bản dịch. Tiêu đề, trích dẫn và danh sách luôn giữ
+ * ký tự đánh dấu làm mờ (`#`, `>`, ký tự đầu dòng danh sách không bị ẩn hoàn toàn).
  *
- * Bold, italic and strikethrough delimiters (`**`, `*`, `_`, `~~`) DO hide, the way Obsidian hides
- * them, once the caret and selection are not touching that span — `selectionTouches` below decides
- * per span, the same rule `imageEmbedDecorations` uses for images. This is still IME-safe for the
- * same reason images are: the delimiters only ever hide for a span that is *complete* (the closing
- * delimiter has already been typed — the Markdown parser only reports a span once it is closed) and
- * that the caret has *left*. While composing inside the span — which is the entire window an input
- * method can be mid-composition — the span is incomplete or the caret is still in it, so nothing
- * hides; during an active composition the whole plugin skips rebuilding regardless
- * (`update.view.composing`), same as every other decoration here. Headings, quotes and lists are left
- * as plain dimmed markers rather than given the same hide treatment, matching `source-editor` D7's
- * general caution: narrower exposure, easier to verify by hand.
+ * Các ký tự phân cách in đậm, in nghiêng và gạch ngang (`**`, `*`, `_`, `~~`) sẽ được ẩn khi
+ * con trỏ và vùng chọn không chạm vào đoạn văn bản đó — `selectionTouches` quyết định theo từng đoạn.
+ * Đảm bảo an toàn với bộ gõ IME: ký tự phân cách chỉ ẩn khi đoạn đã hoàn chỉnh và con trỏ đã rời đi.
+ * Khi đang gõ bộ gõ IME trong đoạn, plugin bỏ qua việc dựng lại (`update.view.composing`).
  *
- * What counts as emphasis, a heading, a quote or a list comes from the Markdown syntax tree
- * (`markdownSyntax.ts`), not from regular expressions, so code spans, escapes, `snake_case` and URLs
- * are left alone.
+ * Các thành phần cú pháp được đọc từ cây cú pháp Markdown (`markdownSyntax.ts`) thay vì biểu thức chính quy,
+ * giúp các đoạn mã, ký tự thoát, `snake_case` và URL không bị ảnh hưởng.
  */
 
-/** One decoration to draw, before it is turned into a CodeMirror `Decoration`. */
+/** Một decoration cần vẽ trước khi chuyển thành CodeMirror `Decoration`. */
 export type PlanKind = 'marker' | 'hidden' | 'quote' | 'h1' | 'h2' | 'h3' | InlineKind
 
 export interface PlanItem {
@@ -51,9 +41,8 @@ export interface PlanItem {
 const HEADING_KINDS = { 1: 'h1', 2: 'h2', 3: 'h3' } as const
 
 /**
- * Decides what to draw over `ranges`: which delimiters stay visible (dimmed) and which hide. Pure —
- * `touches` stands in for "does the selection touch this stretch", so the hide/show rule that the
- * IME safety rests on can be tested without an `EditorView`.
+ * Xác định các decoration cần vẽ trên các vùng `ranges`: ký tự phân cách nào hiển thị (làm mờ) và ký tự nào ẩn.
+ * Hàm thuần túy — `touches` biểu thị trạng thái vùng chọn có chạm vào đoạn hay không, giúp kiểm thử dễ dàng.
  */
 export function planLivePreview(
   tree: SyntaxTree,
@@ -86,7 +75,7 @@ export function planLivePreview(
 
 const DECORATIONS: Record<PlanKind, Decoration> = {
   marker: Decoration.mark({ class: 'cm-livepreview-marker' }),
-  /** No widget: an empty replace just removes the delimiter from the layout, nothing fills its place. */
+  /** Không dùng widget: replace rỗng loại bỏ ký tự phân cách khỏi layout mà không thêm phần tử thay thế. */
   hidden: Decoration.replace({}),
   bold: Decoration.mark({ class: 'cm-livepreview-bold' }),
   italic: Decoration.mark({ class: 'cm-livepreview-italic' }),
@@ -120,15 +109,14 @@ const livePreviewMarks = ViewPlugin.fromClass(
     }
 
     update(update: ViewUpdate): void {
-      // While an input method composes, leave the marks where they are (only moved with the text).
+      // Khi bộ gõ IME đang soạn thảo, giữ nguyên vị trí các mark theo thay đổi văn bản.
       if (update.view.composing || update.view.compositionStarted) {
         this.decorations = this.decorations.map(update.changes)
         return
       }
-      // A caret move alone (no text change) can cross a span's boundary — arrow keys, a click — so
-      // that alone must also re-show or re-hide its delimiters, not just edits. The parser also works
-      // in the background, so a new tree for an unchanged document (a long chapter filling in below
-      // the first screen) needs a rebuild as well.
+      // Di chuyển con trỏ có thể vượt qua ranh giới của đoạn, do đó cần cập nhật lại hiển thị
+      // ký tự phân cách ngay cả khi văn bản không đổi. Parser phân tích nền cũng có thể cập nhật
+      // cây cú pháp cho tài liệu lớn, đòi hỏi phải dựng lại decoration.
       if (
         update.docChanged ||
         update.viewportChanged ||
@@ -153,7 +141,7 @@ const livePreviewTheme = EditorView.baseTheme({
     marginLeft: '2px',
     color: 'var(--mira-text-muted)'
   },
-  // Obsidian's heading scale, relative to the 16px text: 1.618 / 1.462 / 1.318 em.
+  // Tỉ lệ kích thước tiêu đề tương đối so với cỡ chữ 16px: 1.618 / 1.462 / 1.318 em.
   '.cm-livepreview-h1': {
     fontSize: '1.618em',
     fontWeight: '700',

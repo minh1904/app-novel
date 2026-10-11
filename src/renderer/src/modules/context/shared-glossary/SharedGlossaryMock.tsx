@@ -1,7 +1,6 @@
 import type { JSX } from 'react'
-import { AddIcon } from '@solar-icons/react/linear/add'
-import { FileDownloadIcon } from '@solar-icons/react/linear/file-download'
-import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
+import { AddIcon, FileDownloadIcon, MenuDotsIcon } from '@renderer/components/ui/reicon'
+
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
@@ -11,7 +10,7 @@ import { SearchInput } from '../../../components/ui/Input'
 import { NavItem } from '../../../components/ui/NavItem'
 import { cn } from '../../../lib/cn'
 
-/** Fixed sample data: term sets shared by several works. */
+/** Dữ liệu mẫu cố định: các bộ thuật ngữ dùng chung cho nhiều tác phẩm. */
 const SETS = [
   { name: 'Tu tiên chung', meta: '412 mục · 3 tác phẩm' },
   { name: 'Danh xưng cổ trang', meta: '96 mục · 4 tác phẩm' },
@@ -39,9 +38,8 @@ const ENTRIES: { source: string; target: string; kind: string; hits: string; not
 ]
 
 /**
- * Picture of the shared term store (MOCK_FEATURES.sharedGlossary): sets of terms, names and
- * replacement rules that several works use, each work able to override an entry; Names.txt and
- * VietPhrase.txt import here. Nothing is read or written; every control is disabled.
+ * Giao diện mẫu của kho thuật ngữ dùng chung: các bộ thuật ngữ, tên riêng và quy tắc thay thế dùng cho nhiều tác phẩm.
+ * Mọi nút điều khiển đều ở trạng thái vô hiệu hóa để minh họa giao diện.
  */
 export function SharedGlossaryMock(): JSX.Element {
   return (

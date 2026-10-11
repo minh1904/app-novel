@@ -1,5 +1,6 @@
 import { useState, type JSX } from 'react'
-import { TrashBinTrashIcon } from '@solar-icons/react/linear/trash-bin-trash'
+import { TrashBinTrashIcon } from '@renderer/components/ui/reicon'
+
 import {
   CONNECTION_PRESETS,
   SHARED_QUOTA_PROVIDERS,
@@ -18,9 +19,9 @@ import { notify } from '../../../components/ui/notificationStore'
 import { openModelList } from './openConnectionSettings'
 
 /**
- * Phần thân của một kết nối trong Cài đặt: bật/tắt, tên, địa chỉ, các khóa, lối sang danh sách model, kiểm
- * tra và xóa. Các mục model không nằm ở đây mà ở Model › Danh sách model, như Hermes giữ thẻ provider cho
- * khóa. Thẻ Khóa API dùng bản `compact`; Endpoint tùy chỉnh và Trên máy dùng bản đầy đủ.
+ * Phần thân của một kết nối trong Cài đặt: bật/tắt, tên, địa chỉ, các khóa, lối sang danh sách model,
+ * kiểm tra và xóa. Các mục model được quản lý tại Model › Danh sách model.
+ * Thẻ Khóa API dùng bản `compact`; Endpoint tùy chỉnh và Trên máy dùng bản đầy đủ.
  */
 export function ConnectionDetails({
   connection,
@@ -33,8 +34,8 @@ export function ConnectionDetails({
   /** Thẻ provider đã biết ẩn địa chỉ: người dùng hiếm khi cần đổi nó. */
   showAddress?: boolean
   /**
-   * Thẻ Khóa API (như Hermes): ô khóa đã ở hàng đầu thẻ nên không có ô thêm khóa, khóa chỉ được liệt kê khi
-   * có từ hai khóa trở lên, và bật/tắt, kiểm tra, xóa gom vào một hàng thay vì ba hàng cài đặt.
+   * Thẻ Khóa API: ô khóa hiển thị ở hàng đầu thẻ, danh sách khóa chỉ liệt kê khi có từ hai khóa trở lên;
+   * các thao tác bật/tắt, kiểm tra, xóa được gom gọn vào một hàng.
    */
   compact?: boolean
 }): JSX.Element {
@@ -72,7 +73,7 @@ export function ConnectionDetails({
     if (okay) setSecret('')
   }
 
-  /** Kiểm hai bước (design D5); đổi sang base URL đã giải khi khác địa chỉ đang lưu. */
+  /** Kiểm tra endpoint; tự động cập nhật sang URL đã phân giải nếu khác với địa chỉ đang lưu. */
   async function check(): Promise<void> {
     setProbing(true)
     const result = await store.probe({

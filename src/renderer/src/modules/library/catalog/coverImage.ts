@@ -1,19 +1,18 @@
 /**
- * Turns a user-chosen image into the small JPEG that gets stored as a cover. Decoding happens in
- * the renderer because Chromium reads more formats (WebP, AVIF, GIF…) than the main process can;
- * the main process re-checks whatever arrives.
+ * Chuyển đổi ảnh do người dùng chọn thành ảnh JPEG kích thước nhỏ để lưu làm ảnh bìa.
+ * Quá trình giải mã diễn ra tại tiến trình renderer nhằm hỗ trợ nhiều định dạng ảnh phong phú.
  */
 
 export const COVER_MAX_WIDTH = 600
 export const COVER_MAX_HEIGHT = 900
-/** Stay well under the 1 MiB storage limit even after base64 overhead is removed. */
+/** Giữ dung lượng thấp hơn nhiều so với giới hạn lưu trữ 1 MiB sau khi trừ phần phụ trợ base64. */
 const TARGET_BYTES = 700 * 1024
 const MAX_SOURCE_BYTES = 30 * 1024 * 1024
 const QUALITIES = [0.85, 0.72, 0.6, 0.45]
 
 export class CoverImageError extends Error {}
 
-/** Scales down to fit the box, keeping the aspect ratio. Never scales up. */
+/** Thu nhỏ ảnh vừa với khung hình nhưng giữ nguyên tỷ lệ khung hình. Không phóng to ảnh. */
 export function fitWithin(
   width: number,
   height: number,
@@ -67,7 +66,7 @@ export async function fileToCoverDataUrl(file: File): Promise<string> {
     canvas.height = height
     const context = canvas.getContext('2d')
     if (!context) throw new CoverImageError('Không xử lý được ảnh này.')
-    // JPEG has no transparency; without a base a transparent PNG would turn black.
+    // JPEG không hỗ trợ trong suốt; cần nền trắng để tránh ảnh PNG trong suốt bị đen nền.
     context.fillStyle = '#ffffff'
     context.fillRect(0, 0, width, height)
     context.drawImage(bitmap, 0, 0, width, height)

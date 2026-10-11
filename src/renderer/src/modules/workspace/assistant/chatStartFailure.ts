@@ -2,9 +2,8 @@ import type { ChatError } from '../../../../../shared/contracts/aiChat'
 import type { ErrorCode } from '../../../../../shared/contracts/result'
 
 /**
- * A send that main turned down before any provider was asked. It is never "content refused": nothing was
- * sent. A storage or line trouble may pass on a second try; anything else (bad input, a missing chapter)
- * will not until something changes.
+ * Xử lý lỗi khi yêu cầu gửi câu hỏi bị từ chối từ tiến trình chính trước khi gọi nhà cung cấp AI.
+ * Phân loại các lỗi kết nối/hệ thống có thể thử lại hoặc lỗi yêu cầu không hợp lệ.
  */
 export function startFailure(code: ErrorCode, message: string): ChatError {
   if (code === 'io' || code === 'internal') {

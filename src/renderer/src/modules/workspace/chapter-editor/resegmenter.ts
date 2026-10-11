@@ -4,12 +4,11 @@ import type { SegmentLanguage } from '../../../../../shared/segmentation/segment
 import { resegmentSpec } from './editorState'
 
 /**
- * When the segments of an edited text are split again. Never while the input method holds text it
- * has not committed: changing anything the browser is composing in is what loses or doubles
- * characters, so the work waits until the composition ends.
+ * Xử lý tự động tách lại segment sau khi chỉnh sửa văn bản.
+ * Chờ người dùng gõ xong và bộ gõ IME hoàn tất để tránh mất hoặc trùng ký tự.
  */
 
-/** The part of an `EditorView` this needs, so the rules can be tested without a browser. */
+/** Giao diện rút gọn của EditorView phục vụ kiểm thử đơn vị. */
 export interface ViewLike {
   readonly state: EditorState
   readonly composing: boolean
@@ -19,7 +18,7 @@ export interface ViewLike {
 
 export const isComposing = (view: ViewLike): boolean => view.composing || view.compositionStarted
 
-/** Splits again now unless a composition is under way; says which. */
+/** Thực hiện tách lại segment ngay nếu không bận bộ gõ IME. */
 export function resegmentNow(view: ViewLike, lang: SegmentLanguage): 'done' | 'composing' {
   if (isComposing(view)) return 'composing'
   const spec = resegmentSpec(view.state, lang)
@@ -27,7 +26,7 @@ export function resegmentNow(view: ViewLike, lang: SegmentLanguage): 'done' | 'c
   return 'done'
 }
 
-/** Resolves once no composition is under way (at once when none is). */
+/** Chờ cho đến khi bộ gõ IME hoàn tất nhập ký tự. */
 export function afterComposition(view: ViewLike, pollMs = 30): Promise<void> {
   return new Promise((resolve) => {
     const check = (): void => {
@@ -48,7 +47,7 @@ const realTimers: Timers = {
   clear: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>)
 }
 
-/** Splits again after the user has stopped typing for `delay` ms, and again later if a composition was under way. */
+/** Tự động tách lại segment khi người dùng ngừng gõ sau một khoảng thời gian chờ `delay` ms. */
 export class IdleResegmenter {
   private handle: unknown = null
 
@@ -57,11 +56,11 @@ export class IdleResegmenter {
     private readonly lang: SegmentLanguage,
     private readonly delay = 800,
     private readonly timers: Timers = realTimers,
-    /** True while something else (a save) is using the segments: try again later. */
+    /** Trả về true nếu tài nguyên đang bị khóa (ví dụ: đang lưu dữ liệu). */
     private readonly isBlocked: () => boolean = () => false
   ) {}
 
-  /** Call on every edit: the clock starts over. */
+  /** Gọi mỗi khi có thay đổi văn bản để đếm lại thời gian chờ. */
   touch(): void {
     if (this.handle !== null) this.timers.clear(this.handle)
     this.handle = this.timers.set(() => {

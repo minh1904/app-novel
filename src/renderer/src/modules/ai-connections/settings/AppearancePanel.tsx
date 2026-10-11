@@ -9,7 +9,7 @@ const THEME_OPTIONS: Array<{ value: ThemePreference; label: string }> = [
   { value: 'system', label: 'Theo hệ thống' }
 ]
 
-/** Settings › Giao diện: the theme. */
+/** Cài đặt › Giao diện: chế độ màu giao diện. */
 export function AppearancePanel(): JSX.Element {
   const preference = useThemeStore((state) => state.themePreference)
   const setPreference = useThemeStore((state) => state.setThemePreference)

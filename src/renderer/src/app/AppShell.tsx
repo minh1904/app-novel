@@ -1,7 +1,6 @@
 import { useEffect, useState, type JSX, type ReactNode } from 'react'
-import { MoonIcon } from '@solar-icons/react/linear/moon'
-import { SettingsIcon } from '@solar-icons/react/linear/settings'
-import { SunIcon } from '@solar-icons/react/linear/sun'
+import { MoonIcon, SettingsIcon, SunIcon } from '@renderer/components/ui/reicon'
+
 import { CompactButton } from '../components/ui/CompactButton'
 import { cn } from '../lib/cn'
 import { ICON } from '../components/ui/icon'
@@ -10,9 +9,9 @@ import { TopBarSlotContext, TopBarTitleSlotContext } from '../components/ui/topB
 import type { Theme } from './useTheme'
 
 export interface AppShellProps {
-  /** The app sidebar (AppNav), below the app title bar; null on the chapter screen. */
+  /** Thanh bên ứng dụng (AppNav) nằm dưới tiêu đề cửa sổ; null ở màn hình chương. */
   nav: ReactNode | null
-  /** A list column beside the work area (the chapter list); null where the screen has none. */
+  /** Cột danh sách cạnh vùng làm việc (như danh sách chương); null nếu màn hình không có. */
   sidebar: ReactNode | null
   sidebarOpen: boolean
   onToggleSidebar(): void
@@ -26,10 +25,8 @@ export interface AppShellProps {
 }
 
 /**
- * The right end of the app title bar belongs to the OS when the page draws the title bar itself
- * (window controls overlay): `titlebar-area-*` is the part left for the page, so everything past it is
- * the buttons' width. With the native title bar (the current setting) the variables do not exist, the
- * fallbacks make the sum zero, and the 10px minimum keeps the usual padding.
+ * Phần mép phải của thanh tiêu đề dành cho các nút điều khiển cửa sổ của hệ điều hành.
+ * Biến `titlebar-area-*` xác định phần không gian còn lại cho ứng dụng, với khoảng đệm tối thiểu 10px.
  */
 const BAR_END_PADDING =
   'max(10px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)))'
@@ -37,11 +34,9 @@ const BAR_END_PADDING =
 const BAR_ICON = ICON.sm
 
 /**
- * The window: one title bar across the whole app, then the app sidebar beside a page column. The page
- * column starts with its own bar and continues with the optional list column and work area
- * (docs/modules/workspace/app-level-features.md). Theme and settings live at the foot of the sidebar;
- * where there is none (the chapter screen) they come back to the end of the page bar. Ctrl+B folds the
- * list column when the screen has one, else the sidebar.
+ * Khung cửa sổ ứng dụng: thanh tiêu đề chung ở trên cùng, phía dưới gồm thanh điều hướng ứng dụng và cột nội dung trang.
+ * Cột trang gồm thanh công cụ trên cùng, cột danh sách tùy chọn và vùng làm việc chính.
+ * Cài đặt và đổi theme đặt ở chân thanh bên hoặc cuối thanh công cụ trang. Ctrl+B dùng để đóng/mở thanh bên.
  */
 export function AppShell({
   nav,
@@ -54,14 +49,11 @@ export function AppShell({
   settingsOpen = false,
   children
 }: AppShellProps): JSX.Element {
-  // The element the current screen's own controls are drawn into (see `TopBarActions`). A state,
-  // not a ref, so the screens re-render with the element once it exists.
+  // Phần tử để gắn các nút điều khiển của màn hình hiện tại (xem `TopBarActions`). Sử dụng state để cập nhật lại khi phần tử tồn tại.
   const [slot, setSlot] = useState<HTMLElement | null>(null)
   const [titleSlot, setTitleSlot] = useState<HTMLElement | null>(null)
 
-  // A more specific handler closer to the key's target — the translation pane's own "bold" binding,
-  // for one — gets first look and calls preventDefault() when it claims the key; this global one
-  // backs off rather than also firing, the same way a browser lets an inner handler win.
+  // Trình xử lý phím tắt toàn cục; nếu các phần tử bên trong (như ô soạn thảo) đã xử lý và gọi preventDefault(), sự kiện sẽ được bỏ qua.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.defaultPrevented) return
@@ -100,7 +92,7 @@ export function AppShell({
             <div className="flex-1" />
             <div ref={setSlot} className="flex shrink-0 items-center gap-xs empty:hidden" />
             {nav === null && (
-              // Separates the screen's own buttons from the app's; shown only when the screen has some.
+              // Phân cách các nút của màn hình hiện tại với các nút chung của ứng dụng; chỉ hiển thị khi có nút tùy chỉnh.
               <span
                 className="hidden h-4 w-px shrink-0 bg-line [:not(:empty)+&]:block"
                 aria-hidden="true"

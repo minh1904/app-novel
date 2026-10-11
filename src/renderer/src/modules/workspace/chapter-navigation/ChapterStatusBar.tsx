@@ -4,7 +4,7 @@ import { cn } from '../../../lib/cn'
 import type { SessionStatus } from '../chapter-editor/editorSession'
 import { combinedSaveLabel, textStats } from './chapterStats'
 
-/** Pending AI proposals for one chapter, refreshed whenever any proposal changes. */
+/** Hook đếm số lượng đề xuất AI đang chờ duyệt của chương, tự động cập nhật khi có thay đổi. */
 function usePendingCount(workId: string, chapterId: string): number {
   const [count, setCount] = useState(0)
   useEffect(() => {
@@ -28,9 +28,8 @@ function usePendingCount(workId: string, chapterId: string): number {
 }
 
 /**
- * The strip under the chapter's panes, as Obsidian keeps one under its editor: figures for the
- * translation as it is typed, whether the chapter is saved, and how many AI proposals wait. Small and
- * muted so it never competes with the text; the proposal count opens the AI panel that holds them.
+ * Thanh trạng thái ở cạnh dưới khung soạn thảo: hiển thị thống kê từ/ký tự của bản dịch,
+ * trạng thái lưu và số đề xuất AI đang chờ duyệt.
  */
 export function ChapterStatusBar({
   workId,

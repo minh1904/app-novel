@@ -19,8 +19,8 @@ function initialValues(work: Work, cover: string | null): WorkFormValues {
 }
 
 /**
- * Edits the details and the cover of a work in one save. The dialog fetches the current cover
- * first, because the work summary only knows that a cover exists, not its pixels.
+ * Chỉnh sửa thông tin chi tiết và ảnh bìa của tác phẩm trong một lần lưu.
+ * Hộp thoại sẽ tải ảnh bìa hiện tại trước vì bản tóm tắt tác phẩm chỉ lưu thông tin phiên bản.
  */
 export function EditWorkDialog({
   work,
@@ -43,7 +43,7 @@ export function EditWorkDialog({
       title="Sửa thông tin tác phẩm"
       description="Thông tin và ảnh bìa được lưu cùng lúc. Ngôn ngữ gốc không đổi được."
     >
-      {/* Mounted only while open, so every opening starts from what is saved now. */}
+      {/* Chỉ mount khi mở hộp thoại, giúp mỗi lần mở đều nạp dữ liệu lưu mới nhất. */}
       {open && <EditBody work={work} onClose={onClose} onSave={onSave} />}
     </Dialog>
   )
@@ -61,7 +61,7 @@ function EditBody({
   const [initial, setInitial] = useState<WorkFormValues | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Snapshot once per opening: later changes to `work` must not overwrite what is being typed.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Chỉ lấy snapshot một lần khi mở; các thay đổi sau đó đối với work không được ghi đè nội dung đang nhập.
   useEffect(() => {
     let active = true
     if (work.coverVersion === undefined) {
@@ -103,7 +103,7 @@ function EditBody({
       busyLabel="Đang lưu…"
       onSubmit={async (values) => {
         const patch = buildPatch(initial, values)
-        // Nothing changed: close without touching the file or its edit time.
+        // Không có thay đổi: đóng hộp thoại mà không tác động đến tệp hoặc thời gian sửa đổi.
         if (Object.keys(patch).length === 0) return { ok: true, value: null }
         return onSave(patch)
       }}

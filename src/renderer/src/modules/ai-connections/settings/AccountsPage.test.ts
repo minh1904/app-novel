@@ -5,7 +5,7 @@ import type { ConnectionView } from '../../../../../shared/contracts/aiConnectio
 import { resetAllStores } from '../../../lib/testing/resetStores'
 import { AccountsPage, ConnectedCard, UsageChip } from './AccountsPage'
 
-/** Settings › Tài khoản in its states (change `subscription-providers`, tasks 6.3–6.4). */
+/** Kiểm thử các trạng thái của trang Cài đặt › Kết nối AI › Tài khoản. */
 
 function account(provider: 'codex' | 'copilot', state: 'ok' | 'relogin'): ConnectionView {
   return {
@@ -39,7 +39,7 @@ describe('AccountsPage', () => {
     expect(html).not.toContain('Sắp có')
   })
 
-  // A static render reads the store's initial state, so the connected card is rendered on its own.
+  // Render tĩnh đọc trạng thái ban đầu của store nên thẻ đã kết nối được render độc lập.
   const card = (provider: 'codex' | 'copilot', state: 'ok' | 'relogin'): string =>
     renderToStaticMarkup(
       createElement(ConnectedCard, {

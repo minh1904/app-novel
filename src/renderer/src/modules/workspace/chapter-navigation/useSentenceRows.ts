@@ -5,10 +5,8 @@ import type { TextRecord } from '../../../../../shared/contracts/text'
 import { describe } from '../../library/public'
 
 /**
- * The rows of the sentence mode over what the store holds: the source, the translation, and the
- * links. Writes are one at a time, each with the revision the last one returned, so pressing
- * Enter down a column never conflicts with itself; what the user has typed stays in the cell
- * until the store has taken it.
+ * Quản lý các hàng câu trong chế độ dịch từng câu dựa trên bản gốc, bản dịch và liên kết.
+ * Các thao tác ghi được thực hiện tuần tự để tránh xung đột revision.
  */
 
 export interface RowProblem {
@@ -18,26 +16,26 @@ export interface RowProblem {
 
 export interface SentenceRows {
   view: RowsView
-  /** The translation revision the screen currently holds. */
+  /** Revision hiện tại của bản dịch. */
   targetRev: number
   loading: boolean
   loadError: string | null
   drafts: ReadonlyMap<string, string>
   problems: ReadonlyMap<string, RowProblem>
   saving: ReadonlySet<string>
-  /** Something said about the last pairing or review, for the screen to announce. */
+  /** Thông báo kết quả thao tác ghép cặp hoặc duyệt câu. */
   notice: string | null
   setDraft(sourceId: string, text: string): void
-  /** Writes the draft of a row if it differs from what the row has; true when nothing is wrong. */
+  /** Ghi bản nháp của một hàng nếu có thay đổi; trả về true nếu thành công. */
   commit(sourceId: string): Promise<boolean>
-  /** Writes every draft that differs; true when none of them failed. */
+  /** Ghi tất cả bản nháp có thay đổi; trả về true nếu thành công. */
   commitAll(): Promise<boolean>
   review(sourceId: string): Promise<boolean>
   autoPair(): Promise<void>
-  /** Reads the translation and the links again, dropping the drafts. */
+  /** Đọc lại bản dịch và liên kết từ cơ sở dữ liệu, hủy các bản nháp chưa lưu. */
   reload(): Promise<void>
   hasDrafts(): boolean
-  /** The rows as they are right now, including what the last write returned. */
+  /** Trả về cấu trúc view hàng câu tại thời điểm hiện tại. */
   getView(): RowsView
 }
 
@@ -102,7 +100,7 @@ export function useSentenceRows(
     setLoading(false)
   }, [workId, chapterId, setDraftMap, takeLinks])
 
-  // The translation and the links are read fresh when the mode opens, whatever the screen held.
+  // Luôn nạp lại bản dịch và liên kết mới nhất khi mở chế độ câu
   useEffect(() => {
     void reload()
   }, [reload])

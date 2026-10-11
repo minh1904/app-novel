@@ -1,13 +1,13 @@
 import type { JSX } from 'react'
-import { ImportIcon } from '@solar-icons/react/linear/import'
-import { StarIcon } from '@solar-icons/react/linear/star'
+import { ImportIcon, StarIcon } from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { cn } from '../../../lib/cn'
 import { LanguageMark } from '../../library/public'
 import type { SourceLanguage } from '../../library/public'
 import { SOON_LABEL } from '../../../lib/mockFeatures'
 
-/** Fixed sample data: what the Sources area would hold, not anything read from this work. */
+/** Dữ liệu mẫu cố định: hiển thị minh họa nội dung khu vực nguồn raw. */
 interface SourceRow {
   language: SourceLanguage
   label: string
@@ -43,9 +43,8 @@ const SOURCES: SourceRow[] = [
 ]
 
 /**
- * Illustration of the Sources area: multiple raw bases, which one is primary, and how many
- * chapters of this work each has matched. No data is read or written; every control is disabled.
- * See delivery/backlog.md, `sources-area`.
+ * Minh họa khu vực nguồn raw: hiển thị danh sách các nguồn raw, nguồn chính, và số chương
+ * tương ứng đã khớp. Không đọc hoặc ghi dữ liệu thực tế.
  */
 export function SourcesAreaMock(): JSX.Element {
   return (

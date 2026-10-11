@@ -57,23 +57,23 @@ export interface ConnectionState {
   notice: string | null
   tests: Record<string, TestState>
   entries: ModelEntryActions
-  /** Settings › Model; `null` until read. */
+  /** Cài đặt › Model; có giá trị `null` cho đến khi đọc xong. */
   preferences: AiPreferences | null
 
-  // Actions
+  // Hành động
   reload(): Promise<void>
   dismissNotice(): void
-  /** The new connection, or `null` after a notice. */
+  /** Kết nối mới được tạo, hoặc `null` nếu xảy ra thông báo lỗi. */
   create(input: CreateConnectionInput): Promise<ConnectionView | null>
-  /** A key pasted into a provider card; makes the connection from the preset when there is none. */
+  /** Lưu khóa API dán vào thẻ provider; tự động tạo kết nối từ cấu hình sẵn nếu chưa có. */
   ensureWithKey(
     providerId: string,
     secret: string
   ): Promise<{ ok: true; connection: ConnectionView } | { ok: false; message: string }>
   /**
-   * A pasted key that comes out usable, like Hermes' Activate: the key is saved and checked, a key the
-   * provider rejects is taken back out, and a connection with no model entry gets the first listed model.
-   * A check that fails for another reason (network, a timeout) keeps the key and says so in `warning`.
+   * Lưu khóa API và kiểm tra tính khả dụng: lưu và kiểm tra khóa, nếu provider từ chối thì gỡ khóa ra,
+   * và nếu kết nối chưa có mục model nào thì tự động thêm model đầu tiên trong danh sách.
+   * Nếu kiểm tra thất bại vì lý do khác (lỗi mạng, timeout), khóa vẫn được giữ lại và thông báo trong `warning`.
    */
   connectKey(providerId: string, secret: string): Promise<ConnectKeyOutcome>
   probe(
@@ -144,7 +144,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => {
     add: (connectionId, items) => attempt(() => window.mira.ai.models.add(connectionId, items)),
     update: (entryId, patch) => attempt(() => window.mira.ai.models.update(entryId, patch)),
     duplicate: (entryId) => attempt(() => window.mira.ai.models.duplicate(entryId)),
-    // Main drops a deleted entry from the main model and the fallbacks; read them again.
+    // Khi xóa mục model, main model và fallbacks tương ứng cũng bị loại bỏ; tải lại tùy chọn sau khi xóa.
     remove: async (entryId) => {
       const outcome = await attempt(() => window.mira.ai.models.delete(entryId))
       if (outcome.ok) void get().loadPreferences()

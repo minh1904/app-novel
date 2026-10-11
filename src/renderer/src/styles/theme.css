@@ -1,18 +1,18 @@
 /*
- * Mira design system: the one place tokens become Tailwind utilities.
- * Organised as in the IZONE LMS system (docs/modules/design-system/README.md):
- *   strict.css             switches off Tailwind's own colours, radii, type sizes and shadows
- *   tokens/foundation.css  tier 1, raw values: --mira-neutral-500, --mira-radius-md, --mira-space-md…
- *   tokens/semantic.css    tier 2, per theme: --mira-bg-surface, --mira-text-subtle, --mira-error-subtle…
- *   tokens/component.css   tier 3, read only inside a component: --mira-button-neutral-solid-bg…
+ * Hệ thống design token: chuyển đổi các token thành tiện ích Tailwind.
+ * Cấu trúc phân tầng gồm:
+ *   strict.css             vô hiệu hóa giá trị mặc định của Tailwind
+ *   tokens/foundation.css  tầng 1: giá trị thô (--mira-neutral-500, --mira-radius-md, --mira-space-md…)
+ *   tokens/semantic.css    tầng 2: ngữ nghĩa theo theme (--mira-bg-surface, --mira-text-subtle, --mira-error-subtle…)
+ *   tokens/component.css   tầng 3: dành riêng cho component (--mira-button-neutral-solid-bg…)
  *
- * One namespace per property, so a name says where it can go:
+ * Mỗi thuộc tính có namespace riêng xác định phạm vi áp dụng:
  *   bg-default · bg-surface · bg-subtle · bg-muted · bg-hover · bg-selected · bg-inverted · bg-backdrop
  *   text-default · text-emphasis · text-subtle · text-muted · text-faint · text-link · text-inverted
  *   border-default · border-subtle · border-strong · border-input
- *   state colours on every property: text-error, bg-success-subtle, border-warning-muted, bg-info/10
- *   type: text-body-xs…lg, text-label-xs…md, text-title, text-heading (size + line height + weight)
- *   rounded-xs…xl · shadow-xs…lg · p-md / gap-xs (named spacing) · z-(--mira-z-modal)
+ *   màu trạng thái trên mọi thuộc tính: text-error, bg-success-subtle, border-warning-muted, bg-info/10
+ *   kiểu chữ: text-body-xs…lg, text-label-xs…md, text-title, text-heading (cỡ chữ + độ cao dòng + độ đậm)
+ *   rounded-xs…xl · shadow-xs…lg · p-md / gap-xs (khoảng cách định danh) · z-(--mira-z-modal)
  */
 
 @import './strict.css';
@@ -27,13 +27,13 @@
   --font-mono: var(--mira-font-code);
   --font-editor: var(--mira-font-editor);
 
-  /* ── Colours shared by every property (text-, bg-, border-, fill-, ring-) ── */
+  /* ── Màu sắc dùng chung cho các thuộc tính (text-, bg-, border-, fill-, ring-) ── */
   --color-white: var(--mira-neutral-0);
   --color-black: var(--mira-neutral-1000);
   --color-transparent: transparent;
   --color-current: currentColor;
   --color-focus: var(--mira-ring);
-  /* A neutral for dots and icons that state "nothing yet" (not started, untranslated). */
+  /* Màu trung tính cho dấu chấm và biểu tượng trạng thái chưa bắt đầu hoặc chưa dịch. */
   --color-neutral: var(--mira-text-muted);
   --color-success-emphasis: var(--mira-success-emphasis);
   --color-success: var(--mira-success);
@@ -68,7 +68,7 @@
   --background-color-disabled: var(--mira-bg-disabled);
   --background-color-backdrop: var(--mira-bg-backdrop);
   --background-color-code: var(--mira-code-inline);
-  /* A 1px rule drawn as a box (a vertical separator in a bar). */
+  /* Đường kẻ 1px dạng khối (thanh phân cách dọc). */
   --background-color-line: var(--mira-border);
   --background-color-line-strong: var(--mira-border-strong);
 
@@ -98,7 +98,7 @@
   --outline-color-focus: var(--mira-ring);
   --outline-color-error: var(--mira-ring-error);
 
-  /* ── radius ── */
+  /* ── Bo góc ── */
   --radius-none: var(--mira-radius-none);
   --radius-xs: var(--mira-radius-xs);
   --radius-sm: var(--mira-radius-sm);
@@ -107,14 +107,14 @@
   --radius-xl: var(--mira-radius-xl);
   --radius-full: var(--mira-radius-full);
 
-  /* ── shadow ── */
+  /* ── Đổ bóng ── */
   --shadow-xs: var(--mira-shadow-xs);
   --shadow-sm: var(--mira-shadow-sm);
   --shadow-md: var(--mira-shadow-md);
   --shadow-lg: var(--mira-shadow-lg);
 
-  /* ── named spacing (p-md, gap-xl…); Tailwind's numeric scale p-4 = 16px still works.
-     These names win over container widths: max-w-sm is 12px. Widths use max-w-(--container-md). ── */
+  /* ── Khoảng cách định danh (p-md, gap-xl…); thang số p-4 = 16px của Tailwind vẫn hoạt động.
+     Các tên khoảng cách này ưu tiên hơn chiều rộng vùng chứa: max-w-sm là 12px. Chiều rộng dùng max-w-(--container-md). ── */
   --spacing-none: var(--mira-space-none);
   --spacing-3xs: var(--mira-space-3xs);
   --spacing-2xs: var(--mira-space-2xs);
@@ -127,7 +127,7 @@
   --spacing-3xl: var(--mira-space-3xl);
   --spacing-4xl: var(--mira-space-4xl);
 
-  /* ── type styles (Obsidian sizes): each sets size and line height; labels and headings set weight ── */
+  /* ── Kiểu chữ: thiết lập kích thước và độ cao dòng; nhãn và tiêu đề thiết lập thêm độ đậm ── */
   --text-body-xs: var(--mira-font-ui-smaller);
   --text-body-xs--line-height: var(--mira-line-height-normal);
   --text-body-sm: var(--mira-font-ui-small);
@@ -151,7 +151,7 @@
   --text-title: var(--mira-font-ui-large);
   --text-title--line-height: var(--mira-line-height-tight);
   --text-title--font-weight: var(--mira-weight-semibold);
-  /* Inter sets loose at 20px; a title closes up a little. */
+  /* Thu hẹp khoảng cách chữ một chút cho tiêu đề lớn. */
   --text-title--letter-spacing: -0.015em;
   --text-editor: var(--mira-font-text);
   --text-editor--line-height: var(--mira-line-height-text);
@@ -161,7 +161,7 @@
   --leading-text: var(--mira-line-height-text);
   --tracking-heading: -0.015em;
 
-  /* ── motion ── */
+  /* ── Chuyển động ── */
   --ease-enter: var(--mira-ease-enter);
   --ease-exit: var(--mira-ease-exit);
   --ease-standard: var(--mira-ease-standard);

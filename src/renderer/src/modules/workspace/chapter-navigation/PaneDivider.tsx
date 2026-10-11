@@ -4,23 +4,21 @@ import { MAX_SOURCE_RATIO, MIN_SOURCE_RATIO } from '../store/paneLayoutStore'
 const STEP = 0.05
 
 /**
- * The line between the source and the translation, dragged to give one of them more room. Drawn as
- * the one-pixel rule the panes used to share; the grab area is wider than the line. Arrow keys move
- * it in steps, a double click puts it back in the middle.
+ * Thanh phân chia giữa bản gốc và bản dịch, có thể kéo thả để điều chỉnh tỷ lệ chiều rộng.
  */
 export function PaneDivider({
   ratio,
   container,
   onRatioChange
 }: {
-  /** Share of the container's width left of the line. */
+  /** Tỷ lệ chiều rộng của khung bản gốc bên trái so với khung chứa. */
   ratio: number
-  /** The element holding both panes, which the ratio is a share of. */
+  /** Phần tử chứa cả hai khung bản gốc và bản dịch. */
   container: RefObject<HTMLElement | null>
   onRatioChange(ratio: number): void
 }): JSX.Element {
   return (
-    // biome-ignore lint/a11y/useSemanticElements: An <hr> cannot take focus or be dragged; a focusable separator is the ARIA pattern for a splitter.
+    // biome-ignore lint/a11y/useSemanticElements: Thẻ hr không nhận focus hoặc kéo thả; bộ phân tách hỗ trợ focus là chuẩn ARIA cho splitter.
     <div
       role="separator"
       aria-orientation="vertical"
@@ -46,9 +44,7 @@ export function PaneDivider({
         const target = event.currentTarget
         target.setPointerCapture(pointerId)
 
-        // The captured pointer reports to the divider itself. The drag ends on release, and also when the
-        // capture is lost (Alt+Tab, a cancelled touch) or a move arrives with no button held, so a missed
-        // pointerup cannot leave the panes following a mouse that is no longer dragging.
+        // Bắt sự kiện con trỏ để di chuyển thanh chia; dừng kéo khi thả chuột hoặc mất focus
         const end = (): void => {
           if (target.hasPointerCapture(pointerId)) target.releasePointerCapture(pointerId)
           target.removeEventListener('pointermove', onMove)

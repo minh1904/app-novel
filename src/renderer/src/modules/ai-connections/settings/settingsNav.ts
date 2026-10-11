@@ -1,6 +1,5 @@
 /**
- * The groups and pages of the Settings modal (change `hermes-settings-modal`). Only what Mira has content
- * for is listed: an entry with nothing behind it would promise something that does not exist.
+ * Danh sách các nhóm và trang trong modal Cài đặt.
  */
 export const SETTINGS_GROUPS = [
   {
@@ -31,18 +30,18 @@ export type SettingsGroupId = (typeof SETTINGS_GROUPS)[number]['id']
 export interface SettingsLocation {
   group: SettingsGroupId
   page: string
-  /** A row or card to scroll to and highlight, e.g. `provider:google`. */
+  /** Khóa định danh hàng hoặc thẻ cần cuộn tới và làm nổi bật, ví dụ: `provider:google`. */
   key?: string
 }
 
-/** Where the modal opens when nothing more specific is asked for. */
+/** Vị trí trang mặc định khi mở modal cài đặt. */
 export const DEFAULT_SETTINGS_LOCATION: SettingsLocation = { group: 'model', page: 'main' }
 
 export function groupOf(id: SettingsGroupId): (typeof SETTINGS_GROUPS)[number] {
   return SETTINGS_GROUPS.find((group) => group.id === id) ?? SETTINGS_GROUPS[0]
 }
 
-/** A location with a page that exists in its group; an unknown page falls back to the group's first. */
+/** Chuẩn hóa vị trí trang thuộc nhóm hợp lệ; nếu trang không tồn tại thì dùng trang đầu tiên của nhóm. */
 export function normalizeLocation(location: SettingsLocation): SettingsLocation {
   const group = groupOf(location.group)
   const page = group.pages.some((item) => item.id === location.page)
@@ -51,7 +50,7 @@ export function normalizeLocation(location: SettingsLocation): SettingsLocation 
   return { group: group.id, page, ...(location.key ? { key: location.key } : {}) }
 }
 
-/** "Cài đặt › Kết nối AI › Khóa API"; a group with one page stops at the group. */
+/** Tạo danh sách breadcrumb điều hướng (ví dụ: 'Cài đặt › Kết nối AI › Khóa API'). */
 export function breadcrumbOf(location: SettingsLocation): string[] {
   const group = groupOf(location.group)
   const page = group.pages.find((item) => item.id === location.page)

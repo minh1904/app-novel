@@ -12,7 +12,7 @@ import { TabsList, TabsPanel, TabsRoot, TabsTab } from '../../../components/ui/T
 import { SOON_LABEL } from '../../../lib/mockFeatures'
 import type { WorkArea, WorkAreaProps } from './workArea'
 
-/** Keeps one area's failure inside that area; the header and the other areas stay usable. */
+/** Giới hạn phạm vi lỗi trong từng khu vực; phần đầu trang và các khu vực khác vẫn dùng được. */
 class AreaBoundary extends Component<{ label: string; children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
 
@@ -47,8 +47,8 @@ export interface WorkAreaHostProps {
 }
 
 /**
- * The content region of the work detail screen. With one area it shows that area directly: there
- * is no tab bar for a single choice. From two areas it shows the tab bar, in registration order.
+ * Vùng hiển thị nội dung các khu vực của màn hình chi tiết tác phẩm.
+ * Hiển thị thanh tab lựa chọn khi có từ hai khu vực trở lên.
  */
 export function WorkAreaHost({
   areas,
@@ -61,7 +61,7 @@ export function WorkAreaHost({
   const previous = useRef(active?.id)
   const [visited, setVisited] = useState(() => new Set(active ? [active.id] : []))
 
-  // After the user switches area, move focus into it so keyboard and screen-reader users land there.
+  // Sau khi người dùng chuyển khu vực, chuyển tiêu điểm vào khu vực mới
   useEffect(() => {
     if (previous.current !== active?.id) panel.current?.focus()
     previous.current = active?.id

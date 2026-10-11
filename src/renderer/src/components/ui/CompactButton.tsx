@@ -4,20 +4,20 @@ import { cn } from '../../lib/cn'
 import { compactButtonVariants } from './variants'
 
 export interface CompactButtonProps extends Omit<BaseButton.Props, 'className' | 'children'> {
-  /** ghost (default) | light | dark | outline. */
+  /** Kiểu hiển thị: ghost (mặc định) | light | dark | outline. */
   variant?: 'ghost' | 'light' | 'dark' | 'outline'
-  /** lg 28px · md 24px (default) · sm 20px; icons 18 / 16 / 12 (COMPACT_ICON). */
+  /** Kích thước: lg 28px · md 24px (mặc định) · sm 20px (kích thước biểu tượng tương ứng 18 / 16 / 12px). */
   size?: 'lg' | 'md' | 'sm'
   round?: boolean
-  /** neutral (default) | success (accept) | danger (delete): the hover says what the action does. */
+  /** Sắc thái hành động: neutral (mặc định) | success (chấp nhận) | danger (xóa): hiệu ứng hover thể hiện ý nghĩa hành động. */
   tone?: 'neutral' | 'success' | 'danger'
   className?: string
   icon: ReactNode
-  /** Required: the button has no visible label. */
+  /** Bắt buộc: nút không có nhãn chữ hiển thị nên cần aria-label cho công nghệ hỗ trợ. */
   'aria-label': string
 }
 
-/** An icon-only button for bars, rows and tags (IZONE LMS compact button). */
+/** Nút thu gọn chỉ chứa biểu tượng, dùng cho các thanh công cụ, hàng danh sách hoặc thẻ nhãn. */
 export function CompactButton({
   variant,
   size,

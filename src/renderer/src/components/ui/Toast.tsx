@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
-import { CloseIcon } from '@solar-icons/react/linear/close'
+import { CloseIcon } from '@renderer/components/ui/reicon'
+
 import { cn } from '../../lib/cn'
 import { useNotificationStore, type Toast } from './notificationStore'
 import { CompactButton } from './CompactButton'
@@ -49,7 +50,7 @@ function ToastCard({ toast }: { toast: Toast }): JSX.Element {
   )
 }
 
-/** Mounted once; quiet toasts stack bottom-right, ones that need reading stack at the top centre. */
+/** Gắn một lần duy nhất: thông báo nhẹ nhàng xếp ở góc dưới bên phải, thông báo cần chú ý xếp ở giữa phía trên. */
 export function Toaster(): JSX.Element {
   return <ToastStacks toasts={useNotificationStore((state) => state.toasts)} />
 }

@@ -1,7 +1,6 @@
 /*
- * Mira tokens only: switch off Tailwind's default colours, radii, type sizes and shadows, so `bg-red-500`,
- * `rounded-2xl` or `text-sm` do nothing. Imported before tokens/*: `initial` clears every variable of the
- * namespace declared before it.
+ * Chỉ sử dụng token hệ thống: vô hiệu hóa màu sắc, bo góc, cỡ chữ và đổ bóng mặc định của Tailwind.
+ * Khai báo trước các file token để xóa các biến mặc định thuộc từng nhóm tương ứng.
  */
 @theme {
   --color-*: initial;

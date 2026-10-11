@@ -2,16 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { diffLines, diffSummary } from './lineDiff'
 
 /**
- * The diff shown before a proposal may be applied.
- *
- * The property that matters is that nothing goes missing: every line of the old text appears as `same`
- * or `removed`, and every line of the new text as `same` or `added`. A diff that quietly drops a line
- * would show the translator a smaller change than the one they are about to accept.
+ * Kiểm tra tính đúng đắn của diff dòng: đảm bảo không bỏ sót bất kỳ dòng nào
+ * từ văn bản gốc cũng như văn bản mới.
  */
 
 const linesOf = (text: string): string[] => (text === '' ? [] : text.split('\n'))
 
-/** Reconstruct both sides from the diff; neither may lose a line. */
+/** Tái tạo lại cả hai phía từ diff để đảm bảo không mất dòng nào. */
 function roundTrip(before: string, after: string): void {
   const diff = diffLines(before, after)
   expect(diff.filter((line) => line.kind !== 'added').map((line) => line.text)).toEqual(

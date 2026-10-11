@@ -13,7 +13,7 @@ const DOTS = {
 
 export type BadgeColor = keyof typeof DOTS
 
-/** A short label for a state or a category; see badgeVariants for what each colour means. */
+/** Nhãn ngắn thể hiện trạng thái hoặc phân loại danh mục. */
 export function Badge({
   color = 'neutral',
   variant,
@@ -23,9 +23,9 @@ export function Badge({
   ...props
 }: Omit<HTMLAttributes<HTMLSpanElement>, 'color'> & {
   color?: BadgeColor
-  /** light (tinted fill, default) | outline | plain. */
+  /** Kiểu hiển thị: light (nền nhạt, mặc định) | outline (viền ngoài) | plain (văn bản thuần). */
   variant?: 'light' | 'outline' | 'plain'
-  /** A dot before the text, for a status. */
+  /** Dấu chấm tròn trước văn bản thể hiện trạng thái. */
   dot?: boolean
   className?: string
   children: ReactNode

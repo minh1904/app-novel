@@ -3,7 +3,7 @@ import { ContextMenu as BaseContextMenu } from '@base-ui/react/context-menu'
 import { cn } from '../../lib/cn'
 import { menuItemClass, menuSurfaceClass } from './DropdownMenu'
 
-// Items inherit data-highlighted focus styling from menuItemClass
+// Các mục kế thừa kiểu dáng focus khi được làm nổi bật (data-highlighted) từ menuItemClass.
 const positionerClass = 'z-(--mira-z-dropdown)'
 
 export function ContextMenuRoot(props: BaseContextMenu.Root.Props): JSX.Element {

@@ -10,13 +10,8 @@ const STATE_LABEL: Record<SessionStatus['state'], string> = {
 }
 
 /**
- * One side of the full-text editor: what it is, whether its text is safe, and the controls that
- * belong to it. The text itself is the child; the pane never looks inside it.
- *
- * Square and flush against the panes next to it — the grid's own `divide-x` draws the one-pixel
- * line between them, so the pane has no border or radius of its own, and the text inside draws no
- * border of its own either. The name, the figures and the save state share one line to leave the
- * height to the text.
+ * Khung chứa của một bên soạn thảo (bản gốc hoặc bản dịch), bao gồm thanh tiêu đề,
+ * trạng thái lưu, các nút thao tác và vùng nội dung soạn thảo bên dưới.
  */
 export function EditorPane({
   title,
@@ -31,16 +26,15 @@ export function EditorPane({
   title: string
   subtitle: string
   status: SessionStatus
-  /** Said before the save state while the text is locked, so a screen reader hears both. */
+  /** Nhãn mô tả trạng thái khóa bản gốc cho trình đọc màn hình. */
   lockLabel?: string
-  /** Shown next to the title for the same state as `lockLabel`; hidden from screen readers. */
+  /** Biểu tượng khóa hiển thị cạnh tiêu đề. */
   lockIcon?: ReactNode
   actions?: ReactNode
   notice?: ReactNode
   children: ReactNode
 }): JSX.Element {
-  // "Đã lưu" is said once, in the chapter's status bar. A pane speaks up only when its own side is
-  // not saved, so the reader can tell which of the two still needs it.
+  // Khung chỉ hiển thị trạng thái khi có nội dung chưa lưu ở chính bên đó.
   const saved = status.state === 'saved'
   return (
     <section
@@ -56,7 +50,7 @@ export function EditorPane({
             role="status"
             className="flex shrink-0 items-center gap-1 text-body-xs whitespace-nowrap text-subtle"
           >
-            {/* The lock is an icon on screen; a screen reader hears it with the save state. */}
+            {/* Biểu tượng trạng thái khóa được ẩn đối với trình đọc màn hình. */}
             {lockLabel && <span className="sr-only">{lockLabel}</span>}
             {!saved && (
               <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />

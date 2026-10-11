@@ -1,8 +1,9 @@
 import type { JSX } from 'react'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import { RefreshIcon } from '@renderer/components/ui/reicon'
+
 import { cn } from '../../lib/cn'
 
-/** Work in progress, for a button or a small area. A screen that loads shows a skeleton instead. */
+/** Biểu tượng xoay báo tiến trình đang chạy, dùng cho nút bấm hoặc khu vực nhỏ. Màn hình đang tải dùng khung xương (skeleton). */
 export function Spinner({
   size = 16,
   className,
@@ -10,7 +11,7 @@ export function Spinner({
 }: {
   size?: number
   className?: string
-  /** Announced to assistive technology; omit when the spinner sits inside a labelled button. */
+  /** Nhãn thông báo cho công nghệ hỗ trợ; có thể bỏ qua khi spinner nằm trong nút đã có nhãn. */
   label?: string
 }): JSX.Element {
   return (

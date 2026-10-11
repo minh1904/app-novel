@@ -19,30 +19,30 @@ const languageOptions = (Object.keys(languages) as SourceLanguage[]).map((value)
 }))
 
 export interface WorkFormProps {
-  /** In edit mode the source language is shown but cannot change. */
+  /** Ở chế độ chỉnh sửa, ngôn ngữ nguồn chỉ hiển thị chứ không thể thay đổi. */
   mode: 'create' | 'edit'
   initial?: WorkFormValues
   submitLabel: string
   busyLabel: string
   /**
-   * Splits the form in two: the name and the language first, everything optional after. The first
-   * step can submit on its own, so a work is two keystrokes away. Create screen only.
+   * Chia biểu mẫu thành hai bước: bước đầu nhập tên và ngôn ngữ, bước sau nhập thông tin tùy chọn.
+   * Bước một có thể gửi trực tiếp để tạo nhanh. Chỉ áp dụng cho màn hình tạo mới.
    */
   stepped?: boolean
-  /** Resolves to the outcome; field errors in it are shown next to their fields. */
+  /** Trả về kết quả; lỗi từng trường sẽ hiển thị bên cạnh trường tương ứng. */
   onSubmit(values: WorkFormValues): Promise<Result<unknown>>
   onSuccess(): void
   onCancel(): void
-  /** Extra content above the buttons, such as a note about what saving does. */
+  /** Nội dung bổ sung phía trên các nút bấm, ví dụ ghi chú về hành động lưu. */
   footerNote?: ReactNode
 }
 
-/** Which step owns a field, so a failed save lands on the step that can fix it. */
+/** Xác định bước quản lý từng trường để khi lưu thất bại sẽ chuyển về đúng bước cần sửa. */
 const STEP_ONE_FIELDS = new Set(['title', 'sourceLang'])
 
 /**
- * The fields of a work, shared by the create screen and the edit dialog. The cover sits beside the
- * fields, which all share one column, so nothing is wider or taller than its neighbour by accident.
+ * Các trường thông tin của tác phẩm, dùng chung giữa màn hình tạo mới và hộp thoại chỉnh sửa.
+ * Ảnh bìa đặt cạnh các trường thông tin xếp theo cột đồng nhất.
  */
 export function WorkForm({
   mode,
@@ -63,7 +63,7 @@ export function WorkForm({
 
   const set = <K extends keyof WorkFormValues>(key: K, value: WorkFormValues[K]): void => {
     setValues((current) => ({ ...current, [key]: value }))
-    // Editing a field answers its error; the next save checks it again.
+    // Chỉnh sửa trường nào sẽ xóa lỗi của trường đó; lần lưu tiếp theo sẽ kiểm tra lại.
     setFieldErrors((current) => {
       if (!(key in current)) return current
       const rest = { ...current }
@@ -75,7 +75,7 @@ export function WorkForm({
   async function submit(): Promise<void> {
     if (submitting) return
 
-    // Mirror the main process rule so an empty name is caught before any round trip.
+    // Kiểm tra tên rỗng phía client trước khi gửi để tránh lãng phí yêu cầu IPC.
     if (values.title.trim() === '') {
       setFieldErrors({ title: 'Nhập tên tác phẩm.' })
       return
@@ -91,18 +91,18 @@ export function WorkForm({
       onSuccess()
       return
     }
-    // The form keeps everything the user typed, so a failed save can simply be retried.
+    // Biểu mẫu giữ nguyên nội dung đã nhập để người dùng có thể thử lại khi lưu thất bại.
     const errors: Record<string, string> = {}
     for (const detail of result.error.details ?? []) {
       errors[detail.path.replace(/^patch\./, '')] = detail.message
     }
     setFieldErrors(errors)
     if (Object.keys(errors).length === 0) setFormError(result.error.message)
-    // A name rejected by the main process is fixed on step one, so go back to it.
+    // Nếu tên tác phẩm bị từ chối, quay lại bước 1 để người dùng sửa.
     if (Object.keys(errors).some((key) => STEP_ONE_FIELDS.has(key))) setStep(1)
   }
 
-  /** Moving on is not saving, but an empty name is still worth catching before step two. */
+  /** Chuyển bước chưa phải là lưu, nhưng vẫn cần chặn tên rỗng trước khi sang bước hai. */
   function goToOptional(): void {
     if (values.title.trim() === '') {
       setFieldErrors({ title: 'Nhập tên tác phẩm.' })
@@ -203,7 +203,7 @@ export function WorkForm({
 
   if (stepped) {
     const onStepOne = step === 1
-    // On step one Enter means "next", not "create": submitting is the smaller, explicit action.
+    // Ở bước 1, phím Enter mang nghĩa "tiếp tục", không phải "tạo": hành động tạo ngay là nút phụ rõ ràng.
     const onSteppedSubmit = (event: { preventDefault(): void }): void => {
       event.preventDefault()
       if (onStepOne) goToOptional()

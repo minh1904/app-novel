@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { AccountUsageChip } from '../settings/AccountsPage'
 import { Popover } from '@base-ui/react/popover'
-import { AddCircleIcon } from '@solar-icons/react/linear/add-circle'
-import { AltArrowRightIcon } from '@solar-icons/react/linear/alt-arrow-right'
-import { CheckIcon } from '@solar-icons/react/linear/check'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
-import { RestartIcon } from '@solar-icons/react/linear/restart'
-import { SettingsIcon } from '@solar-icons/react/linear/settings'
-import { StarIcon } from '@solar-icons/react/linear/star'
-import { StarIcon as StarFilledIcon } from '@solar-icons/react/bold/star'
+import {
+  AddCircleIcon,
+  AltArrowRightIcon,
+  CheckIcon,
+  MinimalisticMagnifierIcon,
+  RefreshIcon,
+  RestartIcon,
+  SettingsIcon,
+  StarIcon,
+  StarFilledIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
 import { THINKING_LEVELS, type ModelEntryView } from '../../../../../shared/contracts/modelSettings'
 import { cn } from '../../../lib/cn'
@@ -37,13 +40,11 @@ import {
 } from './modelSettingsForm'
 
 /**
- * Một menu để chọn **mục model và mức suy luận của nó**, theo menu model của Hermes Desktop (change
- * `hermes-settings-modal`, spec `model-picker`): ô tìm, nhóm Yêu thích, nhóm theo kết nối, nhãn mức đang
- * đặt, submenu "Tùy chọn / Mức", và các lối tắt ở cuối. Dùng ở ô soạn chat và hộp thoại dịch, nên hai nơi
- * không thể lệch nhau về cái được đưa ra.
+ * Menu để chọn **mục model và mức suy luận**: bao gồm ô tìm kiếm, nhóm Yêu thích,
+ * nhóm theo kết nối, nhãn mức suy luận đang đặt, menu con cấu hình mức suy luận, và các lối tắt cài đặt ở cuối.
+ * Dùng chung ở ô soạn chat và hộp thoại dịch để đảm bảo tính nhất quán.
  *
- * Ô tìm giữ focus suốt lúc menu mở và tự điều khiển dòng đang chọn (kiểu combobox), nên gõ chữ luôn vào ô
- * tìm thay vì bị bộ nhảy-theo-chữ của menu giành lấy.
+ * Ô tìm kiếm giữ focus khi menu mở và điều khiển dòng đang chọn (kiểu combobox).
  */
 
 export interface ModelSelection {
@@ -66,17 +67,17 @@ export interface ModelSelectionMenuProps {
   variant?: 'compact' | 'field'
   /** Nhãn đọc được cho trình đọc màn hình, ví dụ "Model để dịch". */
   label: string
-  /** The selection differs from the main model of Settings: the pill gets an accent dot. */
+  /** Model chọn riêng khác với model chính trong Cài đặt: hiển thị dấu chấm nổi bật trên pill. */
   overridesMain?: boolean
-  /** "Dùng mặc định trong Cài đặt": drop this chat's own pick. Shown only with `overridesMain`. */
+  /** "Dùng mặc định trong Cài đặt": bỏ model chọn riêng của phiên chat. Chỉ hiển thị khi `overridesMain` là true. */
   onUseDefault?(): void
   /** "Tải lại model". */
   onRefresh?(): void
-  /** "Thêm model tùy chỉnh…": add an entry with this model id to the connection in use. */
+  /** "Thêm model tùy chỉnh…": thêm mục với model id này vào kết nối đang dùng. */
   onAddCustom?(connectionId: string, modelId: string): Promise<ModelSelection | null>
-  /** "Sửa danh sách model…" / "Thêm nhà cung cấp": open Settings at that connection, or at the start. */
+  /** "Sửa danh sách model…" / "Thêm nhà cung cấp": mở Cài đặt tại kết nối đó hoặc trang ban đầu. */
   onOpenSettings?(connectionId: string | null): void
-  /** Controlled open state, for the Ctrl+Shift+M shortcut. */
+  /** Trạng thái mở menu điều khiển từ bên ngoài (dành cho phím tắt Ctrl+Shift+M). */
   open?: boolean
   onOpenChange?(open: boolean): void
 }
@@ -84,7 +85,7 @@ export interface ModelSelectionMenuProps {
 const FAVORITES_KEY = 'mira.model-favorites'
 const COLLAPSED_KEY = 'mira.model-groups-collapsed'
 
-/** A per-device convenience set; storage that is unavailable just means an empty set. */
+/** Tập hợp model yêu thích lưu theo thiết bị; trả về tập rỗng nếu bộ nhớ chưa sẵn sàng. */
 function usePersistentSet(key: string): [Set<string>, (item: string) => void] {
   const [items, setItems] = useState<Set<string>>(() => {
     try {
@@ -103,17 +104,17 @@ function usePersistentSet(key: string): [Set<string>, (item: string) => void] {
       try {
         localStorage.setItem(key, JSON.stringify([...next]))
       } catch {
-        // Not remembered; it still holds until the app closes.
+        // Trạng thái thu gọn nhóm chỉ lưu tạm trong phiên làm việc, không lưu cố định xuống đĩa.
       }
       return next
     })
   return [items, toggle]
 }
 
-/** A footer action of the menu: a ghost button laid out as a full-width row. */
+/** Nút hành động ở chân menu: nút dạng phẳng trải dài toàn bộ chiều rộng hàng. */
 const FOOTER_ACTION = 'w-full justify-start'
 
-/** "Tùy chọn: Suy luận" and "Mức", for one entry. */
+/** Cấu hình suy luận cho một mục model: bật/tắt và chọn mức độ suy luận. */
 export function ThinkingPanel({
   entry,
   onChoose
@@ -216,7 +217,7 @@ export function ModelSelectionMenu({
     (connection) => connection.enabled && connection.models.length > 0
   )
 
-  // Closing (by the person or by the shortcut) starts the next opening clean; adjusted while rendering.
+  // Khi đóng menu, xóa trắng nội dung tìm kiếm để lần mở tiếp theo hiển thị trạng thái ban đầu.
   const [wasOpen, setWasOpen] = useState(open)
   if (open !== wasOpen) {
     setWasOpen(open)
@@ -228,7 +229,7 @@ export function ModelSelectionMenu({
     }
   }
 
-  // The row under the keyboard: the one the person moved to, else the chosen model, else the first model.
+  // Hàng được chọn qua bàn phím: hàng vừa di chuyển tới, hoặc mục đang chọn, hoặc mục đầu tiên.
   const chosenIndex = rows.findIndex(
     (row) =>
       row.type === 'model' &&
@@ -355,8 +356,8 @@ export function ModelSelectionMenu({
                   if (row.type === 'header') {
                     const connectionId = row.connectionId
                     return (
-                      // Pressing a header must not take focus from the search field.
-                      // biome-ignore lint/a11y/noStaticElementInteractions: only keeps focus in place.
+                      // Nhấn vào tiêu đề nhóm không làm mất focus của ô tìm kiếm.
+                      // biome-ignore lint/a11y/noStaticElementInteractions: chỉ giữ focus tại ô tìm kiếm.
                       <div
                         key={row.id}
                         className="px-2 pt-1.5 pb-0.5"
@@ -396,9 +397,9 @@ export function ModelSelectionMenu({
                       open={flyout === row.id}
                       onOpenChange={(next) => setFlyout(next ? row.id : null)}
                     >
-                      {/* The option spans the row; the star and the levels trigger sit over its ends,
-                          so no button nests in another. Pressing any of them keeps focus in the search. */}
-                      {/* biome-ignore lint/a11y/noStaticElementInteractions: hover moves the cursor only. */}
+                      {/* Tùy chọn trải dài toàn bộ hàng; ngôi sao yêu thích và nút chọn mức suy luận nằm đè lên hai đầu.
+                          Nhấn vào các phần tử này vẫn giữ nguyên focus tại ô tìm kiếm. */}
+                      {/* biome-ignore lint/a11y/noStaticElementInteractions: di chuột chỉ cập nhật con trỏ hàng. */}
                       <div
                         className="relative"
                         ref={(element) => {
@@ -436,7 +437,11 @@ export function ModelSelectionMenu({
                           className="absolute top-1 left-1"
                           icon={
                             row.favorite ? (
-                              <StarFilledIcon size={ICON.sm} className="text-warning" />
+                              <StarFilledIcon
+                                size={ICON.sm}
+                                weight="Filled"
+                                className="text-warning"
+                              />
                             ) : (
                               <StarIcon size={ICON.sm} />
                             )
@@ -461,7 +466,7 @@ export function ModelSelectionMenu({
                       <Popover.Portal>
                         <Popover.Positioner
                           className="z-(--mira-z-dropdown)"
-                          // The chat pill sits at the right edge of the window: open the levels to the left there.
+                          // Nút pill trên khung chat nằm sát mép phải cửa sổ: mở menu mức suy luận sang bên trái.
                           side={variant === 'compact' ? 'left' : 'right'}
                           align="start"
                           sideOffset={8}

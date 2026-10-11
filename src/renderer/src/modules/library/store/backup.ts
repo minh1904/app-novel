@@ -6,8 +6,8 @@ export type BackupOutcome =
   | { kind: 'failed'; message: string }
 
 /**
- * Backs a work up through the system "save as" dialog. Cancelling is not an error: the user simply
- * changed their mind, so it comes back as its own outcome and nothing is reported.
+ * Sao lưu tác phẩm thông qua hộp thoại lưu tệp của hệ thống. Người dùng hủy không tính là lỗi,
+ * kết quả sẽ trả về trạng thái cancelled và không thông báo lỗi.
  */
 export async function backupWork(workId: string): Promise<BackupOutcome> {
   const result = await window.mira.backup.export(workId)

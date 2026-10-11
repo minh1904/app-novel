@@ -1,21 +1,21 @@
 import { useRef, useState, type JSX } from 'react'
-import { GalleryAddIcon } from '@solar-icons/react/linear/gallery-add'
-import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
+import { GalleryAddIcon, TrashBinMinimalisticIcon } from '@renderer/components/ui/reicon'
+
 import { Button } from '../../../components/ui/Button'
 import { CompactButton } from '../../../components/ui/CompactButton'
 import { DropZone } from '../../../components/ui/DropZone'
 import { CoverImageError, fileToCoverDataUrl } from './coverImage'
 
 /**
- * Chooses a cover image. The file never leaves the renderer as a path: it is decoded, shrunk and
- * re-encoded here, and only the resulting JPEG is passed on.
+ * Chọn ảnh bìa. Tệp ảnh được giải mã, thu nhỏ và mã hóa lại thành JPEG ngay tại renderer
+ * trước khi gửi dữ liệu ảnh đi.
  */
 export function CoverPicker({
   value,
   onChange,
   disabled
 }: {
-  /** The current cover as a data URL. */
+  /** Ảnh bìa hiện tại dưới dạng data URL. */
   value: string | null
   onChange(cover: string | null): void
   disabled?: boolean
@@ -100,7 +100,7 @@ export function CoverPicker({
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0]
-          // Clear so choosing the same file again still fires a change event.
+          // Xóa giá trị input để khi chọn lại cùng một tệp vẫn kích hoạt sự kiện change.
           event.target.value = ''
           void accept(file)
         }}

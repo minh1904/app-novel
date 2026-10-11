@@ -5,8 +5,8 @@ import { cn } from '../../lib/cn'
 import { TopBarActions, TopBarTitle } from './TopBarActions'
 
 /**
- * An app page of the sidebar: its name and buttons in the top bar, then a centred column on the
- * window background. `soon` marks a page that is only a picture of the finished feature.
+ * Khung trang ứng dụng từ thanh bên: hiển thị tiêu đề và các nút trên thanh trên cùng, cùng
+ * cột nội dung căn giữa. Thuộc tính `soon` đánh dấu trang chỉ là giao diện minh họa sắp có.
  */
 export function PageFrame({
   title,
@@ -21,7 +21,7 @@ export function PageFrame({
   note?: ReactNode
   actions?: ReactNode
   soon?: boolean
-  /** Tables and two-column pages take 1240px instead of 1080px. */
+  /** Trang dạng bảng hoặc chia hai cột sử dụng độ rộng 1240px thay vì 1080px. */
   wide?: boolean
   className?: string
   children: ReactNode
@@ -54,7 +54,7 @@ export function PageFrame({
   )
 }
 
-/** A mock section on a real page: a card whose title carries the "Sắp có" mark. */
+/** Tiêu đề phần giao diện mẫu: tiêu đề kèm huy hiệu "Sắp có". */
 export function SoonTitle({ children }: { children: ReactNode }): JSX.Element {
   return (
     <span className="inline-flex items-center gap-xs">

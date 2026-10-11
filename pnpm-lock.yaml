@@ -30,18 +30,24 @@ dependencies:
   '@codemirror/view':
     specifier: ^6.43.13
     version: 6.43.13
-  '@solar-icons/react':
-    specifier: 2.3.0
-    version: 2.3.0(react-dom@19.3.0)(react@19.3.0)
   docx:
     specifier: ^9.8.1
     version: 9.8.1
+  parse5:
+    specifier: 8.0.1
+    version: 8.0.1
   react:
     specifier: 19.3.0
     version: 19.3.0
   react-dom:
     specifier: 19.3.0
     version: 19.3.0(react@19.3.0)
+  reicon-react:
+    specifier: 1.2.6
+    version: 1.2.6(react@19.3.0)
+  undici:
+    specifier: 7.29.1
+    version: 7.29.1
   valibot:
     specifier: 1.5.0
     version: 1.5.0(typescript@5.9.3)
@@ -1449,17 +1455,6 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /@solar-icons/react@2.3.0(react-dom@19.3.0)(react@19.3.0):
-    resolution: {integrity: sha512-ihrnDrdksuX76wsea9i0jlEtln0Vgkzj0TxhIJ2JRWhDSwvX+ItXT3KR30C6ldMmFrEMcbpRCfGxOIHNlOZr0g==}
-    engines: {node: '>=16'}
-    peerDependencies:
-      react: '>= 16.8'
-      react-dom: '>= 16.8'
-    dependencies:
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-    dev: false
-
   /@szmarczak/http-timer@4.0.6:
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
@@ -2523,6 +2518,11 @@ packages:
       graceful-fs: 4.2.11
       tapable: 2.3.3
     dev: true
+
+  /entities@8.1.0:
+    resolution: {integrity: sha512-kxL7msIffSuh9aaFAMD7rxAIuTRMAHMeBtgHW2yUdWw732ZNh4MehkF2gdjvtdmikkaIP9bFDDJOPlsvm7avrA==}
+    engines: {node: '>=20.19.0'}
+    dev: false
 
   /env-paths@2.2.1:
     resolution: {integrity: sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A==}
@@ -3610,6 +3610,12 @@ packages:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
     dev: false
 
+  /parse5@8.0.1:
+    resolution: {integrity: sha512-z1e/HMG90obSGeidlli3hj7cbocou0/wa5HacvI3ASx34PecNjNQeaHNo5WIZpWofN9kgkqV1q5YvXe3F0FoPw==}
+    dependencies:
+      entities: 8.1.0
+    dev: false
+
   /path-is-absolute@1.0.1:
     resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}
     engines: {node: '>=0.10.0'}
@@ -3775,6 +3781,14 @@ packages:
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
     dev: true
+
+  /reicon-react@1.2.6(react@19.3.0):
+    resolution: {integrity: sha512-Dh+XZzXLPzcX3ez9jYddK06nD18vJr9XkB8Cg+NGu1xsLBQcyKPyloEmfX2tQTsw22xACnDkel/o/XoqsFEm2w==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 19.3.0
+    dev: false
 
   /require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -4166,8 +4180,6 @@ packages:
   /undici@7.29.1:
     resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
     engines: {node: '>=20.18.1'}
-    dev: true
-    optional: true
 
   /unique-filename@2.0.1:
     resolution: {integrity: sha512-ODWHtkkdx3IAR+veKxFV+VBkUMcN+FaqzUUd7IZzt+0zhDZFPFxhlqwPF3YQvMHx1TD0tdgYl+kuPnJ8E6ql7A==}

@@ -38,22 +38,20 @@ export interface ParagraphTranslateController {
   refusals: SegmentRefusal[]
   usage: TranslateUsage | null
   keyNotice: string | null
-  /** The store's context changed after the plan was made; the run kept the context it started with. */
+  /** Thông báo khi ngữ cảnh thay đổi sau khi lập kế hoạch; lượt chạy vẫn dùng ngữ cảnh lúc bắt đầu. */
   contextNotice: string | null
-  /** The run has used most of its call budget (shown once), or ran out of it. */
+  /** Thông báo khi sắp dùng hết hoặc đã dùng hết hạn mức lời gọi API cho phép. */
   budgetNotice: string | null
   cancelled: boolean
   result: { proposed: number; applied: number; needsReview: number } | null
   start(): Promise<void>
   retryFailed(): Promise<void>
   /**
-   * The first fallback model of Settings, offered when the run stopped on a failure another model could get
-   * past (main's policy). Continuing translates only the missing paragraphs, in a run and a proposal of its
-   * own, so every proposal still has one model (change `hermes-settings-modal`, task 4.6).
+   * Model dự phòng trong Cài đặt được đề xuất khi lượt dịch bị dừng bởi lỗi có thể khắc phục bằng model khác.
    */
   continueTarget: TranslateTarget | null
   continueWithFallback(): void
-  /** "Đã chuyển sang Y vì X …" for a run that continued with a fallback. */
+  /** Thông báo thông tin chuyển đổi sang model dự phòng khi dịch tiếp. */
   fallbackNotice: string | null
   cancel(): void
 }
@@ -86,9 +84,9 @@ export function useParagraphTranslate(
   const [result, setResult] = useState<ParagraphTranslateController['result']>(null)
   const [replan, setReplan] = useState(0)
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null)
-  /** A continued run covers only the paragraphs left over, not the whole new plan. */
+  /** Giới hạn số lượng đoạn văn cần xử lý khi tiếp tục lượt dịch dở dang. */
   const [scopeTotal, setScopeTotal] = useState<number | null>(null)
-  /** Paragraphs a "Dịch tiếp bằng …" carries over to the next plan; consumed when that plan arrives. */
+  /** Danh sách ID các đoạn văn chưa dịch được chuyển tiếp sang kế hoạch dịch mới. */
   const pendingContinue = useRef<{ ids: string[]; key: string } | null>(null)
   const continueRun = useRef<((plan: ParagraphTranslationPlan, ids: string[]) => void) | null>(null)
   const stop = useRef(false)
@@ -270,8 +268,7 @@ export function useParagraphTranslate(
           lastTail = batch.keyTail
         }
         if (batch.error) setFailure(batch.error)
-        // Main decides which failures stop the run (`errorPolicy.ts`): a few segments blocked by the
-        // filter do not, so the chapter's other batches still get translated.
+        // Xử lý các loại lỗi có dừng lượt chạy hay không; các đoạn bị chặn bởi bộ lọc nội dung không làm dừng các lô khác.
         if (tally.halted) {
           haltedByError = true
           break
@@ -281,7 +278,7 @@ export function useParagraphTranslate(
         localFailed = [...new Set([...localFailed, ...sourceGroups.slice(nextIndex).flat()])]
       }
       setFailed(localFailed)
-      // A partial run remains durable in the proposal queue. Auto acceptance waits for a complete run.
+      // Lượt dịch chưa hoàn tất vẫn lưu kết quả trong hàng chờ; tự động áp dụng chỉ chạy khi toàn bộ hoàn tất.
       if (!stop.current && !haltedByError && localFailed.length === 0) {
         const finalized = await window.mira.ai.translate.paragraphFinalize({
           workId,
@@ -330,7 +327,7 @@ export function useParagraphTranslate(
     )
   }, [plan, current, runBatches])
 
-  // Continue only the paragraphs the stopped run left, grouped as the new model's plan groups them.
+  // Tiếp tục dịch các đoạn còn sót lại theo nhóm lô của kế hoạch mới.
   useEffect(() => {
     continueRun.current = (nextPlan, ids) => {
       const wanted = new Set(ids)

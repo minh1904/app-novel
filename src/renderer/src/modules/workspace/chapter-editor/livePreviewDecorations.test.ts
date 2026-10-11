@@ -5,10 +5,9 @@ import { planLivePreview, type PlanItem } from './livePreviewDecorations'
 import { markdownSupport } from './markdownSyntax'
 
 /**
- * `build()` needs a real `EditorView` (DOM), which the `node` test environment does not provide, so
- * these test `planLivePreview`, the pure part that decides what gets marked and — the part IME safety
- * rests on — which delimiters hide and which stay visible. Nothing here covers the actual rendering
- * in a real window; that has not been checked.
+ * `build()` cần một `EditorView` (DOM) thực tế mà môi trường test `node` không cung cấp, do đó
+ * phần này kiểm thử `planLivePreview` — phần logic thuần túy quyết định nội dung nào được gắn mark
+ * và ký tự phân cách nào ẩn hay hiển thị.
  */
 
 function plan(

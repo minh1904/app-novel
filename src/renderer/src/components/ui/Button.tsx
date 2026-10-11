@@ -5,25 +5,25 @@ import { Spinner } from './Spinner'
 import { BUTTON_ICON, buttonVariants, linkButtonVariants } from './variants'
 
 export interface ButtonProps extends Omit<BaseButton.Props, 'className' | 'color'> {
-  /** neutral (default) | danger, for deleting. */
+  /** Màu sắc: neutral (mặc định) | danger (dành cho thao tác xóa, nguy hiểm). */
   color?: 'neutral' | 'danger'
-  /** solid is the screen's primary action; outline (default) every other one. */
+  /** Kiểu nút: solid (hành động chính trên màn hình); outline (mặc định cho các hành động khác); light; ghost. */
   variant?: 'solid' | 'outline' | 'light' | 'ghost'
-  /** lg 40px (at most one per screen) · md 32px (default) · sm 24px (rows, toolbars). */
+  /** Kích thước: lg 40px (tối đa một nút chính trên màn hình) · md 32px (mặc định) · sm 24px (bảng, hàng, thanh công cụ). */
   size?: 'lg' | 'md' | 'sm'
   className?: string
-  /** An icon before the label. */
+  /** Biểu tượng hiển thị trước nhãn văn bản. */
   leftIcon?: ReactNode
-  /** An icon after the label. */
+  /** Biểu tượng hiển thị sau nhãn văn bản. */
   rightIcon?: ReactNode
-  /** An icon-only (square) button; it needs an aria-label. A 24px or smaller one is a CompactButton. */
+  /** Nút chỉ chứa biểu tượng (hình vuông), yêu cầu aria-label. Nếu kích thước từ 24px trở xuống nên dùng CompactButton. */
   icon?: ReactNode
-  /** Swaps the left icon for a spinner, locks the button and keeps its width. */
+  /** Thay biểu tượng bên trái bằng biểu tượng xoay tải (spinner), khóa nút và giữ nguyên chiều rộng. */
   loading?: boolean
   children?: ReactNode
 }
 
-/** A button of the design system (IZONE LMS model on Mira's tokens). */
+/** Nút bấm chuẩn với đầy đủ các biến thể màu sắc, kiểu dáng và kích thước. */
 export function Button({
   color,
   variant,
@@ -68,7 +68,7 @@ export function Button({
 }
 
 export interface LinkButtonProps extends Omit<BaseButton.Props, 'className' | 'color'> {
-  /** link (default, the link colour) | neutral (subtle text) | warning (something waits). */
+  /** Màu sắc: link (mặc định, màu liên kết) | neutral (chữ mờ nhẹ) | warning (cần chú ý). */
   color?: 'link' | 'neutral' | 'warning'
   size?: 'md' | 'sm'
   className?: string
@@ -77,7 +77,7 @@ export interface LinkButtonProps extends Omit<BaseButton.Props, 'className' | 'c
   children: ReactNode
 }
 
-/** A text action: link colour, underline on hover. */
+/** Nút hành động dạng văn bản: màu liên kết, gạch chân khi hover. */
 export function LinkButton({
   color,
   size,

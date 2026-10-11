@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
-import { CheckCircleIcon } from '@solar-icons/react/linear/check-circle'
-import { EyeIcon } from '@solar-icons/react/linear/eye'
-import { FileCorruptedIcon } from '@solar-icons/react/linear/file-corrupted'
+import {
+  RefreshIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  FileCorruptedIcon
+} from '@renderer/components/ui/reicon'
+
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { Badge, type BadgeColor } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
@@ -63,11 +66,11 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
   const [events, setEvents] = useState<SourceUpdateEvent[]>(initialEvents ?? [])
   const [loading, setLoading] = useState(!initialEvents)
 
-  // Sync state
+  // Trạng thái đồng bộ
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncProgress, setSyncProgress] = useState(0)
 
-  // Diff dialog state
+  // Trạng thái hộp thoại so sánh khác biệt (diff)
   const [diffDialog, setDiffDialog] = useState<{
     open: boolean
     event: SourceUpdateEvent | null
@@ -96,7 +99,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
         }
       }
     } catch {
-      // ignore
+      // Bỏ qua lỗi
     } finally {
       setLoading(false)
     }
@@ -108,7 +111,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
     }
   }, [initialEvents, fetchEvents])
 
-  // Mark all seen
+  // Đánh dấu tất cả sự kiện đã xem
   const handleMarkAllSeen = async (): Promise<void> => {
     const unseens = events.filter((e) => e.seenAt === null)
     if (unseens.length === 0) return
@@ -131,7 +134,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
     }
   }
 
-  // Mark single seen
+  // Đánh dấu một sự kiện đã xem
   const handleMarkSingleSeen = async (eventId: string): Promise<void> => {
     if (typeof window !== 'undefined' && window.mira?.sources?.updates) {
       const res = await window.mira.sources.updates.markSeen({
@@ -146,7 +149,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
     }
   }
 
-  // Manual sync all
+  // Kích hoạt kiểm tra cập nhật thủ công
   const handleCheckNow = (): void => {
     setIsSyncing(true)
     setSyncProgress(20)
@@ -158,7 +161,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
     }, 900)
   }
 
-  // Preview diff for raw_changed
+  // Xem trước khác biệt cho sự kiện sửa đổi bản raw
   const handleOpenDiff = async (event: SourceUpdateEvent): Promise<void> => {
     setDiffDialog({
       open: true,
@@ -194,7 +197,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
           return
         }
       } catch {
-        // fallback
+        // Dữ liệu dự phòng khi gặp lỗi
       }
     }
 
@@ -211,7 +214,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
     })
   }
 
-  // Apply revision
+  // Áp dụng bản cập nhật raw mới
   const handleApplyDiff = async (): Promise<void> => {
     if (!diffDialog.event || !diffDialog.previewData) return
     const eventId = diffDialog.event.id
@@ -231,7 +234,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
     )
   }
 
-  // Group events by day
+  // Gom nhóm các sự kiện theo ngày
   const groupedDays = useMemo(() => {
     const groups: { day: string; items: SourceUpdateEvent[] }[] = []
     const now = new Date()
@@ -289,7 +292,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
         </div>
       }
     >
-      {/* Sync active notice */}
+      {/* Thông báo tiến độ đang đồng bộ */}
       {isSyncing && (
         <div className="flex flex-col gap-xs rounded-md border border-info bg-info/10 p-md">
           <div className="flex items-center justify-between text-body-sm">
@@ -406,7 +409,7 @@ export function UpdatesScreen({ initialEvents }: UpdatesScreenProps): JSX.Elemen
         không tự tạo bản dịch.
       </p>
 
-      {/* Raw Diff Preview & Apply Dialog */}
+      {/* Hộp thoại xem trước khác biệt và áp dụng bản raw mới */}
       <Dialog
         open={diffDialog.open}
         onOpenChange={(open) => setDiffDialog((prev) => ({ ...prev, open }))}

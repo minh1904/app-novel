@@ -1,17 +1,18 @@
 import { useContext, type JSX, type ReactNode } from 'react'
+import { AltArrowLeftIcon } from '@renderer/components/ui/reicon'
 import { createPortal } from 'react-dom'
-import { AltArrowLeftIcon } from '@solar-icons/react/linear/alt-arrow-left'
+
 import { CompactButton } from './CompactButton'
 import { ICON } from './icon'
 import { cn } from '../../lib/cn'
 import { TopBarSlotContext, TopBarTitleSlotContext, WorkTabActiveContext } from './topBarSlot'
 
 /**
- * Draws its children in the top bar instead of where it is written.
+ * Hiển thị các phần tử con lên thanh trên cùng (top bar) qua React portal thay vì tại vị trí khai báo.
  *
- * The controls keep closing over the screen's own state — only their DOM node moves — so a screen
- * puts "save" in the bar without handing the shell its dirty flag or its save function. Leave the
- * screen and they leave the bar with it.
+ * Các nút điều khiển vẫn giữ nguyên closure với state nội bộ của màn hình (chỉ di chuyển DOM node),
+ * giúp màn hình có thể gắn các nút như "Lưu" lên thanh trên cùng mà không cần truyền cờ dirty hay hàm
+ * lưu ra shell cha. Khi rời màn hình, các nút sẽ tự động biến mất.
  */
 export function TopBarActions({ children }: { children: ReactNode }): JSX.Element | null {
   const slot = useContext(TopBarSlotContext)
@@ -28,7 +29,7 @@ export interface TopBarTitleProps {
   className?: string
 }
 
-/** The page name at the left of the top bar, with an optional note and back button. */
+/** Tiêu đề trang hiển thị ở bên trái thanh trên cùng, có thể kèm ghi chú và nút quay lại. */
 export function TopBarTitle({
   children,
   note,

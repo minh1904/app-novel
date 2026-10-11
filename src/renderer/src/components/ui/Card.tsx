@@ -1,7 +1,7 @@
 import type { HTMLAttributes, JSX, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
-/** A bordered block on the sheet. Static cards have no shadow, only the border. */
+/** Khối nội dung có đường viền hiển thị trên bề mặt. Thẻ tĩnh chỉ có viền, không đổ bóng. */
 export function Card({
   title,
   aside,
@@ -10,7 +10,7 @@ export function Card({
   ...props
 }: Omit<HTMLAttributes<HTMLElement>, 'title'> & {
   title?: string
-  /** A count or an action on the title line. */
+  /** Số lượng hoặc nút hành động phụ nằm trên dòng tiêu đề. */
   aside?: ReactNode
   children: ReactNode
 }): JSX.Element {

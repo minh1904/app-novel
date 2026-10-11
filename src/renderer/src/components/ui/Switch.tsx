@@ -4,8 +4,8 @@ import { cn } from '../../lib/cn'
 import { focusRing } from './focus'
 
 /**
- * An on/off switch, 36×20. A real button with role="switch", so keyboards and screen readers know it.
- * Give it a label: wrap it in a <label>, or pass aria-label.
+ * Công tắc bật/tắt kích thước 36×20: nút bấm mang role="switch" hỗ trợ bàn phím và trình đọc màn hình.
+ * Cần gắn nhãn bằng cách bọc trong thẻ <label> hoặc truyền `aria-label`.
  */
 export function Switch({
   className,

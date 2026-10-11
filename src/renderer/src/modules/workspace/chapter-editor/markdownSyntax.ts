@@ -3,32 +3,29 @@ import type { syntaxTree } from '@codemirror/language'
 import type { Extension, Text } from '@codemirror/state'
 
 /**
- * What Live Preview and the format commands read from the Markdown syntax tree, as plain data.
+ * Dữ liệu cú pháp Markdown được đọc từ cây cú pháp (syntax tree) phục vụ Live Preview và các lệnh định dạng.
  *
- * Both used to match regular expressions line by line, which cannot tell a code span, an escaped
- * `\*`, a `snake_case_name` or a URL from real emphasis — and Live Preview hides the delimiters it
- * thinks it found, so a wrong match made characters vanish. The tree comes from the same CommonMark
- * rules the rest of the Markdown world uses, so those cases simply are not emphasis.
+ * Cây cú pháp giúp phân biệt chính xác văn bản nhấn mạnh thực sự với các khối mã (code span),
+ * ký tự thoát `\*`, định danh `snake_case` hoặc URL — tránh việc ẩn nhầm ký tự.
  *
- * `scanMarkdown` is pure (a tree, a document and ranges in; data out) so it can be tested without a
- * DOM, which `EditorView` needs and the `node` test environment does not have.
+ * `scanMarkdown` là hàm thuần túy (nhận cây cú pháp, tài liệu và các khoảng range; trả về dữ liệu kết quả),
+ * giúp kiểm thử độc lập mà không cần môi trường DOM.
  */
 
 export type SyntaxTree = ReturnType<typeof syntaxTree>
 
 /**
- * Block syntax that is wrong for translated prose. Indentation is how a novel marks a paragraph, a
- * `---` under a line is a scene break and not a heading, `[Tên]: lời thoại` is not a link
- * definition, and a line that starts with a tag-like word is not an HTML block. Each of these would
- * swallow the inline syntax on the line (or turn the line above into a heading), so they are not
- * parsed at all.
+ * Bỏ qua các cú pháp khối không phù hợp với văn bản tiểu thuyết dịch:
+ * Thụt đầu dòng là cách tiểu thuyết đánh dấu đoạn văn chứ không phải khối mã;
+ * dòng `---` bên dưới là dấu ngắt cảnh chứ không phải tiêu đề;
+ * `[Tên]: lời thoại` không phải định nghĩa liên kết; và dòng bắt đầu bằng thẻ HTML
+ * không bị coi là khối HTML. Việc bỏ qua các khối này giúp tránh nuốt cú pháp nội dòng.
  */
 const DROPPED_BLOCKS = ['IndentedCode', 'SetextHeading', 'LinkReference', 'HTMLBlock']
 
 /**
- * The Markdown language for the translation pane. `addKeymap: false` matters: the default keymap
- * continues lists and quotes on Enter, but Enter here must add a bare line break (see `bindings` in
- * `TextEditor.tsx`).
+ * Hỗ trợ ngôn ngữ Markdown cho khung dịch. Thiết lập `addKeymap: false` để phím Enter
+ * chỉ thêm ngắt dòng thông thường thay vì tự động tiếp tục danh sách hay trích dẫn.
  */
 export function markdownSupport(): Extension {
   return markdown({
@@ -41,27 +38,27 @@ export function markdownSupport(): Extension {
 
 export type InlineKind = 'bold' | 'italic' | 'strikethrough'
 
-/** One complete emphasis span: both delimiters are present, so it is safe to hide them. */
+/** Một đoạn nhấn mạnh hoàn chỉnh: có đủ cả hai ký tự phân cách mở và đóng. */
 export interface InlineSpan {
   kind: InlineKind
-  /** The whole span, delimiters included. */
+  /** Toàn bộ phạm vi đoạn, bao gồm cả các ký tự phân cách. */
   from: number
   to: number
-  /** The text between the delimiters. */
+  /** Phạm vi văn bản nằm giữa hai ký tự phân cách. */
   innerFrom: number
   innerTo: number
 }
 
-/** A line prefix (`#`, `>`, `-`, `1.`) and, for headings and quotes, the text after it. */
+/** Tiền tố dòng (`#`, `>`, `-`, `1.`) và phần nội dung văn bản sau tiền tố đối với tiêu đề và trích dẫn. */
 export interface LineMark {
   kind: 'heading' | 'quote' | 'list'
-  /** The prefix and the spaces after it. */
+  /** Phạm vi tiền tố và các khoảng trắng theo sau. */
   markFrom: number
   markTo: number
-  /** The rest of the line; empty (`contentFrom === contentTo`) when there is none to style. */
+  /** Phần còn lại của dòng; rỗng (`contentFrom === contentTo`) nếu không có nội dung cần định dạng. */
   contentFrom: number
   contentTo: number
-  /** Heading level, 1 to 3. */
+  /** Cấp độ tiêu đề, từ 1 đến 3. */
   level?: 1 | 2 | 3
 }
 
@@ -81,14 +78,14 @@ const INLINE_NODES: Record<string, { kind: InlineKind; mark: string }> = {
   Strikethrough: { kind: 'strikethrough', mark: 'StrikethroughMark' }
 }
 
-/** Only `#`, `##` and `###` are styled, as the spec says; deeper headings stay plain text. */
+/** Chỉ định dạng các tiêu đề cấp 1 đến 3 (`#`, `##`, `###`); các cấp sâu hơn giữ nguyên văn bản thuần. */
 const HEADING_NODE = /^ATXHeading([1-3])$/
 
 function isBlank(char: string): boolean {
   return char === ' ' || char === '\t'
 }
 
-/** The offset after the blanks that follow `pos` on its line. */
+/** Vị trí ngay sau các khoảng trắng theo sau `pos` trên cùng một dòng. */
 function skipBlanks(doc: Text, pos: number): number {
   const line = doc.lineAt(pos)
   let offset = pos - line.from
@@ -97,8 +94,8 @@ function skipBlanks(doc: Text, pos: number): number {
 }
 
 /**
- * Reads the emphasis spans and line prefixes that touch any of `ranges`. A node that starts before a
- * range and ends inside it is returned whole, and one touched by several ranges is returned once.
+ * Đọc các đoạn nhấn mạnh nội dòng và tiền tố dòng chạm vào bất kỳ khoảng nào trong `ranges`.
+ * Các nút bắt đầu trước khoảng và kết thúc bên trong được trả về trọn vẹn, và chỉ trả về một lần.
  */
 export function scanMarkdown(
   tree: SyntaxTree,
@@ -156,7 +153,7 @@ export function scanMarkdown(
         if (node.name === 'QuoteMark') {
           if (seen.has(key)) return
           seen.add(key)
-          // `>_<` and `>.<` are faces, not quotes: a quote needs a blank right after the `>`.
+          // `>_<` và `>.<` là biểu cảm khuôn mặt, không phải trích dẫn: trích dẫn cần có khoảng trắng ngay sau `>`.
           if (!isBlank(doc.sliceString(node.to, node.to + 1))) return
           const line = doc.lineAt(node.from)
           const markTo = skipBlanks(doc, node.to)
@@ -189,8 +186,7 @@ export function scanMarkdown(
     })
   }
 
-  // In `> > text` only the last prefix carries the styled text, or the quote bar would be drawn once
-  // per prefix on the same line.
+  // Trong `> > text`, chỉ tiền tố cuối cùng mang nội dung văn bản, tránh vẽ thanh trích dẫn lặp lại nhiều lần.
   for (const [lineNumber, marks] of quotesByLine) {
     marks.sort((a, b) => a.markFrom - b.markFrom)
     const last = marks[marks.length - 1]

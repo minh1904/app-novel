@@ -1,20 +1,20 @@
 import type { SegmentRefusal } from '../../../../../shared/contracts/aiTranslate'
 import type { ParagraphBatchResult } from '../../../../../shared/contracts/aiTranslateProposals'
 
-/** What a chapter's translation run has gathered so far, batch by batch. */
+/** Thống kê tiến trình dịch của chương theo từng lô đoạn văn. */
 export interface RunTally {
   failed: string[]
-  /** Segments the provider's filter blocked, newest reason per segment. */
+  /** Danh sách các đoạn bị bộ lọc của nhà cung cấp chặn nội dung. */
   refusals: SegmentRefusal[]
-  /** A batch failed in a way that stops the rest of the run. */
+  /** Đánh dấu tiến trình dịch bị dừng do lỗi nghiêm trọng ở một lô. */
   halted: boolean
 }
 
 export const EMPTY_TALLY: RunTally = { failed: [], refusals: [], halted: false }
 
 /**
- * Adds one batch to the run. Whether a failure stops the run is main's call, carried as `haltsRun`
- * (`errorPolicy.ts`): a few segments blocked by the filter do not, so the chapter's other batches still go.
+ * Cập nhật kết quả của một lô đoạn vào thống kê chung của lượt dịch.
+ * Nếu gặp lỗi dừng toàn bộ lượt chạy (`haltsRun`), cờ `halted` sẽ được kích hoạt.
  */
 export function tallyBatch(
   tally: RunTally,

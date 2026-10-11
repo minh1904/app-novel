@@ -2,9 +2,9 @@ import { create } from 'zustand'
 import { registerStoreReset } from '../../lib/testing/resetStores'
 
 /**
- * Toasts in Hermes Desktop's manner (its store/notifications.ts): a success says its piece quietly in the
- * bottom-right corner and goes away after 5 seconds; an error, or anything that carries a button, stays
- * at the top centre until it is dismissed, because the person has to read it or act on it.
+ * Quản lý thông báo toast: thông báo thành công hoặc thông tin hiển thị nhẹ nhàng ở góc
+ * dưới bên phải và tự ẩn sau 5 giây; thông báo lỗi hoặc có nút thao tác sẽ hiển thị ở giữa
+ * phía trên cho đến khi người dùng đóng lại.
  */
 export type ToastKind = 'success' | 'info' | 'warning' | 'error'
 
@@ -19,7 +19,7 @@ export interface Toast {
   title: string
   message?: string
   action?: ToastAction
-  /** `null` stays until dismissed. */
+  /** `null` nghĩa là thông báo hiển thị cho đến khi được đóng thủ công. */
   durationMs: number | null
   placement: 'bottom-right' | 'top-center'
 }
@@ -29,15 +29,15 @@ export interface NotifyInput {
   title: string
   message?: string
   action?: ToastAction
-  /** Overrides the default for the kind; `null` keeps the toast until it is dismissed. */
+  /** Ghi đè thời gian hiển thị mặc định của loại thông báo; `null` giữ thông báo cho đến khi đóng. */
   durationMs?: number | null
 }
 
 export const QUIET_TOAST_MS = 5_000
-/** More than this many toasts at once is noise; the oldest goes. */
+/** Giới hạn số lượng thông báo hiển thị đồng thời; thông báo cũ nhất sẽ bị xóa khi vượt quá. */
 const MAX_TOASTS = 4
 
-/** Where and for how long a toast shows, from what it is. */
+/** Xác định vị trí và thời lượng hiển thị dựa trên loại thông báo và hành động kèm theo. */
 export function toastShape(
   input: Pick<NotifyInput, 'kind' | 'action' | 'durationMs'>
 ): Pick<Toast, 'durationMs' | 'placement'> {
@@ -97,7 +97,7 @@ export function notify(input: NotifyInput): number {
   return useNotificationStore.getState().notify(input)
 }
 
-/** An error toast with the error's own message, or the fallback when it has none worth showing. */
+/** Hiển thị thông báo lỗi với nội dung lỗi cụ thể, hoặc dùng tiêu đề dự phòng nếu không có thông báo chi tiết. */
 export function notifyError(error: unknown, fallbackTitle: string): number {
   const message =
     error instanceof Error ? error.message : typeof error === 'string' ? error : undefined

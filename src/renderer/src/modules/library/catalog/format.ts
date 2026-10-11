@@ -7,7 +7,7 @@ function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
 }
 
-/** Splits a timestamp into a day label ("Hôm nay", "3 ngày trước") and a clock time. */
+/** Phân tách thời điểm thành nhãn ngày tương đối ("Hôm nay", "3 ngày trước") và giờ đồng hồ. */
 export function formatUpdatedParts(date: Date, now = new Date()): { day: string; time: string } {
   const days = Math.round((startOfDay(now) - startOfDay(date)) / (24 * 60 * 60 * 1000))
   const time = timeOnly.format(date)

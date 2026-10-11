@@ -1,29 +1,28 @@
 import type { ReactNode } from 'react'
 import type { WorkSummary } from '../../../../../shared/contracts/library'
 
-/** What the frame hands to every area of the work detail screen. */
+/** Dữ liệu truyền từ khung màn hình vào từng khu vực của màn hình chi tiết tác phẩm. */
 export interface WorkAreaProps {
-  /** Areas take their work from here, never from whatever the library has selected. */
+  /** Định danh tác phẩm của khu vực hiện tại. */
   workId: string
-  /** Called with the work returned by a change an area makes, so the header stays current. */
+  /** Gọi khi có thay đổi tác phẩm để cập nhật lại phần đầu trang. */
   onWork(summary: WorkSummary): void
-  /** Opens a chapter in the editor. */
+  /** Mở chương trong trình biên tập. */
   onOpenChapter(chapterId: string): void
-  /** Goes up each time the header asks the Chapters area to start adding a chapter. */
+  /** Tăng giá trị mỗi khi phần đầu trang yêu cầu khu vực chương bắt đầu thêm chương mới. */
   addChapterSignal: number
-  /** Opens the export dialog on the chapters picked in a list. */
+  /** Mở hộp thoại xuất cho các chương được chọn. */
   onExportChapters(ids: ReadonlySet<string>): void
 }
 
 /**
- * One area of the work detail screen: Chapters, then Context, Sources and Jobs (see the
- * work-area-navigation change for the order). An area is either a real screen, or a picture marked
- * `soon` that is listed in the backlog and does nothing.
+ * Một khu vực trong màn hình chi tiết tác phẩm: Chương, Ngữ cảnh, Nguồn raw và Tác vụ.
+ * Mỗi khu vực có thể là màn hình thực tế hoặc giao diện đánh dấu "Sắp có".
  */
 export interface WorkArea {
   id: string
   label: string
-  /** Set for an area that is only a picture ("Sắp có"); its `id` must be in the backlog. */
+  /** Đánh dấu khu vực đang ở dạng minh họa ("Sắp có"). */
   soon?: boolean
   render(props: WorkAreaProps): ReactNode
 }

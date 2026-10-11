@@ -6,11 +6,8 @@ import { SourcesArea } from './SourcesArea'
 import type { WorkArea } from './workArea'
 
 /**
- * The areas of the work detail screen, in the fixed order of the work-area-navigation change.
- * Chapters is real, and so is Context: its glossary and addressing tabs read and write the work, and
- * only Văn phong inside it is still a picture. Sources and Jobs are pictures marked "Sắp có" so the
- * finished layout can be seen; each has a row in delivery/backlog.md and becomes real by dropping `soon` and swapping its
- * `render` for the real screen.
+ * Các khu vực trong màn hình chi tiết tác phẩm theo thứ tự hiển thị:
+ * Chương, Ngữ cảnh, Bản raw và Tác vụ dịch AI.
  */
 export const chaptersArea: WorkArea = {
   id: 'chapters',

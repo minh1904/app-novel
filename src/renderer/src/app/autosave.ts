@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { notifyError } from '../components/ui/notificationStore'
 
-/** Hermes saves a settings field 550 ms after the last change (its settings/config-settings.tsx). */
+/** Thời gian chờ mặc định (ms) sau thay đổi cuối cùng trước khi tự động lưu giá trị. */
 export const AUTOSAVE_DELAY_MS = 550
 
 /**
- * Saves values one after another, never two at once and never out of order: a value queued while a save
- * runs waits for it, and only the newest queued value is sent, since anything in between is already stale.
- * A failed save is reported and does not stop the next one.
+ * Hàng đợi lưu giá trị tuần tự: không bao giờ lưu hai yêu cầu cùng lúc và đảm bảo đúng thứ tự.
+ * Khi một thao tác lưu đang chạy, các giá trị mới sẽ chờ và chỉ giá trị mới nhất được gửi đi.
+ * Lỗi lưu được ghi nhận qua hàm callback và không làm gián đoạn các lượt lưu tiếp theo.
  */
 export function createSaveQueue<T>(
   save: (value: T) => Promise<void>,
@@ -39,8 +39,8 @@ export function createSaveQueue<T>(
 }
 
 /**
- * Saves `value` once it has stopped changing for `delay` ms. The first render does not save: the value came
- * from storage. `save` may change between renders; the newest one is used.
+ * Tự động lưu `value` sau khi ngừng thay đổi trong khoảng thời gian `delay` ms.
+ * Lần render đầu tiên không kích hoạt lưu vì giá trị được lấy từ bộ nhớ.
  */
 export function useAutosave<T>(
   value: T,

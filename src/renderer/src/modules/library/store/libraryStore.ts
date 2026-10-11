@@ -23,7 +23,7 @@ export interface LibraryState {
   notice: string | null
   success: { message: string; workId?: string } | null
 
-  // Actions
+  // Các hành động (Actions)
   reload(): Promise<void>
   dismissNotice(): void
   dismissSuccess(): void

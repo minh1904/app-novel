@@ -1,13 +1,16 @@
 import { memo, useRef, type JSX } from 'react'
-import { AltArrowDownIcon } from '@solar-icons/react/linear/alt-arrow-down'
-import { AltArrowUpIcon } from '@solar-icons/react/linear/alt-arrow-up'
-import { DoubleAltArrowDownIcon } from '@solar-icons/react/linear/double-alt-arrow-down'
-import { DoubleAltArrowUpIcon } from '@solar-icons/react/linear/double-alt-arrow-up'
-import { FolderOpenIcon } from '@solar-icons/react/linear/folder-open'
-import { HashtagIcon } from '@solar-icons/react/linear/hashtag'
-import { MenuDotsIcon } from '@solar-icons/react/linear/menu-dots'
-import { PenNewSquareIcon } from '@solar-icons/react/linear/pen-new-square'
-import { TrashBinMinimalisticIcon } from '@solar-icons/react/linear/trash-bin-minimalistic'
+import {
+  AltArrowDownIcon,
+  AltArrowUpIcon,
+  DoubleAltArrowDownIcon,
+  DoubleAltArrowUpIcon,
+  FolderOpenIcon,
+  HashtagIcon,
+  MenuDotsIcon,
+  PenNewSquareIcon,
+  TrashBinMinimalisticIcon
+} from '@renderer/components/ui/reicon'
+
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
 import { cn } from '../../../lib/cn'
 import { Badge, type BadgeColor } from '../../../components/ui/Badge'
@@ -34,15 +37,15 @@ export interface ChapterRowActions {
   moveTo(chapter: ChapterItem, to: number): void
   askMoveTo(chapter: ChapterItem): void
   askDelete(chapter: ChapterItem): void
-  /** Ticks or unticks the chapter; with Shift, every chapter between it and the last one ticked. */
+  /** Chọn hoặc bỏ chọn chương; kết hợp Shift để chọn khoảng liên tiếp. */
   select(chapter: ChapterItem, checked: boolean, range: boolean): void
 }
 
-/** Grid shared by the list header and every row, so the columns line up. */
+/** Lưới cột dùng chung cho tiêu đề danh sách và từng hàng. */
 export const CHAPTER_GRID =
   'grid grid-cols-[28px_40px_minmax(0,1fr)_36px] @min-[560px]:grid-cols-[28px_48px_minmax(0,1fr)_132px_132px_36px]'
 
-/** The same colours as the dots of the chapter sidebar (ChapterNavSidebar). */
+/** Màu trạng thái tương ứng với thanh bên chương. */
 const STATE_COLORS: Record<ChapterState, BadgeColor> = {
   translated: 'success',
   untranslated: 'warning',
@@ -186,7 +189,7 @@ export const ChapterRow = memo(function ChapterRow({
   )
 })
 
-/** Renames in place: Enter or leaving the field saves, Escape keeps the old name. */
+/** Đổi tên trực tiếp tại chỗ: Enter hoặc rời ô nhập để lưu, Escape để hủy đổi tên. */
 function RenameInput({
   chapter,
   actions
@@ -194,7 +197,7 @@ function RenameInput({
   chapter: ChapterItem
   actions: ChapterRowActions
 }): JSX.Element {
-  // Escape unmounts the input, which fires blur; this flag stops that blur from saving.
+  // Escape unmount ô nhập và kích hoạt blur; cờ này ngăn blur lưu giá trị
   const cancelled = useRef(false)
 
   return (

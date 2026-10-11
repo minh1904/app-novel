@@ -1,6 +1,7 @@
 import type { JSX, ReactNode, RefObject } from 'react'
+import { CloseIcon } from '@renderer/components/ui/reicon'
 import { Dialog as BaseDialog } from '@base-ui/react/dialog'
-import { CloseIcon } from '@solar-icons/react/linear/close'
+
 import { cn } from '../../lib/cn'
 import { CompactButton } from './CompactButton'
 
@@ -9,11 +10,11 @@ export interface DialogProps {
   onOpenChange(open: boolean): void
   title: string
   description?: string
-  /** sm 400px confirm · md 512px default · lg 760px a form with a cover beside its fields. */
+  /** Kích thước: sm 400px (xác nhận) · md 512px (mặc định) · lg 760px (biểu mẫu lớn kèm ảnh bìa). */
   size?: 'sm' | 'md' | 'lg'
-  /** Where focus goes on close; the opening control, which a dialog without a trigger cannot know. */
+  /** Phần tử nhận lại focus khi đóng hộp thoại; dùng cho hộp thoại không mở qua trigger trực tiếp. */
   finalFocus?: RefObject<HTMLElement | null>
-  /** Buttons along the bottom edge, right-aligned. */
+  /** Các nút hành động ở chân hộp thoại, căn lề phải. */
   footer?: ReactNode
   children?: ReactNode
 }
@@ -24,7 +25,7 @@ const SIZES = {
   lg: 'w-[min(760px,calc(100vw-32px))]'
 } as const
 
-/** Secondary content over the screen: a title, a scrolling body and an optional footer. */
+/** Hộp thoại nội dung nổi trên màn hình: tiêu đề, phần thân cuộn được và chân hộp thoại tùy chọn. */
 export function Dialog({
   open,
   onOpenChange,

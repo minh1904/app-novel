@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState, type JSX } from 'react'
-import { MinimalisticMagnifierIcon } from '@solar-icons/react/linear/minimalistic-magnifier'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
-import { CloseCircleIcon } from '@solar-icons/react/linear/close-circle'
+import {
+  MinimalisticMagnifierIcon,
+  RefreshIcon,
+  CloseCircleIcon
+} from '@renderer/components/ui/reicon'
+
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { Badge } from '../../../components/ui/Badge'
 import { Button, LinkButton } from '../../../components/ui/Button'
@@ -62,18 +65,18 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
   const [loading, setLoading] = useState(!initialSources)
   const [activeTab, setActiveTab] = useState<'explore' | 'connected' | 'health'>('explore')
 
-  // Filters
+  // Các bộ lọc
   const [searchQuery, setSearchQuery] = useState('')
   const [countryGroup, setCountryGroup] = useState<CountryFacet>('all')
   const [languageTag, setLanguageTag] = useState('all')
   const [capability, setCapability] = useState('all')
   const [healthState, setHealthState] = useState('all')
 
-  // URL identify state
+  // Trạng thái nhận diện liên kết URL
   const [isUrlMode, setIsUrlMode] = useState(false)
   const [urlUnrecognized, setUrlUnrecognized] = useState(false)
 
-  // Load from IPC
+  // Tải danh sách nguồn từ tiến trình chính qua IPC
   const fetchSources = async (): Promise<void> => {
     if (initialSources) return
     setLoading(true)
@@ -85,7 +88,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
         }
       }
     } catch {
-      // ignore
+      // Bỏ qua lỗi
     } finally {
       setLoading(false)
     }
@@ -97,7 +100,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
     }
   }, [initialSources])
 
-  // Handle URL candidate search
+  // Xử lý tìm kiếm và nhận diện khi đầu vào là đường dẫn URL
   useEffect(() => {
     const trimmed = searchQuery.trim()
     const looksLikeUrl =
@@ -129,7 +132,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
     return undefined
   }, [searchQuery])
 
-  // Clear all filters
+  // Đặt lại toàn bộ bộ lọc về mặc định
   const resetFilters = (): void => {
     setSearchQuery('')
     setCountryGroup('all')
@@ -140,7 +143,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
     setUrlUnrecognized(false)
   }
 
-  // Active filter chips
+  // Danh sách các thẻ bộ lọc đang được kích hoạt
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = []
     if (searchQuery.trim()) {
@@ -185,10 +188,10 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
     return chips
   }, [searchQuery, countryGroup, languageTag, capability, healthState])
 
-  // Filtered sources
+  // Lọc danh sách nguồn theo các tiêu chí đã chọn
   const filteredSources = useMemo(() => {
     return sources.filter((s) => {
-      // Country facet
+      // Lọc theo nhóm quốc gia
       if (countryGroup === 'CN' && s.countryCode !== 'CN') return false
       if (countryGroup === 'JP' && s.countryCode !== 'JP') return false
       if (countryGroup === 'KR' && s.countryCode !== 'KR') return false
@@ -199,10 +202,10 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
         return false
       }
 
-      // Language
+      // Lọc theo ngôn ngữ
       if (languageTag !== 'all' && !s.languageTags.includes(languageTag)) return false
 
-      // Capability
+      // Lọc theo khả năng
       if (capability !== 'all') {
         if (capability === 'catalog' && !s.capabilities.includes('catalog' as SourceCapability)) {
           return false
@@ -215,12 +218,12 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
         }
       }
 
-      // Health
+      // Lọc theo tình trạng
       if (healthState !== 'all' && (s.health?.state ?? 'unchecked') !== healthState) {
         return false
       }
 
-      // Search keyword
+      // Lọc theo từ khóa tìm kiếm
       if (searchQuery.trim() && !isUrlMode) {
         const needle = searchQuery.toLowerCase().trim()
         const textToSearch = [s.displayName, s.nativeName ?? '', ...s.aliases, ...s.domains]
@@ -233,7 +236,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
     })
   }, [sources, countryGroup, languageTag, capability, healthState, searchQuery, isUrlMode])
 
-  // Health tab sources (degraded, broken, inconclusive)
+  // Danh sách nguồn có vấn đề về sức khỏe (suy giảm, hỏng, chưa xác định)
   const healthIssues = useMemo(() => {
     return sources.filter(
       (s) =>
@@ -243,7 +246,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
     )
   }, [sources])
 
-  // Connected sources
+  // Danh sách nguồn đã kết nối trên thiết bị hoặc cần tài khoản
   const connectedSources = useMemo(() => {
     return sources.filter((s) => s.access === 'local' || s.access === 'account')
   }, [sources])
@@ -285,7 +288,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
 
         {/* TAB 1: KHÁM PHÁ */}
         <TabsPanel value="explore" className="flex flex-col gap-lg">
-          {/* Search bar & facets */}
+          {/* Thanh tìm kiếm và các bộ lọc */}
           <div className="flex flex-col gap-md">
             <div className="flex flex-wrap items-center gap-sm">
               <div className="min-w-[280px] flex-1">
@@ -299,7 +302,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
               </div>
             </div>
 
-            {/* Country Facets & Dropdowns */}
+            {/* Lọc nhanh theo quốc gia và menu thả xuống */}
             <div className="flex flex-wrap items-center justify-between gap-sm">
               <ButtonGroup
                 label="Lọc theo quốc gia"
@@ -332,7 +335,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
               </div>
             </div>
 
-            {/* Active Filter Chips */}
+            {/* Các thẻ bộ lọc đang kích hoạt */}
             {activeChips.length > 0 && (
               <div className="flex flex-wrap items-center gap-xs pt-2xs">
                 <span className="text-body-xs text-muted">Đang lọc:</span>
@@ -356,13 +359,13 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
             )}
           </div>
 
-          {/* Results section */}
+          {/* Khu vực hiển thị kết quả */}
           {loading ? (
             <p role="status" className="py-xl text-center text-body-sm text-subtle">
               Đang tải danh sách nguồn...
             </p>
           ) : isUrlMode && urlUnrecognized ? (
-            /* Unrecognized URL error state */
+            /* Trạng thái khi URL không được hỗ trợ */
             <EmptyState
               icon={<MinimalisticMagnifierIcon size={ICON.md} />}
               title="Chưa có adapter hỗ trợ liên kết này"
@@ -376,7 +379,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
               (.txt, .md) hoặc theo dõi thư mục chương trên thiết bị.
             </EmptyState>
           ) : sources.length === 0 ? (
-            /* No adapters installed */
+            /* Trạng thái khi chưa có nguồn nào được cài đặt */
             <EmptyState
               icon={<CloseCircleIcon size={ICON.md} />}
               title="Chưa có nguồn nào được cài đặt"
@@ -389,7 +392,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
               Chưa có adapter builtin hoặc chính thức nào trong registry.
             </EmptyState>
           ) : filteredSources.length === 0 ? (
-            /* No results from filters */
+            /* Trạng thái khi không có kết quả phù hợp với bộ lọc */
             <EmptyState
               icon={<MinimalisticMagnifierIcon size={ICON.md} />}
               title="Không có nguồn phù hợp với bộ lọc"
@@ -402,7 +405,7 @@ export function SourcesScreen({ onOpenSettings, initialSources }: SourcesScreenP
               Không tìm thấy nguồn nào khớp với các tiêu chí tìm kiếm và bộ lọc đang chọn.
             </EmptyState>
           ) : (
-            /* Grid of source cards */
+            /* Lưới danh sách thẻ nguồn */
             <div className="grid grid-cols-1 gap-md @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3">
               {filteredSources.map((source) => (
                 <SourceCard key={source.sourceId} source={source} onOpenSettings={onOpenSettings} />

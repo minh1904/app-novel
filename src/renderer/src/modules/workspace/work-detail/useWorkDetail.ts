@@ -10,26 +10,26 @@ export type WorkDetailLoad = 'loading' | 'ready' | 'failed'
 export interface WorkDetailController {
   load: WorkDetailLoad
   work: Work | null
-  /** Why the work could not be opened, in words a user can act on. */
+  /** Lý do không mở được tác phẩm để hiển thị cho người dùng. */
   loadError: string | null
-  /** Last failed action, shown until dismissed. */
+  /** Thông báo lỗi hành động gần nhất, hiển thị cho đến khi bị đóng. */
   notice: string | null
   dismissNotice(): void
   reportNotice(message: string): void
   reload(): Promise<void>
-  /** Takes in a work returned by a chapter change so the header needs no second round trip. */
+  /** Tiếp nhận tác phẩm trả về từ thay đổi chương để cập nhật ngay phần đầu trang. */
   applyWork(summary: WorkSummary): void
-  /** Resolves to the saved work, or the error so the edit form can show field messages. */
+  /** Trả về tác phẩm đã lưu, hoặc lỗi để hiển thị trên biểu mẫu chỉnh sửa. */
   update(patch: WorkPatch): Promise<Result<Work>>
   setPaused(paused: boolean): Promise<void>
   setArchived(archived: boolean): Promise<void>
-  /** Replaces the cover with `file`, or removes it when `file` is null. */
+  /** Thay ảnh bìa bằng `file`, hoặc gỡ bỏ khi `file` là null. */
   setCover(file: File | null): Promise<void>
 }
 
 /**
- * The work shown in the header of the detail screen. It lives apart from the library list because
- * it is loaded per screen; `onChanged` lets the library take in every change made here.
+ * Quản lý dữ liệu tác phẩm hiển thị trên màn hình chi tiết.
+ * `onChanged` giúp đồng bộ mọi thay đổi về danh sách thư viện.
  */
 export function useWorkDetail(
   workId: string,
@@ -39,7 +39,7 @@ export function useWorkDetail(
   const [work, setWork] = useState<Work | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  // Only the newest load may write state, so a slow reply never overwrites a fresher one.
+  // Chỉ phản hồi mới nhất mới được ghi state, tránh phản hồi chậm ghi đè dữ liệu mới hơn
   const latest = useRef(0)
   const changed = useRef(onChanged)
   useEffect(() => {

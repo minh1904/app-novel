@@ -14,18 +14,14 @@ import { startFailure } from './chatStartFailure'
 import { beginTurn, emptySession, historyFor, openRequestIds, type Session } from './chatTurns'
 
 /**
- * The panel's one connection to the rest of the app: a session of turns and a provider call per turn.
+ * Hook quản lý trạng thái phiên hội thoại và tương tác với dịch vụ AI cho chương hiện tại.
  *
- * A turn carries the question, the history, the model and where the user is (change `agentic-chat`);
- * no chapter text goes with it. What the model proposes comes back as proposals in the queue, which the
- * panel accepts or denies like any other.
- *
- * The app owns the stream listener; this hook binds the current work and chapter to it.
+ * Gửi câu hỏi kèm lịch sử, model đã chọn và ngữ cảnh vị trí đoạn văn; các đề xuất từ model
+ * được trả về qua hàng chờ đề xuất để người dùng duyệt.
  */
 
 /**
- * What the panel needs from the translation pane — the subset of `TextEditorHandle` it uses, so the
- * hook can be reasoned about (and stubbed) without dragging in saving, conflicts or the DOM.
+ * Giao diện tối giản của khung bản dịch mà bảng trợ lý AI cần tương tác để hiển thị và duyệt đề xuất.
  */
 export interface ChatEditor {
   getText(): string
@@ -42,11 +38,11 @@ export interface ChatEditor {
 }
 
 export interface AiChatOptions {
-  /** Which work and chapter the turn is about; the read-only tools stay inside this work. */
+  /** Tác phẩm và chương đang thao tác để giới hạn phạm vi công cụ AI. */
   workId: string
   chapterId: string
   sourceLang: SourceLanguage
-  /** Where the user is right now; read when a turn is sent, so it is the position at that moment. */
+  /** Hàm lấy vị trí con trỏ hiện tại của người dùng khi gửi câu hỏi. */
   location(): ChatLocation
 }
 
@@ -55,34 +51,34 @@ export interface AiChatController {
   sessions: AiSessionView[]
   sessionId: string | null
   selectSession(id: string): void
-  /** Connections that can actually be called: enabled, and with a model to call. */
+  /** Danh sách kết nối AI khả dụng và đang được kích hoạt. */
   usable: ConnectionView[]
   connection: ConnectionView | null
-  /** Id of the chosen model entry. */
+  /** ID của mục cấu hình model đang chọn. */
   model: string | null
   models: ModelEntryView[]
-  /** The connection and entry in use, in the shape the model menu takes. */
+  /** Thông tin kết nối và model đang chọn cho menu. */
   selection: ModelSelection | null
   selectModel(selection: ModelSelection): void
-  /** This chat's own pick differs from the main model of Settings (the pill's accent dot). */
+  /** Đánh dấu hội thoại đang chọn model riêng khác với model mặc định trong Cài đặt. */
   overridesMain: boolean
-  /** "Dùng mặc định trong Cài đặt": drop this chat's own pick. */
+  /** Đặt lại về model mặc định trong Cài đặt. */
   useDefaultModel(): void
-  /** "Thêm model tùy chỉnh…": a new entry on a connection; `null` when it could not be added. */
+  /** Thêm model tùy chỉnh vào kết nối; trả về `null` nếu thêm thất bại. */
   addCustomModel(connectionId: string, modelId: string): Promise<ModelSelection | null>
-  /** Picks the entry and writes the level into its settings, like any other setting. */
+  /** Cập nhật mức độ suy luận cho model đang chọn. */
   setThinking(selection: ModelSelection, choice: ThinkingChoice): Promise<void>
-  /** Reloads the connections; the panel lives as long as the chapter, so its copy goes stale. */
+  /** Tải lại danh sách kết nối AI từ hệ thống. */
   refreshConnections(): void
-  /** Why the last attempt to change a model's level failed, if it did. */
+  /** Thông báo lỗi khi cập nhật mức độ suy luận thất bại. */
   modelNotice: string | null
   dismissModelNotice(): void
-  /** True once a connection and model are chosen, there is a question, and no turn is running. */
+  /** Kiểm tra điều kiện có thể gửi câu hỏi: đã chọn model, có nội dung câu hỏi và không có lượt đang chạy. */
   canSend(question: string): boolean
   send(question: string): Promise<void>
   cancel(requestId: string): void
   newConversation(): void
-  /** Set when connections could not be read at all. */
+  /** Thông báo lỗi nếu không đọc được danh sách kết nối. */
   loadError: string | null
 }
 
@@ -106,9 +102,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   const [sessions, setSessions] = useState<AiSessionView[]>([])
   const loadSequence = useRef(0)
 
-  // The session is read inside callbacks that must not be rebuilt on every chunk, so it is mirrored
-  // in a ref. Mirrored in an effect, not during render: writing a ref while rendering is a React
-  // violation, and the committed value is what the unmount cleanup needs anyway.
+  // Lưu tham chiếu phiên hội thoại trong ref để tránh tái tạo callback khi nhận từng chunk stream.
   const sessionRef = useRef(session)
   useEffect(() => {
     sessionRef.current = session
@@ -220,7 +214,7 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   )
 
   const main = useConnectionStore((state) => state.preferences?.main ?? null)
-  // What was picked for this chat, else the main model of Settings, else the first default (model-defaults).
+  // Ưu tiên model chọn riêng cho phiên chat, nếu không thì lấy model mặc định trong Cài đặt.
   const choice = useMemo(
     () => resolveModelChoice(connections, { connectionId, entryId: model }, main),
     [connections, connectionId, model, main]

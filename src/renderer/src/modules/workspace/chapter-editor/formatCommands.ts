@@ -4,8 +4,8 @@ import type { Command } from '@codemirror/view'
 import { scanMarkdown, type InlineKind, type InlineSpan } from './markdownSyntax'
 
 /**
- * What wrapping or unwrapping a delimiter (`**`, `*`, `~~`...) does to one selection range — pure,
- * so it is testable without an `EditorView` (the `node` test environment has no DOM).
+ * Thao tác bọc hoặc gỡ bỏ ký tự phân cách (`**`, `*`, `~~`...) cho một vùng chọn.
+ * Hàm thuần túy giúp kiểm thử dễ dàng mà không cần môi trường DOM.
  */
 export interface WrapEdit {
   from: number
@@ -16,9 +16,8 @@ export interface WrapEdit {
 }
 
 /**
- * The innermost span of `kind` that fully contains `[from, to]`, edges included (a caret right at a
- * delimiter is still "in" the span). A span that runs over a line break is skipped: the toggle never
- * reaches past the line the selection is on.
+ * Tìm đoạn nhỏ nhất thuộc loại `kind` chứa trọn vẹn `[from, to]`, bao gồm cả mép biên.
+ * Bỏ qua đoạn trải dài qua dấu xuống dòng vì thao tác bật/tắt không vượt quá dòng hiện tại.
  */
 function enclosingSpan(
   spans: readonly InlineSpan[],
@@ -37,15 +36,8 @@ function enclosingSpan(
 }
 
 /**
- * Selecting exactly "delimXdelim", or just having the caret somewhere inside an existing span of
- * that kind (selected or not), unwraps that span and selects the plain text left behind. Anything
- * else wraps the given selection; an empty selection gets an empty pair with the caret in the middle.
- *
- * `spans` are the emphasis spans around the selection, read from the Markdown syntax tree. Because
- * they come from the parser, a `*` inside a `**bold**` is never mistaken for an italic delimiter, and
- * an `_italic_` unwraps as readily as a `*italic*`. A bold with no italic inside it gets a new empty
- * pair at the caret instead — it clutters the text but never deletes a delimiter the user did not
- * ask to remove.
+ * Bật/tắt ký tự định dạng: nếu vùng chọn hoặc con trỏ nằm trong đoạn đã định dạng thì gỡ bỏ ký tự bọc;
+ * ngược lại bọc vùng chọn (hoặc chèn cặp ký tự trống nếu chưa chọn gì).
  */
 export function wrapToggleEdit(params: {
   spans: readonly InlineSpan[]
@@ -77,11 +69,7 @@ export function wrapToggleEdit(params: {
 }
 
 /**
- * The changes and new selection for toggling one delimiter on every selection range. Split out of
- * the command so it can be applied to a plain `EditorState` in a test.
- *
- * `changeByRange` wants each new range in the coordinates of the document *after* its own change, so
- * `WrapEdit.selFrom`/`selTo` are given that way (an unwrapped span starts where the old span did).
+ * Tạo danh sách thay đổi và vùng chọn mới để bật/tắt định dạng trên từng phạm vi chọn.
  */
 export function toggleWrapChanges(
   state: EditorState,
@@ -91,7 +79,7 @@ export function toggleWrapChanges(
   const { doc } = state
   const tree = syntaxTree(state)
   return state.changeByRange((range) => {
-    // One character of slack on each side, so a caret that sits right at a delimiter finds its span.
+    // Mở rộng 1 ký tự mỗi bên để con trỏ đặt sát ký tự phân cách vẫn nhận biết được span
     const { inline } = scanMarkdown(tree, doc, [
       { from: Math.max(0, range.from - 1), to: Math.min(doc.length, range.to + 1) }
     ])
@@ -110,7 +98,7 @@ export function toggleWrapChanges(
   })
 }
 
-/** Builds a Ctrl/Cmd-<key> command that toggles one delimiter on the selection, Word/Notion-style. */
+/** Tạo lệnh phím tắt bật/tắt ký tự phân cách trên vùng chọn. */
 function wrapCommand(delim: string, kind: InlineKind): Command {
   return (view) => {
     view.dispatch(
@@ -123,7 +111,7 @@ function wrapCommand(delim: string, kind: InlineKind): Command {
   }
 }
 
-/** Ctrl/Cmd-B: toggle `**bold**` on the selection. */
+/** Phím tắt Ctrl/Cmd-B: bật/tắt chữ đậm (`**bold**`) trên vùng chọn. */
 export const toggleBold = wrapCommand('**', 'bold')
-/** Ctrl/Cmd-I: toggle `*italic*` on the selection. */
+/** Phím tắt Ctrl/Cmd-I: bật/tắt chữ nghiêng (`*italic*`) trên vùng chọn. */
 export const toggleItalic = wrapCommand('*', 'italic')

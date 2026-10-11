@@ -20,8 +20,7 @@ export function useConnections(): ConnectionsController {
     }
   }, [store.load, store.reload])
 
-  // A failed rename, address change, switch or delete leaves its reason in `notice`; on a settings page
-  // that is a toast, as Hermes does, rather than nothing.
+  // Khi đổi tên, đổi địa chỉ, chuyển đổi hoặc xóa thất bại, lý do lỗi được lưu trong `notice`; hiển thị thông báo toast lỗi cho người dùng.
   useEffect(() => {
     if (store.notice === null) return
     notify({ kind: 'error', title: 'Không lưu được thay đổi', message: store.notice })

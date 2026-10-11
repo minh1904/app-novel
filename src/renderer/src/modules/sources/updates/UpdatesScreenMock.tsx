@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
-import { RefreshIcon } from '@solar-icons/react/linear/refresh'
+import { RefreshIcon } from '@renderer/components/ui/reicon'
+
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { Button } from '../../../components/ui/Button'
 import { ICON } from '../../../components/ui/icon'
@@ -10,12 +11,12 @@ interface Update {
   work: MockWork
   text: string
   source: string
-  /** The main action: translate the new chapters, or fetch them first for a paused work. */
+  /** Thao tác chính: dịch các chương mới, hoặc tải trước đối với tác phẩm đang tạm dừng. */
   action: string
   failed?: boolean
 }
 
-/** Fixed sample data: new source chapters of the works being followed. */
+/** Dữ liệu mẫu cố định: danh sách chương mới từ các tác phẩm đang theo dõi. */
 const DAYS: { day: string; updates: Update[] }[] = [
   {
     day: 'Hôm nay',
@@ -55,9 +56,8 @@ const DAYS: { day: string; updates: Update[] }[] = [
 ]
 
 /**
- * Picture of the feed of new source chapters (MOCK_FEATURES.updatesPage), like the Updates tab of a
- * reader app: Mira checks each followed source and offers to queue the new chapters. Needs the
- * Sources area of a work first. Nothing is fetched; every control is disabled.
+ * Giao diện mẫu hiển thị luồng cập nhật chương mới từ các nguồn đang theo dõi.
+ * Mọi nút điều khiển đều ở trạng thái vô hiệu hóa để minh họa giao diện.
  */
 export function UpdatesScreenMock(): JSX.Element {
   return (

@@ -89,13 +89,13 @@ describe('Tip', () => {
   })
 })
 
-// Every interactive component wears the keyboard focus mark (docs/modules/design-system/README.md).
+// Mọi thành phần tương tác đều phải có viền focus khi điều hướng bằng bàn phím.
 describe('focus', () => {
   const dir = __dirname
   const interactive = readdirSync(dir).filter(
     (name) =>
       name.endsWith('.tsx') &&
-      // A tooltip only describes its trigger, which carries its own focus mark.
+      // Tooltip chỉ mô tả trigger của nó, vốn đã có viền focus riêng.
       name !== 'Tooltip.tsx' &&
       /<(Base[A-Z]\w*|Toggle|BaseSelect\.Trigger|textarea|button)\b/.test(
         readFileSync(resolve(dir, name), 'utf8')
@@ -104,8 +104,8 @@ describe('focus', () => {
 
   it.each(interactive)('%s has a visible focus mark', (name) => {
     const text = readFileSync(resolve(dir, name), 'utf8')
-    // A component styled by a table in variants.ts gets the mark from that table; one that renders
-    // another component of this folder inherits it.
+    // Thành phần được định kiểu qua bảng biến thể nhận viền focus từ bảng đó; thành phần bọc
+    // component khác trong thư mục sẽ kế thừa viền focus.
     const tables = readFileSync(resolve(dir, 'variants.ts'), 'utf8')
       .split(/\nexport const /)
       .filter((block) => /focus(Within)?Ring/.test(block))

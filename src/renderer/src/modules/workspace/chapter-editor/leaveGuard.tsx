@@ -3,15 +3,15 @@ import { Button } from '../../../components/ui/Button'
 import { Dialog } from '../../../components/ui/Dialog'
 
 /**
- * Leaving a screen that holds unsaved typing. The screen registers what it can do (is it dirty,
- * save, drop its changes); anything that would take the screen away asks `confirmLeave` first and
- * only goes ahead when it answers true.
+ * Quản lý rời khỏi màn hình khi có nội dung chưa lưu. Màn hình đăng ký trạng thái
+ * (chưa lưu, lưu, hủy thay đổi); các thao tác điều hướng ra khỏi màn hình sẽ gọi `confirmLeave`
+ * trước và chỉ tiếp tục khi người dùng xác nhận cho phép.
  */
 export interface LeaveGuard {
   isDirty(): boolean
-  /** Saves; true when the text is now safe, false when the save failed (the screen shows why). */
+  /** Lưu nội dung; trả về true nếu đã lưu an toàn, false nếu thất bại (màn hình hiển thị lý do lỗi). */
   save(): Promise<boolean>
-  /** Throws the unsaved typing away and shows the stored text again. */
+  /** Hủy các thay đổi chưa lưu và khôi phục lại văn bản đã lưu trước đó. */
   discard(): Promise<void>
 }
 
@@ -19,9 +19,9 @@ export interface LeaveGuardRegistry {
   register(guard: LeaveGuard | null, workId?: string): void
   isDirty(workId?: string): boolean
   /**
-   * True when it is fine to go on. With unsaved typing it asks: save and go on, drop the changes,
-   * or stay. `reloadOnDiscard` also reloads the screen's text when the answer is "drop", for
-   * actions that keep the screen open.
+   * Trả về true khi có thể tiếp tục điều hướng. Nếu có nội dung chưa lưu, hiển thị hộp thoại hỏi:
+   * lưu và tiếp tục, hủy thay đổi, hoặc ở lại. `reloadOnDiscard` cũng tải lại nội dung màn hình
+   * khi chọn "hủy thay đổi", dành cho các hành động vẫn giữ màn hình mở.
    */
   confirmLeave(options?: { reloadOnDiscard?: boolean; workId?: string }): Promise<boolean>
 }
@@ -29,7 +29,7 @@ export interface LeaveGuardRegistry {
 export const LeaveGuardContext = createContext<LeaveGuardRegistry | null>(null)
 export const LeaveGuardScopeContext = createContext<string | null>(null)
 
-/** One registry for all mounted work editors; prompts can still target a single work. */
+/** Đăng ký chung cho tất cả các trình biên tập tác phẩm đang mở; cho phép hỏi theo từng tác phẩm cụ thể. */
 export function createLeaveGuardRegistry(
   request: (guard: LeaveGuard, reloadOnDiscard: boolean) => Promise<boolean>
 ): LeaveGuardRegistry {
@@ -54,7 +54,7 @@ export function createLeaveGuardRegistry(
   }
 }
 
-/** For the app shell: the registry and the dialog it asks with. */
+/** Dành cho vỏ ứng dụng: trả về registry và hộp thoại xác nhận khi rời màn hình. */
 export function useLeaveGuardRegistry(): { registry: LeaveGuardRegistry; dialog: JSX.Element } {
   const [pending, setPending] = useState<{
     resolve(answer: boolean): void
@@ -62,7 +62,7 @@ export function useLeaveGuardRegistry(): { registry: LeaveGuardRegistry; dialog:
     guard: LeaveGuard
   } | null>(null)
   const [saving, setSaving] = useState(false)
-  // One question at a time; a request while one is open means "no".
+  // Mỗi thời điểm chỉ xử lý một yêu cầu hỏi; yêu cầu mới khi đang mở hộp thoại sẽ trả về false.
   const [control] = useState(() => {
     let asking = false
     return {
@@ -125,8 +125,8 @@ export function useLeaveGuardRegistry(): { registry: LeaveGuardRegistry; dialog:
 }
 
 /**
- * For a screen with something to lose: registers it with the app. The app's one beforeunload
- * listener checks every registered guard, including hidden work tabs.
+ * Đăng ký guard cho màn hình có dữ liệu chưa lưu vào hệ thống ứng dụng.
+ * Sự kiện beforeunload của ứng dụng sẽ kiểm tra mọi guard đã đăng ký, bao gồm cả các tab tác phẩm đang ẩn.
  */
 export function useRegisterLeaveGuard(guard: LeaveGuard): void {
   const registry = useContext(LeaveGuardContext)

@@ -14,7 +14,7 @@ import { TextareaField } from '../../../components/ui/Field'
 import { TextField } from '../../../components/ui/Field'
 
 // -------------------------------------------------------------
-// Character Dialogs
+// Hộp thoại quản lý nhân vật
 // -------------------------------------------------------------
 
 interface EditCharacterDialogProps {
@@ -258,7 +258,7 @@ export function DeleteCharacterDialog({
 }
 
 // -------------------------------------------------------------
-// Dyad Dialogs
+// Hộp thoại quản lý quan hệ xưng hô (cặp nhân vật)
 // -------------------------------------------------------------
 
 interface EditDyadDialogProps {
