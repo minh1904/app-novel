@@ -1,6 +1,8 @@
 # Nghiên cứu tích hợp agent bên ngoài
 
-Cập nhật: 2026-10-11 · Trạng thái: **nghiên cứu và đề xuất, chưa chốt để triển khai**.
+Cập nhật: 2026-10-12 · Trạng thái: **đã bỏ**. Chủ sản phẩm thay hướng MCP bằng đăng nhập gói thuê bao
+và gateway CLIProxyAPI tự chạy (xem "Quyết định 2026-10-12" trong
+[ai-connections](../ai-connections/README.md)); trang này chỉ còn là lịch sử nghiên cứu.
 
 ## Kết luận
 

@@ -1,6 +1,7 @@
 # Kết nối AI
 
-Cập nhật: 2026-10-09 · Trạng thái: **Đã chốt hướng** (mục "Quyết định 2026-10-08"); phần giao diện **đã
+Cập nhật: 2026-10-12 · Trạng thái: **Đã chốt hướng** (mục "Quyết định 2026-10-12", sửa một phần "Quyết định
+2026-10-08"); phần giao diện **đã
 triển khai** (mục "Đã triển khai"); đăng nhập thuê bao và ba transport **có trong mã**, chưa thử với tài
 khoản thật (mục "Đã triển khai (change `subscription-providers`)"). Phần 1–2 là quan sát; phần 3–4 là đề xuất ngày 2026-10-07, đã bị quyết định mới thay ở các
 điểm ghi rõ. Chủ trì: chủ sản phẩm, kỹ thuật.
@@ -9,6 +10,50 @@ khoản thật (mục "Đã triển khai (change `subscription-providers`)"). Ph
 
 Người dịch kết nối nhà cung cấp AI, chọn model và đổi model trong lúc chat bằng giao diện nào? Phần nào
 của Hermes Desktop nên học theo, phần nào đã có backend để bấm được, và phần nào chỉ dựng giao diện?
+
+## Quyết định 2026-10-12: thuê bao qua TypeScript gốc và gateway tự chạy
+
+Chủ sản phẩm chốt hướng cho người dùng gói thuê bao. Kế hoạch triển khai nằm ở OpenSpec
+[`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md).
+**Chưa triển khai.**
+
+- **Đăng nhập trong app bằng TypeScript gốc** (mã thiết bị, chạy ở main):
+  - Codex và GitHub Copilot giữ đúng như change `subscription-providers` đã làm;
+  - thêm **Kimi Code** và **xAI Grok**, dùng lại `tokenStore`, làm mới một-lần-một-lúc, `FlowPanel` và thẻ
+    tài khoản.
+
+  Bộ nhà cung cấp MVP là Codex, Copilot, Kimi, xAI.
+- **Claude Pro/Max và Antigravity chỉ đi qua gateway CLIProxyAPI do người dùng tự chạy.** Mira không bao
+  giờ lưu token của hai loại này. Thẻ ghi "chỉ qua gateway tự chạy, rủi ro khóa tài khoản" và có link
+  hướng dẫn dựng gateway.
+- **Chế độ gateway hiểu CLIProxyAPI:**
+  - nhận diện gateway trên máy (mặc định `http://127.0.0.1:8317`);
+  - chỉ quản lý gateway loopback; khóa quản lý lưu bằng `safeStorage`, chỉ gửi tới đúng host đó;
+  - đăng nhập qua Management API v8;
+  - hạn mức hay usage chỉ hiện khi gateway trả về, còn lại là "không rõ";
+  - cảnh báo khi gateway nghe trên mọi giao diện mạng.
+- **Không tự chuyển sang API trả tiền hay nhà cung cấp khác.** Hết hạn mức thì dừng, kèm mốc đặt lại.
+  Nhiều tài khoản chỉ trong một nhà cung cấp, và người dùng phải tự bật.
+- **Không đóng gói CLIProxyAPI làm sidecar ở thời điểm này.** Lý do:
+  - file exe thứ hai khoảng 24 MB, không ký số;
+  - phát hành hằng tuần;
+  - token lưu thành file chữ thường;
+  - mặc định bật giả danh client;
+  - mặc định nghe trên mọi giao diện mạng.
+
+  Có thể mở lại thành change riêng. Sign in with ChatGPT cho Codex cũng có thể là change sau.
+- **Bỏ lát MCP `add-external-translation-worker`.** Git giữ lịch sử.
+
+**Quyết định này sửa "Quyết định 2026-10-08" ở các điểm sau:**
+
+- Dòng "Thẻ Claude của Mira dẫn sang khóa API Anthropic hoặc gateway tự dựng" trong mục Không làm được thay
+  bằng thẻ Claude Pro/Max "chỉ qua gateway tự chạy". Mira vẫn không giữ token Claude và không giả danh
+  Claude Code.
+- Mục "Đăng nhập Google qua Gemini CLI, Antigravity hay Code Assist" vẫn là Không làm **trong Mira**.
+  Antigravity chỉ được nhắc tới như một tài khoản nằm trong gateway của người dùng.
+- Danh sách đăng nhập trong app mở rộng từ hai (Codex, Copilot) lên bốn (thêm Kimi, xAI).
+- Luật "Chat tự chuyển sang dự phòng" (mục Đã triển khai bên dưới) không áp cho kết nối tài khoản thuê bao
+  và gateway CLIProxyAPI. Phần này sửa spec `model-defaults`.
 
 ## Quyết định 2026-10-08: cấu hình provider như Hermes
 
