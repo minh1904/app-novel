@@ -12,7 +12,7 @@ của một lượt.
 | Sản phẩm đã chốt điều gì? | [Quyết định](decisions.md) |
 | Làm agent theo thứ tự nào và gate hoàn thành là gì? | [Roadmap agent](agent-roadmap.md) |
 | Agent được tách thành những lát/spec nào, dựa trên nghiên cứu gì? | [Chương trình đặc tả Agent](agent-spec-program.md) — 6 change độc lập; lát 1 `repair-agent-runtime` đã triển khai (commit `e6090be`), lát 2–6 chưa; lát MCP đã bỏ |
-| Người dùng gói thuê bao (Kimi, xAI, Claude/Antigravity qua gateway) kết nối thế nào? | [`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md) — track riêng, chưa triển khai |
+| Người dùng gói thuê bao (Kimi, Claude/Antigravity qua gateway) kết nối thế nào? | [`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md) — track riêng, chưa triển khai |
 | Gemini CLI, Gemini web hoặc web app riêng có thể điều khiển Mira thế nào? | [Tích hợp agent bên ngoài](external-agent-integration.md) |
 | Session, turn, operation và task khác nhau thế nào? | [Phiên và tác vụ](sessions-and-jobs.md) |
 | Ghi dữ liệu và hoàn tác phải an toàn ra sao? | [Dữ liệu và an toàn](data-and-safety.md) |

@@ -19,10 +19,10 @@ Chủ sản phẩm chốt hướng cho người dùng gói thuê bao. Kế hoạ
 
 - **Đăng nhập trong app bằng TypeScript gốc** (mã thiết bị, chạy ở main):
   - Codex và GitHub Copilot giữ đúng như change `subscription-providers` đã làm;
-  - thêm **Kimi Code** và **xAI Grok**, dùng lại `tokenStore`, làm mới một-lần-một-lúc, `FlowPanel` và thẻ
+  - thêm **Kimi Code**, dùng lại `tokenStore`, làm mới một-lần-một-lúc, `FlowPanel` và thẻ
     tài khoản.
 
-  Bộ nhà cung cấp MVP là Codex, Copilot, Kimi, xAI.
+  Bộ nhà cung cấp MVP là Codex, Copilot, Kimi. xAI Grok được hoãn ("tạm thời chưa cần xAI").
 - **Claude Pro/Max và Antigravity chỉ đi qua gateway CLIProxyAPI do người dùng tự chạy.** Mira không bao
   giờ lưu token của hai loại này. Thẻ ghi "chỉ qua gateway tự chạy, rủi ro khóa tài khoản" và có link
   hướng dẫn dựng gateway.
@@ -51,7 +51,7 @@ Chủ sản phẩm chốt hướng cho người dùng gói thuê bao. Kế hoạ
   Claude Code.
 - Mục "Đăng nhập Google qua Gemini CLI, Antigravity hay Code Assist" vẫn là Không làm **trong Mira**.
   Antigravity chỉ được nhắc tới như một tài khoản nằm trong gateway của người dùng.
-- Danh sách đăng nhập trong app mở rộng từ hai (Codex, Copilot) lên bốn (thêm Kimi, xAI).
+- Danh sách đăng nhập trong app mở rộng từ hai (Codex, Copilot) lên ba (thêm Kimi).
 - Luật "Chat tự chuyển sang dự phòng" (mục Đã triển khai bên dưới) không áp cho kết nối tài khoản thuê bao
   và gateway CLIProxyAPI. Phần này sửa spec `model-defaults`.
 

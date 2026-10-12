@@ -1,7 +1,7 @@
 ## 1. Lưu trữ
 
 - [ ] 1.1 Migration thư viện (D8):
-  - dựng lại `ai_connection`: thêm `kimi`/`xai` vào CHECK, thêm cột `management_secret`;
+  - dựng lại `ai_connection`: thêm `kimi` vào CHECK, thêm cột `management_secret`;
   - dựng lại `ai_oauth_token` thành nhiều dòng mỗi kết nối, chép dữ liệu cũ thành `ord = 0`;
   - thêm fixture `library-vNN.schema.sql`.
 
@@ -9,36 +9,34 @@
   - test migration trên thư viện v10 có một kết nối Codex và một kết nối Copilot: token vẫn đọc được;
   - test backup/khôi phục.
 - [ ] 1.2 `connections.ts`, `oauthTokens.ts`:
-  - `OAuthProvider` thêm `kimi`, `xai`;
+  - `OAuthProvider` thêm `kimi`;
   - đọc/ghi nhiều tài khoản;
   - đọc/ghi `management_secret`, chỉ qua `SecretStore`.
 
   Kiểm: unit test; test từ chối lưu khi `safeStorage` không khả dụng.
 
-## 2. Kimi Code và xAI
+## 2. Kimi Code
 
 - [ ] 2.1 `accounts/kimi.ts` theo D1: xin mã, hỏi lại, làm mới, header `X-Msh-*` của Mira, device ID lưu
   cùng token, danh sách model kèm danh sách tĩnh. Kiểm: unit test bằng server giả cho
   `authorization_pending`, `slow_down`, `expired_token`, `access_denied`, làm mới 401.
-- [ ] 2.2 `accounts/xai.ts` theo D2: discovery có kiểm host, xin mã có `scope`, hỏi lại, làm mới bằng token
-  endpoint đã lưu, nhãn từ `id_token`. Kiểm: unit test cho discovery trả host lạ, `slow_down`, `invalid_grant`.
-- [ ] 2.3 `accountLogins.ts` và `accountCredentials.ts` dùng bảng theo nhà cung cấp; `LOGIN_HOSTS` theo nhà
-  cung cấp; làm mới trước 300 giây cho Kimi/xAI. Kiểm:
+- [ ] 2.2 `accountLogins.ts` và `accountCredentials.ts` dùng bảng theo nhà cung cấp; `LOGIN_HOSTS` theo nhà
+  cung cấp; làm mới trước 300 giây cho Kimi. Kiểm:
   - toàn bộ test Codex/Copilot hiện có vẫn xanh mà không sửa test;
   - test hai lời gọi song song chỉ gửi một refresh cho Kimi.
-- [ ] 2.4 `transportFactory.ts`: Kimi Chat Completions, xAI Responses `standard`; 401 thì làm mới một lần.
+- [ ] 2.3 `transportFactory.ts`: Kimi Chat Completions; 401 thì làm mới một lần.
   Kiểm: unit test bảng chọn transport và header.
 
 ## 3. Thẻ tài khoản
 
 - [ ] 3.1 Contract và IPC:
-  - `ACCOUNT_PROVIDERS` thêm `kimi`, `xai`;
+  - `ACCOUNT_PROVIDERS` thêm `kimi`;
   - `ACCOUNT_LABELS`, `ACCOUNT_NAMES`;
   - `ai:accounts:*` nhận nhà cung cấp mới.
 
   Kiểm: test schema IPC từ chối nhà cung cấp lạ.
 - [ ] 3.2 `AccountsPage` và onboarding:
-  - thẻ Kimi Code và xAI Grok, có cảnh báo điều khoản;
+  - thẻ Kimi Code, có cảnh báo điều khoản;
   - thẻ Claude Pro/Max và Antigravity ghi "Chỉ qua gateway tự chạy, rủi ro khóa tài khoản", có link hướng
     dẫn;
   - nút "Đăng nhập qua gateway" chỉ khi có gateway loopback có khóa quản lý, và hỏi xác nhận rủi ro.
@@ -77,14 +75,13 @@
 
 ## 6. Điều khoản, thử thật, tài liệu
 
-- [ ] 6.1 Trước khi phát hành, đọc và ghi lại điều khoản client bên thứ ba của Kimi Code và xAI. Câu hỏi:
-  - có cho dùng client ID của Kimi Code / Grok CLI từ ứng dụng khác không;
-  - request tới `api.x.ai` bằng token OAuth có tính vào gói không.
+- [ ] 6.1 Trước khi phát hành, đọc và ghi lại điều khoản client bên thứ ba của Kimi Code: có cho dùng
+  client ID của Kimi Code từ ứng dụng khác không.
 
-  Kiểm: ghi nguồn (URL, ngày đọc) vào `docs/modules/ai-connections/README.md`. Nếu điều khoản cấm, hoặc xAI
-  không tính vào gói, thì giữ thẻ ẩn và hỏi chủ sản phẩm.
+  Kiểm: ghi nguồn (URL, ngày đọc) vào `docs/modules/ai-connections/README.md`. Nếu điều khoản cấm thì giữ thẻ ẩn
+  và hỏi chủ sản phẩm.
 - [ ] 6.2 Thử thật với tài khoản của chủ sản phẩm:
-  - đăng nhập Kimi và xAI, dịch một lô, chat có tool;
+  - đăng nhập Kimi, dịch một lô, chat có tool;
   - ghi host thật của trang xác minh;
   - xem Kimi có nhận `X-Msh-Platform: Mira` không;
   - gateway CLIProxyAPI trên máy: đăng nhập một tài khoản, đọc credential và hạn mức.

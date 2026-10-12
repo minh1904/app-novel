@@ -39,7 +39,7 @@ dependency. Tiền tố link: `CPA = https://github.com/router-for-me/CLIProxyAP
 
 **Goals:**
 
-- Đăng nhập Kimi Code và xAI Grok trong Mira, cùng khung với Codex và Copilot.
+- Đăng nhập Kimi Code trong Mira, cùng khung với Codex và Copilot.
 - Claude Pro/Max và Antigravity dùng được qua gateway do người dùng tự chạy, và Mira không chạm token của
   chúng.
 - Chế độ gateway an toàn hơn: chỉ quản lý gateway loopback; khóa quản lý không rời main; cảnh báo khi gateway
@@ -62,14 +62,15 @@ dependency. Tiền tố link: `CPA = https://github.com/router-for-me/CLIProxyAP
 
   Kích thước và nhịp phát hành là số liệu chủ sản phẩm đưa ra ngày 2026-10-12. Có thể mở lại thành change
   riêng.
+- xAI Grok: chủ sản phẩm hoãn ngày 2026-10-12; nghiên cứu D2 cũ còn trong Git lịch sử (commit 084b160).
 - **Sign in with ChatGPT (SIWC) cho Codex.** Có thể là một change sau; Codex giữ mã thiết bị như hiện nay.
-- Mira tự làm OAuth cho Claude Pro/Max hay Antigravity, hoặc giả danh Claude Code, Grok CLI hay Kimi CLI.
+- Mira tự làm OAuth cho Claude Pro/Max hay Antigravity, hoặc giả danh Claude Code hay Kimi CLI.
 - Tự chuyển sang nhà cung cấp, model hay kết nối khác khi hết hạn mức.
 - Kimi bản `kimi.ai`. CLIProxyAPI có cả hai miền
   ([kimi.go#L30-L50](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/auth/kimi/kimi.go#L30-L50));
   MVP chỉ làm `kimi.com`.
 - Quản lý gateway ở xa (không phải loopback), TLS, cấu hình gateway từ Mira (sửa `config`), cài plugin.
-- Chip hạn mức cho Kimi/xAI gọi trực tiếp: chưa thấy endpoint hạn mức công khai, nên hiện "không rõ".
+- Chip hạn mức cho Kimi gọi trực tiếp: chưa thấy endpoint hạn mức công khai, nên hiện "không rõ".
 
 ## Decisions
 
@@ -118,72 +119,21 @@ Hằng số
   ([models.json#L3726-L3979](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/registry/models/models.json#L3726-L3979)).
   Chưa xác minh `/v1/models` có tồn tại trên `api.kimi.com/coding`.
 
-### D2. xAI Grok: discovery, mã thiết bị và Responses ở `api.x.ai`
+### D2. Đã hoãn
 
-Hằng số
-([types.go#L6-L32](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/auth/xai/types.go#L6-L32)):
-
-| Mục | Giá trị |
-| --- | --- |
-| Issuer | `https://auth.x.ai`, discovery ở `/.well-known/openid-configuration` |
-| Client ID (của Grok CLI) | `b1a00492-073a-47ea-816f-4c329264a828` |
-| Scope | `openid profile email offline_access grok-cli:access api:access` |
-| API chính thức | `https://api.x.ai/v1` |
-| Hỏi lại | tối thiểu 5 giây, tối đa 30 phút |
-| Làm mới trước hạn | 5 phút |
-
-- **Discovery:** đọc `device_authorization_endpoint` và `token_endpoint`. Mira chỉ chấp nhận URL `https` có
-  host là `x.ai` hoặc `*.x.ai`
-  ([xai.go#L47-L112](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/auth/xai/xai.go#L47-L112)).
-  Token endpoint được lưu cùng token để làm mới.
-- **Xin mã:** gửi form `client_id`, `scope`. Phải có `device_code`, `user_code` và một trong hai URL xác minh
-  ([xai.go#L123-L177](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/auth/xai/xai.go#L123-L177)).
-- **Hỏi lại:** như Kimi; `slow_down` cộng 5 giây. Nhãn tài khoản lấy từ claim `email` của `id_token`
-  ([xai.go#L263-L340](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/auth/xai/xai.go#L263-L340),
-  [#L464-L486](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/auth/xai/xai.go#L464-L486)).
-- **Làm mới:** gửi `grant_type=refresh_token` tới token endpoint đã lưu
-  ([xai.go#L373-L423](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/auth/xai/xai.go#L373-L423)).
-  `invalid_grant` hoặc 400/401/403 thì chuyển sang "Cần đăng nhập lại".
-- **Gọi model: Mira dùng `https://api.x.ai/v1/responses` với Bearer token OAuth, không dùng cli-chat-proxy.**
-  Với tài khoản OAuth, CLIProxyAPI mặc định đi qua `https://cli-chat-proxy.grok.com/v1` và gắn danh tính Grok
-  CLI:
-  - `User-Agent: xai-grok-workspace/<ver>`;
-  - `x-grok-client-identifier: grok-shell`;
-  - `X-XAI-Token-Auth: xai-grok-cli`;
-  - phiên bản client được ghim; bản cũ bị trả 426.
-
-  Nguồn:
-  [xai_executor_request.go#L253-L273](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/runtime/executor/xai_executor_request.go#L253-L273),
-  [#L347-L367](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/runtime/executor/xai_executor_request.go#L347-L367),
-  [xai_executor.go#L50-L62](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/runtime/executor/xai_executor.go#L50-L62).
-  Đó là giả danh, nên Mira không làm. Đường `using_api` của CLIProxyAPI gọi `/responses` trên `api.x.ai`
-  ([xai_executor_execute.go#L49](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/runtime/executor/xai_executor_execute.go#L49)).
-
-  **Chưa xác minh:** request ở `api.x.ai` có tính vào gói SuperGrok/X Premium không, hay trừ credit API. Task
-  6.1 phải trả lời trước khi phát hành. Nếu chỉ cli-chat-proxy dùng được gói, thì xAI native **không phát
-  hành**, và chủ sản phẩm quyết định lại.
-- **Danh sách model:** `GET /v1/models`. Không được thì dùng danh sách tĩnh
-  ([models.json#L4399-L4693](https://github.com/router-for-me/CLIProxyAPI/blob/a27799ec2b0cc5a60e49970d5467829ceaab8131/internal/registry/models/models.json#L4399-L4693)).
+Xem Non-Goals.
 
 ### D3. Dùng lại khung tài khoản, không thêm lớp mới
 
-- `OAuthProvider` và `ACCOUNT_PROVIDERS` thêm `kimi` và `xai`. `AccountLogins` và `AccountCredentials` đổi
+- `OAuthProvider` và `ACCOUNT_PROVIDERS` thêm `kimi`. `AccountLogins` và `AccountCredentials` đổi
   phần rẽ nhánh `codex ? … : …` thành bảng theo nhà cung cấp gồm `requestCode`, `poll`, `refresh`, `base` và
   `loginHosts`. Codex và Copilot giữ đúng hàm hiện có, không đổi hành vi.
-- `LOGIN_HOSTS` theo nhà cung cấp:
-  - Kimi: `kimi.com` và `*.kimi.com`;
-  - xAI: `x.ai` và `*.x.ai`.
+- `LOGIN_HOSTS` theo nhà cung cấp; Kimi: `kimi.com` và `*.kimi.com`.
 
   Mã CLIProxyAPI lấy URL xác minh từ phản hồi, nên host thật chưa biết. Task 6.2 ghi lại host thật; danh
   sách chỉ được sửa theo bằng chứng đó.
-- `AccountSecret` thêm các trường tùy chọn:
-  - `deviceId` cho Kimi;
-  - `tokenEndpoint` và `expiresAt` cho xAI.
-
-  Token không phải JWT có `exp` nên hạn lấy từ `expires_in`.
-- `transportFactory`:
-  - `kimi` dùng `chat_completions`, base `https://api.kimi.com/coding/v1`, header D1;
-  - `xai` dùng `responses` flavor `standard`, base `https://api.x.ai/v1`.
+- `AccountSecret` thêm trường tùy chọn `deviceId` cho Kimi.
+- `transportFactory`: `kimi` dùng `chat_completions`, base `https://api.kimi.com/coding/v1`, header D1.
 - 401 khi gọi model thì làm mới một lần rồi thử lại, như Codex.
 
 ### D4. Thẻ Claude Pro/Max và Antigravity: chỉ qua gateway
@@ -260,7 +210,7 @@ nút "Đăng nhập qua gateway" cho cả Claude và Antigravity, kèm xác nh�
   - Hủy bằng `DELETE /v8/management/oauth/session?state=`.
 
   Phiên dùng lại `FlowPanel`: polling không có ô OTP, chỉ có "Mở lại trang", "Đang chờ…" và Hủy. Provider
-  Mira cho chọn: `claude`, `codex`, `antigravity`, `kimi`, `xai`. Token nằm trong gateway; Mira không đọc
+  Mira cho chọn: `claude`, `codex`, `antigravity`, `kimi`. Token nằm trong gateway; Mira không đọc
   và không tải về (không gọi `/credentials/download`).
 - **Trạng thái credential:** `GET /v8/management/credentials`. Mỗi mục có `provider`, `email`, `status`,
   `status_message`, `disabled`, `unavailable` và `quota`
@@ -299,7 +249,7 @@ nút "Đăng nhập qua gateway" cho cả Claude và Antigravity, kèm xác nh�
 Một migration thư viện (số phiên bản lấy lúc triển khai, sau v11/v12 của chuỗi agent nếu chúng vào trước):
 
 1. Dựng lại `ai_connection`:
-   - `CHECK (oauth_provider IN ('codex', 'copilot', 'kimi', 'xai'))`;
+   - `CHECK (oauth_provider IN ('codex', 'copilot', 'kimi'))`;
    - thêm `management_secret BLOB`;
    - giữ chỉ mục unique theo `oauth_provider`.
 2. Dựng lại `ai_oauth_token`:
@@ -315,18 +265,16 @@ phục backup trước migration.
 
 ## Risks / Trade-offs
 
-- **Điều khoản bên thứ ba.** Hai client ID là của Kimi Code và Grok CLI (D1, D2). Nhà cung cấp có thể chặn,
+- **Điều khoản bên thứ ba.** Client ID là của Kimi Code (D1). Nhà cung cấp có thể chặn,
   hoặc khóa tài khoản. Mitigation:
-  - task 6.1 đọc ToS của Kimi và xAI trước khi phát hành;
+  - task 6.1 đọc ToS của Kimi trước khi phát hành;
   - thẻ có dòng cảnh báo như Codex/Copilot;
   - không giả danh.
-- **xAI có thể không tính vào gói** khi gọi `api.x.ai` (D2). Mitigation: task 6.1/6.2; không phát hành nếu
-  chưa rõ.
 - **Đăng nhập Claude/Antigravity qua gateway** có thể trái điều khoản của Anthropic/Google ngay cả khi Mira
   không giữ token (D4). Chủ sản phẩm chấp nhận rủi ro này (2026-10-12). Mitigation: chỉ có trên gateway của
   người dùng và có xác nhận rủi ro.
 - **API nội bộ đổi.** Endpoint Kimi `coding` và Management API v8 có thể đổi. Mọi hằng số nằm trong
-  `accounts/kimi.ts`, `accounts/xai.ts` và `gatewayManagement.ts`.
+  `accounts/kimi.ts` và `gatewayManagement.ts`.
 - **Khóa quản lý lộ ra LAN** nếu người dùng trỏ tới host khác. Mitigation: tính năng quản lý chỉ cho loopback.
 - **Bỏ tự chuyển dự phòng cho Codex/Copilot** là đổi hành vi đã có. Đó là hệ quả của quyết định "không tự
   chuyển", được ghi ở MODIFIED `model-defaults`.
@@ -334,11 +282,10 @@ phục backup trước migration.
 ## Migration Plan
 
 1. Migration thư viện (D8) cùng fixture và test.
-2. Kimi, rồi xAI, sau cờ "chưa phát hành": thẻ ẩn cho tới khi task 6.1–6.2 xong.
+2. Kimi, sau cờ "chưa phát hành": thẻ ẩn cho tới khi task 6.1–6.2 xong.
 3. Gateway: nhận diện, rồi khóa quản lý, rồi đăng nhập/trạng thái.
 4. Thẻ Claude/Antigravity và `shouldFallback`.
 
 ## Open Questions
 
-1. xAI: nếu chỉ cli-chat-proxy tính vào gói, có chấp nhận giả danh Grok CLI như đã chấp nhận header VS Code
-   cho Copilot không?
+Không có.

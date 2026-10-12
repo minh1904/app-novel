@@ -1,8 +1,8 @@
 ## ADDED Requirements
 
-### Requirement: Đăng nhập Kimi Code và xAI Grok bằng mã thiết bị
+### Requirement: Đăng nhập Kimi Code bằng mã thiết bị
 
-Bấm thẻ Kimi Code hoặc xAI Grok ở mục Tài khoản, hoặc trong onboarding, Mira SHALL bắt đầu đăng nhập bằng mã
+Bấm thẻ Kimi Code ở mục Tài khoản, hoặc trong onboarding, Mira SHALL bắt đầu đăng nhập bằng mã
 thiết bị, với cùng các trạng thái `FlowPanel` như Codex và Copilot:
 
 1. xin mã;
@@ -11,8 +11,7 @@ thiết bị, với cùng các trạng thái `FlowPanel` như Codex và Copilot:
 4. kết thúc ở thành công, bị từ chối, hết hạn, hủy hoặc lỗi.
 
 Mọi trao đổi mạng SHALL chạy ở main process. Mira SHALL chỉ mở trang xác minh có scheme `https` và host
-nằm trong danh sách của nhà cung cấp đó. Với xAI, Mira SHALL lấy endpoint qua OIDC discovery và từ chối
-endpoint không phải `https` trên `x.ai` hoặc `*.x.ai`. Hỏi lại SHALL theo `interval` nhà cung cấp cho, tối
+nằm trong danh sách của nhà cung cấp đó. Hỏi lại SHALL theo `interval` nhà cung cấp cho, tối
 thiểu 5 giây, và cộng thêm 5 giây khi nhận `slow_down`. Đăng nhập Codex và Copilot SHALL giữ nguyên hành vi
 hiện có.
 
@@ -21,31 +20,26 @@ hiện có.
 - **THEN** Mira lưu token đã mã hóa, tạo kết nối Kimi Code, thêm model vào danh sách và hiện màn chọn model
   mặc định
 
-#### Scenario: Discovery trả endpoint lạ
-- **WHEN** discovery của xAI trả `token_endpoint` có host không thuộc `x.ai`
-- **THEN** Mira dừng đăng nhập, báo lỗi và không gửi mã thiết bị tới host đó
-
 #### Scenario: Codex không đổi
 - **WHEN** người dùng đăng nhập Codex sau khi change này được áp dụng
 - **THEN** request, header và trạng thái giống hệt trước change
 
-### Requirement: Lưu, làm mới và gọi model của Kimi và xAI
+### Requirement: Lưu, làm mới và gọi model của Kimi
 
-Token Kimi và xAI SHALL chỉ được lưu đã mã hóa bằng `safeStorage`. Token SHALL không bao giờ về renderer.
+Token Kimi SHALL chỉ được lưu đã mã hóa bằng `safeStorage`. Token SHALL không bao giờ về renderer.
 Mira SHALL làm mới khi còn dưới 300 giây trước hạn, và làm mới một lần rồi thử lại khi API trả 401. Mỗi kết
 nối SHALL chỉ có một lần làm mới chạy cùng lúc, và refresh token mới SHALL được ghi ngay. Làm mới bị từ
 chối hẳn SHALL chuyển kết nối sang "Cần đăng nhập lại".
 
-Kimi SHALL dùng Chat Completions tại `https://api.kimi.com/coding/v1`. xAI SHALL dùng Responses tại
-`https://api.x.ai/v1`. Mira SHALL tự xưng là Mira và SHALL NOT gửi danh tính của Kimi CLI, Grok CLI hay
-client khác. Mira SHALL NOT gửi hostname của máy.
+Kimi SHALL dùng Chat Completions tại `https://api.kimi.com/coding/v1`. Mira SHALL tự xưng là Mira và
+SHALL NOT gửi danh tính của Kimi CLI hay client khác. Mira SHALL NOT gửi hostname của máy.
 
 #### Scenario: Refresh token Kimi bị từ chối
 - **WHEN** làm mới token Kimi nhận HTTP 401
 - **THEN** thẻ Kimi ghi "Cần đăng nhập lại", và lượt đang chạy báo lỗi kèm nút "Đăng nhập lại"
 
 #### Scenario: Hai lượt cùng cần làm mới
-- **WHEN** hai lượt dịch cùng thấy token xAI sắp hết hạn
+- **WHEN** hai lượt dịch cùng thấy token Kimi sắp hết hạn
 - **THEN** Mira chỉ gửi một request làm mới, và cả hai lượt dùng token mới
 
 ### Requirement: Claude Pro/Max và Antigravity chỉ qua gateway
@@ -104,7 +98,7 @@ Mira SHALL đăng nhập tài khoản trong gateway như sau:
 3. hỏi `GET /v8/management/oauth/status?state=<state>` mỗi 2 giây cho tới khi nhận `ok` hoặc `error`.
 
 Bấm Hủy SHALL gửi `DELETE /v8/management/oauth/session?state=<state>`. Provider được chọn SHALL nằm trong
-`claude`, `codex`, `antigravity`, `kimi`, `xai`. Mira SHALL NOT đọc hay tải về file credential của gateway.
+`claude`, `codex`, `antigravity`, `kimi`. Mira SHALL NOT đọc hay tải về file credential của gateway.
 
 #### Scenario: Hủy đăng nhập qua gateway
 - **WHEN** người dùng bấm Hủy khi gateway đang trả `wait`
@@ -151,5 +145,5 @@ bị đóng băng, Mira SHALL dừng lượt với mốc hồi sớm nhất. Khi
   bằng <model dự phòng>"
 
 #### Scenario: Hai tài khoản cùng nhà cung cấp
-- **WHEN** người dùng đã bật nhiều tài khoản cho xAI, và tài khoản 1 hết hạn mức
-- **THEN** lượt sau đi bằng tài khoản 2 của xAI; khi tài khoản 2 cũng hết, lượt dừng với mốc hồi sớm nhất
+- **WHEN** người dùng đã bật nhiều tài khoản cho Kimi, và tài khoản 1 hết hạn mức
+- **THEN** lượt sau đi bằng tài khoản 2 của Kimi; khi tài khoản 2 cũng hết, lượt dừng với mốc hồi sớm nhất
