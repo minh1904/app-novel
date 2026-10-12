@@ -1,17 +1,14 @@
-## 1. Structural gate
+## 1. Evaluator
 
-- [ ] 1.1 Xây pure validator cho item/attempt/revision/version/exact segment manifest/size; fixture test missing, duplicate, unknown, stale và valid payload.
-- [ ] 1.2 Đặt validator trước transaction commit cho internal/external result; test invalid batch không thay target/journal/progress.
-- [ ] 1.3 Đổi completion gate dựa trên committed coverage + required checks; test provider success nhưng conflict/thiếu segment không completed.
+- [ ] 1.1 Viết hàm thuần `evaluateTaskItem(snapshot, segments)` gọi `evaluateGlossaryCompliance`, `evaluateAddressingCompliance`, `checkResidualSourceChars`, `checkLengthOutliers`, `checkRepetitions`, `checkUnbalancedQuotes` với bead 1–1 theo segment; gán ruleCode/ruleVersion; miễn chữ gốc của mục glossary giữ nguyên.
+- [ ] 1.2 Fixture đúng và báo nhầm dễ gặp cho từng luật (alias chồng, tên giữ nguyên, thoại không nêu tên, đoạn dài hơn nguồn hợp lệ); test kết quả theo bản chụp, không theo Context hiện hành.
 
-## 2. Findings và rules
+## 2. Dismiss
 
-- [ ] 2.1 Thêm finding storage, rule version, dedupe key và lifecycle audit; kiểm schema snapshot, rerun cùng revision không nhân finding.
-- [ ] 2.2 Thêm glossary/proper-name/addressing/coverage rules dùng effective Context snapshot; fixture test true positive, negative và insufficient-context warning.
-- [ ] 2.3 Nối stale/resolved behavior sau edit/Undo/recheck; test evidence lịch sử không bị viết lại cho revision mới.
-- [ ] 2.4 Nếu thêm optional model review, tách request/budget/source/usage và default off; test external deterministic-only không gọi provider Mira.
+- [ ] 2.1 Migration work DB thêm `qa_dismissal` (khóa duy nhất ruleCode, ruleVersion, chapterId, segmentId, target hash), schema snapshot test.
+- [ ] 2.2 Service main đọc bản chụp qua `run_key` và target hiện tại, lọc dismiss; IPC đọc cảnh báo theo task/item và dismiss; test target đổi hoặc ruleVersion đổi làm cảnh báo hiện lại, dismiss không đổi target hay trạng thái item.
 
-## 3. UI và gate lát 6
+## 3. Màn Tác vụ
 
-- [ ] 3.1 Nối QA phase/progress và findings review/open-target/dismiss; test màu không là tín hiệu duy nhất và không có action sửa ngầm.
-- [ ] 3.2 Chạy fixture corpus đo false positives/negatives, E2E translated→checking→completed/needs_attention và `node scripts/check.mjs`; ghi rule nào chỉ là warning.
+- [ ] 3.1 Số cảnh báo mở trong tổng kết task, danh sách theo item, Mở đoạn, Bỏ qua kèm lý do tùy chọn; test không dùng màu làm tín hiệu duy nhất, không có nhãn “đúng 100%”, item không target hiện N/A.
+- [ ] 3.2 Chạy `node scripts/check.mjs`.

@@ -1,17 +1,21 @@
-## 1. Characterization và dữ liệu
+## 1. Work DB
 
-- [ ] 1.1 Characterize glossary/addressing/extraction/context snapshot hiện có và lập fixture approved/pending/rejected/scope; kiểm translation prompt hiện nhận dữ liệu nào.
-- [ ] 1.2 Bổ sung provenance và snapshot immutable nhỏ nhất nếu storage thiếu; kiểm migration/schema snapshot và run cũ vẫn đọc đúng sau sửa/xóa entry.
+- [ ] 1.1 Thêm migration work v14 (`term_type`, `review_flags`, `context_entry_evidence`, `context_extraction_scan`) trong `workSchema.ts`; test nâng cấp từ v13 có dữ liệu và mục cũ đọc được.
+- [ ] 1.2 Mở rộng `contextEntries.ts`: ghi ứng viên kèm bằng chứng và cờ trong một transaction, đọc bằng chứng/cờ, ghi/đọc chương đã quét; test alias trùng lưu cờ thay vì lỗi.
 
-## 2. Workflow Context
+## 2. Trích thuật ngữ và duyệt
 
-- [ ] 2.1 Thêm context preflight với ba lựa chọn và phase task; test không tự extraction/approve và waiting_review không giữ provider/lease.
-- [ ] 2.2 Nối extraction candidate có evidence + dedupe/conflict với entry approved; test lỗi extraction không đổi Context đã duyệt.
-- [ ] 2.3 Thêm review commands idempotent với revision guard, gồm edit-and-approve/reject/bulk; test partial bulk failure không báo thành công toàn bộ.
-- [ ] 2.4 Dùng một effective resolver cho prompt/panel/run detail; test scope chapter, pending/rejected exclusion và speech/narration conditional rule.
-- [ ] 2.5 Tạo snapshot tại item-start và nối prompt chỉ đọc snapshot; test 8/12 approved và retry cùng attempt dùng cùng payload/hash.
+- [ ] 2.1 Thêm `ContextExtractionService` tái dùng `glossaryExtraction.ts` cùng kiểm sản phẩm (trùng approved/pending, mở lại mục đã loại, sai hệ chữ, `not-a-term`); test bằng provider giả, gồm lỗi giữa chừng không đổi mục đã có và trích tăng dần.
+- [ ] 2.2 Nối lời gọi trích vào cổng ngân sách của task; test chạm trần → `paused(budget)` trước request.
+- [ ] 2.3 Thêm contract + IPC duyệt (approve, sửa rồi approve, reject, duyệt hàng loạt cùng loại) với guard `updatedAt`; test `conflict`, lô lẫn loại bị từ chối, lô có một mục lỗi trả kết quả từng mục.
 
-## 3. UI và gate lát 4
+## 3. Task
 
-- [ ] 3.1 Nối utility panel `Trợ lý | Ngữ cảnh` qua public surfaces; test tab/filter/search/selection/scroll/draft, dock/overlay focus và link activity đúng run.
-- [ ] 3.2 Chạy E2E extraction → review một phần → restart waiting_review → Continue → dịch; assert pending không vào prompt và chạy `node scripts/check.mjs`.
+- [ ] 3.1 Thêm `contextStrategy` bắt buộc vào lệnh tạo task và capability chat; test lệnh thiếu trường bị từ chối và không đường nào tự trích.
+- [ ] 3.2 Chạy bước trích trước item đầu, chuyển `waiting_user(context_review)` khi có mục mới; test restart khi chờ, không mục mới thì chạy tiếp, hủy không xóa ứng viên.
+- [ ] 3.3 Test characterization: duyệt 8/12 → bản chụp đúng 8 mục mới; mục ngoài phạm vi; xóa chương mốc; dòng `recipientPronoun`/`thirdPerson` trong prompt.
+
+## 4. UI và kiểm
+
+- [ ] 4.1 Tab Ngữ cảnh `Đang áp dụng` (chỉ đọc, cùng hàm bản chụp) và "Xem và duyệt" mở `GlossaryScreen` với bộ lọc `pending`; màn Từ điển hiện bằng chứng, cờ và lệnh duyệt.
+- [ ] 4.2 Chạy `node scripts/check.mjs`.

@@ -1,59 +1,106 @@
-## Purpose
-
-Cho phép người dùng thay đổi hướng dẫn của task đang chạy với phiên bản và điểm hiệu lực rõ ràng, không âm thầm sửa item đã commit hoặc thay snapshot của work đang thực thi.
-
 ## ADDED Requirements
 
-### Requirement: Steering là bản ghi bền có đích
-Mỗi steering SHALL lưu taskId, clientCommandId, actor, instruction/context delta, requested effective point, createdAt và trạng thái. Nội dung SHALL được validate như task input và không được chứa ID ngoài task scope. Gửi lại cùng clientCommandId/payload trả bản ghi cũ; cùng ID khác payload là conflict.
+### Requirement: Steering là bản ghi bền và idempotent
+Hệ thống SHALL lưu mỗi steering được chấp nhận trong library DB với taskId, clientCommandId, digest của payload,
+chương yêu cầu, `resolvedFromItem`, kind `instruction` hoặc `context_ref`, instruction text hoặc ref tới Context
+entry, trạng thái `accepted`, `applied` hoặc `superseded` và thời điểm tạo. Gửi lại cùng clientCommandId với
+cùng digest SHALL trả record đã có; cùng clientCommandId với digest khác SHALL bị từ chối là `conflict`.
 
-#### Scenario: Chỉ dẫn từ chương 8
-- **WHEN** người dùng gửi “từ chương 8 dùng cách xưng hô mới”
-- **THEN** Mira resolve chapter 8 thành item ordinal và lưu steering pending với điểm hiệu lực đó
+#### Scenario: Gửi lại cùng lệnh
+- **WHEN** chat gửi lại steering với cùng clientCommandId và cùng nội dung sau khi mất phản hồi
+- **THEN** hệ thống trả record cũ và không tạo record thứ hai
 
-#### Scenario: Đích ngoài task
-- **WHEN** steering nêu chapter không thuộc task
-- **THEN** Mira yêu cầu làm rõ hoặc từ chối, không mở rộng phạm vi task
+#### Scenario: Cùng ID khác nội dung
+- **WHEN** một lệnh dùng lại clientCommandId đã có nhưng instruction text khác
+- **THEN** hệ thống trả `conflict` và không đổi record cũ
 
-### Requirement: Item chưa bắt đầu nhận version mới
-Scheduler SHALL chọn instruction/context version tại lúc item chuyển từ queued sang running và lưu snapshot. Steering mặc định chỉ áp dụng item chưa bắt đầu ở hoặc sau điểm hiệu lực. Item completed, failed có commit hoặc running SHALL giữ version đã chốt trừ khi người dùng chọn workflow redo riêng.
+### Requirement: Validate đồng bộ, lệnh bị từ chối không để lại record
+Hệ thống SHALL validate steering ngay khi nhận và trả kết quả trong cùng lệnh. Hệ thống SHALL từ chối kèm lý do,
+không tạo record, khi task đã ở trạng thái kết thúc hoặc đang `cancelling`, khi chương yêu cầu không thuộc task
+hoặc không xác định được đúng một chương, hoặc khi không còn item `queued` ở hoặc sau chương yêu cầu. Khi chấp
+nhận, hệ thống SHALL trả item thực sự bắt đầu áp dụng.
 
-#### Scenario: Chapter 7 đang chạy
-- **WHEN** chapter 7 đã running và steering có hiệu lực từ chapter 8
-- **THEN** chapter 7 giữ version cũ; chapter 8 trở đi chọn version mới
+#### Scenario: Chương ngoài task
+- **WHEN** task gồm chương 1–30 và người dùng yêu cầu áp từ chương 45
+- **THEN** hệ thống từ chối với lý do chương không thuộc task và không có record nào được tạo
 
-#### Scenario: Steering đến muộn
-- **WHEN** chapter 8 đã running trước lúc steering được commit
-- **THEN** Mira báo điểm hiệu lực sớm nhất là item chưa bắt đầu tiếp theo, không nói chapter 8 đã dùng chỉ dẫn mới
+#### Scenario: Chương mơ hồ
+- **WHEN** yêu cầu nêu “chương kế” mà không resolve được đúng một chương
+- **THEN** hệ thống từ chối, chat hỏi lại chương cụ thể
 
-### Requirement: Đổi item đang chạy phải pause và làm rõ phần đã commit
-Nếu người dùng yêu cầu áp steering cho item running, Mira SHALL yêu cầu pause ở batch boundary. Sau pause, UI SHALL hiển thị batch đã commit và cho chọn giữ phần đó rồi áp cho phần còn lại, Undo/redo theo operation hợp lệ, hoặc áp từ item sau. Không tự xóa hoặc dịch lại phần đã commit.
+#### Scenario: Task đã hủy
+- **WHEN** task ở `cancelled`
+- **THEN** steering bị từ chối và task không chạy lại
 
-#### Scenario: Hai batch đã commit
-- **WHEN** người dùng muốn đổi instruction cho chapter đang chạy sau hai batch
-- **THEN** task pause an toàn và chưa chạy version mới cho tới khi người dùng chọn cách xử lý
+### Requirement: Hiệu lực từ item kế tiếp chưa bắt đầu
+Hệ thống SHALL đặt `resolvedFromItem` là item `queued` đầu tiên ở hoặc sau chương yêu cầu theo thứ tự task. Item
+đang chạy, đã xong, lỗi hoặc bỏ qua SHALL giữ snapshot đã pin. Việc nhận steering và việc pin snapshot của item
+SHALL được thực hiện tuần tự trong task runner để mỗi item hoặc dùng toàn bộ nội dung cũ hoặc toàn bộ nội dung
+mới. Câu trả lời cho người dùng SHALL nêu chương thực sự áp dụng.
 
-### Requirement: Steering, pause và cancel được serialize
-Task coordinator SHALL serialize steering với pause/cancel/item-start bằng stateVersion hoặc equivalent guard. Cancel thắng mọi steering chưa áp dụng; pause giữ steering pending; Continue áp version mới nếu precondition còn hợp lệ. Hai steering liên tiếp SHALL có thứ tự bền; steering sau có thể supersede phần chưa chạy nhưng không xóa audit.
+#### Scenario: Chương yêu cầu đang chạy
+- **WHEN** chương 8 đang `running` và người dùng yêu cầu áp từ chương 8
+- **THEN** hệ thống chấp nhận với `resolvedFromItem` là chương 9 và trả lời rằng áp dụng từ chương 9
 
-#### Scenario: Cancel đồng thời steering
-- **WHEN** cancel được chấp nhận trước steering commit
-- **THEN** steering không áp dụng và task không khởi động item mới
+#### Scenario: Chương 7 đang chạy
+- **WHEN** chương 7 đang chạy và steering áp từ chương 8 được chấp nhận
+- **THEN** chương 7 giữ snapshot cũ, chương 8 pin snapshot có nội dung mới
 
-#### Scenario: Hai chỉ dẫn cùng điểm hiệu lực
-- **WHEN** steering B được tạo sau A cho cùng field/chapter range
-- **THEN** B là version effective mới, A được đánh dấu superseded cho phạm vi chưa chạy và lịch sử vẫn đọc được
+#### Scenario: Task đang tạm dừng
+- **WHEN** task `paused` nhận steering rồi người dùng bấm Continue
+- **THEN** item kế tiếp pin snapshot có nội dung mới
 
-### Requirement: Context steering vẫn qua review
-Steering thêm/sửa glossary, nhân vật hoặc xưng hô SHALL đi qua Context validation/review hiện hành. Nó không tự approve candidate. Instruction text thuần có thể được chấp nhận trực tiếp trong phạm vi task; UI SHALL phân biệt instruction override với thay đổi dữ liệu Context bền.
+### Requirement: Instruction thay thế toàn văn và vào snapshot của item
+Mỗi steering `instruction` SHALL chứa toàn văn instruction có hiệu lực từ `resolvedFromItem`. Khi item pin snapshot,
+hệ thống SHALL chọn text của record `instruction` không `superseded`, tạo muộn nhất, có `resolvedFromItem` không
+sau item đó, và lưu text này vào snapshot của item; không có record thì snapshot không có instruction. Record được
+item dùng lần đầu SHALL chuyển `applied` trong cùng transaction pin. Record còn `accepted` SHALL chuyển
+`superseded` khi một record tạo sau có điểm hiệu lực không sau điểm của nó.
 
-#### Scenario: Thêm thuật ngữ giữa task
-- **WHEN** người dùng thêm mapping mới qua steering
-- **THEN** entry phải approved trước khi snapshot item sau chứa mapping; task có thể chờ review
+#### Scenario: Hai instruction liên tiếp
+- **WHEN** A áp từ chương 10, rồi B áp từ chương 10 được tạo trước khi chương 10 chạy
+- **THEN** A thành `superseded`, chương 10 trở đi dùng text của B
 
-### Requirement: Người dùng thấy điểm hiệu lực thực tế
-Task detail SHALL hiển thị timeline steering, trạng thái pending/effective/superseded/rejected, item đầu tiên thực sự dùng version và link tới instruction/context diff. Tổng kết SHALL nêu chapter nào dùng version nào khi task có nhiều version.
+#### Scenario: Instruction đã dùng không bị supersede
+- **WHEN** A đã `applied` cho chương 10–12 và B áp từ chương 13
+- **THEN** A vẫn `applied`, chương 13 trở đi dùng B
 
-#### Scenario: Task hoàn tất qua hai version
-- **WHEN** chapter 1–7 dùng v1 và 8–30 dùng v2
-- **THEN** kết quả task thể hiện hai khoảng và không gộp như toàn bộ dùng chỉ dẫn cuối
+#### Scenario: Retry dùng instruction cũ
+- **WHEN** item chương 10 được retry sau khi có instruction mới áp từ chương 10 nhưng chương 10 đã pin trước đó
+- **THEN** retry dùng snapshot đã pin với instruction cũ
+
+### Requirement: Đổi xưng hô từ chương N không để cặp chồng nhau
+Steering `context_ref` SHALL chỉ được gửi khi người dùng xác nhận. Khi đổi cặp xưng hô người nói → người nghe từ
+chương E (chương của `resolvedFromItem`), hệ thống SHALL, trong một transaction work DB, đặt `toChapterId` của cặp
+cũ đang có hiệu lực ở E thành chương liền trước E theo vị trí trong tác phẩm và thêm cặp mới đã duyệt với
+`fromChapterId` là E; sau đó mới ghi record library. Hệ thống SHALL từ chối khi cặp cũ bắt đầu ở hoặc sau E.
+Hủy task SHALL không hoàn tác Context đã ghi.
+
+#### Scenario: Xưng hô mới từ chương 8
+- **WHEN** người dùng xác nhận đổi cách A gọi B từ chương 8 và chương 8 chưa chạy
+- **THEN** cặp cũ kết thúc ở chương 7, cặp mới bắt đầu ở chương 8, và snapshot chương 8 chỉ có cặp mới
+
+#### Scenario: Hủy task sau khi đổi xưng hô
+- **WHEN** task bị hủy sau khi steering đổi cặp xưng hô được chấp nhận
+- **THEN** cặp xưng hô mới và khoảng đã đóng của cặp cũ vẫn giữ nguyên
+
+#### Scenario: Gửi lại sau lỗi giữa hai DB
+- **WHEN** work DB đã commit nhưng ghi record library lỗi, và lệnh được gửi lại cùng clientCommandId
+- **THEN** hệ thống nhận ra cặp đã tạo, không tạo cặp thứ hai và ghi record library
+
+### Requirement: Đại từ ngôi ba theo chương bị từ chối
+Hệ thống SHALL từ chối steering đổi đại từ ngôi ba (`thirdPerson`) của nhân vật từ một chương, với lý do trường này
+chưa có phạm vi chương và hướng dẫn sửa cho cả tác phẩm ở Ngữ cảnh.
+
+#### Scenario: Đổi “hắn” thành “y” từ chương 12
+- **WHEN** người dùng yêu cầu từ chương 12 người kể gọi nhân vật X là “y”
+- **THEN** hệ thống từ chối kèm lý do, không tạo record và không sửa nhân vật
+
+### Requirement: Người dùng thấy điểm hiệu lực thật
+Màn Tác vụ SHALL liệt kê steering của task với chương yêu cầu, chương thực sự áp dụng, loại và trạng thái, và SHALL
+hiển thị instruction mà từng item đã pin. Hệ thống SHALL không nói steering áp cho chương đã chạy trước khi nó
+được chấp nhận.
+
+#### Scenario: Task xong qua hai instruction
+- **WHEN** chương 1–7 không có instruction và chương 8–30 pin instruction B
+- **THEN** màn Tác vụ cho thấy chương 1–7 không có instruction và chương 8–30 dùng B

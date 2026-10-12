@@ -1,6 +1,6 @@
 # Roadmap Trợ lý AI
 
-Cập nhật: 2026-10-11 · Trạng thái: **roadmap hiện hành**.
+Cập nhật: 2026-10-12 · Trạng thái: **roadmap hiện hành**.
 
 ## Đích sản phẩm
 
@@ -21,18 +21,21 @@ Các mục trên chỉ xác nhận thành phần tồn tại. Chúng chưa chứ
 
 ## Bộ OpenSpec theo lát
 
-Roadmap được triển khai qua bảy change độc lập, không apply như một change lớn:
+Roadmap được triển khai qua sáu change độc lập, không apply như một change lớn:
 
-1. [`repair-agent-runtime`](../../../openspec/changes/repair-agent-runtime/proposal.md) — nối và nghiệm thu foundation.
+1. [`repair-agent-runtime`](../../../openspec/changes/repair-agent-runtime/proposal.md) — nối và nghiệm thu foundation. **Đã triển khai** (commit `e6090be`), chưa archive.
 2. [`add-agent-conversation`](../../../openspec/changes/add-agent-conversation/proposal.md) — model/tool loop và chat toàn ứng dụng.
 3. [`add-durable-translation-tasks`](../../../openspec/changes/add-durable-translation-tasks/proposal.md) — task dịch dải chương.
 4. [`add-agent-context-workflow`](../../../openspec/changes/add-agent-context-workflow/proposal.md) — extraction, review và snapshot Context.
 5. [`add-agent-steering`](../../../openspec/changes/add-agent-steering/proposal.md) — điều chỉnh phần chưa chạy có điểm hiệu lực.
 6. [`add-translation-task-qa`](../../../openspec/changes/add-translation-task-qa/proposal.md) — kiểm cấu trúc và nhất quán.
-7. [`add-external-translation-worker`](../../../openspec/changes/add-external-translation-worker/proposal.md) — MCP local/external inference.
 
-Nguồn khảo sát, dependency graph và bài học từ Hermes, Gemini CLI, LangGraph, OpenAI Agents SDK và MCP
-nằm tại [Chương trình đặc tả Agent](agent-spec-program.md). Change sau chỉ bắt đầu khi gate dependency
+Lát 7 MCP (`add-external-translation-worker`) đã bỏ ngày 2026-10-12; Git giữ lịch sử. Người dùng gói thuê
+bao đi theo track riêng [`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md),
+không nằm trong chuỗi agent.
+
+Nguồn khảo sát, dependency graph và bài học từ Hermes, Gemini CLI, LangGraph và OpenAI Agents SDK nằm tại
+[Chương trình đặc tả Agent](agent-spec-program.md). Change sau chỉ bắt đầu khi gate dependency
 đã có bằng chứng runtime; trạng thái OpenSpec `complete` của foundation cũ không thay thế gate này.
 
 ## 0. Nối và kiểm chứng foundation

@@ -1,16 +1,22 @@
-## 1. Version và command
+## 1. Snapshot và prompt
 
-- [ ] 1.1 Thêm schema instruction version/steering record cùng audit/index; kiểm migration, full materialization/hash và version không bị sửa tại chỗ.
-- [ ] 1.2 Thêm resolver requested chapter/item → effective ordinal và command idempotency; test ngoài scope, mơ hồ, cùng key cùng/khác payload.
+- [ ] 1.1 Thêm `instruction?: string` vào `ContextSnapshot` và `TranslatePromptContext`; `takeContextSnapshot` nhận instruction, `promptFromSnapshot` chép sang; test hash snapshot không đổi khi vắng instruction.
+- [ ] 1.2 Bộ dựng prompt đặt instruction trong thẻ riêng ở message user, thoát thẻ, tăng `TRANSLATE_PROMPT_VERSION`; test system prompt không đổi giữa hai item khác instruction và request dựng lại từ trace trùng hash.
+- [ ] 1.3 Lần chụp so sánh của từng batch dùng instruction đã pin; test steering mới không làm batch báo “Context đổi”.
 
-## 2. Scheduler integration
+## 2. Record và validate
 
-- [ ] 2.1 Serialize steering/pause/cancel/item-start bằng coordinator + stateVersion; concurrency test xác định đúng bên thắng ở từng ordering.
-- [ ] 2.2 Chốt instruction/context version trong transaction `queued → running`; test running/completed item giữ version cũ và item tương lai dùng version mới.
-- [ ] 2.3 Thêm workflow pause/decision khi muốn đổi item running; test committed batches không bị xóa hoặc redo ngầm.
-- [ ] 2.4 Nối Context steering qua review owner; test pending mapping không xuất hiện trong snapshot item sau trước approval.
+- [ ] 2.1 Library v13: bảng `agent_task_steering`, fixture `library-v13.schema.sql`, backup test.
+- [ ] 2.2 Lệnh steering trong task runner: validate (task kết thúc/`cancelling`, ngoài scope, mơ hồ, không còn item `queued`), idempotency theo clientCommandId + digest, trả `effectiveFromItem`; test mỗi lý do từ chối không tạo record.
+- [ ] 2.3 Pin item chọn instruction hiện hành, chuyển `accepted → applied` cùng transaction; supersede record `accepted` bị thay; test pin trước/sau steering, retry dùng snapshot cũ, Continue sau pause.
 
-## 3. UI và gate lát 5
+## 3. Context
 
-- [ ] 3.1 Nối chat capability + task timeline/diff/status superseded; test summary map chapter ranges tới version thực tế.
-- [ ] 3.2 E2E task 10 items với steering trước/đúng/sau item-start, hai steering cạnh tranh và restart; chạy `node scripts/check.mjs`.
+- [ ] 3.1 `context_ref` cho cặp xưng hô: đóng `toChapterId` cặp cũ + thêm cặp mới từ chương E trong một transaction work DB, ID cặp suy từ `(taskId, clientCommandId)`; test không chồng khoảng qua `listDyads`, từ chối khi cặp cũ bắt đầu từ E, gửi lại sau lỗi library, hủy task không hoàn tác.
+- [ ] 3.2 Từ chối đổi `thirdPerson` theo chương kèm lý do; test không sửa nhân vật.
+
+## 4. Chat và màn Tác vụ
+
+- [ ] 4.1 Chat capability đọc instruction hiện hành, gửi steering sau khi người dùng xác nhận, trả lời theo `effectiveFromItem`; form tương đương ở màn Tác vụ.
+- [ ] 4.2 Màn Tác vụ liệt kê steering (chương yêu cầu, chương áp dụng, loại, trạng thái) và instruction mỗi item đã pin.
+- [ ] 4.3 E2E task 10 chương với steering trước/đúng lúc/sau item start và restart; chạy `node scripts/check.mjs`.

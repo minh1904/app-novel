@@ -1,74 +1,133 @@
-## Purpose
-
-Chuẩn bị Context cho task dịch bằng extraction có bằng chứng, review của người dùng và snapshot tái hiện được; chỉ dữ liệu đã duyệt, đúng phạm vi mới đi vào model.
-
 ## ADDED Requirements
 
-### Requirement: Preflight chọn chiến lược Context rõ ràng
-Trước khi task dịch cần Context, Mira SHALL cho người dùng chọn dùng Context đã duyệt hiện có, chạy extraction rồi review, hoặc tiếp tục không extraction. Lựa chọn SHALL được lưu trên task. Mira SHALL không tự chạy extraction tốn inference hoặc tự chấp nhận candidate chỉ vì task dịch đã được cấp quyền.
+### Requirement: Task dịch hỏi lựa chọn Context, không có mặc định
+Khi tạo task dịch, Mira SHALL hỏi người dùng: trích thuật ngữ rồi duyệt, hoặc dịch ngay bằng Context đã duyệt.
+Lệnh tạo task SHALL mang lựa chọn này (`contextStrategy`) và Mira SHALL từ chối lệnh thiếu lựa chọn. Khi task
+được yêu cầu từ chat, model SHALL hỏi người dùng thay vì tự chọn. Mira SHALL không bao giờ tự chạy trích thuật
+ngữ khi người dùng chưa chọn.
 
-#### Scenario: Dùng Context hiện có
-- **WHEN** người dùng chọn dịch bằng Context đã duyệt hiện tại
-- **THEN** task chụp effective Context mà không tạo extraction run mới
+#### Scenario: Dịch ngay bằng Context đã duyệt
+- **WHEN** người dùng chọn dịch ngay bằng Context đã duyệt
+- **THEN** task không gọi model trích thuật ngữ và mỗi item dùng bản chụp Context đã duyệt khi bắt đầu chạy
 
-#### Scenario: Yêu cầu extraction
-- **WHEN** người dùng chọn trích thuật ngữ trước dịch
-- **THEN** task tạo bước extraction riêng và chưa giao item dịch cho tới khi review được giải quyết
+#### Scenario: Yêu cầu từ chat không nói về Context
+- **WHEN** người dùng nhắn "dịch chương 1–30" mà không nói có trích thuật ngữ hay không
+- **THEN** model hỏi người dùng chọn một trong hai cách trước khi tạo task, và không task nào được tạo cho tới khi có câu trả lời
 
-### Requirement: Candidate có nguồn và bằng chứng
-Extraction SHALL tạo candidate `pending` với loại, source form, đề xuất, chapter/segment evidence, model/run identity và phạm vi đề xuất. Candidate giống entry hiện có SHALL được đối chiếu thay vì tạo bản sao mù. Lỗi extraction SHALL không thay đổi entry approved.
+#### Scenario: Lệnh tạo task thiếu lựa chọn
+- **WHEN** lệnh tạo task tới main không có `contextStrategy`
+- **THEN** Mira từ chối lệnh bằng lỗi kiểm tra và không tạo task
 
-#### Scenario: Thuật ngữ mới
-- **WHEN** model đề xuất một thuật ngữ từ chapter 3
-- **THEN** pending entry giữ đoạn bằng chứng và liên kết extraction run để người dùng kiểm tra
+### Requirement: Trích thuật ngữ lưu ứng viên có bằng chứng
+Khi task chọn trích thuật ngữ, Mira SHALL quét các chương trong phạm vi task chưa từng được quét và lưu mỗi
+ứng viên thành mục Context `pending`, `origin = ai`, kèm loại thuật ngữ và ít nhất một bằng chứng gồm định danh
+lần chạy, chương, câu trích nguyên văn, model và hash prompt. Mira SHALL ghi nhận chương đã quét để lần sau
+không quét lại. Mỗi lời gọi model trích thuật ngữ SHALL được tính vào ngân sách của task và kiểm trước request.
+Lỗi trích thuật ngữ SHALL không thay đổi mục Context đã có.
 
-#### Scenario: Trùng entry approved
-- **WHEN** candidate có cùng source form/phạm vi với entry approved
-- **THEN** UI nêu entry hiện có và khác biệt đề xuất, không tự tạo quy tắc cạnh tranh
+#### Scenario: Thuật ngữ mới từ chương 3
+- **WHEN** model đề xuất một tên riêng xuất hiện ở chương 3
+- **THEN** Mira lưu mục `pending` với câu trích từ chương 3, định danh lần chạy, model và hash prompt
 
-### Requirement: Review là hàng rào trước prompt
-Người dùng SHALL approve, edit-and-approve hoặc reject candidate. Chỉ entry approved và effective ở item SHALL được đưa vào snapshot. Pending/rejected SHALL không đi vào prompt. Bulk approve SHALL hiển thị số lượng/phạm vi và áp dụng cùng validation như từng mục.
+#### Scenario: Trích tăng dần
+- **WHEN** chương 1–10 đã được quét và task mới gồm chương 1–20 chọn trích thuật ngữ
+- **THEN** Mira chỉ gửi chương 11–20 cho model
 
-#### Scenario: Review một phần
-- **WHEN** có 12 candidate, 8 approved, 2 rejected và 2 còn pending
-- **THEN** snapshot dịch chỉ có 8 entry mới approved cùng Context approved trước đó
+#### Scenario: Chạm trần ngân sách khi đang trích
+- **WHEN** lời gọi trích tiếp theo sẽ vượt trần lời gọi của task
+- **THEN** task chuyển `paused` với reason `budget` trước request, và các chương chưa quét vẫn được quét khi tiếp tục
 
-#### Scenario: Sửa trước duyệt
-- **WHEN** người dùng đổi bản dịch đề xuất rồi approve
-- **THEN** snapshot dùng giá trị đã sửa và audit giữ candidate gốc + quyết định cuối
+#### Scenario: Model lỗi giữa chừng
+- **WHEN** provider trả lỗi khi đang trích chương 5
+- **THEN** mục đã duyệt không đổi và chương 5 không được ghi là đã quét
 
-### Requirement: Effective Context đúng chương và loại nội dung
-Resolver Context SHALL áp dụng scope toàn truyện/chapter range/character relation và trạng thái theo luật Context hiện hành. Quy tắc lời thoại/lời kể SHALL giữ điều kiện sử dụng, không hạ thành replace-all. Kết quả SHALL có lý do vì sao mỗi entry effective hoặc bị loại khi cần chẩn đoán.
+### Requirement: Kiểm ứng viên bằng code trước khi lưu
+Mira SHALL bỏ ứng viên trùng dạng nguồn với mục đã duyệt hoặc đang chờ duyệt. Mira SHALL bỏ ứng viên trùng mục
+đã loại, trừ khi ứng viên có câu trích từ chương chưa có trong bằng chứng cũ; khi đó mục được mở lại thành
+`pending` với cờ mở lại. Khi alias của ứng viên đã thuộc mục khác, Mira SHALL vẫn lưu ứng viên với cờ xung đột
+alias và không báo lỗi ghi. Khi tên Nhật có bản dịch không phải chữ Latin, hoặc tên Trung có bản dịch không phải
+chữ tiếng Việt, Mira SHALL gắn cờ sai hệ chữ và không tự sửa. Ứng viên model phân loại là không phải thuật ngữ
+SHALL được lưu là `rejected` để không đề xuất lại.
 
-#### Scenario: Entry ngoài phạm vi
-- **WHEN** glossary chỉ áp dụng chương 1–10 và item là chương 11
-- **THEN** entry không có trong snapshot chương 11
+#### Scenario: Alias trùng với mục khác
+- **WHEN** ứng viên "彰" có alias "アキ" trong khi "アキ" đã là alias của một mục khác
+- **THEN** ứng viên được lưu `pending` không kèm alias đó, mang cờ xung đột alias nêu "アキ", và lần trích không lỗi
+
+#### Scenario: Mục đã loại không quay lại
+- **WHEN** model đề xuất lại "先生" đã bị loại, chỉ với câu trích từ chương đã có trong bằng chứng cũ
+- **THEN** Mira không tạo mục mới và mục cũ vẫn `rejected`
+
+#### Scenario: Tên Trung bị phiên âm Latin
+- **WHEN** tác phẩm tiếng Trung có ứng viên loại người với bản dịch "Li Wei"
+- **THEN** ứng viên được lưu `pending` với cờ sai hệ chữ và bản dịch giữ nguyên
+
+### Requirement: Task chờ duyệt không giữ tài nguyên
+Sau bước trích, nếu có mục `pending` mới, Mira SHALL chuyển task sang `waiting_user` với reason `context_review`,
+giữ các item ở `queued`, và SHALL không giữ provider request, write intent hay khóa editor trong lúc chờ. Khi
+người dùng tiếp tục, Mira SHALL chạy item mà không bắt buộc duyệt hết. Hủy task SHALL không xóa ứng viên.
+
+#### Scenario: Đóng app khi chờ duyệt
+- **WHEN** app đóng lúc task đang `waiting_user(context_review)` rồi mở lại
+- **THEN** task vẫn `waiting_user(context_review)`, ứng viên còn nguyên và không item nào chạy
+
+#### Scenario: Không có ứng viên mới
+- **WHEN** bước trích không tạo mục `pending` nào
+- **THEN** task chạy item đầu tiên mà không dừng chờ duyệt
+
+### Requirement: Chỉ mục đã duyệt và đúng phạm vi vào prompt
+Mira SHALL dựng Context của mỗi item bằng resolver hiện có (`getEffectiveGlossary`, `getEffectiveDyadsForChapter`)
+qua `takeContextSnapshot`, chỉ lấy mục `approved` có phạm vi chứa chương của item. Mục `pending` và `rejected`
+SHALL không vào prompt. Mira SHALL đưa xưng hô trong lời thoại và đại từ người kể vào prompt như hai chỉ dẫn có
+nhãn riêng và SHALL không áp phép thay chuỗi nào lên bản dịch. Mira SHALL coi Context đã đổi khi hash bản chụp
+dựng từ kho khác hash bản chụp đã ghim của item.
+
+#### Scenario: Duyệt một phần
+- **WHEN** lần trích tạo 12 ứng viên, người dùng duyệt 8, loại 2, để 2 chờ duyệt rồi tiếp tục
+- **THEN** bản chụp của item có 8 mục mới cùng các mục đã duyệt trước đó, không có 4 mục còn lại
+
+#### Scenario: Mục ngoài phạm vi
+- **WHEN** mục chỉ áp dụng chương 1–10 và item là chương 11
+- **THEN** mục không có trong bản chụp của chương 11
 
 #### Scenario: Bố trong lời thoại, ông trong lời kể
-- **WHEN** quy tắc phân biệt speech/narration được duyệt
-- **THEN** prompt giữ chỉ dẫn điều kiện, không tạo phép thay toàn bộ một từ thành một giá trị
+- **WHEN** cặp A→B có `recipientPronoun = "bố"` và nhân vật B có `thirdPerson = "ông"`
+- **THEN** prompt gửi cả hai, mỗi giá trị kèm nhãn lời thoại hoặc lời kể, và không có phép thay chuỗi nào
 
-### Requirement: Snapshot tái hiện được input đã gửi
-Mỗi translation item/attempt SHALL tham chiếu snapshot bất biến chứa nội dung normalized thực đã gửi hoặc phiên bản immutable có thể đọc lại, cùng entry IDs/revisions, instruction version và createdAt. Sửa/xóa Context sau đó SHALL không đổi snapshot cũ. Pending state không được “sống lại” qua tham chiếu mutable.
+#### Scenario: Xóa chương làm mốc phạm vi
+- **WHEN** mục có phạm vi tới chương 10 và chương 10 bị xóa
+- **THEN** mốc cuối thành không giới hạn nên mục áp cho các chương sau, item đã ghim bản chụp không đổi, còn item bắt đầu sau đó nhận mục
 
-#### Scenario: Glossary đổi sau khi dịch
-- **WHEN** người dùng sửa entry sau khi item hoàn tất
-- **THEN** chi tiết run vẫn hiển thị giá trị cũ đã dùng và run mới dùng revision mới
+### Requirement: Lệnh duyệt có guard và duyệt hàng loạt trong một loại
+Mira SHALL cung cấp lệnh approve, sửa rồi approve, và reject kèm lý do cho mục `pending`; mỗi lệnh SHALL mang
+`updatedAt` người dùng đã thấy và Mira SHALL từ chối bằng `conflict` khi mục đã đổi. Duyệt hàng loạt SHALL chỉ
+nhận các mục cùng loại thuật ngữ, SHALL áp dụng cùng kiểm tra như từng mục và SHALL trả kết quả từng mục; mục
+lỗi SHALL không được báo thành công. Approve SHALL vẫn kiểm trùng dạng nguồn và alias như mọi lần ghi Context.
 
-### Requirement: Task chờ review không giữ tài nguyên ghi
-Task waiting_review SHALL không giữ write lease, provider request hoặc editor lock. Người dùng có thể review từ activity hoặc màn Context; Continue SHALL kiểm lại task/revision và tạo snapshot trước item tiếp theo. Cancel khi chờ review SHALL không tự xóa candidate.
+#### Scenario: Sửa rồi duyệt
+- **WHEN** người dùng đổi bản dịch đề xuất rồi approve
+- **THEN** mục `approved` mang giá trị đã sửa và bằng chứng của lần trích vẫn còn
 
-#### Scenario: Đóng app khi chờ review
-- **WHEN** app đóng và mở lại
-- **THEN** task vẫn waiting_review, candidate còn nguyên và chưa có item dịch chạy ngầm
+#### Scenario: Mục đã đổi ở nơi khác
+- **WHEN** người dùng approve với `updatedAt` cũ hơn giá trị trong kho
+- **THEN** Mira trả `conflict` và mục giữ nguyên
 
-### Requirement: Side panel Ngữ cảnh dùng chung nguồn dữ liệu
-Trong màn chương, side panel SHALL có `Trợ lý | Ngữ cảnh`; tab Ngữ cảnh mặc định `Đang áp dụng`, có `Tất cả` và `Chờ duyệt`, tìm kiếm và sửa/duyệt nhanh. Nó SHALL đọc/ghi qua module Context hiện có; màn Context đầy đủ tiếp tục xử lý import, lọc nâng cao và bulk. Chuyển tab giữ draft chat, filter, selection và scroll hợp lý.
+#### Scenario: Duyệt hàng loạt lẫn loại
+- **WHEN** lệnh duyệt hàng loạt gồm một mục loại người và một mục loại địa danh
+- **THEN** Mira từ chối lệnh và không mục nào đổi trạng thái
 
-#### Scenario: Mở review từ activity
-- **WHEN** activity báo 12 mục cần duyệt và người dùng chọn Xem và duyệt
-- **THEN** panel mở tab Ngữ cảnh, filter pending của đúng work/run và focus heading phù hợp
+#### Scenario: Một mục trong lô bị trùng alias
+- **WHEN** duyệt hàng loạt 5 tên người và một mục có alias trùng mục đã duyệt
+- **THEN** 4 mục được approve, mục còn lại báo `conflict` và vẫn `pending`
 
-#### Scenario: Chỉnh cùng một entry ở hai bề mặt
-- **WHEN** entry được approve trong side panel
-- **THEN** màn quản lý đầy đủ và task đọc cùng trạng thái, không có bản sao trong agent store
+### Requirement: Tab Ngữ cảnh chỉ hiện Context đang áp dụng
+Trong màn chương, tab Ngữ cảnh của side panel SHALL hiển thị Context đang áp dụng cho chương hiện tại, dựng bằng
+cùng hàm với bản chụp dịch, và SHALL chỉ đọc. Hành động "Xem và duyệt" từ tab này hoặc từ activity của task
+`context_review` SHALL mở màn Từ điển hiện có của tác phẩm với bộ lọc `Chờ duyệt`.
+
+#### Scenario: Mở duyệt từ activity
+- **WHEN** activity báo task chờ duyệt 12 mục và người dùng chọn "Xem và duyệt"
+- **THEN** màn Từ điển của đúng tác phẩm mở với bộ lọc `Chờ duyệt`
+
+#### Scenario: Mục pending không hiện là đang áp dụng
+- **WHEN** chương hiện tại có một mục `pending` khớp nội dung
+- **THEN** tab Ngữ cảnh không liệt kê mục đó
