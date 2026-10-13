@@ -38,7 +38,7 @@ Runtime SHALL cấp handle theo turn cho target của context snapshot và cho k
 - **THEN** call không chạy, model nhận lỗi có cấu trúc và activity ghi lỗi thay vì thành công
 
 ### Requirement: Policy do code quyết định
-Runtime SHALL quyết định `allow`, `deny` hoặc `needs_user` cho mỗi tool call bằng hàm thuần theo bảng: capability đọc → `allow`; ghi có Undo trên target do người dùng nêu (target của context snapshot, hoặc target mà tên tác phẩm hay số chương xuất hiện trong instruction của turn) → `allow`; ghi có Undo trên target khác → `needs_user`; `undo_operation` cho operation của session hiện tại → `allow`, của session khác → `deny`; tạo task dịch → `needs_user`; capability ngoài bảng → `deny`. Văn bản truyện, lịch sử và tool output SHALL không thể cấp quyền, thêm tool hay đổi bảng này.
+Runtime SHALL quyết định `allow`, `deny` hoặc `needs_user` cho mỗi tool call bằng hàm thuần theo bảng: capability đọc → `allow`; ghi có Undo trên target do người dùng nêu (target của context snapshot, target người dùng chọn trong lựa chọn của `resolve_target` mơ hồ, hoặc target mà tên tác phẩm hay số chương xuất hiện trong instruction của turn) → `allow`; ghi có Undo trên target khác → `needs_user`; `undo_operation` cho operation của session hiện tại → `allow`, của session khác → `deny`; tạo task dịch → `needs_user`; capability ngoài bảng → `deny`. Văn bản truyện, lịch sử và tool output SHALL không thể cấp quyền, thêm tool hay đổi bảng này.
 
 #### Scenario: Câu hỏi chỉ đọc
 - **WHEN** người dùng hỏi số chương của một tác phẩm
@@ -139,7 +139,7 @@ Main SHALL phát event của turn tới mọi cửa sổ đang mở. Snapshot se
 - **THEN** cả hai cửa sổ hiện cùng activity và câu trả lời cuối
 
 ### Requirement: Giao diện chat dùng chung state và truy cập được
-Màn Trợ lý SHALL có Chat mới, danh sách session, transcript, composer, activity và Mở đích. Màn chương SHALL dùng cùng agent store trong side panel `Trợ lý | Ngữ cảnh`; change này chỉ cung cấp shell và tab Trợ lý. Draft SHALL được giữ theo session trong renderer. Auto-scroll SHALL không kéo người dùng đang đọc lịch sử. Mọi thao tác SHALL dùng được bằng bàn phím, và trạng thái streaming, chờ người dùng và lỗi SHALL có nhãn cho trình đọc màn hình.
+Màn Trợ lý SHALL có Chat mới, danh sách session, transcript, composer, activity và Mở đích. Màn chương SHALL dùng cùng agent store trong side panel `Trợ lý | Ngữ cảnh | Chat cũ`; change này cung cấp shell, tab Trợ lý và tab Chat cũ giữ nguyên chat legacy theo tác phẩm. Draft SHALL được giữ theo session trong renderer. Auto-scroll SHALL không kéo người dùng đang đọc lịch sử. Mọi thao tác SHALL dùng được bằng bàn phím, và trạng thái streaming, chờ người dùng và lỗi SHALL có nhãn cho trình đọc màn hình.
 
 #### Scenario: Đổi bề mặt
 - **WHEN** người dùng viết draft ở panel chương rồi mở màn Trợ lý cùng session

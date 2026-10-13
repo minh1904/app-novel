@@ -127,7 +127,7 @@ tất call đó bằng handle được chọn.
 | Capability | Điều kiện | Quyết định |
 | --- | --- | --- |
 | kind `read`, `resolve_target` | luôn | `allow` |
-| kind `reversible-write` | target là `ctx`, hoặc nhãn tác phẩm/số chương có trong instruction (chuẩn hóa) | `allow` (có Undo) |
+| kind `reversible-write` | target là `ctx`, đích người dùng chọn trong pending action `ambiguous`, hoặc nhãn tác phẩm/số chương có trong instruction (chuẩn hóa) | `allow` (có Undo) |
 | kind `reversible-write` | target khác | `needs_user` |
 | `undo_operation` | operation thuộc session hiện tại | `allow` |
 | `undo_operation` | operation thuộc session khác | `deny` |
@@ -193,8 +193,11 @@ lên bản của nó; `openspec validate` chấp nhận, nhưng archive cần sp
 
 ### D9. UI
 
-Màn Trợ lý thuộc module `agent`, compose ở `app/screens`. Side panel `Trợ lý | Ngữ cảnh` là shell của
-workspace; `AgentPanel` và state thuộc `agent`, dùng qua `public.ts`. Tab Ngữ cảnh là placeholder. Draft theo
+Màn Trợ lý thuộc module `agent`, compose ở `app/screens`. Side panel `Trợ lý | Ngữ cảnh | Chat cũ` là
+shell của workspace; `AgentPanel` và state thuộc `agent`, dùng qua `public.ts`. Tab Ngữ cảnh là
+placeholder. Tab Chat cũ chứa `AiPanel` legacy nguyên vẹn để dữ liệu và proposal theo tác phẩm vẫn đọc,
+duyệt được (chủ sản phẩm chốt 2026-10-13); tay nắm đổi bề rộng chuyển từ `AiPanel` ra dock để mọi tab
+dùng chung. Draft theo
 session là state mới của `agentStore`, chỉ ở renderer. Pending action hiện thành nút lựa chọn trong transcript.
 Drawer ở cửa sổ hẹp trap/restore focus; panel dock không trap.
 
