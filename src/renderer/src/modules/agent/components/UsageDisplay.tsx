@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import type { TokenUsage } from '../../../../../shared/contracts/usage'
+import { Badge } from '../../../components/ui/Badge'
 
 export interface UsageDisplayProps {
   usage: TokenUsage | null | undefined
@@ -9,7 +10,7 @@ export interface UsageDisplayProps {
 export function UsageDisplay({ usage, costUsd }: UsageDisplayProps): JSX.Element {
   if (!usage) {
     return (
-      <div className="mt-1 flex items-center gap-1.5 text-label-xs text-neutral-400">
+      <div className="flex items-center gap-2xs text-label-xs text-muted">
         <span>Token:</span>
         <span>— (Provider không báo lượng dùng)</span>
       </div>
@@ -36,15 +37,11 @@ export function UsageDisplay({ usage, costUsd }: UsageDisplayProps): JSX.Element
       : ''
 
   return (
-    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-label-xs text-neutral-500 dark:text-neutral-400">
-      <span className="font-medium text-neutral-600 dark:text-neutral-300">Lượng dùng:</span>
+    <div className="flex flex-wrap items-center gap-2xs text-label-xs text-muted">
+      <span className="text-subtle">Lượng dùng:</span>
       <span>{parts.join(' · ')}</span>
       {costLabel && <span>{costLabel}</span>}
-      {usage.complete === false && (
-        <span className="rounded bg-amber-50 px-1 py-0.2 text-label-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-          Chưa đầy đủ
-        </span>
-      )}
+      {usage.complete === false && <Badge color="warning">Chưa đầy đủ</Badge>}
     </div>
   )
 }

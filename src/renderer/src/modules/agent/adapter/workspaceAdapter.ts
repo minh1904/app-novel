@@ -14,6 +14,11 @@ export interface TargetEditorHandler {
   reload: (rev?: number) => Promise<void>
 }
 
+export interface ContextLabels {
+  work?: string
+  chapter?: string
+}
+
 export function targetKey(target: TargetRef): string {
   return `${target.workId}:${target.chapterId ?? '*'}:${target.side ?? '*'}`
 }
@@ -31,18 +36,42 @@ export function isTargetMatch(a: TargetRef, b: TargetRef): boolean {
  */
 export class WorkspaceAgentAdapter {
   private activeContextGetter: (() => AgentContext | null) | null = null
+  private labelsGetter: (() => ContextLabels) | null = null
+  private readonly contextListeners = new Set<() => void>()
+  private contextVersion = 0
   private readonly registeredHandlers = new Map<string, TargetEditorHandler>()
   private readonly lockedTargets = new Set<string>()
 
   /** Register provider for current user focus context (workId, chapterId, range) */
-  setActiveContextGetter(getter: () => AgentContext | null): void {
+  setActiveContextGetter(getter: () => AgentContext | null, labels?: () => ContextLabels): void {
     this.activeContextGetter = getter
+    this.labelsGetter = labels ?? null
+    this.contextChanged()
   }
 
   /** Captures current context snapshot; returns {} if outside workspace (HomeScreen, etc.) */
   captureContext(): AgentContext {
     return this.activeContextGetter?.() ?? {}
   }
+
+  /** Names the composer shows on its context chips. */
+  contextLabels(): ContextLabels {
+    return this.labelsGetter?.() ?? {}
+  }
+
+  /** The workspace moved the caret or selection; composers re-read their chips. */
+  contextChanged(): void {
+    this.contextVersion++
+    for (const listener of this.contextListeners) listener()
+  }
+
+  /** For `useSyncExternalStore`: subscribe and a version that changes with the context. */
+  subscribeContext = (listener: () => void): (() => void) => {
+    this.contextListeners.add(listener)
+    return () => this.contextListeners.delete(listener)
+  }
+
+  contextSnapshot = (): number => this.contextVersion
 
   /** Registers editor handler for a specific (workId, chapterId, side) */
   registerEditor(target: TargetRef, handler: TargetEditorHandler): () => void {

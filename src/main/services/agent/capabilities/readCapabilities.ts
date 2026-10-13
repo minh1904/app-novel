@@ -2,18 +2,34 @@ import * as v from 'valibot'
 import { readSideContents, readText } from '../../../infra/storage/textFile'
 import type { CapabilityDefinition } from '../types'
 
+/** Characters of one side `read_chapter` returns per call; longer chapters are read by `offset`. */
+export const READ_CHAPTER_PAGE = 20_000
+
+export const TARGET_PARAM = {
+  type: 'string',
+  description:
+    'Handle của đích do resolve_target hoặc ngữ cảnh cấp (ví dụ "ctx", "t1"). Không dùng ID.'
+}
+
+const targetOnly = {
+  type: 'object' as const,
+  properties: { target: TARGET_PARAM },
+  required: ['target']
+}
+
+// Results carry labels and numbers, never IDs: a target reaches a capability only as a turn handle.
 export const listWorksCapability: CapabilityDefinition<Record<string, never>> = {
   name: 'list_works',
   description: 'Liệt kê danh sách các tác phẩm có trong thư viện.',
   kind: 'read',
   schema: v.object({}),
+  parameters: { type: 'object', properties: {}, required: [] },
   targetPolicy: 'no_target',
   handler: async ({ library }) => {
     const { works } = library.list()
     return {
       ok: true,
       value: works.map((w) => ({
-        id: w.id,
         title: w.title,
         sourceLang: w.sourceLang,
         chapterCount: w.chapterCount,
@@ -27,28 +43,25 @@ export const listWorksCapability: CapabilityDefinition<Record<string, never>> = 
   })
 }
 
-export const listChaptersCapability: CapabilityDefinition<{ workId?: string }> = {
+export const listChaptersCapability: CapabilityDefinition<Record<string, never>> = {
   name: 'list_chapters',
   description: 'Liệt kê danh sách các chương của tác phẩm.',
   kind: 'read',
-  schema: v.object({
-    workId: v.optional(v.string())
-  }),
-  targetPolicy: 'target_optional',
-  handler: async ({ library, target, args }) => {
-    const workId = target?.workId ?? args.workId
-    if (!workId) {
+  schema: v.object({}),
+  parameters: targetOnly,
+  targetPolicy: 'requires_target',
+  handler: async ({ library, target }) => {
+    if (!target) {
       return {
         ok: false,
-        error: { code: 'validation', message: 'Cần chỉ định workId hoặc target tác phẩm.' }
+        error: { code: 'validation', message: 'Cần target tác phẩm.' }
       }
     }
     try {
-      const chapters = library.listChapters(workId)
+      const chapters = library.listChapters(target.workId)
       return {
         ok: true,
         value: chapters.map((c) => ({
-          id: c.id,
           number: c.number,
           title: c.title,
           updatedAt: c.updatedAt
@@ -64,21 +77,41 @@ export const listChaptersCapability: CapabilityDefinition<{ workId?: string }> =
       }
     }
   },
-  activityAdapter: ({ target, args }) => ({
-    label: `Đọc danh mục chương (${target?.workLabel ?? args.workId ?? 'tác phẩm'})`,
+  activityAdapter: ({ target }) => ({
+    label: `Đọc danh mục chương (${target?.workLabel ?? 'tác phẩm'})`,
     kind: 'read'
   })
 }
 
+interface ChapterPage {
+  content: string
+  rev: number
+  totalChars: number
+  nextOffset: number | null
+}
+
 export const readChapterCapability: CapabilityDefinition<{
   side?: 'source' | 'target' | 'both'
+  offset?: number
 }> = {
   name: 'read_chapter',
-  description: 'Đọc nội dung văn bản gốc hoặc bản dịch của một chương.',
+  description:
+    'Đọc nội dung văn bản gốc hoặc bản dịch của một chương theo trang ' +
+    `(tối đa ${READ_CHAPTER_PAGE} ký tự mỗi phía). Còn tiếp thì gọi lại với offset = nextOffset.`,
   kind: 'read',
   schema: v.object({
-    side: v.optional(v.picklist(['source', 'target', 'both']))
+    side: v.optional(v.picklist(['source', 'target', 'both'])),
+    offset: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)))
   }),
+  parameters: {
+    type: 'object',
+    properties: {
+      target: TARGET_PARAM,
+      side: { type: 'string', enum: ['source', 'target', 'both'] },
+      offset: { type: 'integer', minimum: 0, description: 'Ký tự bắt đầu, mặc định 0.' }
+    },
+    required: ['target']
+  },
   targetPolicy: 'requires_target',
   handler: async ({ library, target, args }) => {
     if (!target || target.kind !== 'chapter') {
@@ -88,19 +121,21 @@ export const readChapterCapability: CapabilityDefinition<{
       }
     }
     const side = args.side ?? 'both'
+    const offset = args.offset ?? 0
     return library.withWork(target.workId, (workDb) => {
-      const result: {
-        source?: { content: string; rev: number }
-        target?: { content: string; rev: number }
-      } = {}
-      if (side === 'source' || side === 'both') {
-        const text = readText(workDb, target.chapterId, 'source')
-        result.source = { content: text.content, rev: text.rev }
+      const page = (which: 'source' | 'target'): ChapterPage => {
+        const text = readText(workDb, target.chapterId, which)
+        const end = offset + READ_CHAPTER_PAGE
+        return {
+          content: text.content.slice(offset, end),
+          rev: text.rev,
+          totalChars: text.content.length,
+          nextOffset: end < text.content.length ? end : null
+        }
       }
-      if (side === 'target' || side === 'both') {
-        const text = readText(workDb, target.chapterId, 'target')
-        result.target = { content: text.content, rev: text.rev }
-      }
+      const result: { source?: ChapterPage; target?: ChapterPage } = {}
+      if (side === 'source' || side === 'both') result.source = page('source')
+      if (side === 'target' || side === 'both') result.target = page('target')
       return { ok: true, value: result }
     })
   },
@@ -118,6 +153,11 @@ export const readSegmentsCapability: CapabilityDefinition<{ side: 'source' | 'ta
   schema: v.object({
     side: v.picklist(['source', 'target'])
   }),
+  parameters: {
+    type: 'object',
+    properties: { target: TARGET_PARAM, side: { type: 'string', enum: ['source', 'target'] } },
+    required: ['target', 'side']
+  },
   targetPolicy: 'requires_target',
   handler: async ({ library, target, args }) => {
     if (target?.kind !== 'chapter') {
@@ -157,6 +197,15 @@ export const searchWorkCapability: CapabilityDefinition<{
     query: v.pipe(v.string(), v.minLength(1)),
     side: v.optional(v.picklist(['source', 'target']))
   }),
+  parameters: {
+    type: 'object',
+    properties: {
+      target: TARGET_PARAM,
+      query: { type: 'string', minLength: 1 },
+      side: { type: 'string', enum: ['source', 'target'] }
+    },
+    required: ['target', 'query']
+  },
   targetPolicy: 'requires_target',
   handler: async ({ library, target, args }) => {
     if (!target) {
@@ -167,20 +216,24 @@ export const searchWorkCapability: CapabilityDefinition<{
     }
     const side = args.side ?? 'source'
     const q = args.query.toLowerCase()
+    const chapters = new Map(library.listChapters(target.workId).map((c) => [c.id, c]))
     return library.withWork(target.workId, (workDb) => {
       const sideContents = readSideContents(workDb, side)
-      const matches: Array<{ chapterId: string; snippet: string }> = []
+      const matches: Array<{ chapterNumber: number; chapterTitle: string; snippet: string }> = []
       for (const [chapterId, content] of sideContents) {
         const idx = content.toLowerCase().indexOf(q)
-        if (idx !== -1) {
+        const chapter = chapters.get(chapterId)
+        if (idx !== -1 && chapter) {
           const from = Math.max(0, idx - 30)
           const to = Math.min(content.length, idx + q.length + 30)
           matches.push({
-            chapterId,
+            chapterNumber: chapter.number,
+            chapterTitle: chapter.title,
             snippet: content.slice(from, to)
           })
         }
       }
+      matches.sort((a, b) => a.chapterNumber - b.chapterNumber)
       return { ok: true, value: { matches, totalMatches: matches.length } }
     })
   },
@@ -195,6 +248,7 @@ export const listGlossaryCapability: CapabilityDefinition<Record<string, never>>
   description: 'Đọc bảng thuật ngữ hiệu lực cho chương.',
   kind: 'read',
   schema: v.object({}),
+  parameters: targetOnly,
   targetPolicy: 'requires_target',
   handler: async ({ library, target }) => {
     if (target?.kind !== 'chapter') {
@@ -217,6 +271,7 @@ export const listAddressingCapability: CapabilityDefinition<Record<string, never
   description: 'Đọc các cặp xưng hô hiệu lực cho chương.',
   kind: 'read',
   schema: v.object({}),
+  parameters: targetOnly,
   targetPolicy: 'requires_target',
   handler: async ({ library, target }) => {
     if (target?.kind !== 'chapter') {

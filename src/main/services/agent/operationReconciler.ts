@@ -70,7 +70,7 @@ export function reconcileStartupOperations(
         totalUnits: 0,
         reason: 'missing_work_target'
       })
-      touchedTurnIds.add(op.turnId)
+      if (op.turnId) touchedTurnIds.add(op.turnId)
       continue
     }
 
@@ -171,7 +171,7 @@ export function reconcileStartupOperations(
       totalUnits,
       reason
     })
-    touchedTurnIds.add(op.turnId)
+    if (op.turnId) touchedTurnIds.add(op.turnId)
   }
 
   // Reconcile unsettled turns

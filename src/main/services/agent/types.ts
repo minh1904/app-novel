@@ -42,6 +42,12 @@ export interface CapabilityDefinition<TArgs = any, TResult = any> {
   description: string
   kind: CapabilityKind
   schema: v.GenericSchema<TArgs>
+  /**
+   * Hand-written JSON Schema (OpenAI tool format) of the arguments the model sends. Present means the
+   * capability is offered in chat. A `target` property is a turn handle the runtime swaps for the
+   * resolved target before `schema` validates the rest; the repo has no valibot → JSON Schema export.
+   */
+  parameters?: { type: 'object'; properties: Record<string, unknown>; required: string[] }
   budget?: CapabilityBudget
   targetPolicy: 'requires_target' | 'no_target' | 'target_optional'
   handler: (input: CapabilityExecutionInput<TArgs>) => Promise<CapabilityExecutionResult<TResult>>

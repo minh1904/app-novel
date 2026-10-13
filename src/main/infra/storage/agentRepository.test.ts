@@ -138,4 +138,57 @@ describe('AgentRepository', () => {
     ).toThrowError(StorageError)
     close()
   })
+
+  it('stores tool calls in order, expires a waiting turn on a new command and lists session state', () => {
+    const { repo, close } = repository()
+    repo.createSession({ id: id(1), title: '', now: 1 })
+    const accept = (turnId: number, command: string) =>
+      repo.acceptTurn({
+        id: id(turnId),
+        sessionId: id(1),
+        clientCommandId: command,
+        payloadDigest: command,
+        instruction: 'x',
+        context: {},
+        now: turnId
+      })
+    accept(2, id(90))
+    repo.transitionTurn(id(2), 'running', 3)
+    const call = (n: number, callId: string, state: 'pending' | 'completed') => ({
+      id: id(n),
+      turnId: id(2),
+      round: 1,
+      callId,
+      name: 'translate_chapter',
+      args: { target: 't1' },
+      argsDigest: 'd' + n,
+      decision: 'needs_user' as const,
+      state,
+      createdAt: 4
+    })
+    repo.insertToolCalls([call(10, 'b', 'completed'), call(11, 'a', 'pending')])
+    expect(() => repo.insertToolCalls([call(12, 'a', 'pending')])).toThrow()
+    expect(repo.listToolCalls(id(2)).map((row) => row.callId)).toEqual(['b', 'a'])
+    repo.transitionTurn(id(2), 'waiting_user', 5)
+    expect(repo.listSessionPendingToolCalls(id(1)).map((row) => row.id)).toEqual([id(11)])
+
+    accept(3, id(91))
+    expect(repo.getTurn(id(2))?.status).toBe('expired')
+    expect(repo.getToolCall(id(11))?.state).toBe('expired')
+    expect(repo.getToolCall(id(10))?.state).toBe('completed')
+    expect(repo.listSessionPendingToolCalls(id(1))).toEqual([])
+
+    repo.createOperation({
+      id: id(20),
+      turnId: id(3),
+      commandId: 'op',
+      capability: 'translate_chapter',
+      target: { kind: 'work', workId: id(30), workLabel: 'A' },
+      now: 6
+    })
+    expect(repo.listSessionOperations(id(1)).map((op) => op.id)).toEqual([id(20)])
+    expect(repo.operationSessionId(id(20))).toBe(id(1))
+    expect(repo.operationSessionId(id(99))).toBeNull()
+    close()
+  })
 })

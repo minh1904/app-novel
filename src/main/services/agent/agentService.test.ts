@@ -1,288 +1,472 @@
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
-import { LibraryStore } from '../library/library'
-import { createServices } from '../createServices'
-import type { SecretCrypto } from '../../infra/storage/secretStore'
-import { segment } from '../../../shared/segmentation/segmenter'
-import { AgentRepository } from '../../infra/storage/agentRepository'
-import { CapabilityRegistry } from './registry'
-import { defaultReadCapabilities } from './capabilities/readCapabilities'
-import { TargetResolver } from './resolver'
-import { AgentService } from './agentService'
+import { describe, expect, it, vi } from 'vitest'
+import * as v from 'valibot'
 import type { AgentStreamEvent } from '../../../shared/contracts/agent'
 import { validateAgentEventSequence } from '../../../shared/contracts/agent'
+import { ProviderError } from '../../infra/providers/types'
+import { callTools, say, setupAgent } from './agentTestKit'
+import { AgentService, MAX_MODEL_ROUNDS } from './agentService'
 
-const crypto: SecretCrypto = {
-  isEncryptionAvailable: () => true,
-  async encrypt(plain) {
-    return new Uint8Array([...Buffer.from(plain, 'utf-8')].map((b) => b ^ 0xff))
-  },
-  async decrypt(cipher) {
-    return {
-      value: Buffer.from([...cipher].map((b) => b ^ 0xff)).toString('utf-8'),
-      shouldReEncrypt: false
-    }
-  }
+const recorder = () => {
+  const events: AgentStreamEvent[] = []
+  return { events, onStream: (event: AgentStreamEvent) => events.push(event) }
 }
 
-const tempDirs: string[] = []
-const stores: LibraryStore[] = []
+describe('AgentService model–tool loop', () => {
+  it('answers a read-only question through an allowed read and creates no operation', async () => {
+    const { agent, model, modelSelection } = setupAgent()
+    model.script(callTools({ name: 'list_works', args: {} }), (request) => {
+      const works = JSON.parse(request.messages.at(-1)!.content).value as unknown[]
+      return say(`Thư viện có ${works.length} tác phẩm.`)
+    })
+    const { events, onStream } = recorder()
+    const res = await agent.send({
+      instruction: 'Thư viện có mấy truyện?',
+      modelSelection,
+      onStream
+    })
 
-afterEach(() => {
-  for (const s of stores.splice(0)) {
-    try {
-      s.close()
-    } catch {
-      // ignore
-    }
-  }
-  for (const dir of tempDirs.splice(0)) {
-    try {
-      rmSync(dir, { recursive: true, force: true })
-    } catch {
-      // ignore
-    }
-  }
+    expect(res).toMatchObject({ status: 'completed', answer: 'Thư viện có 2 tác phẩm.' })
+    expect(agent.listOperations(res.turnId)).toEqual([])
+    expect(agent.listToolCalls(res.turnId)).toEqual([
+      expect.objectContaining({
+        name: 'list_works',
+        decision: 'allow',
+        state: 'completed',
+        round: 1
+      })
+    ])
+    // Results carry labels, never IDs, and every chat tool is offered with resolve_target first.
+    const seen = model.lastToolResult()
+    expect(JSON.stringify(seen)).not.toMatch(/"id"/)
+    const names = (model.requests[0].tools as Array<{ function: { name: string } }>).map(
+      (tool) => tool.function.name
+    )
+    expect(names[0]).toBe('resolve_target')
+    expect(names).toContain('translate_chapter')
+    expect(validateAgentEventSequence(events)).toEqual({ ok: true })
+    expect(events.at(-1)).toMatchObject({ kind: 'done', turnState: 'completed' })
+    expect(res.usage).toMatchObject({ inputTokens: 20, outputTokens: 10, complete: true })
+  })
+
+  it('writes the context chapter through the ctx handle', async () => {
+    const { agent, model, modelSelection, library, work1, ch1_2 } = setupAgent()
+    model.script(callTools({ name: 'translate_chapter', args: { target: 'ctx' } }), say('Đã dịch.'))
+    const res = await agent.send({
+      instruction: 'dịch chương này',
+      context: { workId: work1.id, chapterId: ch1_2.id },
+      modelSelection
+    })
+    expect(res.status).toBe('completed')
+    const [operation] = agent.listOperations(res.turnId)
+    expect(operation).toMatchObject({ state: 'completed', capability: 'translate_chapter' })
+    expect(library.readText(work1.id, ch1_2.id, 'target').content).toContain('Dịch: Đoạn một')
+  })
+
+  it('resolves a named chapter to a handle and writes only that chapter', async () => {
+    const { agent, model, modelSelection, library, work1, ch1_1, ch1_2 } = setupAgent()
+    model.script(
+      callTools({ name: 'resolve_target', args: { description: 'chương 2' } }),
+      (request) => {
+        const resolved = JSON.parse(request.messages.at(-1)!.content).value
+        expect(resolved).toMatchObject({ status: 'resolved', handle: 't1' })
+        return callTools({ name: 'translate_chapter', args: { target: resolved.handle } })
+      },
+      say('Xong.')
+    )
+    const res = await agent.send({
+      instruction: 'Dịch chương 2',
+      context: { workId: work1.id, chapterId: ch1_1.id },
+      modelSelection
+    })
+    expect(res.status).toBe('completed')
+    const ops = agent.listOperations(res.turnId)
+    expect(ops).toHaveLength(1)
+    expect(ops[0].target).toMatchObject({ chapterId: ch1_2.id })
+    expect(library.readText(work1.id, ch1_1.id, 'target').content).toBe('')
+  })
+
+  it('reports not_found without creating an operation', async () => {
+    const { agent, model, modelSelection } = setupAgent()
+    model.script(
+      callTools({ name: 'resolve_target', args: { description: 'truyện Không Có chương 9' } }),
+      say('Không tìm thấy đích.')
+    )
+    const res = await agent.send({ instruction: 'dịch truyện Không Có chương 9', modelSelection })
+    expect(model.lastToolResult().value.status).toBe('not_found')
+    expect(res.answer).toContain('Không tìm thấy')
+    expect(agent.listOperations(res.turnId)).toEqual([])
+  })
+
+  it('refuses an unknown tool, a raw ID and a handle the turn never issued', async () => {
+    const { agent, model, modelSelection, work1 } = setupAgent()
+    model.script(
+      callTools(
+        { name: 'run_sql', args: { sql: 'DELETE FROM work_index' } },
+        { name: 'list_chapters', args: { target: work1.id } },
+        { name: 'list_chapters', args: { target: 'ctx' } }
+      ),
+      say('Không làm được.')
+    )
+    const res = await agent.send({ instruction: 'xóa hết', modelSelection })
+    const rows = agent.listToolCalls(res.turnId)
+    expect(rows.map((row) => [row.name, row.decision, row.state])).toEqual([
+      ['run_sql', 'deny', 'failed'],
+      ['list_chapters', 'deny', 'failed'],
+      // The chip was removed (no context), so "ctx" was never issued either.
+      ['list_chapters', 'deny', 'failed']
+    ])
+    const toolMessages = model.requests[1].messages.filter((m) => m.role === 'tool')
+    expect(toolMessages).toHaveLength(3)
+    for (const message of toolMessages) expect(JSON.parse(message.content).ok).toBe(false)
+    expect(agent.listOperations(res.turnId)).toEqual([])
+  })
+
+  it('runs the valid call of a round and stores a result for the invalid one', async () => {
+    const { agent, model, modelSelection, work1, ch1_1 } = setupAgent()
+    model.script(
+      callTools(
+        { name: 'read_chapter', args: { target: 'ctx', side: 'source' }, id: 'good' },
+        { name: 'read_chapter', args: { target: 'ctx', offset: -1 }, id: 'bad' },
+        { raw: '{not json', name: 'list_works', id: 'broken' }
+      ),
+      say('Đã đọc.')
+    )
+    const res = await agent.send({
+      instruction: 'đọc chương này',
+      context: { workId: work1.id, chapterId: ch1_1.id },
+      modelSelection
+    })
+    const rows = agent.listToolCalls(res.turnId)
+    expect(rows.map((row) => [row.callId, row.state])).toEqual([
+      ['good', 'completed'],
+      ['bad', 'failed'],
+      ['broken', 'failed']
+    ])
+    expect(
+      (rows[0].result as { value: { source: { content: string } } }).value.source.content
+    ).toContain('Đoạn một')
+    expect(rows[1].result).toMatchObject({ ok: false, error: { code: 'validation' } })
+  })
+
+  it('fails the turn and runs nothing when the round cannot be persisted', async () => {
+    const { agent, model, modelSelection, repository, registry } = setupAgent()
+    vi.spyOn(repository, 'insertToolCalls').mockImplementation(() => {
+      throw new Error('disk full')
+    })
+    const execute = vi.spyOn(registry, 'execute')
+    model.script(callTools({ name: 'list_works', args: {} }))
+    const { events, onStream } = recorder()
+    const res = await agent.send({ instruction: 'liệt kê', modelSelection, onStream })
+    expect(res.status).toBe('failed')
+    expect(execute).not.toHaveBeenCalled()
+    expect(agent.getTurn(res.turnId)?.status).toBe('failed')
+    expect(events.at(-1)).toMatchObject({ kind: 'error', error: { code: 'persistence' } })
+    expect(model.requests).toHaveLength(1)
+  })
+
+  it('sends no tools to a model the catalog marks without tool calls', async () => {
+    const { agent, model, modelSelection, work1, ch1_1 } = setupAgent()
+    model.info = { id: 'old', name: 'Old', toolCall: false }
+    model.script(say('Tôi không dùng được công cụ.'))
+    const res = await agent.send({
+      instruction: 'dịch chương này',
+      context: { workId: work1.id, chapterId: ch1_1.id },
+      modelSelection
+    })
+    expect(res.status).toBe('completed')
+    expect(model.requests[0].tools).toBeUndefined()
+    expect(agent.listOperations(res.turnId)).toEqual([])
+    expect(agent.getSessionDetail(res.sessionId).activities.map((a) => a.label)).toContain(
+      'Model này không dùng được công cụ; trả lời từ ngữ cảnh đã gửi.'
+    )
+  })
+
+  it('fails on a provider error in round two without asking another model', async () => {
+    const { agent, model, modelSelection } = setupAgent()
+    model.script(
+      callTools({ name: 'list_works', args: {} }),
+      new ProviderError('rate_limited', 'slow down')
+    )
+    const open = vi.spyOn(model, 'open')
+    const { events, onStream } = recorder()
+    await expect(agent.send({ instruction: 'liệt kê', modelSelection, onStream })).rejects.toThrow()
+    const turnId = events[0].turnId
+    expect(agent.getTurn(turnId)?.status).toBe('failed')
+    expect(open).toHaveBeenCalledTimes(1)
+    expect(model.requests).toHaveLength(2)
+    expect(agent.listToolCalls(turnId)).toEqual([expect.objectContaining({ state: 'completed' })])
+    expect(events.at(-1)).toMatchObject({ kind: 'error', error: { code: 'provider_rate_limited' } })
+  })
 })
 
-describe('AgentService (Module 5)', () => {
-  function setup() {
-    const dataDir = mkdtempSync(join(tmpdir(), 'agent-service-test-'))
-    tempDirs.push(dataDir)
+describe('AgentService budget and loop', () => {
+  it('sends the sixth round without tools so the model must answer', async () => {
+    const { agent, model, modelSelection, work1, ch1_1 } = setupAgent()
+    for (let offset = 0; offset < MAX_MODEL_ROUNDS - 1; offset++) {
+      model.script(callTools({ name: 'read_chapter', args: { target: 'ctx', offset } }))
+    }
+    model.script(say('Tóm tắt.'))
+    const res = await agent.send({
+      instruction: 'tóm tắt chương này',
+      context: { workId: work1.id, chapterId: ch1_1.id },
+      modelSelection
+    })
+    expect(res.status).toBe('completed')
+    expect(model.requests).toHaveLength(MAX_MODEL_ROUNDS)
+    expect(model.requests.slice(0, -1).every((r) => r.tools !== undefined)).toBe(true)
+    expect(model.requests.at(-1)!.tools).toBeUndefined()
+  })
 
-    const mockFetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
-      const body = JSON.parse(init?.body as string) as {
-        messages: Array<{ role: string; content: string }>
-      }
-      const userMsg = body.messages.find((m) => m.role === 'user')?.content ?? '[]'
-      const sourceBlock = /<source>\n([\s\S]*?)\n<\/source>/.exec(userMsg)?.[1] ?? userMsg
-      const inputSegments = JSON.parse(sourceBlock) as Array<{ id: string; src: string }>
-      const items = inputSegments.map((s) => ({
-        id: s.id,
-        dst: `Dịch: ${s.src}`
-      }))
+  it('stops a loop on the third identical call without a summary round', async () => {
+    const { agent, model, modelSelection } = setupAgent()
+    for (let i = 0; i < 3; i++) model.script(callTools({ name: 'list_works', args: {} }))
+    const { events, onStream } = recorder()
+    const res = await agent.send({ instruction: 'liệt kê', modelSelection, onStream })
+    expect(res.status).toBe('failed')
+    expect(model.requests).toHaveLength(3)
+    const rows = agent.listToolCalls(res.turnId)
+    expect(rows.map((row) => row.state)).toEqual(['completed', 'completed', 'failed'])
+    expect(rows[2].result).toMatchObject({ error: { code: 'loop' } })
+    expect(events.at(-1)).toMatchObject({ kind: 'error', error: { code: 'loop' } })
+    expect(agent.getTurn(res.turnId)?.usage).not.toBeNull()
+  })
 
-      return new Response(
-        JSON.stringify({
-          id: 'mock-1',
-          choices: [{ message: { role: 'assistant', content: JSON.stringify(items) } }],
-          usage: { prompt_tokens: 15, completion_tokens: 10, total_tokens: 25 }
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+  it('stops when a read would pass the character budget and never hands it to the model', async () => {
+    const { agent, model, modelSelection, registry } = setupAgent()
+    registry.register({
+      name: 'huge_read',
+      description: 'test',
+      kind: 'read',
+      schema: v.object({}),
+      parameters: { type: 'object', properties: {}, required: [] },
+      targetPolicy: 'no_target',
+      handler: async () => ({ ok: true, value: 'x'.repeat(100_001) })
+    })
+    model.script(callTools({ name: 'huge_read', args: {} }))
+    const res = await agent.send({ instruction: 'đọc hết', modelSelection })
+    expect(res.status).toBe('failed')
+    expect(model.requests).toHaveLength(1)
+    expect(agent.listToolCalls(res.turnId)[0].result).toMatchObject({
+      error: { code: 'budget_read' }
+    })
+  })
+
+  it('turns the call over the call cap into an error and makes the next round final', async () => {
+    const { agent, model, modelSelection, work1, ch1_1 } = setupAgent()
+    model.script(
+      callTools(
+        ...Array.from({ length: 21 }, (_, offset) => ({
+          name: 'read_chapter',
+          args: { target: 'ctx', side: 'source', offset }
+        }))
+      ),
+      say('Đủ rồi.')
+    )
+    const res = await agent.send({
+      instruction: 'đọc chương này',
+      context: { workId: work1.id, chapterId: ch1_1.id },
+      modelSelection
+    })
+    expect(res.status).toBe('completed')
+    const rows = agent.listToolCalls(res.turnId)
+    expect(rows.filter((row) => row.state === 'completed')).toHaveLength(20)
+    expect(rows[20].result).toMatchObject({ error: { code: 'budget_calls' } })
+    expect(model.requests[1].tools).toBeUndefined()
+  })
+
+  it('stops before a fourth write operation runs', async () => {
+    const { agent, model, modelSelection, work1 } = setupAgent()
+    const names = ['chương 1', 'chương 2', 'chương Tiết tử Thượng', 'chương Tiết tử Hạ']
+    model.script(
+      callTools(...names.map((description) => ({ name: 'resolve_target', args: { description } }))),
+      callTools(
+        ...['t1', 't2', 't3', 't4'].map((target) => ({
+          name: 'translate_chapter',
+          args: { target }
+        }))
       )
-    }) as typeof fetch
-
-    const library = LibraryStore.open({ dataDir })
-    stores.push(library)
-    const services = createServices({ library, crypto, fetch: mockFetch })
-
-    const connection = services.connections.create({
-      name: 'Mock LLM',
-      baseUrl: 'https://mock.service.local/v1',
-      providerId: 'google'
+    )
+    const res = await agent.send({
+      instruction: 'dịch chương 1, chương 2, Tiết tử Thượng và Tiết tử Hạ',
+      context: { workId: work1.id },
+      modelSelection
     })
-    services.connections.addApiKey(connection.id, 'key')
-    const entryId = services.connections.addModels(connection.id, [
-      { model: 'mock-model', name: 'Mock Model' }
-    ]).models[0]!.id
-
-    const repository = new AgentRepository(library.appDb)
-    const registry = new CapabilityRegistry()
-    for (const cap of defaultReadCapabilities) {
-      registry.register(cap)
-    }
-
-    // Work 1 with chapters
-    const work1 = library.create({ title: 'Đại Đạo', sourceLang: 'zh-Hans' })
-    const ch1_1 = library.createChapter(work1.id, 'Chương 1').chapter
-    const ch1_2 = library.createChapter(work1.id, 'Tiết tử Thượng').chapter
-    const ch1_3 = library.createChapter(work1.id, 'Tiết tử Hạ').chapter
-    const src1 = 'Câu một.\n\nCâu hai.'
-    library.saveText(work1.id, ch1_1.id, 'source', src1, 0, segment(src1, 'zh-Hans'))
-    library.saveText(work1.id, ch1_2.id, 'source', src1, 0, segment(src1, 'zh-Hans'))
-    library.saveText(work1.id, ch1_3.id, 'source', src1, 0, segment(src1, 'zh-Hans'))
-
-    const resolver = new TargetResolver({ library })
-    const agentService = new AgentService({
-      library,
-      connections: services.connections,
-      repository,
-      registry,
-      resolver
+    expect(res.status).toBe('failed')
+    expect(agent.listOperations(res.turnId)).toHaveLength(3)
+    expect(agent.listToolCalls(res.turnId).at(-1)?.result).toMatchObject({
+      error: { code: 'budget_write' }
     })
+    expect(model.requests).toHaveLength(2)
+  })
 
-    return {
-      library,
-      repository,
-      registry,
-      services,
-      agentService,
-      connectionId: connection.id,
-      entryId,
-      work1,
-      ch1_1,
-      ch1_2
-    }
+  it('drops the oldest turns from a long session and records how many', async () => {
+    const { agent, model, modelSelection } = setupAgent()
+    model.script(say('Một câu trả lời rất dài. '.repeat(40)))
+    const first = await agent.send({ instruction: 'câu đầu', modelSelection })
+    model.info = { id: 'tiny', name: 'Tiny', toolCall: true, contextLimit: 2_000, outputLimit: 500 }
+    model.script(say('Ngắn.'))
+    const second = await agent.send({
+      sessionId: first.sessionId,
+      instruction: 'câu hai nguyên văn',
+      modelSelection
+    })
+    const messages = model.requests[1].messages
+    expect(messages.map((m) => m.content)).not.toContain('câu đầu')
+    expect(messages.some((m) => m.content.startsWith('câu hai nguyên văn'))).toBe(true)
+    const dropped = agent
+      .getSessionDetail(second.sessionId)
+      .activities.find((a) => a.turnId === second.turnId && a.label.startsWith('Bỏ'))
+    expect(dropped?.detail).toMatchObject({ droppedTurns: 1 })
+  })
+})
+
+describe('AgentService waiting_user and continuation', () => {
+  async function ambiguous() {
+    const kit = setupAgent()
+    kit.model.script(callTools({ name: 'resolve_target', args: { description: 'chương Tiết tử' } }))
+    const res = await kit.agent.send({
+      instruction: 'Dịch chương Tiết tử',
+      context: { workId: kit.work1.id },
+      modelSelection: kit.modelSelection
+    })
+    return { ...kit, res, pending: kit.agent.getSessionDetail(res.sessionId).pending }
   }
 
-  it('rejects concurrent sends before starting another stream', async () => {
-    const { agentService, repository } = setup()
-
-    const session = agentService.createSession('Test Session')
-    // Manually insert an active turn
-    repository.createTurn({
-      id: 'active-turn',
-      sessionId: session.id,
-      instruction: 'Đang chạy...',
-      context: {},
-      now: 1000
-    })
-
-    const streamEvents: AgentStreamEvent[] = []
-    await expect(
-      agentService.send({
-        sessionId: session.id,
-        instruction: 'Gửi thêm lệnh',
-        onStream: (ev) => streamEvents.push(ev)
-      })
-    ).rejects.toMatchObject({ code: 'conflict' })
-
-    expect(streamEvents).toEqual([])
-  })
-
-  it('Scenario 1: Questions do not create write operations and produce stream ending in done', async () => {
-    const { agentService, work1 } = setup()
-
-    const streamEvents: AgentStreamEvent[] = []
-    const res = await agentService.send({
-      instruction: 'Cho biết tác phẩm có những chương nào?',
-      context: { workId: work1.id },
-      onStream: (ev) => streamEvents.push(ev)
-    })
-
-    expect(res.status).toBe('completed')
-    expect(res.answer).toContain('Chương 1')
-
-    // No write operations created
-    const ops = agentService.listOperations(res.turnId)
-    expect(ops).toEqual([])
-
-    // Validate stream events sequence: monotonic eventSeq, exactly one terminal
-    const validation = validateAgentEventSequence(streamEvents)
-    expect(validation).toEqual({ ok: true })
-    expect(streamEvents[streamEvents.length - 1].kind).toBe('done')
-  })
-
-  it('Scenario 2: Clear write command resolves target, creates write operation, and executes cleanly', async () => {
-    const { agentService, work1, ch1_1, connectionId, entryId } = setup()
-
-    const streamEvents: AgentStreamEvent[] = []
-    const res = await agentService.send({
-      instruction: 'Dịch chương 1',
-      context: { workId: work1.id, chapterId: ch1_1.id },
-      modelSelection: { connectionId, entryId },
-      onStream: (ev) => streamEvents.push(ev)
-    })
-
-    expect(res.status).toBe('completed')
-    expect(res.answer).toContain('Đã dịch')
-
-    // Write operation was created and completed
-    const ops = agentService.listOperations(res.turnId)
-    expect(ops.length).toBe(1)
-    expect(ops[0].capability).toBe('translate_chapter')
-    expect(ops[0].state).toBe('completed')
-
-    // Validate stream event sequence
-    const validation = validateAgentEventSequence(streamEvents)
-    expect(validation).toEqual({ ok: true })
-
-    const opEvents = streamEvents.filter((e) => e.kind === 'operation')
-    expect(opEvents.length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('Scenario 3: Ambiguous write command yields waiting_user, creates NO operation, and clarify-resume continues same turn', async () => {
-    const { agentService, work1, connectionId, entryId } = setup()
-
-    const streamEvents: AgentStreamEvent[] = []
-    // "Dịch chương Tiết tử" matches both "Tiết tử Thượng" and "Tiết tử Hạ"
-    const res = await agentService.send({
-      instruction: 'Dịch chương Tiết tử',
-      context: { workId: work1.id },
-      modelSelection: { connectionId, entryId },
-      onStream: (ev) => streamEvents.push(ev)
-    })
-
+  it('waits on an ambiguous target with distinguishable candidates and no operation', async () => {
+    const { agent, res, pending } = await ambiguous()
     expect(res.status).toBe('waiting_user')
-    expect(res.answer).toContain('Có nhiều ứng viên phù hợp')
+    expect(agent.listOperations(res.turnId)).toEqual([])
+    expect(pending).toHaveLength(1)
+    expect(pending[0]).toMatchObject({ kind: 'choose', name: 'resolve_target' })
+    expect(pending[0].candidates.map((c) => c.label)).toEqual([
+      'Đại Đạo Triều Thiên – Tiết tử Thượng',
+      'Đại Đạo Triều Thiên – Tiết tử Hạ'
+    ])
+  })
 
-    // NO operation created for ambiguous request!
-    const ops = agentService.listOperations(res.turnId)
-    expect(ops).toEqual([])
-
-    // Stream ended with done waiting_user
-    const lastEvent = streamEvents[streamEvents.length - 1]
-    expect(lastEvent.kind).toBe('done')
-    if (lastEvent.kind === 'done') {
-      expect(lastEvent.turnState).toBe('waiting_user')
+  it('continues the same turn with the chosen candidate and writes once', async () => {
+    const { agent, model, modelSelection, res, pending, library, work1, ch1_amb2 } =
+      await ambiguous()
+    const chosen = pending[0].candidates[1]
+    model.script((request) => {
+      expect(JSON.parse(request.messages.at(-1)!.content).value).toMatchObject({
+        status: 'resolved',
+        handle: chosen.handle
+      })
+      return callTools({ name: 'translate_chapter', args: { target: chosen.handle } })
+    }, say('Đã dịch Tiết tử Hạ.'))
+    const reply = {
+      continuesTurnId: res.turnId,
+      pendingReply: {
+        toolCallId: pending[0].toolCallId,
+        argsDigest: pending[0].argsDigest,
+        choice: chosen.handle
+      },
+      instruction: chosen.label,
+      modelSelection,
+      commandId: 'reply-1'
     }
+    const resumed = await agent.send(reply)
+    expect(resumed).toMatchObject({ turnId: res.turnId, status: 'completed' })
+    expect(agent.listTurns(res.sessionId)).toHaveLength(1)
+    expect(agent.listOperations(res.turnId)).toHaveLength(1)
+    expect(library.readText(work1.id, ch1_amb2.id, 'target').content).toContain('Dịch:')
 
-    // Clarify-resume: user answers clarification on the SAME turn
-    const clarifyEvents: AgentStreamEvent[] = []
-    const resumeRes = await agentService.send({
-      sessionId: res.sessionId,
-      turnId: res.turnId,
-      instruction: 'Tôi muốn dịch chương Tiết tử Hạ',
-      context: { workId: work1.id },
-      modelSelection: { connectionId, entryId },
-      onStream: (ev) => clarifyEvents.push(ev)
-    })
-
-    // Continued on same turnId!
-    expect(resumeRes.turnId).toBe(res.turnId)
-    expect(resumeRes.status).toBe('completed')
-
-    const newOps = agentService.listOperations(res.turnId)
-    expect(newOps.length).toBe(1)
-    expect(newOps[0].capability).toBe('translate_chapter')
+    // The same command again returns the same turn and runs nothing more.
+    const again = agent.acceptTurn({ ...reply, clientCommandId: 'reply-1' })
+    expect(again).toMatchObject({ turnId: res.turnId, created: false })
+    expect(agent.listOperations(res.turnId)).toHaveLength(1)
   })
 
-  it('startup reconciler marks unsettled running turns as interrupted', () => {
-    const { agentService, repository } = setup()
+  it('rejects a reply with a wrong digest or for a turn that no longer waits', async () => {
+    const { agent, res, pending } = await ambiguous()
+    const base = { clientCommandId: 'r', instruction: 'x', continuesTurnId: res.turnId }
+    expect(() =>
+      agent.acceptTurn({
+        ...base,
+        pendingReply: {
+          ...pending[0],
+          argsDigest: 'sha256:other',
+          choice: pending[0].candidates[0].handle
+        }
+      })
+    ).toThrow(/không còn hiệu lực/)
+    expect(agent.getTurn(res.turnId)?.status).toBe('waiting_user')
 
-    const session = agentService.createSession('Crash Session')
-    repository.createTurn({
-      id: 'crashed-turn-1',
-      sessionId: session.id,
-      instruction: 'Đang dịch dở thì sập nguồn...',
-      context: {},
-      now: 1000
-    })
-
-    const recon = agentService.reconcileOnStartup()
-    expect(recon.settledTurns).toBe(1)
-
-    const turn = repository.getTurn('crashed-turn-1')
-    expect(turn?.status).toBe('interrupted')
-    expect(turn?.answer).toContain('gián đoạn do ứng dụng đóng bất ngờ')
+    agent.cancelTurn(res.turnId)
+    expect(agent.getTurn(res.turnId)?.status).toBe('cancelled')
+    expect(agent.listToolCalls(res.turnId)[0].state).toBe('cancelled')
+    expect(() =>
+      agent.acceptTurn({
+        ...base,
+        clientCommandId: 'r2',
+        pendingReply: { ...pending[0], choice: pending[0].candidates[0].handle }
+      })
+    ).toThrow(/không còn hiệu lực/)
   })
 
-  it('cancelTurn aborts running execution and marks turn cancelled', () => {
-    const { agentService, repository } = setup()
-
-    const session = agentService.createSession('Cancel Session')
-    repository.createTurn({
-      id: 'cancel-turn',
-      sessionId: session.id,
-      instruction: 'Lệnh cần hủy',
-      context: {},
-      now: 1000
+  it('asks before writing a target the user did not name and binds approval to that call', async () => {
+    const { agent, model, modelSelection, library, work1, ch1_1, work2, ch2_1 } = setupAgent()
+    // The raw of chapter 1 told the model to translate another work; the model obeyed.
+    model.script(
+      callTools({ name: 'resolve_target', args: { description: 'Phàm Nhân Tu Tiên chương 1' } }),
+      callTools({ name: 'translate_chapter', args: { target: 't1' } })
+    )
+    const res = await agent.send({
+      instruction: 'tóm tắt chương này',
+      context: { workId: work1.id, chapterId: ch1_1.id },
+      modelSelection
     })
+    expect(res.status).toBe('waiting_user')
+    expect(library.readText(work2.id, ch2_1.id, 'target').content).toBe('')
+    const [pending] = agent.getSessionDetail(res.sessionId).pending
+    expect(pending).toMatchObject({ kind: 'approve', name: 'translate_chapter' })
 
-    agentService.cancelTurn('cancel-turn')
-    const turn = repository.getTurn('cancel-turn')
-    expect(turn?.status).toBe('cancelled')
+    // Approved; the model then asks for the same write again: a new call, judged on its own.
+    model.script(callTools({ name: 'translate_chapter', args: { target: 't1' } }))
+    const resumed = await agent.send({
+      continuesTurnId: res.turnId,
+      pendingReply: {
+        toolCallId: pending.toolCallId,
+        argsDigest: pending.argsDigest,
+        choice: 'approve'
+      },
+      instruction: 'Duyệt',
+      modelSelection,
+      commandId: 'approve-1'
+    })
+    expect(resumed.status).toBe('waiting_user')
+    expect(agent.listOperations(res.turnId)).toHaveLength(1)
+    expect(library.readText(work2.id, ch2_1.id, 'target').content).toContain('Dịch:')
+    const next = agent.getSessionDetail(res.sessionId).pending
+    expect(next).toHaveLength(1)
+    expect(next[0].toolCallId).not.toBe(pending.toolCallId)
+  })
+
+  it('keeps a waiting turn across shutdown and startup, then expires it on a new command', async () => {
+    const kit = await ambiguous()
+    kit.agent.shutdown()
+    expect(kit.agent.getTurn(kit.res.turnId)?.status).toBe('waiting_user')
+
+    const restarted = new AgentService({
+      library: kit.library,
+      connections: kit.services.connections,
+      repository: kit.repository,
+      registry: kit.registry,
+      openChatModel: (selection) => kit.model.open(selection)
+    })
+    expect(restarted.reconcileOnStartup().settledTurns).toBe(0)
+    expect(restarted.getTurn(kit.res.turnId)?.status).toBe('waiting_user')
+
+    kit.model.script(say('Chào.'))
+    const next = await restarted.send({
+      sessionId: kit.res.sessionId,
+      instruction: 'chào',
+      modelSelection: kit.modelSelection
+    })
+    expect(next.status).toBe('completed')
+    expect(restarted.getTurn(kit.res.turnId)?.status).toBe('expired')
+    expect(restarted.listToolCalls(kit.res.turnId)[0].state).toBe('expired')
+    expect(restarted.getSessionDetail(kit.res.sessionId).pending).toEqual([])
   })
 })

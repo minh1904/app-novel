@@ -10,7 +10,12 @@ import {
 } from '@renderer/components/ui/reicon'
 
 import type { ChapterItem } from '../../../../../shared/contracts/chapters'
-import type { ContextEntryItem, ContextStatus } from '../../../../../shared/contracts/glossary'
+import type {
+  ContextEntryItem,
+  ContextReviewInfo,
+  ContextStatus,
+  ReviewFlag
+} from '../../../../../shared/contracts/glossary'
 import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { cn } from '../../../lib/cn'
@@ -29,6 +34,70 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'rejected', label: 'Từ chối' }
 ] as const
 
+/** Term types an extraction run writes (`TERM_TYPES` of glossaryExtraction). */
+export const TERM_TYPE_LABELS: Record<string, string> = {
+  person: 'Người',
+  place: 'Địa danh',
+  organization: 'Tổ chức',
+  skill: 'Kỹ năng',
+  item: 'Vật phẩm',
+  title: 'Danh hiệu',
+  term: 'Thuật ngữ'
+}
+
+export function reviewFlagLabel(flag: ReviewFlag): string {
+  if (flag.code === 'alias_conflict') return `Dạng viết "${flag.detail ?? ''}" thuộc mục khác`
+  if (flag.code === 'script_mismatch') return 'Bản dịch sai hệ chữ'
+  return 'Mở lại vì có bằng chứng mới'
+}
+
+/** Pending entries grouped by term type, for "approve all of one type". */
+export function pendingByType(
+  entries: ContextEntryItem[],
+  info: Map<string, ContextReviewInfo>
+): Array<{ type: string; entries: ContextEntryItem[] }> {
+  const groups = new Map<string, ContextEntryItem[]>()
+  for (const entry of entries) {
+    const type = info.get(entry.id)?.termType
+    if (entry.status !== 'pending' || !type) continue
+    groups.set(type, [...(groups.get(type) ?? []), entry])
+  }
+  return [...groups].map(([type, list]) => ({ type, entries: list }))
+}
+
+function ReviewDetails({
+  info,
+  chapterNumber
+}: {
+  info: ContextReviewInfo | undefined
+  chapterNumber: (chapterId: string | null) => number | undefined
+}): JSX.Element | null {
+  if (!info) return null
+  const quote = info.evidence[0]
+  return (
+    <div className="flex flex-col items-start gap-1">
+      {info.termType && (
+        <span className="text-body-xs text-subtle">
+          {TERM_TYPE_LABELS[info.termType] ?? info.termType}
+        </span>
+      )}
+      {info.flags.map((flag) => (
+        <Badge key={flag.code + (flag.detail ?? '')} variant="outline" color="warning">
+          {reviewFlagLabel(flag)}
+        </Badge>
+      ))}
+      {quote && (
+        <span className="line-clamp-2 text-body-xs text-subtle" title={quote.quote}>
+          {chapterNumber(quote.chapterId) !== undefined
+            ? `C.${chapterNumber(quote.chapterId)}: `
+            : ''}
+          “{quote.quote}”
+        </span>
+      )}
+    </div>
+  )
+}
+
 export interface GlossaryScreenProps {
   workId: string
 }
@@ -45,8 +114,12 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
     createEntry,
     updateEntry,
     deleteEntry,
-    importNames
+    importNames,
+    reviewInfo,
+    review,
+    bulkApprove
   } = useGlossary({ workId })
+  const [reviewMessage, setReviewMessage] = useState<string | null>(null)
 
   const [chapters, setChapters] = useState<ChapterItem[]>([])
   const [editingEntry, setEditingEntry] = useState<ContextEntryItem | null | 'new'>(null)
@@ -80,12 +153,47 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
     entry: ContextEntryItem,
     nextStatus: ContextStatus
   ): Promise<void> => {
+    setReviewMessage(null)
     try {
-      await updateEntry(entry.id, { status: nextStatus })
+      if (entry.status !== 'pending') {
+        await updateEntry(entry.id, { status: nextStatus })
+      } else if (nextStatus === 'approved') {
+        await review({ kind: 'approve', entryId: entry.id, expectedUpdatedAt: entry.updatedAt })
+      } else {
+        // shortcut: a fixed reason; a reason field belongs in the dialog once reviewers ask for it.
+        await review({
+          kind: 'reject',
+          entryId: entry.id,
+          expectedUpdatedAt: entry.updatedAt,
+          reason: entry.notes || 'Người dịch từ chối khi duyệt.'
+        })
+      }
     } catch (err) {
-      console.error('Không thể cập nhật trạng thái:', err)
+      setReviewMessage(err instanceof Error ? err.message : 'Không cập nhật được trạng thái.')
     }
   }
+
+  const handleBulkApprove = async (selected: ContextEntryItem[]): Promise<void> => {
+    setReviewMessage(null)
+    try {
+      const results = await bulkApprove(selected)
+      const failed = results.filter((result) => !result.ok)
+      const approved = results.length - failed.length
+      setReviewMessage(
+        failed.length === 0
+          ? `Đã duyệt ${approved} mục.`
+          : `Đã duyệt ${approved} mục; ${failed.length} mục cần xem lại: ${failed
+              .map((result) => (result.ok ? '' : result.message))
+              .join(' ')}`
+      )
+    } catch (err) {
+      setReviewMessage(err instanceof Error ? err.message : 'Không duyệt được.')
+    }
+  }
+
+  const chapterNumber = (chapterId: string | null): number | undefined =>
+    chapterId ? chapterMap.get(chapterId)?.number : undefined
+  const groups = statusFilter === 'pending' ? pendingByType(entries, reviewInfo) : []
 
   return (
     <div className="flex flex-col gap-4">
@@ -123,6 +231,23 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
       </div>
 
       {error && <div className="rounded-sm bg-error/10 p-3 text-body-xs text-error">{error}</div>}
+      <p role="status" aria-live="polite" className={reviewMessage ? 'text-body-xs' : 'sr-only'}>
+        {reviewMessage}
+      </p>
+
+      {groups.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2" aria-label="Duyệt hàng loạt theo loại">
+          {groups.map((group) => (
+            <Button
+              key={group.type}
+              leftIcon={<CheckIcon size={ICON.sm} />}
+              onClick={() => void handleBulkApprove(group.entries)}
+            >
+              Duyệt {group.entries.length} mục · {TERM_TYPE_LABELS[group.type] ?? group.type}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Danh sách thuật ngữ chính */}
       <div className="overflow-hidden rounded-lg border border-default bg-surface">
@@ -181,6 +306,7 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
                       ))}
                     </div>
                   )}
+                  <ReviewDetails info={reviewInfo.get(entry.id)} chapterNumber={chapterNumber} />
                 </div>
 
                 {/* Bản dịch đích và cảnh báo cấm dùng */}
@@ -287,6 +413,24 @@ export function GlossaryScreen({ workId }: GlossaryScreenProps): JSX.Element {
         onSave={async (data) => {
           if (editingEntry === 'new') {
             await createEntry(data)
+          } else if (
+            editingEntry &&
+            editingEntry.status === 'pending' &&
+            data.status === 'approved' &&
+            data.source === editingEntry.source &&
+            data.forbidden === editingEntry.forbidden
+          ) {
+            // Edit then approve: guarded by the version the reviewer opened.
+            await review({
+              kind: 'edit_approve',
+              entryId: editingEntry.id,
+              expectedUpdatedAt: editingEntry.updatedAt,
+              target: data.target,
+              aliases: data.aliases,
+              fromChapterId: data.fromChapterId,
+              toChapterId: data.toChapterId,
+              notes: data.notes
+            })
           } else if (editingEntry) {
             await updateEntry(editingEntry.id, data)
           }

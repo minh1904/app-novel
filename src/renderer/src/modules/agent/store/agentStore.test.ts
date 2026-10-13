@@ -1,123 +1,205 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { useAgentStore } from './agentStore'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type {
+  AgentActivity,
+  AgentOperation,
+  AgentSessionDetailView,
+  AgentStreamEvent,
+  AgentTurnView
+} from '../../../../../shared/contracts/agent'
+import { resetAllStores } from '../../../lib/testing/resetStores'
+import { NEW_CHAT, useAgentStore } from './agentStore'
 
-describe('useAgentStore (Task 6.1)', () => {
-  beforeEach(() => {
-    useAgentStore.getState().reset()
-  })
+const session = { id: 's1', title: 'Phiên', createdAt: 1, updatedAt: 1 }
+const turn = (patch: Partial<AgentTurnView> = {}): AgentTurnView => ({
+  id: 't1',
+  sessionId: 's1',
+  instruction: 'dịch chương này',
+  answer: '',
+  reasoning: '',
+  context: {},
+  status: 'running',
+  usage: null,
+  costUsd: null,
+  legacyRef: null,
+  createdAt: 10,
+  updatedAt: 10,
+  ...patch
+})
+const operation = (patch: Partial<AgentOperation> = {}): AgentOperation => ({
+  id: 'op1',
+  turnId: 't1',
+  taskItemId: null,
+  commandId: 'c',
+  capability: 'translate_chapter',
+  target: { kind: 'chapter', workId: 'w', workLabel: 'W', chapterId: 'c', chapterLabel: 'C' },
+  state: 'running',
+  progress: null,
+  model: null,
+  usage: null,
+  result: null,
+  error: null,
+  createdAt: 11,
+  updatedAt: 11,
+  ...patch
+})
+const activity = (patch: Partial<AgentActivity> = {}): AgentActivity => ({
+  id: 'a1',
+  turnId: 't1',
+  operationId: null,
+  stepSeq: 1,
+  kind: 'read',
+  state: 'running',
+  label: 'Đọc',
+  detail: null,
+  createdAt: 11,
+  updatedAt: 11,
+  ...patch
+})
+const detail = (patch: Partial<AgentSessionDetailView> = {}): AgentSessionDetailView => ({
+  session,
+  turns: [],
+  activities: [],
+  operations: [],
+  pending: [],
+  ...patch
+})
+const event = (patch: Record<string, unknown>): AgentStreamEvent =>
+  ({ requestId: 'r', turnId: 't1', eventSeq: 1, ...patch }) as AgentStreamEvent
 
+function bridge(get: () => Promise<{ ok: true; value: AgentSessionDetailView }>) {
+  const api = {
+    sessions: {
+      get: vi.fn(get),
+      list: vi.fn(async () => ({ ok: true, value: { sessions: [session] } })),
+      create: vi.fn()
+    },
+    turn: {
+      send: vi.fn(async () => ({
+        ok: true,
+        value: { requestId: 'r', turnId: 't1', sessionId: 's1' }
+      })),
+      cancel: vi.fn()
+    }
+  }
+  ;(globalThis as unknown as { window: unknown }).window = { mira: { agent: api } }
+  return api
+}
+
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+describe('agentStore', () => {
+  beforeEach(() => resetAllStores())
   afterEach(() => {
-    useAgentStore.getState().reset()
+    ;(globalThis as unknown as { window?: unknown }).window = undefined
   })
 
-  it('keeps active agent session and turns when user switches between Work A and Work B', async () => {
-    const store = useAgentStore.getState()
-    const sessionId = await store.createSession('Phiên dịch chung')
-
-    expect(useAgentStore.getState().sessions.length).toBe(1)
-    expect(useAgentStore.getState().activeSessionId).toBe(sessionId)
-
-    // Simulate user in Work A
-    store.adapter.setActiveContextGetter(() => ({ workId: 'work-A', chapterId: 'ch-1' }))
-    expect(store.adapter.captureContext()).toEqual({ workId: 'work-A', chapterId: 'ch-1' })
-
-    // Simulate adding turn to session
-    store.handleStreamEvent({
-      requestId: 'r1',
-      turnId: 'turn-1',
-      eventSeq: 1,
-      kind: 'done',
-      turnState: 'completed',
-      usage: null
-    })
-    expect(useAgentStore.getState().turns.length).toBe(1)
-
-    // User switches to Work B: session and turns remain preserved!
-    store.adapter.setActiveContextGetter(() => ({ workId: 'work-B', chapterId: 'ch-2' }))
-    expect(store.adapter.captureContext()).toEqual({ workId: 'work-B', chapterId: 'ch-2' })
-    expect(useAgentStore.getState().activeSessionId).toBe(sessionId)
-    expect(useAgentStore.getState().turns.length).toBe(1)
-  })
-
-  it('HomeScreen sends capture empty context without crashing', async () => {
-    const store = useAgentStore.getState()
-    await store.createSession('HomeScreen Session')
-
-    // On HomeScreen, adapter returns null / {}
-    store.adapter.setActiveContextGetter(() => null)
-    expect(store.adapter.captureContext()).toEqual({})
-
-    // Send without electron bridge executes gracefully
-    await store.send('Chào trợ lý')
+  it('reads the snapshot back after a missed event and shows what the DB committed', async () => {
+    let snapshot = detail({ turns: [turn()] })
+    const api = bridge(async () => ({ ok: true, value: snapshot }))
+    await useAgentStore.getState().selectSession('s1')
     expect(useAgentStore.getState().isStreaming).toBe(true)
+
+    // The operation event was missed; the turn finished in Main.
+    snapshot = detail({
+      turns: [turn({ status: 'completed', answer: 'Đã dịch.', updatedAt: 20 })],
+      operations: [operation({ state: 'completed', updatedAt: 19 })]
+    })
+    useAgentStore.getState().handleStreamEvent(event({ kind: 'answer-delta', text: 'Đã d' }))
+    useAgentStore
+      .getState()
+      .handleStreamEvent(event({ eventSeq: 3, kind: 'done', turnState: 'completed', usage: null }))
+    await flush()
+    const state = useAgentStore.getState()
+    expect(state.turns[0]).toMatchObject({ status: 'completed', answer: 'Đã dịch.' })
+    expect(state.operations.op1.state).toBe('completed')
+    expect(state.isStreaming).toBe(false)
+    expect(api.sessions.get).toHaveBeenCalledTimes(2)
   })
 
-  it('handles stream events: reasoning, answer, activities, operations, and terminal done', () => {
-    const store = useAgentStore.getState()
-
-    // 1. Activity start
-    store.handleStreamEvent({
-      requestId: 'r1',
-      turnId: 'turn-1',
-      eventSeq: 1,
-      kind: 'activity-start',
-      activityId: 'act-1',
-      stepSeq: 1,
-      activity: {
-        id: 'act-1',
-        turnId: 'turn-1',
-        operationId: null,
+  it('keeps an event that arrives while the snapshot is being read', async () => {
+    let release: (value: { ok: true; value: AgentSessionDetailView }) => void = () => {}
+    bridge(() => new Promise((resolve) => (release = resolve)))
+    useAgentStore.setState({ activeSessionId: 's1', turns: [turn()] })
+    const hydrating = useAgentStore.getState().refresh()
+    // Newer activity arrives before the (older) snapshot lands.
+    useAgentStore.getState().handleStreamEvent(
+      event({
+        kind: 'activity-finish',
+        activityId: 'a1',
         stepSeq: 1,
-        kind: 'read',
-        state: 'running',
-        label: 'Đọc dữ liệu',
-        detail: null,
-        createdAt: 1000,
-        updatedAt: 1000
-      }
+        activity: activity({ state: 'completed', updatedAt: 30 })
+      })
+    )
+    release({ ok: true, value: detail({ turns: [turn()], activities: [activity()] }) })
+    await hydrating
+    expect(useAgentStore.getState().activities.t1).toEqual([
+      expect.objectContaining({ id: 'a1', state: 'completed', updatedAt: 30 })
+    ])
+  })
+
+  it('reads an unknown turn back once, as a turn sent from another window', async () => {
+    const api = bridge(async () => ({ ok: true, value: detail({ turns: [turn({ id: 't2' })] }) }))
+    useAgentStore.setState({ activeSessionId: 's1' })
+    useAgentStore
+      .getState()
+      .handleStreamEvent(event({ turnId: 't2', kind: 'answer-delta', text: 'x' }))
+    useAgentStore
+      .getState()
+      .handleStreamEvent(event({ turnId: 't2', kind: 'answer-delta', text: 'y' }))
+    await flush()
+    expect(api.sessions.get).toHaveBeenCalledTimes(1)
+    expect(useAgentStore.getState().turns.map((t) => t.id)).toEqual(['t2'])
+    expect(useAgentStore.getState().streamingTurnId).toBe('t2')
+  })
+
+  it('keeps drafts per session and only clears the one that was sent', async () => {
+    const api = bridge(async () => ({ ok: true, value: detail({ turns: [turn()] }) }))
+    const store = useAgentStore.getState()
+    store.setDraft('chưa có phiên')
+    await store.selectSession('s1')
+    useAgentStore.setState({ isStreaming: false, streamingTurnId: null })
+    useAgentStore.getState().setDraft('nháp phiên 1')
+    expect(useAgentStore.getState().drafts).toEqual({
+      [NEW_CHAT]: 'chưa có phiên',
+      s1: 'nháp phiên 1'
     })
 
-    expect(useAgentStore.getState().activities['turn-1']).toHaveLength(1)
-    expect(useAgentStore.getState().activities['turn-1']![0].label).toBe('Đọc dữ liệu')
+    api.turn.send.mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'conflict', message: 'Phiên đang bận.' }
+    } as never)
+    expect(await useAgentStore.getState().send('nháp phiên 1')).toBe(false)
+    expect(useAgentStore.getState().drafts.s1).toBe('nháp phiên 1')
+    expect(useAgentStore.getState().lastError).toBe('Phiên đang bận.')
 
-    // 2. Operation snapshot
-    store.handleStreamEvent({
-      requestId: 'r1',
-      turnId: 'turn-1',
-      eventSeq: 2,
-      kind: 'operation',
-      operation: {
-        id: 'op-1',
-        turnId: 'turn-1',
-        commandId: 'cmd-1',
-        capability: 'translate_chapter',
-        target: { kind: 'chapter', workId: 'w1', chapterId: 'c1' },
-        state: 'running',
-        model: undefined,
-        progress: { completed: 1, total: 5, unit: 'segments' },
-        result: null,
-        error: null,
-        hasChanges: true,
-        createdAt: 1000,
-        updatedAt: 1000
-      }
-    })
+    expect(await useAgentStore.getState().send('nháp phiên 1')).toBe(true)
+    expect(useAgentStore.getState().drafts).toEqual({ [NEW_CHAT]: 'chưa có phiên' })
+  })
 
-    expect(useAgentStore.getState().operations['op-1']).toBeDefined()
-    expect(useAgentStore.getState().operations['op-1']!.state).toBe('running')
-
-    // 3. Done event commits turn and finishes streaming
-    store.handleStreamEvent({
-      requestId: 'r1',
-      turnId: 'turn-1',
-      eventSeq: 3,
-      kind: 'done',
-      turnState: 'completed',
-      usage: null
-    })
-
-    expect(useAgentStore.getState().isStreaming).toBe(false)
-    expect(useAgentStore.getState().turns).toHaveLength(1)
-    expect(useAgentStore.getState().turns[0].status).toBe('completed')
+  it('answers a pending action bound to its call and digest', async () => {
+    const pending = {
+      turnId: 't1',
+      toolCallId: 'call',
+      argsDigest: 'sha256:x',
+      name: 'resolve_target',
+      kind: 'choose' as const,
+      label: 'Chọn đích',
+      candidates: [{ handle: 't2', label: 'B' }],
+      createdAt: 1
+    }
+    const api = bridge(async () => ({
+      ok: true,
+      value: detail({ turns: [turn({ status: 'waiting_user' })], pending: [pending] })
+    }))
+    await useAgentStore.getState().selectSession('s1')
+    expect(useAgentStore.getState().pending).toHaveLength(1)
+    await useAgentStore.getState().reply(pending, 't2', 'B')
+    expect(api.turn.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        continuesTurnId: 't1',
+        pendingReply: { toolCallId: 'call', argsDigest: 'sha256:x', choice: 't2' },
+        instruction: 'B'
+      })
+    )
   })
 })

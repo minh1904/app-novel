@@ -50,6 +50,9 @@ export function getRunContext(db: Db, runKey: string): StoredRunContext | null {
 /**
  * Removes the chapter's snapshots that are older than `maxAgeMs` and that no proposal points to. A
  * proposal that still exists keeps its snapshot, so its trace stays rebuildable. Returns how many went.
+ *
+ * shortcut: a task item's snapshot (`task:<itemId>`) is always kept, because this work DB cannot join
+ * `library.db` to see whether the item still exists; prune by item once tasks can be deleted.
  */
 export function pruneOrphanRunContexts(
   db: Db,
@@ -61,6 +64,7 @@ export function pruneOrphanRunContexts(
     .prepare(
       `DELETE FROM translate_run_context
        WHERE chapter_id = ? AND created_at < ?
+         AND run_key NOT LIKE 'task:%'
          AND NOT EXISTS (SELECT 1 FROM proposal WHERE proposal.run_key = translate_run_context.run_key)`
     )
     .run(chapterId, now - maxAgeMs)

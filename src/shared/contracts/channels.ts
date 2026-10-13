@@ -72,6 +72,10 @@ export const CHANNELS = {
   glossaryDelete: 'glossary:delete',
   glossaryImportNames: 'glossary:importNames',
   glossaryCheckCompliance: 'glossary:checkCompliance',
+  glossaryReview: 'glossary:review',
+  glossaryBulkApprove: 'glossary:bulkApprove',
+  glossaryReviewInfo: 'glossary:reviewInfo',
+  glossaryApplied: 'glossary:applied',
   addressingCharactersList: 'addressing:characters:list',
   addressingCharactersGet: 'addressing:characters:get',
   addressingCharactersCreate: 'addressing:characters:create',
@@ -113,7 +117,11 @@ export const CHANNELS = {
   agentTurnCancel: 'agent:turn:cancel',
   agentOperationGet: 'agent:operation:get',
   agentOperationUndo: 'agent:operation:undo',
-  agentTargetWriteAck: 'agent:target:write-ack'
+  agentTargetWriteAck: 'agent:target:write-ack',
+  agentTaskList: 'agent:task:list',
+  agentTaskGet: 'agent:task:get',
+  agentTaskCreate: 'agent:task:create',
+  agentTaskControl: 'agent:task:control'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]
@@ -140,7 +148,9 @@ export const EVENT_CHANNELS = {
   /** Thông báo ý định ghi đích để editor chặn input và flush dirty (`AgentWriteIntent`). */
   agentTargetWriteIntent: 'agent:target:write-intent',
   /** Thông báo đích đã đổi sau khi operation kết thúc để editor cập nhật (`AgentTargetChanged`). */
-  agentTargetChanged: 'agent:target:changed'
+  agentTargetChanged: 'agent:target:changed',
+  /** Một tác vụ bền đổi trạng thái hoặc tiến độ (`AgentTaskChanged`), phát tới mọi cửa sổ. */
+  agentTaskChanged: 'agent:task:changed'
 } as const
 
 export type EventChannel = (typeof EVENT_CHANNELS)[keyof typeof EVENT_CHANNELS]

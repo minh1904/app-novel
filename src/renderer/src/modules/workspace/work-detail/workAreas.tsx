@@ -1,6 +1,6 @@
 import { ChaptersArea } from './ChaptersArea'
 import { ContextAreaMock } from './ContextAreaMock'
-import { JobsAreaMock } from './JobsAreaMock'
+import { JobsArea } from './JobsArea'
 import { MOCK_FEATURES } from '../../../lib/mockFeatures'
 import { SourcesArea } from './SourcesArea'
 import type { WorkArea } from './workArea'
@@ -28,10 +28,9 @@ export const sourcesArea: WorkArea = {
 }
 
 export const jobsArea: WorkArea = {
-  id: MOCK_FEATURES.jobsArea.id,
-  label: MOCK_FEATURES.jobsArea.label,
-  soon: true,
-  render: () => <JobsAreaMock />
+  id: 'jobs-area',
+  label: 'Tác vụ',
+  render: (props) => <JobsArea workId={props.workId} onOpenChapter={props.onOpenChapter} />
 }
 
 export const workAreas: ReadonlyArray<WorkArea> = [chaptersArea, contextArea, sourcesArea, jobsArea]

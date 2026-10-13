@@ -2,9 +2,19 @@ import { useCallback, useEffect, useState } from 'react'
 import type {
   ContextEntryItem,
   ContextKind,
+  ContextReviewCommand,
+  ContextReviewInfo,
+  ContextReviewOutcome,
   ContextStatus,
   ImportNamesResult
 } from '../../../../../shared/contracts/glossary'
+
+const requestedFilter = new Map<string, ContextStatus>()
+
+/** "Xem và duyệt": the next Glossary screen of this work opens on this status filter. */
+export function requestGlossaryFilter(workId: string, status: ContextStatus): void {
+  requestedFilter.set(workId, status)
+}
 
 export interface UseGlossaryOptions {
   workId: string
@@ -45,6 +55,10 @@ export interface UseGlossaryReturn {
   ) => Promise<ContextEntryItem>
   deleteEntry: (entryId: string) => Promise<void>
   importNames: (content: string) => Promise<ImportNamesResult>
+  /** Type, flags and quotes of the listed entries that have any. */
+  reviewInfo: Map<string, ContextReviewInfo>
+  review: (command: ContextReviewCommand) => Promise<ContextEntryItem>
+  bulkApprove: (entries: ContextEntryItem[]) => Promise<ContextReviewOutcome[]>
 }
 
 export function useGlossary({ workId, kind = 'term' }: UseGlossaryOptions): UseGlossaryReturn {
@@ -52,7 +66,15 @@ export function useGlossary({ workId, kind = 'term' }: UseGlossaryOptions): UseG
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | ContextStatus>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | ContextStatus>(
+    () => requestedFilter.get(workId) ?? 'all'
+  )
+  const [reviewInfo, setReviewInfo] = useState<Map<string, ContextReviewInfo>>(new Map())
+
+  // Taken once: a later visit opens on "all" again.
+  useEffect(() => {
+    requestedFilter.delete(workId)
+  }, [workId])
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -66,6 +88,11 @@ export function useGlossary({ workId, kind = 'term' }: UseGlossaryOptions): UseG
       })
       if (res.ok) {
         setEntries(res.value.entries)
+        const info = await window.mira.glossary.reviewInfo({
+          workId,
+          entryIds: res.value.entries.map((entry) => entry.id)
+        })
+        if (info.ok) setReviewInfo(new Map(info.value.entries.map((item) => [item.entryId, item])))
       } else {
         setError(res.error.message)
       }
@@ -162,8 +189,34 @@ export function useGlossary({ workId, kind = 'term' }: UseGlossaryOptions): UseG
     [workId, reload]
   )
 
+  const review = useCallback(
+    async (command: ContextReviewCommand) => {
+      const res = await window.mira.glossary.review({ workId, command })
+      await reload()
+      if (!res.ok) throw new Error(res.error.message)
+      return res.value
+    },
+    [workId, reload]
+  )
+
+  const bulkApprove = useCallback(
+    async (selected: ContextEntryItem[]) => {
+      const res = await window.mira.glossary.bulkApprove({
+        workId,
+        items: selected.map((entry) => ({ entryId: entry.id, expectedUpdatedAt: entry.updatedAt }))
+      })
+      await reload()
+      if (!res.ok) throw new Error(res.error.message)
+      return res.value.results
+    },
+    [workId, reload]
+  )
+
   return {
     entries,
+    reviewInfo,
+    review,
+    bulkApprove,
     loading,
     error,
     query,

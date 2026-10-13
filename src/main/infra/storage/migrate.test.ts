@@ -84,6 +84,67 @@ describe('migrate', () => {
     db.close()
   })
 
+  describe('foreignKeysOff', () => {
+    const parentChild: SchemaSpec = {
+      applicationId: APP_ID,
+      migrations: [
+        {
+          version: 1,
+          up(db) {
+            db.exec(`
+              CREATE TABLE parent (id TEXT PRIMARY KEY, kind TEXT CHECK (kind IN ('a')));
+              CREATE TABLE child (id TEXT PRIMARY KEY,
+                parent_id TEXT NOT NULL REFERENCES parent (id) ON DELETE CASCADE);
+            `)
+            db.exec('PRAGMA application_id = ' + APP_ID)
+          }
+        }
+      ]
+    }
+    const rebuild = (copySql: string): SchemaSpec => ({
+      ...parentChild,
+      migrations: [
+        ...parentChild.migrations,
+        {
+          version: 2,
+          foreignKeysOff: true,
+          up(db) {
+            db.exec(`
+              CREATE TABLE parent_new (id TEXT PRIMARY KEY, kind TEXT CHECK (kind IN ('a', 'b')));
+              ${copySql}
+              DROP TABLE parent;
+              ALTER TABLE parent_new RENAME TO parent;
+            `)
+          }
+        }
+      ]
+    })
+    const seeded = () => {
+      const db = openDatabase(join(tempDir(), 'fk.db'))
+      migrate(db, parentChild)
+      db.exec("INSERT INTO parent VALUES ('p', 'a'); INSERT INTO child VALUES ('c', 'p');")
+      return db
+    }
+
+    it('rebuilds a referenced table without cascading deletes and turns keys back on', () => {
+      const db = seeded()
+      migrate(db, rebuild('INSERT INTO parent_new SELECT * FROM parent;'))
+      expect(readPragmas(db).userVersion).toBe(2)
+      expect(db.prepare('SELECT id FROM child').all()).toEqual([{ id: 'c' }])
+      expect(db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 })
+      db.close()
+    })
+
+    it('rolls back when the rebuilt table leaves broken links', () => {
+      const db = seeded()
+      expect(() => migrate(db, rebuild(''))).toThrow(StorageError)
+      expect(readPragmas(db).userVersion).toBe(1)
+      expect(db.prepare('SELECT id FROM parent').all()).toEqual([{ id: 'p' }])
+      expect(db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 })
+      db.close()
+    })
+  })
+
   it('refuses a file from a newer version without modifying it', () => {
     const path = join(tempDir(), 'm.db')
     const db = openDatabase(path)

@@ -7,7 +7,7 @@ import type { ConnectionService } from '../services/ai/connectionService'
 import type { GlossaryService } from '../services/context/glossaryService'
 import type { AddressingService } from '../services/context/addressingService'
 import type { LibraryStore } from '../services/library/library'
-import { noChunkSink, type ChunkSink, type RawHandler } from './handler'
+import { noChunkSink, type ChunkSink, type RawHandler, type WindowBroadcast } from './handler'
 import { noFilePicker, type FilePicker } from './filePicker'
 import { accountHandlers } from './handlers/accounts'
 import { addressingHandlers } from './handlers/addressing'
@@ -30,6 +30,7 @@ import { agentHandlers } from './handlers/agent'
 import type { ExportService } from '../services/export/exportService'
 import type { SourceServices } from '../sources/sourceServices'
 import type { AgentService } from '../services/agent/agentService'
+import type { AgentTaskService } from '../services/agent/taskService'
 
 /**
  * Channel → handler đã được xác thực dữ liệu. Không import Electron để các bài test có thể gọi trực tiếp.
@@ -48,7 +49,9 @@ export function createLibraryHandlers(
   paragraphTranslator?: ParagraphTranslator,
   exportService?: ExportService,
   sources?: SourceServices,
-  agent?: AgentService
+  agent?: AgentService,
+  windows?: WindowBroadcast,
+  tasks?: AgentTaskService
 ): Record<Channel, RawHandler<unknown>> {
   const deps: HandlerDeps = {
     library,
@@ -61,7 +64,9 @@ export function createLibraryHandlers(
     paragraphTranslator,
     exportService,
     sources,
-    agent
+    agent,
+    windows,
+    tasks
   }
   return {
     ...worksHandlers(deps),

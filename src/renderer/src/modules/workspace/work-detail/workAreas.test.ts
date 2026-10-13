@@ -9,7 +9,8 @@ describe('workAreas', () => {
     expect(workAreas[2].soon).toBeUndefined()
   })
 
-  it('marks Jobs as "Sắp có"', () => {
-    expect(workAreas[3].soon).toBe(true)
+  it('shows real Jobs, no longer marked "Sắp có"', () => {
+    expect(workAreas[3]).toMatchObject({ id: 'jobs-area', label: 'Tác vụ' })
+    expect(workAreas[3].soon).toBeUndefined()
   })
 })

@@ -36,8 +36,18 @@ export class CallBudget {
     fallback: 0
   }
   private attempts = 0
+  /** Set once the outer gate refused a call: the run stopped for the task's cap, not its own. */
+  gateClosed = false
 
-  constructor(main: number, extra: number) {
+  /**
+   * `gate` is asked before every call that the run's own budget would allow; a durable task uses it for
+   * its caps across runs (calls, tokens, cost). A refusal is final for this budget.
+   */
+  constructor(
+    main: number,
+    extra: number,
+    private readonly gate?: (round: BudgetRound) => boolean
+  ) {
     this.mainLeft = Math.max(0, main)
     this.extraLeft = Math.max(0, extra)
     this.limitTotal = this.mainLeft + this.extraLeft
@@ -48,6 +58,12 @@ export class CallBudget {
    * run has more batches than were planned; any other round uses the extra fund. `false` means no call.
    */
   take(round: BudgetRound): boolean {
+    if (this.gateClosed) return false
+    const own = (round === 'main' && this.mainLeft > 0) || this.extraLeft > 0
+    if (own && this.gate && !this.gate(round)) {
+      this.gateClosed = true
+      return false
+    }
     if (round === 'main' && this.mainLeft > 0) {
       this.mainLeft--
     } else if (this.extraLeft > 0) {

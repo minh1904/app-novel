@@ -78,4 +78,15 @@ describe('translate run context', () => {
     expect(getRunContext(db, 'translate:other-chapter')).not.toBeNull()
     db.close()
   })
+
+  it('keeps an old task item snapshot that no proposal points to', () => {
+    const db = fresh()
+    const old = NOW - ORPHAN_RUN_CONTEXT_MS - 1
+    createRunContext(db, snapshot('task:item-1', 'c1', old))
+    createRunContext(db, snapshot('agent:op-1', 'c1', old))
+    expect(pruneOrphanRunContexts(db, 'c1', NOW)).toBe(1)
+    expect(getRunContext(db, 'task:item-1')).not.toBeNull()
+    expect(getRunContext(db, 'agent:op-1')).toBeNull()
+    db.close()
+  })
 })

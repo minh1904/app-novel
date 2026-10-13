@@ -5,6 +5,11 @@ export interface Migration {
   /** Target schema version; migrations must be listed with strictly increasing versions from 1. */
   version: number
   up(db: Db): void
+  /**
+   * Rebuilding a table that others reference must not cascade-delete their rows, so foreign keys are
+   * switched off around the step (the pragma is a no-op inside a transaction) and checked before commit.
+   */
+  foreignKeysOff?: boolean
 }
 
 export interface SchemaSpec {
@@ -59,9 +64,23 @@ export function migrate(db: Db, spec: SchemaSpec): void {
 
   for (const migration of spec.migrations) {
     if (migration.version <= userVersion) continue
-    db.transaction(() => {
-      migration.up(db)
-      db.exec('PRAGMA user_version = ' + migration.version)
-    })
+    if (migration.foreignKeysOff) db.exec('PRAGMA foreign_keys = OFF')
+    try {
+      db.transaction(() => {
+        migration.up(db)
+        if (migration.foreignKeysOff) {
+          const broken = db.prepare('PRAGMA foreign_key_check').all()
+          if (broken.length > 0) {
+            throw new StorageError(
+              'corrupt',
+              'Migration ' + migration.version + ' để lại ' + broken.length + ' liên kết hỏng.'
+            )
+          }
+        }
+        db.exec('PRAGMA user_version = ' + migration.version)
+      })
+    } finally {
+      if (migration.foreignKeysOff) db.exec('PRAGMA foreign_keys = ON')
+    }
   }
 }

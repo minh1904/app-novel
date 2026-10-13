@@ -198,7 +198,7 @@ describe('WorkFiles library.db lifecycle', () => {
 
     // Open via WorkFiles — should detect userVersion 8 < 10, create backup, then migrate to 10
     const files = WorkFiles.open({ dataDir: dir, now: () => 1500 })
-    expect(readPragmas(files.index).userVersion).toBe(10)
+    expect(readPragmas(files.index).userVersion).toBe(12)
 
     // Verify backup exists in backups/
     const backups = readdirSync(backupsDir).filter((f) => f.endsWith('.db'))
@@ -216,6 +216,74 @@ describe('WorkFiles library.db lifecycle', () => {
     bakDb.close()
 
     files.index.close()
+  })
+
+  it('keeps agent turns, operations and activity across the v11 agent_turn rebuild', () => {
+    const dir = tempDir()
+    const { db } = createSampleLibraryDb(dir, 10)
+    db.exec(`
+      INSERT INTO agent_session (id, title, created_at, updated_at) VALUES ('s', '', 1, 1);
+      INSERT INTO agent_turn (id, session_id, instruction, status, created_at, updated_at,
+        client_command_id, payload_digest)
+      VALUES ('t', 's', 'dịch', 'completed', 1, 2, 'cmd', 'digest');
+      INSERT INTO agent_operation (id, turn_id, command_id, capability, target_json, state,
+        created_at, updated_at)
+      VALUES ('o', 't', 'op-cmd', 'translate_chapter', '{}', 'completed', 1, 2);
+      INSERT INTO agent_activity (id, turn_id, operation_id, step_seq, kind, state, label,
+        created_at, updated_at)
+      VALUES ('a', 't', 'o', 1, 'operation', 'completed', 'Dịch', 1, 2);
+    `)
+    db.close()
+
+    const files = openWorkFiles(dir, () => 1500)
+    const counts = (target: Db) =>
+      target
+        .prepare(
+          `SELECT (SELECT count(*) FROM agent_turn) AS turns,
+             (SELECT count(*) FROM agent_operation) AS operations,
+             (SELECT count(*) FROM agent_activity WHERE operation_id = 'o') AS activities`
+        )
+        .get()
+    expect(readPragmas(files.index).userVersion).toBe(12)
+    expect(counts(files.index)).toEqual({ turns: 1, operations: 1, activities: 1 })
+    expect(
+      files.index.prepare('SELECT client_command_id, payload_digest FROM agent_turn').get()
+    ).toEqual({ client_command_id: 'cmd', payload_digest: 'digest' })
+
+    const backupsDir = join(dir, 'backups')
+    const backup = readdirSync(backupsDir).find((f) => f.endsWith('.db'))
+    const bakDb = open(join(backupsDir, backup ?? ''))
+    expect(readPragmas(bakDb).userVersion).toBe(10)
+    expect(counts(bakDb)).toEqual({ turns: 1, operations: 1, activities: 1 })
+  })
+
+  it('backs up a task caught mid-run with its item, operation and attempt intact', () => {
+    const dir = tempDir()
+    const { db } = createSampleLibraryDb(dir, 12)
+    db.exec(`
+      INSERT INTO agent_task (id, kind, work_id, client_command_id, payload_digest, state,
+        model_ref_json, overwrite_policy, created_at, updated_at)
+      VALUES ('k', 'translate_chapters', 'w', 'cmd', 'd', 'running', '{}', 'fill_untranslated', 1, 1);
+      INSERT INTO agent_task_item (id, task_id, ordinal, chapter_id, state, run_key, created_at, updated_at)
+      VALUES ('i', 'k', 1, 'c', 'running', 'task:i', 1, 1);
+      INSERT INTO agent_operation (id, task_item_id, command_id, capability, target_json, state,
+        created_at, updated_at)
+      VALUES ('o', 'i', 'cmd-o', 'translate_chapter', '{}', 'running', 1, 1);
+      INSERT INTO agent_task_attempt (item_id, attempt, operation_id, created_at) VALUES ('i', 1, 'o', 1);
+    `)
+    const backupPath = join(dir, 'mid-run.db')
+    createLibraryBackup(db, backupPath)
+    const bak = open(backupPath)
+    expect(() => verifyLibraryDatabase(backupPath)).not.toThrow()
+    expect(
+      bak
+        .prepare(
+          `SELECT t.state AS task, i.state AS item, o.task_item_id AS owner, a.attempt
+           FROM agent_task t JOIN agent_task_item i ON i.task_id = t.id
+           JOIN agent_task_attempt a ON a.item_id = i.id JOIN agent_operation o ON o.id = a.operation_id`
+        )
+        .get()
+    ).toEqual({ task: 'running', item: 'running', owner: 'i', attempt: 1 })
   })
 
   it('preserves pre-migration backup if migration fails', () => {

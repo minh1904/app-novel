@@ -80,7 +80,8 @@ export const TURN_STATES = [
   'waiting_user',
   'failed',
   'cancelled',
-  'interrupted'
+  'interrupted',
+  'expired'
 ] as const
 export type AgentTurnState = (typeof TURN_STATES)[number]
 
@@ -103,11 +104,12 @@ export type AgentActivityState = (typeof ACTIVITY_STATES)[number]
 const turnTransitions: Record<AgentTurnState, readonly AgentTurnState[]> = {
   queued: ['running', 'cancelled', 'interrupted'],
   running: ['completed', 'waiting_user', 'failed', 'cancelled', 'interrupted'],
-  waiting_user: ['running'],
+  waiting_user: ['running', 'cancelled', 'expired'],
   completed: [],
   failed: [],
   cancelled: [],
-  interrupted: []
+  interrupted: [],
+  expired: []
 }
 const operationTransitions: Record<AgentOperationState, readonly AgentOperationState[]> = {
   queued: ['running', 'cancelled', 'interrupted'],
@@ -147,7 +149,9 @@ export interface AgentProgress {
 
 export interface AgentOperation {
   id: string
-  turnId: string
+  /** Chat operations belong to a turn, task operations to a task item; exactly one is set. */
+  turnId: string | null
+  taskItemId: string | null
   commandId: string
   capability: string
   target: ResolvedTarget
@@ -251,9 +255,31 @@ export interface AgentTurnView {
   updatedAt: number
 }
 
+/** A tool call that waits for the user: a write needing approval or an ambiguous target. */
+export interface AgentPendingAction {
+  turnId: string
+  toolCallId: string
+  argsDigest: string
+  name: string
+  kind: 'approve' | 'choose'
+  label: string
+  candidates: Array<{ handle: string; label: string }>
+  createdAt: number
+}
+
 export interface AgentSessionDetailView {
   session: AgentSessionView
   turns: AgentTurnView[]
+  activities: AgentActivity[]
+  operations: AgentOperation[]
+  pending: AgentPendingAction[]
+}
+
+export interface AgentPendingReply {
+  toolCallId: string
+  argsDigest: string
+  /** `approve`/`reject` for a write; a candidate handle for an ambiguous target. */
+  choice: string
 }
 
 export interface AgentSendInput {
@@ -266,6 +292,8 @@ export interface AgentSendInput {
     entryId: string
     settingsKey?: string
   }
+  continuesTurnId?: string
+  pendingReply?: AgentPendingReply
 }
 
 export const agentSendInputSchema = v.strictObject({
@@ -282,6 +310,14 @@ export const agentSendInputSchema = v.strictObject({
       connectionId: idSchema,
       entryId: idSchema,
       settingsKey: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1)))
+    })
+  ),
+  continuesTurnId: v.optional(idSchema),
+  pendingReply: v.optional(
+    v.strictObject({
+      toolCallId: idSchema,
+      argsDigest: v.pipe(v.string(), v.minLength(1)),
+      choice: v.pipe(v.string(), v.minLength(1))
     })
   )
 })

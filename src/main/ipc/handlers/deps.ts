@@ -9,9 +9,10 @@ import { AddressingService } from '../../services/context/addressingService'
 import type { ExportService } from '../../services/export/exportService'
 import type { LibraryStore } from '../../services/library/library'
 import type { SourceServices } from '../../sources/sourceServices'
-import type { RawHandler } from '../handler'
+import type { RawHandler, WindowBroadcast } from '../handler'
 import type { FilePicker } from '../filePicker'
 import type { AgentService } from '../../services/agent/agentService'
+import type { AgentTaskService } from '../../services/agent/taskService'
 
 /** What every area of handlers is built from. The AI services are optional: see `connectionsOf`. */
 export interface HandlerDeps {
@@ -26,6 +27,9 @@ export interface HandlerDeps {
   exportService?: ExportService
   sources?: SourceServices
   agent?: AgentService
+  /** Mọi cửa sổ đang mở; vắng thì sự kiện chỉ về cửa sổ đã gọi. */
+  windows?: WindowBroadcast
+  tasks?: AgentTaskService
 }
 
 /**
@@ -79,4 +83,8 @@ export function sourcesOf(deps: HandlerDeps): SourceServices {
 
 export function agentOf(deps: HandlerDeps): AgentService {
   return deps.agent ?? unavailable()
+}
+
+export function tasksOf(deps: HandlerDeps): AgentTaskService {
+  return deps.tasks ?? unavailable()
 }

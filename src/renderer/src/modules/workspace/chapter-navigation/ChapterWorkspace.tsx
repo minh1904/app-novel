@@ -43,6 +43,14 @@ import { useWorkspaceStore } from '../store/workspaceStore'
 import { headingTitle } from '../work-detail/chapterList'
 import { contextArea } from '../work-detail/workAreas'
 import { AiPanel } from '../assistant/AiPanel'
+import { PanelResizeHandle } from './PanelResizeHandle'
+import { buildLocation, type PaneCaret } from '../assistant/chatLocation'
+import {
+  AssistantSideDrawer,
+  AssistantSidePanel,
+  type SidePanelTab,
+  useNarrowWindow
+} from './AssistantSidePanel'
 import { defaultWorkspaceAgentAdapter } from '@renderer/modules/agent/public'
 import type { ChatEditor } from '../assistant/useAiChat'
 import { AiTranslateDialog } from '../translation/AiTranslateDialog'
@@ -154,18 +162,6 @@ export function ChapterWorkspace({
   }, [chapter.id, target.content])
 
   useEffect(() => {
-    if (!tabActive) return
-    defaultWorkspaceAgentAdapter.setActiveContextGetter(() => ({
-      workId: work.id,
-      chapterId: chapter.id,
-      side: 'target'
-    }))
-    return () => {
-      defaultWorkspaceAgentAdapter.setActiveContextGetter(() => null)
-    }
-  }, [tabActive, work.id, chapter.id])
-
-  useEffect(() => {
     return defaultWorkspaceAgentAdapter.registerEditor(
       { workId: work.id, chapterId: chapter.id, side: 'target' },
       {
@@ -207,6 +203,42 @@ export function ChapterWorkspace({
   const [aiSourceRange, setAiSourceRange] = useState<TargetRange | null>(null)
   const [aiRange, setAiRange] = useState<TargetRange | null>(null)
   const [aiSide, setAiSide] = useState<'source' | 'target'>('target')
+  const [sideTab, setSideTab] = useState<SidePanelTab>('assistant')
+  const narrow = useNarrowWindow()
+
+  // Trợ lý chụp tác phẩm, chương, vùng chọn và con trỏ lúc gửi; ref giữ giá trị mới nhất cho getter.
+  const location = useRef({ source: aiSourceRange, target: aiRange, side: aiSide })
+  location.current = { source: aiSourceRange, target: aiRange, side: aiSide }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: báo cho chip ngữ cảnh mỗi khi vị trí đổi.
+  useEffect(() => {
+    defaultWorkspaceAgentAdapter.contextChanged()
+  }, [aiSourceRange, aiRange, aiSide])
+  useEffect(() => {
+    if (!tabActive) return
+    const pane = (range: TargetRange | null): PaneCaret | null =>
+      range && { from: range.from, to: range.to, selected: range.selected === true }
+    defaultWorkspaceAgentAdapter.setActiveContextGetter(
+      () => {
+        const at = buildLocation({
+          sourceText: sourceEditor.current?.getText() ?? '',
+          targetText: targetEditor.current?.getText() ?? '',
+          source: pane(location.current.source),
+          target: pane(location.current.target),
+          active: location.current.side
+        })
+        return {
+          workId: work.id,
+          chapterId: chapter.id,
+          caret: at.caret,
+          ...(at.selection ? { selection: at.selection } : {})
+        }
+      },
+      () => ({ work: work.title, chapter: headingTitle(chapter) })
+    )
+    return () => {
+      defaultWorkspaceAgentAdapter.setActiveContextGetter(() => null)
+    }
+  }, [tabActive, work.id, work.title, chapter])
   const onSourceCaret = useCallback((range: TargetRange) => {
     setAiSourceRange(range)
     setAiSide('source')
@@ -557,6 +589,45 @@ export function ChapterWorkspace({
 
   const focusLabel = focused ? 'Hiện điều hướng' : 'Tập trung'
 
+  // Cửa sổ rộng: panel dock cạnh bản dịch. Cửa sổ hẹp: cùng panel nằm trong drawer phủ.
+  const dockOpen = aiOpen && !narrow
+  const sidePanel = (
+    <AssistantSidePanel
+      workId={work.id}
+      chapterId={chapter.id}
+      tab={sideTab}
+      onTabChange={setSideTab}
+      onClose={() => setAiOpen(false)}
+      legacy={
+        <AiPanel
+          workId={work.id}
+          chapterId={chapter.id}
+          chapterLabel={headingTitle(chapter)}
+          sourceLang={work.sourceLanguage}
+          source={sourceText}
+          target={targetChat}
+          sourceCaret={
+            aiSourceRange && {
+              from: aiSourceRange.from,
+              to: aiSourceRange.to,
+              selected: aiSourceRange.selected === true
+            }
+          }
+          targetCaret={
+            aiRange && {
+              from: aiRange.from,
+              to: aiRange.to,
+              selected: aiRange.selected === true
+            }
+          }
+          activeSide={aiSide}
+          onClose={() => setAiOpen(false)}
+          onOpenSettings={onOpenSettings}
+        />
+      }
+    />
+  )
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <TopBarTitle onBack={onBackToWork} backLabel={`Về tác phẩm: ${work.title}`} size="sm">
@@ -901,46 +972,24 @@ export function ChapterWorkspace({
           </div>
 
           <div
-            inert={!aiOpen || undefined}
-            aria-hidden={!aiOpen || undefined}
+            inert={!dockOpen || undefined}
+            aria-hidden={!dockOpen || undefined}
             className={cn(
-              'min-h-0 shrink-0 overflow-hidden border-default transition-[width] duration-(--mira-duration-base) ease-standard',
-              aiOpen ? 'border-l' : 'w-0 border-l-0'
+              'relative min-h-0 shrink-0 overflow-hidden border-default transition-[width] duration-(--mira-duration-base) ease-standard',
+              dockOpen ? 'border-l' : 'w-0 border-l-0'
             )}
-            style={{ width: aiOpen ? aiWidth : 0 }}
+            style={{ width: dockOpen ? aiWidth : 0 }}
           >
+            {dockOpen && <PanelResizeHandle width={aiWidth} onWidthChange={setAiWidth} />}
             <div className="flex h-full min-h-0 flex-col" style={{ width: aiWidth }}>
-              {tabActive && (
-                <AiPanel
-                  workId={work.id}
-                  chapterId={chapter.id}
-                  chapterLabel={headingTitle(chapter)}
-                  sourceLang={work.sourceLanguage}
-                  source={sourceText}
-                  target={targetChat}
-                  sourceCaret={
-                    aiSourceRange && {
-                      from: aiSourceRange.from,
-                      to: aiSourceRange.to,
-                      selected: aiSourceRange.selected === true
-                    }
-                  }
-                  targetCaret={
-                    aiRange && {
-                      from: aiRange.from,
-                      to: aiRange.to,
-                      selected: aiRange.selected === true
-                    }
-                  }
-                  activeSide={aiSide}
-                  width={aiWidth}
-                  onWidthChange={setAiWidth}
-                  onClose={() => setAiOpen(false)}
-                  onOpenSettings={onOpenSettings}
-                />
-              )}
+              {tabActive && !narrow && sidePanel}
             </div>
           </div>
+          {tabActive && narrow && (
+            <AssistantSideDrawer open={aiOpen} onOpenChange={setAiOpen}>
+              {sidePanel}
+            </AssistantSideDrawer>
+          )}
         </div>
       )}
 
@@ -951,6 +1000,8 @@ export function ChapterWorkspace({
           translation={translation}
           statuses={[sourceStatus, targetStatus]}
           onOpenProposals={() => {
+            // Proposal chờ duyệt thuộc chat cũ theo tác phẩm.
+            setSideTab('legacy')
             if (!aiOpen) toggleAi()
           }}
         />

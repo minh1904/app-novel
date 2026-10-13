@@ -26,6 +26,14 @@ import type {
   AgentWriteIntent,
   AgentWriteIntentAck
 } from './agent'
+import type {
+  AgentTaskChanged,
+  AgentTaskControlInput,
+  AgentTaskCreateInput,
+  AgentTaskDetailView,
+  AgentTaskSummary,
+  AgentTaskView
+} from './agentTask'
 import type { ChatChunk, ChatSendInput, ChatStartResult } from './aiChat'
 import type { AcceptProposalInput, AcceptProposalResult, ProposalQueueItem } from './aiProposals'
 import type { AiSessionView, AiTurnView } from './aiHistory'
@@ -48,10 +56,14 @@ import type { Result } from './result'
 import type { WorkspaceLoad, WorkspaceState } from './workspace'
 import type { SegmentInput, TextRecord, TextSide } from './text'
 import type {
+  AppliedContext,
   ContextEntryItem,
   ContextKind,
   ContextOrigin,
   ContextStatus,
+  ContextReviewCommand,
+  ContextReviewInfo,
+  ContextReviewOutcome,
   GlossaryComplianceReport,
   ImportNamesResult
 } from './glossary'
@@ -333,12 +345,26 @@ export interface GlossaryApi {
   }): Promise<Result<ContextEntryItem>>
   delete(options: { workId: string; entryId: string }): Promise<Result<void>>
   importNames(input: { workId: string; content: string }): Promise<Result<ImportNamesResult>>
+  /** Approve, edit then approve, or reject a pending entry, guarded by `expectedUpdatedAt`. */
+  review(input: {
+    workId: string
+    command: ContextReviewCommand
+  }): Promise<Result<ContextEntryItem>>
+  bulkApprove(input: {
+    workId: string
+    items: Array<{ entryId: string; expectedUpdatedAt: number }>
+  }): Promise<Result<{ results: ContextReviewOutcome[] }>>
+  reviewInfo(input: {
+    workId: string
+    entryIds?: string[]
+  }): Promise<Result<{ entries: ContextReviewInfo[] }>>
   checkCompliance(input: {
     workId: string
     chapterId: string
     sourceText: string
     targetText: string
   }): Promise<Result<GlossaryComplianceReport>>
+  applied(input: { workId: string; chapterId: string }): Promise<Result<AppliedContext>>
 }
 
 export interface AddressingApi {
@@ -470,6 +496,13 @@ export interface AgentApi {
     onTargetChanged(listener: (event: AgentTargetChanged) => void): () => void
   }
   onStreamEvent(listener: (event: AgentStreamEvent) => void): () => void
+  tasks: {
+    list(filter?: { workId?: string }): Promise<Result<{ tasks: AgentTaskSummary[] }>>
+    get(taskId: string): Promise<Result<AgentTaskDetailView>>
+    create(input: AgentTaskCreateInput): Promise<Result<AgentTaskView>>
+    control(input: AgentTaskControlInput): Promise<Result<AgentTaskView>>
+    onChanged(listener: (event: AgentTaskChanged) => void): () => void
+  }
 }
 
 export interface DesktopApi {

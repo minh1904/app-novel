@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import type { AddressingDyadResolved, CharacterItem } from './addressing'
 import { idSchema } from './library'
 
 export const CONTEXT_KINDS = ['term', 'character', 'dyad', 'world', 'style', 'summary'] as const
@@ -24,6 +25,38 @@ export interface ContextEntryItem {
   aliases: string[]
   createdAt: number
   updatedAt: number
+}
+
+/** Why an AI candidate needs a closer look; shown to the reviewer, never fixed automatically. */
+export const REVIEW_FLAG_CODES = ['alias_conflict', 'script_mismatch', 'reopened'] as const
+export type ReviewFlagCode = (typeof REVIEW_FLAG_CODES)[number]
+
+export interface ReviewFlag {
+  code: ReviewFlagCode
+  /** `alias_conflict`: the alias form that belongs to another entry. */
+  detail?: string
+}
+
+/** One quote an extraction run found for an entry. */
+export interface ContextEvidence {
+  id: string
+  runId: string
+  chapterId: string | null
+  quote: string
+  model: string
+  promptHash: string
+  createdAt: number
+}
+
+/**
+ * Review data of an entry, read apart from `ContextEntryItem`: the translation snapshot hashes whole
+ * items, so these fields stay out of it.
+ */
+export interface ContextReviewInfo {
+  entryId: string
+  termType: string | null
+  flags: ReviewFlag[]
+  evidence: ContextEvidence[]
 }
 
 export const TERM_TEXT_MAX = 200
@@ -88,6 +121,66 @@ export const deleteGlossaryEntrySchema = v.strictObject({
   workId,
   entryId
 })
+
+/**
+ * Review of a `pending` entry (change `add-agent-context-workflow`). Every command carries the
+ * `updatedAt` the reviewer saw; an entry changed since is a `conflict` and stays as it is.
+ */
+const expectedUpdatedAt = v.pipe(v.number(), v.integer(), v.minValue(0))
+
+export const reviewContextCommandSchema = v.variant('kind', [
+  v.strictObject({ kind: v.literal('approve'), entryId, expectedUpdatedAt }),
+  v.strictObject({
+    kind: v.literal('edit_approve'),
+    entryId,
+    expectedUpdatedAt,
+    target: v.optional(termTextSchema),
+    aliases: v.optional(v.array(termTextSchema)),
+    fromChapterId: v.optional(chapterIdNullable),
+    toChapterId: v.optional(chapterIdNullable),
+    notes: v.optional(v.nullish(termNotesSchema))
+  }),
+  v.strictObject({
+    kind: v.literal('reject'),
+    entryId,
+    expectedUpdatedAt,
+    reason: termNotesSchema
+  })
+])
+export type ContextReviewCommand = v.InferOutput<typeof reviewContextCommandSchema>
+
+export const reviewContextSchema = v.strictObject({ workId, command: reviewContextCommandSchema })
+
+/** Approves several entries of one term type in one transaction; each entry gets its own result. */
+export const bulkApproveContextSchema = v.strictObject({
+  workId,
+  items: v.pipe(
+    v.array(v.strictObject({ entryId, expectedUpdatedAt })),
+    v.minLength(1, 'Chọn ít nhất một mục.'),
+    v.maxLength(500, 'Tối đa 500 mục một lần.')
+  )
+})
+
+export type ContextReviewOutcome =
+  | { entryId: string; ok: true; entry: ContextEntryItem }
+  | { entryId: string; ok: false; code: 'conflict' | 'not_found'; message: string }
+
+export const reviewInfoSchema = v.strictObject({
+  workId,
+  entryIds: v.optional(v.array(entryId))
+})
+
+export const appliedContextSchema = v.strictObject({
+  workId,
+  chapterId: v.pipe(v.string(), v.uuid())
+})
+
+/** What a translation of the chapter would use now: the snapshot's glossary, pairs and characters. */
+export interface AppliedContext {
+  glossary: ContextEntryItem[]
+  dyads: AddressingDyadResolved[]
+  characters: CharacterItem[]
+}
 
 export const importNamesSchema = v.strictObject({
   workId,

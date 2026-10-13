@@ -157,12 +157,9 @@ export function mergeCandidates(
 }
 
 /** Chia chương thành các khúc không quá `maxChars` ký tự cho lượt AI quét. */
-export function sweepChunks(
-  chapters: ExtractionChapter[],
-  maxChars = 40_000
-): ExtractionChapter[][] {
-  const chunks: ExtractionChapter[][] = []
-  let current: ExtractionChapter[] = []
+export function sweepChunks<T extends ExtractionChapter>(chapters: T[], maxChars = 40_000): T[][] {
+  const chunks: T[][] = []
+  let current: T[] = []
   let size = 0
   for (const chapter of chapters) {
     if (current.length > 0 && size + chapter.text.length > maxChars) {

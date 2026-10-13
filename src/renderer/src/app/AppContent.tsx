@@ -4,9 +4,9 @@ import { AppShell } from './AppShell'
 import { CommandPaletteMock } from './CommandPaletteMock'
 import { WorkTabActiveContext } from '../components/ui/topBarSlot'
 import { Button, LinkButton } from '../components/ui/Button'
-import { AgentPanel } from '../modules/agent/public'
+import { AssistantScreen } from './screens/assistant/AssistantScreen'
 import { HomeScreen } from './screens/home/HomeScreen'
-import { JobsScreenMock } from './screens/jobs/JobsScreenMock'
+import { JobsScreen } from './screens/jobs/JobsScreen'
 import { CreateWorkScreen } from '../modules/library/public'
 import { LibraryScreen } from '../modules/library/public'
 import type { Work } from '../modules/library/public'
@@ -147,7 +147,7 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
         )
       break
     case 'jobs':
-      content = <JobsScreenMock />
+      content = <JobsScreen onOpenChapter={openChapterView} />
       break
     case 'updates':
       content = <UpdatesScreen />
@@ -163,7 +163,7 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
       break
     case 'assistant':
       content = (
-        <AgentPanel
+        <AssistantScreen
           onOpenTarget={(target) => {
             if (target.kind === 'chapter') {
               openChapterView(target.workId, target.chapterId)

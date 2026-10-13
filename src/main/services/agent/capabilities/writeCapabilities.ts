@@ -4,6 +4,7 @@ import { StorageError } from '../../../infra/storage/errors'
 import type { CapabilityDefinition } from '../types'
 import { runChapterTranslation } from '../chapterTranslationRunner'
 import type { ConnectionService } from '../../ai/connectionService'
+import { TARGET_PARAM } from './readCapabilities'
 
 export interface WriteCapabilitiesOptions {
   connections: ConnectionService
@@ -25,6 +26,8 @@ export function createWriteCapabilities(options: WriteCapabilitiesOptions) {
       entryId: v.optional(v.string()),
       settingsKey: v.optional(v.string())
     }),
+    // The model names only the chapter; the runtime fills in the model chosen for the turn.
+    parameters: { type: 'object', properties: { target: TARGET_PARAM }, required: ['target'] },
     targetPolicy: 'requires_target',
     handler: async ({ library, target, args, operationId, now, signal, onProgress }) => {
       if (target?.kind !== 'chapter') {
@@ -120,6 +123,27 @@ export function createWriteCapabilities(options: WriteCapabilitiesOptions) {
       ),
       expectedRev: v.optional(v.number())
     }),
+    parameters: {
+      type: 'object',
+      properties: {
+        target: TARGET_PARAM,
+        replacements: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 50,
+          items: {
+            type: 'object',
+            properties: {
+              sourceId: { type: 'string', description: 'ID đoạn gốc lấy từ read_segments.' },
+              text: { type: 'string' }
+            },
+            required: ['sourceId', 'text']
+          }
+        },
+        expectedRev: { type: 'number', description: 'rev của bản dịch khi đọc.' }
+      },
+      required: ['target', 'replacements']
+    },
     targetPolicy: 'requires_target',
     handler: async ({ library, target, args, operationId, now }) => {
       if (target?.kind !== 'chapter') {
@@ -228,6 +252,12 @@ export function createWriteCapabilities(options: WriteCapabilitiesOptions) {
     schema: v.object({
       operationId: v.pipe(v.string(), v.minLength(1))
     }),
+    // The target is the operation's own; the runtime reads it from the operation.
+    parameters: {
+      type: 'object',
+      properties: { operationId: { type: 'string' } },
+      required: ['operationId']
+    },
     targetPolicy: 'requires_target',
     handler: async ({ library, target, args }) => {
       if (target?.kind !== 'chapter') {

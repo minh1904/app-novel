@@ -14,8 +14,17 @@ import {
 import { CHANNELS, EVENT_CHANNELS } from '../../../shared/contracts/channels'
 import { idSchema } from '../../../shared/contracts/library'
 import { StorageError } from '../../infra/storage/errors'
-import { createHandler, createSinkHandler } from '../handler'
-import { agentOf, type AreaHandlers, type HandlerDeps } from './deps'
+import { createHandler, createSinkHandler, sinkBroadcast } from '../handler'
+import { agentOf, tasksOf, type AreaHandlers, type HandlerDeps } from './deps'
+import {
+  agentTaskControlInputSchema,
+  agentTaskCreateInputSchema,
+  agentTaskGetInputSchema,
+  agentTaskListInputSchema,
+  type AgentTaskDetailView,
+  type AgentTaskSummary,
+  type AgentTaskView
+} from '../../../shared/contracts/agentTask'
 
 const sessionsListSchema = v.nullable(
   v.strictObject({
@@ -51,15 +60,7 @@ export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
 
     [CHANNELS.agentSessionsGet]: createHandler(
       sessionGetSchema,
-      ({ sessionId }): AgentSessionDetailView => {
-        const agent = agentOf(deps)
-        const session = agent.getSession(sessionId)
-        if (!session) {
-          throw new StorageError('not_found', 'Không tìm thấy phiên agent.')
-        }
-        const turns = agent.listTurns(sessionId)
-        return { session, turns }
-      }
+      ({ sessionId }): AgentSessionDetailView => agentOf(deps).getSessionDetail(sessionId)
     ),
 
     [CHANNELS.agentSessionsCreate]: createHandler(
@@ -75,7 +76,8 @@ export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
         const agent = agentOf(deps)
         const accepted = agent.acceptTurn(input)
         if (accepted.created) {
-          sink.onDestroyed(() => agent.cancelTurn(accepted.turnId))
+          // The turn belongs to Main: closing the window that sent it does not cancel it (D8).
+          const windows = deps.windows ?? sinkBroadcast(sink)
           setImmediate(() => {
             void agent
               .runExistingTurn({
@@ -86,15 +88,10 @@ export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
                 instruction: input.instruction,
                 context: input.context,
                 modelSelection: input.modelSelection,
-                onStream: (event) => {
-                  if (!sink.isDestroyed()) sink.send(EVENT_CHANNELS.agentStreamEvent, event)
-                },
-                onWriteIntent: (intent) => {
-                  if (!sink.isDestroyed()) sink.send(EVENT_CHANNELS.agentTargetWriteIntent, intent)
-                },
-                onTargetChanged: (event) => {
-                  if (!sink.isDestroyed()) sink.send(EVENT_CHANNELS.agentTargetChanged, event)
-                }
+                onStream: (event) => windows.send(EVENT_CHANNELS.agentStreamEvent, event),
+                onWriteIntent: (intent) =>
+                  windows.send(EVENT_CHANNELS.agentTargetWriteIntent, intent),
+                onTargetChanged: (event) => windows.send(EVENT_CHANNELS.agentTargetChanged, event)
               })
               .catch((error: unknown) => {
                 console.error(
@@ -133,8 +130,8 @@ export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
       ({ operationId }, sink): AgentUndoResult => {
         const agent = agentOf(deps)
         const undone = agent.undoOperation(operationId)
-        if (undone.target.kind === 'chapter' && !sink.isDestroyed()) {
-          sink.send(EVENT_CHANNELS.agentTargetChanged, {
+        if (undone.target.kind === 'chapter') {
+          ;(deps.windows ?? sinkBroadcast(sink)).send(EVENT_CHANNELS.agentTargetChanged, {
             target: {
               workId: undone.target.workId,
               chapterId: undone.target.chapterId,
@@ -148,8 +145,33 @@ export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
       }
     ),
 
-    [CHANNELS.agentTargetWriteAck]: createHandler(agentWriteIntentAckSchema, (input): void => {
-      agentOf(deps).acknowledgeWriteIntent(input)
-    })
+    [CHANNELS.agentTaskList]: createHandler(
+      agentTaskListInputSchema,
+      (input): { tasks: AgentTaskSummary[] } => ({
+        tasks: tasksOf(deps).list(input?.workId ? { workId: input.workId } : {})
+      })
+    ),
+
+    [CHANNELS.agentTaskGet]: createHandler(
+      agentTaskGetInputSchema,
+      ({ taskId }): AgentTaskDetailView => tasksOf(deps).get(taskId)
+    ),
+
+    [CHANNELS.agentTaskCreate]: createHandler(
+      agentTaskCreateInputSchema,
+      (input): AgentTaskView => tasksOf(deps).create(input).task
+    ),
+
+    [CHANNELS.agentTaskControl]: createHandler(
+      agentTaskControlInputSchema,
+      (input): AgentTaskView => tasksOf(deps).control(input)
+    ),
+
+    [CHANNELS.agentTargetWriteAck]: createSinkHandler(
+      agentWriteIntentAckSchema,
+      (input, sink): void => {
+        agentOf(deps).acknowledgeWriteIntent(input, sink.senderId)
+      }
+    )
   }
 }

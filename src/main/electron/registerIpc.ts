@@ -2,13 +2,14 @@ import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } f
 import { statSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { CHANNELS } from '../../shared/contracts/channels'
+import { CHANNELS, EVENT_CHANNELS } from '../../shared/contracts/channels'
 import { createServices } from '../services/createServices'
 import { electronFetch } from './netFetch'
 import { electronSafeStorage } from './safeStorage'
 import type { LibraryStore } from '../services/library/library'
 import type { FilePicker } from '../ipc/filePicker'
 import { createLibraryHandlers, guardHandlers } from '../ipc/libraryHandlers'
+import type { WindowBroadcast } from '../ipc/handler'
 import { electronExportFilePicker, electronPdfPrinter } from './exportElectron'
 import { ExportService } from '../services/export/exportService'
 
@@ -46,18 +47,43 @@ function electronFilePicker(): FilePicker {
   }
 }
 
+/** Mọi cửa sổ đang mở: lượt Trợ lý thuộc Main nên mọi cửa sổ đều nhận sự kiện của nó. */
+function electronWindows(): WindowBroadcast {
+  return {
+    send(channel, payload) {
+      const reached: number[] = []
+      for (const window of BrowserWindow.getAllWindows()) {
+        const contents = window.webContents
+        if (contents.isDestroyed()) continue
+        contents.send(channel, payload)
+        reached.push(contents.id)
+      }
+      return reached
+    },
+    onClosed(callback) {
+      const watch = (window: BrowserWindow) => {
+        const id = window.webContents.id
+        window.webContents.once('destroyed', () => callback(id))
+      }
+      for (const window of BrowserWindow.getAllWindows()) watch(window)
+      app.on('browser-window-created', (_event, window) => watch(window))
+    }
+  }
+}
+
 export function registerLibraryHandlers(
   library: LibraryStore,
   isTrustedSender: (event: IpcMainInvokeEvent) => boolean
 ): () => void {
-  const { connections, translator, paragraphTranslator, chat, sources, agent } = createServices({
-    library,
-    crypto: electronSafeStorage,
-    fetch: electronFetch,
-    userAgent: 'Mira/' + app.getVersion(),
-    // Dịch vụ đăng nhập tự kiểm tra host (auth.openai.com, github.com) trước khi yêu cầu mở URL này.
-    openExternal: (url) => shell.openExternal(url)
-  })
+  const { connections, translator, paragraphTranslator, chat, sources, agent, tasks } =
+    createServices({
+      library,
+      crypto: electronSafeStorage,
+      fetch: electronFetch,
+      userAgent: 'Mira/' + app.getVersion(),
+      // Dịch vụ đăng nhập tự kiểm tra host (auth.openai.com, github.com) trước khi yêu cầu mở URL này.
+      openExternal: (url) => shell.openExternal(url)
+    })
   const exportService = new ExportService(
     library,
     electronExportFilePicker(),
@@ -69,6 +95,15 @@ export function registerLibraryHandlers(
       else shell.showItemInFolder(path)
     }
   )
+  const windows = electronWindows()
+  windows.onClosed((id) => agent.windowClosed(id))
+  // Tasks have no window that asked: their write intents and changes go to every window.
+  tasks.connect({
+    publishIntent: (intent) => windows.send(EVENT_CHANNELS.agentTargetWriteIntent, intent),
+    changed: (event) => {
+      windows.send(EVENT_CHANNELS.agentTaskChanged, event)
+    }
+  })
   const handlers = guardHandlers(
     createLibraryHandlers(
       library,
@@ -81,7 +116,9 @@ export function registerLibraryHandlers(
       paragraphTranslator,
       exportService,
       sources,
-      agent
+      agent,
+      windows,
+      tasks
     ),
     isTrustedSender,
     // `event.sender` là cửa sổ đã gọi, nên chunk về đúng chỗ hỏi. Khai hẹp lại thành `ChunkSink` để
@@ -89,11 +126,16 @@ export function registerLibraryHandlers(
     (event) => ({
       send: (channel, payload) => event.sender.send(channel, payload),
       isDestroyed: () => event.sender.isDestroyed(),
-      onDestroyed: (callback) => event.sender.once('destroyed', callback)
+      onDestroyed: (callback) => event.sender.once('destroyed', callback),
+      senderId: event.sender.id
     })
   )
   for (const channel of Object.values(CHANNELS)) {
     ipcMain.handle(channel, (event, raw: unknown) => handlers[channel](event, raw))
   }
-  return () => agent.shutdown()
+  // Tasks first: they write paused(app_closed) while the library is still open.
+  return () => {
+    tasks.shutdown()
+    agent.shutdown()
+  }
 }

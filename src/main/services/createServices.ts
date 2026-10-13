@@ -6,6 +6,7 @@ import { ParagraphTranslator } from './ai/paragraphTranslation'
 import { ChatService } from './ai/chatService'
 import { ConnectionService } from './ai/connectionService'
 import { GlossaryService } from './context/glossaryService'
+import { ContextExtractionService } from './context/contextExtractionService'
 import type { LibraryStore } from './library/library'
 import { createSourceServices, type SourceServices } from '../sources/sourceServices'
 import {
@@ -22,6 +23,9 @@ import { AgentRepository } from '../infra/storage/agentRepository'
 import { AgentService } from './agent/agentService'
 import { defaultReadCapabilities } from './agent/capabilities/readCapabilities'
 import { CapabilityRegistry } from './agent/registry'
+import { AgentTaskRepository } from '../infra/storage/agentTaskRepository'
+import { AgentTaskService } from './agent/taskService'
+import { AgentWriteCoordinator } from './agent/writeCoordinator'
 
 /** The AI services of the app, built over one library and one way of protecting keys. */
 export interface Services {
@@ -32,6 +36,7 @@ export interface Services {
   glossary: GlossaryService
   sources: SourceServices
   agent: AgentService
+  tasks: AgentTaskService
 }
 
 /**
@@ -179,13 +184,30 @@ export function createServices({
   const sources = createSourceServices(library, crypto)
   const agentRegistry = new CapabilityRegistry()
   for (const capability of defaultReadCapabilities) agentRegistry.register(capability)
+  const agentRepository = new AgentRepository(library.appDb)
+  // Chat writes and task writes flush editors through one coordinator.
+  const writeCoordinator = new AgentWriteCoordinator()
+  const tasks = new AgentTaskService({
+    library,
+    connections,
+    tasks: new AgentTaskRepository(library.appDb),
+    operations: agentRepository,
+    writeCoordinator,
+    extraction: new ContextExtractionService(library, connections, { now: () => library.appNow() }),
+    now: () => library.appNow(),
+    newId: () => library.newAppId()
+  })
   const agent = new AgentService({
     library,
     connections,
-    repository: new AgentRepository(library.appDb),
+    repository: agentRepository,
     registry: agentRegistry,
+    writeCoordinator,
+    tasks,
     now: () => library.appNow()
   })
+  // Operations first (journal wins), then what a crash left in tasks; neither calls a provider.
   agent.reconcileOnStartup()
-  return { connections, translator, paragraphTranslator, chat, glossary, sources, agent }
+  tasks.reconcileOnStartup()
+  return { connections, translator, paragraphTranslator, chat, glossary, sources, agent, tasks }
 }

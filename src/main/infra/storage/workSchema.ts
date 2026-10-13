@@ -573,6 +573,34 @@ CREATE INDEX agent_operation_batch_order
   ON agent_operation_batch (operation_id, created_at, batch_key);
 `
 
+/**
+ * AI term extraction in the product (change `add-agent-context-workflow`): evidence of where a
+ * candidate came from, which chapters were already scanned, the term type for bulk review and review
+ * flags (JSON `[{code, detail}]`, shown to the reviewer, never queried).
+ */
+const version14 = `
+ALTER TABLE context_entry ADD COLUMN term_type TEXT;
+ALTER TABLE context_entry ADD COLUMN review_flags TEXT NOT NULL DEFAULT '[]';
+CREATE TABLE context_entry_evidence (
+  id TEXT PRIMARY KEY,
+  entry_id TEXT NOT NULL REFERENCES context_entry (id) ON DELETE CASCADE,
+  run_id TEXT NOT NULL,
+  chapter_id TEXT REFERENCES chapter (id) ON DELETE SET NULL,
+  quote TEXT NOT NULL,
+  model TEXT NOT NULL,
+  prompt_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX context_entry_evidence_entry ON context_entry_evidence (entry_id);
+CREATE TABLE context_extraction_scan (
+  chapter_id TEXT PRIMARY KEY REFERENCES chapter (id) ON DELETE CASCADE,
+  run_id TEXT NOT NULL,
+  model TEXT NOT NULL,
+  prompt_hash TEXT NOT NULL,
+  scanned_at INTEGER NOT NULL
+);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -653,6 +681,12 @@ export const workSchema: SchemaSpec = {
       version: 13,
       up(db) {
         db.exec(version13)
+      }
+    },
+    {
+      version: 14,
+      up(db) {
+        db.exec(version14)
       }
     }
   ]

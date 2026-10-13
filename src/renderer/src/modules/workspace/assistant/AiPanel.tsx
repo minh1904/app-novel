@@ -33,13 +33,11 @@ import { openConnectionSettings } from '../../ai-connections/public'
  *
  * Model tự động đọc tác phẩm qua công cụ và gửi đề xuất thay đổi vào hàng chờ để người dịch duyệt từng phần.
  */
-const MIN_WIDTH = 320
 type QueueFilter = 'all' | 'session'
 const QUEUE_FILTERS: ReadonlyArray<ButtonGroupOption<QueueFilter>> = [
   { value: 'all', label: 'Tất cả' },
   { value: 'session', label: 'Phiên này' }
 ]
-const MAX_WIDTH = 720
 
 export function AiPanel({
   workId,
@@ -51,8 +49,6 @@ export function AiPanel({
   sourceCaret,
   targetCaret,
   activeSide,
-  width,
-  onWidthChange,
   onClose,
   onOpenSettings
 }: {
@@ -71,9 +67,6 @@ export function AiPanel({
   targetCaret: PaneCaret | null
   /** Khung soạn thảo được tương tác gần nhất để xác định phạm vi chọn. */
   activeSide: 'source' | 'target'
-  /** Chiều rộng của bảng trợ lý theo pixel. */
-  width: number
-  onWidthChange(width: number): void
   onClose(): void
   onOpenSettings(): void
 }): JSX.Element {
@@ -294,36 +287,6 @@ export function AiPanel({
 
   return (
     <section aria-label="Hỏi AI" className="relative flex h-full min-h-0 flex-col bg-subtle">
-      {/* Tay nắm kéo thả để thay đổi chiều rộng bảng trợ lý. */}
-      <span
-        role="separator"
-        aria-orientation="vertical"
-        title="Kéo để đổi bề rộng"
-        className="absolute top-0 left-0 z-(--mira-z-sticky) flex h-full w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-focus/30"
-        onPointerDown={(event) => {
-          event.preventDefault()
-          const pointerId = event.pointerId
-          const target = event.currentTarget
-          target.setPointerCapture(pointerId)
-          const startX = event.clientX
-          const startWidth = width
-
-          const onMove = (moveEvent: PointerEvent): void => {
-            const next = startWidth + (startX - moveEvent.clientX)
-            onWidthChange(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, next)))
-          }
-          const onUp = (): void => {
-            target.releasePointerCapture(pointerId)
-            window.removeEventListener('pointermove', onMove)
-            window.removeEventListener('pointerup', onUp)
-          }
-          window.addEventListener('pointermove', onMove)
-          window.addEventListener('pointerup', onUp)
-        }}
-      >
-        <span aria-hidden="true" className="h-6 w-px bg-line-strong" />
-      </span>
-
       <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-default px-3">
         <StarsIcon size={16} className="shrink-0 text-subtle" />
         <h3 className="text-body-xs font-semibold">Hỏi AI</h3>

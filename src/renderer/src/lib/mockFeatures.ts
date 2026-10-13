@@ -13,7 +13,6 @@ export const MOCK_FEATURES = {
   importTxt: { id: 'import-txt', label: 'Nhập từ .txt' },
   contextArea: { id: 'context-area', label: 'Ngữ cảnh' },
   sourcesArea: { id: 'sources-area', label: 'Nguồn' },
-  jobsArea: { id: 'jobs-area', label: 'Tác vụ' },
   // Bảng "Hỏi AI" đã được triển khai chính thức và không còn thuộc danh sách giao diện minh họa.
   sentenceModeToolbar: { id: 'sentence-mode-toolbar', label: 'Tìm & lọc hàng' },
   sentenceModeSidePanels: {
@@ -22,7 +21,6 @@ export const MOCK_FEATURES = {
   },
   // Các trang điều hướng trên thanh bên: Trang chủ và Thư viện đã hoàn thiện; các thẻ phụ và các trang bên dưới là giao diện mẫu.
   homeOverview: { id: 'home-overview', label: 'Số liệu, tác vụ và hoạt động ở Trang chủ' },
-  jobsPage: { id: 'jobs-page', label: 'Tác vụ' },
   updatesPage: { id: 'updates-page', label: 'Cập nhật' },
   sharedGlossary: { id: 'shared-glossary', label: 'Kho dùng chung' },
   styleProfiles: { id: 'style-profiles', label: 'Prompt & văn phong' },

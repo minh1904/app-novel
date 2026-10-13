@@ -2,6 +2,7 @@ import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 import {
   agentContextSchema,
+  agentSendInputSchema,
   agentStreamEventSchema,
   canTransitionActivity,
   canTransitionOperation,
@@ -59,6 +60,11 @@ describe('agent contracts', () => {
     expect(canTransitionTurn('queued', 'running')).toBe(true)
     expect(canTransitionTurn('running', 'waiting_user')).toBe(true)
     expect(canTransitionTurn('waiting_user', 'running')).toBe(true)
+    expect(canTransitionTurn('waiting_user', 'cancelled')).toBe(true)
+    expect(canTransitionTurn('waiting_user', 'expired')).toBe(true)
+    expect(canTransitionTurn('waiting_user', 'completed')).toBe(false)
+    expect(canTransitionTurn('running', 'expired')).toBe(false)
+    expect(canTransitionTurn('expired', 'running')).toBe(false)
     expect(canTransitionTurn('completed', 'running')).toBe(false)
 
     expect(canTransitionOperation('queued', 'running')).toBe(true)
@@ -70,6 +76,20 @@ describe('agent contracts', () => {
     expect(canTransitionActivity('pending', 'running')).toBe(true)
     expect(canTransitionActivity('running', 'completed')).toBe(true)
     expect(canTransitionActivity('completed', 'running')).toBe(false)
+  })
+
+  it('accepts a continuation bound to one pending call and rejects a malformed reply', () => {
+    const base = { clientCommandId: id(1), instruction: 'Duyệt' }
+    const reply = { toolCallId: id(3), argsDigest: 'sha256:abc', choice: 'approve' }
+    expect(
+      v.parse(agentSendInputSchema, { ...base, continuesTurnId: id(2), pendingReply: reply })
+    ).toMatchObject({ continuesTurnId: id(2), pendingReply: reply })
+    expect(() =>
+      v.parse(agentSendInputSchema, { ...base, pendingReply: { ...reply, argsDigest: '' } })
+    ).toThrow()
+    expect(() =>
+      v.parse(agentSendInputSchema, { ...base, pendingReply: { ...reply, extra: 1 } })
+    ).toThrow()
   })
 
   it('validates positive immutable sequence numbers and one terminal event', () => {

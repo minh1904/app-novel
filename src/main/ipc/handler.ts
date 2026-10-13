@@ -15,6 +15,8 @@ export interface ChunkSink {
   isDestroyed(): boolean
   /** Gọi `callback` khi cửa sổ biến mất, để chủ nó dọn việc đang chạy. */
   onDestroyed(callback: () => void): void
+  /** Mã của cửa sổ đã gọi, để biết xác nhận (ack) đến từ cửa sổ nào. */
+  senderId?: number
 }
 
 /** Sink rỗng cho các lời gọi không có cửa sổ (test, và mọi kênh không đẩy sự kiện). */
@@ -22,6 +24,30 @@ export const noChunkSink: ChunkSink = {
   send: () => {},
   isDestroyed: () => false,
   onDestroyed: () => {}
+}
+
+/**
+ * Mọi cửa sổ đang mở, cho sự kiện thuộc về Main chứ không thuộc cửa sổ đã gọi: lượt Trợ lý sống
+ * trong Main, nên cửa sổ khác đang mở cùng phiên cũng phải thấy (design D8 của
+ * `add-agent-conversation`).
+ */
+export interface WindowBroadcast {
+  /** Gửi tới mọi cửa sổ còn sống và trả mã các cửa sổ đã nhận. */
+  send(channel: EventChannel, payload: unknown): number[]
+  /** Gọi `callback` với mã cửa sổ khi một cửa sổ đóng. */
+  onClosed(callback: (windowId: number) => void): void
+}
+
+/** Khi không có danh sách cửa sổ (test), coi cửa sổ đã gọi là cửa sổ duy nhất. */
+export function sinkBroadcast(sink: ChunkSink): WindowBroadcast {
+  return {
+    send: (channel, payload) => {
+      if (sink.isDestroyed()) return []
+      sink.send(channel, payload)
+      return [sink.senderId ?? 0]
+    },
+    onClosed: () => {}
+  }
 }
 
 /**

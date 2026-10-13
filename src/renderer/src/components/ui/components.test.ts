@@ -117,3 +117,14 @@ describe('focus', () => {
     )
   })
 })
+
+describe('Drawer', () => {
+  it('renders nothing while closed, so a closed drawer holds no focusable content', async () => {
+    const { Drawer } = await import('./Drawer')
+    const props = { open: false, onOpenChange: () => {}, label: 'Trợ lý' }
+    const html = renderToStaticMarkup(
+      createElement(Drawer, props as unknown as Parameters<typeof Drawer>[0], 'nội dung')
+    )
+    expect(html).not.toContain('nội dung')
+  })
+})

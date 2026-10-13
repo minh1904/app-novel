@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
-import { CHANNELS, type Channel } from '../../shared/contracts/channels'
+import { CHANNELS, EVENT_CHANNELS, type Channel } from '../../shared/contracts/channels'
 import type {
+  AgentStreamEvent,
   AgentCancelInput,
   AgentOperationDetailView,
   AgentSendInput,
@@ -20,6 +21,15 @@ import { AgentRepository } from '../infra/storage/agentRepository'
 import { createServices } from '../services/createServices'
 import type { SecretCrypto } from '../infra/storage/secretStore'
 import { segment } from '../../shared/segmentation/segmenter'
+import { callTools, say, setupAgent } from '../services/agent/agentTestKit'
+import type { ChunkSink, WindowBroadcast } from './handler'
+import type {
+  AgentTaskControlInput,
+  AgentTaskCreateInput,
+  AgentTaskDetailView,
+  AgentTaskSummary,
+  AgentTaskView
+} from '../../shared/contracts/agentTask'
 
 const tempDir = createTempDirs()
 const stores: LibraryStore[] = []
@@ -52,7 +62,9 @@ function setup(): Setup {
     services.paragraphTranslator,
     undefined,
     services.sources,
-    services.agent
+    services.agent,
+    undefined,
+    services.tasks
   )
   return { library, call: (channel, raw) => handlers[channel](raw) as Result<never> }
 }
@@ -185,6 +197,176 @@ describe('agent IPC handlers', () => {
       call(CHANNELS.agentOperationGet, { operationId: op.id })
     )
     expect(opAfter.operation.state).toBe('undone')
+  })
+
+  describe('turn owned by Main', () => {
+    function windowed() {
+      const kit = setupAgent()
+      const received = new Map<number, AgentStreamEvent[]>([
+        [1, []],
+        [2, []]
+      ])
+      let finished: () => void = () => {}
+      const done = new Promise<void>((resolve) => {
+        finished = resolve
+      })
+      const windows: WindowBroadcast = {
+        send(channel, payload) {
+          if (channel !== EVENT_CHANNELS.agentStreamEvent) return [...received.keys()]
+          const event = payload as AgentStreamEvent
+          for (const events of received.values()) events.push(event)
+          if (['done', 'error', 'cancelled'].includes(event.kind)) finished()
+          return [...received.keys()]
+        },
+        onClosed: () => {}
+      }
+      let destroy: () => void = () => {}
+      const sink: ChunkSink = {
+        send: () => {},
+        isDestroyed: () => false,
+        onDestroyed: (callback) => {
+          destroy = callback
+        },
+        senderId: 1
+      }
+      const handlers = createLibraryHandlers(
+        kit.library,
+        undefined,
+        kit.services.connections,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        kit.agent,
+        windows
+      )
+      const send = (raw: AgentSendInput) =>
+        value(handlers[CHANNELS.agentTurnSend](raw, sink) as Result<AgentSendResult>)
+      return { ...kit, received, done, send, destroyWindow: () => destroy(), handlers }
+    }
+
+    it('sends the same events to every open window', async () => {
+      const { model, modelSelection, received, done, send, handlers } = windowed()
+      model.script(callTools({ name: 'list_works', args: {} }), say('Có 2 tác phẩm.'))
+      const sent = send({
+        clientCommandId: randomUUID(),
+        instruction: 'mấy truyện?',
+        modelSelection
+      })
+      await done
+      expect(received.get(1)).toEqual(received.get(2))
+      expect(received.get(2)?.some((event) => event.kind === 'activity-finish')).toBe(true)
+      const detail = value(
+        handlers[CHANNELS.agentSessionsGet]({
+          sessionId: sent.sessionId
+        }) as Result<AgentSessionDetailView>
+      )
+      expect(detail.turns[0]).toMatchObject({ status: 'completed', answer: 'Có 2 tác phẩm.' })
+      expect(detail.activities).toHaveLength(1)
+    })
+
+    it('keeps running after the window that sent the turn closes', async () => {
+      const { agent, model, modelSelection, done, send, destroyWindow } = windowed()
+      model.script(() => {
+        destroyWindow()
+        return say('Vẫn trả lời.')
+      })
+      const sent = send({ clientCommandId: randomUUID(), instruction: 'chào', modelSelection })
+      await done
+      expect(agent.getTurn(sent.turnId)).toMatchObject({
+        status: 'completed',
+        answer: 'Vẫn trả lời.'
+      })
+    })
+  })
+
+  describe('durable tasks', () => {
+    function taskHandlers() {
+      const kit = setupAgent()
+      const handlers = createLibraryHandlers(
+        kit.library,
+        undefined,
+        kit.services.connections,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        kit.services.agent,
+        undefined,
+        kit.services.tasks
+      )
+      const call = <T>(channel: Channel, raw?: unknown) => handlers[channel](raw) as Result<T>
+      return { ...kit, call }
+    }
+
+    it('validates create input and creates, lists and reads a task', async () => {
+      const { call, work1, ch1_1, ch1_2, services } = taskHandlers()
+      const both = call(CHANNELS.agentTaskCreate, {
+        clientCommandId: randomUUID(),
+        contextStrategy: 'approved_only',
+        workId: work1.id,
+        chapterIds: [ch1_1.id],
+        range: { from: 1, to: 2 }
+      })
+      expect(both.ok ? null : both.error.code).toBe('validation')
+      // No default: a create without the context choice is rejected and creates nothing.
+      const noChoice = call(CHANNELS.agentTaskCreate, {
+        clientCommandId: randomUUID(),
+        workId: work1.id,
+        range: { from: 1, to: 2 }
+      })
+      expect(noChoice.ok ? null : noChoice.error.code).toBe('validation')
+      expect(services.tasks.list()).toEqual([])
+
+      const created = value(
+        call<AgentTaskView>(CHANNELS.agentTaskCreate, {
+          clientCommandId: randomUUID(),
+          contextStrategy: 'approved_only',
+          workId: work1.id,
+          range: { from: 1, to: 2 }
+        } satisfies AgentTaskCreateInput)
+      )
+      const detail = value(call<AgentTaskDetailView>(CHANNELS.agentTaskGet, { taskId: created.id }))
+      expect(detail.items.map((item) => item.chapterId)).toEqual([ch1_1.id, ch1_2.id])
+      const listed = value(
+        call<{ tasks: AgentTaskSummary[] }>(CHANNELS.agentTaskList, { workId: work1.id })
+      )
+      expect(listed.tasks.map((task) => task.id)).toEqual([created.id])
+      await services.tasks.idle()
+    })
+
+    it('rejects a control with a stale state version', async () => {
+      const { call, work1, ch1_1, services } = taskHandlers()
+      const created = value(
+        call<AgentTaskView>(CHANNELS.agentTaskCreate, {
+          clientCommandId: randomUUID(),
+          contextStrategy: 'approved_only',
+          workId: work1.id,
+          chapterIds: [ch1_1.id]
+        })
+      )
+      await services.tasks.idle()
+      const stale = call(CHANNELS.agentTaskControl, {
+        taskId: created.id,
+        command: 'run_again',
+        stateVersion: created.stateVersion,
+        clientCommandId: randomUUID()
+      } satisfies AgentTaskControlInput)
+      expect(stale.ok ? null : stale.error.code).toBe('conflict')
+      const skipWithoutItem = call(CHANNELS.agentTaskControl, {
+        taskId: created.id,
+        command: 'skip_item',
+        stateVersion: 0,
+        clientCommandId: randomUUID()
+      })
+      expect(skipWithoutItem.ok ? null : skipWithoutItem.error.code).toBe('validation')
+    })
   })
 
   it('rejects a write ack that has no pending intent', () => {

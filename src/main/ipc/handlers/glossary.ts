@@ -1,10 +1,14 @@
 import * as v from 'valibot'
 import { CHANNELS } from '../../../shared/contracts/channels'
 import {
+  appliedContextSchema,
+  bulkApproveContextSchema,
   createGlossaryEntrySchema,
   deleteGlossaryEntrySchema,
   importNamesSchema,
   listGlossarySchema,
+  reviewContextSchema,
+  reviewInfoSchema,
   updateGlossaryEntrySchema
 } from '../../../shared/contracts/glossary'
 import { idSchema } from '../../../shared/contracts/library'
@@ -42,6 +46,18 @@ export function glossaryHandlers(deps: HandlerDeps): AreaHandlers<'glossary'> {
     }),
     [CHANNELS.glossaryImportNames]: createHandler(importNamesSchema, (input) =>
       glossary.importNames(input.workId, input.content)
+    ),
+    [CHANNELS.glossaryReview]: createHandler(reviewContextSchema, (input) =>
+      glossary.review(input.workId, input.command)
+    ),
+    [CHANNELS.glossaryBulkApprove]: createHandler(bulkApproveContextSchema, (input) => ({
+      results: glossary.bulkApprove(input.workId, input.items)
+    })),
+    [CHANNELS.glossaryReviewInfo]: createHandler(reviewInfoSchema, (input) => ({
+      entries: glossary.reviewInfo(input.workId, input.entryIds)
+    })),
+    [CHANNELS.glossaryApplied]: createHandler(appliedContextSchema, (input) =>
+      glossary.applied(input.workId, input.chapterId)
     ),
     [CHANNELS.glossaryCheckCompliance]: createHandler(
       v.strictObject({

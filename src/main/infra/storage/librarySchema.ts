@@ -330,6 +330,150 @@ CREATE UNIQUE INDEX agent_turn_client_command ON agent_turn (client_command_id)
   WHERE client_command_id IS NOT NULL;
 `
 
+/**
+ * Vòng model–tool của Trợ lý (change `add-agent-conversation`, D2): mỗi tool call được lưu cùng quyết
+ * định policy trước khi chạy, và hàng `needs_user` còn `pending` là pending action. SQLite không sửa CHECK
+ * tại chỗ nên `agent_turn` được dựng lại để có `expired` và để index một-turn-active tính cả
+ * `waiting_user`; migration chạy với `foreignKeysOff` để operation/activity không bị cascade xóa.
+ */
+const version11 = `
+CREATE TABLE agent_turn_new (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES agent_session (id) ON DELETE CASCADE,
+  instruction TEXT NOT NULL,
+  answer TEXT NOT NULL DEFAULT '',
+  reasoning TEXT NOT NULL DEFAULT '',
+  context_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'waiting_user', 'failed',
+    'cancelled', 'interrupted', 'expired')),
+  usage_json TEXT,
+  cost_usd REAL,
+  legacy_ref_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  client_command_id TEXT,
+  payload_digest TEXT
+);
+INSERT INTO agent_turn_new SELECT * FROM agent_turn;
+DROP TABLE agent_turn;
+ALTER TABLE agent_turn_new RENAME TO agent_turn;
+CREATE INDEX agent_turn_session_order ON agent_turn (session_id, created_at, id);
+CREATE UNIQUE INDEX agent_turn_one_active ON agent_turn (session_id)
+  WHERE status IN ('queued', 'running', 'waiting_user');
+CREATE UNIQUE INDEX agent_turn_client_command ON agent_turn (client_command_id)
+  WHERE client_command_id IS NOT NULL;
+
+CREATE TABLE agent_tool_call (
+  id TEXT PRIMARY KEY,
+  turn_id TEXT NOT NULL REFERENCES agent_turn (id) ON DELETE CASCADE,
+  round INTEGER NOT NULL CHECK (round > 0),
+  call_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  args_json TEXT NOT NULL,
+  args_digest TEXT NOT NULL,
+  decision TEXT NOT NULL CHECK (decision IN ('allow', 'deny', 'needs_user')),
+  state TEXT NOT NULL CHECK (state IN ('pending', 'completed', 'failed', 'cancelled', 'expired')),
+  result_json TEXT,
+  created_at INTEGER NOT NULL,
+  UNIQUE (turn_id, call_id)
+);
+CREATE INDEX agent_tool_call_turn_order ON agent_tool_call (turn_id, round, created_at);
+`
+
+const TASK_STATES = `'queued', 'running', 'pausing', 'paused', 'waiting_user', 'cancelling',
+    'cancelled', 'completed', 'partially_completed', 'failed'`
+const ITEM_STATES = `'queued', 'running', 'waiting_user', 'completed', 'failed', 'skipped', 'cancelled'`
+const TASK_REASONS = `'missing_raw', 'conflict', 'budget', 'provider', 'refused', 'context_review',
+    'app_closed', 'recovered_after_restart', 'user'`
+
+/**
+ * Task dịch dải chương lưu bền (change `add-durable-translation-tasks`). Mỗi lần chạy item là một
+ * `agent_operation` mới không thuộc turn nào, nên bảng đó được dựng lại với `turn_id` nullable và đúng một
+ * chủ sở hữu; `foreignKeysOff` giữ `agent_activity.operation_id` khỏi bị `ON DELETE SET NULL`.
+ */
+const version12 = `
+CREATE TABLE agent_task (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('translate_chapters')),
+  work_id TEXT NOT NULL,
+  origin_turn_id TEXT REFERENCES agent_turn (id) ON DELETE SET NULL,
+  source_task_id TEXT REFERENCES agent_task (id) ON DELETE SET NULL,
+  client_command_id TEXT NOT NULL UNIQUE,
+  payload_digest TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN (${TASK_STATES})),
+  reason TEXT CHECK (reason IN (${TASK_REASONS})),
+  model_ref_json TEXT NOT NULL,
+  overwrite_policy TEXT NOT NULL CHECK (overwrite_policy IN ('fill_untranslated')),
+  options_json TEXT NOT NULL DEFAULT '{}',
+  budget_json TEXT NOT NULL DEFAULT '{}',
+  state_version INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  CHECK (reason IS NULL OR state IN ('waiting_user', 'paused', 'failed'))
+);
+CREATE INDEX agent_task_order ON agent_task (created_at, id);
+CREATE INDEX agent_task_work ON agent_task (work_id, created_at);
+
+CREATE TABLE agent_task_item (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES agent_task (id) ON DELETE CASCADE,
+  ordinal INTEGER NOT NULL CHECK (ordinal > 0),
+  chapter_id TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN (${ITEM_STATES})),
+  reason TEXT CHECK (reason IN (${TASK_REASONS})),
+  run_key TEXT,
+  source_rev INTEGER,
+  expected_target_rev INTEGER,
+  skipped_segments_json TEXT NOT NULL DEFAULT '[]',
+  progress_json TEXT NOT NULL DEFAULT '{}',
+  context_changed INTEGER NOT NULL DEFAULT 0 CHECK (context_changed IN (0, 1)),
+  state_version INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (task_id, ordinal),
+  UNIQUE (task_id, chapter_id),
+  CHECK (reason IS NULL OR state IN ('waiting_user', 'failed'))
+);
+CREATE UNIQUE INDEX agent_task_item_one_running ON agent_task_item ((1)) WHERE state = 'running';
+
+CREATE TABLE agent_operation_new (
+  id TEXT PRIMARY KEY,
+  turn_id TEXT REFERENCES agent_turn (id) ON DELETE CASCADE,
+  command_id TEXT NOT NULL UNIQUE,
+  capability TEXT NOT NULL,
+  target_json TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('queued', 'running', 'completed', 'partially_completed',
+    'conflict', 'failed', 'cancelled', 'interrupted', 'undone')),
+  progress_json TEXT,
+  model_ref_json TEXT,
+  usage_json TEXT,
+  result_json TEXT,
+  error_json TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  task_item_id TEXT REFERENCES agent_task_item (id) ON DELETE CASCADE,
+  CHECK ((turn_id IS NULL) <> (task_item_id IS NULL))
+);
+INSERT INTO agent_operation_new
+  (id, turn_id, command_id, capability, target_json, state, progress_json, model_ref_json, usage_json,
+   result_json, error_json, created_at, updated_at)
+  SELECT id, turn_id, command_id, capability, target_json, state, progress_json, model_ref_json,
+    usage_json, result_json, error_json, created_at, updated_at FROM agent_operation;
+DROP TABLE agent_operation;
+ALTER TABLE agent_operation_new RENAME TO agent_operation;
+CREATE INDEX agent_operation_turn_order ON agent_operation (turn_id, created_at, id);
+CREATE INDEX agent_operation_state ON agent_operation (state, updated_at);
+CREATE INDEX agent_operation_task_item ON agent_operation (task_item_id, created_at);
+
+CREATE TABLE agent_task_attempt (
+  item_id TEXT NOT NULL REFERENCES agent_task_item (id) ON DELETE CASCADE,
+  attempt INTEGER NOT NULL CHECK (attempt > 0),
+  operation_id TEXT NOT NULL UNIQUE REFERENCES agent_operation (id) ON DELETE CASCADE,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (item_id, attempt)
+);
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -390,6 +534,20 @@ export const librarySchema: SchemaSpec = {
       version: 10,
       up(db) {
         db.exec(version10)
+      }
+    },
+    {
+      version: 11,
+      foreignKeysOff: true,
+      up(db) {
+        db.exec(version11)
+      }
+    },
+    {
+      version: 12,
+      foreignKeysOff: true,
+      up(db) {
+        db.exec(version12)
       }
     }
   ]

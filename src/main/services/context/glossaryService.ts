@@ -1,12 +1,19 @@
 import type {
+  AppliedContext,
   ContextEntryItem,
   ContextKind,
   ContextOrigin,
+  ContextReviewCommand,
+  ContextReviewInfo,
+  ContextReviewOutcome,
   ContextStatus,
   ImportNamesResult
 } from '../../../shared/contracts/glossary'
 import {
+  bulkApproveContextEntries,
   createContextEntry,
+  readReviewInfo,
+  reviewContextEntry,
   deleteContextEntry,
   getContextEntry,
   getEffectiveGlossary,
@@ -25,6 +32,7 @@ import {
   type GlossaryComplianceReport
 } from '../../../shared/context/glossaryCompliance'
 import type { LibraryStore } from '../library/library'
+import { takeContextSnapshot } from '../ai/translate/contextSnapshot'
 
 export class GlossaryService {
   constructor(
@@ -34,6 +42,38 @@ export class GlossaryService {
 
   list(workId: string, options: ListContextOptions = {}): ContextEntryItem[] {
     return this.library.withWork(workId, (db) => listContextEntries(db, options))
+  }
+
+  review(workId: string, command: ContextReviewCommand): ContextEntryItem {
+    return this.library.withWork(workId, (db) => reviewContextEntry(db, command, this.now()))
+  }
+
+  bulkApprove(
+    workId: string,
+    items: Array<{ entryId: string; expectedUpdatedAt: number }>
+  ): ContextReviewOutcome[] {
+    return this.library.withWork(workId, (db) => bulkApproveContextEntries(db, items, this.now()))
+  }
+
+  /** Read-only: the same snapshot function a translation of the chapter would use now. */
+  applied(workId: string, chapterId: string): AppliedContext {
+    let source = ''
+    try {
+      source = this.library.readText(workId, chapterId, 'source').content
+    } catch {
+      // No source yet: pairs and characters are narrowed to the text, so none apply.
+    }
+    const { glossary, dyads, characters } = takeContextSnapshot(
+      this.library,
+      workId,
+      chapterId,
+      source
+    ).snapshot
+    return { glossary, dyads, characters }
+  }
+
+  reviewInfo(workId: string, entryIds?: string[]): ContextReviewInfo[] {
+    return this.library.withWork(workId, (db) => readReviewInfo(db, entryIds))
   }
 
   get(workId: string, entryId: string): ContextEntryItem | null {

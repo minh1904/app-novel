@@ -8,6 +8,7 @@ describe('OperationCard (Task 6.7)', () => {
   const baseOp: AgentOperation = {
     id: 'op-translate-1',
     turnId: 'turn-1',
+    taskItemId: null,
     commandId: 'cmd-1',
     capability: 'translate_chapter',
     target: {

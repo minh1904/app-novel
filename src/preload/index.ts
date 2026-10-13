@@ -21,6 +21,12 @@ import type {
   AgentUndoResult,
   AgentWriteIntent
 } from '../shared/contracts/agent'
+import type {
+  AgentTaskChanged,
+  AgentTaskDetailView,
+  AgentTaskSummary,
+  AgentTaskView
+} from '../shared/contracts/agentTask'
 import type { AiSessionView, AiTurnView } from '../shared/contracts/aiHistory'
 import type {
   AddModelEntriesInput,
@@ -54,7 +60,13 @@ import type { Result } from '../shared/contracts/result'
 import type { WorkspaceLoad, WorkspaceState } from '../shared/contracts/workspace'
 import type { RowSaved } from '../shared/contracts/rows'
 import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/text'
-import type { ContextEntryItem, ImportNamesResult } from '../shared/contracts/glossary'
+import type {
+  AppliedContext,
+  ContextEntryItem,
+  ContextReviewInfo,
+  ContextReviewOutcome,
+  ImportNamesResult
+} from '../shared/contracts/glossary'
 import type { GlossaryComplianceReport } from '../shared/context/glossaryCompliance'
 import type {
   AddressingDyadItem,
@@ -363,6 +375,18 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke(CHANNELS.glossaryDelete, options) as Promise<Result<void>>,
     importNames: (input) =>
       ipcRenderer.invoke(CHANNELS.glossaryImportNames, input) as Promise<Result<ImportNamesResult>>,
+    applied: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryApplied, input) as Promise<Result<AppliedContext>>,
+    review: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryReview, input) as Promise<Result<ContextEntryItem>>,
+    bulkApprove: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryBulkApprove, input) as Promise<
+        Result<{ results: ContextReviewOutcome[] }>
+      >,
+    reviewInfo: (input) =>
+      ipcRenderer.invoke(CHANNELS.glossaryReviewInfo, input) as Promise<
+        Result<{ entries: ContextReviewInfo[] }>
+      >,
     checkCompliance: (input) =>
       ipcRenderer.invoke(CHANNELS.glossaryCheckCompliance, input) as Promise<
         Result<GlossaryComplianceReport>
@@ -556,6 +580,25 @@ const desktopApi: DesktopApi = {
       const handler = (_event: IpcRendererEvent, event: AgentStreamEvent): void => listener(event)
       ipcRenderer.on(EVENT_CHANNELS.agentStreamEvent, handler)
       return () => ipcRenderer.off(EVENT_CHANNELS.agentStreamEvent, handler)
+    },
+    tasks: {
+      list: (filter) =>
+        ipcRenderer.invoke(CHANNELS.agentTaskList, filter ?? null) as Promise<
+          Result<{ tasks: AgentTaskSummary[] }>
+        >,
+      get: (taskId) =>
+        ipcRenderer.invoke(CHANNELS.agentTaskGet, { taskId }) as Promise<
+          Result<AgentTaskDetailView>
+        >,
+      create: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentTaskCreate, input) as Promise<Result<AgentTaskView>>,
+      control: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentTaskControl, input) as Promise<Result<AgentTaskView>>,
+      onChanged: (listener) => {
+        const handler = (_event: IpcRendererEvent, event: AgentTaskChanged): void => listener(event)
+        ipcRenderer.on(EVENT_CHANNELS.agentTaskChanged, handler)
+        return () => ipcRenderer.off(EVENT_CHANNELS.agentTaskChanged, handler)
+      }
     }
   }
 }

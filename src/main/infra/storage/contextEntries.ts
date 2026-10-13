@@ -1,9 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import type {
   ContextEntryItem,
+  ContextEvidence,
   ContextKind,
   ContextOrigin,
-  ContextStatus
+  ContextReviewCommand,
+  ContextReviewInfo,
+  ContextReviewOutcome,
+  ContextStatus,
+  ReviewFlag
 } from '../../../shared/contracts/glossary'
 import { StorageError } from './errors'
 import type { Db } from './sqlite'
@@ -467,5 +472,332 @@ export function deleteContextEntry(db: Db, id: string, now?: number): void {
 
     db.prepare('DELETE FROM context_entry WHERE id = ?').run(id)
     touchWork(db, now ?? Date.now())
+  })
+}
+
+// -----------------------------------------------------------------------------------------------------
+// AI extraction: candidates with evidence, scanned chapters, review data (change
+// `add-agent-context-workflow`).
+
+export interface ExtractedCandidateWrite {
+  source: string
+  target: string
+  termType: string
+  /** `rejected` for what the model called `not-a-term`, so it is not proposed again. */
+  status: 'pending' | 'rejected'
+  aliases?: string[]
+  notes?: string | null
+  /** Flags the caller already knows (`script_mismatch`); alias conflicts are found here. */
+  flags?: ReviewFlag[]
+  evidence: Array<{ chapterId: string | null; quote: string }>
+}
+
+export interface SaveExtractionInput {
+  runId: string
+  model: string
+  promptHash: string
+  /** Chapters this write finishes scanning; recorded in the same transaction. */
+  scannedChapterIds: string[]
+  candidates: ExtractedCandidateWrite[]
+  now?: number
+  newId?: () => string
+}
+
+export interface SaveExtractionResult {
+  /** New `pending` entries plus rejected ones reopened as `pending`. */
+  pending: string[]
+  skipped: number
+}
+
+interface MatchRow {
+  id: string
+  status: ContextStatus
+  review_flags: string
+}
+
+/** The entry that already owns `form`, as its source or as an alias. */
+function ownerOf(db: Db, form: string): MatchRow | null {
+  return (
+    db
+      .prepare(
+        `SELECT id, status, review_flags FROM context_entry WHERE lower(source) = lower(?)
+         UNION ALL
+         SELECT e.id, e.status, e.review_flags FROM context_alias a
+           JOIN context_entry e ON e.id = a.entry_id WHERE lower(a.form) = lower(?)
+         LIMIT 1`
+      )
+      .get<MatchRow>(form, form) ?? null
+  )
+}
+
+const parseFlags = (json: string): ReviewFlag[] => {
+  try {
+    const flags = JSON.parse(json) as unknown
+    return Array.isArray(flags) ? (flags as ReviewFlag[]) : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Writes one extraction step in one transaction: candidates, their quotes and the scanned chapters. A
+ * candidate that matches an approved or pending entry is dropped; one that matches a rejected entry
+ * comes back as `pending` (flag `reopened`) only with a quote from a chapter its old evidence lacks. An
+ * alias another entry owns is left off and becomes an `alias_conflict` flag instead of an error.
+ */
+export function saveExtraction(db: Db, input: SaveExtractionInput): SaveExtractionResult {
+  const now = input.now ?? Date.now()
+  const newId = input.newId ?? randomUUID
+  return db.transaction(() => {
+    const pending: string[] = []
+    let skipped = 0
+    const insertEvidence = db.prepare(
+      `INSERT INTO context_entry_evidence
+         (id, entry_id, run_id, chapter_id, quote, model, prompt_hash, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    const addEvidence = (entryId: string, evidence: ExtractedCandidateWrite['evidence']): void => {
+      for (const quote of evidence) {
+        insertEvidence.run(
+          newId(),
+          entryId,
+          input.runId,
+          quote.chapterId,
+          quote.quote,
+          input.model,
+          input.promptHash,
+          now
+        )
+      }
+    }
+
+    for (const candidate of input.candidates) {
+      const source = candidate.source.trim()
+      const existing = ownerOf(db, source)
+      if (existing) {
+        if (existing.status !== 'rejected' || candidate.status === 'rejected') {
+          skipped++
+          continue
+        }
+        const known = new Set(
+          db
+            .prepare('SELECT chapter_id FROM context_entry_evidence WHERE entry_id = ?')
+            .all<{ chapter_id: string | null }>(existing.id)
+            .map((row) => row.chapter_id)
+        )
+        // No old quote: the model called it not-a-term, or a person rejected it by hand. Stays rejected.
+        if (known.size === 0 || !candidate.evidence.some((quote) => !known.has(quote.chapterId))) {
+          skipped++
+          continue
+        }
+        const flags = parseFlags(existing.review_flags).filter((flag) => flag.code !== 'reopened')
+        db.prepare(
+          "UPDATE context_entry SET status = 'pending', review_flags = ?, updated_at = ? WHERE id = ?"
+        ).run(JSON.stringify([...flags, { code: 'reopened' }]), now, existing.id)
+        addEvidence(existing.id, candidate.evidence)
+        pending.push(existing.id)
+        continue
+      }
+
+      const flags = [...(candidate.flags ?? [])]
+      const aliases: string[] = []
+      for (const raw of candidate.aliases ?? []) {
+        const form = raw.trim()
+        if (form === '' || form.toLowerCase() === source.toLowerCase()) continue
+        if (aliases.some((alias) => alias.toLowerCase() === form.toLowerCase())) continue
+        if (ownerOf(db, form)) flags.push({ code: 'alias_conflict', detail: form })
+        else aliases.push(form)
+      }
+      const id = newId()
+      db.prepare(
+        `INSERT INTO context_entry (id, kind, source, target, status, origin, forbidden, notes,
+           term_type, review_flags, created_at, updated_at)
+         VALUES (?, 'term', ?, ?, ?, 'ai', 0, ?, ?, ?, ?, ?)`
+      ).run(
+        id,
+        source,
+        candidate.target.trim(),
+        candidate.status,
+        candidate.notes?.trim() || null,
+        candidate.termType,
+        JSON.stringify(flags),
+        now,
+        now
+      )
+      const insertAlias = db.prepare(
+        'INSERT INTO context_alias (id, entry_id, form, created_at) VALUES (?, ?, ?, ?)'
+      )
+      for (const form of aliases) insertAlias.run(newId(), id, form, now)
+      addEvidence(id, candidate.evidence)
+      if (candidate.status === 'pending') pending.push(id)
+    }
+
+    const scan = db.prepare(
+      `INSERT OR REPLACE INTO context_extraction_scan (chapter_id, run_id, model, prompt_hash, scanned_at)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+    for (const chapterId of input.scannedChapterIds) {
+      scan.run(chapterId, input.runId, input.model, input.promptHash, now)
+    }
+    if (input.candidates.length > 0) touchWork(db, now)
+    return { pending, skipped }
+  })
+}
+
+/** The chapters an extraction run already scanned. */
+export function listScannedChapterIds(db: Db): Set<string> {
+  return new Set(
+    db
+      .prepare('SELECT chapter_id FROM context_extraction_scan')
+      .all<{ chapter_id: string }>()
+      .map((row) => row.chapter_id)
+  )
+}
+
+/** Review data of the given entries (or of every entry that has a type, flags or evidence). */
+export function readReviewInfo(db: Db, entryIds?: string[]): ContextReviewInfo[] {
+  const rows = db
+    .prepare(
+      `SELECT id, term_type, review_flags FROM context_entry e
+       WHERE term_type IS NOT NULL OR review_flags != '[]'
+         OR EXISTS (SELECT 1 FROM context_entry_evidence v WHERE v.entry_id = e.id)`
+    )
+    .all<{ id: string; term_type: string | null; review_flags: string }>()
+  const wanted = entryIds ? new Set(entryIds) : null
+  const evidence = new Map<string, ContextEvidence[]>()
+  for (const row of db
+    .prepare(
+      `SELECT id, entry_id, run_id, chapter_id, quote, model, prompt_hash, created_at
+       FROM context_entry_evidence ORDER BY created_at, rowid`
+    )
+    .all<{
+      id: string
+      entry_id: string
+      run_id: string
+      chapter_id: string | null
+      quote: string
+      model: string
+      prompt_hash: string
+      created_at: number
+    }>()) {
+    const list = evidence.get(row.entry_id) ?? []
+    list.push({
+      id: row.id,
+      runId: row.run_id,
+      chapterId: row.chapter_id,
+      quote: row.quote,
+      model: row.model,
+      promptHash: row.prompt_hash,
+      createdAt: row.created_at
+    })
+    evidence.set(row.entry_id, list)
+  }
+  return rows
+    .filter((row) => !wanted || wanted.has(row.id))
+    .map((row) => ({
+      entryId: row.id,
+      termType: row.term_type,
+      flags: parseFlags(row.review_flags),
+      evidence: evidence.get(row.id) ?? []
+    }))
+}
+
+// -----------------------------------------------------------------------------------------------------
+// Review of pending entries, guarded by the `updatedAt` the reviewer saw.
+
+/**
+ * One review command in its own (nested) transaction. Approving still checks the source and aliases like
+ * every context write, and an `alias_conflict` whose form another entry still owns is a `conflict`
+ * until the reviewer edits the aliases. Approving clears the review flags; quotes stay.
+ */
+export function reviewContextEntry(
+  db: Db,
+  command: ContextReviewCommand,
+  now = Date.now()
+): ContextEntryItem {
+  return db.transaction(() => {
+    const row = db
+      .prepare('SELECT status, updated_at, review_flags FROM context_entry WHERE id = ?')
+      .get<{ status: ContextStatus; updated_at: number; review_flags: string }>(command.entryId)
+    if (!row) throw new StorageError('not_found', 'Không tìm thấy mục thuật ngữ.')
+    if (row.updated_at !== command.expectedUpdatedAt) {
+      throw new StorageError('conflict', 'Mục đã đổi ở nơi khác; hãy tải lại rồi duyệt.')
+    }
+    if (row.status !== 'pending') throw new StorageError('conflict', 'Mục không còn chờ duyệt.')
+
+    if (command.kind === 'reject') {
+      return updateContextEntry(db, command.entryId, {
+        status: 'rejected',
+        notes: command.reason,
+        now
+      })
+    }
+    const current = getContextEntry(db, command.entryId)!
+    const aliases = command.kind === 'edit_approve' ? command.aliases : undefined
+    if (aliases === undefined) {
+      for (const flag of parseFlags(row.review_flags)) {
+        const owner =
+          flag.code === 'alias_conflict' && flag.detail ? ownerOf(db, flag.detail) : null
+        if (owner && owner.id !== command.entryId) {
+          throw new StorageError(
+            'conflict',
+            `Dạng viết khác "${flag.detail}" đã thuộc mục khác; sửa dạng viết rồi duyệt.`
+          )
+        }
+      }
+      checkUniqueness(db, current.source, current.aliases, command.entryId)
+    }
+    const entry = updateContextEntry(db, command.entryId, {
+      ...(command.kind === 'edit_approve'
+        ? {
+            target: command.target,
+            aliases: command.aliases,
+            fromChapterId: command.fromChapterId,
+            toChapterId: command.toChapterId,
+            notes: command.notes
+          }
+        : {}),
+      status: 'approved',
+      now
+    })
+    db.prepare("UPDATE context_entry SET review_flags = '[]' WHERE id = ?").run(command.entryId)
+    return entry
+  })
+}
+
+/**
+ * Approves entries of one term type. A mixed batch is refused before anything changes; otherwise each
+ * entry is approved on its own and reports its own result, so a failed one is never counted approved.
+ */
+export function bulkApproveContextEntries(
+  db: Db,
+  items: Array<{ entryId: string; expectedUpdatedAt: number }>,
+  now = Date.now()
+): ContextReviewOutcome[] {
+  return db.transaction(() => {
+    const types = new Set<string | null>()
+    for (const item of items) {
+      const row = db
+        .prepare('SELECT term_type FROM context_entry WHERE id = ?')
+        .get<{ term_type: string | null }>(item.entryId)
+      if (row) types.add(row.term_type)
+    }
+    if (types.size > 1) {
+      throw new StorageError('validation', 'Chỉ duyệt hàng loạt các mục cùng một loại thuật ngữ.')
+    }
+    return items.map((item): ContextReviewOutcome => {
+      try {
+        const entry = reviewContextEntry(db, { kind: 'approve', ...item }, now)
+        return { entryId: item.entryId, ok: true, entry }
+      } catch (error) {
+        if (!(error instanceof StorageError)) throw error
+        return {
+          entryId: item.entryId,
+          ok: false,
+          code: error.code === 'not_found' ? 'not_found' : 'conflict',
+          message: error.message
+        }
+      }
+    })
   })
 }

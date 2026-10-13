@@ -17,4 +17,5 @@ export {
   type View,
   type WorkspaceStateStore
 } from './store/workspaceStore'
+export { openGlossaryReview } from './work-detail/openGlossaryReview'
 export { WorkDetailScreen } from './work-detail/WorkDetailScreen'

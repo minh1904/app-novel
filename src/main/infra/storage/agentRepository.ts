@@ -74,7 +74,8 @@ interface TurnRow {
 
 interface OperationRow {
   id: string
-  turn_id: string
+  turn_id: string | null
+  task_item_id: string | null
   command_id: string
   capability: string
   target_json: string
@@ -100,6 +101,54 @@ interface ActivityRow {
   created_at: number
   updated_at: number
 }
+
+export type AgentToolDecision = 'allow' | 'deny' | 'needs_user'
+export type AgentToolCallState = 'pending' | 'completed' | 'failed' | 'cancelled' | 'expired'
+
+export interface AgentToolCall {
+  id: string
+  turnId: string
+  round: number
+  callId: string
+  name: string
+  args: unknown
+  argsDigest: string
+  decision: AgentToolDecision
+  state: AgentToolCallState
+  result: unknown | null
+  createdAt: number
+}
+
+interface ToolCallRow {
+  id: string
+  turn_id: string
+  round: number
+  call_id: string
+  name: string
+  args_json: string
+  args_digest: string
+  decision: AgentToolDecision
+  state: AgentToolCallState
+  result_json: string | null
+  created_at: number
+}
+
+const TOOL_CALL_COLUMNS = `id, turn_id, round, call_id, name, args_json, args_digest, decision, state,
+  result_json, created_at`
+
+const toolCallFrom = (row: ToolCallRow): AgentToolCall => ({
+  id: row.id,
+  turnId: row.turn_id,
+  round: row.round,
+  callId: row.call_id,
+  name: row.name,
+  args: JSON.parse(row.args_json),
+  argsDigest: row.args_digest,
+  decision: row.decision,
+  state: row.state,
+  result: row.result_json ? JSON.parse(row.result_json) : null,
+  createdAt: row.created_at
+})
 
 const sessionFrom = (row: SessionRow): AgentSession => ({
   id: row.id,
@@ -128,6 +177,7 @@ const turnFrom = (row: TurnRow): AgentTurn => ({
 const operationFrom = (row: OperationRow): AgentOperation => ({
   id: row.id,
   turnId: row.turn_id,
+  taskItemId: row.task_item_id,
   commandId: row.command_id,
   capability: row.capability,
   target: JSON.parse(row.target_json),
@@ -191,7 +241,9 @@ export class AgentRepository {
     payloadDigest?: string
   }): AgentTurn {
     const active = this.db
-      .prepare("SELECT id FROM agent_turn WHERE session_id = ? AND status IN ('queued', 'running')")
+      .prepare(
+        "SELECT id FROM agent_turn WHERE session_id = ? AND status IN ('queued', 'running', 'waiting_user')"
+      )
       .get<{ id: string }>(input.sessionId)
     if (active) {
       throw new StorageError('conflict', 'Đã có lượt đang chạy hoặc chờ trong cùng phiên.')
@@ -294,6 +346,11 @@ export class AgentRepository {
         }
         return { turn: existing, created: false }
       }
+      // A new command, not an answer, ends the turn that waits for the user (D7).
+      const waiting = this.db
+        .prepare("SELECT id FROM agent_turn WHERE session_id = ? AND status = 'waiting_user'")
+        .get<{ id: string }>(input.sessionId)
+      if (waiting) this.settleWaitingTurn(waiting.id, 'expired', input.now)
       return {
         turn: this.createTurn({
           id: input.id,
@@ -351,7 +408,9 @@ export class AgentRepository {
 
   createOperation(input: {
     id: string
-    turnId: string
+    /** Exactly one owner: a chat turn or a task item (CHECK of library v12). */
+    turnId?: string
+    taskItemId?: string
     commandId: string
     capability: string
     target: ResolvedTarget
@@ -368,12 +427,14 @@ export class AgentRepository {
     this.db
       .prepare(
         `INSERT INTO agent_operation
-          (id, turn_id, command_id, capability, target_json, state, model_ref_json, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, 'queued', ?, ?, ?)`
+          (id, turn_id, task_item_id, command_id, capability, target_json, state, model_ref_json,
+           created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?)`
       )
       .run(
         input.id,
-        input.turnId,
+        input.turnId ?? null,
+        input.taskItemId ?? null,
         input.commandId,
         input.capability,
         JSON.stringify(input.target),
@@ -388,7 +449,7 @@ export class AgentRepository {
   getOperation(id: string): AgentOperation | null {
     const row = this.db
       .prepare(
-        `SELECT id, turn_id, command_id, capability, target_json, state, progress_json,
+        `SELECT id, turn_id, task_item_id, command_id, capability, target_json, state, progress_json,
                 model_ref_json, usage_json, result_json, error_json, created_at, updated_at
          FROM agent_operation WHERE id = ?`
       )
@@ -399,7 +460,7 @@ export class AgentRepository {
   listOperations(turnId: string): AgentOperation[] {
     return this.db
       .prepare(
-        `SELECT id, turn_id, command_id, capability, target_json, state, progress_json,
+        `SELECT id, turn_id, task_item_id, command_id, capability, target_json, state, progress_json,
                 model_ref_json, usage_json, result_json, error_json, created_at, updated_at
          FROM agent_operation WHERE turn_id = ? ORDER BY created_at ASC, id ASC`
       )
@@ -410,7 +471,7 @@ export class AgentRepository {
   listUnsettledOperations(): AgentOperation[] {
     return this.db
       .prepare(
-        `SELECT id, turn_id, command_id, capability, target_json, state, progress_json,
+        `SELECT id, turn_id, task_item_id, command_id, capability, target_json, state, progress_json,
                 model_ref_json, usage_json, result_json, error_json, created_at, updated_at
          FROM agent_operation WHERE state IN ('queued', 'running') ORDER BY created_at ASC, id ASC`
       )
@@ -555,6 +616,116 @@ export class AgentRepository {
       )
       .all<ActivityRow>(turnId)
       .map(activityFrom)
+  }
+
+  transaction<T>(fn: () => T): T {
+    return this.db.transaction(fn)
+  }
+
+  /** Ends a `waiting_user` turn by Stop (`cancelled`) or a new command (`expired`), with its pending calls. */
+  settleWaitingTurn(turnId: string, status: 'cancelled' | 'expired', now: number): AgentTurn {
+    return this.db.transaction(() => {
+      const turn = this.transitionTurn(turnId, status, now)
+      this.db
+        .prepare("UPDATE agent_tool_call SET state = ? WHERE turn_id = ? AND state = 'pending'")
+        .run(status, turnId)
+      return turn
+    })
+  }
+
+  insertToolCalls(calls: Array<Omit<AgentToolCall, 'result'> & { result?: unknown }>): void {
+    this.db.transaction(() => {
+      const insert = this.db.prepare(
+        `INSERT INTO agent_tool_call (${TOOL_CALL_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      for (const call of calls) {
+        insert.run(
+          call.id,
+          call.turnId,
+          call.round,
+          call.callId,
+          call.name,
+          JSON.stringify(call.args ?? {}),
+          call.argsDigest,
+          call.decision,
+          call.state,
+          call.result === undefined ? null : JSON.stringify(call.result),
+          call.createdAt
+        )
+      }
+    })
+  }
+
+  updateToolCall(id: string, state: AgentToolCallState, result: unknown): AgentToolCall {
+    const changed = this.db
+      .prepare('UPDATE agent_tool_call SET state = ?, result_json = ? WHERE id = ?')
+      .run(state, result === undefined ? null : JSON.stringify(result), id)
+    if (changed.changes === 0) throw new StorageError('not_found', 'Không tìm thấy tool call.')
+    return this.getToolCall(id)!
+  }
+
+  getToolCall(id: string): AgentToolCall | null {
+    const row = this.db
+      .prepare(`SELECT ${TOOL_CALL_COLUMNS} FROM agent_tool_call WHERE id = ?`)
+      .get<ToolCallRow>(id)
+    return row ? toolCallFrom(row) : null
+  }
+
+  listToolCalls(turnId: string): AgentToolCall[] {
+    return this.db
+      .prepare(
+        `SELECT ${TOOL_CALL_COLUMNS} FROM agent_tool_call WHERE turn_id = ?
+         ORDER BY round ASC, created_at ASC, rowid ASC`
+      )
+      .all<ToolCallRow>(turnId)
+      .map(toolCallFrom)
+  }
+
+  listSessionPendingToolCalls(sessionId: string): AgentToolCall[] {
+    return this.db
+      .prepare(
+        `SELECT ${TOOL_CALL_COLUMNS.replace(/(\w+)/g, 'c.$1')} FROM agent_tool_call c
+         JOIN agent_turn t ON t.id = c.turn_id
+         WHERE t.session_id = ? AND t.status = 'waiting_user' AND c.state = 'pending'
+         ORDER BY c.round ASC, c.created_at ASC, c.rowid ASC`
+      )
+      .all<ToolCallRow>(sessionId)
+      .map(toolCallFrom)
+  }
+
+  listSessionActivities(sessionId: string): AgentActivity[] {
+    return this.db
+      .prepare(
+        `SELECT a.id, a.turn_id, a.operation_id, a.step_seq, a.kind, a.state, a.label, a.detail_json,
+                a.created_at, a.updated_at
+         FROM agent_activity a JOIN agent_turn t ON t.id = a.turn_id
+         WHERE t.session_id = ? ORDER BY t.created_at ASC, t.id ASC, a.step_seq ASC`
+      )
+      .all<ActivityRow>(sessionId)
+      .map(activityFrom)
+  }
+
+  listSessionOperations(sessionId: string): AgentOperation[] {
+    return this.db
+      .prepare(
+        `SELECT o.id, o.turn_id, o.task_item_id, o.command_id, o.capability, o.target_json, o.state, o.progress_json,
+                o.model_ref_json, o.usage_json, o.result_json, o.error_json, o.created_at, o.updated_at
+         FROM agent_operation o JOIN agent_turn t ON t.id = o.turn_id
+         WHERE t.session_id = ? ORDER BY o.created_at ASC, o.id ASC`
+      )
+      .all<OperationRow>(sessionId)
+      .map(operationFrom)
+  }
+
+  /** The session an operation belongs to, for the `undo_operation` policy. */
+  operationSessionId(operationId: string): string | null {
+    const row = this.db
+      .prepare(
+        `SELECT t.session_id FROM agent_operation o JOIN agent_turn t ON t.id = o.turn_id
+         WHERE o.id = ?`
+      )
+      .get<{ session_id: string }>(operationId)
+    return row ? row.session_id : null
   }
 
   recordLegacyImport(
