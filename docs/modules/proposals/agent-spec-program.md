@@ -1,7 +1,9 @@
 # Chương trình đặc tả Trợ lý Agent
 
-Cập nhật: 2026-10-12 · Trạng thái: **lát 1 `repair-agent-runtime` đã triển khai** (commit `e6090be`, mọi
-task đã đánh dấu, chưa archive); lát 2–6 là kế hoạch, chưa triển khai.
+Cập nhật: 2026-10-13 · Trạng thái: **lát 1 `repair-agent-runtime` đã triển khai và archive**; **lát 2
+`add-agent-conversation` đã triển khai và archive**; **lát 3 `add-durable-translation-tasks` đã triển khai**
+(đã archive); **lát 4 `add-agent-context-workflow` đã triển khai** (đã archive); lát 5–6 là kế
+hoạch, chưa triển khai.
 
 ## Kết luận
 
@@ -14,15 +16,15 @@ Thay vào là track riêng [`add-subscription-gateway-auth`](../../../openspec/c
 không nằm trong chuỗi agent (xem [Kết nối AI](../ai-connections/README.md), mục "Quyết định 2026-10-12").
 
 ```text
-repair-agent-runtime            (đã triển khai, chưa archive)
+repair-agent-runtime            (đã triển khai, đã archive)
         ↓
-add-agent-conversation          (thư viện v11)
+add-agent-conversation          (thư viện v11; đã triển khai, đã archive)
         ↓
-add-durable-translation-tasks   (thư viện v12)
+add-durable-translation-tasks   (thư viện v12; đã triển khai, đã archive)
         ├──────────────────────────────┐
         ↓                              ↓
 add-agent-context-workflow       add-translation-task-qa
-(migration work DB)
+(work v14; đã triển khai, đã archive)
         ↓
 add-agent-steering
 
@@ -38,10 +40,10 @@ Phụ thuộc chi tiết:
 
 | Lát | Change | Kết quả độc lập | Không thuộc lát |
 | --- | --- | --- | --- |
-| 1 | [`repair-agent-runtime`](../../../openspec/changes/repair-agent-runtime/proposal.md) | Một chương dịch được qua UI → IPC → service → storage; cancel, usage và Undo đúng | Model tự chọn tool, task nhiều chương |
-| 2 | [`add-agent-conversation`](../../../openspec/changes/add-agent-conversation/proposal.md) | Chat toàn ứng dụng với model/tool loop, làm rõ target và lịch sử thật | Task dài, Context review |
-| 3 | [`add-durable-translation-tasks`](../../../openspec/changes/add-durable-translation-tasks/proposal.md) | Dịch dải chương tuần tự, pause/cancel/retry/recovery | Extraction, steering |
-| 4 | [`add-agent-context-workflow`](../../../openspec/changes/add-agent-context-workflow/proposal.md) | Extraction → review → snapshot đã duyệt → dịch | Sửa hướng giữa task, QA hậu dịch |
+| 1 | [`repair-agent-runtime`](../../../openspec/changes/archive/2026-10-12-repair-agent-runtime/proposal.md) | Một chương dịch được qua UI → IPC → service → storage; cancel, usage và Undo đúng | Model tự chọn tool, task nhiều chương |
+| 2 | [`add-agent-conversation`](../../../openspec/changes/archive/2026-10-13-add-agent-conversation/proposal.md) | Chat toàn ứng dụng với model/tool loop, làm rõ target và lịch sử thật | Task dài, Context review |
+| 3 | [`add-durable-translation-tasks`](../../../openspec/changes/archive/2026-10-14-add-durable-translation-tasks/proposal.md) | Dịch dải chương tuần tự, pause/cancel/retry/recovery | Extraction, steering |
+| 4 | [`add-agent-context-workflow`](../../../openspec/changes/archive/2026-10-14-add-agent-context-workflow/proposal.md) | Extraction → review → snapshot đã duyệt → dịch | Sửa hướng giữa task, QA hậu dịch |
 | 5 | [`add-agent-steering`](../../../openspec/changes/add-agent-steering/proposal.md) | Chỉ dẫn mới có điểm hiệu lực rõ cho phần chưa chạy | QA tự động, sửa ngược kết quả |
 | 6 | [`add-translation-task-qa`](../../../openspec/changes/add-translation-task-qa/proposal.md) | Kiểm đủ segment, revision và nhất quán; phân biệt lỗi với cảnh báo | Auto-polish, chấm chất lượng văn học tuyệt đối |
 

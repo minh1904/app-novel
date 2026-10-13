@@ -1,8 +1,10 @@
 # AI trích xuất glossary
 
-Cập nhật: 2026-10-06 · Trạng thái: **đề xuất thiết kế**; bước 1–4 đã có trong Lab (`extract`,
-[`glossaryExtraction.ts`](../../../src/main/services/ai/glossaryExtraction.ts)), bước 5–6 (hàng duyệt) và nối
-vào sản phẩm chưa làm. Nguyên tắc ở mục 1 là **quyết định của chủ sản phẩm** (2026-10-06).
+Cập nhật: 2026-10-13 · Trạng thái: bước 1–4 **đã triển khai trong sản phẩm** qua
+`ContextExtractionService` (change `add-agent-context-workflow`: ứng viên `pending` có bằng chứng, trích
+tăng dần theo chương đã quét, cờ `alias_conflict`/`script_mismatch`/`reopened`, duyệt có guard); bước
+5–6 (hàng duyệt) có dạng tối thiểu trong màn Từ điển; bước 7 vẫn là đề xuất. Lab vẫn gọi cùng các hàm
+thuần của [`glossaryExtraction.ts`](../../../src/main/services/ai/glossaryExtraction.ts). Nguyên tắc ở mục 1 là **quyết định của chủ sản phẩm** (2026-10-06).
 Chủ trì: kỹ thuật (luồng, phép đo), sản phẩm/ngôn ngữ (chính sách phiên âm, hàng duyệt).
 Câu hỏi: làm sao để AI tự lập glossary đủ tốt để bản dịch nhất quán hơn, mà người dịch vẫn là người chốt?
 

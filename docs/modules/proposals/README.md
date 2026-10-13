@@ -1,7 +1,8 @@
 # Module Trợ lý AI và đề xuất
 
-Cập nhật: 2026-10-12 · Trạng thái: quyết định sản phẩm và roadmap hiện hành. Đường chạy đầu-cuối của
-foundation agent đã được nối trong change `repair-agent-runtime` (commit `e6090be`, chưa archive).
+Cập nhật: 2026-10-13 · Trạng thái: quyết định sản phẩm và roadmap hiện hành. Lát 1
+`repair-agent-runtime` và lát 2 `add-agent-conversation` đã triển khai và archive; lát 3
+`add-durable-translation-tasks` và lát 4 `add-agent-context-workflow` đã triển khai và archive.
 
 Module này chịu trách nhiệm cho hội thoại với Trợ lý, tác vụ AI dài, thao tác ghi có thể hoàn tác và
 dữ liệu proposal cũ. Trợ lý là tính năng toàn ứng dụng; tác phẩm và chương chỉ là ngữ cảnh hoặc đích
@@ -11,7 +12,7 @@ của một lượt.
 | --- | --- |
 | Sản phẩm đã chốt điều gì? | [Quyết định](decisions.md) |
 | Làm agent theo thứ tự nào và gate hoàn thành là gì? | [Roadmap agent](agent-roadmap.md) |
-| Agent được tách thành những lát/spec nào, dựa trên nghiên cứu gì? | [Chương trình đặc tả Agent](agent-spec-program.md) — 6 change độc lập; lát 1 `repair-agent-runtime` đã triển khai (commit `e6090be`), lát 2–6 chưa; lát MCP đã bỏ |
+| Agent được tách thành những lát/spec nào, dựa trên nghiên cứu gì? | [Chương trình đặc tả Agent](agent-spec-program.md) — 6 change độc lập; lát 1–3 đã triển khai, lát 4–6 chưa; lát MCP đã bỏ |
 | Người dùng gói thuê bao (Kimi, Claude/Antigravity qua gateway) kết nối thế nào? | [`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md) — track riêng, chưa triển khai |
 | Gemini CLI, Gemini web hoặc web app riêng có thể điều khiển Mira thế nào? | [Tích hợp agent bên ngoài](external-agent-integration.md) |
 | Session, turn, operation và task khác nhau thế nào? | [Phiên và tác vụ](sessions-and-jobs.md) |
@@ -25,14 +26,47 @@ checkpoint, một phần runner dịch chương và module renderer cho agent. C
 dụng, không phải bằng chứng rằng Trợ lý đã chạy hoàn chỉnh.
 
 `repair-agent-runtime` đã nối UI → IPC → `AgentService`, cancel/undo thật, usage và ghi có điều phối cho
-một chương. Còn thiếu vòng model gọi capability và tác vụ nhiều chương có thể phục hồi.
-[Roadmap agent](agent-roadmap.md) là nguồn trạng thái duy nhất cho phần này.
+một chương. `add-agent-conversation` thay nhánh regex bằng vòng model → tool → kết quả trên
+`provider.chat`: tool call lưu vào `agent_tool_call` (library v11) trước khi chạy, target chỉ đi qua
+handle, policy là bảng trong code, budget 6 vòng và phát hiện lặp; turn chờ người dùng tiếp tục bằng
+câu trả lời gắn với đúng call. Turn thuộc Main và event tới mọi cửa sổ. Màn Trợ lý có Chat mới, lịch
+sử, transcript và composer với chip ngữ cảnh; side panel màn chương dùng chung store.
+
+`add-durable-translation-tasks` thêm task dịch dải chương lưu bền (library v12: `agent_task`,
+`agent_task_item`, `agent_task_attempt`; `agent_operation` có `turn_id` hoặc `task_item_id`). Scheduler
+trong Main chạy tuần tự một item toàn app, mỗi lần chạy item là một operation mới với một `CallBudget`;
+runner chỉ dịch hàng chưa có bản dịch (`fill_untranslated`), khóa batch theo nội dung và dựng prompt từ
+bản chụp `task:<itemId>`. Pause/Continue/Cancel/Retry/Bỏ qua/Chạy lại đi qua compare-and-set
+`state_version`; đóng app ghi `paused(app_closed)`, khởi động lại chỉ đối soát journal, không gọi
+provider. Trần task (lời gọi, token, chi phí khi catalog có giá) chặn trước request. Màn Tác vụ và khu
+Tác vụ của tác phẩm đọc task thật; chat tạo task qua `create_translation_task` sau khi người dùng duyệt.
+
+`add-agent-context-workflow` đưa trích thuật ngữ vào sản phẩm (work v14: `term_type`, `review_flags`,
+`context_entry_evidence`, `context_extraction_scan`). Lệnh tạo task bắt buộc `contextStrategy`
+(`extract_then_review` hoặc `approved_only`), không có mặc định; capability chat khai trường này và dặn
+model hỏi người dùng. Với `extract_then_review`, trước item đầu scheduler quét các chương chưa quét bằng
+luồng Lab bước 1–4, ghi ứng viên `pending` kèm câu trích, lần chạy, model và hash prompt; lời gọi đi qua
+trần của task (là một operation của item đầu). Có mục mới thì task `waiting_user(context_review)`, item
+vẫn `queued`. Lệnh duyệt (approve, sửa rồi approve, reject, duyệt hàng loạt cùng loại) có guard
+`updatedAt`. Tab Ngữ cảnh của side panel hiện "Đang áp dụng" từ `takeContextSnapshot`; "Xem và duyệt" mở
+khu Ngữ cảnh với bộ lọc Chờ duyệt.
+[Roadmap agent](agent-roadmap.md) là nguồn trạng thái duy nhất cho phần
+này.
+
+### Chat legacy còn lại
+
+Chat theo tác phẩm (`AiPanel`, spec `ai-chat-tools`) chưa bị gỡ. Ngày 2026-10-13 chủ sản phẩm chốt đặt
+nó ở tab thứ ba **Chat cũ** của side panel màn chương (`Trợ lý | Ngữ cảnh | Chat cũ`), Trợ lý là tab mặc
+định. Tab Chat cũ giữ nguyên hành vi: lịch sử theo tác phẩm, proposal chờ duyệt và Accept/Deny; nút
+"đề xuất chờ duyệt" ở thanh trạng thái chương mở thẳng tab này. Chat legacy vẫn tự chuyển sang model
+dự phòng khi lỗi và có 6 vòng gọi tool cộng một vòng trả lời; Trợ lý mới không fallback và tổng cộng 6
+vòng. Gỡ chat legacy cần một change riêng.
 
 Proposal theo tác phẩm và Accept/Deny vẫn tồn tại để đọc dữ liệu cũ và phục vụ các luồng legacy chưa
 chuyển đổi. Không dùng thiết kế proposal-only cũ làm contract cho lượt agent mới.
 
-OpenSpec [`app-agent-foundation`](../../../openspec/changes/app-agent-foundation/proposal.md) mô tả
-foundation dự kiến. Checklist của change là hồ sơ thực hiện tại thời điểm viết, không thay cho kiểm
+OpenSpec [`app-agent-foundation`](../../../openspec/changes/archive/2026-10-12-app-agent-foundation/proposal.md)
+mô tả foundation dự kiến. Checklist của change là hồ sơ thực hiện tại thời điểm viết, không thay cho kiểm
 chứng runtime hiện tại.
 
 [Về mục lục module](../README.md)

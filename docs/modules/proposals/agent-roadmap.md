@@ -1,6 +1,6 @@
 # Roadmap Trợ lý AI
 
-Cập nhật: 2026-10-12 · Trạng thái: **roadmap hiện hành**.
+Cập nhật: 2026-10-13 · Trạng thái: **roadmap hiện hành**.
 
 ## Đích sản phẩm
 
@@ -23,10 +23,10 @@ Các mục trên chỉ xác nhận thành phần tồn tại. Chúng chưa chứ
 
 Roadmap được triển khai qua sáu change độc lập, không apply như một change lớn:
 
-1. [`repair-agent-runtime`](../../../openspec/changes/repair-agent-runtime/proposal.md) — nối và nghiệm thu foundation. **Đã triển khai** (commit `e6090be`), chưa archive.
-2. [`add-agent-conversation`](../../../openspec/changes/add-agent-conversation/proposal.md) — model/tool loop và chat toàn ứng dụng.
-3. [`add-durable-translation-tasks`](../../../openspec/changes/add-durable-translation-tasks/proposal.md) — task dịch dải chương.
-4. [`add-agent-context-workflow`](../../../openspec/changes/add-agent-context-workflow/proposal.md) — extraction, review và snapshot Context.
+1. [`repair-agent-runtime`](../../../openspec/changes/archive/2026-10-12-repair-agent-runtime/proposal.md) — nối và nghiệm thu foundation. **Đã triển khai** (commit `e6090be`), đã archive.
+2. [`add-agent-conversation`](../../../openspec/changes/archive/2026-10-13-add-agent-conversation/proposal.md) — model/tool loop và chat toàn ứng dụng. **Đã triển khai** (2026-10-13), đã archive.
+3. [`add-durable-translation-tasks`](../../../openspec/changes/archive/2026-10-14-add-durable-translation-tasks/proposal.md) — task dịch dải chương. **Đã triển khai** (2026-10-13), archive 2026-10-14.
+4. [`add-agent-context-workflow`](../../../openspec/changes/archive/2026-10-14-add-agent-context-workflow/proposal.md) — extraction, review và snapshot Context. **Đã triển khai** (2026-10-13), archive 2026-10-14.
 5. [`add-agent-steering`](../../../openspec/changes/add-agent-steering/proposal.md) — điều chỉnh phần chưa chạy có điểm hiệu lực.
 6. [`add-translation-task-qa`](../../../openspec/changes/add-translation-task-qa/proposal.md) — kiểm cấu trúc và nhất quán.
 
@@ -55,6 +55,11 @@ ngân sách.
 **Gate:** cùng một session xử lý được câu hỏi không ghi, lệnh ghi rõ target và yêu cầu mơ hồ cần làm rõ;
 không có ID hoặc primitive lưu trữ do model tự cấp quyền.
 
+**Bằng chứng 2026-10-13:** test với model giả theo kịch bản (`agentService.test.ts`,
+`agentE2eIntegration.test.ts`, `agentHandlers.test.ts`) phủ cả ba loại yêu cầu trong một session, ID thô
+và handle không được cấp bị từ chối, prompt injection trong raw thành `needs_user`, continuation gắn ID +
+digest, budget/loop và hai cửa sổ. Chưa thử với provider thật và chưa kiểm UI trong app đang chạy.
+
 ## 2. Tác vụ dịch nhiều chương
 
 Thêm `agent_task` và item bền cho `translate_range`. Chạy tuần tự, dùng translation core hiện có,
@@ -62,6 +67,12 @@ pause/cancel/retry được và phục hồi từ journal sau khi mở lại app
 
 **Gate:** yêu cầu “dịch chương 1–30, dừng khi vượt ngân sách” tiếp tục được sau khi đóng app, không dịch
 lặp chương đã commit và hiển thị đúng chương lỗi.
+
+**Bằng chứng 2026-10-13:** `taskService.test.ts` chạy runner thật trên provider giả: trần lời gọi đưa task về
+`paused(budget)` trước request; đóng app ghi `paused(app_closed)` và lần mở sau không tự chạy; crash giữa
+hai DB, giữa item và sau response trước commit đều khôi phục mà không gọi provider, Continue chỉ dịch phần
+còn lại và không ghi lặp; 29/30 hiện là `partially_completed` với chương lỗi. Chưa thử với provider thật và
+chưa kiểm màn Tác vụ trong app đang chạy.
 
 ## 3. Chuẩn bị Context
 
@@ -92,7 +103,7 @@ rename/pin/archive session hay framework LangGraph. Chỉ bổ sung khi một wo
 
 ## Nguồn kỹ thuật
 
-- [OpenSpec foundation](../../../openspec/changes/app-agent-foundation/proposal.md): thiết kế các khối
+- [OpenSpec foundation](../../../openspec/changes/archive/2026-10-12-app-agent-foundation/proposal.md): thiết kế các khối
   nền; checklist không phải trạng thái nghiệm thu runtime hiện tại.
 - [Roadmap Context](../context/roadmap.md): thứ tự glossary, addressing, extraction và style/memory.
 - [`ARCHITECTURE.md`](../../../ARCHITECTURE.md): ownership `main/services/agent` và module renderer.
