@@ -3,7 +3,7 @@
 - [x] 1.1 Xác nhận change `provider-error-reasons` đã có kind cho lỗi cấu hình hay request không hợp lệ,
   tách khỏi `refused`. Có test trong `classifyError.test.ts` cho thấy một 400 "Invalid JSON schema" hay
   "Unknown name response_format" không ra `refused`. Chưa có thì dừng change này lại.
-- [ ] 1.2 (Chưa làm: cần gọi API thật, người dùng chạy. Lệnh gợi ý ở
+- [ ] 1.2 (Chưa làm: cần gọi API thật, người dùng chạy; chuyển ra `running-experiments.md` khi archive 2026-10-14. Lệnh gợi ý ở
   `docs/modules/measurement/running-experiments.md`, mục "Chế độ đầu ra có schema".) Ghi một bản ghi sống (`__fixtures__/live`) cho một lời gọi `gemini-2.5-flash` có
   `response_format` `json_schema` theo D1, trả HTTP 200 với `{"items":[…]}`, và một bản ghi cho schema bị
   400 nếu tái hiện được. Kiểm bằng cách mở tệp và thấy status cùng thân phản hồi.
@@ -81,6 +81,6 @@
   mặc định tắt) và ghi kế hoạch đo vào `docs/modules/measurement/running-experiments.md`. Kiểm bằng cách
   đọc lại hai trang và thấy trạng thái ghi đúng là "đề xuất / đang thử", không phải "đã triển khai mặc
   định".
-- [ ] 9.3 (Chưa đo: cần người dùng chạy Lab, xem lệnh trong `running-experiments.md`.) (Sau khi có báo cáo đo lặp của `lab-completion-quality-report`) Chạy thử nghiệm so `schema` với
+- [ ] 9.3 (Chưa đo: cần người dùng chạy Lab, xem lệnh trong `running-experiments.md`; chuyển ra đó khi archive 2026-10-14.) (Sau khi có báo cáo đo lặp của `lab-completion-quality-report`) Chạy thử nghiệm so `schema` với
   `text` trên tập chương cố định, ghi kết quả và quyết định của cổng vào tài liệu module. Kiểm bằng một
   mục lịch sử đo có cả hai biến thể và một dòng quyết định có số đo dẫn kèm.

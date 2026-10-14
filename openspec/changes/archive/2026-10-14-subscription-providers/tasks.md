@@ -46,7 +46,7 @@
 
   Kiểm: test hai lời gọi song song chỉ gửi một refresh; test `refresh_token_reused` chuyển `state =
   relogin`.
-- [ ] 3.4 (Đã làm header, claim JWT, danh sách model theo hai `client_version` và danh sách dự phòng. Chưa làm thang suy luận theo họ model ghi vào `modelCapability`: cần bảng `agent/reasoning_effort.py` của Hermes, chưa đọc được trên máy này.) Header (Bearer, account id, residency, `originator: mira`, `session_id`), danh sách model theo hai
+- [x] 3.4 (Thang suy luận theo họ model: `accountReasoning.ts` theo bảng `agent/reasoning_effort.py` của Hermes, đọc 2026-10-14; `toView` và bước kiểm mức trước khi gọi dùng chung.) Header (Bearer, account id, residency, `originator: mira`, `session_id`), danh sách model theo hai
   `client_version` kèm danh sách dự phòng tĩnh, thang suy luận theo họ model. Kiểm: unit test claim JWT,
   lọc và sắp model.
 - [x] 3.5 (IPC tên `ai:accounts:usage`, cùng nhóm kênh `ai:accounts:*`.) Hạn mức `/wham/usage` (gán Phiên/Tuần theo độ dài cửa sổ, lưu đệm 5 phút) và IPC `ai:usage:get`.
@@ -65,7 +65,7 @@
 - [x] 4.3 Header Copilot cho Chat Completions và Responses; `x-initiator` theo `turnRound`; header vision; đổi
   lại token và thử lại khi gặp `model_not_available_for_integrator`. Kiểm: test `chatService` với
   transport giả ghi header của ba vòng.
-- [ ] 4.4 (Đã lọc `/models` theo type, endpoint và `model_picker_enabled`, có danh sách dự phòng; `parseCopilotModels` đọc `supports.reasoning_effort` nhưng chưa nối vào `modelCapability`.) Danh sách model `/models` (lọc theo type, endpoint, `model_picker_enabled`) kèm danh sách dự phòng
+- [x] 4.4 (`supports.reasoning_effort` vào `modelCapability` của mục Copilot qua lần liệt kê model gần nhất; sau khởi động lại dùng catalog cho tới lần liệt kê sau, có ghi chú `shortcut:`.) Danh sách model `/models` (lọc theo type, endpoint, `model_picker_enabled`) kèm danh sách dự phòng
   tĩnh và mức suy luận từ `supports.reasoning_effort`. Kiểm: unit test với fixture.
 
 ## 5. Anthropic Messages
@@ -114,7 +114,7 @@
 ## 7. Lỗi, thử thật, tài liệu
 
 - [x] 7.1 `classifyError` thêm các lỗi theo nhà cung cấp ở D9. Kiểm: unit test từng mã.
-- [ ] 7.2 (Chưa thử: cần tài khoản ChatGPT và Copilot của chủ sản phẩm.) Thử thật với tài khoản của chủ sản phẩm: đăng nhập Codex, dịch một lô, chat có tool; đăng nhập Copilot,
+- [ ] 7.2 (Chưa thử: cần tài khoản ChatGPT và Copilot của chủ sản phẩm. Chuyển ra `docs/modules/ai-connections/README.md` khi archive 2026-10-14.) Thử thật với tài khoản của chủ sản phẩm: đăng nhập Codex, dịch một lô, chat có tool; đăng nhập Copilot,
   chat với một model gpt-5 và một model Claude. Kiểm: ghi kết quả (model, usage, lỗi gặp phải) vào
   `docs/modules/ai-connections/README.md`. Nếu chưa có tài khoản thì để mở và nói rõ.
 - [x] 7.3 Cập nhật `docs/modules/ai-connections/README.md` (tiếng Việt): hành vi đã chạy, hằng số và nguồn,

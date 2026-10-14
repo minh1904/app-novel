@@ -5,22 +5,27 @@ TBD - created by archiving change add-agent-context-workflow. Update Purpose aft
 
 ## Requirements
 
-### Requirement: Task dịch hỏi lựa chọn Context, không có mặc định
-Khi tạo task dịch, Mira SHALL hỏi người dùng: trích thuật ngữ rồi duyệt, hoặc dịch ngay bằng Context đã duyệt.
-Lệnh tạo task SHALL mang lựa chọn này (`contextStrategy`) và Mira SHALL từ chối lệnh thiếu lựa chọn. Khi task
-được yêu cầu từ chat, model SHALL hỏi người dùng thay vì tự chọn. Mira SHALL không bao giờ tự chạy trích thuật
-ngữ khi người dùng chưa chọn.
+### Requirement: Task dịch mặc định trích glossary khi tác phẩm chưa có
+Lệnh tạo task dịch MAY mang lựa chọn Context (`contextStrategy`): trích thuật ngữ rồi duyệt, hoặc dịch ngay bằng
+Context đã duyệt. Khi lệnh không mang lựa chọn, Mira SHALL trích thuật ngữ trước nếu tác phẩm chưa có mục
+thuật ngữ nào đã duyệt hoặc đang chờ duyệt, và SHALL dịch ngay bằng Context đã duyệt nếu đã có. Khi task được
+yêu cầu từ chat, model SHALL chỉ chọn dịch ngay khi người dùng nói rõ không trích (quyết định của chủ sản phẩm,
+2026-10-14; thay quy tắc "không có mặc định" của change `add-agent-context-workflow`).
 
 #### Scenario: Dịch ngay bằng Context đã duyệt
 - **WHEN** người dùng chọn dịch ngay bằng Context đã duyệt
 - **THEN** task không gọi model trích thuật ngữ và mỗi item dùng bản chụp Context đã duyệt khi bắt đầu chạy
 
-#### Scenario: Yêu cầu từ chat không nói về Context
-- **WHEN** người dùng nhắn "dịch chương 1–30" mà không nói có trích thuật ngữ hay không
-- **THEN** model hỏi người dùng chọn một trong hai cách trước khi tạo task, và không task nào được tạo cho tới khi có câu trả lời
+#### Scenario: Yêu cầu từ chat cho tác phẩm chưa có glossary
+- **WHEN** người dùng nhắn "dịch chương 1–30" cho tác phẩm chưa có thuật ngữ nào và không nói gì về Context
+- **THEN** task được tạo với lựa chọn trích thuật ngữ rồi duyệt, và bước trích chạy trước item đầu
 
-#### Scenario: Lệnh tạo task thiếu lựa chọn
-- **WHEN** lệnh tạo task tới main không có `contextStrategy`
+#### Scenario: Tác phẩm đã có glossary
+- **WHEN** lệnh tạo task không mang lựa chọn và tác phẩm đã có mục thuật ngữ đã duyệt hoặc đang chờ duyệt
+- **THEN** task dịch ngay bằng Context đã duyệt, không gọi model trích thuật ngữ
+
+#### Scenario: Lựa chọn không hợp lệ
+- **WHEN** lệnh tạo task mang `contextStrategy` không thuộc hai giá trị đã định
 - **THEN** Mira từ chối lệnh bằng lỗi kiểm tra và không tạo task
 
 ### Requirement: Trích thuật ngữ lưu ứng viên có bằng chứng
