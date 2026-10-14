@@ -24,6 +24,7 @@ Tập hợp những gì đã nghiên cứu về glossary, nhân vật, xưng hô
 | Chưa có cặp xưng hô thì AI xưng hô thế nào, theo bối cảnh nào? | [Xưng hô tiếng Việt](vietnamese-addressing.md) |
 | Chứng minh tốt hơn và tránh báo lỗi nhầm thế nào? | [Chất lượng và kiểm chứng](quality-and-evaluation.md) |
 | Sau lượt dịch: kiểm, tự sửa, trau chuốt và để người duyệt thế nào? | [Kiểm, tự sửa và trau chuốt](post-editing.md) |
+| Thế nào là bản dịch tiểu thuyết tốt, mỗi ngôn ngữ nguồn cần lưu ý gì? | [Văn phong bản dịch theo ngôn ngữ](translation-style-research.md) |
 | Model từ chối dịch một phần chương thì sao? | [Đoạn bị nhà cung cấp từ chối](content-refusals.md) |
 | Học gì từ harness của một agent khác, làm theo thứ tự nào? | [Đối chiếu harness Hermes](harness-review.md) |
 | Cần dữ liệu gì để đo cách người dịch xử lý xưng hô và độ linh hoạt? | [Kho đối chiếu bản dịch người](human-translation-corpus.md) |

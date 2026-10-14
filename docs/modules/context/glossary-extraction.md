@@ -1,6 +1,6 @@
 # AI trích xuất glossary
 
-Cập nhật: 2026-10-13 · Trạng thái: bước 1–4 **đã triển khai trong sản phẩm** qua
+Cập nhật: 2026-10-14 · Trạng thái: bước 1–4 **đã triển khai trong sản phẩm** qua
 `ContextExtractionService` (change `add-agent-context-workflow`: ứng viên `pending` có bằng chứng, trích
 tăng dần theo chương đã quét, cờ `alias_conflict`/`script_mismatch`/`reopened`, duyệt có guard); bước
 5–6 (hàng duyệt) có dạng tối thiểu trong màn Từ điển; bước 7 vẫn là đề xuất. Lab vẫn gọi cùng các hàm
@@ -128,7 +128,51 @@ Lệnh mới `extract <ncode> [--chapters 1-30] [--model …]` ghi `glossary/<nc
 “Tên nhất quán” là chỉ số chính vì không cần đáp án: nó cho biết glossary có làm bản dịch ổn định hơn
 hay không, kể cả trước khi có người duyệt.
 
-## 5. Câu hỏi còn mở
+## 5. Mặc định trích trước (quyết định 2026-10-14)
+
+Chủ sản phẩm chốt: luồng dịch mặc định tự trích glossary trước nếu tác phẩm chưa có, trừ khi người dùng chủ
+động bảo dịch luôn. Trong mã: `contextStrategy` của lệnh tạo task thành tùy chọn; bỏ trống thì tác phẩm không có
+mục thuật ngữ nào đã duyệt hoặc chờ duyệt được trích trước (rồi `waiting_user(context_review)` như cũ), đã có
+thì dịch ngay. Chat chỉ truyền `approved_only` khi người dùng nói rõ dịch luôn. Luồng dịch một chương trong hộp
+thoại dịch chưa có bước trích.
+
+## 6. Tự cải thiện qua các chương (nghiên cứu 2026-10-14, đề xuất)
+
+Vòng đề xuất: mỗi chương dịch xong sinh **tín hiệu** → ứng viên `pending` có bằng chứng, hoặc cờ trên mục đã
+có → người dịch duyệt → thay đổi ghi theo phạm vi chương → app chỉ **liệt kê** chỗ bị ảnh hưởng, không sửa.
+Không công cụ nào đã đọc tự áp thay đổi glossary vào bản dịch cũ (Phrase cũng bắt người dùng tìm–thay tay,
+[Phrase](https://support.phrase.com/hc/en-us/articles/10112307362332)).
+
+| Tín hiệu | Ai làm | Mira nên |
+| --- | --- | --- |
+| Ứng viên mới tần suất cao | DelTA trích tên riêng sau mỗi câu và cố định bản dịch đầu ([arXiv 2410.08143](https://arxiv.org/html/2410.08143)) | pending (đã có); không cố định bản dịch đầu của mục chưa duyệt |
+| Người dùng sửa tên trong bản dịch | Crowdin Dreams gom các lần sửa lặp lại thành đề xuất có ví dụ trước/sau, không tự áp ([Crowdin](https://store.crowdin.com/crowdin-dreams)) | pending khi cùng một sửa lặp ≥2 chương |
+| Cùng nguồn dịch khác nhau giữa các chương | Trados "inconsistent translations"; WMT25 đo % lệch khỏi cách dịch phổ biến ([WMT25](https://www2.statmt.org/wmt25/terminology.html)) | cờ trên mục đã duyệt |
+| Alias (họ/tên/hậu tố) | BookNLP gom tên trước, tránh coreference đầy đủ vì hay gộp nhầm ([BookNLP](https://github.com/booknlp/booknlp)) | alias pending bằng code từ mục `person` đã duyệt |
+| Đổi phạm vi (thăng chức, lộ danh tính) | Novelcrafter progression theo cảnh ([Novelcrafter](https://www.novelcrafter.com/help/docs/codex/progressions-additions)) | mục mới có `from_chapter`, mục cũ đóng `to_chapter` |
+
+LLM dịch đúng tên người khoảng 60%, địa danh khoảng 90% ([MT Summit 2025](https://aclanthology.org/2025.mtsummit-1.16),
+snippet): hàng duyệt nên ưu tiên tên người.
+
+Năm cơ chế xếp theo giá trị/chi phí (chưa duyệt):
+
+1. **Tổng hợp compliance theo mục qua các chương** — mục "thiếu target" ở k/n chương thì cờ `often_missing`,
+   gợi ý biến thể hoặc sửa target. Không cần dữ liệu mới ngoài một mã cờ.
+2. **Xếp hàng duyệt theo tác động** — số chương của task kế tiếp mà mục khớp; không cần dữ liệu mới.
+3. **Alias bằng code** từ mục `person` đã duyệt (tách họ/tên, bỏ hậu tố; chỉ dạng có thật, ≥2 lần).
+4. **Học từ sửa của người dùng** — so `after_text` của part đã nhận với bản hiện tại; cần loại bằng chứng
+   trước/sau.
+5. **Progression** — bước phân loại nhận thêm mục đã duyệt có mặt trong lô và được đề xuất đổi phạm vi; cần
+   liên kết `supersedes`.
+
+Không làm: tự duyệt theo tần suất; ghi đè target đã duyệt âm thầm hay tìm–thay toàn truyện; coreference đầy đủ;
+gọi LLM sau mỗi câu; đưa thông tin chương sau vào ghi chú của mục áp cho chương trước.
+
+Câu hỏi mở: tự duyệt alias tách bằng code? Đổi target giữa truyện mặc định "từ chương N" hay toàn bộ? Sửa nào
+tính là tín hiệu (sửa tay, hay cả đề xuất của chat đã nhận)? Lời gọi LLM chạy nền có tính vào ngân sách task?
+Truyện đang ra tự quét khi có chương mới?
+
+## 7. Câu hỏi còn mở
 
 - Chuẩn phiên romaji: Hepburn có dấu (Ryōta), không dấu (Ryota) hay `ou` (Ryouta)? Cần một quyết định
   cho mỗi tác phẩm hoặc mặc định chung.

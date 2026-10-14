@@ -146,6 +146,15 @@ Cổng bật mặc định: lỗi cấu trúc (thiếu, lạ, lặp, số đoạ
 thành không giảm; tuân thủ glossary và xưng hô không giảm; chi phí và độ trễ được ghi. Không qua cổng thì
 gỡ nhánh `object` và ghi lại kết quả.
 
+**Còn cần chạy (task 1.2 và 9.3 của `translate-structured-output-trial`, chuyển ra đây khi archive
+2026-10-14).** Cả hai cần khóa API thật nên người dùng chạy:
+
+1. Ghi một bản ghi sống trong `src/main/infra/providers/__fixtures__/live` cho một lời gọi `gemini-2.5-flash` có
+   `response_format` `json_schema`, trả HTTP 200 với `{"items":[…]}`, và một bản ghi schema bị 400 nếu tái hiện
+   được.
+2. Chạy kế hoạch đo ở trên (mỗi bên 3 lần lặp), ghi hai biến thể vào lịch sử đo và một dòng quyết định của
+   cổng kèm số đo.
+
 Giới hạn: lần đo cũ không dựng lại được vì bản dịch đã bị ghi đè — lịch sử chỉ bắt đầu từ lần `report`/
 `pairs` đầu tiên sau khi có sổ. Lần chạy cũ không còn model trong `lab.json` thì không tính được chi phí.
 Bench (`fixtures/private/runs/`) chưa nối vào sổ.

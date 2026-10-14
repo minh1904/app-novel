@@ -25,7 +25,13 @@ giữa các lô, các chương?
 7. **Phân loại theo bối cảnh, không theo thể loại**: truyện tình cảm và trinh thám cùng đặt ở học đường
    Nhật dùng chung một bộ; thể loại chỉ bật/tắt vài luật. Làm **sau** việc gửi đủ ngữ cảnh.
 
-8. **Giáo viên hạn chế "mày/tao"** (chốt sau khi xem bản dịch, triển khai 2026-10-06). Học đường hiện
+8. **"Mày – tao" theo quan hệ, vai dưới không tự dùng với vai trên** (chủ sản phẩm chốt 2026-10-14, thay
+   quyết định cũ dưới đây): dùng theo quan hệ, tính cách và mức thô của bản gốc; người vai dưới trong quan hệ
+   cách xa về vai vế (cháu → ông bà, con → bố mẹ, trò → thầy cô) không tự xưng tao gọi mày với vai trên, kể cả
+   khi giận, trừ khi cặp đã duyệt cho phép. Là một luật chung, không còn luật thầy trò viết cứng theo bộ.
+   Phần còn đúng của quyết định cũ: giữ độ gắt bằng từ ngữ và nhịp câu, không làm nhẹ tình tiết.
+
+   *Lịch sử:* **Giáo viên hạn chế "mày/tao"** (chốt sau khi xem bản dịch, triển khai 2026-10-06). Học đường hiện
    đại mặc định "thầy/cô – em"; giáo viên cộc hoặc xa cách có thể dùng "thầy/cô – cậu". Học trò lễ
    phép dùng "em – thầy/cô". Chỉ dùng mày/tao khi cặp đã duyệt hoặc quy ước người dịch cho phép rõ.
    Giữ độ gắt, lời chửi, đe dọa đúng mức qua từ ngữ và nhịp câu; không làm nhẹ tình tiết hoặc thêm
@@ -62,8 +68,8 @@ cân nhắc về "cô – mày" trong khảo sát ban đầu:
 
 1. **Cặp đã duyệt** trong ma trận xưng hô (có chiều, có phạm vi chương, có ghi chú) — bắt buộc, kể cả
    khi nhân vật nói gắt.
-2. **Bộ mặc định theo bối cảnh** của tác phẩm — bảng cặp chỉ cho cặp chưa có ở trên; luật riêng của bộ
-   (luật thầy trò của `ja-modern`/`zh-modern`) chỉ vào prompt khi tác phẩm dùng bộ đó.
+2. **Bộ mặc định theo bối cảnh** của tác phẩm — bảng cặp chỉ cho cặp chưa có ở trên. Từ 2026-10-14 bộ
+   không còn luật riêng (luật thầy trò đã bỏ).
 3. **Luật chung** (mục 1) — luôn áp; chỉ giữ nguyên tắc không gắn ngôn ngữ nguồn hay một quan hệ riêng.
    Phân tầng ở [hệ thống prompt](prompt-system.md#luật-theo-bộ-mặc-định-đã-triển-khai-2026-10-06-chưa-đo-lại-bằng-model).
 

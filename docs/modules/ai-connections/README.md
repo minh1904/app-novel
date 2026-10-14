@@ -264,6 +264,19 @@ thăm dò đúng route của chế độ đó: `/chat/completions`, `/responses`
 nhưng app cũ sẽ thấy kết nối tài khoản như một kết nối khóa API không có khóa. Muốn sạch thì ngắt các tài
 khoản trước khi revert.
 
+**Bổ sung 2026-10-14 (task 3.4, 4.4):** mức suy luận của kết nối tài khoản không lấy từ catalog nữa. Codex dùng
+thang theo thế hệ model của Hermes (`agent/reasoning_effort.py`, đọc 2026-10-14): không có `minimal`; `max`
+từ gpt-5.6 và GPT-6 Sol/Luna; Astra và 6.1 Sol không tắt được. Copilot dùng `supports.reasoning_effort` của
+`/models` ở lần liệt kê gần nhất (giữ trong bộ nhớ; sau khi khởi động lại dùng catalog tới lần liệt kê sau).
+Mã: `accounts/accountReasoning.ts`; form và bước kiểm trước khi gọi dùng chung thang này.
+
+**Còn cần thử thật (task 7.2 của `subscription-providers`, chuyển ra đây khi archive 2026-10-14).** Cần tài
+khoản ChatGPT và Copilot của chủ sản phẩm:
+
+1. Đăng nhập Codex, dịch một lô, chat có tool.
+2. Đăng nhập Copilot, chat với một model gpt-5 và một model Claude.
+3. Ghi vào mục này: model, usage nhà cung cấp báo, lỗi gặp phải và mức suy luận đã thử.
+
 ## Đã triển khai (rà flow theo Hermes, 2026-10-09)
 
 Chi tiết và lý do ở [Rà flow Kết nối AI so với Hermes](hermes-ux-flow-review.md), mục "Trạng thái triển

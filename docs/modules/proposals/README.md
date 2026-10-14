@@ -1,8 +1,9 @@
 # Module Trợ lý AI và đề xuất
 
-Cập nhật: 2026-10-13 · Trạng thái: quyết định sản phẩm và roadmap hiện hành. Lát 1
+Cập nhật: 2026-10-14 · Trạng thái: quyết định sản phẩm và roadmap hiện hành. Lát 1
 `repair-agent-runtime` và lát 2 `add-agent-conversation` đã triển khai và archive; lát 3
-`add-durable-translation-tasks` và lát 4 `add-agent-context-workflow` đã triển khai và archive.
+`add-durable-translation-tasks` và lát 4 `add-agent-context-workflow` đã triển khai và archive; lát 5
+`add-agent-steering` và lát 6 `add-translation-task-qa` đã triển khai và archive.
 
 Module này chịu trách nhiệm cho hội thoại với Trợ lý, tác vụ AI dài, thao tác ghi có thể hoàn tác và
 dữ liệu proposal cũ. Trợ lý là tính năng toàn ứng dụng; tác phẩm và chương chỉ là ngữ cảnh hoặc đích
@@ -13,7 +14,7 @@ của một lượt.
 | Sản phẩm đã chốt điều gì? | [Quyết định](decisions.md) |
 | Làm agent theo thứ tự nào và gate hoàn thành là gì? | [Roadmap agent](agent-roadmap.md) |
 | Agent được tách thành những lát/spec nào, dựa trên nghiên cứu gì? | [Chương trình đặc tả Agent](agent-spec-program.md) — 6 change độc lập; lát 1–3 đã triển khai, lát 4–6 chưa; lát MCP đã bỏ |
-| Người dùng gói thuê bao (Kimi, Claude/Antigravity qua gateway) kết nối thế nào? | [`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md) — track riêng, chưa triển khai |
+| Người dùng gói thuê bao (Kimi, Claude/Antigravity qua gateway) kết nối thế nào? | [`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md) — track riêng, **hoãn** (chủ sản phẩm, 2026-10-14) |
 | Gemini CLI, Gemini web hoặc web app riêng có thể điều khiển Mira thế nào? | [Tích hợp agent bên ngoài](external-agent-integration.md) |
 | Session, turn, operation và task khác nhau thế nào? | [Phiên và tác vụ](sessions-and-jobs.md) |
 | Ghi dữ liệu và hoàn tác phải an toàn ra sao? | [Dữ liệu và an toàn](data-and-safety.md) |
@@ -42,14 +43,30 @@ provider. Trần task (lời gọi, token, chi phí khi catalog có giá) chặn
 Tác vụ của tác phẩm đọc task thật; chat tạo task qua `create_translation_task` sau khi người dùng duyệt.
 
 `add-agent-context-workflow` đưa trích thuật ngữ vào sản phẩm (work v14: `term_type`, `review_flags`,
-`context_entry_evidence`, `context_extraction_scan`). Lệnh tạo task bắt buộc `contextStrategy`
-(`extract_then_review` hoặc `approved_only`), không có mặc định; capability chat khai trường này và dặn
-model hỏi người dùng. Với `extract_then_review`, trước item đầu scheduler quét các chương chưa quét bằng
+`context_entry_evidence`, `context_extraction_scan`). Lệnh tạo task mang `contextStrategy`
+(`extract_then_review` hoặc `approved_only`); từ 2026-10-14 trường này tùy chọn: bỏ trống thì tác phẩm chưa có
+glossary được trích trước, đã có thì dịch ngay; chat chỉ truyền `approved_only` khi người dùng nói rõ dịch luôn. Với `extract_then_review`, trước item đầu scheduler quét các chương chưa quét bằng
 luồng Lab bước 1–4, ghi ứng viên `pending` kèm câu trích, lần chạy, model và hash prompt; lời gọi đi qua
 trần của task (là một operation của item đầu). Có mục mới thì task `waiting_user(context_review)`, item
 vẫn `queued`. Lệnh duyệt (approve, sửa rồi approve, reject, duyệt hàng loạt cùng loại) có guard
 `updatedAt`. Tab Ngữ cảnh của side panel hiện "Đang áp dụng" từ `takeContextSnapshot`; "Xem và duyệt" mở
 khu Ngữ cảnh với bộ lọc Chờ duyệt.
+
+`add-agent-steering` cho task nhận điều chỉnh giữa chừng (library v13: `agent_task_steering`). Lệnh được
+validate ngay (task đã kết thúc, chương ngoài task, không còn chương chưa chạy, đại từ ngôi ba theo chương
+đều bị từ chối và không để lại bản ghi), idempotent theo `clientCommandId` và trả chương thực sự áp dụng:
+item `queued` đầu tiên chưa pin snapshot, ở hoặc sau chương yêu cầu. Chỉ dẫn là toàn văn thay thế, được vật
+chất hóa vào snapshot của item lúc pin và vào prompt (từ `translate-v6`, khối `<task_instruction>`). Đổi xưng
+hô từ chương E đóng cặp cũ ở chương trước E và thêm cặp mới trong một transaction work DB. Chat có
+`read_translation_tasks` và `steer_translation_task` (cần duyệt); màn Tác vụ có form chỉ dẫn, danh sách điều
+chỉnh và chỉ dẫn từng chương đã pin.
+
+`add-translation-task-qa` thêm cảnh báo chất lượng cho item của task (work v15: `qa_dismissal`). Hàm thuần
+`evaluateTaskItem` chạy tám luật bằng các evaluator sẵn có (glossary cấm/thiếu, xưng hô, chữ gốc sót, độ dài,
+lặp, ngoặc) trên **bản chụp item đã pin**, ghép nguồn–đích theo segment ID; cảnh báo tính khi đọc, không lưu,
+không đổi trạng thái hay văn bản. Chỉ quyết định "Bỏ qua" được lưu, khóa theo luật, phiên bản luật, đoạn và
+hash target nên sửa đoạn hay đổi luật làm cảnh báo hiện lại. Màn Tác vụ hiện số cảnh báo mở, danh sách theo
+chương (N/A khi chưa có bản dịch), nút Mở đoạn (editor cuộn tới đoạn) và Bỏ qua kèm lý do tùy chọn.
 [Roadmap agent](agent-roadmap.md) là nguồn trạng thái duy nhất cho phần
 này.
 

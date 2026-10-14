@@ -27,8 +27,8 @@ Roadmap được triển khai qua sáu change độc lập, không apply như m�
 2. [`add-agent-conversation`](../../../openspec/changes/archive/2026-10-13-add-agent-conversation/proposal.md) — model/tool loop và chat toàn ứng dụng. **Đã triển khai** (2026-10-13), đã archive.
 3. [`add-durable-translation-tasks`](../../../openspec/changes/archive/2026-10-14-add-durable-translation-tasks/proposal.md) — task dịch dải chương. **Đã triển khai** (2026-10-13), archive 2026-10-14.
 4. [`add-agent-context-workflow`](../../../openspec/changes/archive/2026-10-14-add-agent-context-workflow/proposal.md) — extraction, review và snapshot Context. **Đã triển khai** (2026-10-13), archive 2026-10-14.
-5. [`add-agent-steering`](../../../openspec/changes/add-agent-steering/proposal.md) — điều chỉnh phần chưa chạy có điểm hiệu lực.
-6. [`add-translation-task-qa`](../../../openspec/changes/add-translation-task-qa/proposal.md) — kiểm cấu trúc và nhất quán.
+5. [`add-agent-steering`](../../../openspec/changes/archive/2026-10-14-add-agent-steering/proposal.md) — điều chỉnh phần chưa chạy có điểm hiệu lực. **Đã triển khai** và archive (2026-10-14).
+6. [`add-translation-task-qa`](../../../openspec/changes/archive/2026-10-14-add-translation-task-qa/proposal.md) — kiểm cấu trúc và nhất quán. **Đã triển khai** và archive (2026-10-14).
 
 Lát 7 MCP (`add-external-translation-worker`) đã bỏ ngày 2026-10-12; Git giữ lịch sử. Người dùng gói thuê
 bao đi theo track riêng [`add-subscription-gateway-auth`](../../../openspec/changes/add-subscription-gateway-auth/proposal.md),

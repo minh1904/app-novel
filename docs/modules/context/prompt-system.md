@@ -68,7 +68,7 @@ jailbreak của GalTransl; dán cả glossary với chữ “BẮT BUỘC 100%�
 
 **Một bộ dựng duy nhất.** [`translatePrompt.ts`](../../../src/main/services/ai/translate/translatePrompt.ts)
 dựng request cho lượt chính, lượt hỏi lại và hash trace. Lõi dịch trả về `version`, `systemHash`,
-`requestHash` của request đã gửi; trace đề xuất ghi `promptVersion` (hiện là `translate-v5`) và hash đó.
+`requestHash` của request đã gửi; trace đề xuất ghi `promptVersion` (hiện là `translate-v7`) và hash đó.
 Lượt hỏi lại dùng đúng ngữ cảnh của lượt chính.
 
 **Dịch: system cố định, user thay đổi.**
@@ -150,7 +150,13 @@ vẫn là câu tiếng Việt.
 - **Các lần chạy Lab cũ vẫn đọc được:** lệnh `pairs` nhận cả khóa `noi` lẫn `speaker_to_listener`, cả thẻ
   `<nguon>` lẫn `<source>`. Nhãn biến thể của Lab giờ là tên tự đặt (mặc định `base`), không còn gắn với
   phiên bản prompt.
-- `promptVersion` trong trace đề xuất là hằng `translate-v5`; đề xuất cũ giữ `translate-v1`…`v4`.
+- `promptVersion` trong trace đề xuất là hằng `translate-v7`; đề xuất cũ giữ `translate-v1`…`v6`.
+  `v7` (2026-10-14) bỏ luật và ví dụ thầy trò của bộ, thêm luật chung "mày – tao" theo cảm xúc (mục
+  [Bỏ luật cứng theo bối cảnh](#bỏ-luật-cứng-theo-bối-cảnh-2026-10-14-chưa-đo-lại-bằng-model)); system prompt
+  đổi nên số đo `v5` không còn áp nguyên.
+  `v6` (2026-10-14, `add-agent-steering`) chỉ thêm khối `<task_instruction>` và một câu lệnh cuối ở
+  message user khi item của task có chỉ dẫn; system prompt và request không có chỉ dẫn giữ nguyên từng byte,
+  nên số đo `translate-v5` vẫn áp dụng cho lượt dịch thường.
 
 ## Bổ sung ngày 2026-10-05 (đã triển khai, đo sơ bộ)
 
@@ -179,7 +185,10 @@ Chi tiết, số đo và các điểm còn mở: [Xưng hô tiếng Việt](viet
   cũ là kết quả lịch sử; số đo cũ chưa đánh giá chính sách mới. Chi tiết quyết định ở
   [Xưng hô tiếng Việt](vietnamese-addressing.md).
 
-## Luật theo bộ mặc định (đã triển khai 2026-10-06, chưa đo lại bằng model)
+## Luật theo bộ mặc định (2026-10-06, đã thay ngày 2026-10-14)
+
+> Mục này là lịch sử: luật thầy trò theo bộ đã bị bỏ, xem
+> [Bỏ luật cứng theo bối cảnh](#bỏ-luật-cứng-theo-bối-cảnh-2026-10-14-chưa-đo-lại-bằng-model).
 
 Luật thầy trò từng nằm trong luật chung và nhúng cứng vào system prompt chat, nên truyện tiên hiệp hay
 fantasy phương Tây cũng nhận câu về お前/テメェ và "thầy/cô – em". Nay luật chia ba tầng:
@@ -195,6 +204,36 @@ fantasy phương Tây cũng nhận câu về お前/テメェ và "thầy/cô �
 - Chat: `systemPrompt(mode, register)` gồm luật gọi tên và luật của bộ; bộ chọn bằng `suggestRegister`
   như lô dịch. Bộ chỉ phụ thuộc tác phẩm nên system prompt chat vẫn giữ nguyên giữa các lượt.
 - Bộ vẫn đoán từ ngôn ngữ và thể loại; lưu lựa chọn theo tác phẩm vẫn là đề xuất ở mục dưới.
+
+## Bỏ luật cứng theo bối cảnh (2026-10-14, chưa đo lại bằng model)
+
+**Quyết định của chủ sản phẩm (2026-10-14):** bỏ luật cứng theo bối cảnh. "Mày – tao" dùng theo quan hệ và
+tính cách như bản gốc, nhưng vai dưới trong quan hệ cách xa về vai vế (cháu → ông bà, con → bố mẹ, trò → thầy
+cô) không tự xưng tao gọi mày với vai trên, trừ khi cặp đã duyệt cho phép. Văn phong "linh hoạt, sát nguyên
+tác"; dấu ba chấm "...". Lý do bỏ luật cứng: `suggestRegister` cho mọi truyện Nhật không có từ khóa thể loại vào `ja-modern`,
+nên luật thầy trò lọt vào chat và prompt dịch của truyện không có giáo viên nào. Lab cũng chưa cho thấy
+luật đó giúp: lỗi gọi nhầm "thầy" giảm nhờ dữ liệu nhân vật và cặp, không nhờ bộ
+([Xưng hô tiếng Việt](vietnamese-addressing.md) §5).
+
+- `RegisterPreset` không còn `rules` và `examples`; bộ chỉ còn bảng cặp gợi ý và cách gọi ngôi ba.
+- Luật chung thêm `MAY_TAO_RULE` theo quyết định trên; câu "đại từ bản gốc chỉ quyết định mức thô" đổi
+  thành "đại từ là tín hiệu về giọng, tính cách và mức thô, không phải bảng quy đổi".
+- `<translation_rules>` thay câu "Viết tiếng Việt tự nhiên…" bằng năm dòng: sát nguyên tác về nghĩa, linh
+  hoạt câu chữ (được tách/gộp câu trong mục); lược chủ ngữ, không lặp tên/đại từ ở câu liền nhau; không dịch
+  từng chữ bị động, "một cách", "của", "đã/đang/sẽ"; giữ giọng riêng của nhân vật; dấu ba chấm "..."; hạn
+  chế gạch dài vì tiếng Việt không dùng (chủ sản phẩm, 2026-10-14): gạch dài của bản gốc chuyển thành phẩy,
+  hai chấm hoặc "..." tùy câu. Nghiên cứu cho thấy câu văn phong trong prompt có thể ít tác dụng
+  ([văn phong theo ngôn ngữ](translation-style-research.md)) — cần đo bằng Lab.
+- Lời thoại nhận cả ngoặc thẳng `"…"` và thoại đứng sau lời kể trong cùng mục (trước đây chỉ mục mở đầu bằng
+  「, 『 hoặc “, nên truyện Hàn/Anh thiếu khai người nói); lời nghĩ (‘…’, （…）) không phải thoại. Lượt trau
+  chuốt dùng cùng định nghĩa (`polish-v3`).
+- Profile theo ngôn ngữ có thêm gợi ý linh hoạt: Nhật (giọng tự xưng và đuôi câu, tượng thanh, Hán Việt bạn
+  giả), Trung (我们/咱们, tự xưng theo thân phận, ranh giới Hán Việt, thành ngữ, calque), Hàn (viết lại: đuôi
+  lịch sự → tiểu từ, mốc 반말, tên Latinh, cửa sổ hệ thống), Anh (mật độ đại từ, bị động, câu dẫn).
+- `suggestRegister`: truyện Nhật không có tín hiệu thì không đoán bộ (trước đây rơi vào `ja-modern`); có
+  tín hiệu học đường/hiện đại mới ra `ja-modern`. Bản tiếng Anh của truyện tu tiên ra `zh-ancient`.
+- Chat chỉ còn luật chung (gọi tên, "mày – tao"), không nhận gì từ bộ; `ChatService` bỏ tùy chọn `register`.
+- Còn mở: lưu lựa chọn bộ theo tác phẩm (đề xuất ở mục dưới); đo cả thay đổi này bằng Lab.
 
 ## Bản chụp ngữ cảnh theo lượt dịch (đã triển khai 2026-10-07)
 

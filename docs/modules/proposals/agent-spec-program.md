@@ -1,9 +1,10 @@
 # Chương trình đặc tả Trợ lý Agent
 
-Cập nhật: 2026-10-13 · Trạng thái: **lát 1 `repair-agent-runtime` đã triển khai và archive**; **lát 2
+Cập nhật: 2026-10-14 · Trạng thái: **lát 1 `repair-agent-runtime` đã triển khai và archive**; **lát 2
 `add-agent-conversation` đã triển khai và archive**; **lát 3 `add-durable-translation-tasks` đã triển khai**
-(đã archive); **lát 4 `add-agent-context-workflow` đã triển khai** (đã archive); lát 5–6 là kế
-hoạch, chưa triển khai.
+(đã archive); **lát 4 `add-agent-context-workflow` đã triển khai** (đã archive); **lát 5
+`add-agent-steering` đã triển khai** (đã archive); **lát 6 `add-translation-task-qa` đã triển khai** (đã
+archive). Cả sáu lát đã xong.
 
 ## Kết luận
 
@@ -24,9 +25,9 @@ add-durable-translation-tasks   (thư viện v12; đã triển khai, đã archiv
         ├──────────────────────────────┐
         ↓                              ↓
 add-agent-context-workflow       add-translation-task-qa
-(work v14; đã triển khai, đã archive)
+(work v14; đã triển khai, đã archive)  (work v15; đã triển khai, đã archive)
         ↓
-add-agent-steering
+add-agent-steering               (thư viện v13; đã triển khai, đã archive)
 
 Track riêng: subscription-providers → add-subscription-gateway-auth
 ```
@@ -44,8 +45,8 @@ Phụ thuộc chi tiết:
 | 2 | [`add-agent-conversation`](../../../openspec/changes/archive/2026-10-13-add-agent-conversation/proposal.md) | Chat toàn ứng dụng với model/tool loop, làm rõ target và lịch sử thật | Task dài, Context review |
 | 3 | [`add-durable-translation-tasks`](../../../openspec/changes/archive/2026-10-14-add-durable-translation-tasks/proposal.md) | Dịch dải chương tuần tự, pause/cancel/retry/recovery | Extraction, steering |
 | 4 | [`add-agent-context-workflow`](../../../openspec/changes/archive/2026-10-14-add-agent-context-workflow/proposal.md) | Extraction → review → snapshot đã duyệt → dịch | Sửa hướng giữa task, QA hậu dịch |
-| 5 | [`add-agent-steering`](../../../openspec/changes/add-agent-steering/proposal.md) | Chỉ dẫn mới có điểm hiệu lực rõ cho phần chưa chạy | QA tự động, sửa ngược kết quả |
-| 6 | [`add-translation-task-qa`](../../../openspec/changes/add-translation-task-qa/proposal.md) | Kiểm đủ segment, revision và nhất quán; phân biệt lỗi với cảnh báo | Auto-polish, chấm chất lượng văn học tuyệt đối |
+| 5 | [`add-agent-steering`](../../../openspec/changes/archive/2026-10-14-add-agent-steering/proposal.md) | Chỉ dẫn mới có điểm hiệu lực rõ cho phần chưa chạy | QA tự động, sửa ngược kết quả |
+| 6 | [`add-translation-task-qa`](../../../openspec/changes/archive/2026-10-14-add-translation-task-qa/proposal.md) | Kiểm đủ segment, revision và nhất quán; phân biệt lỗi với cảnh báo | Auto-polish, chấm chất lượng văn học tuyệt đối |
 
 ## Bằng chứng từ Mira
 
