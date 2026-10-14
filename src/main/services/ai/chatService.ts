@@ -6,7 +6,6 @@ import type {
   ChatToolStep,
   ChatUsage
 } from '../../../shared/contracts/aiChat'
-import type { RegisterPresetId } from '../../../shared/contracts/addressingPresets'
 import { buildChatMessages, type LocationChapter } from './chatPrompt'
 import {
   CHAT_TOOL_DEFINITIONS,
@@ -54,8 +53,6 @@ export interface ChatConnections {
 
 export interface ChatServiceOptions {
   connections: ChatConnections
-  /** Bộ mặc định xưng hô của tác phẩm; luật riêng của bộ đi vào system prompt. */
-  register?: (input: ChatSendInput) => RegisterPresetId | null
   /** Tên tác phẩm, số và tên chương đang mở, cho khối vị trí; thiếu thì khối chỉ nói số đoạn. */
   chapter?: (input: ChatSendInput) => LocationChapter | null
   records?: {
@@ -227,11 +224,7 @@ export class ChatService {
             ...(writes ? { writes } : {})
           })
         : null
-      const messages = buildChatMessages(
-        input,
-        this.options.register?.(input),
-        this.options.chapter?.(input) ?? null
-      )
+      const messages = buildChatMessages(input, this.options.chapter?.(input) ?? null)
       // Ngân sách thuộc lượt, không thuộc runner: mỗi lần gọi nhận phần còn lại và tự rút trang về đó.
       let toolChars = 0
 

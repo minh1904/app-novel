@@ -65,3 +65,38 @@ describe('suggestRegister', () => {
     expect(suggestRegister('ja', 'Học đường [ja-fantasy]')).toBe('ja-fantasy')
   })
 })
+
+describe('suggestRegister without evidence', () => {
+  // A Japanese work with no genre used to get the school preset, so teacher rules reached every work.
+  it('guesses no preset for a Japanese work without a setting signal', () => {
+    expect(suggestRegister('ja', null)).toBeNull()
+    expect(suggestRegister('ja', 'Hành động')).toBeNull()
+    expect(suggestRegister('ja', 'ハイファンタジー〔ファンタジー〕')).toBe('ja-fantasy')
+    expect(suggestRegister('ja', '現実世界〔恋愛〕')).toBe('ja-modern')
+    expect(suggestRegister('ja', 'Học đường')).toBe('ja-modern')
+  })
+
+  it('reads an English translation of a cultivation novel as ancient Chinese', () => {
+    expect(suggestRegister('en', 'Xianxia, cultivation')).toBe('zh-ancient')
+    expect(suggestRegister('en', 'LitRPG')).toBe('en-western')
+  })
+})
+
+describe('language profiles: style notes', () => {
+  it('gives each source language its own flexible notes', () => {
+    const profile = (sourceLang: string, genre?: string) =>
+      languageProfile({ sourceLang, genre }).join('\n')
+    const ja = profile('ja')
+    expect(ja).toContain('không phiên âm romaji')
+    expect(ja).toContain('緊張 là căng thẳng')
+    const zh = profile('zh-Hans', 'Tiên hiệp')
+    expect(zh).toContain('咱们 luôn gồm người nghe')
+    expect(zh).toContain('bổn tọa')
+    expect(zh).toContain('có phải… hay không')
+    const ko = profile('ko')
+    expect(ko).toContain('không tự đọc theo Hán Việt')
+    expect(ko).toContain('ạ, dạ, thưa')
+    expect(ko).not.toContain('Hán Hàn')
+    expect(profile('en')).toContain('không lặp "anh ta/cô ta"')
+  })
+})

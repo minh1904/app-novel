@@ -133,3 +133,37 @@ describe('rebuildTranslateRequest', () => {
     expect(rebuilt.requestHash).toBe(sent.requestHash)
   })
 })
+
+describe('steering instruction in the snapshot', () => {
+  it('leaves the snapshot and its hash as they were when there is no instruction', () => {
+    const { library, workId, chapterId } = setup()
+    populate(library, workId)
+    const plain = takeContextSnapshot(library, workId, chapterId, SOURCE)
+    expect(takeContextSnapshot(library, workId, chapterId, SOURCE, undefined).hash).toBe(plain.hash)
+    expect(takeContextSnapshot(library, workId, chapterId, SOURCE, '').hash).toBe(plain.hash)
+    expect(plain.json).not.toContain('instruction')
+  })
+
+  it('carries the pinned instruction into the prompt, and the comparison snapshot with it matches', () => {
+    const { library, workId, chapterId } = setup()
+    const pinned = takeContextSnapshot(library, workId, chapterId, SOURCE, 'Giữ câu ngắn.')
+    expect(pinned.hash).not.toBe(takeContextSnapshot(library, workId, chapterId, SOURCE).hash)
+    const snapshot = parseSnapshot(pinned.json)
+    expect(promptFromSnapshot(snapshot, SOURCE, []).instruction).toBe('Giữ câu ngắn.')
+    // What a batch compares with: the store now plus the pinned instruction, not a newer steering.
+    expect(takeContextSnapshot(library, workId, chapterId, SOURCE, snapshot.instruction).hash).toBe(
+      pinned.hash
+    )
+
+    const units = [{ id: 'u1', text: '霊剣を抜いた。' }]
+    const sent = buildTranslateRequest(promptFromSnapshot(snapshot, units[0].text, []), [
+      { tempId: '[1]', originalId: 'u1', text: units[0].text }
+    ])
+    const rebuilt = rebuildTranslateRequest(
+      { previous: [], contextHash: sent.requestHash },
+      parseSnapshot(pinned.json),
+      units
+    )
+    expect(rebuilt.matches).toBe(true)
+  })
+})

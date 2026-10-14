@@ -26,26 +26,13 @@ function input(patch: Partial<ChatSendInput> = {}): ChatSendInput {
 }
 
 describe('systemPrompt', () => {
-  it('giữ luật thầy trò khi tác phẩm dùng bộ học đường hiện đại', () => {
-    for (const register of ['ja-modern', 'zh-modern'] as const) {
-      const prompt = systemPrompt(register)
-      expect(prompt).toContain('hạn chế "mày/tao"')
-      expect(prompt).toContain('Ngoại lệ đã duyệt có ưu tiên cao hơn')
-      expect(prompt).toContain('không làm nhẹ tình tiết')
-      expect(prompt).toContain('không tự chuyển qua lại em/cậu/mày')
-    }
-    expect(systemPrompt('ja-modern')).toContain('お前/テメェ/貴様')
-    expect(systemPrompt('zh-modern')).not.toContain('お前')
-  })
-
-  // Luật thầy trò từng nằm cứng trong mọi chat, kể cả truyện tiên hiệp, nơi sư phụ không phải "thầy".
-  it('bộ khác hoặc chưa có bộ thì không có luật thầy trò, chỉ còn luật gọi tên', () => {
-    for (const register of [undefined, null, 'zh-ancient', 'en-western'] as const) {
-      const prompt = systemPrompt(register)
-      expect(prompt).not.toContain('mày/tao')
-      expect(prompt).not.toContain('お前')
-      expect(prompt).toContain('giữ cách gọi tương ứng theo quy ước tên')
-    }
+  // Luật thầy trò từng đi theo bộ học đường, mà bộ đó là mặc định của mọi truyện Nhật không ghi thể loại.
+  it('has no setting-specific rule: only naming and the "mày – tao" rule', () => {
+    const prompt = systemPrompt()
+    expect(prompt).not.toContain('Giáo viên')
+    expect(prompt).not.toContain('お前')
+    expect(prompt).toContain('giữ cách gọi tương ứng theo quy ước tên')
+    expect(prompt).toContain('không tự xưng "tao" gọi "mày" với người vai trên')
   })
 
   // Đảm bảo phân biệt giữa "không ghi đè trực tiếp" và "vẫn hỗ trợ dịch trong câu trả lời".
@@ -97,25 +84,24 @@ describe('locationBlock', () => {
 
 describe('buildChatMessages', () => {
   it('leads with the system prompt and ends with the bare question', () => {
-    const messages = buildChatMessages(input(), null, OPEN)
+    const messages = buildChatMessages(input(), OPEN)
     expect(messages[0].role).toBe('system')
     expect(messages.at(-1)).toEqual({ role: 'user', content: 'Dịch chương này' })
   })
 
   it('ends the system prompt with the location, after everything that stays the same', () => {
-    const [system] = buildChatMessages(input(), null, OPEN)
-    expect(system.content).toBe(systemPrompt(null) + '\n\n' + locationBlock(input().location, OPEN))
+    const [system] = buildChatMessages(input(), OPEN)
+    expect(system.content).toBe(systemPrompt() + '\n\n' + locationBlock(input().location, OPEN))
   })
 
   // Hai lượt trong cùng tác phẩm chỉ khác nhau ở khối vị trí: phần còn lại là tiền tố chung cho bộ nhớ đệm.
   it('keeps the system prompt identical between two turns except for the location', () => {
-    const first = buildChatMessages(input(), 'ja-modern', OPEN)[0].content as string
+    const first = buildChatMessages(input(), OPEN)[0].content as string
     const second = buildChatMessages(
       input({
         question: 'Đoạn này đúng chưa',
         location: { caret: { source: 7, target: 9 }, selection: { side: 'source', from: 7, to: 8 } }
       }),
-      'ja-modern',
       OPEN
     )[0].content as string
     const cut = (prompt: string): string => prompt.slice(0, prompt.indexOf('<location>'))
@@ -136,6 +122,6 @@ describe('buildChatMessages', () => {
   })
 
   it('same input gives the same messages', () => {
-    expect(buildChatMessages(input(), null, OPEN)).toEqual(buildChatMessages(input(), null, OPEN))
+    expect(buildChatMessages(input(), OPEN)).toEqual(buildChatMessages(input(), OPEN))
   })
 })

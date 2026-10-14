@@ -12,7 +12,7 @@ import {
   sanitizeJsonString
 } from '../../../shared/translation/lenientParser'
 
-export const POLISH_PROMPT_VERSION = 'polish-v2'
+export const POLISH_PROMPT_VERSION = 'polish-v3'
 
 /** Nhãn lỗi, ánh xạ được về MQM để so với nghiên cứu. */
 export const POLISH_ISSUES = [
@@ -84,7 +84,7 @@ export function buildPolishMessages(context: PolishContext, items: PolishItem[])
     '- literal: dịch sát chữ hoặc giữ trật tự câu gốc, người Việt không nói vậy (ví dụ こっち dịch "bên này" khi ý là "tôi"; "một cách", "được/bị", "của" thừa; đại từ ở chỗ tiếng Việt sẽ lược).',
     '- awkward: lủng củng, khó đọc, sai ngữ pháp.',
     '- repetition: lặp từ hoặc lặp ý trong đoạn.',
-    '- voice: lời thoại (src mở đầu bằng 「, 『 hoặc “) sai giọng nhân vật hoặc sai cặp xưng hô trong <addressing>. Câu kể không phải lời thoại.',
+    '- voice: lời thoại (trong “…”, "…", 「…」 hoặc 『…』) sai giọng nhân vật hoặc sai cặp xưng hô trong <addressing>. Câu kể và lời nghĩ không phải lời thoại.',
     '- particle: lời thoại thiếu tiểu từ tự nhiên (nhé, ạ, chứ, cơ mà) khiến câu cứng.',
     'Phần lớn mục không cần sửa. Mục ổn thì bỏ qua, không trả về.',
     '</task>',

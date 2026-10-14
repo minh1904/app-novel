@@ -1,4 +1,3 @@
-import { suggestRegister } from './ai/translate/languageProfiles'
 import type { SecretCrypto } from '../infra/storage/secretStore'
 import { SecretStore } from '../infra/storage/secretStore'
 import { ChapterTranslator } from './ai/chapterTranslation'
@@ -87,15 +86,6 @@ export function createServices({
   }
   const chat = new ChatService({
     connections,
-    // Cùng cách chọn bộ với lô dịch. Đọc tác phẩm lỗi thì chat chạy không có luật của bộ, không chặn lượt.
-    register: (input) => {
-      try {
-        const work = library.get(input.workId)
-        return suggestRegister(work.sourceLang, work.genre)
-      } catch {
-        return null
-      }
-    },
     // Tên tác phẩm và chương cho khối vị trí. Đọc lỗi thì khối chỉ nói số đoạn, không chặn lượt.
     chapter: (input) => {
       try {

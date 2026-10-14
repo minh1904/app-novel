@@ -219,8 +219,14 @@ export class ParagraphTranslator {
     const snapshot = parseSnapshot(stored.snapshotJson)
     // So với kho lúc này: khác thì báo, nhưng lô vẫn dùng bản chụp của lượt, không trộn hai phiên bản.
     const contextChanged =
-      takeContextSnapshot(library, input.workId, input.chapterId, source.content).hash !==
-      stored.snapshotHash
+      takeContextSnapshot(
+        library,
+        input.workId,
+        input.chapterId,
+        source.content,
+        // The pinned instruction: a newer steering is not a context change for this run.
+        snapshot.instruction
+      ).hash !== stored.snapshotHash
     const prior = library.withWork(input.workId, (db) => {
       const row = db.prepare('SELECT id FROM proposal WHERE run_key = ?').get<{ id: string }>(key)
       return row ? getProposal(db, row.id) : null

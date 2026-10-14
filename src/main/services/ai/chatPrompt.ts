@@ -1,10 +1,6 @@
 import type { ChatLocation, ChatSendInput } from '../../../shared/contracts/aiChat'
 import type { ChatMessage } from '../../infra/providers/openAiCompatible'
-import {
-  NAME_ADDRESSING_RULE,
-  REGISTER_PRESETS,
-  type RegisterPresetId
-} from '../../../shared/contracts/addressingPresets'
+import { MAY_TAO_RULE, NAME_ADDRESSING_RULE } from '../../../shared/contracts/addressingPresets'
 
 /**
  * Lắp một lượt hội thoại thành `messages`.
@@ -48,9 +44,8 @@ const TERMS = [
  * Phần đầu của system prompt: vai trò, luật của bộ mặc định, luật dùng tool, luật thuật ngữ. Bộ chỉ phụ
  * thuộc tác phẩm, nên phần này giống hệt nhau giữa các lượt của cùng tác phẩm và prompt cache trúng.
  */
-export function systemPrompt(register?: RegisterPresetId | null): string {
-  const rules = (register ? REGISTER_PRESETS[register].rules : undefined) ?? []
-  return [ROLE, NAME_ADDRESSING_RULE, ...rules, TOOLS, TERMS].join(' ')
+export function systemPrompt(): string {
+  return [ROLE, NAME_ADDRESSING_RULE, MAY_TAO_RULE, TOOLS, TERMS].join(' ')
 }
 
 /** Chương đang mở, như main đọc được từ kho; thiếu thì khối vị trí chỉ nói số đoạn. */
@@ -95,10 +90,9 @@ export function locationBlock(location: ChatLocation, chapter: LocationChapter |
  */
 export function buildChatMessages(
   input: ChatSendInput,
-  register?: RegisterPresetId | null,
   chapter: LocationChapter | null = null
 ): ChatMessage[] {
-  const system = systemPrompt(register) + '\n\n' + locationBlock(input.location, chapter)
+  const system = systemPrompt() + '\n\n' + locationBlock(input.location, chapter)
   const messages: ChatMessage[] = [{ role: 'system', content: system }]
   for (const turn of input.history) {
     messages.push({ role: turn.role, content: turn.text })

@@ -39,10 +39,6 @@ export interface RegisterPreset {
   rows: PresetRow[]
   /** Cách người kể gọi nhân vật ở ngôi ba. */
   thirdPerson: string[]
-  /** Luật chỉ đúng trong bối cảnh này; chỉ vào prompt khi tác phẩm dùng bộ này. */
-  rules?: string[]
-  /** Ví dụ tự soạn, chỉ minh họa bộ này; không phải các mục cần dịch. */
-  examples?: Array<{ context: string; source: string; translation: string }>
 }
 
 /** Gọi tên và lược đại từ: đúng với mọi ngôn ngữ nguồn, nên vừa ở luật chung vừa đi vào chat. */
@@ -50,25 +46,24 @@ export const NAME_ADDRESSING_RULE =
   'Khi bản gốc gọi tên hoặc chức danh thì giữ cách gọi tương ứng theo quy ước tên; có thể lược đại từ nếu câu vẫn rõ và tự nhiên, không nhét đủ cặp xưng hô vào mọi câu.'
 
 /**
- * Quy tắc giáo viên hạn chế dùng "mày/tao", áp dụng cho bối cảnh học đường hiện đại nguồn Nhật lẫn Trung.
- * Quy tắc gắn với đại từ tiếng Nhật nằm riêng trong `ja-modern`.
+ * "Mày – tao" theo quan hệ và tính cách như bản gốc, nhưng vai dưới trong quan hệ cách xa về vai vế không tự
+ * dùng với vai trên (quyết định của chủ sản phẩm, 2026-10-14; thay luật thầy trò viết cứng theo bộ học đường).
+ * Đi vào cả prompt dịch lẫn chat.
  */
-const MODERN_TEACHER_RULES = [
-  'Giáo viên nói với học trò: hạn chế "mày/tao"; chỉ dùng khi cặp xưng hô đã duyệt hoặc quy ước người dịch cho phép rõ. Ngoại lệ đã duyệt có ưu tiên cao hơn mặc định này.',
-  'Giáo viên mặc định thầy/cô – em; giáo viên nói cộc hoặc xa cách có thể dùng thầy/cô – cậu. Học trò lễ phép xưng em – thầy/cô. Cặp đã chốt giữ ổn định cả khi giận, không tự chuyển qua lại em/cậu/mày.',
-  'Giữ độ gắt, lời chửi và đe dọa của giáo viên bằng từ ngữ, nhịp câu đúng mức bản gốc; không làm nhẹ tình tiết, không thêm lời xúc phạm.'
-]
+export const MAY_TAO_RULE =
+  '"Mày – tao" dùng theo quan hệ, tính cách và mức thô của bản gốc (bạn cùng lứa nói thô, côn đồ, kẻ thù, lúc cảm xúc bùng nổ). Người vai dưới trong quan hệ cách xa về vai vế (cháu với ông bà, con với bố mẹ, trò với thầy cô) không tự xưng "tao" gọi "mày" với người vai trên, kể cả khi giận, trừ khi cặp đã duyệt cho phép; độ gắt khi đó chuyển vào từ ngữ và nhịp câu.'
 
 /** Quy tắc xưng hô chung cho mọi bộ bối cảnh. */
 export const ADDRESSING_RULES = [
   'Cặp xưng hô đã duyệt trong <addressing> là bắt buộc, kể cả khi nhân vật nói gắt; bảng mặc định chỉ dùng cho cặp chưa có ở đó.',
-  'Quan hệ giữa hai người quyết định cặp xưng hô; đại từ của bản gốc chỉ quyết định mức thô hay lịch sự.',
+  'Quan hệ giữa hai người quyết định cặp xưng hô; đại từ của bản gốc là tín hiệu về giọng, tính cách và mức thô hay lịch sự, không phải bảng quy đổi từng chữ.',
   'Khi bản gốc đổi cách xưng gọi giữa cảnh (giận, mỉa mai, chuyển sang kính ngữ), thể hiện thay đổi bằng giọng điệu, tên gọi hoặc kính ngữ trong phạm vi quy ước đã duyệt; không tự phá cặp đã chốt chỉ vì nhân vật giận.',
   'Chỉ đổi cặp theo mốc có trong truyện (tỏ tình, cưới, bái sư, lộ thân phận…), không đổi sớm hơn nguyên tác.',
   'Không dùng "tôi – bạn" trong lời thoại.',
   'Giọng vùng miền (tớ – cậu hay tui – ông/bà) theo tính cách nhân vật, không theo mặc định chung.',
   'Người kể gọi mỗi nhân vật bằng một đại từ ngôi ba cố định cho cả truyện; chỉ đổi khi thái độ của người kể đổi theo mốc truyện.',
-  NAME_ADDRESSING_RULE
+  NAME_ADDRESSING_RULE,
+  MAY_TAO_RULE
 ]
 
 export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
@@ -123,8 +118,7 @@ export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
         relation: 'Thầy cô → học trò, thô',
         signals: '私 + お前/テメェ',
         forward: 'cô / thầy – cậu',
-        notes:
-          'Giữ cặp cả khi gắt; chuyển độ thô vào từ ngữ đúng mức bản gốc. Chỉ dùng mày/tao theo ngoại lệ đã duyệt'
+        notes: 'Giữ cặp cả khi gắt; chuyển độ thô vào từ ngữ đúng mức bản gốc'
       },
       {
         relation: 'Học trò → thầy cô',
@@ -157,27 +151,6 @@ export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
         notes: 'Không dùng "bạn"'
       },
       { relation: 'Kẻ thù, côn đồ', signals: '俺 + てめぇ/貴様', forward: 'tao – mày' }
-    ],
-    rules: [
-      ...MODERN_TEACHER_RULES,
-      'Không tự quy お前/テメェ/貴様 thành "mày" hoặc 俺 thành "tao" trong quan hệ thầy trò.'
-    ],
-    examples: [
-      {
-        context: 'Cô giáo → học trò, cặp đã chốt cô – cậu; đang quát, không đổi cặp vì お前.',
-        source: '「お前、ふざけるな！課題を出せと言っただろ！」',
-        translation: '“Cậu đừng có đùa! Cô đã bảo nộp bài rồi cơ mà!”'
-      },
-      {
-        context: 'Cô giáo → học trò, cặp cô – cậu; lời đe dọa trong truyện vẫn phải giữ mức độ.',
-        source: '「ぶち殺すぞ！」',
-        translation: '“Cô giết cậu bây giờ!”'
-      },
-      {
-        context: 'Học trò → cô giáo, cặp em – cô; lược đại từ ở câu sau khi đã rõ người nói.',
-        source: '「先生、すみません。明日持ってきます。」',
-        translation: '“Em xin lỗi cô. Mai sẽ mang đến ạ.”'
-      }
     ],
     thirdPerson: [
       'Lời kể ngôi một bằng 俺/僕/私 dịch là "tôi".',
@@ -487,7 +460,6 @@ export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
         notes: 'Gọi theo nghề'
       }
     ],
-    rules: MODERN_TEACHER_RULES,
     thirdPerson: [
       'Nam chính: anh, anh ấy; nữ chính: cô, cô ấy. Không dùng cặp "hắn – nàng" cho truyện hiện đại.',
       'Phản diện, người bị ghét: anh ta, cô ta, gã, hắn; người lớn tuổi: ông ấy, bà ấy; trẻ con: nó, thằng bé, con bé.'
@@ -498,7 +470,11 @@ export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
     label: 'Phương Tây hiện đại và fantasy (nguồn Anh)',
     sourceLangs: ['en'],
     rows: [
-      { relation: 'Bạn thân tuổi teen', signals: 'I/you, mate', forward: 'mình – bồ / cậu' },
+      {
+        relation: 'Bạn thân tuổi teen',
+        signals: 'gọi tên, nói suồng sã',
+        forward: 'tớ / mình – cậu'
+      },
       { relation: 'Người lớn ngang hàng', signals: 'gọi tên', forward: 'tôi – anh / chị' },
       {
         relation: 'Thầy cô ấm áp → học trò',
@@ -520,15 +496,16 @@ export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {
       },
       {
         relation: 'Người yêu',
-        signals: 'darling, love, honey',
+        signals: 'đã xác nhận yêu nhau; darling, honey giữa hai người',
         forward: 'anh – em',
-        backward: 'em – anh'
+        backward: 'em – anh',
+        notes: '"love", "darling" kiểu Anh có thể chỉ là cách gọi thân, kể cả với người lạ'
       },
       {
         relation: 'Người hầu → chủ (fantasy)',
         signals: 'my lord, my lady, master',
         forward: 'tôi – ngài / tiểu thư / cậu chủ',
-        backward: 'ta – ngươi / gọi tên'
+        backward: 'gọi tên / cô / cậu; ta – ngươi chỉ khi chủ cố ý kẻ cả'
       },
       {
         relation: 'Bề tôi, hiệp sĩ → vua',

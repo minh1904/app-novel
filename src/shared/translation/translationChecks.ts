@@ -147,7 +147,8 @@ export function checkStructure(srcCount: number, tgtCount: number, beads: Bead[]
 }
 
 // Ký tự CJK: Chữ Hán, Hiragana, Katakana (không bao gồm gạch nối ー U+30FC)
-const CJK_CHARS_RE = /[\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FB\u30FD-\u30FF]/g
+const CJK_CHARS_RE =
+  /[\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FB\u30FD-\u30FF\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/g
 // Dấu ngoặc CJK: 「」『』
 const CJK_BRACKETS_RE = /[「」『』]/g
 // Dấu câu toàn phần CJK: 、。！？：；，

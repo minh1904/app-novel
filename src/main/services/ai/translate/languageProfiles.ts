@@ -138,6 +138,9 @@ function japanese(policy: HonorificPolicy): string[] {
   return [
     ...honorificLines(policy),
     '- Bản gốc hay lược chủ ngữ: chỉ thêm đại từ khi câu tiếng Việt cần, và suy người nói từ mạch truyện, không suy từ một chữ.',
+    '- Cách tự xưng (僕, 俺, 私, わたくし…) và đuôi câu đặc trưng (～のじゃ, ～ですわ, ～っす) là giọng của nhân vật: giữ khác biệt đó bằng cách chọn từ và tiểu từ tiếng Việt nhất quán, không làm phẳng.',
+    '- Từ tượng thanh, tượng hình dịch bằng từ láy hoặc động từ tiếng Việt (ドキドキ → thình thịch); không phiên âm romaji.',
+    '- Từ Hán của tiếng Nhật không mặc nhiên cùng nghĩa với từ Hán Việt (緊張 là căng thẳng, 勉強 là học, 大丈夫 là ổn).',
     '- Dùng dấu câu tiếng Việt thay cho 、。！？. Lời thoại 「…」 viết thành “…”, trích dẫn lồng 『…』 thành ‘…’; giữ một kiểu cho cả chương.'
   ]
 }
@@ -145,7 +148,11 @@ function japanese(policy: HonorificPolicy): string[] {
 function chinese(family: GenreFamily): string[] {
   const common = [
     '- Không gán 你 hay 您 vào một cặp đại từ tiếng Việt cố định; chọn theo quan hệ giữa người nói và người nghe.',
-    '- Tránh lạm dụng từ Hán Việt tối nghĩa; câu văn phải đọc như tiếng Việt.'
+    '- 咱们 luôn gồm người nghe ("chúng ta"); 我们 có thể không gồm ("chúng tôi", "bọn ta"): xét theo cảnh.',
+    '- Tự xưng theo thân phận (本座, 本王, 本宫, 老夫, 贫道, 在下, 朕…) giữ dạng Hán Việt (bổn tọa, bổn vương, lão phu, tại hạ, trẫm…); chỉ 我/你 trơn mới chọn theo quan hệ.',
+    '- Giữ Hán Việt cho tên, danh xưng, thuật ngữ và từ cổ hợp bối cảnh; lời kể dùng từ thông dụng khi có (im lặng thay trầm mặc, hóa ra thay nguyên lai). Thành ngữ: ưu tiên thành ngữ tiếng Việt tương đương, rồi dạng Hán Việt đã quen, cuối cùng mới dịch nghĩa.',
+    '- Không giữ dấu vết trật tự câu tiếng Trung: 把 không thành "đem… ra", 向 không thành "hướng", 是不是 không thành "có phải… hay không", 几分 không thành "vài phần".',
+    '- Tên người nước ngoài hay tên Nhật viết bằng chữ Hán (约翰, 山本) trả về dạng gốc (John, Yamamoto).'
   ]
   if (family === 'historical') {
     return [
@@ -173,15 +180,19 @@ function english(): string[] {
   return [
     '- I/you không cho biết quan hệ: chọn cặp xưng hô tiếng Việt theo tuổi, vai vế và độ thân giữa hai người, rồi giữ nguyên cặp đó khi quan hệ chưa đổi.',
     '- Tên riêng giữ dạng chữ Latinh của bản gốc.',
-    '- Dịch thoát ý khi dịch sát làm câu tiếng Việt gượng, nhưng giữ sắc thái và giọng nhân vật.'
+    '- he/she/his/her dày đặc trong bản gốc: lược khi đã rõ, gọi tên khi hai nhân vật cùng giới, không lặp "anh ta/cô ta"; bỏ đại từ sở hữu khi đã rõ của ai.',
+    '- Câu bị động chuyển sang chủ động khi tự nhiên hơn. Câu dẫn "he said" được lược khi đã rõ người nói hoặc đưa lên trước lời thoại; không thay bằng động từ thêm nghĩa.',
+    '- "love", "darling", "mate" kiểu Anh có thể chỉ là cách gọi thân, không mặc nhiên là tín hiệu yêu hay bạn thân.'
   ]
 }
 
 function korean(): string[] {
   return [
-    '- Hệ thống kính ngữ và đuôi câu tiếng Hàn phản ánh vai vế và mức độ thân mật; dịch sang đại từ và ngữ khí tiếng Việt phù hợp ngữ cảnh.',
-    '- Tên riêng và địa danh dùng âm Hán Hàn phổ biến hoặc phiên âm theo quy ước của truyện.',
-    '- Dịch tự nhiên sang tiếng Việt, tránh chuyển ngữ máy móc các hậu tố xưng hô.'
+    '- Đuôi câu lịch sự (-요, -습니다) thể hiện bằng tiểu từ và lời lẽ tiếng Việt (ạ, dạ, thưa…), không tự đổi sang một cặp đại từ khác; 너 hay 당신 không tự quyết định cặp xưng hô, quan hệ mới quyết định.',
+    '- Chuyển từ kính ngữ sang nói trống (반말) là mốc quan hệ: đổi cặp đúng tại mốc đó; nói trống khi chưa được phép thì thể hiện độ lạnh hay hỗn bằng lời lẽ.',
+    '- Tên người Hàn viết Latinh (Kim Dok-ja, Sung Jin-woo) trừ khi glossary ghi khác; không tự đọc theo Hán Việt, không ghép danh xưng tiếng Việt với hậu tố Hàn ("anh Min-su-ssi").',
+    '- Cửa sổ hệ thống trong [ ] hoặc 【 】 giữ nguyên khung và con số, văn trung tính. Từ tượng thanh dịch sang tiếng Việt (쾅 → rầm).',
+    '- Tên bị nhắc lặp ở các câu liền nhau thì lược hoặc thay bằng đại từ ngôi ba đã chọn.'
   ]
 }
 
@@ -204,6 +215,33 @@ export function languageProfile(input: LanguageProfileInput): string[] {
 
 const COURT = ['hậu cung', 'cung đình', 'cung đấu', '後宮', '宮廷', '妃']
 
+/** Tín hiệu học đường, hiện đại của truyện Nhật: chỉ khi có một trong số này mới gợi ý `ja-modern`. */
+const JA_MODERN = [
+  'học đường',
+  'hiện đại',
+  'school',
+  'romcom',
+  'rom-com',
+  'slice of life',
+  '学園',
+  '学校',
+  '高校',
+  '現代',
+  '現実世界',
+  'ラブコメ'
+]
+
+/** Truyện Trung (bản gốc hay bản tiếng Anh) theo bối cảnh cổ đại, tu tiên. */
+const CN_ANCIENT = [
+  'tiên hiệp',
+  'kiếm hiệp',
+  'tu tiên',
+  'xianxia',
+  'wuxia',
+  'xuanhuan',
+  'cultivation'
+]
+
 const FANTASY = [
   'dị giới',
   'isekai',
@@ -223,6 +261,7 @@ const FANTASY = [
 /**
  * Gợi ý bộ mặc định xưng hô cho tác phẩm. Người dịch chốt; đây chỉ là điểm khởi đầu. Ghi thẳng mã bộ
  * vào thể loại (ví dụ "[ja-fantasy]") thì mã đó thắng, cho tới khi lựa chọn được lưu riêng theo tác phẩm.
+ * Không có tín hiệu thì không đoán bộ nào (`null`): một bộ sai bối cảnh kéo model sai, tệ hơn không có bộ.
  */
 export function suggestRegister(
   sourceLang: SourceLanguage | string | undefined,
@@ -234,14 +273,15 @@ export function suggestRegister(
   switch (sourceLang) {
     case 'ja':
       if (COURT.some((word) => text.includes(word))) return 'ja-court'
-      return FANTASY.some((word) => text.includes(word)) ? 'ja-fantasy' : 'ja-modern'
+      if (FANTASY.some((word) => text.includes(word))) return 'ja-fantasy'
+      return JA_MODERN.some((word) => text.includes(word)) ? 'ja-modern' : null
     case 'zh-Hans':
     case 'zh-Hant': {
       const family = genreFamily(genre)
       return family === 'historical' ? 'zh-ancient' : family === 'modern' ? 'zh-modern' : null
     }
     case 'en':
-      return 'en-western'
+      return CN_ANCIENT.some((word) => text.includes(word)) ? 'zh-ancient' : 'en-western'
     default:
       return null
   }

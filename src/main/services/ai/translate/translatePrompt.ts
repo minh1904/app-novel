@@ -29,7 +29,7 @@ import {
  */
 
 /** Định danh thế hệ prompt ghi vào trace đề xuất. */
-export const TRANSLATE_PROMPT_VERSION = 'translate-v5'
+export const TRANSLATE_PROMPT_VERSION = 'translate-v7'
 
 /** Tên thẻ của prompt dịch. Đổi tên ở đây thì system prompt, message user và bộ thoát thẻ đổi theo. */
 export const TAGS = {
@@ -43,6 +43,7 @@ export const TAGS = {
   addressing: 'addressing',
   glossary: 'glossary',
   previous: 'previous',
+  instruction: 'task_instruction',
   source: 'source'
 } as const
 
@@ -71,6 +72,11 @@ export interface TranslatePromptContext {
   characters?: CharacterItem[]
   /** Vài đoạn bản gốc liền trước lô, chỉ để hiểu mạch. */
   previous?: string[]
+  /**
+   * Chỉ dẫn của task (steering) cho item này. Nằm trong message user để system prompt của tác phẩm
+   * giống nhau giữa các item.
+   */
+  instruction?: string
   /**
    * Hình dạng câu trả lời: `array` (mặc định, như trước) hay `object` `{"items":[…]}` đi cùng JSON
    * schema. Chỉ câu đầu và ví dụ của `<output>` đổi; `array` cho system prompt cũ tới từng byte.
@@ -113,7 +119,14 @@ export function buildTranslatePayload(units: TempMappedUnit[]): string {
 /** Các thẻ xuất hiện trong message user; chữ truyện không được đóng hay mở chúng. */
 const TAG_PATTERN = new RegExp(
   '<(/?)(' +
-    [TAGS.characters, TAGS.addressing, TAGS.glossary, TAGS.previous, TAGS.source].join('|') +
+    [
+      TAGS.characters,
+      TAGS.addressing,
+      TAGS.glossary,
+      TAGS.previous,
+      TAGS.instruction,
+      TAGS.source
+    ].join('|') +
     ')\\b',
   'gi'
 )
@@ -155,14 +168,18 @@ export function systemPrompt(context: TranslatePromptContext): string {
       : '- Trả về đúng một mảng JSON các đối tượng {"id","dst"}, không kèm giải thích hay dấu ```.',
     '- Mỗi id nhận được có đúng một đối tượng: giữ nguyên id, không thêm id mới, không gộp hay tách mục, kể cả khi một câu bị ngắt giữa hai mục.',
     '- "dst" không chứa ký tự xuống dòng.',
-    `- Với mục là lời thoại (src mở đầu bằng 「, 『 hoặc “), thêm trường "${k.speakerToListener}" TRƯỚC "dst": "Người nói→Người nghe" bằng tên dịch trong <${t.characters}> (ví dụ "Milly→Rion"); không rõ thì dùng "?" cho phía đó. Lời kể không có "${k.speakerToListener}".`,
+    `- Với mục có lời thoại (trong “…”, "…", 「…」 hoặc 『…』, kể cả khi lời thoại đứng sau lời kể trong cùng mục), thêm trường "${k.speakerToListener}" TRƯỚC "dst": "Người nói→Người nghe" bằng tên dịch trong <${t.characters}> (ví dụ "Milly→Rion"); không rõ thì dùng "?" cho phía đó. Lời nghĩ trong đầu (‘…’, （…）) không phải lời thoại. Mục chỉ có lời kể không có "${k.speakerToListener}".`,
     `- Sau "${k.speakerToListener}", viết "${k.selfRef}" (cách người nói tự xưng) và "${k.addrRef}" (đại từ gọi người nghe), rồi mới viết "dst". Tra đúng chiều trong <${t.addressing}>: chép cách tự xưng vào "${k.selfRef}"; chép đại từ ngôi hai vào "${k.addrRef}" nếu có, nếu không thì chép cách gọi. Chỉ khi chưa có cặp mới suy theo quan hệ và bảng mặc định; chưa xác định được thì ghi "?".`,
-    `- Ví dụ hình dạng: ${asObject ? '{"items":' : ''}[{"id":"[1]","${k.speakerToListener}":"A→B","${k.selfRef}":"tôi","${k.addrRef}":"cậu","dst":"…"},{"id":"[2]","dst":"…"}]${asObject ? '}' : ''}. Giá trị xưng gọi phải lấy từ cặp của câu đang dịch, không sao chép giá trị trong ví dụ. Lời kể không có "${k.selfRef}"/"${k.addrRef}".`,
+    `- Ví dụ hình dạng: ${asObject ? '{"items":' : ''}[{"id":"[1]","${k.speakerToListener}":"A→B","${k.selfRef}":"tôi","${k.addrRef}":"cậu","dst":"…"},{"id":"[2]","dst":"…"}]${asObject ? '}' : ''}. Giá trị xưng gọi phải lấy từ cặp của câu đang dịch, không sao chép giá trị trong ví dụ. Mục chỉ có lời kể không có "${k.selfRef}"/"${k.addrRef}".`,
     `</${t.output}>`,
     '',
     `<${t.rules}>`,
     '- Dịch đủ ý từng mục: không tóm tắt, không bỏ, không thêm chú thích. Giữ giọng điệu và cảm xúc nhân vật, kể cả câu thô hay châm biếm.',
-    '- Viết tiếng Việt tự nhiên theo trật tự câu tiếng Việt, tránh dịch từng chữ.',
+    '- Sát nguyên tác về nghĩa, sắc thái và mức độ; linh hoạt về câu chữ: viết theo trật tự và nhịp câu tiếng Việt, được tách hoặc gộp câu trong cùng mục.',
+    '- Lược chủ ngữ, đại từ khi câu đã rõ ai làm gì; không lặp cùng một tên hay đại từ ở các câu liền nhau, trừ khi bản gốc cố ý lặp.',
+    '- Không dịch từng chữ bị động, danh hóa hay trạng từ: chỉ dùng "được/bị", "một cách", "của", "đã/đang/sẽ" khi câu tiếng Việt cần.',
+    '- Mỗi nhân vật giữ giọng riêng của bản gốc (cách tự xưng, tiểu từ, độ dài câu); không làm phẳng giọng.',
+    '- Dấu ba chấm viết "..." (kể cả khi bản gốc dùng … hoặc ……). Tiếng Việt hạn chế gạch dài: gạch dài của bản gốc (――, —) chuyển thành dấu phẩy, dấu hai chấm hoặc "..." khi lời bị ngắt, bỏ lửng, tùy câu.',
     `- Thuật ngữ trong <${t.glossary}> là lựa chọn người dịch đã chốt: dùng đúng bản dịch cho từ gốc và các biến thể, không dùng dạng nằm trong mục "Forbidden".`,
     `- Giới tính và vai của nhân vật lấy theo <${t.characters}>, không đoán từ giọng nói: một cô giáo nói năng thô vẫn là "cô".`,
     `- Cặp xưng hô trong <${t.addressing}> có chiều: dùng khi nhận ra người nói và người nghe trong cảnh.`,
@@ -214,7 +231,7 @@ export function addressingLines(dyads: AddressingDyadResolved[]): string[] {
     const formality = dyad.formality ? ` (formality: ${dyad.formality})` : ''
     const notes = dyad.notes ? ` Notes: ${dyad.notes}` : ''
     const second = dyad.secondPerson
-      ? `; mọi chỗ cần đại từ ngôi hai cho ${to} (bản gốc lược chủ ngữ, dùng あなた, 貴方, 你, hoặc lặp tên kèm kính ngữ như 様, さん) đều dùng "${dyad.secondPerson}", không đổi sang đại từ khác giữa các chương`
+      ? `; mọi chỗ cần đại từ ngôi hai cho ${to} (bản gốc lược chủ ngữ, dùng あなた, 貴方, 你, 당신, 너, you, hoặc lặp tên kèm kính ngữ như 様, さん, 씨, 님) đều dùng "${dyad.secondPerson}", không đổi sang đại từ khác giữa các chương`
       : ''
     return `- ${from} → ${to}: ${from} tự xưng "${dyad.speakerPronoun}", gọi ${to} là "${dyad.recipientPronoun}"${second}${formality}.${notes}`
   })
@@ -277,6 +294,13 @@ function previousBlock(previous: string[]): string {
   return [`<${tag}>`, ...lines, `</${tag}>`].join('\n')
 }
 
+function instructionBlock(instruction: string | undefined): string {
+  const text = instruction?.trim()
+  if (!text) return ''
+  const tag = TAGS.instruction
+  return [`<${tag}>`, text, `</${tag}>`].join('\n')
+}
+
 function build(
   context: TranslatePromptContext,
   units: TempMappedUnit[],
@@ -288,7 +312,8 @@ function build(
     ),
     addressingBlock(approvedDyads(context.dyads ?? [])),
     glossaryBlock(approvedGlossary(context.glossary ?? [])),
-    previousBlock(context.previous ?? [])
+    previousBlock(context.previous ?? []),
+    instructionBlock(context.instruction)
   ]
     .filter(Boolean)
     .map(escapeTagsInside)
@@ -301,6 +326,12 @@ function build(
       ? `Các mục trong <${source}> bị thiếu hoặc rỗng ở lần trả lời trước. Dịch đủ đúng các id này.`
       : `Dịch các mục trong <${source}>.`
   )
+  // The system prompt calls every block data; this line, outside the blocks, is what makes it binding.
+  if (context.instruction?.trim()) {
+    blocks.push(
+      `Áp dụng chỉ dẫn của người dịch trong <${TAGS.instruction}> cho chương này, trừ khi nó trái với định dạng đầu ra.`
+    )
+  }
   return finish([
     { role: 'system', content: systemPrompt(context) },
     { role: 'user', content: blocks.join('\n\n') }
@@ -381,18 +412,6 @@ export function presetSection(preset: RegisterPreset): string[] {
     ...rows,
     'Người kể gọi nhân vật ở ngôi ba:',
     ...preset.thirdPerson.map((line) => '- ' + line),
-    ...(preset.rules?.length
-      ? ['Luật riêng của bối cảnh này:', ...preset.rules.map((rule) => '- ' + rule)]
-      : []),
-    ...(preset.examples?.length
-      ? [
-          'Ví dụ minh họa cách xưng hô (tự soạn, không phải dữ liệu cần dịch; không chép vào đầu ra; cặp đã duyệt luôn thắng ví dụ):',
-          ...preset.examples.map(
-            (example) =>
-              `- ${example.context}\n  Nguồn: ${example.source}\n  Dịch: ${example.translation}`
-          )
-        ]
-      : []),
     `</${tag}>`
   ]
 }

@@ -31,6 +31,11 @@ export interface ContextSnapshot {
   glossary: ContextEntryItem[]
   dyads: AddressingDyadResolved[]
   characters: CharacterItem[]
+  /**
+   * The task's steering instruction for this item, in full (change `add-agent-steering`). Absent
+   * outside tasks, so the canonical JSON and hash of a plain run stay as they were.
+   */
+  instruction?: string
 }
 
 export interface SnapshotRecord {
@@ -78,7 +83,8 @@ export function promptFromSnapshot(
     dyads: snapshot.dyads,
     register: snapshot.register,
     characters: snapshot.characters,
-    previous
+    previous,
+    ...(snapshot.instruction ? { instruction: snapshot.instruction } : {})
   }
 }
 
@@ -123,7 +129,8 @@ export function takeContextSnapshot(
   library: LibraryStore,
   workId: string,
   chapterId: string,
-  chapterSource: string
+  chapterSource: string,
+  instruction?: string
 ): SnapshotRecord {
   const work = library.get(workId)
   const glossary = library.getEffectiveGlossary(workId, chapterId, { approvedOnly: true })
@@ -139,6 +146,7 @@ export function takeContextSnapshot(
     register: suggestRegister(work.sourceLang, work.genre) ?? null,
     glossary,
     dyads,
-    characters
+    characters,
+    ...(instruction ? { instruction } : {})
   })
 }
