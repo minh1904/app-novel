@@ -32,6 +32,18 @@ describe('uiStore', () => {
     expect(useWorkspaceStore.getState().tabs).toEqual([])
   })
 
+  it('opens a chapter and asks it to scroll to a paragraph, once', async () => {
+    expect(await useWorkspaceStore.getState().openParagraph('work-1', 'ch-3', 7)).toBe(true)
+    expect(useWorkspaceStore.getState().view).toEqual({
+      name: 'chapter',
+      workId: 'work-1',
+      chapterId: 'ch-3'
+    })
+    expect(useWorkspaceStore.getState().reveal).toEqual({ chapterId: 'ch-3', paragraph: 7 })
+    useWorkspaceStore.getState().clearReveal()
+    expect(useWorkspaceStore.getState().reveal).toBeNull()
+  })
+
   it('navigates to next view directly when no leaveGuard is registered', async () => {
     const next: View = { name: 'work', workId: 'work-1' }
     const ok = await useWorkspaceStore.getState().navigate(next)

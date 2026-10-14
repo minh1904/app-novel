@@ -644,6 +644,17 @@ export function saveExtraction(db: Db, input: SaveExtractionInput): SaveExtracti
   })
 }
 
+/** Whether the work has any glossary term that is approved or waiting for review. */
+export function hasGlossary(db: Db): boolean {
+  return (
+    db
+      .prepare(
+        "SELECT 1 AS found FROM context_entry WHERE kind = 'term' AND status IN ('approved', 'pending') LIMIT 1"
+      )
+      .get<{ found: number }>() !== undefined
+  )
+}
+
 /** The chapters an extraction run already scanned. */
 export function listScannedChapterIds(db: Db): Set<string> {
   return new Set(

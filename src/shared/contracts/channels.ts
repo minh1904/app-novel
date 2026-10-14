@@ -121,7 +121,10 @@ export const CHANNELS = {
   agentTaskList: 'agent:task:list',
   agentTaskGet: 'agent:task:get',
   agentTaskCreate: 'agent:task:create',
-  agentTaskControl: 'agent:task:control'
+  agentTaskControl: 'agent:task:control',
+  agentTaskSteer: 'agent:task:steer',
+  agentTaskQuality: 'agent:task:quality',
+  agentTaskDismiss: 'agent:task:dismiss'
 } as const
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS]

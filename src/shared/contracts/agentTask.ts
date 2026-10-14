@@ -154,7 +154,16 @@ export interface AgentTaskSummary extends AgentTaskView {
 
 export interface AgentTaskDetailView {
   task: AgentTaskSummary
-  items: Array<AgentTaskItemView & { chapterLabel: string }>
+  items: Array<
+    AgentTaskItemView & {
+      chapterLabel: string
+      /** The steering instruction the item pinned; `null` none, `undefined` not pinned yet. */
+      instruction?: string | null
+    }
+  >
+  steerings: Array<AgentTaskSteeringView & { requestedLabel: string; effectiveLabel: string }>
+  /** The instruction in effect for the chapters not started yet; `null` when there is none. */
+  currentInstruction: string | null
 }
 
 export const TASK_COMMANDS = [
@@ -176,14 +185,16 @@ const budgetSchema = v.strictObject({
 
 /**
  * How a translation task gets its context (change `add-agent-context-workflow`): extract terms and wait
- * for review first, or translate with the approved context as it is. Required, with no default.
+ * for review first, or translate with the approved context as it is. Optional since 2026-10-14 (product
+ * owner): left out, a work with no glossary yet extracts first; "translate right away" is `approved_only`.
  */
 export const CONTEXT_STRATEGIES = ['extract_then_review', 'approved_only'] as const
 export type ContextStrategy = (typeof CONTEXT_STRATEGIES)[number]
 
 export interface AgentTaskCreateInput {
   clientCommandId: string
-  contextStrategy: ContextStrategy
+  /** Left out: `extract_then_review` when the work has no glossary yet, else `approved_only`. */
+  contextStrategy?: ContextStrategy
   workId: string
   /** Chapters in work order; or a 1-based number range of the work's chapters. */
   chapterIds?: string[]
@@ -195,7 +206,7 @@ export interface AgentTaskCreateInput {
 export const agentTaskCreateInputSchema = v.pipe(
   v.strictObject({
     clientCommandId: idSchema,
-    contextStrategy: v.picklist(CONTEXT_STRATEGIES, 'Cần chọn cách dùng ngữ cảnh cho tác vụ.'),
+    contextStrategy: v.optional(v.picklist(CONTEXT_STRATEGIES)),
     workId: idSchema,
     chapterIds: v.optional(v.pipe(v.array(idSchema), v.minLength(1), v.maxLength(2000))),
     range: v.optional(
@@ -246,6 +257,79 @@ export const agentTaskControlInputSchema = v.pipe(
     'Lệnh bỏ qua cần itemId, lệnh khác thì không.'
   )
 )
+
+// ---------------------------------------------------------------------------------------------------
+// Steering (change `add-agent-steering`)
+
+export const STEERING_STATES = ['accepted', 'applied', 'superseded'] as const
+export type AgentTaskSteeringState = (typeof STEERING_STATES)[number]
+
+export const STEERING_INSTRUCTION_MAX = 2000
+
+/** The pair a `context_ref` steering wrote in the work DB: the new one and the one it closed. */
+export interface SteeringContextRef {
+  newDyadId: string
+  closedDyadId: string | null
+}
+
+export interface AgentTaskSteeringView {
+  id: string
+  taskId: string
+  requestedChapterId: string
+  resolvedFromItemId: string
+  kind: 'instruction' | 'context_ref'
+  instructionText: string | null
+  contextRef: SteeringContextRef | null
+  state: AgentTaskSteeringState
+  createdAt: number
+  updatedAt: number
+}
+
+const pronoun = v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(40))
+
+/**
+ * A steering command. The chapter is a number of the work or an id, exactly one. `instruction` is the
+ * full text from that chapter on (it replaces, never adds); `addressing` changes how one character
+ * addresses another from that chapter on; `third_person` is always refused (no chapter scope yet).
+ */
+export const agentTaskSteerInputSchema = v.pipe(
+  v.strictObject({
+    taskId: idSchema,
+    clientCommandId: idSchema,
+    chapterNumber: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
+    chapterId: v.optional(idSchema),
+    change: v.variant('kind', [
+      v.strictObject({
+        kind: v.literal('instruction'),
+        text: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(STEERING_INSTRUCTION_MAX))
+      }),
+      v.strictObject({
+        kind: v.literal('addressing'),
+        speakerCharacterId: idSchema,
+        listenerCharacterId: idSchema,
+        speakerPronoun: pronoun,
+        recipientPronoun: pronoun,
+        secondPerson: v.optional(pronoun)
+      }),
+      v.strictObject({
+        kind: v.literal('third_person'),
+        characterId: idSchema,
+        thirdPerson: pronoun
+      })
+    ])
+  }),
+  v.check(
+    (input) => (input.chapterNumber === undefined) !== (input.chapterId === undefined),
+    'Cần đúng một chương: số chương hoặc id chương.'
+  )
+)
+export type AgentTaskSteerInput = v.InferOutput<typeof agentTaskSteerInputSchema>
+
+export interface AgentTaskSteerResult {
+  steering: AgentTaskSteeringView
+  /** Where it really starts: the first item no run has pinned yet, at or after the asked chapter. */
+  effectiveFrom: { itemId: string; chapterId: string; chapterLabel: string }
+}
 
 export const agentTaskListInputSchema = v.nullable(v.strictObject({ workId: v.optional(idSchema) }))
 

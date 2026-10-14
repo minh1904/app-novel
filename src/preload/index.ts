@@ -25,7 +25,8 @@ import type {
   AgentTaskChanged,
   AgentTaskDetailView,
   AgentTaskSummary,
-  AgentTaskView
+  AgentTaskView,
+  AgentTaskSteerResult
 } from '../shared/contracts/agentTask'
 import type { AiSessionView, AiTurnView } from '../shared/contracts/aiHistory'
 import type {
@@ -60,6 +61,7 @@ import type { Result } from '../shared/contracts/result'
 import type { WorkspaceLoad, WorkspaceState } from '../shared/contracts/workspace'
 import type { RowSaved } from '../shared/contracts/rows'
 import type { SegmentInput, TextRecord, TextSide } from '../shared/contracts/text'
+import type { TaskQualityView } from '../shared/contracts/taskQuality'
 import type {
   AppliedContext,
   ContextEntryItem,
@@ -594,6 +596,14 @@ const desktopApi: DesktopApi = {
         ipcRenderer.invoke(CHANNELS.agentTaskCreate, input) as Promise<Result<AgentTaskView>>,
       control: (input) =>
         ipcRenderer.invoke(CHANNELS.agentTaskControl, input) as Promise<Result<AgentTaskView>>,
+      steer: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentTaskSteer, input) as Promise<Result<AgentTaskSteerResult>>,
+      quality: (taskId) =>
+        ipcRenderer.invoke(CHANNELS.agentTaskQuality, { taskId }) as Promise<
+          Result<TaskQualityView>
+        >,
+      dismiss: (input) =>
+        ipcRenderer.invoke(CHANNELS.agentTaskDismiss, input) as Promise<Result<void>>,
       onChanged: (listener) => {
         const handler = (_event: IpcRendererEvent, event: AgentTaskChanged): void => listener(event)
         ipcRenderer.on(EVENT_CHANNELS.agentTaskChanged, handler)

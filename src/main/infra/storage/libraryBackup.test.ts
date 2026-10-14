@@ -198,7 +198,7 @@ describe('WorkFiles library.db lifecycle', () => {
 
     // Open via WorkFiles — should detect userVersion 8 < 10, create backup, then migrate to 10
     const files = WorkFiles.open({ dataDir: dir, now: () => 1500 })
-    expect(readPragmas(files.index).userVersion).toBe(12)
+    expect(readPragmas(files.index).userVersion).toBe(13)
 
     // Verify backup exists in backups/
     const backups = readdirSync(backupsDir).filter((f) => f.endsWith('.db'))
@@ -244,7 +244,7 @@ describe('WorkFiles library.db lifecycle', () => {
              (SELECT count(*) FROM agent_activity WHERE operation_id = 'o') AS activities`
         )
         .get()
-    expect(readPragmas(files.index).userVersion).toBe(12)
+    expect(readPragmas(files.index).userVersion).toBe(13)
     expect(counts(files.index)).toEqual({ turns: 1, operations: 1, activities: 1 })
     expect(
       files.index.prepare('SELECT client_command_id, payload_digest FROM agent_turn').get()
@@ -284,6 +284,47 @@ describe('WorkFiles library.db lifecycle', () => {
         )
         .get()
     ).toEqual({ task: 'running', item: 'running', owner: 'i', attempt: 1 })
+  })
+
+  it('upgrades a v12 file with a task to v13 and backs up its steering rows', () => {
+    const dir = tempDir()
+    const { db } = createSampleLibraryDb(dir, 12)
+    db.exec(`
+      INSERT INTO agent_task (id, kind, work_id, client_command_id, payload_digest, state,
+        model_ref_json, overwrite_policy, created_at, updated_at)
+      VALUES ('k', 'translate_chapters', 'w', 'cmd', 'd', 'paused', '{}', 'fill_untranslated', 1, 1);
+      INSERT INTO agent_task_item (id, task_id, ordinal, chapter_id, state, created_at, updated_at)
+      VALUES ('i', 'k', 1, 'c', 'queued', 1, 1);
+    `)
+    db.close()
+
+    const files = openWorkFiles(dir, () => 1500)
+    expect(readPragmas(files.index).userVersion).toBe(13)
+    expect(files.index.prepare("SELECT state FROM agent_task WHERE id = 'k'").get()).toEqual({
+      state: 'paused'
+    })
+    files.index.exec(`
+      INSERT INTO agent_task_steering (id, task_id, client_command_id, payload_digest,
+        requested_chapter_id, resolved_from_item_id, kind, instruction_text, created_at, updated_at)
+      VALUES ('s', 'k', 'steer', 'd', 'c', 'i', 'instruction', 'Giữ câu ngắn.', 2, 2);
+    `)
+    const backupPath = join(dir, 'steering.db')
+    createLibraryBackup(files.index, backupPath)
+    expect(() => verifyLibraryDatabase(backupPath)).not.toThrow()
+    expect(
+      open(backupPath).prepare('SELECT state, instruction_text FROM agent_task_steering').get()
+    ).toEqual({ state: 'accepted', instruction_text: 'Giữ câu ngắn.' })
+    // A steering row needs its content and goes with its task.
+    expect(() =>
+      files.index.exec(`INSERT INTO agent_task_steering (id, task_id, client_command_id,
+        payload_digest, requested_chapter_id, resolved_from_item_id, kind, created_at, updated_at)
+        VALUES ('x', 'k', 'x', 'd', 'c', 'i', 'instruction', 2, 2)`)
+    ).toThrow()
+    files.index.exec("DELETE FROM agent_task WHERE id = 'k'")
+    expect(files.index.prepare('SELECT count(*) AS n FROM agent_task_steering').get()).toEqual({
+      n: 0
+    })
+    files.index.close()
   })
 
   it('preserves pre-migration backup if migration fails', () => {

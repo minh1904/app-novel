@@ -567,7 +567,7 @@ describe('AgentTaskService: lifecycle and caps', () => {
 })
 
 describe('AgentTaskService: context choice from chat', () => {
-  it('rejects a create_translation_task call without the context choice before any approval', async () => {
+  it('lets the model leave the context choice out: approval first, then the work default', async () => {
     const kit = taskKit(scriptedRunner().run)
     const chat = new AgentService({
       library: kit.library,
@@ -582,19 +582,32 @@ describe('AgentTaskService: context choice from chat', () => {
         name: 'create_translation_task',
         args: { target: 'ctx', fromChapter: 1, toChapter: 2 }
       }),
-      say('Bạn muốn trích thuật ngữ rồi duyệt, hay dịch ngay bằng ngữ cảnh đã duyệt?')
+      say('Đã tạo tác vụ.')
     )
     const res = await chat.send({
       instruction: 'dịch chương 1 đến 2',
       context: { workId: kit.work1.id },
       modelSelection: kit.modelSelection
     })
-    expect(res.status).toBe('completed')
-    expect(kit.model.lastToolResult()).toMatchObject({ ok: false })
-    expect(chat.getSessionDetail(res.sessionId).pending).toEqual([])
+    expect(res.status).toBe('waiting_user')
     expect(kit.tasks.list()).toEqual([])
+    const [pending] = chat.getSessionDetail(res.sessionId).pending
+    await chat.send({
+      continuesTurnId: res.turnId,
+      pendingReply: {
+        toolCallId: pending!.toolCallId,
+        argsDigest: pending!.argsDigest,
+        choice: 'approve'
+      },
+      instruction: 'Duyệt',
+      modelSelection: kit.modelSelection,
+      commandId: 'approve-default'
+    })
+    // The work has no glossary yet, so the task extracts first.
+    expect(kit.tasks.list()[0]?.options.contextStrategy).toBe('extract_then_review')
     const tool = kit.registry.get('create_translation_task')
-    expect(tool?.parameters?.required).toContain('contextStrategy')
-    expect(tool?.description).toContain('không tự chọn')
+    expect(tool?.parameters?.required).not.toContain('contextStrategy')
+    expect(tool?.description).toContain('"approved_only" khi người dùng nói rõ dịch luôn')
+    await kit.tasks.idle()
   })
 })

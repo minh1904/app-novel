@@ -42,10 +42,15 @@ import { createWriteCapabilities } from './capabilities/writeCapabilities'
 import { TARGET_PARAM } from './capabilities/readCapabilities'
 import { AgentWriteCoordinator } from './writeCoordinator'
 import type { AgentTaskService } from './taskService'
-import { createTranslationTaskCapability } from './capabilities/taskCapabilities'
+import {
+  createTranslationTaskCapability,
+  readTranslationTasksCapability,
+  steerTranslationTaskCapability
+} from './capabilities/taskCapabilities'
 import {
   CONTEXT_HANDLE,
   CREATE_TRANSLATION_TASK,
+  STEER_TRANSLATION_TASK,
   RESOLVE_TARGET,
   UNDO_OPERATION,
   decideToolCall,
@@ -256,8 +261,14 @@ export class AgentService {
     ]) {
       if (!this.registry.get(capability.name)) this.registry.register(capability)
     }
-    if (this.tasks && !this.registry.get(createTranslationTaskCapability.name)) {
-      this.registry.register(createTranslationTaskCapability)
+    if (this.tasks) {
+      for (const capability of [
+        createTranslationTaskCapability,
+        steerTranslationTaskCapability,
+        readTranslationTasksCapability(this.tasks)
+      ]) {
+        if (!this.registry.get(capability.name)) this.registry.register(capability)
+      }
     }
   }
 
@@ -780,7 +791,7 @@ export class AgentService {
           try {
             const { task } = this.tasks.create({
               clientCommandId: row.id,
-              contextStrategy: args.contextStrategy as ContextStrategy,
+              contextStrategy: args.contextStrategy as ContextStrategy | undefined,
               workId: target.workId,
               range: { from, to },
               modelSelection: chatModel.modelRef,
@@ -796,6 +807,38 @@ export class AgentService {
                   taskId: task.id,
                   chapters,
                   note: 'Tác vụ chạy nền; theo dõi ở màn Tác vụ.'
+                }
+              }
+            }
+          } catch (error) {
+            finish('failed')
+            return { state: 'failed', result: { ok: false, error: errorInfo(error) } }
+          }
+        }
+        if (row.name === STEER_TRANSLATION_TASK && this.tasks) {
+          // Runs only after the user approved this exact call.
+          const fromChapter = Number(args.fromChapter)
+          const finish = activity({
+            kind: 'write',
+            label: `Điều chỉnh tác vụ dịch từ chương ${fromChapter}`
+          })
+          try {
+            const { steering, effectiveFrom } = this.tasks.steer({
+              taskId: String(args.taskId),
+              clientCommandId: row.id,
+              chapterNumber: fromChapter,
+              change: { kind: 'instruction', text: String(args.instruction) }
+            })
+            finish('completed', { steeringId: steering.id })
+            return {
+              state: 'completed',
+              result: {
+                ok: true,
+                value: {
+                  appliesFrom: effectiveFrom.chapterLabel,
+                  note:
+                    'Áp dụng từ chương này; chương đang dịch hoặc đã dịch giữ bản cũ. Báo đúng chương ' +
+                    'áp dụng cho người dùng.'
                 }
               }
             }

@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import { TaskList } from '@renderer/modules/agent/public'
+import { useWorkspaceStore } from '../store/workspaceStore'
 import { openGlossaryReview } from './openGlossaryReview'
 import type { WorkAreaProps } from './workArea'
 
@@ -13,6 +14,9 @@ export function JobsArea({
       workId={workId}
       onOpenChapter={(_workId, chapterId) => onOpenChapter(chapterId)}
       onReviewContext={(id) => void openGlossaryReview(id)}
+      onOpenSegment={(id, chapterId, paragraph) =>
+        void useWorkspaceStore.getState().openParagraph(id, chapterId, paragraph)
+      }
     />
   )
 }

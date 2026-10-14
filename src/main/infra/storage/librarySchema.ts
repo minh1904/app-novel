@@ -474,6 +474,30 @@ CREATE TABLE agent_task_attempt (
 );
 `
 
+/**
+ * Steering of a durable task (change `add-agent-steering`): an accepted change that applies from
+ * `resolved_from_item_id` on. Refused commands leave no row; `client_command_id` dedupes resends.
+ */
+const version13 = `
+CREATE TABLE agent_task_steering (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES agent_task (id) ON DELETE CASCADE,
+  client_command_id TEXT NOT NULL UNIQUE,
+  payload_digest TEXT NOT NULL,
+  requested_chapter_id TEXT NOT NULL,
+  resolved_from_item_id TEXT NOT NULL REFERENCES agent_task_item (id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('instruction', 'context_ref')),
+  instruction_text TEXT,
+  context_ref_json TEXT,
+  state TEXT NOT NULL DEFAULT 'accepted' CHECK (state IN ('accepted', 'applied', 'superseded')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  CHECK ((kind = 'instruction') = (instruction_text IS NOT NULL)),
+  CHECK ((kind = 'context_ref') = (context_ref_json IS NOT NULL))
+);
+CREATE INDEX agent_task_steering_task ON agent_task_steering (task_id, created_at, id);
+`
+
 export const librarySchema: SchemaSpec = {
   applicationId: LIBRARY_APPLICATION_ID,
   migrations: [
@@ -548,6 +572,12 @@ export const librarySchema: SchemaSpec = {
       foreignKeysOff: true,
       up(db) {
         db.exec(version12)
+      }
+    },
+    {
+      version: 13,
+      up(db) {
+        db.exec(version13)
       }
     }
   ]

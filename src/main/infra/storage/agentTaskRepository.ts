@@ -5,7 +5,10 @@ import type {
   AgentTaskProgress,
   AgentTaskReason,
   AgentTaskState,
-  AgentTaskView
+  AgentTaskSteeringState,
+  AgentTaskSteeringView,
+  AgentTaskView,
+  SteeringContextRef
 } from '../../../shared/contracts/agentTask'
 import {
   canTransitionItem,
@@ -54,6 +57,35 @@ interface ItemRow {
   created_at: number
   updated_at: number
 }
+
+interface SteeringRow {
+  id: string
+  task_id: string
+  payload_digest: string
+  requested_chapter_id: string
+  resolved_from_item_id: string
+  kind: 'instruction' | 'context_ref'
+  instruction_text: string | null
+  context_ref_json: string | null
+  state: AgentTaskSteeringState
+  created_at: number
+  updated_at: number
+}
+
+const steeringFrom = (row: SteeringRow): AgentTaskSteeringView => ({
+  id: row.id,
+  taskId: row.task_id,
+  requestedChapterId: row.requested_chapter_id,
+  resolvedFromItemId: row.resolved_from_item_id,
+  kind: row.kind,
+  instructionText: row.instruction_text,
+  contextRef: row.context_ref_json
+    ? (JSON.parse(row.context_ref_json) as SteeringContextRef)
+    : null,
+  state: row.state,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at
+})
 
 const taskFrom = (row: TaskRow): AgentTaskView => ({
   id: row.id,
@@ -353,6 +385,74 @@ export class AgentTaskRepository {
 
   latestOperationId(itemId: string): string | null {
     return this.attemptOperationIds(itemId).at(-1) ?? null
+  }
+
+  // -------------------------------------------------------------------------------------------------
+  // Steering
+
+  getSteeringByCommand(
+    clientCommandId: string
+  ): (AgentTaskSteeringView & { digest: string }) | null {
+    const row = this.db
+      .prepare('SELECT * FROM agent_task_steering WHERE client_command_id = ?')
+      .get<SteeringRow>(clientCommandId)
+    return row ? { ...steeringFrom(row), digest: row.payload_digest } : null
+  }
+
+  /** The task's steering in the order it was accepted. */
+  listSteerings(taskId: string): AgentTaskSteeringView[] {
+    return this.db
+      .prepare('SELECT * FROM agent_task_steering WHERE task_id = ? ORDER BY created_at, rowid')
+      .all<SteeringRow>(taskId)
+      .map(steeringFrom)
+  }
+
+  createSteering(input: {
+    id: string
+    taskId: string
+    clientCommandId: string
+    digest: string
+    requestedChapterId: string
+    resolvedFromItemId: string
+    kind: 'instruction' | 'context_ref'
+    instructionText?: string
+    contextRef?: SteeringContextRef
+    now: number
+  }): AgentTaskSteeringView {
+    this.db
+      .prepare(
+        `INSERT INTO agent_task_steering (id, task_id, client_command_id, payload_digest,
+           requested_chapter_id, resolved_from_item_id, kind, instruction_text, context_ref_json,
+           created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        input.id,
+        input.taskId,
+        input.clientCommandId,
+        input.digest,
+        input.requestedChapterId,
+        input.resolvedFromItemId,
+        input.kind,
+        input.instructionText ?? null,
+        input.contextRef ? JSON.stringify(input.contextRef) : null,
+        input.now,
+        input.now
+      )
+    return steeringFrom(
+      this.db.prepare('SELECT * FROM agent_task_steering WHERE id = ?').get<SteeringRow>(input.id)!
+    )
+  }
+
+  /** `accepted → applied | superseded`; anything else is a programming error. */
+  settleSteering(id: string, state: 'applied' | 'superseded', now: number): void {
+    const changed = this.db
+      .prepare(
+        "UPDATE agent_task_steering SET state = ?, updated_at = ? WHERE id = ? AND state = 'accepted'"
+      )
+      .run(state, now, id).changes
+    if (changed !== 1)
+      throw new StorageError('conflict', 'Steering không còn ở trạng thái chờ áp dụng.')
   }
 
   /** Every operation of the task's items (runs and term extraction), oldest first. */

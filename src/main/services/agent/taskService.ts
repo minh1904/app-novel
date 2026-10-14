@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import type { AgentWriteIntent, ResolvedTarget } from '../../../shared/contracts/agent'
 import type {
   AgentTaskChanged,
@@ -9,7 +9,12 @@ import type {
   AgentTaskItemView,
   AgentTaskProgress,
   AgentTaskReason,
+  AgentTaskState,
+  AgentTaskSteeringView,
+  AgentTaskSteerInput,
+  AgentTaskSteerResult,
   AgentTaskSummary,
+  SteeringContextRef,
   AgentTaskView,
   ContextStrategy
 } from '../../../shared/contracts/agentTask'
@@ -22,7 +27,11 @@ import { StorageError } from '../../infra/storage/errors'
 import { createRunContext, getRunContext } from '../../infra/storage/translateRunContext'
 import type { ConnectionService } from '../ai/connectionService'
 import type { ContextExtractionService } from '../context/contextExtractionService'
-import { takeContextSnapshot } from '../ai/translate/contextSnapshot'
+import { parseSnapshot, takeContextSnapshot } from '../ai/translate/contextSnapshot'
+import { changeDyadFrom } from '../../infra/storage/addressingEntries'
+import { hasGlossary } from '../../infra/storage/contextEntries'
+import type { QaDismissInput, TaskQualityView } from '../../../shared/contracts/taskQuality'
+import { dismissFinding, readTaskQuality } from './taskQuality'
 import type { LibraryStore } from '../library/library'
 import { aggregateTokenUsage, calculateTurnCost } from './agentUsage'
 import { defaultModelSelection, digestPayload } from './agentService'
@@ -68,6 +77,21 @@ interface RunningItem {
 /** Tasks from before the choice existed translated with the approved context only. */
 export const contextStrategyOf = (task: AgentTaskView): ContextStrategy =>
   task.options.contextStrategy === 'extract_then_review' ? 'extract_then_review' : 'approved_only'
+
+/** Task states that take no more steering. */
+const STEERING_CLOSED: readonly AgentTaskState[] = [
+  'cancelling',
+  'cancelled',
+  'completed',
+  'partially_completed',
+  'failed'
+]
+
+/** A stable UUID-shaped id from a seed (the derived pair id of a steering). */
+function uuidFrom(seed: string): string {
+  const hex = createHash('sha256').update(seed).digest('hex')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`
+}
 
 const EMPTY_COUNTS = (): Record<AgentTaskItemState, number> =>
   Object.fromEntries(TASK_ITEM_STATES.map((state) => [state, 0])) as Record<
@@ -118,16 +142,62 @@ export class AgentTaskService {
     return this.tasks.listTasks(filter).map((task) => this.summary(task))
   }
 
+  /** Quality warnings of every item, from each item's pinned snapshot; read-only (change `add-translation-task-qa`). */
+  quality(taskId: string): TaskQualityView {
+    const { task, items } = this.get(taskId)
+    return readTaskQuality(this.library, task, items)
+  }
+
+  /** "Ignore this warning" for a paragraph's current text. Changes neither the text nor any state. */
+  dismiss(input: QaDismissInput): void {
+    const task = this.tasks.getTask(input.taskId)
+    if (!task) throw new StorageError('not_found', 'Không tìm thấy tác vụ.')
+    dismissFinding(this.library, task.workId, this.itemOf(task, input.itemId), input, this.now())
+  }
+
   get(taskId: string): AgentTaskDetailView {
     const task = this.tasks.getTask(taskId)
     if (!task) throw new StorageError('not_found', 'Không tìm thấy tác vụ.')
     const labels = this.chapterLabels(task.workId)
+    const items = this.tasks.listItems(taskId)
+    const pinned = this.pinnedInstructions(task.workId, items)
+    const labelOf = (chapterId: string) => labels.get(chapterId) ?? 'Chương đã xóa'
+    const itemChapter = new Map(items.map((item) => [item.id, item.chapterId]))
+    const steerings = this.tasks.listSteerings(taskId)
     return {
       task: this.summary(task),
-      items: this.tasks.listItems(taskId).map((item) => ({
+      items: items.map((item) => ({
         ...item,
-        chapterLabel: labels.get(item.chapterId) ?? 'Chương đã xóa'
-      }))
+        chapterLabel: labelOf(item.chapterId),
+        ...(item.runKey ? { instruction: pinned.get(item.id) ?? null } : {})
+      })),
+      steerings: steerings.map((steering) => ({
+        ...steering,
+        requestedLabel: labelOf(steering.requestedChapterId),
+        effectiveLabel: labelOf(itemChapter.get(steering.resolvedFromItemId) ?? '')
+      })),
+      currentInstruction:
+        steerings.filter((s) => s.kind === 'instruction' && s.state !== 'superseded').at(-1)
+          ?.instructionText ?? null
+    }
+  }
+
+  /** What each pinned item's snapshot holds as instruction; a missing work file reads as none. */
+  private pinnedInstructions(
+    workId: string,
+    items: AgentTaskItemView[]
+  ): Map<string, string | null> {
+    try {
+      return this.library.withWork(workId, (db) => {
+        const out = new Map<string, string | null>()
+        for (const item of items) {
+          const stored = item.runKey ? getRunContext(db, item.runKey) : null
+          if (stored) out.set(item.id, parseSnapshot(stored.snapshotJson).instruction ?? null)
+        }
+        return out
+      })
+    } catch {
+      return new Map()
     }
   }
 
@@ -212,6 +282,12 @@ export class AgentTaskService {
       entryId: selection.entryId,
       settingsKey: translator.settingsKey
     }
+    // Default (2026-10-14): a work with no glossary yet extracts first, unless the command says otherwise.
+    const contextStrategy: ContextStrategy =
+      input.contextStrategy ??
+      (this.library.withWork(input.workId, (db) => hasGlossary(db))
+        ? 'approved_only'
+        : 'extract_then_review')
     const created = this.tasks.createTask({
       id: this.newId(),
       workId: input.workId,
@@ -228,7 +304,7 @@ export class AgentTaskService {
       }),
       model,
       budget: input.budget,
-      options: { contextStrategy: input.contextStrategy },
+      options: { contextStrategy },
       chapterIds,
       newId: this.newId,
       now: this.now()
@@ -361,6 +437,145 @@ export class AgentTaskService {
   }
 
   // ---------------------------------------------------------------------------------------------------
+  // Steering (change `add-agent-steering`)
+
+  listSteerings(taskId: string): AgentTaskSteeringView[] {
+    return this.tasks.listSteerings(taskId)
+  }
+
+  /**
+   * Accepts or refuses a steering command at once. It runs on the main thread between item starts, and an
+   * item pins its snapshot and turns `running` in one synchronous step, so every item sees all of a
+   * steering or none of it. A refusal throws and writes nothing.
+   */
+  steer(input: AgentTaskSteerInput): AgentTaskSteerResult {
+    const digest = digestPayload({
+      taskId: input.taskId,
+      chapterNumber: input.chapterNumber,
+      chapterId: input.chapterId,
+      change: input.change
+    })
+    const task = this.tasks.getTask(input.taskId)
+    if (!task) throw new StorageError('not_found', 'Không tìm thấy tác vụ.')
+    const labels = this.chapterLabels(task.workId)
+    const items = this.tasks.listItems(task.id)
+    const effectiveOf = (itemId: string) => {
+      const item = items.find((each) => each.id === itemId)!
+      return {
+        itemId,
+        chapterId: item.chapterId,
+        chapterLabel: labels.get(item.chapterId) ?? 'Chương đã xóa'
+      }
+    }
+
+    const prior = this.tasks.getSteeringByCommand(input.clientCommandId)
+    if (prior) {
+      if (prior.digest !== digest || prior.taskId !== task.id) {
+        throw new StorageError('conflict', 'Mã lệnh đã dùng cho một yêu cầu khác.')
+      }
+      const { digest: _digest, ...steering } = prior
+      return { steering, effectiveFrom: effectiveOf(steering.resolvedFromItemId) }
+    }
+
+    if (STEERING_CLOSED.includes(task.state)) {
+      throw new StorageError('conflict', 'Tác vụ đã kết thúc hoặc đang hủy; không nhận điều chỉnh.')
+    }
+    if (input.change.kind === 'third_person') {
+      throw new StorageError(
+        'validation',
+        'Đại từ ngôi ba chưa có phạm vi chương; hãy sửa cho cả tác phẩm ở Ngữ cảnh.'
+      )
+    }
+    const chapters = this.library.listChapters(task.workId)
+    const requested = input.chapterId
+      ? chapters.find((chapter) => chapter.id === input.chapterId)
+      : chapters.find((chapter) => chapter.number === input.chapterNumber)
+    const at = requested ? items.find((item) => item.chapterId === requested.id) : undefined
+    if (!requested || !at) {
+      throw new StorageError('validation', 'Chương yêu cầu không thuộc tác vụ này.')
+    }
+    // The first item no run has pinned: a running, finished or retried item keeps its snapshot.
+    const from = items.find(
+      (item) => item.ordinal >= at.ordinal && item.state === 'queued' && item.runKey === null
+    )
+    if (!from) {
+      throw new StorageError('conflict', 'Không còn chương chưa chạy từ chương này trở đi.')
+    }
+
+    const now = this.now()
+    const id = this.newId()
+    let contextRef: SteeringContextRef | undefined
+    if (input.change.kind === 'addressing') {
+      const change = input.change
+      // Work DB first; the pair id comes from the command, so a resend finds what it already wrote.
+      contextRef = this.library.withWork(task.workId, (db) =>
+        changeDyadFrom(
+          db,
+          {
+            newDyadId: uuidFrom(`steering:${task.id}:${input.clientCommandId}`),
+            sourceCharacterId: change.speakerCharacterId,
+            targetCharacterId: change.listenerCharacterId,
+            fromChapterId: from.chapterId,
+            speakerPronoun: change.speakerPronoun,
+            recipientPronoun: change.recipientPronoun,
+            secondPerson: change.secondPerson
+          },
+          now
+        )
+      )
+    }
+    const steering = this.tasks.transaction(() => {
+      if (input.change.kind === 'instruction') {
+        const ordinal = new Map(items.map((item) => [item.id, item.ordinal]))
+        for (const older of this.tasks.listSteerings(task.id)) {
+          if (
+            older.kind === 'instruction' &&
+            older.state === 'accepted' &&
+            ordinal.get(older.resolvedFromItemId)! >= from.ordinal
+          ) {
+            this.tasks.settleSteering(older.id, 'superseded', now)
+          }
+        }
+      }
+      return this.tasks.createSteering({
+        id,
+        taskId: task.id,
+        clientCommandId: input.clientCommandId,
+        digest,
+        requestedChapterId: requested.id,
+        resolvedFromItemId: from.id,
+        kind: input.change.kind === 'instruction' ? 'instruction' : 'context_ref',
+        instructionText: input.change.kind === 'instruction' ? input.change.text : undefined,
+        contextRef,
+        now
+      })
+    })
+    this.notify(task)
+    return { steering, effectiveFrom: effectiveOf(from.id) }
+  }
+
+  /**
+   * The instruction an item pins: the latest instruction steering, not superseded, whose start is not
+   * after the item. Each one holds the full text, so there is nothing to merge.
+   */
+  private instructionFor(item: AgentTaskItemView): AgentTaskSteeringView | null {
+    const ordinal = new Map(
+      this.tasks.listItems(item.taskId).map((each) => [each.id, each.ordinal])
+    )
+    return (
+      this.tasks
+        .listSteerings(item.taskId)
+        .filter(
+          (steering) =>
+            steering.kind === 'instruction' &&
+            steering.state !== 'superseded' &&
+            (ordinal.get(steering.resolvedFromItemId) ?? Number.POSITIVE_INFINITY) <= item.ordinal
+        )
+        .at(-1) ?? null
+    )
+  }
+
+  // ---------------------------------------------------------------------------------------------------
   // Scheduler
 
   /** Schedules one look at the queue; calls while a look is pending or an item runs collapse. */
@@ -450,9 +665,17 @@ export class AgentTaskService {
 
     // Work DB first: pin the snapshot once; a crash between the two DBs reuses it.
     const runKey = item.runKey ?? `task:${item.id}`
-    this.library.withWork(task.workId, (db) => {
-      if (getRunContext(db, runKey)) return
-      const record = takeContextSnapshot(this.library, task.workId, item.chapterId, source.content)
+    const steering = item.runKey === null ? this.instructionFor(item) : null
+    const pinned = this.library.withWork(task.workId, (db) => {
+      const existing = getRunContext(db, runKey)
+      if (existing) return parseSnapshot(existing.snapshotJson).instruction ?? null
+      const record = takeContextSnapshot(
+        this.library,
+        task.workId,
+        item.chapterId,
+        source.content,
+        steering?.instructionText ?? undefined
+      )
       createRunContext(db, {
         runKey,
         chapterId: item.chapterId,
@@ -460,6 +683,7 @@ export class AgentTaskService {
         snapshotHash: record.hash,
         createdAt: now
       })
+      return record.snapshot.instruction ?? null
     })
 
     const target = this.chapterTarget(task.workId, item.chapterId)
@@ -471,6 +695,10 @@ export class AgentTaskService {
         now,
         patch: { runKey, sourceRev: item.sourceRev ?? source.rev, expectedTargetRev: targetRev }
       })
+      // First pin in the library: the steering the snapshot holds is now in use.
+      if (steering?.state === 'accepted' && steering.instructionText === pinned) {
+        this.tasks.settleSteering(steering.id, 'applied', now)
+      }
       if (sourceChanged) return
       this.operations.createOperation({
         id: operationId,

@@ -59,7 +59,12 @@ export interface WorkspaceStateStore {
   paletteOpen: boolean
 
   leaveGuardRegistry: LeaveGuardRegistry | null
+  /** A paragraph the chapter screen should scroll to once its editors are up ("Mở đoạn"). */
+  reveal: { chapterId: string; paragraph: number } | null
 
+  /** Opens a chapter and asks its screen to scroll to the paragraph. */
+  openParagraph(workId: string, chapterId: string, paragraph: number): Promise<boolean>
+  clearReveal(): void
   setLeaveGuardRegistry(registry: LeaveGuardRegistry | null): void
   navigate(next: View): Promise<boolean>
   activateTab(workId: string): void
@@ -87,7 +92,8 @@ const initialValues = {
   navCollapsed: false,
   paletteOpen: false,
 
-  leaveGuardRegistry: null as LeaveGuardRegistry | null
+  leaveGuardRegistry: null as LeaveGuardRegistry | null,
+  reveal: null as { chapterId: string; paragraph: number } | null
 }
 
 let pendingSave = Promise.resolve()
@@ -121,6 +127,14 @@ export const useWorkspaceStore = create<WorkspaceStateStore>((set, get) => ({
   navCollapsed: readNavCollapsed(),
 
   setLeaveGuardRegistry: (registry) => set({ leaveGuardRegistry: registry }),
+
+  openParagraph: async (workId, chapterId, paragraph) => {
+    const opened = await get().navigate({ name: 'chapter', workId, chapterId })
+    if (opened) set({ reveal: { chapterId, paragraph } })
+    return opened
+  },
+
+  clearReveal: () => set({ reveal: null }),
 
   navigate: async (next) => {
     const { view, leaveGuardRegistry } = get()

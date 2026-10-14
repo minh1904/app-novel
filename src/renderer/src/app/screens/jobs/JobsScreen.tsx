@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import { PageFrame } from '../../../components/ui/PageFrame'
 import { TaskList } from '../../../modules/agent/public'
-import { openGlossaryReview } from '../../../modules/workspace/public'
+import { openGlossaryReview, useWorkspaceStore } from '../../../modules/workspace/public'
 
 /**
  * Màn Tác vụ toàn ứng dụng: mọi tác vụ dịch bền, điều khiển được (tạm dừng, tiếp tục, hủy, thử lại) và
@@ -17,6 +17,9 @@ export function JobsScreen({
       <TaskList
         onOpenChapter={onOpenChapter}
         onReviewContext={(workId) => void openGlossaryReview(workId)}
+        onOpenSegment={(workId, chapterId, paragraph) =>
+          void useWorkspaceStore.getState().openParagraph(workId, chapterId, paragraph)
+        }
       />
     </PageFrame>
   )

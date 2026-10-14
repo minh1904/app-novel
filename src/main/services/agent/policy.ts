@@ -4,6 +4,8 @@ import type { CapabilityKind } from './types'
 
 /** The capability that creates a multi-chapter translation task (`add-durable-translation-tasks`). */
 export const CREATE_TRANSLATION_TASK = 'create_translation_task'
+/** The capability that steers a running task from a chapter on (`add-agent-steering`). */
+export const STEER_TRANSLATION_TASK = 'steer_translation_task'
 export const RESOLVE_TARGET = 'resolve_target'
 export const UNDO_OPERATION = 'undo_operation'
 /** Handle of the context snapshot's target. */
@@ -90,6 +92,12 @@ export function decideToolCall(input: PolicyInput): PolicyDecision {
   }
   if (input.name === CREATE_TRANSLATION_TASK) {
     return { decision: 'needs_user', reason: 'Tác vụ dịch nhiều chương tốn chi phí, cần duyệt.' }
+  }
+  if (input.name === STEER_TRANSLATION_TASK) {
+    return {
+      decision: 'needs_user',
+      reason: 'Điều chỉnh tác vụ đổi cách dịch các chương sau, cần duyệt.'
+    }
   }
   if (input.kind === 'reversible-write') {
     if (input.handle === CONTEXT_HANDLE || input.chosenByUser || namedByUser(input)) {

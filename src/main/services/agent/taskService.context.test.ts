@@ -57,7 +57,7 @@ function contextKit(terms: Term[]) {
     return service
   }
   const tasks = make()
-  const create = (contextStrategy: ContextStrategy, budget = {}) =>
+  const create = (contextStrategy: ContextStrategy | undefined, budget = {}) =>
     tasks.create({
       clientCommandId: command(),
       contextStrategy,
@@ -135,6 +135,20 @@ describe('AgentTaskService: context before translating', () => {
     await kit.tasks.idle()
     expect(kit.extractionCalls()).toBe(1) // both short chapters share one sweep chunk
     expect(kit.tasks.get(task.id).task.state).toBe('completed')
+  })
+
+  // Default since 2026-10-14: no choice in the command means "extract first" for a work with no glossary.
+  it('extracts first by default when the work has no glossary, and not once it has one', async () => {
+    const kit = contextKit([HAN_LAP])
+    const first = kit.create(undefined)
+    expect(first.options.contextStrategy).toBe('extract_then_review')
+    await kit.tasks.idle()
+    expect(kit.tasks.get(first.id).task.reason).toBe('context_review')
+
+    // The pending candidate counts as a glossary: the next default task translates right away.
+    const second = kit.create(undefined)
+    expect(second.options.contextStrategy).toBe('approved_only')
+    await kit.tasks.idle()
   })
 
   it('never extracts for a task that translates with the approved context only', async () => {

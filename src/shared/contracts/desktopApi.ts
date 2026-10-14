@@ -32,7 +32,9 @@ import type {
   AgentTaskCreateInput,
   AgentTaskDetailView,
   AgentTaskSummary,
-  AgentTaskView
+  AgentTaskView,
+  AgentTaskSteerInput,
+  AgentTaskSteerResult
 } from './agentTask'
 import type { ChatChunk, ChatSendInput, ChatStartResult } from './aiChat'
 import type { AcceptProposalInput, AcceptProposalResult, ProposalQueueItem } from './aiProposals'
@@ -53,6 +55,7 @@ import type { LinkRecord } from './links'
 import type { RowSaved } from './rows'
 import type { CreateWorkInput, WorkList, WorkPatch, WorkSummary } from './library'
 import type { Result } from './result'
+import type { QaDismissInput, TaskQualityView } from './taskQuality'
 import type { WorkspaceLoad, WorkspaceState } from './workspace'
 import type { SegmentInput, TextRecord, TextSide } from './text'
 import type {
@@ -501,6 +504,10 @@ export interface AgentApi {
     get(taskId: string): Promise<Result<AgentTaskDetailView>>
     create(input: AgentTaskCreateInput): Promise<Result<AgentTaskView>>
     control(input: AgentTaskControlInput): Promise<Result<AgentTaskView>>
+    steer(input: AgentTaskSteerInput): Promise<Result<AgentTaskSteerResult>>
+    /** Open quality warnings of every item, computed now from each item's pinned snapshot. */
+    quality(taskId: string): Promise<Result<TaskQualityView>>
+    dismiss(input: QaDismissInput): Promise<Result<void>>
     onChanged(listener: (event: AgentTaskChanged) => void): () => void
   }
 }

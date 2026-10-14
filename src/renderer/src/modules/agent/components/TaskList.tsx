@@ -1,14 +1,25 @@
-import { useEffect, type JSX } from 'react'
+import { useEffect, useState, type JSX } from 'react'
 import type {
   AgentTaskCommand,
   AgentTaskItemState,
   AgentTaskReason,
+  AgentTaskDetailView,
   AgentTaskState,
+  AgentTaskSteeringState,
   AgentTaskSummary
 } from '../../../../../shared/contracts/agentTask'
+import { STEERING_INSTRUCTION_MAX } from '../../../../../shared/contracts/agentTask'
+import type {
+  QaFinding,
+  QaRuleCode,
+  TaskQualityView
+} from '../../../../../shared/contracts/taskQuality'
 import { Badge, type BadgeColor } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { EmptyState } from '../../../components/ui/EmptyState'
+import { Field } from '../../../components/ui/Field'
+import { Input } from '../../../components/ui/Input'
+import { Textarea } from '../../../components/ui/Textarea'
 import { ProgressBar } from '../../../components/ui/ProgressBar'
 import { TASK_STATE_LABELS, useTaskStore } from '../store/taskStore'
 import { UsageDisplay } from './UsageDisplay'
@@ -80,12 +91,228 @@ const COMMANDS: Record<AgentTaskState, Array<{ command: AgentTaskCommand; label:
   cancelled: [{ command: 'run_again', label: 'Chạy lại' }]
 }
 
+const STEERING_STATES: Record<AgentTaskSteeringState, { label: string; color: BadgeColor }> = {
+  accepted: { label: 'Chờ áp dụng', color: 'info' },
+  applied: { label: 'Đã áp dụng', color: 'success' },
+  superseded: { label: 'Bị thay', color: 'neutral' }
+}
+
+/** States that still take steering (the rest are finished or cancelling). */
+const STEERABLE: readonly AgentTaskState[] = [
+  'queued',
+  'running',
+  'pausing',
+  'paused',
+  'waiting_user'
+]
+
+/**
+ * Steering of a task: what was asked and where it really applies, and a form for a new full
+ * instruction from a chapter on (change `add-agent-steering`).
+ */
+function SteeringPanel({
+  task,
+  detail
+}: {
+  task: AgentTaskSummary
+  detail: AgentTaskDetailView
+}): JSX.Element {
+  const steer = useTaskStore((s) => s.steer)
+  const [chapter, setChapter] = useState('')
+  const [text, setText] = useState(detail.currentInstruction ?? '')
+  const number = Number(chapter)
+  const ready = Number.isInteger(number) && number >= 1 && text.trim() !== ''
+
+  return (
+    <div className="flex flex-col gap-xs">
+      {detail.steerings.length > 0 && (
+        <ul aria-label="Các lần điều chỉnh" className="m-0 flex list-none flex-col gap-2xs p-0">
+          {detail.steerings.map((steering) => (
+            <li key={steering.id} className="flex flex-wrap items-center gap-xs text-body-sm">
+              <span className="min-w-0 flex-1">
+                {steering.kind === 'instruction' ? 'Chỉ dẫn' : 'Xưng hô'} · yêu cầu từ{' '}
+                {steering.requestedLabel} · áp dụng từ {steering.effectiveLabel}
+              </span>
+              <Badge color={STEERING_STATES[steering.state].color} variant="plain" dot>
+                {STEERING_STATES[steering.state].label}
+              </Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+      {STEERABLE.includes(task.state) && (
+        <form
+          aria-label="Điều chỉnh tác vụ"
+          className="flex flex-col gap-xs"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (ready) void steer(task.id, number, text.trim()).then((ok) => ok && setChapter(''))
+          }}
+        >
+          <Field label="Từ chương" hint="Chương đang dịch hoặc đã dịch giữ bản cũ.">
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                type="number"
+                min={1}
+                className="w-32"
+                value={chapter}
+                onChange={(event) => setChapter(event.target.value)}
+              />
+            )}
+          </Field>
+          <Field label="Chỉ dẫn (toàn văn, thay chỉ dẫn cũ)">
+            {({ id, describedBy }) => (
+              <Textarea
+                id={id}
+                aria-describedby={describedBy}
+                maxLength={STEERING_INSTRUCTION_MAX}
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+              />
+            )}
+          </Field>
+          <div>
+            <Button type="submit" disabled={!ready}>
+              Áp dụng điều chỉnh
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
+/** Every rule has a written label: colour is never the only signal. */
+export const QA_RULE_LABELS: Record<QaRuleCode, string> = {
+  'glossary.forbidden_used': 'Từ bị cấm',
+  'glossary.missing_target': 'Thiếu thuật ngữ',
+  'addressing.unexpected_pronoun': 'Xưng hô lệch',
+  'addressing.inconsistent_pair': 'Xưng hô không nhất quán',
+  'text.residual_source': 'Còn chữ gốc',
+  'text.length_ratio': 'Độ dài bất thường',
+  'text.repetition': 'Lặp bất thường',
+  'text.unbalanced_quotes': 'Ngoặc không cân'
+}
+
+function FindingRow({
+  task,
+  itemId,
+  finding,
+  onOpenSegment
+}: {
+  task: AgentTaskSummary
+  itemId: string
+  finding: QaFinding
+  onOpenSegment: TaskListProps['onOpenSegment']
+}): JSX.Element {
+  const dismiss = useTaskStore((s) => s.dismiss)
+  const [asking, setAsking] = useState(false)
+  const [reason, setReason] = useState('')
+  return (
+    <li className="flex flex-col gap-2xs text-body-sm">
+      <div className="flex flex-wrap items-center gap-xs">
+        <Badge color="warning" variant="plain">
+          Cảnh báo · {QA_RULE_LABELS[finding.ruleCode]}
+        </Badge>
+        <span className="min-w-0 flex-1">{finding.message}</span>
+        {onOpenSegment && (
+          <Button
+            variant="ghost"
+            onClick={() => onOpenSegment(task.workId, finding.chapterId, finding.paragraphIndex)}
+          >
+            Mở đoạn
+          </Button>
+        )}
+        {!asking && (
+          <Button variant="ghost" onClick={() => setAsking(true)}>
+            Bỏ qua
+          </Button>
+        )}
+      </div>
+      <span className="text-body-xs text-muted">Bằng chứng: {finding.evidence}</span>
+      {asking && (
+        <form
+          aria-label="Bỏ qua cảnh báo"
+          className="flex flex-wrap items-end gap-xs"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void dismiss(task.id, itemId, finding, reason)
+          }}
+        >
+          <Field label="Lý do (không bắt buộc)" className="min-w-0 flex-1">
+            {({ id }) => (
+              <Input id={id} value={reason} onChange={(event) => setReason(event.target.value)} />
+            )}
+          </Field>
+          <Button type="submit">Xác nhận bỏ qua</Button>
+          <Button variant="ghost" onClick={() => setAsking(false)}>
+            Hủy
+          </Button>
+        </form>
+      )}
+    </li>
+  )
+}
+
+/**
+ * Quality warnings of a task (change `add-translation-task-qa`): only warnings, counted, never a score or
+ * "100% correct"; an item with nothing to check says N/A.
+ */
+function QualityPanel({
+  task,
+  quality,
+  onOpenSegment
+}: {
+  task: AgentTaskSummary
+  quality: TaskQualityView
+  onOpenSegment: TaskListProps['onOpenSegment']
+}): JSX.Element {
+  const checked = quality.items.filter((item) => item.status === 'checked')
+  return (
+    <section aria-label="Cảnh báo chất lượng" className="flex flex-col gap-xs">
+      <h4 className="m-0 text-label-sm">
+        {quality.openCount > 0
+          ? `Cảnh báo chất lượng: ${quality.openCount} đang mở`
+          : checked.length > 0
+            ? 'Không có cảnh báo đang mở'
+            : 'Chưa có chương nào để kiểm'}
+      </h4>
+      {quality.items.map((item) =>
+        item.status === 'na' ? (
+          <p key={item.itemId} className="m-0 text-body-xs text-muted">
+            {item.chapterLabel}: N/A, chưa có bản dịch để kiểm
+          </p>
+        ) : item.findings.length > 0 ? (
+          <div key={item.itemId} className="flex flex-col gap-2xs">
+            <span className="text-body-xs text-muted">{item.chapterLabel}</span>
+            <ul className="m-0 flex list-none flex-col gap-xs p-0">
+              {item.findings.map((finding) => (
+                <FindingRow
+                  key={finding.ruleCode + finding.segmentId}
+                  task={task}
+                  itemId={item.itemId}
+                  finding={finding}
+                  onOpenSegment={onOpenSegment}
+                />
+              ))}
+            </ul>
+          </div>
+        ) : null
+      )}
+    </section>
+  )
+}
+
 export interface TaskListProps {
   /** Only the tasks of this work (the work's Tasks area); all tasks when absent. */
   workId?: string
   onOpenChapter: (workId: string, chapterId: string) => void
   /** "Xem và duyệt" of a task waiting for context review. */
   onReviewContext?: (workId: string) => void
+  /** "Mở đoạn" of a quality warning: the chapter, scrolled to the source paragraph. */
+  onOpenSegment?: (workId: string, chapterId: string, paragraphIndex: number) => void
 }
 
 /** Progress in words: never "done" while an item failed or waits. */
@@ -101,13 +328,16 @@ export function taskProgressLabel(task: AgentTaskSummary): string {
 function TaskRow({
   task,
   onOpenChapter,
-  onReviewContext
+  onReviewContext,
+  onOpenSegment
 }: {
   task: AgentTaskSummary
   onOpenChapter: TaskListProps['onOpenChapter']
   onReviewContext: TaskListProps['onReviewContext']
+  onOpenSegment: TaskListProps['onOpenSegment']
 }): JSX.Element {
   const detail = useTaskStore((s) => s.details[task.id])
+  const quality = useTaskStore((s) => s.quality[task.id])
   const control = useTaskStore((s) => s.control)
   const expand = useTaskStore((s) => s.expand)
   const collapse = useTaskStore((s) => s.collapse)
@@ -201,17 +431,31 @@ function TaskRow({
                 <Button variant="ghost" onClick={() => onOpenChapter(task.workId, item.chapterId)}>
                   Mở đích
                 </Button>
+                {item.instruction !== undefined && (
+                  <span className="basis-full truncate text-body-xs text-muted">
+                    {item.instruction ? `Chỉ dẫn: ${item.instruction}` : 'Không có chỉ dẫn'}
+                  </span>
+                )}
               </li>
             )
           })}
         </ol>
       )}
+      {detail && quality && (
+        <QualityPanel task={task} quality={quality} onOpenSegment={onOpenSegment} />
+      )}
+      {detail && <SteeringPanel task={task} detail={detail} />}
     </li>
   )
 }
 
 /** Durable tasks read from Main; refetched on mount and on every `agentTaskChanged`. */
-export function TaskList({ workId, onOpenChapter, onReviewContext }: TaskListProps): JSX.Element {
+export function TaskList({
+  workId,
+  onOpenChapter,
+  onReviewContext,
+  onOpenSegment
+}: TaskListProps): JSX.Element {
   const tasks = useTaskStore((s) => s.tasks)
   const load = useTaskStore((s) => s.load)
   const lastError = useTaskStore((s) => s.lastError)
@@ -250,6 +494,7 @@ export function TaskList({ workId, onOpenChapter, onReviewContext }: TaskListPro
               task={task}
               onOpenChapter={onOpenChapter}
               onReviewContext={onReviewContext}
+              onOpenSegment={onOpenSegment}
             />
           ))}
         </ul>

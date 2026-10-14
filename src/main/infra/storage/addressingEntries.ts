@@ -602,3 +602,84 @@ export function getEffectiveDyadsForChapter(db: Db, chapterId: string): Addressi
 
   return resolved
 }
+
+/**
+ * Steering "from chapter E, A addresses B like this" (change `add-agent-steering`), in one transaction:
+ * the approved pair of A → B in effect at E ends at the chapter before E and a new approved pair starts
+ * at E, up to where the old one ended. `newDyadId` is derived by the caller, so a resend after a failure
+ * finds the pair it already wrote. A pair that starts at or after E is refused: no range splitting.
+ */
+export function changeDyadFrom(
+  db: Db,
+  params: {
+    newDyadId: string
+    sourceCharacterId: string
+    targetCharacterId: string
+    fromChapterId: string
+    speakerPronoun: string
+    recipientPronoun: string
+    secondPerson?: string | null
+  },
+  now: number = Date.now()
+): { newDyadId: string; closedDyadId: string | null } {
+  return db.transaction(() => {
+    const position = (id: string | null): number | null =>
+      id
+        ? (db.prepare('SELECT position FROM chapter WHERE id = ?').get<{ position: number }>(id)
+            ?.position ?? null)
+        : null
+    const at = position(params.fromChapterId)
+    if (at === null) throw new StorageError('not_found', 'Không tìm thấy chương áp dụng.')
+    const previous =
+      db
+        .prepare('SELECT id FROM chapter WHERE position < ? ORDER BY position DESC LIMIT 1')
+        .get<{ id: string }>(at)?.id ?? null
+    const samePair = (dyad: AddressingDyadItem) =>
+      dyad.sourceCharacterId === params.sourceCharacterId &&
+      dyad.targetCharacterId === params.targetCharacterId
+
+    if (getDyad(db, params.newDyadId)) {
+      const closed = listDyads(db).find(
+        (dyad) => samePair(dyad) && previous !== null && dyad.toChapterId === previous
+      )
+      return { newDyadId: params.newDyadId, closedDyadId: closed?.id ?? null }
+    }
+
+    const active = listDyads(db, { chapterId: params.fromChapterId, status: 'approved' }).filter(
+      samePair
+    )
+    for (const dyad of active) {
+      const start = position(dyad.fromChapterId)
+      if (previous === null || (start !== null && start >= at)) {
+        throw new StorageError(
+          'validation',
+          'Cặp xưng hô hiện có bắt đầu từ chương này hoặc sau; hãy sửa trực tiếp ở Ngữ cảnh.'
+        )
+      }
+    }
+    const closed = active[0] ?? null
+    if (closed) {
+      db.prepare('UPDATE context_entry SET to_chapter_id = ?, updated_at = ? WHERE id = ?').run(
+        previous,
+        now,
+        closed.id
+      )
+    }
+    const created = setDyad(
+      db,
+      {
+        sourceCharacterId: params.sourceCharacterId,
+        targetCharacterId: params.targetCharacterId,
+        speakerPronoun: params.speakerPronoun,
+        recipientPronoun: params.recipientPronoun,
+        secondPerson: params.secondPerson ?? null,
+        fromChapterId: params.fromChapterId,
+        toChapterId: closed?.toChapterId ?? null,
+        status: 'approved'
+      },
+      now
+    )
+    db.prepare('UPDATE context_entry SET id = ? WHERE id = ?').run(params.newDyadId, created.id)
+    return { newDyadId: params.newDyadId, closedDyadId: closed?.id ?? null }
+  })
+}

@@ -5,12 +5,15 @@ import type {
   AgentTaskDetailView,
   AgentTaskSummary
 } from '../../../../../shared/contracts/agentTask'
+import type { QaFinding, TaskQualityView } from '../../../../../shared/contracts/taskQuality'
 import { registerStoreReset } from '../../../lib/testing/resetStores'
 
 export interface TaskState {
   tasks: AgentTaskSummary[]
   /** Item lists of the tasks a person expanded; refreshed with the list. */
   details: Record<string, AgentTaskDetailView>
+  /** Quality warnings of the expanded tasks, computed by Main when read. */
+  quality: Record<string, TaskQualityView>
   load: 'idle' | 'loading' | 'ready' | 'failed'
   lastError: string | null
   /** The last state change, read out by the live region. */
@@ -19,6 +22,10 @@ export interface TaskState {
   expand: (taskId: string) => Promise<void>
   collapse: (taskId: string) => void
   control: (taskId: string, command: AgentTaskCommand, itemId?: string) => Promise<void>
+  /** Steers the task from a chapter on with a full instruction; announces where it really starts. */
+  steer: (taskId: string, chapterNumber: number, text: string) => Promise<boolean>
+  /** Ignores one warning for the paragraph's current text, then refetches the warnings. */
+  dismiss: (taskId: string, itemId: string, finding: QaFinding, reason?: string) => Promise<void>
   /** Subscribes to `agentTaskChanged` and refetches; returns the unsubscribe. */
   listen: () => () => void
   reset: () => void
@@ -49,6 +56,7 @@ let unbind: (() => void) | null = null
 export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
   details: {},
+  quality: {},
   load: 'idle',
   lastError: null,
   announcement: '',
@@ -63,23 +71,31 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       return
     }
     const details: Record<string, AgentTaskDetailView> = {}
+    const quality: Record<string, TaskQualityView> = {}
     for (const taskId of Object.keys(get().details)) {
       const detail = await api.get(taskId)
       if (detail.ok) details[taskId] = detail.value
+      const warnings = await api.quality(taskId)
+      if (warnings.ok) quality[taskId] = warnings.value
     }
-    set({ tasks: res.value.tasks, details, load: 'ready' })
+    set({ tasks: res.value.tasks, details, quality, load: 'ready' })
   },
 
   expand: async (taskId) => {
-    const res = await bridge()?.get(taskId)
+    const api = bridge()
+    const res = await api?.get(taskId)
     if (res?.ok) set((s) => ({ details: { ...s.details, [taskId]: res.value } }))
+    const warnings = await api?.quality(taskId)
+    if (warnings?.ok) set((s) => ({ quality: { ...s.quality, [taskId]: warnings.value } }))
   },
 
   collapse: (taskId) =>
     set((s) => {
       const details = { ...s.details }
       delete details[taskId]
-      return { details }
+      const quality = { ...s.quality }
+      delete quality[taskId]
+      return { details, quality }
     }),
 
   control: async (taskId, command, itemId) => {
@@ -96,6 +112,41 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     })
     if (!res.ok) set({ lastError: res.error.message })
     await get().refresh()
+  },
+
+  steer: async (taskId, chapterNumber, text) => {
+    const api = bridge()
+    if (!api) return false
+    set({ lastError: null })
+    const res = await api.steer({
+      taskId,
+      clientCommandId: crypto.randomUUID(),
+      chapterNumber,
+      change: { kind: 'instruction', text }
+    })
+    if (res.ok) {
+      set({ announcement: `Điều chỉnh áp dụng từ ${res.value.effectiveFrom.chapterLabel}.` })
+    } else {
+      set({ lastError: res.error.message })
+    }
+    await get().refresh()
+    return res.ok
+  },
+
+  dismiss: async (taskId, itemId, finding, reason) => {
+    const api = bridge()
+    if (!api) return
+    const res = await api.dismiss({
+      taskId,
+      itemId,
+      segmentId: finding.segmentId,
+      ruleCode: finding.ruleCode,
+      ruleVersion: finding.ruleVersion,
+      ...(reason?.trim() ? { reason: reason.trim() } : {})
+    })
+    if (!res.ok) set({ lastError: res.error.message })
+    const warnings = await api.quality(taskId)
+    if (warnings.ok) set((s) => ({ quality: { ...s.quality, [taskId]: warnings.value } }))
   },
 
   listen: () => {
@@ -121,7 +172,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
-  reset: () => set({ tasks: [], details: {}, load: 'idle', lastError: null, announcement: '' })
+  reset: () =>
+    set({ tasks: [], details: {}, quality: {}, load: 'idle', lastError: null, announcement: '' })
 }))
 
 registerStoreReset(() => useTaskStore.getState().reset())

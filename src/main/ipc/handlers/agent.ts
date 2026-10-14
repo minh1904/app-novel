@@ -1,5 +1,10 @@
 import * as v from 'valibot'
 import {
+  qaDismissInputSchema,
+  taskQualityInputSchema,
+  type TaskQualityView
+} from '../../../shared/contracts/taskQuality'
+import {
   agentCancelInputSchema,
   agentSendInputSchema,
   agentUndoInputSchema,
@@ -20,6 +25,8 @@ import {
   agentTaskControlInputSchema,
   agentTaskCreateInputSchema,
   agentTaskGetInputSchema,
+  agentTaskSteerInputSchema,
+  type AgentTaskSteerResult,
   agentTaskListInputSchema,
   type AgentTaskDetailView,
   type AgentTaskSummary,
@@ -165,6 +172,20 @@ export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
     [CHANNELS.agentTaskControl]: createHandler(
       agentTaskControlInputSchema,
       (input): AgentTaskView => tasksOf(deps).control(input)
+    ),
+
+    [CHANNELS.agentTaskQuality]: createHandler(
+      taskQualityInputSchema,
+      ({ taskId }): TaskQualityView => tasksOf(deps).quality(taskId)
+    ),
+
+    [CHANNELS.agentTaskDismiss]: createHandler(qaDismissInputSchema, (input): void => {
+      tasksOf(deps).dismiss(input)
+    }),
+
+    [CHANNELS.agentTaskSteer]: createHandler(
+      agentTaskSteerInputSchema,
+      (input): AgentTaskSteerResult => tasksOf(deps).steer(input)
     ),
 
     [CHANNELS.agentTargetWriteAck]: createSinkHandler(

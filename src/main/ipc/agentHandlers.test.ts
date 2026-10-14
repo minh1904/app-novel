@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CHANNELS, EVENT_CHANNELS, type Channel } from '../../shared/contracts/channels'
+import type { TaskQualityView } from '../../shared/contracts/taskQuality'
 import type {
   AgentStreamEvent,
   AgentCancelInput,
@@ -315,13 +316,14 @@ describe('agent IPC handlers', () => {
         range: { from: 1, to: 2 }
       })
       expect(both.ok ? null : both.error.code).toBe('validation')
-      // No default: a create without the context choice is rejected and creates nothing.
-      const noChoice = call(CHANNELS.agentTaskCreate, {
+      // A context choice outside the list is refused and creates nothing.
+      const badChoice = call(CHANNELS.agentTaskCreate, {
         clientCommandId: randomUUID(),
+        contextStrategy: 'guess',
         workId: work1.id,
         range: { from: 1, to: 2 }
       })
-      expect(noChoice.ok ? null : noChoice.error.code).toBe('validation')
+      expect(badChoice.ok ? null : badChoice.error.code).toBe('validation')
       expect(services.tasks.list()).toEqual([])
 
       const created = value(
@@ -339,6 +341,32 @@ describe('agent IPC handlers', () => {
       )
       expect(listed.tasks.map((task) => task.id)).toEqual([created.id])
       await services.tasks.idle()
+    })
+
+    it('reads quality warnings and refuses a dismissal with an unknown rule', async () => {
+      const { call, work1, ch1_1, services } = taskHandlers()
+      const created = value(
+        call<AgentTaskView>(CHANNELS.agentTaskCreate, {
+          clientCommandId: randomUUID(),
+          contextStrategy: 'approved_only',
+          workId: work1.id,
+          chapterIds: [ch1_1.id]
+        })
+      )
+      await services.tasks.idle()
+      const quality = value(
+        call<TaskQualityView>(CHANNELS.agentTaskQuality, { taskId: created.id })
+      )
+      expect(quality.taskId).toBe(created.id)
+      expect(quality.items).toHaveLength(1)
+      const refused = call(CHANNELS.agentTaskDismiss, {
+        taskId: created.id,
+        itemId: randomUUID(),
+        segmentId: 's',
+        ruleCode: 'text.made_up',
+        ruleVersion: 1
+      })
+      expect(refused.ok ? null : refused.error.code).toBe('validation')
     })
 
     it('rejects a control with a stale state version', async () => {

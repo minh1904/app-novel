@@ -4,7 +4,11 @@ import type { ConnectionService } from '../../ai/connectionService'
 import type { CapabilityDefinition } from '../types'
 import { defaultReadCapabilities } from './readCapabilities'
 import { createWriteCapabilities } from './writeCapabilities'
-import { createTranslationTaskCapability } from './taskCapabilities'
+import {
+  createTranslationTaskCapability,
+  readTranslationTasksCapability,
+  steerTranslationTaskCapability
+} from './taskCapabilities'
 
 const write = createWriteCapabilities({ connections: {} as ConnectionService })
 const chatCapabilities: CapabilityDefinition[] = [
@@ -12,7 +16,9 @@ const chatCapabilities: CapabilityDefinition[] = [
   write.translateChapterCapability,
   write.editTranslationCapability,
   write.undoOperationCapability,
-  createTranslationTaskCapability
+  createTranslationTaskCapability,
+  steerTranslationTaskCapability,
+  readTranslationTasksCapability({ list: () => [], get: () => ({}) as never })
 ]
 
 /** A valid and an invalid model payload per capability, both without `target`. */
@@ -31,9 +37,14 @@ const samples: Record<string, { valid: unknown; invalid: unknown }> = {
   },
   undo_operation: { valid: { operationId: 'op' }, invalid: {} },
   create_translation_task: {
-    valid: { fromChapter: 1, toChapter: 30, contextStrategy: 'approved_only' },
-    invalid: { fromChapter: 1, toChapter: 30 }
-  }
+    valid: { fromChapter: 1, toChapter: 30 },
+    invalid: { fromChapter: 1, toChapter: 30, contextStrategy: 'guess' }
+  },
+  steer_translation_task: {
+    valid: { taskId: 't', fromChapter: 8, instruction: 'Giữ câu ngắn.' },
+    invalid: { taskId: 't', fromChapter: 8, instruction: '' }
+  },
+  read_translation_tasks: { valid: {}, invalid: null }
 }
 
 type Entries = Record<string, { type: string }>

@@ -601,6 +601,24 @@ CREATE TABLE context_extraction_scan (
 );
 `
 
+/**
+ * A person's "ignore this warning" for one paragraph (change `add-translation-task-qa`). Warnings are
+ * computed when read and never stored; a dismissal matches only the same rule version and the same target
+ * text (`target_hash`), so an edit or a rule change brings the warning back.
+ */
+const version15 = `
+CREATE TABLE qa_dismissal (
+  rule_code TEXT NOT NULL,
+  rule_version INTEGER NOT NULL CHECK (rule_version > 0),
+  chapter_id TEXT NOT NULL REFERENCES chapter (id) ON DELETE CASCADE,
+  segment_id TEXT NOT NULL,
+  target_hash TEXT NOT NULL,
+  reason TEXT,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (rule_code, rule_version, chapter_id, segment_id, target_hash)
+);
+`
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -687,6 +705,12 @@ export const workSchema: SchemaSpec = {
       version: 14,
       up(db) {
         db.exec(version14)
+      }
+    },
+    {
+      version: 15,
+      up(db) {
+        db.exec(version15)
       }
     }
   ]

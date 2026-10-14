@@ -257,6 +257,18 @@ export function ChapterWorkspace({
     []
   )
 
+  // "Mở đoạn" from a quality warning: scroll the source to the paragraph once the editors are mounted.
+  const reveal = useWorkspaceStore((state) => state.reveal)
+  useEffect(() => {
+    if (!reveal || reveal.chapterId !== chapter.id) return
+    const frame = requestAnimationFrame(() => {
+      editorOf('source')?.scrollToAnchor({ index: reveal.paragraph, fraction: 0 })
+      editorOf('target')?.scrollToAnchor({ index: reveal.paragraph, fraction: 0 })
+      useWorkspaceStore.getState().clearReveal()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [reveal, chapter.id, editorOf])
+
   /** Đánh dấu liên kết đoạn văn tương ứng ở khung đối diện dựa theo vị trí con trỏ hiện tại. */
   const showLink = useCallback(
     (side: Side): void => {
