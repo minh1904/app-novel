@@ -149,10 +149,13 @@ export type ThinkingCheck =
  */
 export function checkThinkingLevel(
   info: ModelInfo | undefined,
-  level: ThinkingLevel | undefined
+  level: ThinkingLevel | undefined,
+  /** Levels a subscription account declares for this model; they replace the catalog's. */
+  accountLevels?: ThinkingLevel[]
 ): ThinkingCheck {
-  if (level === undefined || info === undefined) return { ok: true }
-  const allowed = modelCapability(info).thinkingLevels
+  if (level === undefined || (info === undefined && accountLevels === undefined))
+    return { ok: true }
+  const allowed = accountLevels ?? modelCapability(info).thinkingLevels
   if (allowed.includes(level)) return { ok: true }
   return { ok: false, allowed, nearest: nearestThinkingLevel(allowed, level) }
 }

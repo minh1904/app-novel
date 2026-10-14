@@ -9,7 +9,8 @@ import type {
 import {
   applySettingsPatch,
   type ModelEntryView,
-  type ModelSettingsPatch
+  type ModelSettingsPatch,
+  type ThinkingLevel
 } from '../../../shared/contracts/modelSettings'
 import {
   addKey,
@@ -72,6 +73,10 @@ import { createTransport } from '../../infra/providers/transports/transportFacto
 import { anthropicKeyProblem } from '../../infra/providers/transports/anthropicTransport'
 import { CODEX_FALLBACK_MODELS } from '../../infra/providers/accounts/codex'
 import {
+  codexThinkingLevels,
+  thinkingLevelsFromWire
+} from '../../infra/providers/accounts/accountReasoning'
+import {
   COPILOT,
   COPILOT_FALLBACK_MODELS,
   copilotHeaders,
@@ -130,11 +135,29 @@ function toModelView(id: string, info: ModelInfo | undefined): ModelInfoView {
  * nhiệt độ không), đọc từ bảng dữ liệu đi kèm bản cài. Kho không biết bảng đó nên việc ghép nằm ở đây.
  */
 function toView(connection: StoredConnection): ConnectionView {
-  const models: ModelEntryView[] = connection.models.map((entry) => ({
-    ...entry,
-    capability: modelCapability(lookupModel(entry.model, connection.providerId ?? undefined))
-  }))
+  const models: ModelEntryView[] = connection.models.map((entry) => {
+    const capability = modelCapability(lookupModel(entry.model, connection.providerId ?? undefined))
+    const levels = accountThinkingLevels(connection, entry.model)
+    return { ...entry, capability: levels ? { ...capability, thinkingLevels: levels } : capability }
+  })
   return { ...connection, models }
+}
+
+/**
+ * Copilot's `/models` reasoning levels, by model id, from the last listing.
+ * shortcut: kept in memory, so after a restart Copilot models fall back to the catalog until the account's
+ * models are listed again; persist them with the model entry if that gap shows up in use.
+ */
+const copilotReasoning = new Map<string, ThinkingLevel[]>()
+
+/** Levels a subscription account declares for a model; `undefined` means "use the catalog". */
+function accountThinkingLevels(
+  connection: Pick<StoredConnection, 'oauthProvider'>,
+  model: string
+): ThinkingLevel[] | undefined {
+  if (connection.oauthProvider === 'codex') return codexThinkingLevels(model)
+  if (connection.oauthProvider === 'copilot') return copilotReasoning.get(model)
+  return undefined
 }
 
 /** Một kết nối đã sẵn sàng gọi bằng một mục model, cộng cách biết khóa nào vừa được dùng. */
@@ -270,7 +293,13 @@ export class ConnectionService {
       }
     })
     if (!response.ok) return []
-    return parseCopilotModels(await response.json()).map((model) => model.id)
+    const models = parseCopilotModels(await response.json())
+    for (const model of models) {
+      if (model.reasoningLevels.length > 0) {
+        copilotReasoning.set(model.id, thinkingLevelsFromWire(model.reasoningLevels))
+      }
+    }
+    return models.map((model) => model.id)
   }
 
   private transportDeps(connectionId: string): Parameters<typeof createTransport>[2] {
@@ -437,7 +466,8 @@ export class ConnectionService {
       const connection = getConnection(db, connectionId)
       const check = checkThinkingLevel(
         lookupModel(model, connection.providerId ?? undefined),
-        level
+        level,
+        accountThinkingLevels(connection, model)
       )
       if (!check.ok && level !== undefined) {
         throw new StorageError('validation', describeThinkingCheck(model, level, check))
@@ -498,7 +528,8 @@ export class ConnectionService {
     const level = entry.settings.thinking
     const check = checkThinkingLevel(
       lookupModel(entry.model, connection.providerId ?? undefined),
-      level
+      level,
+      accountThinkingLevels(connection, entry.model)
     )
     const blockedBy =
       check.ok || level === undefined
