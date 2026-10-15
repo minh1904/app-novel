@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { mapToTempIds, normalizeTempId, reconcileTempItems } from './translateReconcile'
+import {
+  mapToTempIds,
+  normalizeTempId,
+  reconcileTempItems,
+  restoreDialogueQuotes
+} from './translateReconcile'
 
 describe('translateReconcile — Đối soát hợp đồng Lõi dịch', () => {
   it('ánh xạ đúng các đơn vị nguồn sang ID tạm [1], [2] và bỏ qua đơn vị rỗng', () => {
@@ -21,6 +26,50 @@ describe('translateReconcile — Đối soát hợp đồng Lõi dịch', () => 
     expect(tempToId.get('[1]')).toBe('u1')
     expect(tempToId.get('[2]')).toBe('u3')
     expect(tempToId.get('1')).toBe('u1')
+  })
+
+  it('chép nguyên dòng phân cách, vẫn gửi thoại không chữ và dòng có chữ', () => {
+    const units = [
+      { id: 'u1', text: '　　　　　　　◇◇◇' },
+      { id: 'u2', text: '――――――――――――――' },
+      { id: 'u3', text: '＊＊＊' },
+      { id: 'u4', text: '「――――？」' },
+      { id: 'u5', text: '――そして。' },
+      { id: 'u6', text: '◇ティルダ視点' }
+    ]
+    const { sendable, skippedEmpty } = mapToTempIds(units)
+    expect(skippedEmpty).toEqual([
+      { id: 'u1', text: '◇◇◇' },
+      { id: 'u2', text: '――――――――――――――' },
+      { id: 'u3', text: '＊＊＊' }
+    ])
+    expect(sendable.map((unit) => unit.originalId)).toEqual(['u4', 'u5', 'u6'])
+  })
+
+  it('bỏ khoảng trắng trước ngoặc đóng trong bản dịch', () => {
+    const { sendable, tempToId } = mapToTempIds([{ id: 'u1', text: '「登録を……」' }])
+    const result = reconcileTempItems(sendable, tempToId, [
+      { tempId: '[1]', text: '“Tôi muốn đăng ký... ” và ‘ừ ’' }
+    ])
+    expect(result.matched).toEqual([{ id: 'u1', text: '“Tôi muốn đăng ký...” và ‘ừ’' }])
+  })
+
+  it('thêm lại ngoặc thoại mà bản dịch làm mất', () => {
+    const dialogue = '「王都にはね……見捨てられた人間がいる」'
+    // Mất cả hai ngoặc, quên ngoặc đóng, đã đủ: chỉ sửa hai ca đầu.
+    expect(restoreDialogueQuotes(dialogue, 'Ở Vương đô ấy… có những người bị bỏ rơi.')).toBe(
+      '“Ở Vương đô ấy… có những người bị bỏ rơi.”'
+    )
+    expect(restoreDialogueQuotes(dialogue, '“Ở làng Olum bên cạnh… đâu.')).toBe(
+      '“Ở làng Olum bên cạnh… đâu.”'
+    )
+    expect(restoreDialogueQuotes(dialogue, '“Đủ rồi.”')).toBe('“Đủ rồi.”')
+    expect(restoreDialogueQuotes('『肩書だけ立派』', 'Toàn là danh hão.')).toBe(
+      '‘Toàn là danh hão.’'
+    )
+    // Lời kể, hay thoại kèm lời dẫn sau ngoặc, không bị đụng tới.
+    expect(restoreDialogueQuotes('僕は頭を下げる。', 'Tôi cúi đầu.')).toBe('Tôi cúi đầu.')
+    expect(restoreDialogueQuotes('「はい」と僕は言った。', 'Tôi đáp vâng.')).toBe('Tôi đáp vâng.')
   })
 
   it('chuẩn hóa các biến thể của ID tạm', () => {

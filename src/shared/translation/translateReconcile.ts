@@ -8,7 +8,7 @@ import type {
 export interface TempMappingResult {
   /** Các đơn vị gửi đi với ID tạm [1], [2], ... */
   sendable: TempMappedUnit[]
-  /** Các đơn vị rỗng không cần gửi tới mô hình */
+  /** Các đơn vị không gửi tới mô hình: rỗng, hoặc dòng phân cách được chép nguyên. */
   skippedEmpty: TranslateUnit[]
   /** Ánh xạ từ ID gốc sang ID tạm */
   idToTemp: Map<string, string>
@@ -17,8 +17,14 @@ export interface TempMappingResult {
 }
 
 /**
+ * Dòng chỉ gồm ký tự ngắt cảnh hay phân cách (◇◇◇, ＊＊＊, ――――): không có gì để dịch. Gửi model thì nó
+ * áp luật dấu câu và biến "――――" thành "...". Thoại không chữ như 「――――？」 có ngoặc nên vẫn được gửi.
+ */
+const SEPARATOR_ONLY = /^[\s―ー—–\-─━＝=＊*◇◆□■○●◎☆★※・·〜~#]+$/u
+
+/**
  * Ánh xạ danh sách đơn vị gốc sang ID tạm [1], [2], ...
- * Bỏ qua các đơn vị có nội dung rỗng (trả về trực tiếp).
+ * Bỏ qua các đơn vị có nội dung rỗng (trả về trực tiếp) và chép nguyên dòng phân cách.
  */
 export function mapToTempIds(units: TranslateUnit[]): TempMappingResult {
   const sendable: TempMappedUnit[] = []
@@ -30,6 +36,10 @@ export function mapToTempIds(units: TranslateUnit[]): TempMappingResult {
   for (const unit of units) {
     if (unit.text.trim() === '') {
       skippedEmpty.push({ id: unit.id, text: '' })
+      continue
+    }
+    if (SEPARATOR_ONLY.test(unit.text)) {
+      skippedEmpty.push({ id: unit.id, text: unit.text.trim() })
       continue
     }
 
@@ -49,6 +59,24 @@ export function mapToTempIds(units: TranslateUnit[]): TempMappingResult {
   }
 
   return { sendable, skippedEmpty, idToTemp, tempToId }
+}
+
+/**
+ * Đoạn thoại nằm trọn trong 「…」 (hay 『…』) thì bản dịch phải có ngoặc. Model đôi khi bỏ ngoặc cho cả loạt
+ * câu thoại liền nhau, hoặc mở “ mà quên đóng; thêm lại ngoặc còn thiếu.
+ */
+export function restoreDialogueQuotes(source: string, text: string): string {
+  const src = source.trim()
+  const pair =
+    src.startsWith('「') && src.endsWith('」')
+      ? ['“', '”']
+      : src.startsWith('『') && src.endsWith('』')
+        ? ['‘', '’']
+        : null
+  const body = text.trim()
+  if (pair === null || body === '') return text
+  if (!/^["“‘'「『]/.test(body)) return pair[0] + body + pair[1]
+  return /["”’'」』]$/.test(body) ? text : body + (body.startsWith('‘') ? '’' : '”')
 }
 
 /**
@@ -113,7 +141,8 @@ export function reconcileTempItems(
 
     matched.push({
       id: originalId,
-      text: item.text
+      // Model đôi khi để khoảng trắng trước ngoặc đóng ("đội... ”"); tiếng Việt không có cách viết đó.
+      text: restoreDialogueQuotes(source, item.text.replace(/\s+(?=[”’])/g, ''))
     })
     seenOriginalIds.add(originalId)
   }

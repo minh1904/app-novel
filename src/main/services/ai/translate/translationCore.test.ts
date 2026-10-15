@@ -15,7 +15,7 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
               speaker_to_listener: 'A→B',
               self_ref: 'tôi',
               addr_ref: 'cậu',
-              dst: 'Cậu về rồi à?'
+              dst: '“Cậu về rồi à?”'
             }
           ]),
           usage: null
@@ -28,7 +28,7 @@ describe('translationCore — Điều phối Lõi dịch theo lô', () => {
     })
     expect(result.error).toBeNull()
     expect(result.failedIds).toEqual([])
-    expect(result.items).toEqual([{ id: 'u1', text: 'Cậu về rồi à?' }])
+    expect(result.items).toEqual([{ id: 'u1', text: '“Cậu về rồi à?”' }])
   })
   it('dịch thành công lô bình thường và tính đúng usage', async () => {
     const caller: TranslationModelCaller = {
