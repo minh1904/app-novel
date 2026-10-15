@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
 import { useConnectionStore } from '../store/connectionStore'
 import { resolveModelChoice } from './modelChoice'
+import { addableModels } from './modelMenuModel'
 import type { ModelSelection } from './ModelSelectionMenu'
 import { thinkingPatch, type ThinkingChoice } from './modelSettingsForm'
 
@@ -21,8 +22,14 @@ export interface ModelPicker {
   addCustomModel(connectionId: string, modelId: string): Promise<ModelSelection | null>
   /** Cập nhật mức độ suy luận cho model đang chọn. */
   setThinking(selection: ModelSelection, choice: ThinkingChoice): Promise<void>
-  /** Tải lại danh sách kết nối AI từ hệ thống. */
+  /** Tải lại danh sách kết nối AI từ hệ thống, và hỏi nhà cung cấp model của kết nối chưa được hỏi trong phiên. */
   refreshConnections(): void
+  /** "Tải lại model": hỏi lại nhà cung cấp của mọi kết nối đang bật. */
+  refreshModels(): void
+  /** Đang hỏi danh sách model của một nhà cung cấp. */
+  refreshing: boolean
+  /** Id kết nối → model nhà cung cấp liệt kê mà kết nối chưa có mục. */
+  suggestions: ReadonlyMap<string, readonly string[]>
   /** Thông báo lỗi khi thêm model hoặc cập nhật mức độ suy luận thất bại. */
   modelNotice: string | null
   dismissModelNotice(): void
@@ -47,9 +54,27 @@ export function useModelPicker(
     }
   }, [connectionLoad])
 
-  const refreshConnections = useCallback(() => {
-    void useConnectionStore.getState().reload()
+  // Hỏi nhà cung cấp (`GET /models`) cho kết nối đang bật; `force` hỏi lại cả kết nối đã hỏi, trừ lượt đang chạy.
+  const loadListings = useCallback((force: boolean) => {
+    const { connections: current, tests, test } = useConnectionStore.getState()
+    for (const item of current) {
+      const asked = tests[item.id]
+      if (item.enabled && !asked?.running && (force || asked === undefined)) void test(item.id)
+    }
   }, [])
+  const refreshConnections = useCallback(() => {
+    void useConnectionStore
+      .getState()
+      .reload()
+      .then(() => loadListings(false))
+  }, [loadListings])
+  const refreshModels = useCallback(() => {
+    void useConnectionStore
+      .getState()
+      .reload()
+      .then(() => loadListings(true))
+  }, [loadListings])
+  const tests = useConnectionStore((state) => state.tests)
 
   const addCustomModel = useCallback(
     async (connectionId: string, modelId: string): Promise<ModelSelection | null> => {
@@ -95,6 +120,11 @@ export function useModelPicker(
     [connections]
   )
   const connection = usable.find((entry) => entry.id === choice?.connectionId) ?? null
+  const suggestions = useMemo(
+    () =>
+      new Map(usable.map((item) => [item.id, addableModels(tests[item.id]?.models ?? [], item)])),
+    [usable, tests]
+  )
 
   return {
     usable,
@@ -107,6 +137,9 @@ export function useModelPicker(
     addCustomModel,
     setThinking,
     refreshConnections,
+    refreshModels,
+    refreshing: usable.some((item) => tests[item.id]?.running),
+    suggestions,
     modelNotice,
     dismissModelNotice: () => setModelNotice(null),
     loadError

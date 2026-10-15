@@ -316,6 +316,41 @@ Trạng thái: **có trong mã và có test store**; chưa thử bằng tay tron
   `ai.main`, nên pill sẽ hiện sai model đang chạy. Hàng chờ dịch (`taskService`) vẫn gặp khoảng trống này
   khi không truyền model.
 
+## Đã triển khai (model mới từ nhà cung cấp trong menu, 2026-10-14)
+
+Trạng thái: **có trong mã và có test cho phần thuần** (`modelMenuModel.test.ts`); chưa thử bằng tay trong
+app, chưa chạy `GET /models` thật của Gemini bằng khóa thật.
+
+**Vấn đề:** menu chỉ hiện các mục model người dùng đã thêm. Danh sách thật của nhà cung cấp chỉ được hỏi
+khi mở hộp thoại "Thêm model" trong Cài đặt; tài khoản Codex/Copilot chỉ được đồng bộ một lần lúc đăng nhập
+(`syncAccountModels`). Nút "Tải lại model" chỉ đọc lại dữ liệu cục bộ, nên model mới ra không bao giờ hiện.
+
+**Hành vi mới:**
+
+- Mở menu lần đầu trong phiên thì Mira hỏi `GET /models` của mọi kết nối đang bật (dùng lại `store.test`,
+  không thêm kênh IPC). Lỗi hỏi không hiện trong menu; kết nối đó chỉ không có gợi ý. "Tải lại model" hỏi
+  lại tất cả kết nối đang bật và quay khi đang chạy.
+- Cuối mỗi nhóm kết nối có nhóm **"Có thể thêm · N"**: model nhà cung cấp liệt kê mà kết nối chưa có mục.
+  Bấm (hoặc Enter) thì thêm mục với cài đặt trống và chọn luôn, cùng đường với "Thêm model tùy chỉnh".
+  Khi chưa tìm kiếm chỉ hiện 5 model mới nhất của mỗi nhóm; gõ vào ô tìm kiếm để thấy hết.
+- Gợi ý bỏ: model đã có mục, model nhà cung cấp đánh dấu `deprecated`, và model không dùng để chat đoán theo
+  tên (embedding, tts, imagen, veo, image, audio, live, realtime, transcribe, whisper, moderation, dall-e,
+  sora, rerank, aqa). Thứ tự "mới nhất" là so sánh số trong tên giảm dần, không phải ngày phát hành.
+
+**Quyết định lệch so với đề xuất ban đầu:** tài khoản Codex/Copilot cũng đi qua nhóm "Có thể thêm" thay vì
+tự thêm lại bằng `syncAccountModels` khi tải lại. Lý do: tự thêm sẽ hồi sinh những mục người dùng đã xóa
+có chủ ý.
+
+**Giới hạn đã biết:**
+
+- Bộ lọc đoán theo tên: nhà cung cấp đặt tên lạ thì lọt rác hoặc mất model; còn "Thêm model tùy chỉnh".
+- OpenRouter và gateway trả hàng trăm model; "5 mới nhất" theo thứ tự chữ cái giảm dần có thể không hữu
+  ích, phải tìm kiếm.
+- Chỉ ô soạn chat cũ và ô soạn Trợ lý có gợi ý. Hộp thoại dịch và Onboarding dùng cùng menu nhưng chưa
+  truyền `suggestions`.
+- Mở menu bằng phím tắt `Ctrl+Shift+M` không kích hoạt lần hỏi đầu tiên (chỉ lần mở bằng chuột/phím trên
+  pill); "Tải lại model" vẫn chạy.
+
 ## 1. Snapshot Mira trước các change (quan sát mã, 2026-10-07)
 
 **Kết nối:**

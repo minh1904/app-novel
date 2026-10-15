@@ -119,7 +119,9 @@ export function AgentComposer({ placeholder }: { placeholder?: string }): JSX.El
           onOpen={model.refreshConnections}
           overridesMain={model.overridesMain}
           onUseDefault={model.useDefaultModel}
-          onRefresh={model.refreshConnections}
+          onRefresh={model.refreshModels}
+          refreshing={model.refreshing}
+          suggestions={model.suggestions}
           onAddCustom={model.addCustomModel}
           onOpenSettings={openModelList}
         />

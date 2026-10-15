@@ -71,9 +71,13 @@ export interface ModelSelectionMenuProps {
   overridesMain?: boolean
   /** "Dùng mặc định trong Cài đặt": bỏ model chọn riêng của phiên chat. Chỉ hiển thị khi `overridesMain` là true. */
   onUseDefault?(): void
-  /** "Tải lại model". */
+  /** "Tải lại model": hỏi lại nhà cung cấp. */
   onRefresh?(): void
-  /** "Thêm model tùy chỉnh…": thêm mục với model id này vào kết nối đang dùng. */
+  /** Đang hỏi nhà cung cấp: nút "Tải lại model" quay và tạm khóa. */
+  refreshing?: boolean
+  /** Id kết nối → model nhà cung cấp liệt kê mà chưa có mục; hiện ở cuối nhóm, bấm để thêm. Cần `onAddCustom`. */
+  suggestions?: ReadonlyMap<string, readonly string[]>
+  /** "Thêm model tùy chỉnh…" và các model gợi ý: thêm mục với model id này vào kết nối. */
   onAddCustom?(connectionId: string, modelId: string): Promise<ModelSelection | null>
   /** "Sửa danh sách model…" / "Thêm nhà cung cấp": mở Cài đặt tại kết nối đó hoặc trang ban đầu. */
   onOpenSettings?(connectionId: string | null): void
@@ -183,6 +187,8 @@ export function ModelSelectionMenu({
   overridesMain = false,
   onUseDefault,
   onRefresh,
+  refreshing = false,
+  suggestions,
   onAddCustom,
   onOpenSettings,
   open: openProp,
@@ -204,9 +210,13 @@ export function ModelSelectionMenu({
   const rowRefs = useRef(new Map<string, HTMLElement>())
   const input = useRef<HTMLInputElement | null>(null)
 
+  const canAdd = onAddCustom !== undefined
   const rows = useMemo(
-    () => (adding ? [] : buildMenuRows(connections, query, favorites, collapsed)),
-    [adding, connections, query, favorites, collapsed]
+    () =>
+      adding
+        ? []
+        : buildMenuRows(connections, query, favorites, collapsed, canAdd ? suggestions : undefined),
+    [adding, connections, query, favorites, collapsed, canAdd, suggestions]
   )
 
   const chosenConnection = connections.find(
@@ -251,15 +261,18 @@ export function ModelSelectionMenu({
     setOpen(false)
   }
 
-  async function addCustom(): Promise<void> {
-    const modelId = query.trim()
-    const connectionId = selected?.connectionId ?? withEntries[0]?.id
-    if (!modelId || !connectionId || !onAddCustom) return
-    const added = await onAddCustom(connectionId, modelId)
+  async function addModel(connectionId: string, modelId: string): Promise<void> {
+    const added = await onAddCustom?.(connectionId, modelId)
     if (added) {
       onSelect(added)
       setOpen(false)
     }
+  }
+
+  function addCustom(): Promise<void> {
+    const modelId = query.trim()
+    const connectionId = selected?.connectionId ?? withEntries[0]?.id
+    return modelId && connectionId ? addModel(connectionId, modelId) : Promise.resolve()
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
@@ -275,6 +288,9 @@ export function ModelSelectionMenu({
       setFlyout(null)
       const next = stepModelRow(rows, active, event.key === 'ArrowDown' ? 1 : -1)
       setActiveId(rows[next]?.id ?? null)
+    } else if (event.key === 'Enter' && activeRow?.type === 'suggest') {
+      event.preventDefault()
+      void addModel(activeRow.connection.id, activeRow.model)
     } else if (event.key === 'Enter' && activeRow?.type === 'model') {
       event.preventDefault()
       if (event.shiftKey) toggleFavorite(favoriteKey(activeRow.connection.id, activeRow.entry.id))
@@ -383,6 +399,32 @@ export function ModelSelectionMenu({
                             {row.label}
                           </span>
                         )}
+                      </div>
+                    )
+                  }
+                  if (row.type === 'suggest') {
+                    return (
+                      // Cùng cách hoạt động như hàng model: di chuột chỉ cập nhật con trỏ hàng, nhấn không làm mất focus ô tìm kiếm.
+                      // biome-ignore lint/a11y/noStaticElementInteractions: di chuột chỉ cập nhật con trỏ hàng.
+                      <div
+                        key={row.id}
+                        ref={(element) => {
+                          if (element) rowRefs.current.set(row.id, element)
+                          else rowRefs.current.delete(row.id)
+                        }}
+                        onMouseEnter={() => setActiveId(row.id)}
+                        onMouseDown={(event) => event.preventDefault()}
+                      >
+                        <ListOption
+                          id={'model-row-' + row.id}
+                          tabIndex={-1}
+                          selected={index === active}
+                          onClick={() => void addModel(row.connection.id, row.model)}
+                          className="pl-8"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-subtle">{row.model}</span>
+                          <AddCircleIcon size={ICON.xs} className="shrink-0 text-subtle" />
+                        </ListOption>
                       </div>
                     )
                   }
@@ -515,7 +557,13 @@ export function ModelSelectionMenu({
                     <Button
                       variant="ghost"
                       className={FOOTER_ACTION}
-                      leftIcon={<RefreshIcon size={ICON.sm} />}
+                      disabled={refreshing}
+                      leftIcon={
+                        <RefreshIcon
+                          size={ICON.sm}
+                          className={refreshing ? 'motion-safe:animate-spin' : undefined}
+                        />
+                      }
                       onClick={onRefresh}
                     >
                       Tải lại model

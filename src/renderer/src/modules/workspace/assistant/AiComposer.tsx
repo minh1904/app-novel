@@ -85,7 +85,9 @@ export function AiComposer({ chat }: { chat: AiChatController }): JSX.Element {
             onOpenChange={setModelMenuOpen}
             overridesMain={chat.overridesMain}
             onUseDefault={chat.useDefaultModel}
-            onRefresh={chat.refreshConnections}
+            onRefresh={chat.refreshModels}
+            refreshing={chat.refreshing}
+            suggestions={chat.suggestions}
             onAddCustom={chat.addCustomModel}
             onOpenSettings={openModelList}
           />
