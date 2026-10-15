@@ -363,10 +363,20 @@ export function buildRepairRequest(
   return build(context, missing, true)
 }
 
+/**
+ * A full name also matches by each of its parts: a story says ノエル and セレナ far more often than
+ * ノエル・アーデン or セレナ・ヴァルトハイム, and the extracted character often has no alias for that. Parts
+ * shorter than two characters are left out so a stray syllable does not match everywhere.
+ */
+function nameForms(form: string): string[] {
+  const parts = form.split(/[・･=＝\s]+/u).filter((part) => [...part].length >= 2)
+  return parts.length > 1 ? [form, ...parts] : [form]
+}
+
 function mentions(text: string, character: CharacterItem): boolean {
   const lower = text.toLowerCase()
   return [character.source, character.target, ...character.aliases]
-    .map((form) => form.trim().toLowerCase())
+    .flatMap((form) => nameForms(form.trim().toLowerCase()))
     .some((form) => form !== '' && lower.includes(form))
 }
 

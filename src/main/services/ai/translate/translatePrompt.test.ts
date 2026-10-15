@@ -373,6 +373,28 @@ describe('translatePrompt — nhân vật và bộ mặc định', () => {
     const akira = character({ id: 'a', source: '桐谷彰', target: 'Akira', aliases: ['アキラ'] })
     expect(charactersMentionedIn([akira, unya], 'アキラは笑った').map((c) => c.id)).toEqual(['a'])
   })
+
+  // Seen 2026-10-15: characters extracted as ノエル・アーデン and セレナ・ヴァルトハイム with no alias were left
+  // out of most chapters, which only say ノエル様 and セレナ, so their approved pairs never reached the model.
+  it('tìm nhân vật theo từng phần của họ tên đầy đủ', () => {
+    const noel = character({
+      id: 'n',
+      source: 'ノエル・アーデン',
+      target: 'Noel Arden',
+      aliases: []
+    })
+    const selena = character({
+      id: 's',
+      source: 'セレナ・ヴァルトハイム',
+      target: 'Selena',
+      aliases: []
+    })
+    const text = '「ノエル様、私の剣技を」セレナは微笑んだ。'
+    expect(charactersMentionedIn([noel, selena], text).map((c) => c.id)).toEqual(['n', 's'])
+    // A one-character part matches nothing on its own.
+    const short = character({ id: 'x', source: 'ア・ベル', target: 'A Bell', aliases: [] })
+    expect(charactersMentionedIn([short], 'アイスを食べた')).toEqual([])
+  })
 })
 
 describe('output mode', () => {

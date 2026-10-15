@@ -175,6 +175,15 @@ vẫn là câu tiếng Việt.
     lại ngoặc (`restoreDialogueQuotes`). Lý do: hai chương dịch bằng `v8` mất ngoặc ở cả nửa sau chương;
     chưa biết lỗi do model hay app vì tác vụ tự áp dụng không lưu câu trả lời thô (xem mục log dưới).
 
+## Nhận nhân vật theo từng phần họ tên (sửa lỗi 2026-10-15)
+
+Log lượt `translate-v10` của "Hehe" cho thấy cả 11 câu Selena nói với Noel đều ra "Noel-sama" dù cặp đã
+duyệt ghi "ngài Noel": phần lớn chương không có khối `<addressing>`. Lý do: nhân vật do AI trích được lưu
+bằng họ tên đầy đủ (ノエル・アーデン, セレナ・ヴァルトハイム) và không có biến thể, còn truyện chỉ viết ノエル様,
+セレナ, nên `charactersMentionedIn`/`dyadsMentionedIn` bỏ họ ở 10/12 chương. Nay một họ tên tách theo `・`,
+`=`, khoảng trắng cũng khớp qua từng phần dài từ hai ký tự. Trên dữ liệu "Hehe", số cặp gửi theo chương
+tăng từ 0–3 lên 2–9 (chương 4: 0 → 2, chương 9: 1 → 9). Không đổi prompt, nên `promptVersion` giữ nguyên.
+
 ## Log lời gọi AI theo tác phẩm (đã triển khai 2026-10-15)
 
 Trạng thái: **có trong mã và có test**; chưa xem log của một lượt chạy thật.
