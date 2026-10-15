@@ -2,8 +2,10 @@ import { useEffect, useRef, useState, type JSX } from 'react'
 import type { AgentTurnView, ResolvedTarget } from '../../../../../shared/contracts/agent'
 import { Badge, type BadgeColor } from '../../../components/ui/Badge'
 import { EmptyState } from '../../../components/ui/EmptyState'
+import { SafeMarkdown } from '../../../components/ui/SafeMarkdown'
 import { useAgentStore } from '../store/agentStore'
 import { ActivityTimeline } from './ActivityTimeline'
+import { useAgentModel } from './AgentComposer'
 import { AutoScrollSentinel, getScrollBehavior, shouldAutoScroll } from './AutoScrollSentinel'
 import { DeltaBuffer } from './DeltaBuffer'
 import { OperationCard } from './OperationCard'
@@ -46,6 +48,8 @@ export function AgentTranscript({ onOpenTarget, className }: AgentTranscriptProp
   const cancel = useAgentStore((s) => s.cancel)
   const undo = useAgentStore((s) => s.undo)
   const reply = useAgentStore((s) => s.reply)
+  // The continuation runs on the model the composer shows, not on the main process default.
+  const model = useAgentModel().selection ?? undefined
 
   const nearBottom = (): boolean => {
     const el = scrollRef.current
@@ -76,7 +80,7 @@ export function AgentTranscript({ onOpenTarget, className }: AgentTranscriptProp
       onScroll={() => nearBottom() && setShowNewPill(false)}
       className={`min-h-0 flex-1 overflow-y-auto ${className ?? ''}`}
     >
-      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-lg px-md py-md">
+      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4 px-3 py-3">
         {turns.length === 0 && !isStreaming && (
           <EmptyState title="Trợ lý sẵn sàng">
             Hỏi về truyện, nhờ dịch hoặc sửa một chương.
@@ -92,11 +96,13 @@ export function AgentTranscript({ onOpenTarget, className }: AgentTranscriptProp
             <article
               key={turn.id}
               aria-label={`Lượt: ${turn.instruction}`}
-              className="flex flex-col gap-sm"
+              className="flex flex-col gap-1.5"
             >
-              <p className="m-0 max-w-[85%] self-end whitespace-pre-wrap break-words rounded-lg bg-muted px-sm py-xs text-body-sm">
-                {turn.instruction}
-              </p>
+              <div className="rounded-lg border border-default bg-muted/50 px-3 py-2">
+                <p className="selectable m-0 whitespace-pre-wrap wrap-anywhere text-body-sm leading-normal text-default">
+                  {turn.instruction}
+                </p>
+              </div>
               {(live ? streamingReasoning : turn.reasoning) && (
                 <ThinkingPreview
                   reasoning={live ? streamingReasoning : turn.reasoning}
@@ -116,13 +122,13 @@ export function AgentTranscript({ onOpenTarget, className }: AgentTranscriptProp
                     onUndo={(id) => void undo(id)}
                   />
                 ))}
-              {answer && (
-                <p className="m-0 whitespace-pre-wrap break-words text-body-sm">
-                  {live ? DeltaBuffer.safeTailFence(answer) : answer}
-                </p>
-              )}
+              {answer && <SafeMarkdown text={live ? DeltaBuffer.safeTailFence(answer) : answer} />}
               {turnPending.map((action) => (
-                <PendingActionCard key={action.toolCallId} action={action} onReply={reply} />
+                <PendingActionCard
+                  key={action.toolCallId}
+                  action={action}
+                  onReply={(item, choice, label) => reply(item, choice, label, model)}
+                />
               ))}
               <div className="flex flex-wrap items-center gap-xs">
                 {ended && (

@@ -1,15 +1,32 @@
 import { useState, useSyncExternalStore, type JSX, type KeyboardEvent } from 'react'
-import { ArrowUpIcon, CloseIcon, StopCircleIcon } from '@renderer/components/ui/reicon'
-import { Button } from '../../../components/ui/Button'
+import { ArrowUpIcon, StopCircleIcon } from '@renderer/components/ui/reicon'
 import { CompactButton } from '../../../components/ui/CompactButton'
+import { focusWithinRing } from '../../../components/ui/focus'
 import { ICON } from '../../../components/ui/icon'
+import { cn } from '../../../lib/cn'
+import { Tag } from '../../../components/ui/Tag'
 import { Textarea } from '../../../components/ui/Textarea'
+import {
+  ModelSelectionMenu,
+  openModelList,
+  useModelPicker,
+  type ModelPicker
+} from '../../ai-connections/public'
 import { NEW_CHAT, useAgentStore } from '../store/agentStore'
 import { contextChips, withoutChips, type ChipKey } from './contextChips'
 
+/** Model của Trợ lý: chọn một lần trên ô soạn, dùng cho mọi phiên và cả khi trả lời câu hỏi đang chờ. */
+export function useAgentModel(): ModelPicker {
+  return useModelPicker(
+    useAgentStore((s) => s.model),
+    useAgentStore((s) => s.setModel)
+  )
+}
+
 /**
- * Ô soạn của Trợ lý: draft theo phiên (đổi bề mặt không mất chữ), chip ngữ cảnh bỏ được trước khi gửi,
- * Enter gửi và Shift+Enter xuống dòng. Khi lượt đang chạy, nút gửi thành nút Dừng.
+ * Ô soạn của Trợ lý: draft theo phiên (đổi bề mặt không mất chữ), chọn model và mức suy luận, chip ngữ
+ * cảnh bỏ được trước khi gửi, Enter gửi và Shift+Enter xuống dòng. Khi lượt đang chạy, nút gửi thành nút
+ * Dừng.
  */
 export function AgentComposer({ placeholder }: { placeholder?: string }): JSX.Element {
   const adapter = useAgentStore((s) => s.adapter)
@@ -20,6 +37,8 @@ export function AgentComposer({ placeholder }: { placeholder?: string }): JSX.El
   const cancel = useAgentStore((s) => s.cancel)
   const busy = useAgentStore((s) => s.isStreaming)
   const waiting = useAgentStore((s) => s.pending.length > 0)
+  const model = useAgentModel()
+  const ready = draft.trim() !== '' && model.selection !== null
   // Chips follow the workspace as it moves; removals belong to the draft being written.
   useSyncExternalStore(adapter.subscribeContext, adapter.contextSnapshot, adapter.contextSnapshot)
   const [removed, setRemoved] = useState<{ key: string; chips: Set<ChipKey> }>({
@@ -32,8 +51,11 @@ export function AgentComposer({ placeholder }: { placeholder?: string }): JSX.El
 
   const submit = async (): Promise<void> => {
     const text = draft.trim()
-    if (!text || busy) return
-    const sent = await send(text, { context: withoutChips(context, removedChips) })
+    if (!text || busy || !model.selection) return
+    const sent = await send(text, {
+      context: withoutChips(context, removedChips),
+      modelSelection: model.selection
+    })
     if (sent) setRemoved({ key: draftKey, chips: new Set() })
   }
 
@@ -45,41 +67,63 @@ export function AgentComposer({ placeholder }: { placeholder?: string }): JSX.El
   }
 
   return (
-    <div className="flex flex-col gap-xs rounded-lg border border-input bg-surface p-xs shadow-xs">
+    <div
+      className={cn(
+        'flex flex-col gap-2xs rounded-lg border border-input bg-surface p-xs shadow-xs',
+        focusWithinRing
+      )}
+    >
+      <ul
+        aria-label="Ngữ cảnh gửi kèm"
+        className="m-0 flex list-none flex-wrap gap-2xs p-0 empty:hidden"
+      >
+        {chips.map((chip) => (
+          <li key={chip.key} className="flex min-w-0">
+            <Tag
+              removeLabel={`Bỏ ngữ cảnh ${chip.label}`}
+              onRemove={() =>
+                setRemoved({ key: draftKey, chips: new Set([...removedChips, chip.key]) })
+              }
+            >
+              {chip.label}
+            </Tag>
+          </li>
+        ))}
+      </ul>
       <Textarea
         aria-label="Câu hỏi hoặc yêu cầu cho Trợ lý"
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={onKeyDown}
         rows={2}
-        className="min-h-0 resize-none border-0"
+        className="min-h-0 resize-none border-0 bg-transparent px-2xs hover:bg-transparent focus-visible:outline-none"
         placeholder={
           placeholder ??
           (waiting ? 'Trả lời câu hỏi ở trên, hoặc gửi yêu cầu mới…' : 'Hỏi, nhờ dịch hoặc sửa…')
         }
       />
+      {(model.loadError ?? model.modelNotice) && (
+        <p role="alert" className="m-0 px-xs text-body-xs text-error">
+          {model.loadError
+            ? `Không đọc được danh sách kết nối: ${model.loadError}`
+            : model.modelNotice}
+        </p>
+      )}
       <div className="flex items-center gap-2xs">
-        <ul
-          aria-label="Ngữ cảnh gửi kèm"
-          className="m-0 flex min-w-0 flex-1 list-none flex-wrap gap-2xs p-0"
-        >
-          {chips.map((chip) => (
-            <li key={chip.key} className="flex min-w-0">
-              <Button
-                variant="light"
-                aria-label={`Bỏ ngữ cảnh ${chip.label}`}
-                title={`Bỏ ngữ cảnh ${chip.label}`}
-                rightIcon={<CloseIcon size={ICON.xs} aria-hidden="true" />}
-                className="min-w-0 max-w-full"
-                onClick={() =>
-                  setRemoved({ key: draftKey, chips: new Set([...removedChips, chip.key]) })
-                }
-              >
-                <span className="truncate">{chip.label}</span>
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <ModelSelectionMenu
+          label="Model của Trợ lý"
+          connections={model.usable}
+          selected={model.selection}
+          onSelect={model.selectModel}
+          onSelectThinking={(selection, choice) => void model.setThinking(selection, choice)}
+          onOpen={model.refreshConnections}
+          overridesMain={model.overridesMain}
+          onUseDefault={model.useDefaultModel}
+          onRefresh={model.refreshConnections}
+          onAddCustom={model.addCustomModel}
+          onOpenSettings={openModelList}
+        />
+        <span className="flex-1" />
         {busy ? (
           <CompactButton
             variant="outline"
@@ -92,7 +136,8 @@ export function AgentComposer({ placeholder }: { placeholder?: string }): JSX.El
           <CompactButton
             variant="dark"
             aria-label="Gửi"
-            disabled={!draft.trim()}
+            title={ready ? 'Gửi (Enter)' : 'Cần câu hỏi và một model'}
+            disabled={!ready}
             icon={<ArrowUpIcon size={ICON.sm} />}
             onClick={() => void submit()}
           />

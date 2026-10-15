@@ -12,7 +12,7 @@ import { TextField } from '../../../components/ui/Field'
 import { useConnectionStore } from '../store/connectionStore'
 import { notify } from '../../../components/ui/notificationStore'
 import { useAiOverlayStore } from '../store/overlayStore'
-import { resolveModelChoice } from '../model-selection/modelChoice'
+import { firstFreeModel, resolveModelChoice } from '../model-selection/modelChoice'
 import {
   DEFAULT_THINKING_LABEL,
   thinkingChoiceOf,
@@ -252,6 +252,11 @@ export function FallbacksPage(): JSX.Element {
   const [draft, setDraft] = useState<ModelRef[] | null>(null)
   const list = draft ?? saved
   const live = usable(connections)
+  const mainEntryId = store.preferences?.main?.entryId ?? null
+  // Main bỏ mục trùng khi lưu, nên mọi lựa chọn mặc định phải tránh model đã có ở dòng khác.
+  const takenBesides = (index: number): Set<string> =>
+    new Set(list.filter((_, at) => at !== index).map((item) => item.entryId))
+  const nextFree = firstFreeModel(connections, takenBesides(-1), mainEntryId)
 
   async function commit(next: ModelRef[]): Promise<void> {
     setDraft(next)
@@ -277,59 +282,66 @@ export function FallbacksPage(): JSX.Element {
                 Chưa có model dự phòng; khi model chính lỗi, Mira dừng và báo lỗi.
               </p>
             )}
-            {list.map((ref, index) => (
-              <div key={index} className="flex flex-wrap items-center gap-2">
-                <span className="w-5 text-right font-mono text-body-xs text-muted">
-                  {index + 1}
-                </span>
-                <Select
-                  label={'Kết nối dự phòng ' + (index + 1)}
-                  value={ref.connectionId}
-                  options={live.map((item) => ({ value: item.id, label: item.name }))}
-                  onChange={(connectionId) => {
-                    const first = entriesOf(connectionId)[0]
-                    if (!first) return
-                    void commit(
-                      list.map((item, at) =>
-                        at === index ? { connectionId, entryId: first.id } : item
+            {list.map((ref, index) => {
+              const others = takenBesides(index)
+              return (
+                <div key={index} className="flex flex-wrap items-center gap-2">
+                  <span className="w-5 text-right font-mono text-body-xs text-muted">
+                    {index + 1}
+                  </span>
+                  <Select
+                    label={'Kết nối dự phòng ' + (index + 1)}
+                    value={ref.connectionId}
+                    options={live
+                      .filter(
+                        (item) =>
+                          item.id === ref.connectionId ||
+                          firstFreeModel(connections, others, mainEntryId, item.id) !== null
                       )
-                    )
-                  }}
-                  className="min-w-36"
-                />
-                <Select
-                  label={'Model dự phòng ' + (index + 1)}
-                  value={ref.entryId}
-                  options={entriesOf(ref.connectionId).map((item) => ({
-                    value: item.id,
-                    label: item.name
-                  }))}
-                  onChange={(entryId) =>
-                    void commit(
-                      list.map((item, at) => (at === index ? { ...item, entryId } : item))
-                    )
-                  }
-                  className="min-w-52 flex-1"
-                />
-                <CompactButton
-                  aria-label={'Bỏ dự phòng ' + (index + 1)}
-                  onClick={() => void commit(list.filter((_, at) => at !== index))}
-                  icon={<CloseIcon size={12} />}
-                />
-              </div>
-            ))}
-            {list.length < MAX_FALLBACKS && live.length > 0 && (
+                      .map((item) => ({ value: item.id, label: item.name }))}
+                    onChange={(connectionId) => {
+                      const free = firstFreeModel(connections, others, mainEntryId, connectionId)
+                      if (!free) return
+                      void commit(list.map((item, at) => (at === index ? free : item)))
+                    }}
+                    className="min-w-36"
+                  />
+                  <Select
+                    label={'Model dự phòng ' + (index + 1)}
+                    value={ref.entryId}
+                    options={entriesOf(ref.connectionId)
+                      .filter((item) => !others.has(item.id))
+                      .map((item) => ({ value: item.id, label: item.name }))}
+                    onChange={(entryId) =>
+                      void commit(
+                        list.map((item, at) => (at === index ? { ...item, entryId } : item))
+                      )
+                    }
+                    className="min-w-52 flex-1"
+                  />
+                  <CompactButton
+                    aria-label={'Bỏ dự phòng ' + (index + 1)}
+                    onClick={() => void commit(list.filter((_, at) => at !== index))}
+                    icon={<CloseIcon size={12} />}
+                  />
+                </div>
+              )
+            })}
+            {list.length < MAX_FALLBACKS && nextFree && (
               <Button
                 variant="ghost"
                 className="self-start"
-                onClick={() => {
-                  const first = live[0]!
-                  void commit([...list, { connectionId: first.id, entryId: first.models[0]!.id }])
-                }}
+                onClick={() => void commit([...list, nextFree])}
               >
                 <AddCircleIcon size={14} />
                 Thêm dự phòng
               </Button>
+            )}
+            {list.length > 0 && list.length < MAX_FALLBACKS && !nextFree && (
+              <p className="m-0 text-body-xs text-subtle">
+                Mọi model của các kết nối đã có trong danh sách. Thêm model ở thẻ kết nối để có thêm
+                dự phòng.
+              </p>
             )}
           </div>
         }

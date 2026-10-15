@@ -1,13 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChatLocation } from '../../../../../shared/contracts/aiChat'
 import type { AiSessionView } from '../../../../../shared/contracts/aiHistory'
-import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
 import type { ModelEntryView } from '../../../../../shared/contracts/modelSettings'
-import type { ModelSelection } from '../../ai-connections/public'
-import { thinkingPatch, type ThinkingChoice } from '../../ai-connections/public'
-import { resolveModelChoice } from '../../ai-connections/public'
+import { type ModelPicker, type ModelSelection, useModelPicker } from '../../ai-connections/public'
 import { useAiChatStore } from '../store/aiChatStore'
-import { useConnectionStore } from '../../ai-connections/public'
 import type { SourceLanguage } from '../../../../../shared/contracts/library'
 import type { TargetRange } from '../chapter-editor/chatRange'
 import { startFailure } from './chatStartFailure'
@@ -46,54 +42,26 @@ export interface AiChatOptions {
   location(): ChatLocation
 }
 
-export interface AiChatController {
+export interface AiChatController extends ModelPicker {
   session: Session
   sessions: AiSessionView[]
   sessionId: string | null
   selectSession(id: string): void
-  /** Danh sách kết nối AI khả dụng và đang được kích hoạt. */
-  usable: ConnectionView[]
-  connection: ConnectionView | null
   /** ID của mục cấu hình model đang chọn. */
   model: string | null
   models: ModelEntryView[]
-  /** Thông tin kết nối và model đang chọn cho menu. */
-  selection: ModelSelection | null
-  selectModel(selection: ModelSelection): void
-  /** Đánh dấu hội thoại đang chọn model riêng khác với model mặc định trong Cài đặt. */
-  overridesMain: boolean
-  /** Đặt lại về model mặc định trong Cài đặt. */
-  useDefaultModel(): void
-  /** Thêm model tùy chỉnh vào kết nối; trả về `null` nếu thêm thất bại. */
-  addCustomModel(connectionId: string, modelId: string): Promise<ModelSelection | null>
-  /** Cập nhật mức độ suy luận cho model đang chọn. */
-  setThinking(selection: ModelSelection, choice: ThinkingChoice): Promise<void>
-  /** Tải lại danh sách kết nối AI từ hệ thống. */
-  refreshConnections(): void
-  /** Thông báo lỗi khi cập nhật mức độ suy luận thất bại. */
-  modelNotice: string | null
-  dismissModelNotice(): void
   /** Kiểm tra điều kiện có thể gửi câu hỏi: đã chọn model, có nội dung câu hỏi và không có lượt đang chạy. */
   canSend(question: string): boolean
   send(question: string): Promise<void>
   cancel(requestId: string): void
   newConversation(): void
-  /** Thông báo lỗi nếu không đọc được danh sách kết nối. */
-  loadError: string | null
 }
-
-const usableOf = (connections: ConnectionView[]): ConnectionView[] =>
-  connections.filter((connection) => connection.enabled)
 
 export function useAiChat(options: AiChatOptions): AiChatController {
   const { workId, chapterId, sourceLang, location } = options
 
-  const connections = useConnectionStore((state) => state.connections)
-  const connectionLoad = useConnectionStore((state) => state.load)
-  const connectionLoadError = useConnectionStore((state) => state.loadError)
-  const [modelNotice, setModelNotice] = useState<string | null>(null)
-  const [connectionId, setConnectionId] = useState<string | null>(null)
-  const [model, setModelState] = useState<string | null>(null)
+  const [picked, setPicked] = useState<ModelSelection | null>(null)
+  const picker = useModelPicker(picked, setPicked)
   const storedWorkId = useAiChatStore((state) => state.workId)
   const session = useAiChatStore((state) =>
     state.workId === workId ? state.session : emptySession
@@ -160,71 +128,8 @@ export function useAiChat(options: AiChatOptions): AiChatController {
     latest.current = { location, sourceLang }
   })
 
-  useEffect(() => {
-    if (connectionLoad === 'loading') {
-      void useConnectionStore.getState().reload()
-    }
-  }, [connectionLoad])
-
-  const refreshConnections = useCallback(() => {
-    void useConnectionStore.getState().reload()
-  }, [])
-
-  const selectModel = useCallback((selection: ModelSelection) => {
-    setConnectionId(selection.connectionId)
-    setModelState(selection.entryId)
-  }, [])
-
-  const useDefaultModel = useCallback(() => {
-    setConnectionId(null)
-    setModelState(null)
-  }, [])
-
-  const addCustomModel = useCallback(
-    async (connectionId: string, modelId: string): Promise<ModelSelection | null> => {
-      const store = useConnectionStore.getState()
-      const outcome = await store.entries.add(connectionId, [{ model: modelId }])
-      if (!outcome.ok) {
-        setModelNotice(outcome.message)
-        return null
-      }
-      const added = useConnectionStore
-        .getState()
-        .connections.find((item) => item.id === connectionId)
-        ?.models.filter((entry) => entry.model === modelId)
-        .at(-1)
-      return added ? { connectionId, entryId: added.id } : null
-    },
-    []
-  )
-
-  const setThinking = useCallback(
-    async (selection: ModelSelection, choice: ThinkingChoice): Promise<void> => {
-      selectModel(selection)
-      const outcome = await useConnectionStore.getState().entries.update(selection.entryId, {
-        settings: thinkingPatch(choice)
-      })
-      if (outcome.ok) {
-        setModelNotice(null)
-      } else {
-        setModelNotice(outcome.message)
-      }
-    },
-    [selectModel]
-  )
-
-  const main = useConnectionStore((state) => state.preferences?.main ?? null)
-  // Ưu tiên model chọn riêng cho phiên chat, nếu không thì lấy model mặc định trong Cài đặt.
-  const choice = useMemo(
-    () => resolveModelChoice(connections, { connectionId, entryId: model }, main),
-    [connections, connectionId, model, main]
-  )
-  const usable = useMemo(() => usableOf(connections), [connections])
-  const connection = useMemo(
-    () => usable.find((entry) => entry.id === choice?.connectionId) ?? null,
-    [usable, choice]
-  )
-  const chosenModel = choice && connection ? choice.entryId : null
+  const connection = picker.connection
+  const chosenModel = picker.selection?.entryId ?? null
 
   const cancel = useCallback((requestId: string) => {
     void window.mira.ai.chat.cancel(requestId)
@@ -285,26 +190,13 @@ export function useAiChat(options: AiChatOptions): AiChatController {
   )
 
   return {
+    ...picker,
     session,
     sessions,
     sessionId,
     selectSession,
-    usable,
-    connection,
     model: chosenModel,
     models: connection?.models ?? [],
-    selection:
-      connection !== null && chosenModel !== null
-        ? { connectionId: connection.id, entryId: chosenModel }
-        : null,
-    selectModel,
-    overridesMain: choice?.source === 'picked' && main !== null && main.entryId !== choice.entryId,
-    useDefaultModel,
-    addCustomModel,
-    setThinking,
-    refreshConnections,
-    modelNotice,
-    dismissModelNotice: () => setModelNotice(null),
     canSend,
     send,
     cancel,
@@ -312,7 +204,6 @@ export function useAiChat(options: AiChatOptions): AiChatController {
       loadSequence.current++
       for (const requestId of openRequestIds(sessionRef.current)) cancel(requestId)
       useAiChatStore.getState().clearSession()
-    },
-    loadError: connectionLoadError
+    }
   }
 }

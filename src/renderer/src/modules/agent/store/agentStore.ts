@@ -4,12 +4,14 @@ import type {
   AgentContext,
   AgentOperation,
   AgentPendingAction,
+  AgentSendInput,
   AgentSessionDetailView,
   AgentSessionView,
   AgentStreamEvent,
   AgentTurnView
 } from '../../../../../shared/contracts/agent'
 import { registerStoreReset } from '../../../lib/testing/resetStores'
+import type { ModelSelection } from '../../ai-connections/public'
 import {
   defaultWorkspaceAgentAdapter,
   type WorkspaceAgentAdapter,
@@ -20,6 +22,8 @@ import { DeltaBuffer } from '../components/DeltaBuffer'
 /** Draft key of a chat that has no session yet. */
 export const NEW_CHAT = 'new'
 
+type SendModel = AgentSendInput['modelSelection']
+
 export interface AgentState {
   sessions: AgentSessionView[]
   activeSessionId: string | null
@@ -29,6 +33,8 @@ export interface AgentState {
   pending: AgentPendingAction[]
   /** Unsent composer text per session (`NEW_CHAT` before the first send); renderer only. */
   drafts: Record<string, string>
+  /** Model the user picked in the composer for every session; `null` follows Settings. */
+  model: ModelSelection | null
   streamingTurnId: string | null
   streamingAnswer: string
   streamingReasoning: string
@@ -45,8 +51,17 @@ export interface AgentState {
   newChat: () => void
   createSession: (title?: string) => Promise<string>
   setDraft: (text: string) => void
-  send: (instruction: string, options?: { context?: AgentContext }) => Promise<boolean>
-  reply: (action: AgentPendingAction, choice: string, label: string) => Promise<boolean>
+  setModel: (model: ModelSelection | null) => void
+  send: (
+    instruction: string,
+    options?: { context?: AgentContext; modelSelection?: SendModel }
+  ) => Promise<boolean>
+  reply: (
+    action: AgentPendingAction,
+    choice: string,
+    label: string,
+    modelSelection?: SendModel
+  ) => Promise<boolean>
   cancel: (turnId?: string) => Promise<void>
   undo: (operationId: string) => Promise<void>
   handleStreamEvent: (event: AgentStreamEvent) => void
@@ -146,6 +161,7 @@ export const useAgentStore = create<AgentState>((set, get) => {
     operations: {},
     pending: [],
     drafts: {},
+    model: null,
     streamingTurnId: null,
     streamingAnswer: '',
     streamingReasoning: '',
@@ -233,6 +249,8 @@ export const useAgentStore = create<AgentState>((set, get) => {
       set((s) => ({ drafts: { ...s.drafts, [key]: text } }))
     },
 
+    setModel: (model) => set({ model }),
+
     send: async (instruction, options) => {
       const state = get()
       if (state.isStreaming) return false
@@ -249,7 +267,8 @@ export const useAgentStore = create<AgentState>((set, get) => {
         ...(state.activeSessionId ? { sessionId: state.activeSessionId } : {}),
         clientCommandId: crypto.randomUUID(),
         instruction,
-        context
+        context,
+        ...(options?.modelSelection ? { modelSelection: options.modelSelection } : {})
       })
       if (!res.ok) {
         // The draft stays so a busy session or a failure loses nothing the user typed.
@@ -267,7 +286,7 @@ export const useAgentStore = create<AgentState>((set, get) => {
       return true
     },
 
-    reply: async (action, choice, label) => {
+    reply: async (action, choice, label, modelSelection) => {
       const api = bridge()
       if (!api?.turn?.send) return false
       set({ lastError: null })
@@ -275,6 +294,7 @@ export const useAgentStore = create<AgentState>((set, get) => {
         ...(get().activeSessionId ? { sessionId: get().activeSessionId! } : {}),
         clientCommandId: crypto.randomUUID(),
         instruction: label,
+        ...(modelSelection ? { modelSelection } : {}),
         continuesTurnId: action.turnId,
         pendingReply: { toolCallId: action.toolCallId, argsDigest: action.argsDigest, choice }
       })
@@ -407,6 +427,7 @@ export const useAgentStore = create<AgentState>((set, get) => {
         operations: {},
         pending: [],
         drafts: {},
+        model: null,
         streamingTurnId: null,
         streamingAnswer: '',
         streamingReasoning: '',

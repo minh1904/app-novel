@@ -1,5 +1,5 @@
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
-import type { MainModel } from '../../../../../shared/contracts/aiPreferences'
+import type { MainModel, ModelRef } from '../../../../../shared/contracts/aiPreferences'
 
 export interface ModelChoice {
   connectionId: string
@@ -21,6 +21,25 @@ function has(
     (connection) =>
       connection.id === connectionId && connection.models.some((entry) => entry.id === entryId)
   )
+}
+
+/**
+ * Mục model đầu tiên chưa nằm trong `taken`, trong `connectionId` nếu có, không thì trong mọi kết nối dùng
+ * được. Ưu tiên mục khác model chính, vì dự phòng trùng model đang chạy bị bỏ qua lúc gọi.
+ */
+export function firstFreeModel(
+  connections: readonly ConnectionView[],
+  taken: ReadonlySet<string>,
+  mainEntryId: string | null,
+  connectionId?: string
+): ModelRef | null {
+  const free = usable(connections)
+    .filter((connection) => connectionId === undefined || connection.id === connectionId)
+    .flatMap((connection) =>
+      connection.models.map((entry) => ({ connectionId: connection.id, entryId: entry.id }))
+    )
+    .filter((ref) => !taken.has(ref.entryId))
+  return free.find((ref) => ref.entryId !== mainEntryId) ?? free[0] ?? null
 }
 
 /**

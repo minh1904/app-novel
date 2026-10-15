@@ -85,6 +85,7 @@ function bridge(get: () => Promise<{ ok: true; value: AgentSessionDetailView }>)
   return api
 }
 
+const model = { connectionId: 'c1', entryId: 'e1' }
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('agentStore', () => {
@@ -176,6 +177,22 @@ describe('agentStore', () => {
     expect(useAgentStore.getState().drafts).toEqual({ [NEW_CHAT]: 'chưa có phiên' })
   })
 
+  it('sends the model chosen in the composer, and none when the composer has none', async () => {
+    const api = bridge(async () => ({ ok: true, value: detail({ turns: [turn()] }) }))
+    await useAgentStore.getState().selectSession('s1')
+    useAgentStore.setState({ isStreaming: false, streamingTurnId: null })
+    await useAgentStore.getState().send('dịch', { modelSelection: model })
+    useAgentStore.setState({ isStreaming: false, streamingTurnId: null })
+    await useAgentStore.getState().send('dịch tiếp')
+    expect(api.turn.send).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ modelSelection: model })
+    )
+    expect(api.turn.send).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ modelSelection: expect.anything() })
+    )
+  })
+
   it('answers a pending action bound to its call and digest', async () => {
     const pending = {
       turnId: 't1',
@@ -193,9 +210,10 @@ describe('agentStore', () => {
     }))
     await useAgentStore.getState().selectSession('s1')
     expect(useAgentStore.getState().pending).toHaveLength(1)
-    await useAgentStore.getState().reply(pending, 't2', 'B')
+    await useAgentStore.getState().reply(pending, 't2', 'B', model)
     expect(api.turn.send).toHaveBeenCalledWith(
       expect.objectContaining({
+        modelSelection: model,
         continuesTurnId: 't1',
         pendingReply: { toolCallId: 'call', argsDigest: 'sha256:x', choice: 't2' },
         instruction: 'B'

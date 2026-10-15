@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ConnectionView } from '../../../../../shared/contracts/aiConnections'
-import { resolveModelChoice } from './modelChoice'
+import { firstFreeModel, resolveModelChoice } from './modelChoice'
 
 const entry = (id: string): ConnectionView['models'][number] =>
   ({ id, name: id, model: id, settings: {} }) as unknown as ConnectionView['models'][number]
@@ -72,5 +72,34 @@ describe('model choice', () => {
 
   it('has nothing to offer without a usable connection', () => {
     expect(resolveModelChoice([connection('a', [])], none, null)).toBeNull()
+  })
+})
+
+describe('firstFreeModel', () => {
+  const connections = [connection('a', ['a1', 'a2']), connection('b', ['b1'])]
+
+  it('offers a different model on each add, so a second fallback is not a duplicate', () => {
+    expect(firstFreeModel(connections, new Set(), null)?.entryId).toBe('a1')
+    expect(firstFreeModel(connections, new Set(['a1']), null)?.entryId).toBe('a2')
+    expect(firstFreeModel(connections, new Set(['a1', 'a2']), null)).toEqual({
+      connectionId: 'b',
+      entryId: 'b1'
+    })
+  })
+
+  it('skips the main model while another is free, and offers it last', () => {
+    expect(firstFreeModel(connections, new Set(), 'a1')?.entryId).toBe('a2')
+    expect(firstFreeModel(connections, new Set(['a2', 'b1']), 'a1')?.entryId).toBe('a1')
+  })
+
+  it('stays inside the chosen connection and reports when everything is taken', () => {
+    expect(firstFreeModel(connections, new Set(['a1']), null, 'b')?.entryId).toBe('b1')
+    expect(firstFreeModel(connections, new Set(['b1']), null, 'b')).toBeNull()
+    expect(firstFreeModel(connections, new Set(['a1', 'a2', 'b1']), null)).toBeNull()
+  })
+
+  it('ignores disabled connections', () => {
+    const off = [connection('a', ['a1'], { enabled: false })]
+    expect(firstFreeModel(off, new Set(), null)).toBeNull()
   })
 })

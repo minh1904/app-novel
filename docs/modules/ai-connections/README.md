@@ -302,6 +302,20 @@ khai".
 - Luồng thiếu connection chưa thống nhất: chat/dịch mở Cài đặt, menu model mở Onboarding, còn bấm Gửi
   có thể bị vô hiệu. Connection bật nhưng không có model cũng chưa được phân loại nhất quán.
 
+## Đã triển khai (menu model trên ô soạn Trợ lý, 2026-10-14)
+
+Trạng thái: **có trong mã và có test store**; chưa thử bằng tay trong app.
+
+- Ô soạn Trợ lý (`AgentComposer`) có cùng `ModelSelectionMenu` với chat cũ: pill tên model kèm mức suy
+  luận, tìm kiếm, yêu thích, submenu mức suy luận, "Dùng mặc định", "Thêm model tùy chỉnh". Phần trạng thái
+  của menu tách thành hook `useModelPicker`, chat cũ và Trợ lý dùng chung.
+- Model chọn riêng áp cho mọi phiên Trợ lý và chỉ sống trong renderer: khởi động lại app thì về model
+  chính.
+- Renderer luôn gửi model đã chọn, kể cả khi trả lời câu hỏi đang chờ duyệt. Lý do: khi không nhận model,
+  main (`defaultModelSelection`) lấy mục mặc định của kết nối bật đầu tiên mà **bỏ qua model chính**
+  `ai.main`, nên pill sẽ hiện sai model đang chạy. Hàng chờ dịch (`taskService`) vẫn gặp khoảng trống này
+  khi không truyền model.
+
 ## 1. Snapshot Mira trước các change (quan sát mã, 2026-10-07)
 
 **Kết nối:**
