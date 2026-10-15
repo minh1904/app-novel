@@ -2,12 +2,28 @@ import { createHash, randomUUID } from 'node:crypto'
 import type { ReviewFlag } from '../../../shared/contracts/glossary'
 import type { TokenUsage } from '../../../shared/contracts/usage'
 import { addUsage, toWireUsage, type Usage } from '../../infra/providers/usage'
+import { CHARACTER_GENDERS } from '../../../shared/contracts/addressing'
 import {
+  listCharacters,
+  saveAddressingProposals,
+  type AddressingProposal
+} from '../../infra/storage/addressingEntries'
+import {
+  listContextEntries,
   listScannedChapterIds,
+  readReviewInfo,
   saveExtraction,
   type ExtractedCandidateWrite
 } from '../../infra/storage/contextEntries'
+import {
+  buildAnalysisMessages,
+  collectAddressingEvidence,
+  parseAnalysis,
+  verifiedQuotes,
+  type AnalysisCharacter
+} from '../ai/addressingAnalysis'
 import type { ConnectionService } from '../ai/connectionService'
+import { suggestRegister } from '../ai/translate/languageProfiles'
 import {
   buildClassifyMessages,
   buildSweepMessages,
@@ -49,7 +65,7 @@ export interface ExtractContextInput {
 export interface ExtractContextResult {
   state: 'completed' | 'stopped'
   stopReason: ExtractionStopReason | null
-  /** Entries this run left `pending` (new or reopened). */
+  /** Entries this run left `pending` (new or reopened), then the new pending addressing pairs. */
   pending: string[]
   scannedChapterIds: string[]
   calls: number
@@ -148,8 +164,10 @@ export class ContextExtractionService {
     const numbers = new Map(
       this.library.listChapters(input.workId).map((chapter) => [chapter.id, chapter.number])
     )
-    const chapters: Array<ExtractionChapter & { id: string }> = []
-    for (const id of this.unscanned(input.workId, input.chapterIds)) {
+    const unscanned = new Set(this.unscanned(input.workId, input.chapterIds))
+    // Every chapter of the task is addressing evidence; only the unscanned ones are swept.
+    const taskChapters: Array<ExtractionChapter & { id: string }> = []
+    for (const id of input.chapterIds) {
       let text = ''
       try {
         text = this.library.readText(input.workId, id, 'source').content
@@ -157,8 +175,9 @@ export class ContextExtractionService {
         // A chapter without a readable source is not scanned; a later run tries again.
       }
       if (text.trim() !== '' && numbers.has(id))
-        chapters.push({ id, number: numbers.get(id)!, text })
+        taskChapters.push({ id, number: numbers.get(id)!, text })
     }
+    const chapters = taskChapters.filter((chapter) => unscanned.has(chapter.id))
 
     let calls = 0
     let usage: Usage | null = null
@@ -170,6 +189,8 @@ export class ContextExtractionService {
       if (stop) throw new Stopped(stop)
       if (input.gate && !input.gate()) throw new Stopped('budget')
       calls++
+      // Report the call as it starts: one call can take minutes and the task should show it.
+      input.onUsage?.(wire(false), calls)
       try {
         const result = await call(messages, input.signal)
         if (result.usage) usage = addUsage(usage, result.usage)
@@ -234,6 +255,19 @@ export class ContextExtractionService {
         pending.push(...saved.pending)
         scannedChapterIds.push(...chunk.map((chapter) => chapter.id))
       }
+      if (chapters.length > 0) {
+        pending.push(
+          ...(await this.analyzeAddressing(
+            input.workId,
+            sourceLang,
+            taskChapters,
+            ask,
+            model,
+            runId,
+            now()
+          ))
+        )
+      }
     } catch (error) {
       if (!(error instanceof Stopped)) throw error
       return {
@@ -253,5 +287,107 @@ export class ContextExtractionService {
       calls,
       usage: wire(true)
     }
+  }
+  /**
+   * Addressing analysis after the sweep (decision 2026-10-14): the work's people — characters and
+   * glossary persons, approved or pending — with dialogue lines in the task's chapters, one model call,
+   * and every proposed pair with a verbatim quote saved `pending` next to the terms. Fewer than two
+   * people with lines means no call; an answer that is not JSON proposes nothing.
+   */
+  private async analyzeAddressing(
+    workId: string,
+    sourceLang: string,
+    chapters: Array<ExtractionChapter & { id: string }>,
+    ask: (messages: ExtractionMessage[]) => Promise<string>,
+    model: string,
+    runId: string,
+    now: number
+  ): Promise<string[]> {
+    const people = new Map<string, AnalysisCharacter>()
+    this.library.withWork(workId, (db) => {
+      for (const character of listCharacters(db)) {
+        if (character.status === 'rejected') continue
+        people.set(character.source, {
+          source: character.source,
+          target: character.target,
+          aliases: character.aliases,
+          ...(character.gender !== 'unknown' ? { gender: character.gender } : {}),
+          ...(character.role ? { role: character.role } : {})
+        })
+      }
+      const types = new Map(readReviewInfo(db).map((info) => [info.entryId, info.termType]))
+      for (const entry of listContextEntries(db, { kind: 'term' })) {
+        if (
+          types.get(entry.id) !== 'person' ||
+          entry.status === 'rejected' ||
+          people.has(entry.source)
+        )
+          continue
+        people.set(entry.source, {
+          source: entry.source,
+          target: entry.target,
+          aliases: entry.aliases,
+          ...(entry.notes ? { notes: entry.notes } : {})
+        })
+      }
+    })
+    const all = [...people.values()]
+    const evidence = collectAddressingEvidence(chapters, all, sourceLang)
+    const speaking = all.filter((_, index) => evidence[index]!.lines.length > 0)
+    if (speaking.length < 2) return []
+
+    const genre = this.library.get(workId).genre ?? null
+    const messages = buildAnalysisMessages({
+      sourceLang,
+      register: suggestRegister(sourceLang, genre) ?? null,
+      characters: speaking,
+      evidence: evidence.filter((each) => each.lines.length > 0)
+    })
+    const text = await ask(messages)
+    let result: ReturnType<typeof parseAnalysis>
+    try {
+      result = parseAnalysis(text)
+    } catch {
+      return []
+    }
+    const facts = new Map(result.characters.map((each) => [each.source, each]))
+    const person = (source: string): AddressingProposal['from'] | null => {
+      const known = people.get(source)
+      if (!known) return null
+      const fact = facts.get(source)
+      const gender = CHARACTER_GENDERS.find((each) => each === fact?.gender)
+      return {
+        source: known.source,
+        target: known.target,
+        gender,
+        thirdPerson: typeof fact?.thirdPerson === 'string' ? fact.thirdPerson : null
+      }
+    }
+    const proposals: AddressingProposal[] = []
+    for (const dyad of result.dyads) {
+      const from = person(String(dyad.from))
+      const to = person(String(dyad.to))
+      const self = typeof dyad.self === 'string' ? dyad.self.trim() : ''
+      const address = typeof dyad.address === 'string' ? dyad.address.trim() : ''
+      const quotes = verifiedQuotes(dyad.evidence, chapters)
+      if (!from || !to || !self || !address || quotes.length === 0) continue
+      proposals.push({
+        from,
+        to,
+        self,
+        address,
+        secondPerson: typeof dyad.secondPerson === 'string' ? dyad.secondPerson : null,
+        notes: typeof dyad.notes === 'string' ? dyad.notes : null,
+        evidence: quotes.map((quote) => ({
+          chapterId: chapters.find((chapter) => chapter.number === quote.chapter)?.id ?? null,
+          quote: quote.quote
+        }))
+      })
+    }
+    if (proposals.length === 0) return []
+    const promptHash = 'sha256:' + createHash('sha256').update(messages[0]!.content).digest('hex')
+    return this.library.withWork(workId, (db) =>
+      saveAddressingProposals(db, { runId, model, promptHash, proposals, now })
+    )
   }
 }

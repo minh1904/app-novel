@@ -104,6 +104,7 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
         targetCharacterId: dyad.targetCharacterId,
         speakerPronoun: dyad.speakerPronoun,
         recipientPronoun: dyad.recipientPronoun,
+        secondPerson: dyad.secondPerson,
         formality: dyad.formality,
         fromChapterId: dyad.fromChapterId,
         toChapterId: dyad.toChapterId,
@@ -271,6 +272,11 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
                           &ldquo;{dyad.speakerPronoun}&rdquo; &ndash; &ldquo;{dyad.recipientPronoun}
                           &rdquo;
                         </span>
+                        {dyad.secondPerson && (
+                          <span className="text-body-xs text-subtle">
+                            Ngôi hai: &ldquo;{dyad.secondPerson}&rdquo;
+                          </span>
+                        )}
                         {dyad.formality && (
                           <span className="text-body-xs text-subtle">
                             Sắc thái: {dyad.formality}
@@ -493,7 +499,11 @@ export function AddressingScreen({ workId }: AddressingScreenProps): JSX.Element
         characters={characters}
         chapters={chapters}
         onSave={async (data) => {
-          await setDyad(data)
+          // The dialog has no second-person field yet: keep the pair's own.
+          await setDyad({
+            secondPerson: editingDyad && editingDyad !== 'new' ? editingDyad.secondPerson : null,
+            ...data
+          })
         }}
       />
 

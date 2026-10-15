@@ -91,6 +91,12 @@ function validateChapters(
   }
 }
 
+/**
+ * Characters and pairs keep their own names: a character named like a glossary person (the addressing
+ * analysis creates one per person) must not block that entry's review.
+ */
+const GLOSSARY = "kind NOT IN ('character', 'dyad')"
+
 function checkUniqueness(db: Db, source: string, aliases: string[], excludeEntryId?: string): void {
   const trimmedSource = source.trim()
   const trimmedAliases = aliases.map((a) => a.trim())
@@ -121,8 +127,8 @@ function checkUniqueness(db: Db, source: string, aliases: string[], excludeEntry
     const existingEntry = db
       .prepare(
         excludeEntryId
-          ? 'SELECT source FROM context_entry WHERE lower(source) = lower(?) AND id != ? LIMIT 1'
-          : 'SELECT source FROM context_entry WHERE lower(source) = lower(?) LIMIT 1'
+          ? `SELECT source FROM context_entry WHERE lower(source) = lower(?) AND ${GLOSSARY} AND id != ? LIMIT 1`
+          : `SELECT source FROM context_entry WHERE lower(source) = lower(?) AND ${GLOSSARY} LIMIT 1`
       )
       .get<{ source: string }>(candidate, ...(excludeEntryId ? [excludeEntryId] : []))
 
@@ -520,7 +526,7 @@ function ownerOf(db: Db, form: string): MatchRow | null {
   return (
     db
       .prepare(
-        `SELECT id, status, review_flags FROM context_entry WHERE lower(source) = lower(?)
+        `SELECT id, status, review_flags FROM context_entry WHERE lower(source) = lower(?) AND ${GLOSSARY}
          UNION ALL
          SELECT e.id, e.status, e.review_flags FROM context_alias a
            JOIN context_entry e ON e.id = a.entry_id WHERE lower(a.form) = lower(?)

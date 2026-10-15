@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   buildAnalysisMessages,
   collectAddressingEvidence,
-  parseAnalysis
+  parseAnalysis,
+  verifiedQuotes
 } from './addressingAnalysis'
 
 const chapters = [
@@ -48,5 +49,22 @@ describe('addressingAnalysis', () => {
     expect(result.dyads).toEqual([
       { from: 'ミリィ', to: 'リオン', self: 'tôi', address: 'Rion-sama', secondPerson: 'cậu' }
     ])
+  })
+  it('chỉ giữ câu bằng chứng có nguyên văn trong chương, bỏ tiền tố ch/câu dẫn', () => {
+    expect(
+      verifiedQuotes(
+        [
+          'ch2: 「リオン様、お昼寝の時間です」',
+          '[ミリィが扉を開けた。] 「リオン様？」',
+          'ch1: 「リオン様、帰りましょう」',
+          42
+        ],
+        chapters
+      )
+    ).toEqual([
+      { chapter: 2, quote: '「リオン様、お昼寝の時間です」' },
+      { chapter: 1, quote: '「リオン様？」' }
+    ])
+    expect(verifiedQuotes(undefined, chapters)).toEqual([])
   })
 })

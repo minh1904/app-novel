@@ -76,36 +76,49 @@ export function useGlossary({ workId, kind = 'term' }: UseGlossaryOptions): UseG
     requestedFilter.delete(workId)
   }, [workId])
 
-  const reload = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await window.mira.glossary.list({
-        workId,
-        kind,
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        query: query.trim() || undefined
-      })
-      if (res.ok) {
-        setEntries(res.value.entries)
-        const info = await window.mira.glossary.reviewInfo({
+  // `quiet` refetches without the loading state: a task wrote entries while the list is open.
+  const reload = useCallback(
+    async (quiet = false) => {
+      if (!quiet) setLoading(true)
+      setError(null)
+      try {
+        const res = await window.mira.glossary.list({
           workId,
-          entryIds: res.value.entries.map((entry) => entry.id)
+          kind,
+          status: statusFilter === 'all' ? undefined : statusFilter,
+          query: query.trim() || undefined
         })
-        if (info.ok) setReviewInfo(new Map(info.value.entries.map((item) => [item.entryId, item])))
-      } else {
-        setError(res.error.message)
+        if (res.ok) {
+          setEntries(res.value.entries)
+          const info = await window.mira.glossary.reviewInfo({
+            workId,
+            entryIds: res.value.entries.map((entry) => entry.id)
+          })
+          if (info.ok)
+            setReviewInfo(new Map(info.value.entries.map((item) => [item.entryId, item])))
+        } else {
+          setError(res.error.message)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Lỗi khi tải danh sách thuật ngữ')
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi khi tải danh sách thuật ngữ')
-    } finally {
-      setLoading(false)
-    }
-  }, [workId, kind, statusFilter, query])
+    },
+    [workId, kind, statusFilter, query]
+  )
 
   useEffect(() => {
     void reload()
   }, [reload])
+
+  useEffect(
+    () =>
+      window.mira.agent?.tasks.onChanged((event) => {
+        if (event.workId === workId) void reload(true)
+      }),
+    [workId, reload]
+  )
 
   const createEntry = useCallback(
     async (input: {

@@ -1,4 +1,5 @@
 export { AddressingScreen } from './addressing/AddressingScreen'
+export { requestAddressingFilter } from './addressing/useAddressing'
 export { AppliedContext } from './glossary/AppliedContext'
 export { GlossaryScreen } from './glossary/GlossaryScreen'
 export { requestGlossaryFilter } from './glossary/useGlossary'

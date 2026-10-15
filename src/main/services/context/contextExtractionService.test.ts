@@ -148,7 +148,8 @@ describe('ContextExtractionService', () => {
     )
     expect(result).toMatchObject({ state: 'stopped', stopReason: 'budget', calls: 1 })
     expect(model.calls()).toBe(1)
-    expect(usages).toEqual([1])
+    // Once when the call starts, once when it ends.
+    expect(usages).toEqual([1, 1])
     expect(
       service.unscanned(
         work.id,

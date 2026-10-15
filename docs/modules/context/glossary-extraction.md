@@ -3,7 +3,8 @@
 Cập nhật: 2026-10-14 · Trạng thái: bước 1–4 **đã triển khai trong sản phẩm** qua
 `ContextExtractionService` (change `add-agent-context-workflow`: ứng viên `pending` có bằng chứng, trích
 tăng dần theo chương đã quét, cờ `alias_conflict`/`script_mismatch`/`reopened`, duyệt có guard); bước
-5–6 (hàng duyệt) có dạng tối thiểu trong màn Từ điển; bước 7 vẫn là đề xuất. Lab vẫn gọi cùng các hàm
+5–6 (hàng duyệt) có dạng tối thiểu trong màn Từ điển; bước 7 **đã triển khai** từ 2026-10-14 (phân tích xưng
+hô cùng bước trích, xem [nhân vật và xưng hô](characters-and-addressing.md#phân-tích-xưng-hô-trong-bước-trích-quyết-định-2026-10-14)). Lab vẫn gọi cùng các hàm
 thuần của [`glossaryExtraction.ts`](../../../src/main/services/ai/glossaryExtraction.ts). Nguyên tắc ở mục 1 là **quyết định của chủ sản phẩm** (2026-10-06).
 Chủ trì: kỹ thuật (luồng, phép đo), sản phẩm/ngôn ngữ (chính sách phiên âm, hàng duyệt).
 Câu hỏi: làm sao để AI tự lập glossary đủ tốt để bản dịch nhất quán hơn, mà người dịch vẫn là người chốt?
@@ -101,9 +102,10 @@ Một lời gọi cho mỗi lô khoảng 50–100 ứng viên (cỡ lô cần đ
 
 ### Bước 7: nối với nhân vật và xưng hô
 
-`analyze` hiện cần danh sách nhân vật cho sẵn. Đề xuất: mục loại `person` đã duyệt trở thành nhân vật
-(tên gốc, alias, tên dịch, giới tính AI đề xuất ở trạng thái chờ), rồi `analyze` đề xuất cặp xưng hô như
-hiện nay. Vậy toàn bộ dữ liệu ngữ cảnh đi một đường: trích thuật ngữ → nhân vật → xưng hô → người duyệt.
+**Đã triển khai (2026-10-14):** sau các lô quét, cùng lần trích gọi phân tích xưng hô với mục loại `person`
+(đã duyệt hoặc chờ duyệt) và nhân vật có sẵn; mục chưa có nhân vật thành nhân vật `pending`, cặp đề xuất lưu
+`pending` kèm bằng chứng và chờ duyệt cùng thuật ngữ. Toàn bộ dữ liệu ngữ cảnh đi một đường: trích thuật ngữ →
+nhân vật → xưng hô → người duyệt. Chi tiết ở [nhân vật và xưng hô](characters-and-addressing.md).
 
 ## 4. Thí nghiệm trong Lab (đề xuất)
 

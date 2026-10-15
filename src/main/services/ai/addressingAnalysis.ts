@@ -225,3 +225,24 @@ export function parseAnalysis(text: string): AnalysisResult {
     )
   }
 }
+
+/**
+ * The model's evidence quotes that appear verbatim in one of `chapters`, with the chapter they are in;
+ * the rest are dropped. Strips the `ch3:` and `[cue]` prefixes the prompt shows the model.
+ */
+export function verifiedQuotes(
+  evidence: unknown,
+  chapters: ChapterSource[]
+): Array<{ chapter: number; quote: string }> {
+  const quotes: Array<{ chapter: number; quote: string }> = []
+  for (const raw of Array.isArray(evidence) ? evidence : []) {
+    if (typeof raw !== 'string') continue
+    const quote = raw
+      .replace(/^\s*ch\s*\d+\s*:\s*/i, '')
+      .replace(/^\[[^\]]*\]\s*/, '')
+      .trim()
+    const chapter = quote ? chapters.find((each) => each.text.includes(quote)) : undefined
+    if (chapter) quotes.push({ chapter: chapter.number, quote: quote.slice(0, 200) })
+  }
+  return quotes
+}

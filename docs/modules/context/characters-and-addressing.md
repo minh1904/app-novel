@@ -1,10 +1,40 @@
 # Nhân vật, quan hệ và xưng hô Nhật → Việt
 
-Cập nhật: 2026-10-04 · Trạng thái: mặc định hậu tố đã chốt; mô hình và cách kiểm là đề xuất.
+Cập nhật: 2026-10-14 · Trạng thái: mặc định hậu tố đã chốt; phân tích xưng hô trong bước trích **đã
+triển khai**; phần còn lại của mô hình và cách kiểm là đề xuất.
 Chủ trì: người dịch/sản phẩm. Câu hỏi: làm sao hỗ trợ lựa chọn của người dịch mà không đoán sai quan hệ?
 
 > 2026-10-05: các quyết định về xưng hô tiếng Việt (đổi theo mốc, không "tôi – bạn", đổi giữa cảnh,
 > bộ mặc định theo bối cảnh) và căn cứ nghiên cứu nằm ở [Xưng hô tiếng Việt](vietnamese-addressing.md).
+
+## Phân tích xưng hô trong bước trích (quyết định 2026-10-14)
+
+**Quyết định của chủ sản phẩm (chấp nhận 2026-10-14):** phân tích xưng hô chạy cùng bước trích, chờ duyệt
+cùng thuật ngữ. Task dịch với chiến lược `extract_then_review` không chỉ trích thuật ngữ mà còn đề xuất cặp
+xưng hô, và chỉ dịch sau khi người dùng duyệt.
+
+**Đã triển khai** (`ContextExtractionService.analyzeAddressing`):
+
+- Chạy sau các lô quét thuật ngữ của cùng lần trích, đi qua cùng đường gọi model, cổng ngân sách, báo usage
+  (đầu và cuối lời gọi) và tín hiệu dừng của task. Một lời gọi cho cả task.
+- Danh sách người: nhân vật chưa bị loại cùng mục glossary loại `person` đã duyệt hoặc đang chờ duyệt (kể cả
+  vừa trích). Bằng chứng là câu thoại có tên trong **mọi chương của task**
+  ([`addressingAnalysis.ts`](../../../src/main/services/ai/addressingAnalysis.ts)). Dưới hai người có câu
+  thoại thì không gọi model.
+- Code kiểm: chỉ giữ cặp có ít nhất một câu bằng chứng có nguyên văn trong chương (`verifiedQuotes`); bỏ cặp
+  có người không nằm trong danh sách; chiều A → B đã có cặp ở bất kỳ trạng thái hay phạm vi nào thì để yên —
+  AI không ghi đè hay mở lại cặp đã duyệt/đã loại. Phản hồi không phải JSON thì không đề xuất gì.
+- Lưu: cặp `pending`, `origin = ai`, câu bằng chứng vào `context_entry_evidence`. Người chưa có hàng nhân vật
+  được tạo nhân vật `pending` (tên dịch lấy từ mục glossary, giới tính và đại từ ngôi ba AI đề xuất); dạng
+  viết khác vẫn thuộc mục glossary. Tên nhân vật không còn chặn duyệt mục glossary cùng tên.
+- Cặp mới cộng vào số mục chờ duyệt: task vào `waiting_user(context_review)` như với thuật ngữ.
+- Duyệt: "Xem và duyệt" mở Ngữ cảnh, cả Thuật ngữ và Xưng hô lọc "Chờ duyệt"; tab Xưng hô hiện số cặp chờ
+  duyệt. **Duyệt một cặp thì duyệt luôn hai nhân vật `pending` của nó**, vì prompt dịch chỉ dùng cặp đã duyệt
+  có hai nhân vật đã duyệt.
+
+Chưa làm: màn Xưng hô chưa hiện câu bằng chứng của cặp; hộp sửa cặp chưa có ô đại từ ngôi hai (giữ nguyên giá
+trị AI đề xuất khi lưu). Task dừng vì ngân sách đúng ở lời gọi phân tích thì lần Tiếp tục không phân tích lại
+(chương đã quét xong).
 
 ## Tách ba lớp
 

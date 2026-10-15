@@ -566,6 +566,13 @@ export function setDyad(
     }
   }
 
+  // Approving a pair accepts its two people too: a pair reaches the prompt only with approved characters.
+  if (getDyad(db, id)!.status === 'approved') {
+    db.prepare(
+      "UPDATE context_entry SET status = 'approved', updated_at = ? WHERE kind = 'character' AND status = 'pending' AND id IN (?, ?)"
+    ).run(now, sourceCharacterId, targetCharacterId)
+  }
+
   touchWork(db, now)
   return getDyad(db, id)!
 }
@@ -681,5 +688,116 @@ export function changeDyadFrom(
     )
     db.prepare('UPDATE context_entry SET id = ? WHERE id = ?').run(params.newDyadId, created.id)
     return { newDyadId: params.newDyadId, closedDyadId: closed?.id ?? null }
+  })
+}
+
+export interface ProposedCharacter {
+  source: string
+  target: string
+  gender?: CharacterGender
+  thirdPerson?: string | null
+}
+
+export interface AddressingProposal {
+  from: ProposedCharacter
+  to: ProposedCharacter
+  self: string
+  address: string
+  secondPerson?: string | null
+  notes?: string | null
+  evidence: Array<{ chapterId: string | null; quote: string }>
+}
+
+/**
+ * AI addressing proposals of one context extraction run, in one transaction. Each becomes a `pending`
+ * pair with its quotes; a person without a character row gets a `pending` one (aliases stay on the
+ * glossary entry, which owns them). A direction that already has a pair in any status or scope is left
+ * alone, so the AI never overrides or reopens a reviewed pair. Returns the new pending pairs.
+ */
+export function saveAddressingProposals(
+  db: Db,
+  input: {
+    runId: string
+    model: string
+    promptHash: string
+    proposals: AddressingProposal[]
+    now: number
+  }
+): string[] {
+  const { now } = input
+  return db.transaction(() => {
+    const pending: string[] = []
+    const findCharacter = (source: string): string | null =>
+      db
+        .prepare(
+          "SELECT id FROM context_entry WHERE kind = 'character' AND lower(source) = lower(?) LIMIT 1"
+        )
+        .get<{ id: string }>(source.trim())?.id ?? null
+    const characterOf = (person: ProposedCharacter): string => {
+      const found = findCharacter(person.source)
+      if (found) return found
+      const created = createCharacter(
+        db,
+        {
+          source: person.source,
+          target: person.target || person.source,
+          gender: person.gender,
+          thirdPerson: person.thirdPerson,
+          status: 'pending'
+        },
+        now
+      )
+      db.prepare("UPDATE context_entry SET origin = 'ai' WHERE id = ?").run(created.id)
+      return created.id
+    }
+    const pairExists = (from: string, to: string): boolean =>
+      db
+        .prepare(
+          "SELECT 1 AS found FROM context_entry WHERE kind = 'dyad' AND source = ? AND target = ? LIMIT 1"
+        )
+        .get<{ found: number }>(from, to) !== undefined
+    const insertEvidence = db.prepare(
+      `INSERT INTO context_entry_evidence
+         (id, entry_id, run_id, chapter_id, quote, model, prompt_hash, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+
+    for (const proposal of input.proposals) {
+      if (proposal.from.source.trim().toLowerCase() === proposal.to.source.trim().toLowerCase())
+        continue
+      const knownFrom = findCharacter(proposal.from.source)
+      const knownTo = findCharacter(proposal.to.source)
+      if (knownFrom && knownTo && pairExists(knownFrom, knownTo)) continue
+      const from = characterOf(proposal.from)
+      const to = characterOf(proposal.to)
+      const dyad = setDyad(
+        db,
+        {
+          sourceCharacterId: from,
+          targetCharacterId: to,
+          speakerPronoun: proposal.self,
+          recipientPronoun: proposal.address,
+          secondPerson: proposal.secondPerson ?? null,
+          notes: proposal.notes ?? null,
+          status: 'pending'
+        },
+        now
+      )
+      db.prepare("UPDATE context_entry SET origin = 'ai' WHERE id = ?").run(dyad.id)
+      for (const quote of proposal.evidence) {
+        insertEvidence.run(
+          randomUUID(),
+          dyad.id,
+          input.runId,
+          quote.chapterId,
+          quote.quote,
+          input.model,
+          input.promptHash,
+          now
+        )
+      }
+      pending.push(dyad.id)
+    }
+    return pending
   })
 }

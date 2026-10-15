@@ -6,6 +6,13 @@ import type {
 } from '../../../../../shared/contracts/addressing'
 import type { ContextStatus } from '../../../../../shared/contracts/glossary'
 
+const requestedFilter = new Map<string, ContextStatus>()
+
+/** "Xem và duyệt": the next Addressing screen of this work opens on this status filter. */
+export function requestAddressingFilter(workId: string, status: ContextStatus): void {
+  requestedFilter.set(workId, status)
+}
+
 export interface UseAddressingOptions {
   workId: string
 }
@@ -50,6 +57,7 @@ export interface UseAddressingReturn {
     targetCharacterId: string
     speakerPronoun: string
     recipientPronoun: string
+    secondPerson?: string | null
     formality?: string | null
     fromChapterId?: string | null
     toChapterId?: string | null
@@ -65,47 +73,65 @@ export function useAddressing({ workId }: UseAddressingOptions): UseAddressingRe
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | ContextStatus>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | ContextStatus>(
+    () => requestedFilter.get(workId) ?? 'all'
+  )
+  // Taken once: a later visit opens on "all" again.
+  useEffect(() => {
+    requestedFilter.delete(workId)
+  }, [workId])
   const [chapterFilter, setChapterFilter] = useState<string | 'all'>('all')
 
-  const reload = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [charsRes, dyadsRes] = await Promise.all([
-        window.mira.addressing.characters.list({
-          workId,
-          status: statusFilter === 'all' ? undefined : statusFilter,
-          query: query.trim() || undefined
-        }),
-        window.mira.addressing.dyads.list({
-          workId,
-          chapterId: chapterFilter === 'all' ? undefined : chapterFilter,
-          status: statusFilter === 'all' ? undefined : statusFilter
-        })
-      ])
+  // `quiet` refetches without the loading state: a task wrote pairs while the list is open.
+  const reload = useCallback(
+    async (quiet = false) => {
+      if (!quiet) setLoading(true)
+      setError(null)
+      try {
+        const [charsRes, dyadsRes] = await Promise.all([
+          window.mira.addressing.characters.list({
+            workId,
+            status: statusFilter === 'all' ? undefined : statusFilter,
+            query: query.trim() || undefined
+          }),
+          window.mira.addressing.dyads.list({
+            workId,
+            chapterId: chapterFilter === 'all' ? undefined : chapterFilter,
+            status: statusFilter === 'all' ? undefined : statusFilter
+          })
+        ])
 
-      if (charsRes.ok && dyadsRes.ok) {
-        setCharacters(charsRes.value.characters)
-        setDyads(dyadsRes.value.dyads)
-      } else {
-        const errMsg = !charsRes.ok
-          ? charsRes.error.message
-          : !dyadsRes.ok
-            ? dyadsRes.error.message
-            : 'Lỗi tải dữ liệu'
-        setError(errMsg)
+        if (charsRes.ok && dyadsRes.ok) {
+          setCharacters(charsRes.value.characters)
+          setDyads(dyadsRes.value.dyads)
+        } else {
+          const errMsg = !charsRes.ok
+            ? charsRes.error.message
+            : !dyadsRes.ok
+              ? dyadsRes.error.message
+              : 'Lỗi tải dữ liệu'
+          setError(errMsg)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Lỗi khi tải dữ liệu xưng hô')
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi khi tải dữ liệu xưng hô')
-    } finally {
-      setLoading(false)
-    }
-  }, [workId, statusFilter, query, chapterFilter])
+    },
+    [workId, statusFilter, query, chapterFilter]
+  )
 
   useEffect(() => {
     void reload()
   }, [reload])
+
+  useEffect(
+    () =>
+      window.mira.agent?.tasks.onChanged((event) => {
+        if (event.workId === workId) void reload(true)
+      }),
+    [workId, reload]
+  )
 
   const createCharacter = useCallback(
     async (input: {
@@ -178,6 +204,7 @@ export function useAddressing({ workId }: UseAddressingOptions): UseAddressingRe
       targetCharacterId: string
       speakerPronoun: string
       recipientPronoun: string
+      secondPerson?: string | null
       formality?: string | null
       fromChapterId?: string | null
       toChapterId?: string | null
