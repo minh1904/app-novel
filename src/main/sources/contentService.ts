@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Db } from '../infra/storage/sqlite'
 import { StorageError } from '../infra/storage/errors'
 import { readText, saveText } from '../infra/storage/textFile'
+import { segment } from '../../shared/segmentation/segmenter'
 import {
   getCatalogItem,
   getContentRevision,
@@ -182,7 +183,10 @@ export class SourceContentService {
         side: 'source',
         content: revision.normalizedText,
         expectedRev: args.expectedRev,
-        segments: []
+        segments: segment(
+          revision.normalizedText,
+          db.prepare('SELECT source_lang FROM work').get<{ source_lang: string }>()!.source_lang
+        )
       },
       now,
       newId

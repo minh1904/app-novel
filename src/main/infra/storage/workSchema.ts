@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import type { SchemaSpec } from './migrate'
+import { segment } from '../../../shared/segmentation/segmenter'
 import type { Db } from './sqlite'
 
 /** "MIRA" in ASCII. A constant of the file format: never change it once users have data. */
@@ -619,6 +621,34 @@ CREATE TABLE qa_dismissal (
 );
 `
 
+/**
+ * Chapters downloaded from a source were saved with their text but no segments, and translation
+ * needs segments. Give every such source side its segments at its current revision, without raising
+ * the revision, so an open editor or a pinned task sees no change.
+ */
+function segmentBareSources(db: Db): void {
+  const lang = db
+    .prepare('SELECT source_lang FROM work')
+    .get<{ source_lang: string }>()?.source_lang
+  if (!lang) return
+  const bare = db
+    .prepare(
+      `SELECT chapter_id, content, rev FROM chapter_text t WHERE side = 'source'
+       AND trim(content) != ''
+       AND NOT EXISTS (SELECT 1 FROM segment s WHERE s.chapter_id = t.chapter_id AND s.side = 'source')`
+    )
+    .all<{ chapter_id: string; content: string; rev: number }>()
+  const insert = db.prepare(
+    `INSERT INTO segment (id, chapter_id, side, position, start_offset, end_offset, text_rev, status)
+     VALUES (?, ?, 'source', ?, ?, ?, ?, 'ok')`
+  )
+  for (const row of bare) {
+    segment(row.content, lang).forEach((range, position) => {
+      insert.run(randomUUID(), row.chapter_id, position, range.start, range.end, row.rev)
+    })
+  }
+}
+
 export const workSchema: SchemaSpec = {
   applicationId: WORK_APPLICATION_ID,
   migrations: [
@@ -711,6 +741,12 @@ export const workSchema: SchemaSpec = {
       version: 15,
       up(db) {
         db.exec(version15)
+      }
+    },
+    {
+      version: 16,
+      up(db) {
+        segmentBareSources(db)
       }
     }
   ]

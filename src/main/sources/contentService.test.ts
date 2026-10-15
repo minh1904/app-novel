@@ -259,6 +259,7 @@ describe('SourceContentService', () => {
 
     expect(applied.currentRev).toBe(2)
     expect(readText(db, 'c1', 'source').content).toBe('V2 Mới')
+    expect(readText(db, 'c1', 'source').segments).toHaveLength(1)
     // Target translation is completely preserved!
     expect(readText(db, 'c1', 'target').content).toBe('Bản dịch V1')
 

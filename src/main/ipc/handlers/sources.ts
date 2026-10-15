@@ -36,6 +36,7 @@ import {
   type StoredSyncRun,
   type StoredUpdateEvent
 } from '../../infra/storage/sourceStorage'
+import { segment } from '../../../shared/segmentation/segmenter'
 import { parseRangeString } from '../../../shared/text/rangeParser'
 import { StorageError } from '../../infra/storage/errors'
 import { identifyKakuyomu } from '../../sources/kakuyomu/identify'
@@ -198,7 +199,14 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
           )
           const { chapter } = deps.library.createChapterAt(input.workId, targetPos, item.title)
           try {
-            deps.library.saveText(input.workId, chapter.id, 'source', page.text, 0, [])
+            deps.library.saveText(
+              input.workId,
+              chapter.id,
+              'source',
+              page.text,
+              0,
+              segment(page.text, deps.library.get(input.workId).sourceLang)
+            )
             deps.library.withWork(input.workId, (db) => {
               sources().catalog.mapChapter(db, item.id, chapter.id)
             })
@@ -268,7 +276,14 @@ export function sourcesHandlers(deps: HandlerDeps): AreaHandlers<'sources'> {
           )
           const { chapter } = deps.library.createChapterAt(input.workId, targetPos, item.title)
           try {
-            deps.library.saveText(input.workId, chapter.id, 'source', page.text, 0, [])
+            deps.library.saveText(
+              input.workId,
+              chapter.id,
+              'source',
+              page.text,
+              0,
+              segment(page.text, deps.library.get(input.workId).sourceLang)
+            )
             deps.library.withWork(input.workId, (db) => {
               sources().catalog.mapChapter(db, item.id, chapter.id)
             })
