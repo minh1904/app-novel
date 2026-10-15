@@ -150,13 +150,30 @@ vẫn là câu tiếng Việt.
 - **Các lần chạy Lab cũ vẫn đọc được:** lệnh `pairs` nhận cả khóa `noi` lẫn `speaker_to_listener`, cả thẻ
   `<nguon>` lẫn `<source>`. Nhãn biến thể của Lab giờ là tên tự đặt (mặc định `base`), không còn gắn với
   phiên bản prompt.
-- `promptVersion` trong trace đề xuất là hằng `translate-v7`; đề xuất cũ giữ `translate-v1`…`v6`.
-  `v7` (2026-10-14) bỏ luật và ví dụ thầy trò của bộ, thêm luật chung "mày – tao" theo cảm xúc (mục
-  [Bỏ luật cứng theo bối cảnh](#bỏ-luật-cứng-theo-bối-cảnh-2026-10-14-chưa-đo-lại-bằng-model)); system prompt
-  đổi nên số đo `v5` không còn áp nguyên.
-  `v6` (2026-10-14, `add-agent-steering`) chỉ thêm khối `<task_instruction>` và một câu lệnh cuối ở
-  message user khi item của task có chỉ dẫn; system prompt và request không có chỉ dẫn giữ nguyên từng byte,
-  nên số đo `translate-v5` vẫn áp dụng cho lượt dịch thường.
+- `promptVersion` trong trace đề xuất là hằng `translate-v10`; đề xuất cũ giữ `translate-v1`…`v9`.
+  `v10` (2026-10-15, chưa đo bằng model) sửa những gì đếm được trên 12 chương "Hehe" dịch bằng `v9` (có
+  glossary, 8 nhân vật, 13 cặp đã duyệt):
+  - "ạ": luật `v9` khiến 85/153 câu gốc nói です/ます có "ạ", kể cả câu quát côn đồ và 9 lượt có hai "ạ".
+    Nay です/ます là lịch sự trung tính; "ạ" chỉ khi người nói xưng em/cháu/con với người trên, hoặc người
+    phục vụ, thuộc hạ nói với khách, chủ; tối đa một "ạ" mỗi lượt; không dùng khi quát, can ngăn.
+  - Cách gọi trong cặp đã duyệt thắng quy ước kính ngữ: cặp do AI trích ghi "ngài Noel", "chị Serena"
+    trong khi tác phẩm giữ hậu tố, nên bản dịch trộn 36 "Noel-sama" với 4 "ngài Noel"; danh hiệu kèm 様
+    không viết lai ("Kiếm Thánh-sama").
+  - Một người nói với một người nghe giữ một cách tự xưng, một cách gọi cả chương (Noel lúc "tôi" lúc
+    "tớ" với Serena ở chương 6); 私たち không gồm người nghe là "chúng tôi".
+  `v9` (2026-10-14, chưa đo bằng model) sửa các lỗi chủ sản phẩm thấy khi so ba chương dịch bằng prompt
+  cũ với bản dịch của Gemini web (cắt chữ đến cụt câu, mất sắc thái, Noel mất "ạ"):
+  - Luật lược chủ ngữ thêm vế "lược đại từ, không lược ý": giữ từ nối, "được/đã", tân ngữ.
+  - Luật chống dịch từng chữ bỏ danh sách từ ("được/bị", "của", "đã/đang/sẽ"…) vì nghi model né luôn các
+    từ đó khi câu cần.
+  - Thêm luật giữ từ mang sắc thái; profile Nhật thêm giữ lễ phép です/ます bằng ạ/dạ/vâng và bảng trợ từ
+    なんて, すら/さえ, すでに, ぜひ, だろうか, ものだ.
+  - Gạch dài mở đầu câu kể: bỏ gạch nhưng câu vẫn đủ chủ ngữ; 『…』 đứng riêng viết ‘…’.
+  - Ngoài prompt: dòng chỉ gồm ký tự phân cách (◇◇◇, ＊＊＊, ――――) không gửi model mà chép nguyên
+    (`mapToTempIds`), vì luật gạch dài từng biến "――――" thành "..."; khoảng trắng trước ” ’ trong bản
+    dịch bị bỏ; đoạn nguồn nằm trọn trong 「…」/『…』 mà bản dịch mất ngoặc (hay mở “ quên đóng) được thêm
+    lại ngoặc (`restoreDialogueQuotes`). Lý do: hai chương dịch bằng `v8` mất ngoặc ở cả nửa sau chương;
+    chưa biết lỗi do model hay app vì tác vụ tự áp dụng không lưu câu trả lời thô (xem mục log dưới).
 
 ## Bổ sung ngày 2026-10-05 (đã triển khai, đo sơ bộ)
 
@@ -218,6 +235,13 @@ luật đó giúp: lỗi gọi nhầm "thầy" giảm nhờ dữ liệu nhân v�
 - `RegisterPreset` không còn `rules` và `examples`; bộ chỉ còn bảng cặp gợi ý và cách gọi ngôi ba.
 - Luật chung thêm `MAY_TAO_RULE` theo quyết định trên; câu "đại từ bản gốc chỉ quyết định mức thô" đổi
   thành "đại từ là tín hiệu về giọng, tính cách và mức thô, không phải bảng quy đổi".
+  **Đã bỏ cùng ngày (`translate-v8`):** chủ sản phẩm xem bản dịch thật thấy một nhân vật xưng "ta" gọi "mày"
+  trong cảnh đe dọa, khi nhân vật đối diện nói "tao – mày"; mức thô của người dùng đang đặt cao nên cần giữ
+  "tao – mày". Luật này là nghi phạm chính nhưng chưa đo lại bằng model nên chưa chứng minh là nguyên nhân duy
+  nhất. Bỏ hẳn `MAY_TAO_RULE`, cả ở prompt dịch lẫn chat. Các luật chung còn lại vẫn có: đại từ bản gốc là tín
+  hiệu về giọng và mức thô, cặp đã duyệt là bắt buộc. Hệ quả: cách xưng của người dưới với người trên giờ
+  do model quyết, trừ khi có cặp đã duyệt; muốn khóa thì thêm cặp vào ma trận xưng hô. Bảng gợi ý của bộ
+  (ví dụ "cô / thầy – cậu") giữ nguyên.
 - `<translation_rules>` thay câu "Viết tiếng Việt tự nhiên…" bằng năm dòng: sát nguyên tác về nghĩa, linh
   hoạt câu chữ (được tách/gộp câu trong mục); lược chủ ngữ, không lặp tên/đại từ ở câu liền nhau; không dịch
   từng chữ bị động, "một cách", "của", "đã/đang/sẽ"; giữ giọng riêng của nhân vật; dấu ba chấm "..."; hạn

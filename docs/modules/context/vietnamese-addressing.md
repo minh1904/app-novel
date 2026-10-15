@@ -25,11 +25,12 @@ giữa các lô, các chương?
 7. **Phân loại theo bối cảnh, không theo thể loại**: truyện tình cảm và trinh thám cùng đặt ở học đường
    Nhật dùng chung một bộ; thể loại chỉ bật/tắt vài luật. Làm **sau** việc gửi đủ ngữ cảnh.
 
-8. **"Mày – tao" theo quan hệ, vai dưới không tự dùng với vai trên** (chủ sản phẩm chốt 2026-10-14, thay
-   quyết định cũ dưới đây): dùng theo quan hệ, tính cách và mức thô của bản gốc; người vai dưới trong quan hệ
-   cách xa về vai vế (cháu → ông bà, con → bố mẹ, trò → thầy cô) không tự xưng tao gọi mày với vai trên, kể cả
-   khi giận, trừ khi cặp đã duyệt cho phép. Là một luật chung, không còn luật thầy trò viết cứng theo bộ.
-   Phần còn đúng của quyết định cũ: giữ độ gắt bằng từ ngữ và nhịp câu, không làm nhẹ tình tiết.
+8. **Không còn luật riêng cho "mày – tao"** (chủ sản phẩm chốt 2026-10-14, thay quyết định cũ dưới đây).
+   Cùng ngày có một bản chốt trung gian: vai dưới trong quan hệ cách xa về vai vế (cháu → ông bà, con → bố mẹ,
+   trò → thầy cô) không tự xưng tao gọi mày với vai trên. Bản đó đã bỏ vì khi dịch thật có nhân vật xưng "ta"
+   gọi "mày" thay vì "tao – mày" dù bản gốc thô (chưa đo lại bằng model). Nay không có luật cứng nào về "mày – tao"; đại từ bản
+   gốc là tín hiệu về giọng và mức thô, cặp đã duyệt là bắt buộc. Phần còn đúng của quyết định cũ: giữ độ
+   gắt bằng từ ngữ và nhịp câu, không làm nhẹ tình tiết.
 
    *Lịch sử:* **Giáo viên hạn chế "mày/tao"** (chốt sau khi xem bản dịch, triển khai 2026-10-06). Học đường hiện
    đại mặc định "thầy/cô – em"; giáo viên cộc hoặc xa cách có thể dùng "thầy/cô – cậu". Học trò lễ

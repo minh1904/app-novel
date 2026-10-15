@@ -317,11 +317,10 @@ describe('translatePrompt — nhân vật và bộ mặc định', () => {
     expect(one).toContain('Bối cảnh: Nhật hiện đại, học đường.')
     expect(one).toContain('- Thầy cô → học trò, thô [私 + お前/テメェ]: cô / thầy – cậu.')
     expect(one).not.toContain('Luật riêng của bối cảnh này')
-    expect(plain).toContain('không tự xưng "tao" gọi "mày" với người vai trên')
     expect(one).toBe(two)
   })
 
-  it('không bộ nào mang luật thầy trò; luật "mày – tao" theo vai vế có ở mọi prompt', () => {
+  it('không bộ nào mang luật thầy trò, cũng không có luật hạn chế "mày – tao"', () => {
     const registers = [undefined, 'ja-modern', 'zh-modern', 'zh-ancient'] as const
     for (const register of registers) {
       const prompt = buildTranslateRequest(
@@ -331,8 +330,8 @@ describe('translatePrompt — nhân vật và bộ mặc định', () => {
       expect(prompt).not.toContain('hạn chế "mày/tao"')
       expect(prompt).not.toContain('Giáo viên')
       expect(prompt).not.toContain('お前/テメェ/貴様')
+      expect(prompt).not.toContain('không tự xưng "tao"')
       expect(prompt).toContain('giữ cách gọi tương ứng theo quy ước tên')
-      expect(prompt).toContain('không tự xưng "tao" gọi "mày" với người vai trên')
     }
   })
 
@@ -381,23 +380,23 @@ describe('output mode', () => {
   const hash = (text: string): string => createHash('sha256').update(text).digest('hex')
 
   it('leaves the system prompt byte for byte as it was before the mode existed', () => {
-    // Pinned system prompts. Re-pinned for translate-v7 (2026-10-14): the "mày – tao" rule replaced the
-    // teacher rules and preset examples, and the style and dialogue rules changed. Array mode must still
-    // not change a byte.
+    // Pinned system prompts. Re-pinned for translate-v10 (2026-10-15): "ạ" only for a junior speaker or
+    // a servant, approved pair forms win over the honorific suffix, one self-reference per listener per
+    // chapter, and exclusive 私たち. Array mode must still not change a byte.
     const school = { sourceLang: 'ja', genre: 'Học đường', register: 'ja-modern' as const }
     expect(hash(systemPrompt(school))).toBe(
-      '4b865255979989515b8ceb072d641736d30efd07ffd2985e741be9eb94355201'
+      '203bf40a7b402a2d157acd3a4ba1ade9bf364153f9c06bc16e8ba389d795f29f'
     )
     expect(hash(systemPrompt({ ...school, outputMode: 'array' }))).toBe(hash(systemPrompt(school)))
     expect(hash(systemPrompt({ sourceLang: 'zh' }))).toBe(
-      'c47af0e6e4e9416b01be59df7892138c70326339302cb454855d79599c22a683'
+      '388c66d2d791b7e51cfa883511912bfb147360eaf987c1ccabf19f66c6ad70b2'
     )
     const request = buildTranslateRequest({ sourceLang: 'ja' }, unit)
     expect(request.systemHash).toBe(
-      '92a33ddd99b94baf08c4c0d2d7078fc288244cd8a0fb492ed8fb77d238af1aad'
+      'ead1b10e2f9082c4a733f015c0a153b49b2fd63bdf2caa78ec75bdf9e32002a6'
     )
     expect(request.requestHash).toBe(
-      '600e44191f5b6e047fb5b571ee2fd455fdad8f6840be368cf2e4c2699cb2c5ef'
+      '2804188cd71203885fc4698b032f909258efe4525c5fbfabe2e9911d76253ee2'
     )
   })
 

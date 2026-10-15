@@ -3,9 +3,10 @@
 Cập nhật: 2026-10-14 · Trạng thái: **quan sát và đề xuất**, chưa đo bằng Lab. Nguồn: năm đợt nghiên cứu song
 song ngày 2026-10-14 (chung, Nhật, Trung, Hàn, Anh), đọc web và đối chiếu mã.
 
-**Quyết định của chủ sản phẩm cùng ngày:** không còn luật cứng theo bối cảnh; "mày – tao" theo quan hệ, vai
-dưới (cháu, con, trò) không tự dùng với vai trên; văn phong linh hoạt, sát nguyên tác; các điểm theo ngôn ngữ
-viết thành gợi ý linh hoạt; dấu ba chấm "..."; hạn chế gạch dài vì tiếng Việt không dùng.
+**Quyết định của chủ sản phẩm cùng ngày:** không còn luật cứng theo bối cảnh và không còn luật riêng cho
+"mày – tao" (bản chốt trung gian "vai dưới không tự dùng với vai trên" đã bỏ, prompt `translate-v8`); văn
+phong linh hoạt, sát nguyên tác; các điểm theo ngôn ngữ viết thành gợi ý linh hoạt; dấu ba chấm "...";
+hạn chế gạch dài vì tiếng Việt không dùng.
 
 **Đã triển khai ngày 2026-10-14** (prompt `translate-v7`, `polish-v3`): hai lỗi ở mục 2, năm dòng luật chung ở
 mục 5, gợi ý theo ngôn ngữ ở mục 5, không tự đoán bộ học đường cho truyện Nhật. Chưa làm: dữ liệu theo tác

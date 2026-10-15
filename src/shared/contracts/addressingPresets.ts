@@ -45,14 +45,6 @@ export interface RegisterPreset {
 export const NAME_ADDRESSING_RULE =
   'Khi bản gốc gọi tên hoặc chức danh thì giữ cách gọi tương ứng theo quy ước tên; có thể lược đại từ nếu câu vẫn rõ và tự nhiên, không nhét đủ cặp xưng hô vào mọi câu.'
 
-/**
- * "Mày – tao" theo quan hệ và tính cách như bản gốc, nhưng vai dưới trong quan hệ cách xa về vai vế không tự
- * dùng với vai trên (quyết định của chủ sản phẩm, 2026-10-14; thay luật thầy trò viết cứng theo bộ học đường).
- * Đi vào cả prompt dịch lẫn chat.
- */
-export const MAY_TAO_RULE =
-  '"Mày – tao" dùng theo quan hệ, tính cách và mức thô của bản gốc (bạn cùng lứa nói thô, côn đồ, kẻ thù, lúc cảm xúc bùng nổ). Người vai dưới trong quan hệ cách xa về vai vế (cháu với ông bà, con với bố mẹ, trò với thầy cô) không tự xưng "tao" gọi "mày" với người vai trên, kể cả khi giận, trừ khi cặp đã duyệt cho phép; độ gắt khi đó chuyển vào từ ngữ và nhịp câu.'
-
 /** Quy tắc xưng hô chung cho mọi bộ bối cảnh. */
 export const ADDRESSING_RULES = [
   'Cặp xưng hô đã duyệt trong <addressing> là bắt buộc, kể cả khi nhân vật nói gắt; bảng mặc định chỉ dùng cho cặp chưa có ở đó.',
@@ -62,8 +54,7 @@ export const ADDRESSING_RULES = [
   'Không dùng "tôi – bạn" trong lời thoại.',
   'Giọng vùng miền (tớ – cậu hay tui – ông/bà) theo tính cách nhân vật, không theo mặc định chung.',
   'Người kể gọi mỗi nhân vật bằng một đại từ ngôi ba cố định cho cả truyện; chỉ đổi khi thái độ của người kể đổi theo mốc truyện.',
-  NAME_ADDRESSING_RULE,
-  MAY_TAO_RULE
+  NAME_ADDRESSING_RULE
 ]
 
 export const REGISTER_PRESETS: Record<RegisterPresetId, RegisterPreset> = {

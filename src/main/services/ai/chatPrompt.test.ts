@@ -27,12 +27,12 @@ function input(patch: Partial<ChatSendInput> = {}): ChatSendInput {
 
 describe('systemPrompt', () => {
   // Luật thầy trò từng đi theo bộ học đường, mà bộ đó là mặc định của mọi truyện Nhật không ghi thể loại.
-  it('has no setting-specific rule: only naming and the "mày – tao" rule', () => {
+  it('has no setting-specific rule: only naming', () => {
     const prompt = systemPrompt()
     expect(prompt).not.toContain('Giáo viên')
     expect(prompt).not.toContain('お前')
+    expect(prompt).not.toContain('mày')
     expect(prompt).toContain('giữ cách gọi tương ứng theo quy ước tên')
-    expect(prompt).toContain('không tự xưng "tao" gọi "mày" với người vai trên')
   })
 
   // Đảm bảo phân biệt giữa "không ghi đè trực tiếp" và "vẫn hỗ trợ dịch trong câu trả lời".

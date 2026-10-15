@@ -130,7 +130,8 @@ function honorificLines(policy: HonorificPolicy): string[] {
   return [
     '- Giữ hậu tố gắn sau tên (-san, -kun, -chan, -sama…) đúng như bản gốc; không tự thêm hậu tố không có trong bản gốc.',
     '- Không ghép thêm danh xưng tiếng Việt thành dạng lai như "chị A-san".',
-    '- Chức danh hay quan hệ đứng riêng (sensei, senpai…) dịch theo vai trong cảnh.'
+    '- Chức danh hay quan hệ đứng riêng (sensei, senpai…) dịch theo vai trong cảnh.',
+    '- Hậu tố chỉ gắn sau tên riêng. Danh hiệu, chức danh kèm 様 (剣聖様, 聖女様) dịch thành "ngài Kiếm Thánh", "Thánh nữ đại nhân"…, không viết dạng lai "Kiếm Thánh-sama".'
   ]
 }
 
@@ -138,10 +139,13 @@ function japanese(policy: HonorificPolicy): string[] {
   return [
     ...honorificLines(policy),
     '- Bản gốc hay lược chủ ngữ: chỉ thêm đại từ khi câu tiếng Việt cần, và suy người nói từ mạch truyện, không suy từ một chữ.',
+    '- Thể lịch sự (です/ます) là lịch sự trung tính, không phải kính ngữ với bề trên: thể hiện bằng lời lẽ nhã nhặn (xin, vâng, cảm ơn). Chỉ thêm "ạ" khi người nói xưng em, cháu, con với người trên, hoặc người phục vụ, thuộc hạ nói với khách, chủ; nhiều nhất một "ạ" mỗi lượt thoại; không dùng khi quát, can ngăn hay nói với kẻ địch.',
+    '- 私たち, 僕たち, 俺たち là "chúng tôi", "bọn tôi" khi không gồm người nghe; "chúng ta" chỉ khi gồm cả người nghe.',
+    '- Trợ từ sắc thái phải hiện ra trong câu: なんて (chẳng qua chỉ là, cái việc… mà), すら/さえ (ngay cả, đến cả), すでに (đã… từ lúc nào), ぜひ (nhất định), …だろうか (liệu… không), …ものだ (thường hay).',
     '- Cách tự xưng (僕, 俺, 私, わたくし…) và đuôi câu đặc trưng (～のじゃ, ～ですわ, ～っす) là giọng của nhân vật: giữ khác biệt đó bằng cách chọn từ và tiểu từ tiếng Việt nhất quán, không làm phẳng.',
     '- Từ tượng thanh, tượng hình dịch bằng từ láy hoặc động từ tiếng Việt (ドキドキ → thình thịch); không phiên âm romaji.',
     '- Từ Hán của tiếng Nhật không mặc nhiên cùng nghĩa với từ Hán Việt (緊張 là căng thẳng, 勉強 là học, 大丈夫 là ổn).',
-    '- Dùng dấu câu tiếng Việt thay cho 、。！？. Lời thoại 「…」 viết thành “…”, trích dẫn lồng 『…』 thành ‘…’; giữ một kiểu cho cả chương.'
+    '- Dùng dấu câu tiếng Việt thay cho 、。！？. Lời thoại 「…」 viết thành “…”, trích dẫn lồng 『…』 thành ‘…’; 『…』 đứng riêng (lời nhớ lại, lời trích) cũng viết ‘…’ để không lẫn với thoại đang diễn ra; giữ một kiểu cho cả chương.'
   ]
 }
 

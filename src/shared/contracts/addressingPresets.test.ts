@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  ADDRESSING_RULES,
-  REGISTER_PRESET_IDS,
-  REGISTER_PRESETS,
-  MAY_TAO_RULE
-} from './addressingPresets'
+import { ADDRESSING_RULES, REGISTER_PRESET_IDS, REGISTER_PRESETS } from './addressingPresets'
 
 describe('bộ mặc định xưng hô', () => {
   it('mỗi mã có một bộ, có dòng quan hệ và luật ngôi ba', () => {
@@ -49,10 +44,8 @@ describe('bộ mặc định xưng hô', () => {
     expect(general).toContain('giữ cách gọi tương ứng theo quy ước tên')
   })
 
-  // Quyết định 2026-10-14: không còn luật cứng theo bối cảnh; "mày – tao" là mức cảm xúc, một luật chung.
-  it('"mày – tao" là luật chung; không bộ nào còn luật hay ví dụ riêng', () => {
-    expect(ADDRESSING_RULES).toContain(MAY_TAO_RULE)
-    expect(MAY_TAO_RULE).toContain('cháu với ông bà, con với bố mẹ, trò với thầy cô')
+  // Quyết định 2026-10-14: không còn luật cứng theo bối cảnh; một bộ chỉ còn bảng cặp gợi ý và cách gọi ngôi ba.
+  it('không bộ nào còn luật hay ví dụ riêng', () => {
     for (const preset of Object.values(REGISTER_PRESETS)) {
       expect(Object.keys(preset).sort()).toEqual([
         'id',
@@ -61,24 +54,6 @@ describe('bộ mặc định xưng hô', () => {
         'sourceLangs',
         'thirdPerson'
       ])
-    }
-  })
-
-  // Vai dưới không tự xưng tao gọi mày với vai trên (quyết định 2026-10-14); bảng gợi ý không được gợi ý ngược.
-  it('không dòng nào gợi ý vai dưới xưng tao gọi mày với thầy cô hay cha mẹ', () => {
-    const row = REGISTER_PRESETS['ja-modern'].rows.find((item) => item.relation.includes('thô'))
-    expect(row?.forward).toBe('cô / thầy – cậu')
-    for (const preset of Object.values(REGISTER_PRESETS)) {
-      for (const junior of preset.rows.filter((item) =>
-        /→ (thầy cô|cha mẹ|bố mẹ)/i.test(item.relation)
-      )) {
-        expect(junior.forward + (junior.notes ?? '')).not.toMatch(/tao – mày|mày – tao/)
-      }
-    }
-    for (const preset of Object.values(REGISTER_PRESETS)) {
-      for (const teacher of preset.rows.filter((item) => /Thầy cô|Giáo viên/.test(item.relation))) {
-        expect(teacher.forward).not.toMatch(/mày|tao/)
-      }
     }
   })
 })

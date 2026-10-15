@@ -1,6 +1,6 @@
 import type { ChatLocation, ChatSendInput } from '../../../shared/contracts/aiChat'
 import type { ChatMessage } from '../../infra/providers/openAiCompatible'
-import { MAY_TAO_RULE, NAME_ADDRESSING_RULE } from '../../../shared/contracts/addressingPresets'
+import { NAME_ADDRESSING_RULE } from '../../../shared/contracts/addressingPresets'
 
 /**
  * Lắp một lượt hội thoại thành `messages`.
@@ -45,7 +45,7 @@ const TERMS = [
  * thuộc tác phẩm, nên phần này giống hệt nhau giữa các lượt của cùng tác phẩm và prompt cache trúng.
  */
 export function systemPrompt(): string {
-  return [ROLE, NAME_ADDRESSING_RULE, MAY_TAO_RULE, TOOLS, TERMS].join(' ')
+  return [ROLE, NAME_ADDRESSING_RULE, TOOLS, TERMS].join(' ')
 }
 
 /** Chương đang mở, như main đọc được từ kho; thiếu thì khối vị trí chỉ nói số đoạn. */

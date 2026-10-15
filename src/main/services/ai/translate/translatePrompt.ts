@@ -29,7 +29,7 @@ import {
  */
 
 /** Định danh thế hệ prompt ghi vào trace đề xuất. */
-export const TRANSLATE_PROMPT_VERSION = 'translate-v7'
+export const TRANSLATE_PROMPT_VERSION = 'translate-v10'
 
 /** Tên thẻ của prompt dịch. Đổi tên ở đây thì system prompt, message user và bộ thoát thẻ đổi theo. */
 export const TAGS = {
@@ -176,16 +176,17 @@ export function systemPrompt(context: TranslatePromptContext): string {
     `<${t.rules}>`,
     '- Dịch đủ ý từng mục: không tóm tắt, không bỏ, không thêm chú thích. Giữ giọng điệu và cảm xúc nhân vật, kể cả câu thô hay châm biếm.',
     '- Sát nguyên tác về nghĩa, sắc thái và mức độ; linh hoạt về câu chữ: viết theo trật tự và nhịp câu tiếng Việt, được tách hoặc gộp câu trong cùng mục.',
-    '- Lược chủ ngữ, đại từ khi câu đã rõ ai làm gì; không lặp cùng một tên hay đại từ ở các câu liền nhau, trừ khi bản gốc cố ý lặp.',
-    '- Không dịch từng chữ bị động, danh hóa hay trạng từ: chỉ dùng "được/bị", "một cách", "của", "đã/đang/sẽ" khi câu tiếng Việt cần.',
+    '- Lược chủ ngữ, đại từ khi câu đã rõ ai làm gì; không lặp cùng một tên hay đại từ ở các câu liền nhau, trừ khi bản gốc cố ý lặp. Lược đại từ, không lược ý: giữ từ nối (rồi, và, mà, thì), "được", "đã" và tân ngữ khi thiếu chúng câu bị cụt hoặc đổi nghĩa.',
+    '- Tránh lối dịch từng chữ: không bê nguyên bị động, danh hóa hay trạng từ của bản gốc vào câu tiếng Việt.',
+    '- Từ mang sắc thái của bản gốc (coi nhẹ, nhấn mạnh, bất ngờ, rụt rè, đã xảy ra từ trước) phải hiện trong câu tiếng Việt (chẳng qua chỉ là, ngay cả, đã… từ lúc nào, liệu… không); không lược vì tưởng là chữ thừa.',
     '- Mỗi nhân vật giữ giọng riêng của bản gốc (cách tự xưng, tiểu từ, độ dài câu); không làm phẳng giọng.',
-    '- Dấu ba chấm viết "..." (kể cả khi bản gốc dùng … hoặc ……). Tiếng Việt hạn chế gạch dài: gạch dài của bản gốc (――, —) chuyển thành dấu phẩy, dấu hai chấm hoặc "..." khi lời bị ngắt, bỏ lửng, tùy câu.',
+    '- Dấu ba chấm viết "..." (kể cả khi bản gốc dùng … hoặc ……). Tiếng Việt hạn chế gạch dài: gạch dài của bản gốc (――, —) chuyển thành dấu phẩy, dấu hai chấm hoặc "..." khi lời bị ngắt, bỏ lửng, tùy câu. Gạch dài mở đầu một câu kể là nhịp ngắt của người kể: bỏ gạch nhưng vẫn viết câu đủ chủ ngữ, đủ ý, không thành mảnh câu cụt.',
     `- Thuật ngữ trong <${t.glossary}> là lựa chọn người dịch đã chốt: dùng đúng bản dịch cho từ gốc và các biến thể, không dùng dạng nằm trong mục "Forbidden".`,
     `- Giới tính và vai của nhân vật lấy theo <${t.characters}>, không đoán từ giọng nói: một cô giáo nói năng thô vẫn là "cô".`,
     `- Cặp xưng hô trong <${t.addressing}> có chiều: dùng khi nhận ra người nói và người nghe trong cảnh.`,
-    `- Với mỗi câu thoại, xác định người nói và người nghe TRƯỚC, rồi mới chọn đại từ theo đúng cặp đó trong <${t.addressing}>. Một nhân vật có thể tự xưng khác nhau với từng người nghe; cách xưng với người này không được lan sang người khác trong cùng cảnh.`,
+    `- Với mỗi câu thoại, xác định người nói và người nghe TRƯỚC, rồi mới chọn đại từ theo đúng cặp đó trong <${t.addressing}>. Một nhân vật có thể tự xưng khác nhau với từng người nghe; cách xưng với người này không được lan sang người khác trong cùng cảnh. Cùng một người nói với cùng một người nghe thì giữ một cách tự xưng và một cách gọi trong cả chương (không đổi qua lại "tôi"/"tớ", "chị"/"cô"), trừ khi bản gốc đổi.`,
     `- Viết "dst" theo cặp vừa chọn trong "${k.selfRef}"/"${k.addrRef}". Kính ngữ, lời khẩn cầu, trêu đùa hay đổi cảm xúc không tự cho phép đổi cặp đã duyệt; chỉ áp dụng ngoại lệ nếu ghi chú của cặp cho phép. Thể hiện sắc thái bằng lời văn, nhịp câu và tiểu từ phù hợp.`,
-    `- "${k.selfRef}"/"${k.addrRef}" chỉ xác định cách dùng khi cần đại từ, không bắt buộc chèn đại từ vào câu. Khi gọi bằng tên, giữ tên và kính ngữ theo <${t.addressing}> và bản gốc. Đại từ chỉ người thứ ba, lời được trích và từ phản thân không bị thay bằng cặp của người đang nói.`,
+    `- "${k.selfRef}"/"${k.addrRef}" chỉ xác định cách dùng khi cần đại từ, không bắt buộc chèn đại từ vào câu. Khi gọi bằng tên, cách gọi ghi trong cặp của <${t.addressing}> (ví dụ "ngài Noel", "chị Lili") thắng quy ước kính ngữ; chỉ khi chưa có cặp mới theo bản gốc và quy ước kính ngữ. Đại từ chỉ người thứ ba, lời được trích và từ phản thân không bị thay bằng cặp của người đang nói.`,
     '- Khi chưa rõ ai nói với ai, gọi bằng tên hoặc danh xưng, hoặc lược đại từ nếu câu tiếng Việt vẫn tự nhiên; không đoán giới tính từ một đại từ trung tính.',
     `</${t.rules}>`
   ]
