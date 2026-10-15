@@ -472,6 +472,18 @@ export class AgentRepository {
       .map(operationFrom)
   }
 
+  /** The latest operations of chats and tasks alike, newest change first: the AI log. */
+  listRecentOperations(limit: number): AgentOperation[] {
+    return this.db
+      .prepare(
+        `SELECT id, turn_id, task_item_id, command_id, capability, target_json, state, progress_json,
+                model_ref_json, usage_json, result_json, error_json, created_at, updated_at
+         FROM agent_operation ORDER BY updated_at DESC, id DESC LIMIT ?`
+      )
+      .all<OperationRow>(limit)
+      .map(operationFrom)
+  }
+
   listUnsettledOperations(): AgentOperation[] {
     return this.db
       .prepare(

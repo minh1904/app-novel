@@ -115,6 +115,7 @@ export const CHANNELS = {
   agentSessionsCreate: 'agent:sessions:create',
   agentTurnSend: 'agent:turn:send',
   agentTurnCancel: 'agent:turn:cancel',
+  agentOperationList: 'agent:operation:list',
   agentOperationGet: 'agent:operation:get',
   agentOperationUndo: 'agent:operation:undo',
   agentTargetWriteAck: 'agent:target:write-ack',

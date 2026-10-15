@@ -11,7 +11,7 @@ export interface OperationCardProps {
   onUndo?: (operationId: string) => void
 }
 
-function stateInfo(state: AgentOperation['state']): { label: string; color: BadgeColor } {
+export function stateInfo(state: AgentOperation['state']): { label: string; color: BadgeColor } {
   switch (state) {
     case 'queued':
       return { label: 'Đang chờ', color: 'neutral' }
@@ -34,8 +34,9 @@ function stateInfo(state: AgentOperation['state']): { label: string; color: Badg
   }
 }
 
-const CAPABILITY_LABELS: Record<string, string> = {
+export const CAPABILITY_LABELS: Record<string, string> = {
   translate_chapter: 'Dịch chương',
+  extract_terms: 'Trích thuật ngữ',
   edit_translation: 'Sửa bản dịch'
 }
 

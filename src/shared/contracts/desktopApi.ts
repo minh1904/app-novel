@@ -14,6 +14,7 @@ import type {
 import type {
   AgentCancelInput,
   AgentCancelResult,
+  AgentOperation,
   AgentOperationDetailView,
   AgentSendInput,
   AgentSendResult,
@@ -490,6 +491,8 @@ export interface AgentApi {
     cancel(input: AgentCancelInput): Promise<Result<AgentCancelResult>>
   }
   operations: {
+    /** The latest operations of every chat and task, newest change first. */
+    list(limit: number): Promise<Result<AgentOperation[]>>
     get(operationId: string): Promise<Result<AgentOperationDetailView>>
     undo(input: AgentUndoInput): Promise<Result<AgentUndoResult>>
   }

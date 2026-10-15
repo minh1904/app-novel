@@ -312,6 +312,10 @@ export class AgentService {
     return this.repository.getTurn(id)
   }
 
+  listRecentOperations(limit: number): AgentOperation[] {
+    return this.repository.listRecentOperations(limit)
+  }
+
   getOperation(id: string): AgentOperation | null {
     return this.repository.getOperation(id)
   }

@@ -6,6 +6,7 @@ export { PendingActionCard, type PendingActionCardProps } from './components/Pen
 export { ActivityTimeline, type ActivityTimelineProps } from './components/ActivityTimeline'
 export { ThinkingPreview, type ThinkingPreviewProps } from './components/ThinkingPreview'
 export { OperationCard, type OperationCardProps } from './components/OperationCard'
+export { OperationLog } from './components/OperationLog'
 export { UsageDisplay, type UsageDisplayProps } from './components/UsageDisplay'
 export { AutoScrollSentinel, type AutoScrollSentinelProps } from './components/AutoScrollSentinel'
 export { DeltaBuffer } from './components/DeltaBuffer'

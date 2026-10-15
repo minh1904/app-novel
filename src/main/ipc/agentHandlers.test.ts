@@ -5,6 +5,7 @@ import type { TaskQualityView } from '../../shared/contracts/taskQuality'
 import type {
   AgentStreamEvent,
   AgentCancelInput,
+  AgentOperation,
   AgentOperationDetailView,
   AgentSendInput,
   AgentSendResult,
@@ -187,6 +188,9 @@ describe('agent IPC handlers', () => {
     )
     expect(opDetail.operation.id).toBe(op.id)
     expect(opDetail.operation.state).toBe('completed')
+    const log = value<AgentOperation[]>(call(CHANNELS.agentOperationList, { limit: 50 }))
+    expect(log.map((each) => each.id)).toContain(op.id)
+    expect(call(CHANNELS.agentOperationList, { limit: 0 }).ok).toBe(false)
 
     const undoRes = value<AgentUndoResult>(
       call(CHANNELS.agentOperationUndo, { operationId: op.id } satisfies AgentUndoInput)

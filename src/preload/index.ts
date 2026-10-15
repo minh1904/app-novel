@@ -12,6 +12,7 @@ import type {
   ProposalQueueItem
 } from '../shared/contracts/aiProposals'
 import type {
+  AgentOperation,
   AgentOperationDetailView,
   AgentSendResult,
   AgentSessionDetailView,
@@ -555,6 +556,10 @@ const desktopApi: DesktopApi = {
       cancel: (input) => ipcRenderer.invoke(CHANNELS.agentTurnCancel, input)
     },
     operations: {
+      list: (limit) =>
+        ipcRenderer.invoke(CHANNELS.agentOperationList, { limit }) as Promise<
+          Result<AgentOperation[]>
+        >,
       get: (operationId) =>
         ipcRenderer.invoke(CHANNELS.agentOperationGet, { operationId }) as Promise<
           Result<AgentOperationDetailView>

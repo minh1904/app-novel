@@ -10,6 +10,7 @@ import {
   agentUndoInputSchema,
   agentWriteIntentAckSchema,
   type AgentCancelResult,
+  type AgentOperation,
   type AgentOperationDetailView,
   type AgentSendResult,
   type AgentSessionDetailView,
@@ -51,6 +52,10 @@ const sessionCreateSchema = v.nullable(
 
 const operationGetSchema = v.strictObject({
   operationId: idSchema
+})
+
+const operationListSchema = v.strictObject({
+  limit: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(500))
 })
 
 export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
@@ -119,6 +124,11 @@ export function agentHandlers(deps: HandlerDeps): AreaHandlers<'agent'> {
     [CHANNELS.agentTurnCancel]: createHandler(
       agentCancelInputSchema,
       ({ turnId }): AgentCancelResult => ({ status: agentOf(deps).cancelTurn(turnId) })
+    ),
+
+    [CHANNELS.agentOperationList]: createHandler(
+      operationListSchema,
+      ({ limit }): AgentOperation[] => agentOf(deps).listRecentOperations(limit)
     ),
 
     [CHANNELS.agentOperationGet]: createHandler(
