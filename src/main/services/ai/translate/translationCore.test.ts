@@ -1,8 +1,39 @@
+import { mkdtempSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { ContextEntryItem } from '../../../../shared/contracts/glossary'
+import { configureAiCallLog } from '../../../infra/storage/aiCallLog'
 import { ProviderError } from '../../../infra/providers/types'
 import { CallBudget } from './callBudget'
 import { executeTranslateBatch, type TranslationModelCaller } from './translationCore'
+
+describe('translationCore — AI call log', () => {
+  it('logs the raw answer of each call and the text the app kept', async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), 'mira-core-log-'))
+    configureAiCallLog(dataDir)
+    try {
+      const raw = JSON.stringify([{ id: '[1]', dst: 'Ở vương đô ấy...' }])
+      await executeTranslateBatch({
+        caller: { complete: async () => ({ text: raw, usage: null, finishReason: 'stop' }) },
+        units: [{ id: 'u1', text: '「王都にはね……」' }],
+        log: { workId: 'w1', chapterId: 'c1', runKey: 'r1', model: 'm' }
+      })
+      const records = readFileSync(join(dataDir, 'logs', 'w1.jsonl'), 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line) as Record<string, unknown>)
+      expect(records.map((record) => record.kind)).toEqual(['translate.main', 'translate.result'])
+      expect(records[0]).toMatchObject({ chapterId: 'c1', runKey: 'r1', model: 'm', raw })
+      // The raw answer lost the quotes; the kept text has them back.
+      expect(records[1]?.items).toEqual([
+        { id: 'u1', src: '「王都にはね……」', dst: '“Ở vương đô ấy...”' }
+      ])
+    } finally {
+      configureAiCallLog(null)
+    }
+  })
+})
 
 describe('translationCore — Điều phối Lõi dịch theo lô', () => {
   it('v4 chỉ lưu dst, bỏ nhãn và các trường chuẩn bị xưng gọi', async () => {

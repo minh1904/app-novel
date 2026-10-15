@@ -199,7 +199,8 @@ export class ChapterTranslator {
           caller: translator.provider as unknown as TranslationModelCaller,
           units: segments,
           prompt,
-          now
+          now,
+          log: { workId, chapterId, model: translator.entry.model }
         })
         items = outcome.items
         usage = outcome.usage === null ? null : toWireUsage(outcome.usage)

@@ -281,7 +281,8 @@ export async function runChapterTranslation(
           prompt,
           now,
           signal,
-          budget
+          budget,
+          log: { workId, chapterId, runKey, model: translator.entry.model }
         })
         translatedItems = outcome.items
         base.failedIds.push(...outcome.failedIds)

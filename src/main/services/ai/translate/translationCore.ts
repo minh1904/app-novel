@@ -11,8 +11,10 @@ import { parseTranslationResponse } from '../../../../shared/translation/lenient
 import {
   buildRepairRequest,
   buildTranslateRequest,
+  TRANSLATE_PROMPT_VERSION,
   type TranslatePromptContext
 } from './translatePrompt'
+import { appendAiCall } from '../../../infra/storage/aiCallLog'
 import { ProviderError } from '../../../infra/providers/types'
 import { addUsage } from '../../../infra/providers/usage'
 import { describeRefusals } from '../../../../shared/translation/refusalMessage'
@@ -37,6 +39,8 @@ export interface TranslateCoreBatchOptions {
    * caps (one main call, 33 extra), so callers that do not plan a run behave as before.
    */
   budget?: CallBudget
+  /** Where the batch belongs; given, every model call and the kept result go to the work's AI call log. */
+  log?: { workId: string; chapterId: string; runKey?: string; model?: string }
 }
 
 export interface TranslateCoreBatchOutcome {
@@ -83,15 +87,58 @@ export interface TranslateCoreBatchOutcome {
  * - Đối soát ID
  * - Hỏi lại (repair) đúng các ID bị thiếu 1 lần duy nhất
  */
-export async function executeTranslateBatch({
+export async function executeTranslateBatch(
+  options: TranslateCoreBatchOptions
+): Promise<TranslateCoreBatchOutcome> {
+  const outcome = await runTranslateBatch(options)
+  const { log, units } = options
+  if (log) {
+    // What the app kept, next to the raw answers above it: a lost quote or word shows which side lost it.
+    const source = new Map(units.map((unit) => [unit.id, unit.text]))
+    appendAiCall(log.workId, {
+      kind: 'translate.result',
+      ...log,
+      promptVersion: TRANSLATE_PROMPT_VERSION,
+      items: outcome.items.map((item) => ({
+        id: item.id,
+        src: source.get(item.id),
+        dst: item.text
+      })),
+      failedIds: outcome.failedIds,
+      refusedIds: outcome.refusedIds,
+      error: outcome.error,
+      structure: outcome.structure
+    })
+  }
+  return outcome
+}
+
+async function runTranslateBatch({
   caller,
   units,
   prompt = {},
   signal,
   now,
-  budget = new CallBudget(1, LOCAL_EXTRA)
+  budget = new CallBudget(1, LOCAL_EXTRA),
+  log
 }: TranslateCoreBatchOptions): Promise<TranslateCoreBatchOutcome> {
   let totalUsage: Usage | null = null
+  const record = (
+    round: BudgetRound,
+    messages: Parameters<TranslationModelCaller['complete']>[0],
+    mode: OutputMode,
+    answer: Record<string, unknown>
+  ): void => {
+    if (!log) return
+    appendAiCall(log.workId, {
+      kind: 'translate.' + round,
+      ...log,
+      promptVersion: TRANSLATE_PROMPT_VERSION,
+      outputMode: mode,
+      messages,
+      ...answer
+    })
+  }
   // Mọi lời gọi model của lô đi qua đây: xin ngân sách trước, ghi số request HTTP thật sau.
   const call = async (
     round: BudgetRound,
@@ -106,9 +153,19 @@ export async function executeTranslateBatch({
         mode === 'object' ? { signal, responseFormat: TRANSLATE_RESPONSE_FORMAT } : { signal }
       )
       budget.addAttempts(result.attempts ?? 1)
+      record(round, messages, mode, {
+        raw: result.text,
+        finishReason: result.finishReason,
+        usage: result.usage,
+        attempts: result.attempts,
+        ...(result.filter ? { filter: result.filter } : {})
+      })
       return result
     } catch (error) {
       budget.addAttempts(1)
+      record(round, messages, mode, {
+        error: error instanceof Error ? error.message : String(error)
+      })
       throw error
     }
   }

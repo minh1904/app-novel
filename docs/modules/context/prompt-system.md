@@ -175,6 +175,31 @@ vẫn là câu tiếng Việt.
     lại ngoặc (`restoreDialogueQuotes`). Lý do: hai chương dịch bằng `v8` mất ngoặc ở cả nửa sau chương;
     chưa biết lỗi do model hay app vì tác vụ tự áp dụng không lưu câu trả lời thô (xem mục log dưới).
 
+## Log lời gọi AI theo tác phẩm (đã triển khai 2026-10-15)
+
+Trạng thái: **có trong mã và có test**; chưa xem log của một lượt chạy thật.
+
+- Mỗi lời gọi model của lõi dịch (`translate.main`, `translate.repair`, `translate.fallback`,
+  `translate.split`, `translate.bare`) và của luồng trích thuật ngữ (`extract`) ghi một dòng JSON vào
+  `<dataDir>/logs/<workId>.jsonl`: prompt đầy đủ (`messages`), câu trả lời thô (`raw`) hoặc lỗi, usage,
+  model, `promptVersion`, chương và `runKey`. Cuối mỗi lô có thêm `translate.result`: từng đoạn nguồn và
+  bản dịch app giữ lại. So `raw` với `translate.result` cho biết chữ hay ngoặc mất ở model hay ở app.
+- Bật mặc định, không có công tắc (chủ sản phẩm chốt 2026-10-15). Log nằm trên máy, không nằm trong file
+  tác phẩm nên bản sao lưu và bản xuất không kéo theo. Mỗi lần mở app xóa dòng cũ hơn 30 ngày.
+- Mục đích: người làm prompt (kể cả Claude) đọc lượt chạy thật thay vì đoán từ bản dịch cuối, và gom mẫu
+  lỗi lặp lại trước khi sửa luật. Chat của Trợ lý chưa ghi log.
+- Cài ở `executeTranslateBatch` (`log` tùy chọn, ba nơi gọi đều truyền) và hàm `ask` của
+  `ContextExtractionService`; module ghi ở `src/main/infra/storage/aiCallLog.ts`, cấu hình trong
+  `src/main/index.ts`. Chưa cấu hình (test, công cụ) thì không ghi gì.
+  `v8` (2026-10-14) bỏ luật chung `MAY_TAO_RULE` (vai dưới không tự xưng tao gọi mày với vai trên) theo
+  chủ sản phẩm; system prompt đổi nên số đo trước đó không còn áp nguyên.
+  `v7` (2026-10-14) bỏ luật và ví dụ thầy trò của bộ, thêm luật chung "mày – tao" theo cảm xúc (mục
+  [Bỏ luật cứng theo bối cảnh](#bỏ-luật-cứng-theo-bối-cảnh-2026-10-14-chưa-đo-lại-bằng-model)); system prompt
+  đổi nên số đo `v5` không còn áp nguyên.
+  `v6` (2026-10-14, `add-agent-steering`) chỉ thêm khối `<task_instruction>` và một câu lệnh cuối ở
+  message user khi item của task có chỉ dẫn; system prompt và request không có chỉ dẫn giữ nguyên từng byte,
+  nên số đo `translate-v5` vẫn áp dụng cho lượt dịch thường.
+
 ## Bổ sung ngày 2026-10-05 (đã triển khai, đo sơ bộ)
 
 Sau khi đọc 20 chương dịch thật, xưng hô lộn xộn đúng ở ranh giới lô và vì thiếu giới tính nhân vật.

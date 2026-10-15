@@ -312,7 +312,13 @@ export class ParagraphTranslator {
           units,
           prompt,
           now,
-          budget
+          budget,
+          log: {
+            workId: input.workId,
+            chapterId: input.chapterId,
+            runKey: key,
+            model: translator.entry.model
+          }
         })
         contextHash = result.request?.requestHash ?? contextHash
         items = result.items

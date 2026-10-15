@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import type { ReviewFlag } from '../../../shared/contracts/glossary'
 import type { TokenUsage } from '../../../shared/contracts/usage'
 import { addUsage, toWireUsage, type Usage } from '../../infra/providers/usage'
+import { appendAiCall } from '../../infra/storage/aiCallLog'
 import { CHARACTER_GENDERS } from '../../../shared/contracts/addressing'
 import {
   listCharacters,
@@ -191,11 +192,19 @@ export class ContextExtractionService {
       calls++
       // Report the call as it starts: one call can take minutes and the task should show it.
       input.onUsage?.(wire(false), calls)
+      const log = { kind: 'extract', runId, model, promptHash, messages }
       try {
         const result = await call(messages, input.signal)
         if (result.usage) usage = addUsage(usage, result.usage)
         else calledWithoutUsage = true
+        appendAiCall(input.workId, { ...log, raw: result.text, usage: result.usage })
         return result.text
+      } catch (error) {
+        appendAiCall(input.workId, {
+          ...log,
+          error: error instanceof Error ? error.message : String(error)
+        })
+        throw error
       } finally {
         input.onUsage?.(wire(false), calls)
       }

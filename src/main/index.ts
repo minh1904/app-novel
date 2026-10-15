@@ -20,6 +20,7 @@ import {
   TOP_BAR_HEIGHT
 } from './electron/titleBar'
 import { pinZoom } from './electron/zoom'
+import { configureAiCallLog } from './infra/storage/aiCallLog'
 import { LibraryStore } from './services/library/library'
 
 app.enableSandbox()
@@ -143,6 +144,11 @@ app.whenReady().then(() => {
     )
     app.exit(1)
     return
+  }
+  try {
+    configureAiCallLog(dataDir())
+  } catch {
+    // Without a log folder the app still runs; the AI call log just stays off.
   }
   stopServices = registerLibraryHandlers(library, isTrustedSender)
 
