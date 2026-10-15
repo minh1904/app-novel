@@ -75,6 +75,7 @@ Mira đang là **bản MVP thử nghiệm**:
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md): Quy tắc kiến trúc toàn repository và cấu trúc domain modules của renderer.
 - [`DESIGN.md`](DESIGN.md): Hệ thống thiết kế UI, token và quy chuẩn thành phần giao diện.
+- [Đọc lại Mira từ code](docs/code-tour/README.md): Bản đồ chín vùng và sơ đồ Mermaid từ thao tác người dùng đến IPC, dịch, lưu trữ và đo lường.
 - [Tài liệu theo module](docs/modules/README.md): Quyết định, nghiên cứu và trạng thái chi tiết của từng phạm vi sản phẩm.
 - [Quy tắc repository](AGENTS.md): Quy chuẩn commit và các bước kiểm thử.
 
