@@ -394,17 +394,20 @@ export function SourcesArea({ workId, initialBindings, onWork }: SourcesAreaProp
                 key={binding.id}
                 data-slot="raw-binding-card"
                 className={cn(
-                  'flex flex-col justify-between gap-md rounded-md border p-md transition-colors',
+                  'flex min-w-0 flex-col justify-between gap-md rounded-md border p-md transition-colors',
                   isPrimary ? 'border-strong bg-muted/30' : 'border-default bg-surface'
                 )}
               >
                 <div className="flex flex-col gap-sm">
                   {/* Title & language */}
                   <div className="flex items-start justify-between gap-xs">
-                    <div className="flex items-center gap-xs">
+                    <div className="flex min-w-0 flex-1 items-center gap-xs">
                       <LanguageMark language={binding.languageTag as SourceLanguage} />
                       <div className="min-w-0 flex-1">
-                        <h3 className="m-0 truncate text-label-md font-semibold text-default">
+                        <h3
+                          title={binding.label}
+                          className="m-0 truncate text-label-md font-semibold text-default"
+                        >
                           {binding.label}
                         </h3>
                         <p className="m-0 text-body-xs text-subtle">
@@ -413,14 +416,16 @@ export function SourcesArea({ workId, initialBindings, onWork }: SourcesAreaProp
                       </div>
                     </div>
                     {isPrimary ? (
-                      <Badge color="accent" dot>
+                      <Badge color="accent" dot className="shrink-0">
                         <span className="inline-flex items-center gap-3xs">
                           <StarIcon size={12} />
                           Bản chính
                         </span>
                       </Badge>
                     ) : (
-                      <Badge color="neutral">Đối chiếu</Badge>
+                      <Badge color="neutral" className="shrink-0">
+                        Đối chiếu
+                      </Badge>
                     )}
                   </div>
 

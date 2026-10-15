@@ -41,9 +41,9 @@ function openTarget(target: ResolvedTarget): void {
 }
 
 /**
- * Shell của side panel màn chương: `Trợ lý | Ngữ cảnh | Chat cũ` trong cùng một panel, không mở hai
- * panel song song. Trợ lý dùng chung store với màn Trợ lý; Ngữ cảnh thuộc
- * `add-agent-context-workflow`; Chat cũ giữ luồng chat theo tác phẩm đọc được.
+ * Shell của side panel màn chương: `Trợ lý | Ngữ cảnh` trong cùng một panel, không mở hai panel song
+ * song. Trợ lý dùng chung store với màn Trợ lý; Ngữ cảnh thuộc `add-agent-context-workflow`. Chat cũ
+ * không còn tab: nó chỉ mở từ "đề xuất chờ duyệt", nơi duy nhất còn duyệt được đề xuất dịch đoạn.
  */
 export function AssistantSidePanel({
   workId,
@@ -58,7 +58,7 @@ export function AssistantSidePanel({
   tab: SidePanelTab
   onTabChange(tab: SidePanelTab): void
   onClose(): void
-  /** Chat cũ theo tác phẩm (AiPanel), giữ nguyên hành vi của nó. */
+  /** Chat cũ theo tác phẩm (AiPanel): hàng đợi đề xuất, mở từ thanh trạng thái. */
   legacy: ReactNode
 }): JSX.Element {
   return (
@@ -72,7 +72,6 @@ export function AssistantSidePanel({
           <TabsList className="min-w-0 flex-1">
             <TabsTab value="assistant">Trợ lý</TabsTab>
             <TabsTab value="context">Ngữ cảnh</TabsTab>
-            <TabsTab value="legacy">Chat cũ</TabsTab>
           </TabsList>
           <CompactButton
             aria-label="Đóng (Esc)"

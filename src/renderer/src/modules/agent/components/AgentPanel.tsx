@@ -1,9 +1,10 @@
 import { useEffect, type JSX } from 'react'
-import { PenNewRoundIcon } from '@renderer/components/ui/reicon'
+import { AltArrowDownIcon, PenNewRoundIcon } from '@renderer/components/ui/reicon'
 import type { ResolvedTarget } from '../../../../../shared/contracts/agent'
+import { Button } from '../../../components/ui/Button'
 import { CompactButton } from '../../../components/ui/CompactButton'
+import { MenuItem, MenuPopup, MenuRoot, MenuTrigger } from '../../../components/ui/DropdownMenu'
 import { ICON } from '../../../components/ui/icon'
-import { Select } from '../../../components/ui/Select'
 import { useAgentStore } from '../store/agentStore'
 import { AgentComposer } from './AgentComposer'
 import { AgentTranscript } from './AgentTranscript'
@@ -42,29 +43,42 @@ export function AgentPanel({ onOpenTarget, className }: AgentPanelProps): JSX.El
 
   return (
     <div className={`flex h-full min-h-0 flex-col ${className ?? ''}`}>
-      <div className="flex shrink-0 items-center gap-xs px-sm py-2xs">
-        <Select
-          label="Phiên Trợ lý"
-          value={activeSessionId ?? ''}
-          options={[
-            ...(activeSessionId === null ? [{ value: '', label: 'Chat mới' }] : []),
-            ...sessions.map((session) => ({
-              value: session.id,
-              label: session.title || 'Phiên mới'
-            }))
-          ]}
-          onChange={(id) => {
-            if (id) void selectSession(id)
-          }}
-          className="min-w-0 flex-1"
-        />
-        <CompactButton
-          aria-label="Chat mới"
-          title="Chat mới"
-          disabled={activeSessionId === null}
-          onClick={newChat}
-          icon={<PenNewRoundIcon size={ICON.sm} />}
-        />
+      <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-default px-3">
+        <span className="min-w-0 truncate text-body-xs font-semibold">
+          {sessions.find((session) => session.id === activeSessionId)?.title || 'Hội thoại mới'}
+        </span>
+        <span className="ml-auto flex shrink-0 items-center gap-0.5">
+          {sessions.length > 0 && (
+            <MenuRoot>
+              <MenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    aria-label="Mở lịch sử hội thoại"
+                    rightIcon={<AltArrowDownIcon size={ICON.sm} aria-hidden="true" />}
+                  >
+                    Lịch sử
+                  </Button>
+                }
+              />
+              <MenuPopup align="end">
+                {sessions.map((session) => (
+                  <MenuItem key={session.id} onClick={() => void selectSession(session.id)}>
+                    <span className="max-w-52 truncate">{session.title || 'Hội thoại'}</span>
+                    {session.id === activeSessionId && <span aria-hidden="true">✓</span>}
+                  </MenuItem>
+                ))}
+              </MenuPopup>
+            </MenuRoot>
+          )}
+          <CompactButton
+            aria-label="Hội thoại mới"
+            title="Hội thoại mới"
+            disabled={activeSessionId === null}
+            onClick={newChat}
+            icon={<PenNewRoundIcon size={ICON.sm} />}
+          />
+        </span>
       </div>
       <AgentTranscript onOpenTarget={onOpenTarget} />
       <div className="shrink-0 px-sm pb-sm">

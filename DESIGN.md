@@ -268,7 +268,8 @@ vai trò trong một control. Màn feature chỉ dùng tên semantic như `bg-su
 - Phần tử nằm trong phần tử khác dùng radius nhỏ hơn theo khoảng cách inset; tránh nhiều đường cong cạnh
   nhau không đồng tâm.
 - Icon dùng Reicon Outline với nét mặc định 1,5 px và thang 12/14/16/18/24 px. Chỉ dùng Filled để biểu
-  thị trạng thái đang chọn hoặc đã đánh dấu. Icon tương tác phải nằm trong hit target của component,
+  thị trạng thái đang chọn hoặc đã đánh dấu. Dùng glyph trơn, không khung tròn/vuông bao ngoài (X, Stop,
+  Check, Add); chỉ giữ khung khi Reicon không có bản trơn, như dấu "!", "i", "?". Icon tương tác phải nằm trong hit target của component,
   không tự quyết định kích thước vùng bấm.
 
 ## Components
