@@ -150,6 +150,8 @@ export interface AgentTaskSummary extends AgentTaskView {
   counts: Record<AgentTaskItemState, number>
   /** Sum of the reported usage of the task's operations; `null` when nothing was reported. */
   usage: TokenUsage | null
+  /** Term extraction is running before the first item; `calls` counts the model calls started. */
+  extracting?: { calls: number }
 }
 
 export interface AgentTaskDetailView {

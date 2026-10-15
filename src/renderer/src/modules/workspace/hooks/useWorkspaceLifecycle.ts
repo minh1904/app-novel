@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { LeaveGuardRegistry } from '../chapter-editor/leaveGuard'
 import { useAiChatStore } from '../store/aiChatStore'
+import { useChapterStore } from '../store/chapterStore'
 import { useWorkspaceStore } from '../store/workspaceStore'
 
 export function useWorkspaceLifecycle(registry: LeaveGuardRegistry): void {
@@ -19,6 +20,16 @@ export function useWorkspaceLifecycle(registry: LeaveGuardRegistry): void {
   }, [registry])
 
   useEffect(() => useAiChatStore.getState().startListening(), [])
+
+  // An agent wrote a chapter from chat or a task: the chapter list (translated or not) refetches.
+  useEffect(
+    () =>
+      window.mira?.agent?.coordinator.onTargetChanged((event) => {
+        const chapters = useChapterStore.getState()
+        if (chapters.workId === event.target.workId) void chapters.reload()
+      }),
+    []
+  )
 }
 
 export function useWorkspaceRestore(libraryLoad: 'loading' | 'ready' | 'failed'): void {

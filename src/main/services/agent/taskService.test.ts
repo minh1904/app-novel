@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { segment } from '../../../shared/segmentation/segmenter'
+import type { AgentTargetChanged } from '../../../shared/contracts/agent'
 import type { AgentTaskChanged } from '../../../shared/contracts/agentTask'
 import { AgentRepository } from '../../infra/storage/agentRepository'
 import { AgentTaskRepository } from '../../infra/storage/agentTaskRepository'
@@ -35,7 +36,12 @@ function taskKit(
     })
   const tasks = make()
   const changes: AgentTaskChanged[] = []
-  tasks.connect({ publishIntent: () => [], changed: (event) => changes.push(event) })
+  const targets: AgentTargetChanged[] = []
+  tasks.connect({
+    publishIntent: () => [],
+    changed: (event) => changes.push(event),
+    targetChanged: (event) => targets.push(event)
+  })
   const create = (chapterIds: string[], extra: Record<string, unknown> = {}) =>
     tasks.create({
       clientCommandId: command(),
@@ -58,7 +64,7 @@ function taskKit(
       ...(itemId ? { itemId } : {})
     })
   const states = (taskId: string) => tasks.get(taskId).items.map((item) => item.state)
-  return { ...kit, tasks, make, coordinator, operations, changes, create, control, states }
+  return { ...kit, tasks, make, coordinator, operations, changes, targets, create, control, states }
 }
 
 /** A scripted runner: each run waits on `gate` and returns what `outcome` says. */
@@ -155,6 +161,20 @@ describe('AgentTaskService: scheduler', () => {
       runKey: `task:${first.id}`,
       policy: 'fill_untranslated'
     })
+  })
+
+  it('tells every window each chapter run ended, so editors unlock and lists refetch', async () => {
+    const runner = scriptedRunner()
+    const { create, tasks, targets, ch1_1, ch1_2 } = taskKit(runner.run)
+    create([ch1_1.id, ch1_2.id])
+    await tasks.idle()
+    expect(targets.map((event) => [event.target.chapterId, event.target.side])).toEqual([
+      [ch1_1.id, 'target'],
+      [ch1_2.id, 'target']
+    ])
+    expect(targets.map((event) => event.operationId)).toEqual(
+      runner.calls.map((call) => call.operationId)
+    )
   })
 
   it('does not let a chapter without raw block the next one and ends partially_completed', async () => {

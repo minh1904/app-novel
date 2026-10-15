@@ -13,6 +13,15 @@ export interface AgentPanelProps {
   className?: string
 }
 
+/**
+ * Answers the main process's write intents on every screen. Main waits for every window before a
+ * task or chat writes a chapter; a window that does not answer turns the write into a conflict.
+ */
+export function useAgentWriteIntents(): void {
+  const listenCoordinator = useAgentStore((s) => s.listenCoordinator)
+  useEffect(() => listenCoordinator(), [listenCoordinator])
+}
+
 /** Subscribes to agent events while mounted and loads the session list once. */
 export function useAgentConnection(): void {
   const loadSessions = useAgentStore((s) => s.loadSessions)

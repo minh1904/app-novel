@@ -369,6 +369,12 @@ function TaskRow({
           {progressLabel}
         </span>
       </div>
+      {running && task.extracting && (
+        <p role="status" className="m-0 text-body-xs text-muted motion-safe:animate-pulse">
+          Đang trích thuật ngữ trước khi dịch · {task.extracting.calls.toLocaleString('vi')} lượt
+          gọi
+        </p>
+      )}
       <UsageDisplay usage={task.usage} />
       <div className="flex flex-wrap items-center gap-xs">
         {task.reason === 'context_review' && onReviewContext && (

@@ -53,6 +53,9 @@ let unbind: (() => void) | null = null
  * Tasks as Main has them: the store never changes a state itself, it sends a command with the version
  * it saw and refetches. Every window refetches on `agentTaskChanged`, so they agree.
  */
+/** Overlapping refreshes: only the latest may write, so an older reply never rolls the list back. */
+let refreshSeq = 0
+
 export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
   details: {},
@@ -64,8 +67,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   refresh: async () => {
     const api = bridge()
     if (!api) return
+    const mine = ++refreshSeq
     if (get().load === 'idle') set({ load: 'loading' })
     const res = await api.list()
+    if (mine !== refreshSeq) return
     if (!res.ok) {
       set({ load: 'failed', lastError: res.error.message })
       return
@@ -78,6 +83,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       const warnings = await api.quality(taskId)
       if (warnings.ok) quality[taskId] = warnings.value
     }
+    if (mine !== refreshSeq) return
     set({ tasks: res.value.tasks, details, quality, load: 'ready' })
   },
 

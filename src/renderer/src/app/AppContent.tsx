@@ -29,6 +29,7 @@ import { useWorkspaceStore, type AppPage, type View } from '../modules/workspace
 import { useConnectionStore } from '../modules/ai-connections/public'
 import { useAiPreferencesLoad } from '../modules/ai-connections/public'
 import { useWorkspaceLifecycle, useWorkspaceRestore } from '../modules/workspace/public'
+import { useAgentWriteIntents } from '../modules/agent/public'
 import { useAppShortcuts } from './hooks/useAppShortcuts'
 import { useSystemThemeSync } from './hooks/useSystemThemeSync'
 
@@ -37,6 +38,7 @@ export function AppContent({ registry }: { registry: LeaveGuardRegistry }): JSX.
   useAppShortcuts()
   useSystemThemeSync()
   useAiPreferencesLoad()
+  useAgentWriteIntents()
 
   const view = useWorkspaceStore((state) => state.view)
   const tabs = useWorkspaceStore((state) => state.tabs)

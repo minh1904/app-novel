@@ -1,5 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto'
-import type { AgentWriteIntent, ResolvedTarget } from '../../../shared/contracts/agent'
+import type {
+  AgentTargetChanged,
+  AgentWriteIntent,
+  ResolvedTarget
+} from '../../../shared/contracts/agent'
 import type {
   AgentTaskChanged,
   AgentTaskControlInput,
@@ -62,6 +66,8 @@ export interface AgentTaskOutlets {
   /** Sends a write intent to every open window and returns the ids it reached. */
   publishIntent(intent: AgentWriteIntent): number[]
   changed(event: AgentTaskChanged): void
+  /** A run of a chapter ended: open editors reload the target and unlock, lists refetch. */
+  targetChanged?(event: AgentTargetChanged): void
 }
 
 interface RunningItem {
@@ -72,6 +78,8 @@ interface RunningItem {
   controller: AbortController
   stop: RunStopReason | null
   done: Promise<void>
+  /** Calls started by the term extraction now running before the item; `null` outside it. */
+  extractCalls: number | null
 }
 
 /** Tasks from before the choice existed translated with the approved context only. */
@@ -230,7 +238,11 @@ export class AgentTaskService {
       workTitle,
       modelLabel,
       counts,
-      usage: aggregateTokenUsage(this.tasks.taskUsages(task.id))
+      usage: aggregateTokenUsage(this.tasks.taskUsages(task.id)),
+      extracting:
+        this.running?.taskId === task.id && this.running.extractCalls !== null
+          ? { calls: this.running.extractCalls }
+          : undefined
     }
   }
 
@@ -610,7 +622,8 @@ export class AgentTaskService {
       chapterId: item.chapterId,
       controller,
       stop: null,
-      done: Promise.resolve()
+      done: Promise.resolve(),
+      extractCalls: null
     }
     this.running = running
     running.done = this.runItem(task, item, running)
@@ -630,7 +643,10 @@ export class AgentTaskService {
   ): Promise<void> {
     const now = this.now()
     const starting = task.state === 'queued'
-    if (starting) task = this.tasks.transitionTask(task.id, 'running', { now })
+    if (starting) {
+      task = this.tasks.transitionTask(task.id, 'running', { now })
+      this.notify(task)
+    }
 
     // The connection or its settings changed since the task was created: the user decides.
     let settingsKey: string | null = null
@@ -746,6 +762,7 @@ export class AgentTaskService {
             usage,
             result: { calls }
           })
+          this.notify(task)
         },
         onProgress: (progress) => {
           if (this.closed) return
@@ -765,6 +782,18 @@ export class AgentTaskService {
     if (this.closed) return
     this.settleOperation(operationId, result, error, gate.calls())
     this.settleItem(task.id, item.id, result, error)
+    // Sent even when nothing was written: the editor locked by the write intent unlocks on it.
+    try {
+      this.outlets?.targetChanged?.({
+        target: { workId: task.workId, chapterId: item.chapterId, side: 'target' },
+        lastAppliedRev:
+          result?.lastAppliedRev ??
+          this.library.readText(task.workId, item.chapterId, 'target').rev,
+        operationId
+      })
+    } catch {
+      // Best effort: the chapter may be gone; the task state is already written.
+    }
   }
 
   /**
@@ -797,6 +826,8 @@ export class AgentTaskService {
       this.operations.transitionOperation(operationId, 'running', { now: this.now() })
     })
     const gate = this.gateFor(task, operationId)
+    running.extractCalls = 0
+    this.notify(task)
     try {
       const result = await extraction.extract({
         workId: task.workId,
@@ -809,13 +840,16 @@ export class AgentTaskService {
         onUsage: (usage, calls) => {
           gate.live(usage, calls)
           if (this.closed) return
+          running.extractCalls = calls
           this.operations.transitionOperation(operationId, 'running', {
             now: this.now(),
             usage,
             result: { calls }
           })
+          this.notify(task)
         }
       })
+      running.extractCalls = null
       if (this.closed) return false
       const now = this.now()
       this.operations.transitionOperation(
@@ -846,6 +880,7 @@ export class AgentTaskService {
       )
       return false
     } catch (error) {
+      running.extractCalls = null
       if (this.closed) return false
       const now = this.now()
       this.operations.transitionOperation(operationId, 'failed', {

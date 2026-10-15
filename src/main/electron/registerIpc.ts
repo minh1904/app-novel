@@ -102,7 +102,8 @@ export function registerLibraryHandlers(
     publishIntent: (intent) => windows.send(EVENT_CHANNELS.agentTargetWriteIntent, intent),
     changed: (event) => {
       windows.send(EVENT_CHANNELS.agentTaskChanged, event)
-    }
+    },
+    targetChanged: (event) => windows.send(EVENT_CHANNELS.agentTargetChanged, event)
   })
   const handlers = guardHandlers(
     createLibraryHandlers(

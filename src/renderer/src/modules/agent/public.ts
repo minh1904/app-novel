@@ -1,4 +1,9 @@
-export { AgentPanel, type AgentPanelProps, useAgentConnection } from './components/AgentPanel'
+export {
+  AgentPanel,
+  type AgentPanelProps,
+  useAgentConnection,
+  useAgentWriteIntents
+} from './components/AgentPanel'
 export { AgentComposer } from './components/AgentComposer'
 export { AgentSessionList } from './components/AgentSessionList'
 export { AgentTranscript, type AgentTranscriptProps } from './components/AgentTranscript'
