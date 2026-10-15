@@ -43,7 +43,7 @@ function check(name: string, spec: SchemaSpec, version: number): void {
 }
 
 describe('work file schema', () => {
-  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])(
+  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])(
     'version %i matches its frozen snapshot',
     (version) => {
       check('work-v' + version + '.schema.sql', workSchema, version)
@@ -52,14 +52,14 @@ describe('work file schema', () => {
 
   it('has one fixture per migration and a stable application id', () => {
     expect(workSchema.migrations.map((m) => m.version)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
     ])
     expect(WORK_APPLICATION_ID).toBe(0x4d495241)
   })
 })
 
 describe('library index schema', () => {
-  it.each([1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13])(
+  it.each([1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14])(
     'version %i matches its frozen snapshot',
     (version) => {
       check('library-v' + version + '.schema.sql', librarySchema, version)
@@ -68,7 +68,7 @@ describe('library index schema', () => {
 
   it('has one fixture per migration and a stable application id', () => {
     expect(librarySchema.migrations.map((m) => m.version)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
     ])
     expect(LIBRARY_APPLICATION_ID).toBe(0x4d49524c)
   })

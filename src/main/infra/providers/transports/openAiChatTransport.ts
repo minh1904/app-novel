@@ -48,6 +48,8 @@ export interface ChatMessage {
     id: string
     type: 'function'
     function: { name: string; arguments: string }
+    /** Dữ liệu riêng của nhà cung cấp, gửi lại nguyên vẹn (Gemini đặt `thought_signature` ở đây). */
+    extra_content?: unknown
   }>
   /** Lượt của `tool` trả lời chính xác cho lệnh gọi này. */
   tool_call_id?: string
@@ -58,6 +60,8 @@ export interface AssembledToolCall {
   id: string
   name: string
   arguments: string
+  /** `extra_content` của lệnh gọi; Gemini từ chối lượt sau nếu thiếu `thought_signature` trong đó. */
+  extra?: unknown
 }
 
 /** Lý do kết thúc phản hồi (`unknown` khi máy chủ không trả về lý do). */
@@ -183,6 +187,7 @@ export interface ToolCallFragment {
   id?: string
   name?: string
   arguments?: string
+  extra?: unknown
 }
 
 /** Khung dữ liệu sự kiện từ luồng SSE sau khi phân tích JSON. */
@@ -208,6 +213,7 @@ function readToolFragments(raw: unknown): ToolCallFragment[] {
       index?: unknown
       id?: unknown
       function?: { name?: unknown; arguments?: unknown }
+      extra_content?: unknown
     }
     // Mặc định index là 0 nếu thiếu (một số endpoint bỏ qua khi chỉ có một lệnh gọi).
     const index = typeof item?.index === 'number' ? item.index : 0
@@ -215,6 +221,7 @@ function readToolFragments(raw: unknown): ToolCallFragment[] {
     if (typeof item?.id === 'string') fragment.id = item.id
     if (typeof item?.function?.name === 'string') fragment.name = item.function.name
     if (typeof item?.function?.arguments === 'string') fragment.arguments = item.function.arguments
+    if (item?.extra_content !== undefined) fragment.extra = item.extra_content
     fragments.push(fragment)
   }
   return fragments
@@ -388,7 +395,7 @@ export class OpenAiChatTransport implements ChatTransport {
       let finishReason: FinishReason = 'unknown'
       let filter: FilterReason | undefined
       // Gom các phân đoạn gọi công cụ theo `index`.
-      const pending = new Map<number, { id: string; name: string; arguments: string }>()
+      const pending = new Map<number, AssembledToolCall>()
       try {
         for await (const event of parseSseStream(response.body)) {
           // Sự kiện đầu tiên kết thúc thời gian chờ byte đầu; chuyển sang tính thời gian im lặng giữa các sự kiện.
@@ -419,7 +426,10 @@ export class OpenAiChatTransport implements ChatTransport {
             pending.set(fragment.index, {
               id: fragment.id ?? current.id,
               name: fragment.name ?? current.name,
-              arguments: current.arguments + (fragment.arguments ?? '')
+              arguments: current.arguments + (fragment.arguments ?? ''),
+              ...((fragment.extra ?? current.extra) !== undefined
+                ? { extra: fragment.extra ?? current.extra }
+                : {})
             })
           }
           if (frame.reasoning !== '') yield { kind: 'reasoning', text: frame.reasoning }

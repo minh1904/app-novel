@@ -626,6 +626,36 @@ describe('stream', () => {
     ])
   })
 
+  it("keeps Gemini's thought signature on a tool call", async () => {
+    const extra = { google: { thought_signature: 'sig' } }
+    const t = transport(
+      fetchFake(() =>
+        sse([
+          frame({
+            choices: [
+              {
+                delta: {
+                  tool_calls: [
+                    {
+                      index: 0,
+                      id: 'c1',
+                      function: { name: 'list_works', arguments: '{}' },
+                      extra_content: extra
+                    }
+                  ]
+                }
+              }
+            ]
+          }),
+          finish('tool_calls'),
+          DONE
+        ])
+      )
+    )
+    const [event] = await collect(t.stream(ask, { apiKey: null }))
+    expect(event).toMatchObject({ calls: [{ id: 'c1', extra }] })
+  })
+
   it('keeps the text it already gave when an error frame arrives in the middle', async () => {
     const t = transport(
       fetchFake(() =>

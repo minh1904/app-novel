@@ -579,6 +579,12 @@ export const librarySchema: SchemaSpec = {
       up(db) {
         db.exec(version13)
       }
+    },
+    {
+      version: 14,
+      up(db) {
+        db.exec('ALTER TABLE agent_tool_call ADD COLUMN extra_json TEXT')
+      }
     }
   ]
 }

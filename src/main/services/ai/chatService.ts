@@ -18,6 +18,7 @@ import type { ConnectionTranslator } from './connectionService'
 import { costOfUsage } from './costEstimate'
 import { lookupModel } from '../../infra/providers/modelCatalog'
 import { ProviderError } from '../../infra/providers/types'
+import type { AssembledToolCall } from '../../infra/providers/transports/openAiChatTransport'
 import { describeProviderError, taskErrorPolicy } from './errorPolicy'
 import { fallbackChain, fallbackLine, shouldFallback } from './fallback'
 import type { ModelRef } from '../../../shared/contracts/aiPreferences'
@@ -232,7 +233,7 @@ export class ChatService {
         // Vòng cuối **không** mời công cụ nữa, nên model buộc phải trả lời bằng những gì đã đọc. Đó
         // là thứ làm vòng lặp này chắc chắn dừng, chứ không phải một lời hứa về hành vi của model.
         const offer = tools !== null && round < MAX_TOOL_ROUNDS ? CHAT_TOOL_DEFINITIONS : undefined
-        let calls: Array<{ id: string; name: string; arguments: string }> = []
+        let calls: AssembledToolCall[] = []
 
         for (;;) {
           try {
@@ -308,7 +309,8 @@ export class ChatService {
           tool_calls: calls.map((call) => ({
             id: call.id,
             type: 'function' as const,
-            function: { name: call.name, arguments: call.arguments }
+            function: { name: call.name, arguments: call.arguments },
+            ...(call.extra !== undefined ? { extra_content: call.extra } : {})
           }))
         })
 

@@ -112,6 +112,8 @@ export interface AgentToolCall {
   callId: string
   name: string
   args: unknown
+  /** Provider data sent back with the call next round (Gemini's `thought_signature`). */
+  extra?: unknown
   argsDigest: string
   decision: AgentToolDecision
   state: AgentToolCallState
@@ -126,6 +128,7 @@ interface ToolCallRow {
   call_id: string
   name: string
   args_json: string
+  extra_json: string | null
   args_digest: string
   decision: AgentToolDecision
   state: AgentToolCallState
@@ -134,7 +137,7 @@ interface ToolCallRow {
 }
 
 const TOOL_CALL_COLUMNS = `id, turn_id, round, call_id, name, args_json, args_digest, decision, state,
-  result_json, created_at`
+  result_json, created_at, extra_json`
 
 const toolCallFrom = (row: ToolCallRow): AgentToolCall => ({
   id: row.id,
@@ -143,6 +146,7 @@ const toolCallFrom = (row: ToolCallRow): AgentToolCall => ({
   callId: row.call_id,
   name: row.name,
   args: JSON.parse(row.args_json),
+  ...(row.extra_json ? { extra: JSON.parse(row.extra_json) } : {}),
   argsDigest: row.args_digest,
   decision: row.decision,
   state: row.state,
@@ -636,7 +640,7 @@ export class AgentRepository {
   insertToolCalls(calls: Array<Omit<AgentToolCall, 'result'> & { result?: unknown }>): void {
     this.db.transaction(() => {
       const insert = this.db.prepare(
-        `INSERT INTO agent_tool_call (${TOOL_CALL_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO agent_tool_call (${TOOL_CALL_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       for (const call of calls) {
         insert.run(
@@ -650,7 +654,8 @@ export class AgentRepository {
           call.decision,
           call.state,
           call.result === undefined ? null : JSON.stringify(call.result),
-          call.createdAt
+          call.createdAt,
+          call.extra === undefined ? null : JSON.stringify(call.extra)
         )
       }
     })

@@ -20,6 +20,7 @@ import type { TokenUsage } from '../../../shared/contracts/usage'
 import { StorageError } from '../../infra/storage/errors'
 import { lookupModel, type ModelInfo } from '../../infra/providers/modelCatalog'
 import type {
+  AssembledToolCall,
   ChatMessage,
   ChatStreamEvent
 } from '../../infra/providers/transports/openAiChatTransport'
@@ -1028,7 +1029,7 @@ export class AgentService {
         }
 
         let text = ''
-        let calls: Array<{ id: string; name: string; arguments: string }> = []
+        let calls: AssembledToolCall[] = []
         let reported = false
         for await (const event of chatModel.chat(assembled.messages, {
           signal,
@@ -1218,7 +1219,7 @@ export class AgentService {
 
   /** Validates one model call and decides policy for it; nothing runs here. */
   private prepareCall(
-    call: { id: string; name: string; arguments: string },
+    call: AssembledToolCall,
     round: number,
     turnId: string,
     handles: Map<string, ResolvedTarget>,
@@ -1248,6 +1249,7 @@ export class AgentService {
       callId: call.id,
       name: call.name,
       args,
+      ...(call.extra !== undefined ? { extra: call.extra } : {}),
       argsDigest: digestPayload({ name: call.name, args }),
       createdAt: this.now()
     }
@@ -1479,7 +1481,8 @@ function roundMessages(rows: AgentToolCall[]): ChatMessage[] {
       tool_calls: calls.map((row) => ({
         id: row.callId,
         type: 'function' as const,
-        function: { name: row.name, arguments: JSON.stringify(row.args ?? {}) }
+        function: { name: row.name, arguments: JSON.stringify(row.args ?? {}) },
+        ...(row.extra !== undefined ? { extra_content: row.extra } : {})
       }))
     })
     for (const row of calls) {
